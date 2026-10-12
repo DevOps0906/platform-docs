@@ -1,0 +1,224 @@
+# 05 데이터 모델: Admin Suite
+
+경로 약어: `F1600` = `docs/products/_supabase-modular/migrations/1600_erp.sql`, `F1700` = `.../1700_sms.sql`, `HMS2` = `docs/products/admin-suite/supabase/monolith/hms/migrations/0002_hms_domain.sql`.
+
+## 1. 개요와 ERD
+
+```
+core.organizations (테넌트 = 고객사/학교/병원. 코어 참조만)
+ ├─ core.org_members (owner/admin = 앱 관리자 역할의 원천)
+ ├─ core.app_entitlements (erp/sms/hms 이용 여부)
+ │
+ ├─ erp.workspaces 1:1 ── erp.join_codes 1:1
+ │   ├─ erp.departments (트리: parent_id)
+ │   ├─ erp.employees (org, user) ── department_id → departments
+ │   ├─ erp.join_requests (org, user, status)
+ │   ├─ erp.products ── erp.inventory_moves (append-only)
+ │   │                └─ erp.sales ── inventory_moves.sale_id
+ │
+ ├─ sms.workspaces 1:1
+ │   ├─ sms.classes ── sms.subjects (class_id)
+ │   ├─ sms.members (org, user, sms_role, class_id)
+ │   └─ sms.attendance (student x subject x date 유일)
+ │
+ └─ (hms 모놀리스, public) workspaces 1:1
+     ├─ staff_profiles (org, user, role)
+     ├─ patients ── patient_private 1:1 (민감)
+     │   ├─ appointments (doctor_id → staff_profiles)
+     │   │   ├─ medical_records (append-only, 암호문)
+     │   │   ├─ lab_tests ── lab_test_catalog(전역)
+     │   │   └─ visit_charges (예약당 1)
+     └─ phi_access_log (append-only)
+```
+
+공통 설계: 테넌트 테이블은 모두 `org_id → core.organizations on delete cascade`. 같은 조직 내부 참조는 `(org_id, id)` 복합 FK로 조직을 건너뛰는 참조를 DB가 거부한다. 도메인 데이터를 가지려면 `<app>.workspaces` 행이 있어야 한다(서버 프로비저닝). 가입 트리거가 만드는 개인 조직은 엔타이틀먼트가 있어도 workspace가 없어 접근 불가다(스모크 테스트 "C insert product into own personal org" 42501).
+
+## 2. 테이블
+
+표준 컬럼(`DB_CONVENTIONS.md` 3장): 모든 테이블에 `created_at`, UPDATE가 있는 테이블에 `updated_at` + `core.set_updated_at` 트리거, 행위자 `created_by`/`marked_by` 등은 FK 없는 uuid. 상태는 text + CHECK.
+
+### 2.1 erp (F1600)
+
+| 테이블 | 목적 | 주요 컬럼(타입, 제약) | 표준 컬럼 |
+|---|---|---|---|
+| `workspaces` | ERP 고객사 | `org_id` uuid PK FK, `company_name` text 1..120, `status` active/suspended, `default_safety_stock` int 0..1e6, `low_stock_alert` bool, `settings` jsonb | created_at, updated_at |
+| `join_codes` | 가입 코드(사용자 접근 불가) | `org_id` PK FK workspaces, `join_code` text unique `^[A-HJ-NP-Z2-9]{8}$`, `rotated_at` | - |
+| `departments` | 부서 트리 | `id` uuid, `org_id`, `name` 1..60 (org 내 유일), `parent_id` (복합 FK, `on delete set null (parent_id)`), `sort_order`, `created_by` | 전부 |
+| `employees` | 임직원 + ERP 역할 | PK(`org_id`,`user_id`), `display_name` ..80, `department_id`(복합 FK), `position` ..40, `phone` `^[0-9+() -]{7,20}$`, `erp_role` inventory_manager/sales_manager/staff, `status` active/suspended, `joined_at` | 전부 |
+| `join_requests` | 승인제 가입 요청 | `id`, `org_id`, `user_id`, `applicant_name` 1..80, `message` ..500, `status` pending/approved/rejected/canceled, `decided_by`, `decided_at`, `decision_note`. 부분 유니크(org,user) where pending | 전부 |
+| `products` | 상품 | `id`, `org_id`, `sku` (org 내 유일), `name` 1..200, `category` 1..60, `price` numeric(12,2)>=0, `quantity` int>=0, `safety_stock` int>=0, `is_low_stock` 생성 컬럼, `image_path`(`<org>/erp/product/` 강제), `is_active`, `created_by` | 전부 |
+| `inventory_moves` | 재고 이동 이력 | `id` bigint identity, `org_id`, `product_id`(복합 FK), `move_type` IN/OUT/ADJUSTMENT/SALE/SALE_CANCEL, `quantity_delta` <>0, `quantity_after` >=0, `reason` ..300, `sale_id`, `request_id`(org 내 유일), `created_by` | created_at만(append-only) |
+| `sales` | 판매 | `id`, `org_id`, `product_id`(복합 FK), `quantity`>0, `unit_price`, `total_price` 생성, `status` pending/completed/canceled, `sold_by`, `sold_at`, `completed_at`(completed면 필수), `canceled_at/by`, `cancel_reason`, `request_id` not null(org 내 유일) | 전부 |
+
+### 2.2 sms (F1700)
+
+| 테이블 | 목적 | 주요 컬럼 | 표준 컬럼 |
+|---|---|---|---|
+| `workspaces` | 학교 | `org_id` PK, `school_name`, `school_year` 2000..2100, `status`, `teacher_backfill_days` 0..60(기본 7, 제안), `settings` | 전부 |
+| `classes` | 학급 | `id`, `org_id`, `name` 1..40(유일), `grade` 1..12, `homeroom_teacher_id`, `created_by` | 전부 |
+| `subjects` | 과목(학급 소속) | `id`, `org_id`, `class_id`(복합 FK cascade), `name`(학급 내 유일), `teacher_id` | 전부 |
+| `members` | 교사/학생 | PK(`org_id`,`user_id`), `sms_role` teacher/student, `display_name`, `class_id`(복합 FK set null), `student_no`(org 내 유일), `status` invited/active/suspended, `invited_by`, `invited_at`, `joined_at`. CHECK: 교사는 class_id/student_no 없음 | 전부 |
+| `attendance` | 출석 | `id`, `org_id`, `class_id`, `subject_id`(복합 FK), `student_id`, `attend_date` date(KST 수업일), `status` present/late/early_leave/absent, `note` ..200, `marked_by`. 유일(org, student, subject, date) | 전부 |
+
+`attend_date`는 시각이 아닌 달력 날짜라 date를 쓴다(`DB_CONVENTIONS.md` 4장 "date에 시각을 넣지 않는다"에 부합). 원본의 한글 상태 리터럴(`School_Management_System/src/lib/types.ts`)은 영문 코드로 바꾸고 라벨은 UI에서 매핑한다.
+
+### 2.3 hms (HMS2, 모놀리스 public)
+
+| 테이블 | 목적 | 주요 컬럼 | 사용자 GRANT |
+|---|---|---|---|
+| `workspaces` | 병원 | `org_id` PK, `hospital_name`, `status`, `phi_log_retention_days` >=730 | SELECT |
+| `staff_profiles` | 직원과 의료 역할 | PK(org,user), `role` doctor/staff/lab_tech, `display_name`, `specialty`, `is_available`, `status` invited/active/suspended | SELECT |
+| `patients` | 환자 디렉토리(최소 식별) | `id`, `org_id`, `chart_no`(유일), `name`, `sex` M/F/U, `birth_year`, `phone_last4`, `has_allergy`, `crm_tags` text[] <=10, `last_visit_at`, `deleted_at` | SELECT(RLS) |
+| `patient_private` | 민감 항목 | `patient_id` PK, `birth_date`, `phone_ciphertext`, `blood_type`, `allergies`, `memo_ciphertext`, `key_version`, `privacy_consent_at` not null | 없음(RPC만) |
+| `appointments` | 예약/대기열 | `id`, `org_id`, `patient_id`, `doctor_id`(복합 FK → staff_profiles, set null), `scheduled_at` timestamptz, `duration_min` 5..240, `visit_type` first/return/checkup/procedure, `status` 6종, `queue_no`, 전이 시각 4개, `cancel_reason`, `admin_note`(비진료) | SELECT(RLS) |
+| `medical_records` | 진료기록/처방 | `id`, `org_id`, `patient_id`, `appointment_id`, `author_id`, `record_type` progress/prescription/order_note, `body_ciphertext`, `key_version`, `amends_id` | 없음(RPC만), append-only |
+| `lab_test_catalog` | 검사 항목·정상범위(전역) | `code` PK, `name`, `parameters` jsonb 배열 | SELECT |
+| `lab_tests` | 검사 | `id`, `org_id`, `patient_id`, `appointment_id`, `test_code`, `status` 5종, `result_values` jsonb, `abnormal_keys` text[], 요청/시작/결과/승인/취소 행위자·시각, `correction_reason`. CHECK 승인자 <> 입력자 | 없음(RPC만) |
+| `visit_charges` | 수납 | `id`, `org_id`, `appointment_id`(유일), `patient_id`, `amount_krw` 0..1억, `status` unpaid/paid/refunded/void, `method`, 시각, `refund_reason`, `handled_by` | SELECT(RLS) |
+| `phi_access_log` | 의료정보 접근 기록 | `id` bigint, `org_id`, `actor_id`, `actor_role`, `action` `<entity>.<verb>`, `patient_id`, `target_type/id`, `purpose`, `row_count`, `created_at` | SELECT(admin), append-only |
+
+## 3. 상태 전이
+
+| 테이블.컬럼 | 현재 | 허용 전이 | 누가 | 부수 효과 | 강제 |
+|---|---|---|---|---|---|
+| erp.sales.status | pending | completed, canceled | master_admin, sales_manager | completed: 조건부 재고 차감 + SALE 이력 | 트리거 `sales_guard_transition` + RPC |
+| | completed | canceled | 같음 | 재고 복원 + SALE_CANCEL 이력 + 감사 | 같음 |
+| erp.join_requests.status | pending | approved, rejected | master_admin | approved: core 초대 멤버십 + employees 행 + 서버 `approve_profile` | 트리거 + RPC |
+| | pending | canceled | 신청자 본인 | - | |
+| erp.employees.status | active ↔ suspended | | master_admin(자기 자신·core admin 제외) | 감사 | RPC |
+| sms.members.status | invited | active, suspended | 본인 수락 / admin | core accept_invite | 트리거 `members_guard_transition` + RPC |
+| | active ↔ suspended | | admin | 감사 | |
+| hms appointments.status | scheduled | checked_in | staff, admin | 대기번호(KST 당일 순번), checked_in_at | 트리거 + `transition_appointment` |
+| | scheduled | canceled(사유), no_show(예약 시각 이후만) | staff, admin | 감사 | |
+| | checked_in | in_consultation | 담당 doctor, admin | consult_started_at | |
+| | checked_in | canceled | staff, admin | | |
+| | in_consultation | completed | 담당 doctor, admin | completed_at, patients.last_visit_at | |
+| hms lab_tests.status | requested | in_progress / canceled | lab_tech / doctor, admin | | 트리거 + RPC |
+| | in_progress | resulted / canceled | lab_tech / doctor, admin | 이탈 키 계산, 접근 기록 | |
+| | resulted | approved / in_progress(정정 사유) | lab_tech·doctor(입력자 제외) / lab_tech | approved 이후 값 불변 | |
+| hms visit_charges.status | unpaid | paid, void | staff, admin | 감사 | 트리거 + RPC |
+| | paid | refunded | admin(사유) | 감사 | |
+| hms staff_profiles.status | invited → active(본인 수락), active ↔ suspended(admin) | | | 감사 | RPC |
+
+취소와 노쇼를 별도 상태로 나눠 대시보드에서 섞이지 않게 했다(`docs/reviews/Hospital.md:62`). 원본 PRD의 예약 전이 순서(`Hospital/PRD.md:79`)를 지킨다.
+
+## 4. RLS 정책
+
+모든 테이블 RLS ON. `FOR ALL` 정책 없음. 쓰기 정책이 있는 테이블은 `with check`가 있고 상태·권한·돈 컬럼이 없는 순수 콘텐츠 테이블뿐이다(`DB_CONVENTIONS.md` 8.1). 나머지 쓰기는 RPC + `guard_privileged_write` 트리거(이중 잠금).
+
+### 4.1 erp
+
+| 테이블 | SELECT | INSERT | UPDATE | DELETE | GRANT(authenticated) |
+|---|---|---|---|---|---|
+| workspaces | `erp.has_access(org_id)` | - | - | - | select |
+| join_codes | 없음 | - | - | - | 없음 |
+| departments | `has_access` | `has_role(org,{master_admin})` | 같음(using + with check) | 같음 | select, insert, update, delete |
+| employees | `(user_id = auth.uid() and has_access) or has_role({master_admin})` | - | - | - | select |
+| join_requests | `user_id = auth.uid() or has_role({master_admin})` | - | - | - | select |
+| products | `has_role({master_admin, inventory_manager, sales_manager})` | `has_role({master_admin, inventory_manager})` | 같음 | `has_role({master_admin})` | select, insert/update(컬럼: quantity 제외), delete |
+| inventory_moves | `has_role({master_admin, inventory_manager, sales_manager})` | - | - | - | select |
+| sales | `has_role({master_admin, sales_manager})` | - | - | - | select |
+
+products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 쓰기를 열고, 돈·수량 성격의 `quantity`는 컬럼 GRANT에서 제외 + `erp.guard_product_columns` 트리거(F1600:220)로 2중 차단한다. 가격(`price`) 변경은 재고·인사 권한 있는 역할만 가능하며 판매 금액은 판매 시점 단가로 `sales.unit_price`에 고정된다.
+
+### 4.2 sms
+
+| 테이블 | SELECT | 쓰기 | GRANT |
+|---|---|---|---|
+| workspaces | `sms.has_access` | RPC | select |
+| classes, subjects | `has_access` | insert/update/delete: `sms.is_admin(org_id)`(with check) | select, insert, update, delete |
+| members | `user_id = auth.uid() or sms.is_staff(org_id)` | RPC | select |
+| attendance | `sms.is_staff(org_id) or (student_id = auth.uid() and has_access)` (F1700:266) | RPC | select |
+
+### 4.3 hms
+
+| 테이블 | SELECT | 쓰기 |
+|---|---|---|
+| workspaces | `has_access` | RPC(service) |
+| staff_profiles | `user_id = auth.uid() or has_access` | RPC |
+| patients | `deleted_at is null and has_role({admin, doctor, staff})` | RPC |
+| appointments | `has_role({admin, doctor, staff})` | RPC |
+| visit_charges | `has_role({admin, staff})` | RPC |
+| lab_test_catalog | `is_active` | 없음 |
+| phi_access_log | `has_access and has_org_role(owner, admin)` | DEFINER 내부만 |
+| patient_private, medical_records, lab_tests | GRANT 없음(HMS2:450) | RPC |
+
+### 4.4 헬퍼
+
+`<app>.has_access`, `has_role`, `my_role`(sms는 `is_admin`, `is_staff`)는 SECURITY DEFINER + STABLE + `search_path=''`이며 exists로 판정해 NULL이 나오지 않는다(`SECURITY_BASELINE.md` 2장). 정책 안에서 `org_members`나 자기 테이블을 직접 조회하지 않아 42P17 재귀가 없다. `has_access`는 `core.profiles.status = 'active'`를 요구해 승인 전(pending) 사용자는 멤버십이 있어도 0행을 본다.
+
+## 5. 인덱스와 성능
+
+| 인덱스 | 조회 패턴 |
+|---|---|
+| `erp.products_low_stock_idx (org_id) where is_low_stock and is_active` | 대시보드 위험 재고 |
+| `erp.sales_org_completed_idx (org_id, completed_at desc) where completed` | 당일 매출, 추이 |
+| `erp.inventory_moves_org_created_idx` | 최근 변동 5건 |
+| `erp.join_requests_pending_uniq` | 대기 요청 1건 보장 |
+| `sms.attendance_uniq (org, student, subject, date)` | upsert 충돌 대상 |
+| `sms.attendance_org_date_idx`, `class_date_idx`, `student_date_idx` | 일 통계, 학급별, 학생 월 요약 |
+| `sms.members_class_idx where student` | 출석 그리드 학생 목록 |
+| hms `appointments_org_time_idx`, `doctor_time_idx` | 캘린더 범위 조회, 겹침 검사 |
+| hms `appointments_queue_idx where status in (checked_in, in_consultation)` | 대기열 |
+| hms `patients_org_name_idx`, `org_phone_idx` | 검색 |
+| hms `lab_tests_worklist_idx (org, status, requested_at)` | 검사 작업 목록 |
+| hms `phi_access_log_*` (org/created, patient, actor) | 접근 기록 점검 |
+
+예약 겹침 검사는 의사별 advisory lock 뒤 `tstzrange &&`로 판정한다. 병원 규모(일 수백 건)에서 GiST 제약은 과하다고 보고 넣지 않았다(제안).
+
+## 6. 코어 참조
+
+| core 객체(모놀리스 `public.`) | 용도 | ALTER 여부 |
+|---|---|---|
+| `organizations`, `org_members` | 테넌트, 관리자 역할 원천 | 안 함 |
+| `profiles.status` | pending 차단(has_access) | 안 함 |
+| `app_entitlements`, `has_entitlement` | 앱 이용 여부 | 안 함 |
+| `is_org_member`, `has_org_role`, `is_service_caller`, `is_privileged_session`(트리거·service 전용 함수만), `guard_privileged_write`, `set_updated_at`, `write_audit` | 정책·함수·트리거 | 안 함 |
+| `invite_member`, `accept_invite`, `change_member_role`, `remove_member`, `approve_profile` | 수명주기 | 안 함 |
+| `apps`, `plans` | 조각 머리에서 `on conflict do nothing` 등록 | 데이터만 |
+| Storage `org-files` | ERP 상품 이미지 | 안 함 |
+
+프로비저닝(조직 생성, owner 멤버십, manual 엔타이틀먼트)은 service_role 서버 스크립트가 코어 테이블에 직접 쓴다(`CORE_SPEC.md` 1.1 "service_role 키를 가진 서버 코드"). 제품 SQL은 코어 테이블에 쓰지 않는다. 전용 코어 함수는 06장 6절에 요청한다.
+
+## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
+
+02장 6절 8건 + 이 표 6건 = 리뷰 "높음" 14건.
+
+| 리뷰 #n | 출처 | 결함 요약 | 차단 설계 | 담당 장/작업 |
+|---|---|---|---|---|
+| `docs/reviews/ERP-Wesite.md` 3장 #1 | `ERP-Wesite/supabase/migrations/001_initial_schema.sql:76-80` | profiles 자기 행 UPDATE/INSERT에 컬럼 제한이 없어 누구나 Master Admin·Active로 상승 | 역할을 profiles에 두지 않는다. 관리자 = `core.org_members.role`(사용자 쓰기 불가, guard 트리거 `migrations/0001_core_identity.sql` org_members_guard_write), 도메인 역할 = `erp.employees.erp_role`(GRANT 없음 + `employees_guard_write` + RPC `erp.set_employee_role`(F1600:651)의 master_admin 검사, 자기 자신 금지). profiles 상태는 코어 컬럼 GRANT + `guard_profile_columns`. 스모크: M `update employees set erp_role` 42501, `set_employee_role(self)` 42501, `change_member_role(self)` 42501, `update profiles set platform_role` 42501 | 4.1절, ADM-06-001, ADM-06-034 |
+| `docs/reviews/ERP-Wesite.md` 3장 #2 | `001_initial_schema.sql:83-89` | profiles 정책 안 profiles 서브쿼리 → 42P17 재귀, 전 테이블 연쇄 실패 | 정책은 DEFINER 헬퍼(`erp.has_access` F1600:287, `erp.has_role` F1600:305)만 부르고 헬퍼는 소유자 권한으로 읽어 RLS를 다시 타지 않는다. 정책 안에서 `org_members`·`employees` 직접 조회 0건(리뷰 체크리스트) | 4.4절, ADM-06-001 |
+| `docs/reviews/ERP-Wesite.md` 3장 #4 | `ERP-Wesite/app/actions/sales.ts:20-43`, `inventory.ts:40-64` | 읽기-계산-쓰기 비원자 처리, 판매 역할이 재고 차감 권한 없음 | `erp.record_sale`(F1600:825)이 `update ... set quantity = quantity - n where quantity >= n`(조건부) + sales INSERT + SALE 이력을 한 트랜잭션에서, DEFINER라 sales_manager도 차감 성공. `record_inventory_move`(F1600:771)는 `FOR UPDATE` 잠금. `quantity >= 0` CHECK가 최후 방어. `request_id` 멱등(advisory lock). 스모크: 초과 판매 ER001, 같은 키 재호출 수량 불변 | 2.1절, ADM-06-001, ADM-06-037 |
+| `docs/reviews/ERP-Wesite.md` 3장 #5 | `ERP-Wesite/app/(auth)/login/page.tsx:49` | 이메일 가입 시 이름 미전송, 프로필 트리거 없음 → 프로필 누락 | 코어 가입 트리거(`_supabase-modular/migrations/0001_core_identity.sql:113-160`)가 프로필·개인 조직을 항상 만든다. 가입 폼은 `options.data = { signup_app: 'erp', full_name }` 필수(zod). 승인제라 프로필은 pending(`0003_core_credits.sql:400-402`), 승인 후 `employees.display_name`은 신청 이름으로 채운다. 프로필 없음은 proxy가 로그아웃 처리 | ADM-06-014 |
+| `docs/reviews/Hospital.md` 3장 #4 | `Hospital/CLAUDE.md` 스키마, `queue-client.tsx:35-37` 등 | RLS 없음, 브라우저가 anon key로 appointments/staff_profiles/lab_results 직접 update | hms 모든 테이블 RLS ON + 사용자 쓰기 GRANT 0 + `guard_privileged_write` 일괄(HMS2 "이중 잠금" 블록). 상태 변경은 `transition_appointment`(HMS2:824)가 역할·담당의 검사, 가용 토글은 `set_my_availability`(본인만), 검사값은 `save_lab_result`(lab_tech만). 민감 테이블은 SELECT도 없음(RPC + `phi_access_log`). 스모크: staff `get_patient_chart` 42501, lab_tech patients 0행, 타 병원 0행 | 4.3절, ADM-06-002, ADM-06-034 |
+| `docs/reviews/School_Management_System.md` 3장 #3 | `School_Management_System/CLAUDE.md:80-87` | admin 정책이 profiles 자기참조(재귀), 정책·트리거 SQL 미커밋 | 정책은 `sms.is_admin/is_staff/has_access`(F1700:156) 헬퍼만 사용. 테이블·정책·트리거·Realtime publication 전부 조각과 모놀리스 마이그레이션으로 커밋되고 PGlite 체커와 RLS 스모크(학생 본인 출석만, 타 학교 0행, 역할 자기 변경 42501)를 CI에서 돈다 | 4.2절, ADM-06-001, ADM-06-034 |
+
+## 8. 모놀리스와 모듈러의 차이
+
+| 항목 | 모듈러 | 모놀리스 | 비고 |
+|---|---|---|---|
+| 대상 | erp, sms | erp, sms, hms(hms는 모놀리스만) | 확정 결정 2 |
+| 스키마 | `erp`, `sms` | `public` | lite 기본. 사용자 최종 확인 대기 |
+| 도메인 SQL | `1600_erp.sql`, `1700_sms.sql`(정본) | `0002_<app>_domain.sql`(조각에서 변환 생성, hms는 직접 작성) | `DB_CONVENTIONS.md` 12장 변환 규칙 |
+| 앱/플랜 등록 | 조각 머리 `on conflict do nothing` | `seed.sql` upsert | |
+| 코어 lite 제거 절(erp) | - | SECTION 4, 6-A, 6-B, 7, 9 제거. 3(Toss), 6-C(레이트 리밋), 8(Storage, 상품 이미지) 유지 | |
+| 코어 lite 제거 절(sms) | - | SECTION 4, 6-A, 6-B, 7, 8, 9 제거. 3, 6-C 유지 | |
+| 코어 lite 제거 절(hms) | - | SECTION 3, 4, 6-A, 6-B, 7, 8, 9 제거. 6-C 유지 | 온라인 결제 없음(계약형) |
+| SECTION 3 수정 | - | `confirm_payment_order`의 credit_pack 분기를 지우고 credit_pack 주문을 22023으로 거부 | lite 지침(SECTION 4 제거 시) |
+| `purge_organization` | 코어 0003에 있음 | SECTION 4와 함께 빠짐 | 06장 6절 코어 요청 |
+| PUBLIC EXECUTE | 조각 끝 `revoke execute on all functions in schema <app> from public`(0007 규칙) | 도메인 파일 끝 `... in schema public from public` | 트리거 함수 포함 |
+| Realtime | `erp.products/inventory_moves/sales`, `sms.attendance` | 같은 테이블(public), hms `appointments`, `staff_profiles` | |
+| 알려진 코어 결함 | `confirm_payment_order`가 금액 불일치 시 주문을 failed로 남기지 못함(raise가 롤백) | 같음 | 고치지 않고 의존하지 않는다(04장 6절) |
+
+## 9. 마이그레이션 파일
+
+| 파일 | 내용 |
+|---|---|
+| `docs/products/_supabase-modular/migrations/1600_erp.sql` | erp 스키마, 앱·플랜 등록, 테이블 8개, 트리거, 헬퍼 3개, RLS, RPC 16개 + 내부 2개, Realtime, PUBLIC 회수 |
+| `docs/products/_supabase-modular/migrations/1700_sms.sql` | sms 스키마, 테이블 5개, 헬퍼 4개, RLS, RPC 12개, Realtime, PUBLIC 회수 |
+| `supabase/monolith/erp/migrations/0001_core_lite.sql`, `0002_erp_domain.sql`, `seed.sql` | lite(절 제거), 변환된 도메인, apps 1행 + 플랜 2행 |
+| `supabase/monolith/sms/migrations/0001_core_lite.sql`, `0002_sms_domain.sql`, `seed.sql` | 같음 |
+| `supabase/monolith/hms/migrations/0001_core_lite.sql`, `0002_hms_domain.sql`, `seed.sql` | lite(절 제거), 의료정보 보호 도메인, apps 1행 + contract 플랜 + 검사 카탈로그 3종 |
+| hms 조각 | 없음(통합 DB 제외) |
+
+검증 결과(2026-10-12, PGlite): 모듈러(0000~0007 + seed + 1600 + 1700) OK, 모놀리스 erp/sms/hms 각 OK. RLS 스모크: 모듈러 92/92, 모놀리스 erp 21/21, sms 19/19, hms 52/52 통과. erp/sms 스키마에서 anon이 EXECUTE 가능한 함수 0개.

@@ -1,0 +1,85 @@
+# supabase/config.toml 예시 (모듈러 통합 프로젝트)
+# 복사해서 supabase/config.toml 로 쓴다. 제품 스키마를 추가하면 [api].schemas 에도 추가해야 PostgREST/supabase-js 에서 보인다.
+# hms(병원)는 의료정보 격리 때문에 이 프로젝트에 넣지 않는다. 별도 프로젝트(모놀리스)로만 운영한다.
+
+project_id = "platform-modular"
+
+[api]
+enabled = true
+port = 54321
+# core 가 먼저, 그 다음 제품 스키마. public 은 호환용으로만 남긴다(여기에 제품 테이블을 만들지 않는다).
+schemas = [
+  "public",
+  "graphql_public",
+  "core",
+  "publishing",
+  "astro",
+  "video",
+  "blog",
+  "commerce",
+  "microweb",
+  "erp",
+  "sms",
+  "poll",
+  "stock",
+  "toon",
+  "notes",
+  "site",
+]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+file_size_limit = "200MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+# 각 제품의 콜백 경로를 모두 등록한다. 와일드카드 대신 명시 등록을 권장한다.
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3001/auth/callback",
+  "http://localhost:3002/auth/callback",
+]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+# 소셜 로그인: 이메일 + Google 은 전 제품 공통. Kakao 는 제품별 선택(기본 off).
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = ""
+skip_nonce_check = false
+
+[auth.external.kakao]
+enabled = false
+client_id = "env(KAKAO_CLIENT_ID)"
+secret = "env(KAKAO_CLIENT_SECRET)"
+redirect_uri = ""
+
+[analytics]
+enabled = false

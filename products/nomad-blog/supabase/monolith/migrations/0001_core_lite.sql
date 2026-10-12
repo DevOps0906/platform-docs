@@ -1,0 +1,2816 @@
+-- =====================================================================
+-- nomad-blog 0001_core_lite.sql
+-- 원본: docs/products/_platform-core/MONOLITH_CORE_LITE.sql (2026-10-12) 를 그대로 복사했다.
+-- 제거한 [선택] 절: 없음.
+--   SECTION 3 Toss       : Pro/Business 구독과 크레딧팩 결제(01_PRD.md 4장)
+--   SECTION 4 크레딧      : AI 원고 생성, 키워드, 컴플라이언스 LLM 판정 과금
+--   SECTION 6-A OAuth    : 인스타그램(Phase 2, sns-uploader) 연결
+--   SECTION 6-B 자격증명  : 네이버/티스토리 세션 쿠키와 계정 정보, 워드프레스 애플리케이션 비밀번호, 제휴 키
+--   SECTION 6-C 레이트리밋: 생성 API, /r/[code], 브랜드커넥트 지원(계정당 5건/시간)
+--   SECTION 7 잡          : blog.generate, blog.publish.*, brandconnect.* 워커
+--   SECTION 8 Storage    : 대표 이미지, 원고 이미지
+--   SECTION 9 affiliate  : 제휴 링크, 클릭, 대가성 문구, 브랜드커넥트(확정 결정 12). 유지 필수
+-- 아래 본문은 한 글자도 바꾸지 않았다(코어 변경은 _platform-core 담당).
+-- =====================================================================
+
+-- =====================================================================
+-- MONOLITH_CORE_LITE.sql
+-- 제품별 단독 Supabase 프로젝트(모놀리스)용 코어. 한 파일로 묶은 축소판.
+-- 원본: docs/products/_supabase-modular/migrations/0000 ~ 0006 (모듈러 core 스키마)
+--
+-- 스키마 선택: public
+--   - ARCHITECTURE.md:10 "차이는 스키마 접두사(core. 대 public.)뿐" 원칙을 그대로 따른다.
+--   - 모놀리스는 PostgREST 노출 스키마 설정 없이 바로 쓸 수 있어야 한다(public은 기본 노출).
+--   - 제품 도메인 테이블도 public에 두므로 정책이 public.is_org_member(...) 하나로 통일된다.
+--   - 함수 이름과 시그니처는 모듈러 core.*와 같다. 앱 코드는 SUPABASE_DB_SCHEMA 환경변수로 전환한다.
+--
+-- 사용법 (제품 에이전트)
+--   1) 이 파일을 <제품>/supabase/monolith/migrations/0001_core_lite.sql 로 복사한다.
+--   2) [선택] 표시가 붙은 절(SECTION)은 제품에 필요 없으면 절 전체를 지운다.
+--      절 머리의 "의존" 표를 보고 지울 때 함께 지울 줄을 확인한다.
+--   3) [필수] 절은 지우지 않는다. 바꾸지도 않는다(코어 변경은 _platform-core 담당).
+--   4) 마지막 "SECTION 10 권한 정리"는 to_regclass / to_regprocedure 로 존재하는 객체에만
+--      권한을 주므로 절을 지워도 그대로 동작한다.
+--
+-- 모듈러(0000~0006)와 다른 점 (DB_CONVENTIONS.md 9장에도 정리)
+--   a) 스키마 public. Supabase가 public에 기본으로 주는 anon/authenticated 권한을 이 파일이 회수한다.
+--   b) 가입 트리거: signup_app 메타데이터가 없고 apps 행이 정확히 1개면 그 앱으로 자동 부트스트랩한다.
+--   c) run_monthly_credit_grants()를 run_subscription_rollover()(SECTION 2) + 크레딧 지급(SECTION 4)으로
+--      나눠, 크레딧 절을 지워도 구독 기간 굴림과 해지 만료가 남는다.
+--   d) RLS 정책을 테이블이 있는 절 안에 둔다(모듈러는 0004에 모아 둠). 절 단위 삭제를 위해서다.
+--
+-- 보안 규칙 (SECURITY_BASELINE.md)
+--   - 쓰기는 service_role 또는 SECURITY DEFINER RPC만. 사용자(authenticated)에게는 SELECT 정책만.
+--   - 사용자에게 EXECUTE를 연 SECURITY DEFINER 함수 안의 호출자 판정은 is_service_caller() 만 쓴다.
+--     is_privileged_session()은 DEFINER 안에서 항상 true(current_user = 함수 소유자)라서 검사가 통째로 건너뛰어진다.
+--   - 역할 비교는 coalesce(role, '') 로 NULL-safe 하게 한다. 비멤버의 역할은 NULL이고
+--     NULL not in (...) 은 NULL이라 분기가 건너뛰어진다.
+--   - EXECUTE 권한이 1차 잠금, 함수 안 검사가 2차 잠금, guard 트리거가 3차 잠금이다.
+--
+-- PostgreSQL 15 / Supabase 표준 객체만 사용. 반복 실행해도 안전하다.
+-- =====================================================================
+
+
+-- =====================================================================
+-- SECTION 0. 확장, 기본 권한, 공용 헬퍼  [필수]
+-- 원본: 0000_core_extensions_and_schema.sql
+-- =====================================================================
+
+create extension if not exists pgcrypto with schema extensions;
+-- pg_cron은 호스팅 대시보드에서 켠다. 로컬 선택 사항.
+-- create extension if not exists pg_cron;
+
+grant usage on schema public to anon, authenticated, service_role;
+
+-- Supabase는 public에 만들어지는 테이블/함수/시퀀스에 anon, authenticated 전체 권한을 기본으로 준다.
+-- 이 코어는 "쓰기는 service_role만" 원칙이므로 기본 권한을 회수하고 절마다 SELECT만 명시적으로 준다.
+-- (모듈러 core 스키마에는 이런 기본 권한이 없어서 이 줄이 필요 없었다.)
+alter default privileges in schema public revoke all on tables from anon, authenticated, public;
+alter default privileges in schema public revoke all on sequences from anon, authenticated, public;
+alter default privileges in schema public revoke execute on functions from anon, authenticated, public;
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public grant all on sequences to service_role;
+alter default privileges in schema public grant execute on functions to service_role;
+
+-- updated_at 갱신 트리거
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+-- 세션 헬퍼
+--   jwt_role()              : PostgREST 요청의 JWT role ('anon' | 'authenticated' | 'service_role' | 'none')
+--   is_privileged_session() : service_role 요청 또는 DB 소유 세션(마이그레이션, pg_cron, SECURITY DEFINER 내부)
+--                             → guard 트리거와 "EXECUTE가 service_role에만 있는" RPC 에서만 쓴다.
+--   is_service_caller()     : 실제 호출자가 service_role 이거나 JWT 없는 DB 관리 세션
+--                             → authenticated 에 EXECUTE 를 연 DEFINER 함수 안에서는 반드시 이것을 쓴다.
+create or replace function public.jwt_role()
+returns text
+language sql
+stable
+set search_path = ''
+as $$
+  select coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role'),
+    'none'
+  );
+$$;
+
+create or replace function public.is_privileged_session()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select public.jwt_role() = 'service_role'
+      or current_user in ('postgres', 'supabase_admin', 'supabase_auth_admin');
+$$;
+
+-- session_user 는 SECURITY DEFINER 안에서도 바뀌지 않는다. PostgREST 요청은 session_user 가
+-- authenticator 이고 JWT role 이 항상 있으므로, JWT 없는 관리 세션만 두 번째 조건으로 통과한다.
+create or replace function public.is_service_caller()
+returns boolean
+language sql
+stable
+set search_path = ''
+as $$
+  select public.jwt_role() = 'service_role'
+      or (public.jwt_role() = 'none' and session_user in ('postgres', 'supabase_admin', 'supabase_auth_admin'));
+$$;
+
+-- 쓰기 보호 트리거: service_role 또는 DB 소유 세션이 아니면 어떤 쓰기도 거부(이중 잠금)
+create or replace function public.guard_privileged_write()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if not public.is_privileged_session() then
+    raise exception 'core: % on %.% is allowed only for service_role', tg_op, tg_table_schema, tg_table_name
+      using errcode = '42501';
+  end if;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+
+-- =====================================================================
+-- SECTION 1. 신원: profiles, organizations, org_members, 가입 트리거  [필수]
+-- 원본: 0001_core_identity.sql
+-- 테넌시는 org 기준, 운영은 1인 1워크스페이스(확정 결정 5). 가입 시 개인 조직을 자동 생성한다.
+-- =====================================================================
+
+create table if not exists public.profiles (
+  id            uuid primary key references auth.users(id) on delete cascade,
+  email         text,
+  display_name  text not null default '',
+  avatar_url    text,
+  locale        text not null default 'ko',
+  platform_role text not null default 'user'
+                constraint profiles_platform_role_check check (platform_role in ('user', 'platform_admin')),
+  status        text not null default 'active'
+                constraint profiles_status_check check (status in ('active', 'pending', 'suspended')),
+  last_seen_at  timestamptz,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+comment on column public.profiles.platform_role is '플랫폼 운영자 여부. service_role만 변경 가능';
+comment on column public.profiles.status is '승인제 앱에서 pending으로 시작. service_role 또는 approve_profile()만 변경 가능';
+
+create table if not exists public.organizations (
+  id          uuid primary key default gen_random_uuid(),
+  name        text not null constraint organizations_name_check check (char_length(name) between 1 and 80),
+  slug        text not null unique constraint organizations_slug_check check (slug ~ '^[a-z0-9][a-z0-9-]{1,62}$'),
+  owner_id    uuid not null references auth.users(id) on delete cascade,
+  is_personal boolean not null default true,
+  settings    jsonb not null default '{}'::jsonb,
+  deleted_at  timestamptz,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists organizations_owner_idx on public.organizations (owner_id);
+
+create table if not exists public.org_members (
+  org_id     uuid not null references public.organizations(id) on delete cascade,
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  role       text not null default 'member'
+             constraint org_members_role_check check (role in ('owner', 'admin', 'member', 'viewer')),
+  status     text not null default 'active'
+             constraint org_members_status_check check (status in ('active', 'invited', 'pending', 'suspended')),
+  invited_by uuid references auth.users(id) on delete set null,
+  joined_at  timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (org_id, user_id)
+);
+create index if not exists org_members_user_active_idx on public.org_members (user_id) where status = 'active';
+create unique index if not exists org_members_single_owner_idx on public.org_members (org_id) where role = 'owner';
+
+drop trigger if exists profiles_set_updated_at on public.profiles;
+create trigger profiles_set_updated_at before update on public.profiles
+  for each row execute function public.set_updated_at();
+drop trigger if exists organizations_set_updated_at on public.organizations;
+create trigger organizations_set_updated_at before update on public.organizations
+  for each row execute function public.set_updated_at();
+drop trigger if exists org_members_set_updated_at on public.org_members;
+create trigger org_members_set_updated_at before update on public.org_members
+  for each row execute function public.set_updated_at();
+
+alter table public.profiles      enable row level security;
+alter table public.organizations enable row level security;
+alter table public.org_members   enable row level security;
+
+-- org_members 직접 쓰기는 service_role만(이중 잠금). 멤버 관리는 SECTION 5의 함수로.
+drop trigger if exists org_members_guard_write on public.org_members;
+create trigger org_members_guard_write before insert or update or delete on public.org_members
+  for each row execute function public.guard_privileged_write();
+
+-- 앱 부트스트랩 스텁. SECTION 2(플랜/엔타이틀먼트), SECTION 4(크레딧)에서 순서대로 교체된다.
+create or replace function public.on_signup_app_bootstrap(p_org_id uuid, p_user_id uuid, p_app_id text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  return;
+end;
+$$;
+
+-- 가입 트리거
+--   1) profiles  2) 개인 조직 + owner 멤버십  3) 앱 부트스트랩
+--   모놀리스 차이: raw_user_meta_data.signup_app 이 없고 apps 행이 정확히 1개면 그 앱으로 부트스트랩한다.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_org_id uuid;
+  v_name   text;
+  v_app    text;
+begin
+  v_name := coalesce(
+    nullif(new.raw_user_meta_data ->> 'full_name', ''),
+    nullif(new.raw_user_meta_data ->> 'name', ''),
+    nullif(split_part(coalesce(new.email, ''), '@', 1), ''),
+    'user'
+  );
+  v_app := nullif(new.raw_user_meta_data ->> 'signup_app', '');
+
+  insert into public.profiles (id, email, display_name, avatar_url)
+  values (new.id, new.email, left(v_name, 80), new.raw_user_meta_data ->> 'avatar_url')
+  on conflict (id) do nothing;
+
+  insert into public.organizations (name, slug, owner_id, is_personal)
+  values (left(v_name, 80), 'u' || replace(new.id::text, '-', ''), new.id, true)
+  on conflict (slug) do nothing
+  returning id into v_org_id;
+
+  if v_org_id is null then
+    select id into v_org_id from public.organizations where slug = 'u' || replace(new.id::text, '-', '');
+  end if;
+
+  insert into public.org_members (org_id, user_id, role, status, joined_at)
+  values (v_org_id, new.id, 'owner', 'active', now())
+  on conflict (org_id, user_id) do nothing;
+
+  if v_app is null and to_regclass('public.apps') is not null then
+    -- apps 행이 정확히 1개일 때만 그 앱으로. 2개 이상이면 signup_app 을 요구한다(모듈러와 같은 동작).
+    select min(a.id) into v_app from public.apps a where a.status <> 'disabled'
+    having count(*) = 1;
+  end if;
+
+  if v_app is not null then
+    perform public.on_signup_app_bootstrap(v_org_id, new.id, v_app);
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- 현재 사용자의 개인 조직 id (SECURITY INVOKER)
+create or replace function public.personal_org_id()
+returns uuid
+language sql
+stable
+set search_path = ''
+as $$
+  select o.id
+  from public.organizations o
+  where o.owner_id = auth.uid() and o.is_personal and o.deleted_at is null
+  order by o.created_at
+  limit 1;
+$$;
+
+
+-- =====================================================================
+-- SECTION 5-A. RLS 헬퍼, 권한 컬럼 보호, audit_log, 멤버 관리  [필수]
+-- 원본: 0004_core_security.sql 1~4절
+-- 정책이 헬퍼를 쓰므로 테이블 절(2~9)보다 먼저 둔다.
+-- 헬퍼는 모두 SECURITY DEFINER + set search_path='' + STABLE. 정책 안에서 org_members 를
+-- 다시 조회할 때 생기는 재귀(42P17)를 끊는다.
+-- =====================================================================
+
+create or replace function public.current_org_ids()
+returns setof uuid
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.org_id
+  from public.org_members m
+  where m.user_id = auth.uid() and m.status = 'active';
+$$;
+
+create or replace function public.is_org_member(org uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.org_members m
+    where m.org_id = org and m.user_id = auth.uid() and m.status = 'active'
+  );
+$$;
+
+create or replace function public.has_org_role(org uuid, roles text[])
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.org_members m
+    where m.org_id = org and m.user_id = auth.uid() and m.status = 'active' and m.role = any (roles)
+  );
+$$;
+
+create or replace function public.current_org_role(org uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select m.role from public.org_members m
+  where m.org_id = org and m.user_id = auth.uid() and m.status = 'active';
+$$;
+
+create or replace function public.is_platform_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.platform_role = 'platform_admin' and p.status = 'active'
+  );
+$$;
+
+-- 권한 컬럼 보호 트리거: 컬럼 단위 GRANT가 1차, 이 트리거가 2차
+create or replace function public.guard_profile_columns()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if public.is_privileged_session() then
+    return new;
+  end if;
+  if new.platform_role is distinct from old.platform_role
+     or new.status is distinct from old.status
+     or new.email is distinct from old.email
+     or new.id is distinct from old.id then
+    raise exception 'profiles: privileged columns can only be changed by service_role' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists profiles_guard_columns on public.profiles;
+create trigger profiles_guard_columns before update on public.profiles
+  for each row execute function public.guard_profile_columns();
+
+create or replace function public.guard_organization_columns()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if public.is_privileged_session() then
+    return new;
+  end if;
+  if tg_op = 'UPDATE' and (
+       new.owner_id is distinct from old.owner_id
+    or new.is_personal is distinct from old.is_personal
+    or new.deleted_at is distinct from old.deleted_at
+    or new.slug is distinct from old.slug
+    or new.id is distinct from old.id) then
+    raise exception 'organizations: privileged columns can only be changed by service_role' using errcode = '42501';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists organizations_guard_columns on public.organizations;
+create trigger organizations_guard_columns before update on public.organizations
+  for each row execute function public.guard_organization_columns();
+
+-- audit_log (append-only)
+create table if not exists public.audit_log (
+  id          bigint generated always as identity primary key,
+  org_id      uuid,
+  actor_id    uuid,
+  actor_role  text not null default 'user' constraint audit_log_actor_role_check check (actor_role in ('user', 'service', 'system')),
+  action      text not null,
+  target_type text,
+  target_id   text,
+  before      jsonb,
+  after       jsonb,
+  metadata    jsonb not null default '{}'::jsonb,
+  ip          inet,
+  user_agent  text,
+  request_id  text,
+  created_at  timestamptz not null default now()
+);
+create index if not exists audit_log_org_created_idx on public.audit_log (org_id, created_at desc);
+create index if not exists audit_log_actor_idx on public.audit_log (actor_id, created_at desc);
+create index if not exists audit_log_target_idx on public.audit_log (target_type, target_id);
+
+create or replace function public.audit_log_immutable()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' and current_setting('core.allow_purge', true) = 'on' and public.is_privileged_session() then
+    return old;
+  end if;
+  raise exception 'audit_log is append-only (%)', tg_op using errcode = 'AU000';
+end;
+$$;
+drop trigger if exists audit_log_immutable on public.audit_log;
+create trigger audit_log_immutable before update or delete on public.audit_log
+  for each row execute function public.audit_log_immutable();
+drop trigger if exists audit_log_guard_write on public.audit_log;
+create trigger audit_log_guard_write before insert on public.audit_log
+  for each row execute function public.guard_privileged_write();
+alter table public.audit_log enable row level security;
+
+-- 사용자 세션에서 감사 기록을 남기는 유일한 경로. actor 는 auth.uid() 로 강제.
+create or replace function public.write_audit(
+  p_org_id      uuid,
+  p_action      text,
+  p_target_type text  default null,
+  p_target_id   text  default null,
+  p_before      jsonb default null,
+  p_after       jsonb default null,
+  p_metadata    jsonb default '{}'::jsonb
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_id bigint;
+begin
+  if not public.is_service_caller() then
+    if auth.uid() is null or (p_org_id is not null and not public.is_org_member(p_org_id)) then
+      raise exception 'write_audit: not a member of the organization' using errcode = '42501';
+    end if;
+  end if;
+  insert into public.audit_log (org_id, actor_id, actor_role, action, target_type, target_id, before, after, metadata)
+  values (p_org_id, auth.uid(),
+          case when public.jwt_role() = 'service_role' then 'service' when auth.uid() is null then 'system' else 'user' end,
+          p_action, p_target_type, p_target_id, p_before, p_after, coalesce(p_metadata, '{}'::jsonb))
+  returning id into v_id;
+  return v_id;
+end;
+$$;
+
+-- 멤버 관리 (SECURITY DEFINER, authenticated 호출 가능, 안에서 역할 검사: is_service_caller + coalesce)
+create or replace function public.invite_member(p_org_id uuid, p_user_id uuid, p_role text default 'member')
+returns public.org_members
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_caller_role text; v_row public.org_members;
+begin
+  v_caller_role := public.current_org_role(p_org_id);
+  if not public.is_service_caller() then
+    if coalesce(v_caller_role, '') not in ('owner', 'admin') then
+      raise exception 'invite_member: owner/admin only' using errcode = '42501';
+    end if;
+    if p_user_id = auth.uid() then
+      raise exception 'invite_member: cannot invite yourself' using errcode = '22023';
+    end if;
+  end if;
+  if p_role not in ('admin', 'member', 'viewer') then
+    raise exception 'invite_member: role must be admin/member/viewer' using errcode = '22023';
+  end if;
+  if v_caller_role = 'admin' and p_role = 'admin' then
+    raise exception 'invite_member: admin cannot grant admin' using errcode = '42501';
+  end if;
+
+  insert into public.org_members (org_id, user_id, role, status, invited_by)
+  values (p_org_id, p_user_id, p_role, 'invited', auth.uid())
+  on conflict (org_id, user_id) do update
+    set role = excluded.role, status = case when public.org_members.status = 'active' then 'active' else 'invited' end,
+        invited_by = excluded.invited_by
+  returning * into v_row;
+
+  perform public.write_audit(p_org_id, 'org_member.invite', 'user', p_user_id::text, null, jsonb_build_object('role', p_role));
+  return v_row;
+end;
+$$;
+
+create or replace function public.accept_invite(p_org_id uuid)
+returns public.org_members
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.org_members;
+begin
+  update public.org_members
+  set status = 'active', joined_at = now()
+  where org_id = p_org_id and user_id = auth.uid() and status = 'invited'
+  returning * into v_row;
+  if not found then
+    raise exception 'accept_invite: no pending invitation' using errcode = 'P0002';
+  end if;
+  perform public.write_audit(p_org_id, 'org_member.accept', 'user', auth.uid()::text);
+  return v_row;
+end;
+$$;
+
+create or replace function public.approve_member(p_org_id uuid, p_user_id uuid)
+returns public.org_members
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.org_members;
+begin
+  if not public.is_service_caller() and not public.has_org_role(p_org_id, array['owner', 'admin']) then
+    raise exception 'approve_member: owner/admin only' using errcode = '42501';
+  end if;
+  update public.org_members set status = 'active', joined_at = coalesce(joined_at, now())
+  where org_id = p_org_id and user_id = p_user_id and status = 'pending'
+  returning * into v_row;
+  if not found then
+    raise exception 'approve_member: no pending member' using errcode = 'P0002';
+  end if;
+  perform public.write_audit(p_org_id, 'org_member.approve', 'user', p_user_id::text);
+  return v_row;
+end;
+$$;
+
+create or replace function public.change_member_role(p_org_id uuid, p_user_id uuid, p_role text)
+returns public.org_members
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_caller_role text; v_target public.org_members; v_row public.org_members;
+begin
+  v_caller_role := public.current_org_role(p_org_id);
+  if not public.is_service_caller() then
+    if coalesce(v_caller_role, '') not in ('owner', 'admin') then
+      raise exception 'change_member_role: owner/admin only' using errcode = '42501';
+    end if;
+    if p_user_id = auth.uid() then
+      raise exception 'change_member_role: cannot change your own role' using errcode = '42501';
+    end if;
+  end if;
+  if p_role not in ('admin', 'member', 'viewer') then
+    raise exception 'change_member_role: role must be admin/member/viewer' using errcode = '22023';
+  end if;
+  select * into v_target from public.org_members where org_id = p_org_id and user_id = p_user_id for update;
+  if not found then
+    raise exception 'change_member_role: member not found' using errcode = 'P0002';
+  end if;
+  if v_target.role = 'owner' then
+    raise exception 'change_member_role: use transfer_ownership for the owner' using errcode = '42501';
+  end if;
+  if v_caller_role = 'admin' and (p_role = 'admin' or v_target.role = 'admin') then
+    raise exception 'change_member_role: admin cannot change admin roles' using errcode = '42501';
+  end if;
+
+  update public.org_members set role = p_role where org_id = p_org_id and user_id = p_user_id returning * into v_row;
+  perform public.write_audit(p_org_id, 'org_member.role', 'user', p_user_id::text,
+                             jsonb_build_object('role', v_target.role), jsonb_build_object('role', p_role));
+  return v_row;
+end;
+$$;
+
+create or replace function public.remove_member(p_org_id uuid, p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_caller_role text; v_target public.org_members;
+begin
+  v_caller_role := public.current_org_role(p_org_id);
+  select * into v_target from public.org_members where org_id = p_org_id and user_id = p_user_id for update;
+  if not found then
+    return;
+  end if;
+  if v_target.role = 'owner' then
+    raise exception 'remove_member: owner cannot be removed' using errcode = '42501';
+  end if;
+  if not public.is_service_caller() then
+    if p_user_id <> auth.uid() and coalesce(v_caller_role, '') not in ('owner', 'admin') then
+      raise exception 'remove_member: owner/admin only' using errcode = '42501';
+    end if;
+    if v_caller_role = 'admin' and v_target.role = 'admin' and p_user_id <> auth.uid() then
+      raise exception 'remove_member: admin cannot remove admin' using errcode = '42501';
+    end if;
+  end if;
+  delete from public.org_members where org_id = p_org_id and user_id = p_user_id;
+  perform public.write_audit(p_org_id, 'org_member.remove', 'user', p_user_id::text, jsonb_build_object('role', v_target.role), null);
+end;
+$$;
+
+create or replace function public.transfer_ownership(p_org_id uuid, p_new_owner uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_service_caller() and coalesce(public.current_org_role(p_org_id), '') <> 'owner' then
+    raise exception 'transfer_ownership: owner only' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public.org_members where org_id = p_org_id and user_id = p_new_owner and status = 'active') then
+    raise exception 'transfer_ownership: new owner must be an active member' using errcode = 'P0002';
+  end if;
+  update public.org_members set role = 'admin' where org_id = p_org_id and role = 'owner';
+  update public.org_members set role = 'owner' where org_id = p_org_id and user_id = p_new_owner;
+  update public.organizations set owner_id = p_new_owner where id = p_org_id;
+  perform public.write_audit(p_org_id, 'organization.transfer_ownership', 'user', p_new_owner::text);
+end;
+$$;
+
+create or replace function public.approve_profile(p_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_service_caller() and not public.is_platform_admin() then
+    raise exception 'approve_profile: platform_admin only' using errcode = '42501';
+  end if;
+  update public.profiles set status = 'active' where id = p_user_id and status = 'pending';
+  perform public.write_audit(null, 'profile.approve', 'user', p_user_id::text);
+end;
+$$;
+
+-- SECTION 1 테이블의 RLS 정책 (읽기 + 비권한 컬럼 UPDATE)
+drop policy if exists profiles_select on public.profiles;
+create policy profiles_select on public.profiles for select to authenticated
+  using (
+    id = auth.uid()
+    or public.is_platform_admin()
+    or id in (select m.user_id from public.org_members m where m.org_id in (select public.current_org_ids()))
+  );
+drop policy if exists profiles_update_self on public.profiles;
+create policy profiles_update_self on public.profiles for update to authenticated
+  using (id = auth.uid()) with check (id = auth.uid());
+
+drop policy if exists organizations_select on public.organizations;
+create policy organizations_select on public.organizations for select to authenticated
+  using (deleted_at is null and (public.is_org_member(id) or public.is_platform_admin()));
+drop policy if exists organizations_update_admin on public.organizations;
+create policy organizations_update_admin on public.organizations for update to authenticated
+  using (deleted_at is null and public.has_org_role(id, array['owner', 'admin']))
+  with check (public.has_org_role(id, array['owner', 'admin']));
+
+drop policy if exists org_members_select on public.org_members;
+create policy org_members_select on public.org_members for select to authenticated
+  using (public.is_org_member(org_id) or user_id = auth.uid() or public.is_platform_admin());
+
+drop policy if exists audit_log_select on public.audit_log;
+create policy audit_log_select on public.audit_log for select to authenticated
+  using ((org_id is not null and public.has_org_role(org_id, array['owner', 'admin'])) or public.is_platform_admin());
+
+
+-- =====================================================================
+-- SECTION 2. 앱 레지스트리, 플랜, 크레딧팩, 구독, 엔타이틀먼트  [필수]
+-- 원본: 0002_core_billing.sql (결제 테이블은 SECTION 3), 0003의 부트스트랩 1단계
+-- 유료 플랜이 없는 제품도 apps 1행 + 기본 플랜 1행은 둔다. app_entitlements 가 기능 게이팅의 단일 출처다.
+-- =====================================================================
+
+create table if not exists public.apps (
+  id            text primary key constraint apps_id_check check (id ~ '^[a-z][a-z0-9_]{1,30}$'),
+  name          text not null,
+  schema_name   text not null unique,
+  signup_policy text not null default 'open'
+                constraint apps_signup_policy_check check (signup_policy in ('open', 'approval', 'invite')),
+  status        text not null default 'active'
+                constraint apps_status_check check (status in ('active', 'beta', 'disabled')),
+  created_at    timestamptz not null default now()
+);
+
+create table if not exists public.plans (
+  id               uuid primary key default gen_random_uuid(),
+  app_id           text not null references public.apps(id) on delete cascade,
+  code             text not null constraint plans_code_check check (code ~ '^[a-z][a-z0-9_]{1,30}$'),
+  name             text not null,
+  description      text,
+  price_krw        integer not null default 0 constraint plans_price_check check (price_krw >= 0),
+  billing_interval text not null default 'none'
+                   constraint plans_interval_check check (billing_interval in ('none', 'month', 'year')),
+  monthly_credits  integer not null default 0 constraint plans_monthly_credits_check check (monthly_credits >= 0),
+  signup_credits   integer not null default 0 constraint plans_signup_credits_check check (signup_credits >= 0),
+  carry_over       boolean not null default false,
+  features         jsonb not null default '{}'::jsonb,
+  is_default       boolean not null default false,
+  is_active        boolean not null default true,
+  sort_order       integer not null default 0,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  unique (app_id, code)
+);
+create unique index if not exists plans_one_default_per_app_idx on public.plans (app_id) where is_default;
+comment on column public.plans.carry_over is 'false면 월 지급 시 남은 플랜 크레딧을 만료(expire)시킨다';
+comment on column public.plans.features is '서버에서만 읽는 기능 플래그. 예: {"tracks":["A"],"max_channels":1}';
+
+create table if not exists public.credit_packs (
+  id         uuid primary key default gen_random_uuid(),
+  app_id     text not null references public.apps(id) on delete cascade,
+  code       text not null constraint credit_packs_code_check check (code ~ '^[a-z][a-z0-9_]{1,30}$'),
+  name       text not null,
+  credits    integer not null constraint credit_packs_credits_check check (credits > 0),
+  price_krw  integer not null constraint credit_packs_price_check check (price_krw > 0),
+  is_active  boolean not null default true,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  unique (app_id, code)
+);
+
+-- billing_keys 는 SECTION 3 에 있지만 subscriptions 가 참조하므로 FK 없이 uuid 로만 둔다(모듈러와의 차이).
+create table if not exists public.subscriptions (
+  id                     uuid primary key default gen_random_uuid(),
+  org_id                 uuid not null references public.organizations(id) on delete cascade,
+  app_id                 text not null references public.apps(id) on delete cascade,
+  plan_id                uuid not null references public.plans(id),
+  status                 text not null default 'active'
+                         constraint subscriptions_status_check check (status in ('trialing', 'active', 'past_due', 'canceled', 'expired')),
+  billing_key_id         uuid,
+  current_period_start   timestamptz not null default now(),
+  current_period_end     timestamptz,
+  next_charge_at         timestamptz,
+  cancel_at_period_end   boolean not null default false,
+  canceled_at            timestamptz,
+  failed_charge_count    integer not null default 0,
+  last_credit_grant_key  text,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now(),
+  unique (org_id, app_id)
+);
+create index if not exists subscriptions_charge_due_idx on public.subscriptions (next_charge_at)
+  where status in ('active', 'past_due') and next_charge_at is not null;
+
+create table if not exists public.app_entitlements (
+  org_id     uuid not null references public.organizations(id) on delete cascade,
+  app_id     text not null references public.apps(id) on delete cascade,
+  plan_id    uuid not null references public.plans(id),
+  status     text not null default 'active'
+             constraint app_entitlements_status_check check (status in ('active', 'suspended', 'expired')),
+  source     text not null default 'signup'
+             constraint app_entitlements_source_check check (source in ('signup', 'subscription', 'manual', 'trial')),
+  expires_at timestamptz,
+  granted_by uuid,
+  note       text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (org_id, app_id)
+);
+
+drop trigger if exists plans_set_updated_at on public.plans;
+create trigger plans_set_updated_at before update on public.plans for each row execute function public.set_updated_at();
+drop trigger if exists subscriptions_set_updated_at on public.subscriptions;
+create trigger subscriptions_set_updated_at before update on public.subscriptions for each row execute function public.set_updated_at();
+drop trigger if exists app_entitlements_set_updated_at on public.app_entitlements;
+create trigger app_entitlements_set_updated_at before update on public.app_entitlements for each row execute function public.set_updated_at();
+
+alter table public.apps             enable row level security;
+alter table public.plans            enable row level security;
+alter table public.credit_packs     enable row level security;
+alter table public.subscriptions    enable row level security;
+alter table public.app_entitlements enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['apps', 'plans', 'credit_packs', 'subscriptions', 'app_entitlements']
+  loop
+    execute format('drop trigger if exists %I_guard_write on public.%I', t, t);
+    execute format('create trigger %I_guard_write before insert or update or delete on public.%I for each row execute function public.guard_privileged_write()', t, t);
+  end loop;
+end $$;
+
+-- 엔타이틀먼트 헬퍼
+create or replace function public.has_entitlement(org uuid, app text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.app_entitlements e
+    where e.org_id = org and e.app_id = app and e.status = 'active'
+      and (e.expires_at is null or e.expires_at > now())
+  );
+$$;
+
+create or replace function public.entitled_plan_code(org uuid, app text)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p.code
+  from public.app_entitlements e
+  join public.plans p on p.id = e.plan_id
+  where e.org_id = org and e.app_id = app and e.status = 'active'
+    and (e.expires_at is null or e.expires_at > now());
+$$;
+
+-- 세션 컨텍스트: 요청당 1회. 반환 {user_id, email, display_name, platform_role, status, org, app_id, plan_code, entitled, credit_balance}
+-- 프로필이 없으면 null → 호출 측은 로그아웃 처리(기본 admin 금지). credit_balance 는 wallets(SECTION 4)가 없으면 0.
+create or replace function public.session_context(p_app text default null, p_org uuid default null)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid     uuid := auth.uid();
+  v_profile public.profiles;
+  v_org     uuid;
+  v_org_row public.organizations;
+  v_role    text;
+  v_plan    text;
+  v_balance integer;
+begin
+  if v_uid is null then
+    return null;
+  end if;
+  select * into v_profile from public.profiles p where p.id = v_uid;
+  if not found then
+    return null;
+  end if;
+
+  v_org := coalesce(p_org, (
+    select o.id from public.organizations o
+    where o.owner_id = v_uid and o.is_personal and o.deleted_at is null
+    order by o.created_at limit 1));
+
+  if v_org is not null then
+    select m.role into v_role from public.org_members m
+    where m.org_id = v_org and m.user_id = v_uid and m.status = 'active';
+    if v_role is null then
+      v_org := null;
+    else
+      select * into v_org_row from public.organizations o where o.id = v_org and o.deleted_at is null;
+      if p_app is not null then
+        v_plan := public.entitled_plan_code(v_org, p_app);
+      end if;
+      if to_regclass('public.wallets') is not null then
+        execute 'select w.plan_balance + w.pack_balance from public.wallets w where w.org_id = $1' into v_balance using v_org;
+      end if;
+    end if;
+  end if;
+
+  return jsonb_build_object(
+    'user_id',        v_uid,
+    'email',          v_profile.email,
+    'display_name',   v_profile.display_name,
+    'platform_role',  v_profile.platform_role,
+    'status',         v_profile.status,
+    'org',            case when v_org is null then null else jsonb_build_object(
+                        'id', v_org, 'name', v_org_row.name, 'slug', v_org_row.slug, 'role', v_role) end,
+    'app_id',         p_app,
+    'plan_code',      v_plan,
+    'entitled',       v_plan is not null,
+    'credit_balance', coalesce(v_balance, 0)
+  );
+end;
+$$;
+
+-- 구독 상태 머신 (service_role 전용)
+--   trialing → active | canceled | expired / active → past_due | canceled | expired
+--   past_due → active | canceled | expired / canceled → active | expired / expired → active
+create or replace function public.apply_subscription_transition(
+  p_subscription_id uuid,
+  p_to              text,
+  p_reason          text default null
+)
+returns public.subscriptions
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sub          public.subscriptions;
+  v_allowed      boolean;
+  v_default_plan uuid;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'apply_subscription_transition: service_role only' using errcode = '42501';
+  end if;
+
+  select * into v_sub from public.subscriptions where id = p_subscription_id for update;
+  if not found then
+    raise exception 'subscription not found: %', p_subscription_id using errcode = 'P0002';
+  end if;
+
+  v_allowed := case v_sub.status
+    when 'trialing' then p_to in ('active', 'canceled', 'expired')
+    when 'active'   then p_to in ('past_due', 'canceled', 'expired')
+    when 'past_due' then p_to in ('active', 'canceled', 'expired')
+    when 'canceled' then p_to in ('active', 'expired')
+    when 'expired'  then p_to in ('active')
+    else false
+  end;
+  if not v_allowed then
+    raise exception 'invalid subscription transition % -> %', v_sub.status, p_to using errcode = 'SB001';
+  end if;
+
+  update public.subscriptions
+  set status               = p_to,
+      canceled_at          = case when p_to = 'canceled' then now() else canceled_at end,
+      cancel_at_period_end = case when p_to = 'canceled' then true
+                                  when p_to = 'active' then false
+                                  else cancel_at_period_end end,
+      failed_charge_count  = case when p_to = 'active' then 0 else failed_charge_count end,
+      next_charge_at       = case when p_to in ('canceled', 'expired') then null else next_charge_at end
+  where id = p_subscription_id
+  returning * into v_sub;
+
+  if p_to in ('trialing', 'active', 'past_due') then
+    insert into public.app_entitlements (org_id, app_id, plan_id, status, source, expires_at)
+    values (v_sub.org_id, v_sub.app_id, v_sub.plan_id, 'active', 'subscription', null)
+    on conflict (org_id, app_id) do update
+      set plan_id = excluded.plan_id, status = 'active', source = 'subscription', expires_at = null;
+  elsif p_to = 'canceled' then
+    update public.app_entitlements
+    set expires_at = v_sub.current_period_end
+    where org_id = v_sub.org_id and app_id = v_sub.app_id;
+  elsif p_to = 'expired' then
+    select id into v_default_plan from public.plans where app_id = v_sub.app_id and is_default and is_active limit 1;
+    if v_default_plan is not null then
+      insert into public.app_entitlements (org_id, app_id, plan_id, status, source, expires_at)
+      values (v_sub.org_id, v_sub.app_id, v_default_plan, 'active', 'signup', null)
+      on conflict (org_id, app_id) do update
+        set plan_id = excluded.plan_id, status = 'active', source = 'signup', expires_at = null;
+    else
+      update public.app_entitlements set status = 'expired'
+      where org_id = v_sub.org_id and app_id = v_sub.app_id;
+    end if;
+  end if;
+
+  insert into public.audit_log (org_id, actor_id, actor_role, action, target_type, target_id, after)
+  values (v_sub.org_id, null, 'service', 'subscription.' || p_to, 'subscription', v_sub.id::text,
+          jsonb_build_object('reason', p_reason, 'plan_id', v_sub.plan_id));
+
+  return v_sub;
+end;
+$$;
+
+-- 부트스트랩 1단계(크레딧 없음): 기본 플랜으로 구독 + 엔타이틀먼트. SECTION 4 가 크레딧 지급 버전으로 교체한다.
+create or replace function public.on_signup_app_bootstrap(p_org_id uuid, p_user_id uuid, p_app_id text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_app  public.apps;
+  v_plan public.plans;
+  v_period_end timestamptz;
+begin
+  select * into v_app from public.apps where id = p_app_id and status <> 'disabled';
+  if not found then
+    return;
+  end if;
+  if v_app.signup_policy = 'approval' then
+    update public.profiles set status = 'pending' where id = p_user_id and status = 'active';
+  end if;
+  select * into v_plan from public.plans where app_id = p_app_id and is_default and is_active limit 1;
+  if not found then
+    return;
+  end if;
+  v_period_end := case v_plan.billing_interval
+    when 'month' then now() + interval '1 month'
+    when 'year'  then now() + interval '1 year'
+    else null end;
+  insert into public.subscriptions (org_id, app_id, plan_id, status, current_period_start, current_period_end)
+  values (p_org_id, p_app_id, v_plan.id, 'active', now(), v_period_end)
+  on conflict (org_id, app_id) do nothing;
+  insert into public.app_entitlements (org_id, app_id, plan_id, status, source)
+  values (p_org_id, p_app_id, v_plan.id, 'active', 'signup')
+  on conflict (org_id, app_id) do nothing;
+end;
+$$;
+
+-- 기존 사용자가 앱을 처음 열 때(SSO) 호출. owner/admin 만.
+create or replace function public.bootstrap_app_for_org(p_app_id text, p_org_id uuid default null)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_org uuid;
+begin
+  v_org := coalesce(p_org_id, public.personal_org_id());
+  if v_org is null then
+    raise exception 'bootstrap_app_for_org: no organization' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() then
+    if not public.has_org_role(v_org, array['owner', 'admin']) then
+      raise exception 'bootstrap_app_for_org: owner/admin only' using errcode = '42501';
+    end if;
+  end if;
+  perform public.on_signup_app_bootstrap(v_org, auth.uid(), p_app_id);
+end;
+$$;
+
+-- 구독 기간 굴림 + 해지 예약 만료 (service_role / pg_cron). 모듈러 run_monthly_credit_grants 의 1), 3) 단계.
+create or replace function public.run_subscription_rollover()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare r record; v_count integer := 0;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'run_subscription_rollover: service_role only' using errcode = '42501';
+  end if;
+
+  update public.subscriptions s
+  set current_period_start = s.current_period_end,
+      current_period_end   = s.current_period_end + case p.billing_interval when 'year' then interval '1 year' else interval '1 month' end
+  from public.plans p
+  where p.id = s.plan_id
+    and p.price_krw = 0
+    and p.billing_interval in ('month', 'year')
+    and s.status in ('active', 'trialing')
+    and s.current_period_end is not null
+    and s.current_period_end <= now();
+
+  for r in
+    select s.id from public.subscriptions s
+    where s.status = 'canceled' and s.current_period_end is not null and s.current_period_end <= now()
+  loop
+    perform public.apply_subscription_transition(r.id, 'expired', 'period_end');
+    v_count := v_count + 1;
+  end loop;
+  return v_count;
+end;
+$$;
+
+-- RLS 정책: 가격표는 공개 읽기, 조직 데이터는 멤버 읽기, 쓰기 정책 없음
+drop policy if exists apps_select on public.apps;
+create policy apps_select on public.apps for select to anon, authenticated using (status <> 'disabled');
+drop policy if exists plans_select on public.plans;
+create policy plans_select on public.plans for select to anon, authenticated using (is_active);
+drop policy if exists credit_packs_select on public.credit_packs;
+create policy credit_packs_select on public.credit_packs for select to anon, authenticated using (is_active);
+drop policy if exists subscriptions_select on public.subscriptions;
+create policy subscriptions_select on public.subscriptions for select to authenticated using (public.is_org_member(org_id));
+drop policy if exists app_entitlements_select on public.app_entitlements;
+create policy app_entitlements_select on public.app_entitlements for select to authenticated using (public.is_org_member(org_id));
+
+
+-- =====================================================================
+-- SECTION 3. Toss Payments: 빌링키, 주문, 결제, 웹훅 이벤트, 결제 이행  [선택]
+-- 원본: 0002_core_billing.sql, 0003 confirm_payment_order
+-- 의존: SECTION 2(plans, subscriptions, app_entitlements). confirm_payment_order 의 credit_pack 분기는 SECTION 4 가 필요하다.
+--       SECTION 4 를 지우면 confirm_payment_order 의 "if v_order.kind = 'credit_pack'" 분기도 지운다.
+-- 지울 때: 이 절 전체. SECTION 2 의 subscriptions.billing_key_id 컬럼은 남겨도 무해하다.
+-- =====================================================================
+
+-- 빌링키 자체는 앱 계층 AES-256-GCM 암호문으로만. customer_key 는 'org_' || org_id 로 결정적 생성(Date.now() 금지).
+create table if not exists public.billing_keys (
+  id                     uuid primary key default gen_random_uuid(),
+  org_id                 uuid not null references public.organizations(id) on delete cascade,
+  customer_key           text not null,
+  billing_key_ciphertext text not null,
+  key_version            integer not null default 1,
+  card_company           text,
+  card_number_masked     text,
+  status                 text not null default 'active'
+                         constraint billing_keys_status_check check (status in ('active', 'revoked')),
+  created_by             uuid,
+  created_at             timestamptz not null default now(),
+  revoked_at             timestamptz
+);
+create unique index if not exists billing_keys_one_active_per_org_idx on public.billing_keys (org_id) where status = 'active';
+
+-- 결제창을 열기 전에 서버가 먼저 저장하는 주문. 금액의 정본. orderId 파싱으로 org/plan 을 꺼내지 않는다.
+create table if not exists public.payment_orders (
+  id             uuid primary key default gen_random_uuid(),
+  order_id       text not null unique constraint payment_orders_order_id_check check (order_id ~ '^[A-Za-z0-9_-]{6,64}$'),
+  org_id         uuid not null references public.organizations(id) on delete cascade,
+  app_id         text not null references public.apps(id),
+  kind           text not null constraint payment_orders_kind_check check (kind in ('subscription', 'credit_pack', 'billing_key_charge')),
+  plan_id        uuid references public.plans(id),
+  credit_pack_id uuid references public.credit_packs(id),
+  credits        integer constraint payment_orders_credits_check check (credits is null or credits > 0),
+  amount_krw     integer not null constraint payment_orders_amount_check check (amount_krw > 0),
+  currency       text not null default 'KRW',
+  status         text not null default 'created'
+                 constraint payment_orders_status_check check (status in ('created', 'confirmed', 'failed', 'canceled', 'refunded', 'expired')),
+  customer_key   text,
+  created_by     uuid,
+  expires_at     timestamptz not null default (now() + interval '1 hour'),
+  confirmed_at   timestamptz,
+  metadata       jsonb not null default '{}'::jsonb,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  constraint payment_orders_kind_ref_check check (
+    (kind = 'credit_pack' and credit_pack_id is not null and credits is not null)
+    or (kind in ('subscription', 'billing_key_charge') and plan_id is not null)
+  )
+);
+create index if not exists payment_orders_org_idx on public.payment_orders (org_id, created_at desc);
+
+-- Toss 승인 결과. payment_key 유일 → 같은 승인을 두 번 지급하지 않는다.
+create table if not exists public.payments (
+  id                  uuid primary key default gen_random_uuid(),
+  order_id            text not null references public.payment_orders(order_id),
+  org_id              uuid not null references public.organizations(id) on delete cascade,
+  payment_key         text not null unique,
+  method              text,
+  amount_krw          integer not null constraint payments_amount_check check (amount_krw > 0),
+  canceled_amount_krw integer not null default 0,
+  status              text not null default 'done'
+                      constraint payments_status_check check (status in ('done', 'canceled', 'partial_canceled', 'failed')),
+  approved_at         timestamptz,
+  receipt_url         text,
+  raw                 jsonb not null default '{}'::jsonb,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+create index if not exists payments_org_idx on public.payments (org_id, created_at desc);
+
+-- 인바운드 웹훅 멱등 처리. (provider, event_id) 유일. 서명 검증 실패 이벤트는 처리하지 않는다.
+create table if not exists public.webhook_events (
+  id              uuid primary key default gen_random_uuid(),
+  provider        text not null,
+  event_id        text not null,
+  event_type      text,
+  signature_valid boolean not null default false,
+  payload         jsonb not null,
+  status          text not null default 'received'
+                  constraint webhook_events_status_check check (status in ('received', 'processed', 'ignored', 'failed')),
+  attempts        integer not null default 0,
+  error           text,
+  received_at     timestamptz not null default now(),
+  processed_at    timestamptz,
+  unique (provider, event_id)
+);
+
+drop trigger if exists payment_orders_set_updated_at on public.payment_orders;
+create trigger payment_orders_set_updated_at before update on public.payment_orders for each row execute function public.set_updated_at();
+drop trigger if exists payments_set_updated_at on public.payments;
+create trigger payments_set_updated_at before update on public.payments for each row execute function public.set_updated_at();
+
+alter table public.billing_keys   enable row level security;
+alter table public.payment_orders enable row level security;
+alter table public.payments       enable row level security;
+alter table public.webhook_events enable row level security;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['billing_keys', 'payment_orders', 'payments', 'webhook_events']
+  loop
+    execute format('drop trigger if exists %I_guard_write on public.%I', t, t);
+    execute format('create trigger %I_guard_write before insert or update or delete on public.%I for each row execute function public.guard_privileged_write()', t, t);
+  end loop;
+end $$;
+
+-- 빌링키 요약 뷰(암호문 제외). 정의자 뷰이므로 멤버십 필터를 뷰 안에서 건다.
+create or replace view public.billing_key_summaries as
+  select b.id, b.org_id, b.customer_key, b.card_company, b.card_number_masked, b.status, b.created_at, b.revoked_at
+  from public.billing_keys b
+  where b.org_id in (
+    select m.org_id from public.org_members m where m.user_id = auth.uid() and m.status = 'active'
+  );
+
+create or replace function public.expire_stale_payment_orders()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_count integer;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'expire_stale_payment_orders: service_role only' using errcode = '42501';
+  end if;
+  update public.payment_orders set status = 'expired'
+  where status = 'created' and expires_at < now();
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+-- 결제 이행: Toss confirm 성공 후 서버가 1회 호출. 주문 잠금 → 금액 대조 → payments 기록 → 종류별 지급. 한 트랜잭션.
+-- SQLSTATE: PM404 주문 없음 / PM409 다른 결제키로 재확인 / PM410 상태 불가 / PM001 금액 불일치
+-- 알려진 한계(모듈러 0003:577-583 과 동일, 코어 결정 전까지 유지): PM001 분기의 "주문 failed" UPDATE 는 뒤따르는
+-- raise 로 같은 트랜잭션에서 롤백된다. 앱 계층은 PM001 을 받으면 별도 호출로 주문을 failed 로 표시해야 한다.
+create or replace function public.confirm_payment_order(
+  p_order_id    text,
+  p_payment_key text,
+  p_amount_krw  integer,
+  p_method      text        default null,
+  p_raw         jsonb       default '{}'::jsonb,
+  p_approved_at timestamptz default now()
+)
+returns public.payments
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_order   public.payment_orders;
+  v_payment public.payments;
+  v_plan    public.plans;
+  v_sub     public.subscriptions;
+  v_start   timestamptz := now();
+  v_end     timestamptz;
+  v_key     text;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'confirm_payment_order: service_role only' using errcode = '42501';
+  end if;
+
+  select * into v_order from public.payment_orders where order_id = p_order_id for update;
+  if not found then
+    raise exception 'payment order not found: %', p_order_id using errcode = 'PM404';
+  end if;
+
+  if v_order.status = 'confirmed' then
+    select * into v_payment from public.payments where order_id = p_order_id;
+    if v_payment.payment_key = p_payment_key then
+      return v_payment;
+    end if;
+    raise exception 'order % already confirmed with another payment key', p_order_id using errcode = 'PM409';
+  end if;
+
+  if v_order.status <> 'created' then
+    raise exception 'order % is %, cannot confirm', p_order_id, v_order.status using errcode = 'PM410';
+  end if;
+
+  if v_order.amount_krw <> p_amount_krw then
+    update public.payment_orders set status = 'failed',
+      metadata = metadata || jsonb_build_object('failure', 'amount_mismatch', 'received', p_amount_krw)
+    where order_id = p_order_id;
+    raise exception 'amount mismatch for order %: expected % got %', p_order_id, v_order.amount_krw, p_amount_krw
+      using errcode = 'PM001';
+  end if;
+
+  insert into public.payments (order_id, org_id, payment_key, method, amount_krw, status, approved_at, raw)
+  values (p_order_id, v_order.org_id, p_payment_key, p_method, p_amount_krw, 'done', p_approved_at, coalesce(p_raw, '{}'::jsonb))
+  returning * into v_payment;
+
+  update public.payment_orders set status = 'confirmed', confirmed_at = now() where order_id = p_order_id;
+
+  if v_order.kind = 'credit_pack' then
+    -- SECTION 4 (크레딧) 필요. 크레딧 절을 지웠으면 이 분기도 지운다.
+    perform public.grant_credits(v_order.org_id, v_order.credits, v_order.app_id, 'credit_pack_purchase', 'pack',
+                                 'payment_order', p_order_id, 'order:' || p_order_id,
+                                 jsonb_build_object('payment_key', p_payment_key, 'credit_pack_id', v_order.credit_pack_id),
+                                 v_order.created_by, false);
+  else
+    select * into v_plan from public.plans where id = v_order.plan_id;
+    v_end := case v_plan.billing_interval when 'year' then v_start + interval '1 year' else v_start + interval '1 month' end;
+
+    insert into public.subscriptions (org_id, app_id, plan_id, status, current_period_start, current_period_end, next_charge_at, failed_charge_count)
+    values (v_order.org_id, v_order.app_id, v_plan.id, 'active', v_start, v_end, v_end, 0)
+    on conflict (org_id, app_id) do update
+      set plan_id              = excluded.plan_id,
+          status               = 'active',
+          current_period_start = excluded.current_period_start,
+          current_period_end   = excluded.current_period_end,
+          next_charge_at       = excluded.next_charge_at,
+          failed_charge_count  = 0,
+          cancel_at_period_end = false,
+          canceled_at          = null
+    returning * into v_sub;
+
+    insert into public.app_entitlements (org_id, app_id, plan_id, status, source, expires_at)
+    values (v_order.org_id, v_order.app_id, v_plan.id, 'active', 'subscription', null)
+    on conflict (org_id, app_id) do update
+      set plan_id = excluded.plan_id, status = 'active', source = 'subscription', expires_at = null;
+
+    if v_plan.monthly_credits > 0 and to_regprocedure('public.grant_credits(uuid,integer,text,text,text,text,text,text,jsonb,uuid,boolean)') is not null then
+      v_key := 'monthly:' || v_sub.id::text || ':' || to_char(v_sub.current_period_start, 'YYYY-MM-DD');
+      perform public.grant_credits(v_order.org_id, v_plan.monthly_credits, v_order.app_id, 'monthly_plan_credits', 'plan',
+                                   'subscription', v_sub.id::text, v_key,
+                                   jsonb_build_object('order_id', p_order_id, 'payment_key', p_payment_key),
+                                   v_order.created_by, not v_plan.carry_over);
+      update public.subscriptions set last_credit_grant_key = v_key where id = v_sub.id;
+    end if;
+  end if;
+
+  return v_payment;
+end;
+$$;
+
+drop policy if exists payment_orders_select on public.payment_orders;
+create policy payment_orders_select on public.payment_orders for select to authenticated using (public.is_org_member(org_id));
+drop policy if exists payments_select on public.payments;
+create policy payments_select on public.payments for select to authenticated using (public.is_org_member(org_id));
+-- billing_keys, webhook_events: 정책 없음(사용자 접근 불가). 빌링키 요약은 뷰로만.
+
+
+-- =====================================================================
+-- SECTION 4. 크레딧: wallets, credit_ledger(append-only), ai_usage, consume/grant/refund, 월 지급  [선택]
+-- 원본: 0003_core_credits.sql
+-- 의존: SECTION 2. 지울 때 함께 지울 것:
+--   - SECTION 3 confirm_payment_order 의 credit_pack 분기
+--   - SECTION 7 jobs.credit_ledger_id 컬럼과 fail_job / cancel_job 의 refund_credits 호출
+-- 설계: 잔액 정본은 wallets 1행. FOR UPDATE 잠금 후 검사·갱신·원장 INSERT 를 한 트랜잭션에서.
+--       원장은 UPDATE/DELETE 불가, 환불은 refund_of 를 가리키는 새 행. 멱등 키 같으면 첫 결과 반환.
+--       버킷 2개: plan(월 지급, 이월 정책) / pack(구매·가입·환불). 차감은 plan 부터.
+-- =====================================================================
+
+create table if not exists public.wallets (
+  org_id       uuid primary key references public.organizations(id) on delete cascade,
+  plan_balance integer not null default 0 constraint wallets_plan_balance_check check (plan_balance >= 0),
+  pack_balance integer not null default 0 constraint wallets_pack_balance_check check (pack_balance >= 0),
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.credit_ledger (
+  id              bigint generated always as identity primary key,
+  org_id          uuid not null references public.organizations(id) on delete cascade,
+  app_id          text references public.apps(id),
+  entry_type      text not null constraint credit_ledger_type_check check (entry_type in ('grant', 'consume', 'refund', 'expire', 'adjust')),
+  amount          integer not null constraint credit_ledger_amount_check check (amount <> 0),
+  plan_delta      integer not null default 0,
+  pack_delta      integer not null default 0,
+  balance_after   integer not null,
+  reason          text not null,
+  ref_type        text,
+  ref_id          text,
+  refund_of       bigint references public.credit_ledger(id),
+  idempotency_key text unique,
+  actor_id        uuid,
+  metadata        jsonb not null default '{}'::jsonb,
+  created_at      timestamptz not null default now(),
+  constraint credit_ledger_delta_sum_check check (amount = plan_delta + pack_delta)
+);
+create index if not exists credit_ledger_org_created_idx on public.credit_ledger (org_id, created_at desc);
+create index if not exists credit_ledger_ref_idx on public.credit_ledger (ref_type, ref_id);
+create index if not exists credit_ledger_refund_of_idx on public.credit_ledger (refund_of) where refund_of is not null;
+
+create or replace function public.credit_ledger_immutable()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' and current_setting('core.allow_purge', true) = 'on' and public.is_privileged_session() then
+    return old;
+  end if;
+  raise exception 'credit_ledger is append-only (%)', tg_op using errcode = 'CR000';
+end;
+$$;
+drop trigger if exists credit_ledger_immutable on public.credit_ledger;
+create trigger credit_ledger_immutable before update or delete on public.credit_ledger
+  for each row execute function public.credit_ledger_immutable();
+drop trigger if exists credit_ledger_guard_write on public.credit_ledger;
+create trigger credit_ledger_guard_write before insert on public.credit_ledger
+  for each row execute function public.guard_privileged_write();
+drop trigger if exists wallets_guard_write on public.wallets;
+create trigger wallets_guard_write before insert or update or delete on public.wallets
+  for each row execute function public.guard_privileged_write();
+
+-- LLM/이미지 호출 사용량(게이트웨이가 기록). 과금 행과 ledger_id 로 연결.
+create table if not exists public.ai_usage (
+  id              bigint generated always as identity primary key,
+  org_id          uuid not null references public.organizations(id) on delete cascade,
+  app_id          text references public.apps(id),
+  provider        text not null,
+  model           text not null,
+  purpose         text,
+  input_tokens    integer not null default 0,
+  output_tokens   integer not null default 0,
+  cost_usd_micros bigint not null default 0,
+  credits         integer not null default 0,
+  ledger_id       bigint references public.credit_ledger(id),
+  latency_ms      integer,
+  status          text not null default 'ok' constraint ai_usage_status_check check (status in ('ok', 'error', 'fallback')),
+  error_code      text,
+  request_id      text,
+  created_at      timestamptz not null default now()
+);
+create index if not exists ai_usage_org_created_idx on public.ai_usage (org_id, created_at desc);
+drop trigger if exists ai_usage_guard_write on public.ai_usage;
+create trigger ai_usage_guard_write before insert or update or delete on public.ai_usage
+  for each row execute function public.guard_privileged_write();
+
+alter table public.wallets       enable row level security;
+alter table public.credit_ledger enable row level security;
+alter table public.ai_usage      enable row level security;
+
+create or replace view public.credit_balances
+with (security_invoker = true) as
+  select w.org_id, w.plan_balance, w.pack_balance, w.plan_balance + w.pack_balance as balance, w.updated_at
+  from public.wallets w;
+
+-- 운영용(service_role): 원장 합계 대 지갑 검증
+create or replace view public.credit_ledger_reconciliation as
+  select w.org_id,
+         w.plan_balance + w.pack_balance as wallet_balance,
+         coalesce(sum(l.amount), 0)::integer as ledger_balance,
+         (w.plan_balance + w.pack_balance) - coalesce(sum(l.amount), 0)::integer as drift
+  from public.wallets w
+  left join public.credit_ledger l on l.org_id = w.org_id
+  group by w.org_id, w.plan_balance, w.pack_balance;
+
+-- consume_credits: 원자 차감. 부족하면 SQLSTATE 'CR001'. 반환 ledger_id, new_balance, plan_used, pack_used
+create or replace function public.consume_credits(
+  p_org_id          uuid,
+  p_amount          integer,
+  p_app_id          text,
+  p_reason          text,
+  p_ref_type        text    default null,
+  p_ref_id          text    default null,
+  p_idempotency_key text    default null,
+  p_metadata        jsonb   default '{}'::jsonb,
+  p_actor_id        uuid    default null
+)
+returns table (ledger_id bigint, new_balance integer, plan_used integer, pack_used integer)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_plan      integer;
+  v_pack      integer;
+  v_take_plan integer;
+  v_take_pack integer;
+  v_row       public.credit_ledger;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'consume_credits: service_role only' using errcode = '42501';
+  end if;
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'consume_credits: amount must be positive' using errcode = '22023';
+  end if;
+
+  if p_idempotency_key is not null then
+    perform pg_advisory_xact_lock(hashtext('credit:' || p_idempotency_key));
+    select * into v_row from public.credit_ledger l where l.idempotency_key = p_idempotency_key;
+    if found then
+      return query select v_row.id, v_row.balance_after, -v_row.plan_delta, -v_row.pack_delta;
+      return;
+    end if;
+  end if;
+
+  insert into public.wallets (org_id) values (p_org_id) on conflict (org_id) do nothing;
+
+  select w.plan_balance, w.pack_balance into v_plan, v_pack
+  from public.wallets w where w.org_id = p_org_id for update;
+
+  if v_plan + v_pack < p_amount then
+    raise exception 'insufficient_credits: balance=% required=%', v_plan + v_pack, p_amount
+      using errcode = 'CR001';
+  end if;
+
+  v_take_plan := least(v_plan, p_amount);
+  v_take_pack := p_amount - v_take_plan;
+
+  update public.wallets
+  set plan_balance = plan_balance - v_take_plan,
+      pack_balance = pack_balance - v_take_pack,
+      updated_at   = now()
+  where org_id = p_org_id;
+
+  insert into public.credit_ledger
+    (org_id, app_id, entry_type, amount, plan_delta, pack_delta, balance_after,
+     reason, ref_type, ref_id, idempotency_key, actor_id, metadata)
+  values
+    (p_org_id, p_app_id, 'consume', -p_amount, -v_take_plan, -v_take_pack, v_plan + v_pack - p_amount,
+     p_reason, p_ref_type, p_ref_id, p_idempotency_key, p_actor_id, coalesce(p_metadata, '{}'::jsonb))
+  returning * into v_row;
+
+  return query select v_row.id, v_row.balance_after, v_take_plan, v_take_pack;
+end;
+$$;
+
+-- grant_credits: 지급. p_bucket = 'plan' | 'pack'. p_reset_plan_bucket = true 면 지급 전 plan 잔액을 expire(이월 불가 플랜).
+create or replace function public.grant_credits(
+  p_org_id            uuid,
+  p_amount            integer,
+  p_app_id            text,
+  p_reason            text,
+  p_bucket            text    default 'pack',
+  p_ref_type          text    default null,
+  p_ref_id            text    default null,
+  p_idempotency_key   text    default null,
+  p_metadata          jsonb   default '{}'::jsonb,
+  p_actor_id          uuid    default null,
+  p_reset_plan_bucket boolean default false
+)
+returns table (ledger_id bigint, new_balance integer)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_plan integer;
+  v_pack integer;
+  v_row  public.credit_ledger;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'grant_credits: service_role only' using errcode = '42501';
+  end if;
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'grant_credits: amount must be positive' using errcode = '22023';
+  end if;
+  if p_bucket not in ('plan', 'pack') then
+    raise exception 'grant_credits: bucket must be plan or pack' using errcode = '22023';
+  end if;
+
+  if p_idempotency_key is not null then
+    perform pg_advisory_xact_lock(hashtext('credit:' || p_idempotency_key));
+    select * into v_row from public.credit_ledger l where l.idempotency_key = p_idempotency_key;
+    if found then
+      return query select v_row.id, v_row.balance_after;
+      return;
+    end if;
+  end if;
+
+  insert into public.wallets (org_id) values (p_org_id) on conflict (org_id) do nothing;
+
+  select w.plan_balance, w.pack_balance into v_plan, v_pack
+  from public.wallets w where w.org_id = p_org_id for update;
+
+  if p_reset_plan_bucket and v_plan > 0 then
+    update public.wallets set plan_balance = 0, updated_at = now() where org_id = p_org_id;
+    insert into public.credit_ledger
+      (org_id, app_id, entry_type, amount, plan_delta, pack_delta, balance_after, reason, ref_type, ref_id, idempotency_key, actor_id, metadata)
+    values
+      (p_org_id, p_app_id, 'expire', -v_plan, -v_plan, 0, v_pack, 'plan_bucket_reset', p_ref_type, p_ref_id,
+       case when p_idempotency_key is null then null else p_idempotency_key || ':expire' end, p_actor_id, '{}'::jsonb);
+    v_plan := 0;
+  end if;
+
+  if p_bucket = 'plan' then
+    update public.wallets set plan_balance = plan_balance + p_amount, updated_at = now() where org_id = p_org_id;
+    v_plan := v_plan + p_amount;
+  else
+    update public.wallets set pack_balance = pack_balance + p_amount, updated_at = now() where org_id = p_org_id;
+    v_pack := v_pack + p_amount;
+  end if;
+
+  insert into public.credit_ledger
+    (org_id, app_id, entry_type, amount, plan_delta, pack_delta, balance_after,
+     reason, ref_type, ref_id, idempotency_key, actor_id, metadata)
+  values
+    (p_org_id, p_app_id, 'grant', p_amount,
+     case when p_bucket = 'plan' then p_amount else 0 end,
+     case when p_bucket = 'pack' then p_amount else 0 end,
+     v_plan + v_pack, p_reason, p_ref_type, p_ref_id, p_idempotency_key, p_actor_id, coalesce(p_metadata, '{}'::jsonb))
+  returning * into v_row;
+
+  return query select v_row.id, v_row.balance_after;
+end;
+$$;
+
+-- refund_credits: consume 행을 가리키는 환불. 부분 환불 가능, 누적 환불은 원 차감액을 넘지 못한다(CR003).
+create or replace function public.refund_credits(
+  p_consume_ledger_id bigint,
+  p_reason            text,
+  p_amount            integer default null,
+  p_idempotency_key   text    default null,
+  p_actor_id          uuid    default null
+)
+returns table (ledger_id bigint, new_balance integer)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_orig       public.credit_ledger;
+  v_row        public.credit_ledger;
+  v_ref_plan   integer;
+  v_ref_pack   integer;
+  v_rem_plan   integer;
+  v_rem_pack   integer;
+  v_amount     integer;
+  v_back_plan  integer;
+  v_back_pack  integer;
+  v_plan       integer;
+  v_pack       integer;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'refund_credits: service_role only' using errcode = '42501';
+  end if;
+
+  if p_idempotency_key is not null then
+    perform pg_advisory_xact_lock(hashtext('credit:' || p_idempotency_key));
+    select * into v_row from public.credit_ledger l where l.idempotency_key = p_idempotency_key;
+    if found then
+      return query select v_row.id, v_row.balance_after;
+      return;
+    end if;
+  end if;
+
+  perform pg_advisory_xact_lock(hashtext('refund:' || p_consume_ledger_id::text));
+
+  select * into v_orig from public.credit_ledger l where l.id = p_consume_ledger_id;
+  if not found or v_orig.entry_type <> 'consume' then
+    raise exception 'refund_credits: ledger % is not a consume entry', p_consume_ledger_id using errcode = 'CR002';
+  end if;
+
+  select coalesce(sum(l.plan_delta), 0), coalesce(sum(l.pack_delta), 0)
+  into v_ref_plan, v_ref_pack
+  from public.credit_ledger l where l.refund_of = p_consume_ledger_id;
+
+  v_rem_plan := (-v_orig.plan_delta) - v_ref_plan;
+  v_rem_pack := (-v_orig.pack_delta) - v_ref_pack;
+  v_amount   := coalesce(p_amount, v_rem_plan + v_rem_pack);
+
+  if v_amount <= 0 or v_amount > v_rem_plan + v_rem_pack then
+    raise exception 'refund_credits: amount % exceeds refundable %', v_amount, v_rem_plan + v_rem_pack using errcode = 'CR003';
+  end if;
+
+  v_back_plan := least(v_rem_plan, v_amount);
+  v_back_pack := v_amount - v_back_plan;
+
+  select w.plan_balance, w.pack_balance into v_plan, v_pack
+  from public.wallets w where w.org_id = v_orig.org_id for update;
+
+  update public.wallets
+  set plan_balance = plan_balance + v_back_plan,
+      pack_balance = pack_balance + v_back_pack,
+      updated_at   = now()
+  where org_id = v_orig.org_id;
+
+  insert into public.credit_ledger
+    (org_id, app_id, entry_type, amount, plan_delta, pack_delta, balance_after,
+     reason, ref_type, ref_id, refund_of, idempotency_key, actor_id, metadata)
+  values
+    (v_orig.org_id, v_orig.app_id, 'refund', v_amount, v_back_plan, v_back_pack, v_plan + v_pack + v_amount,
+     p_reason, v_orig.ref_type, v_orig.ref_id, p_consume_ledger_id, p_idempotency_key, p_actor_id, '{}'::jsonb)
+  returning * into v_row;
+
+  return query select v_row.id, v_row.balance_after;
+end;
+$$;
+
+-- 부트스트랩 2단계(SECTION 2 버전 교체): 구독/엔타이틀먼트 + 가입 크레딧(pack) + 첫 달 플랜 크레딧(plan)
+create or replace function public.on_signup_app_bootstrap(p_org_id uuid, p_user_id uuid, p_app_id text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_app    public.apps;
+  v_plan   public.plans;
+  v_sub    public.subscriptions;
+  v_period_end timestamptz;
+  v_key    text;
+begin
+  select * into v_app from public.apps where id = p_app_id and status <> 'disabled';
+  if not found then
+    return;
+  end if;
+
+  if v_app.signup_policy = 'approval' then
+    update public.profiles set status = 'pending' where id = p_user_id and status = 'active';
+  end if;
+
+  select * into v_plan from public.plans where app_id = p_app_id and is_default and is_active limit 1;
+  if not found then
+    return;
+  end if;
+
+  v_period_end := case v_plan.billing_interval
+    when 'month' then now() + interval '1 month'
+    when 'year'  then now() + interval '1 year'
+    else null end;
+
+  insert into public.subscriptions (org_id, app_id, plan_id, status, current_period_start, current_period_end)
+  values (p_org_id, p_app_id, v_plan.id, 'active', now(), v_period_end)
+  on conflict (org_id, app_id) do nothing;
+
+  select * into v_sub from public.subscriptions where org_id = p_org_id and app_id = p_app_id;
+
+  insert into public.app_entitlements (org_id, app_id, plan_id, status, source)
+  values (p_org_id, p_app_id, v_plan.id, 'active', 'signup')
+  on conflict (org_id, app_id) do nothing;
+
+  if v_plan.signup_credits > 0 then
+    perform public.grant_credits(p_org_id, v_plan.signup_credits, p_app_id, 'signup_credits', 'pack',
+                                 'signup', p_user_id::text, 'signup:' || p_org_id::text || ':' || p_app_id,
+                                 '{}'::jsonb, null, false);
+  end if;
+
+  if v_plan.monthly_credits > 0 and v_sub.id is not null then
+    v_key := 'monthly:' || v_sub.id::text || ':' || to_char(v_sub.current_period_start, 'YYYY-MM-DD');
+    perform public.grant_credits(p_org_id, v_plan.monthly_credits, p_app_id, 'monthly_plan_credits', 'plan',
+                                 'subscription', v_sub.id::text, v_key, '{}'::jsonb, null, not v_plan.carry_over);
+    update public.subscriptions set last_credit_grant_key = v_key where id = v_sub.id;
+  end if;
+end;
+$$;
+
+-- 월 크레딧 지급 (service_role / pg_cron). 구독 굴림(SECTION 2) → 지급. 멱등 키 = monthly:<sub>:<period_start>
+create or replace function public.run_monthly_credit_grants()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare r record; v_key text; v_count integer := 0;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'run_monthly_credit_grants: service_role only' using errcode = '42501';
+  end if;
+
+  perform public.run_subscription_rollover();
+
+  for r in
+    select s.id, s.org_id, s.app_id, s.current_period_start, p.monthly_credits, p.carry_over
+    from public.subscriptions s
+    join public.plans p on p.id = s.plan_id
+    where s.status in ('active', 'trialing')
+      and p.monthly_credits > 0
+      and p.billing_interval in ('month', 'year')
+      and s.current_period_start <= now()
+      and (s.current_period_end is null or s.current_period_end > now())
+      and coalesce(s.last_credit_grant_key, '') <> 'monthly:' || s.id::text || ':' || to_char(s.current_period_start, 'YYYY-MM-DD')
+  loop
+    v_key := 'monthly:' || r.id::text || ':' || to_char(r.current_period_start, 'YYYY-MM-DD');
+    perform public.grant_credits(r.org_id, r.monthly_credits, r.app_id, 'monthly_plan_credits', 'plan',
+                                 'subscription', r.id::text, v_key, '{}'::jsonb, null, not r.carry_over);
+    update public.subscriptions set last_credit_grant_key = v_key where id = r.id;
+    v_count := v_count + 1;
+  end loop;
+  return v_count;
+end;
+$$;
+
+-- 조직 영구 삭제(탈퇴 유예 종료 후). 원장/감사 삭제 허용 GUC 를 트랜잭션 범위로 켠다.
+create or replace function public.purge_organization(p_org_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_privileged_session() then
+    raise exception 'purge_organization: service_role only' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public.organizations o where o.id = p_org_id and o.deleted_at is not null) then
+    raise exception 'purge_organization: organization must be soft-deleted first' using errcode = 'P0001';
+  end if;
+  perform set_config('core.allow_purge', 'on', true);
+  delete from public.organizations where id = p_org_id;
+end;
+$$;
+
+drop policy if exists wallets_select on public.wallets;
+create policy wallets_select on public.wallets for select to authenticated using (public.is_org_member(org_id));
+drop policy if exists credit_ledger_select on public.credit_ledger;
+create policy credit_ledger_select on public.credit_ledger for select to authenticated using (public.is_org_member(org_id));
+drop policy if exists ai_usage_select on public.ai_usage;
+create policy ai_usage_select on public.ai_usage for select to authenticated using (public.is_org_member(org_id));
+
+
+-- =====================================================================
+-- SECTION 6-A. oauth_states: 서버 발급 1회용 nonce  [선택]
+-- 원본: 0004_core_security.sql 5절. 의존: SECTION 1, 2(apps)
+-- =====================================================================
+
+create table if not exists public.oauth_states (
+  state         text primary key,
+  user_id       uuid not null,
+  org_id        uuid not null references public.organizations(id) on delete cascade,
+  app_id        text not null references public.apps(id),
+  provider      text not null,
+  redirect_to   text,
+  code_verifier text,
+  expires_at    timestamptz not null default (now() + interval '10 minutes'),
+  consumed_at   timestamptz,
+  created_at    timestamptz not null default now()
+);
+create index if not exists oauth_states_expires_idx on public.oauth_states (expires_at);
+alter table public.oauth_states enable row level security;
+drop trigger if exists oauth_states_guard_write on public.oauth_states;
+create trigger oauth_states_guard_write before insert or update or delete on public.oauth_states
+  for each row execute function public.guard_privileged_write();
+
+create or replace function public.create_oauth_state(
+  p_user_id       uuid,
+  p_org_id        uuid,
+  p_app_id        text,
+  p_provider      text,
+  p_redirect_to   text    default null,
+  p_code_verifier text    default null,
+  p_ttl_seconds   integer default 600
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_state text;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'create_oauth_state: service_role only' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public.org_members m where m.org_id = p_org_id and m.user_id = p_user_id and m.status = 'active') then
+    raise exception 'create_oauth_state: user is not a member of org' using errcode = '42501';
+  end if;
+  if p_redirect_to is not null and (p_redirect_to !~ '^/[^/]' or p_redirect_to ~ '@') then
+    raise exception 'create_oauth_state: redirect_to must be a relative path' using errcode = '22023';
+  end if;
+  v_state := encode(extensions.gen_random_bytes(32), 'hex');
+  insert into public.oauth_states (state, user_id, org_id, app_id, provider, redirect_to, code_verifier, expires_at)
+  values (v_state, p_user_id, p_org_id, p_app_id, p_provider, p_redirect_to, p_code_verifier,
+          now() + make_interval(secs => greatest(p_ttl_seconds, 60)));
+  return v_state;
+end;
+$$;
+
+-- 1회 소비. 만료/재사용이면 SQLSTATE 'OA001'.
+create or replace function public.consume_oauth_state(p_state text)
+returns public.oauth_states
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.oauth_states;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'consume_oauth_state: service_role only' using errcode = '42501';
+  end if;
+  update public.oauth_states
+  set consumed_at = now()
+  where state = p_state and consumed_at is null and expires_at > now()
+  returning * into v_row;
+  if not found then
+    raise exception 'oauth_state_invalid' using errcode = 'OA001';
+  end if;
+  return v_row;
+end;
+$$;
+
+create or replace function public.purge_expired_oauth_states()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_count integer;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'purge_expired_oauth_states: service_role only' using errcode = '42501';
+  end if;
+  delete from public.oauth_states where expires_at < now() - interval '1 day';
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+
+-- =====================================================================
+-- SECTION 6-B. encrypted_credentials: OAuth 토큰, 마켓 API 키 (AES-256-GCM 암호문만)  [선택]
+-- 원본: 0004_core_security.sql 6절. 의존: SECTION 1, 2(apps)
+-- 키는 환경변수(버전별)로만 존재하며 DB 에는 key_version 만 기록한다. 평문 컬럼 없음.
+-- =====================================================================
+
+create table if not exists public.encrypted_credentials (
+  id                  uuid primary key default gen_random_uuid(),
+  org_id              uuid not null references public.organizations(id) on delete cascade,
+  app_id              text not null references public.apps(id),
+  provider            text not null,
+  external_account_id text not null default '',
+  label               text,
+  ciphertext          text not null,
+  key_version         integer not null,
+  scopes              text[] not null default '{}',
+  expires_at          timestamptz,
+  status              text not null default 'active'
+                      constraint encrypted_credentials_status_check check (status in ('active', 'expired', 'revoked', 'error')),
+  last_refreshed_at   timestamptz,
+  last_error          text,
+  created_by          uuid,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
+  unique (org_id, app_id, provider, external_account_id)
+);
+create index if not exists encrypted_credentials_org_idx on public.encrypted_credentials (org_id, app_id, provider);
+drop trigger if exists encrypted_credentials_set_updated_at on public.encrypted_credentials;
+create trigger encrypted_credentials_set_updated_at before update on public.encrypted_credentials
+  for each row execute function public.set_updated_at();
+alter table public.encrypted_credentials enable row level security;
+drop trigger if exists encrypted_credentials_guard_write on public.encrypted_credentials;
+create trigger encrypted_credentials_guard_write before insert or update or delete on public.encrypted_credentials
+  for each row execute function public.guard_privileged_write();
+
+-- 사용자에게는 암호문을 뺀 요약만(정의자 뷰 + 멤버십 필터)
+create or replace view public.credential_summaries as
+  select c.id, c.org_id, c.app_id, c.provider, c.external_account_id, c.label, c.scopes,
+         c.expires_at, c.status, c.last_refreshed_at, c.created_at, c.updated_at
+  from public.encrypted_credentials c
+  where c.org_id in (select m.org_id from public.org_members m where m.user_id = auth.uid() and m.status = 'active');
+
+-- 사용자가 연결을 끊는 유일한 경로(소프트 revoke). 삭제는 service_role.
+create or replace function public.revoke_credential(p_credential_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_org uuid;
+begin
+  select org_id into v_org from public.encrypted_credentials where id = p_credential_id;
+  if v_org is null then
+    return;
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_org, array['owner', 'admin']) then
+    raise exception 'revoke_credential: owner/admin only' using errcode = '42501';
+  end if;
+  update public.encrypted_credentials set status = 'revoked', ciphertext = '', updated_at = now() where id = p_credential_id;
+  perform public.write_audit(v_org, 'credential.revoke', 'credential', p_credential_id::text);
+end;
+$$;
+
+
+-- =====================================================================
+-- SECTION 6-C. rate_limit_buckets: 고정 윈도우 카운터 (Redis 없는 제품의 기본 레이트 리밋)  [선택]
+-- 원본: 0004_core_security.sql 7절. 의존: SECTION 0 만
+-- =====================================================================
+
+create table if not exists public.rate_limit_buckets (
+  key          text primary key,
+  window_start timestamptz not null,
+  count        integer not null default 0,
+  updated_at   timestamptz not null default now()
+);
+alter table public.rate_limit_buckets enable row level security;
+drop trigger if exists rate_limit_buckets_guard_write on public.rate_limit_buckets;
+create trigger rate_limit_buckets_guard_write before insert or update or delete on public.rate_limit_buckets
+  for each row execute function public.guard_privileged_write();
+
+-- 반환: allowed, remaining, reset_at. 호출 1회 = 1 히트.
+create or replace function public.rate_limit_hit(p_key text, p_limit integer, p_window_seconds integer)
+returns table (allowed boolean, remaining integer, reset_at timestamptz)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_count integer; v_start timestamptz; v_win interval;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'rate_limit_hit: service_role only' using errcode = '42501';
+  end if;
+  v_win := make_interval(secs => p_window_seconds);
+  insert into public.rate_limit_buckets as b (key, window_start, count)
+  values (p_key, now(), 1)
+  on conflict (key) do update
+    set count        = case when b.window_start + v_win <= now() then 1 else b.count + 1 end,
+        window_start = case when b.window_start + v_win <= now() then now() else b.window_start end,
+        updated_at   = now()
+  returning b.count, b.window_start into v_count, v_start;
+  return query select v_count <= p_limit, greatest(p_limit - v_count, 0), v_start + v_win;
+end;
+$$;
+
+create or replace function public.purge_rate_limit_buckets(p_older_than interval default interval '1 day')
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_count integer;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'purge_rate_limit_buckets: service_role only' using errcode = '42501';
+  end if;
+  delete from public.rate_limit_buckets where updated_at < now() - p_older_than;
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+
+-- =====================================================================
+-- SECTION 7. jobs: 범용 잡 테이블(SKIP LOCKED), 실패 시 자동 환불, Realtime 발행  [선택]
+-- 원본: 0005_core_jobs_storage.sql 1절. 의존: SECTION 1, 2(apps), 4(credit_ledger FK, refund_credits)
+-- SECTION 4 를 지웠으면: credit_ledger_id 컬럼, fail_job / cancel_job 의 refund 블록을 지운다.
+-- 워커 규약: claim_jobs → (heartbeat_job)* → complete_job | fail_job. BullMQ 를 쓰는 파이프라인도 상태 정본은 이 테이블.
+-- =====================================================================
+
+create table if not exists public.jobs (
+  id                uuid primary key default gen_random_uuid(),
+  org_id            uuid not null references public.organizations(id) on delete cascade,
+  app_id            text not null references public.apps(id),
+  queue             text not null default 'default',
+  job_type          text not null,
+  payload           jsonb not null default '{}'::jsonb,
+  result            jsonb,
+  status            text not null default 'queued'
+                    constraint jobs_status_check check (status in ('queued', 'running', 'succeeded', 'failed', 'canceled')),
+  priority          integer not null default 100,
+  attempts          integer not null default 0,
+  max_attempts      integer not null default 3,
+  run_after         timestamptz not null default now(),
+  locked_at         timestamptz,
+  locked_by         text,
+  heartbeat_at      timestamptz,
+  progress          integer not null default 0 constraint jobs_progress_check check (progress between 0 and 100),
+  progress_message  text,
+  last_error        text,
+  credit_ledger_id  bigint references public.credit_ledger(id),   -- SECTION 4 의존
+  refund_on_failure boolean not null default true,
+  idempotency_key   text unique,
+  parent_job_id     uuid references public.jobs(id) on delete set null,
+  created_by        uuid,
+  created_at        timestamptz not null default now(),
+  started_at        timestamptz,
+  finished_at       timestamptz,
+  updated_at        timestamptz not null default now()
+);
+create index if not exists jobs_claim_idx on public.jobs (queue, priority, run_after, created_at) where status = 'queued';
+create index if not exists jobs_org_created_idx on public.jobs (org_id, created_at desc);
+create index if not exists jobs_running_heartbeat_idx on public.jobs (heartbeat_at) where status = 'running';
+create index if not exists jobs_parent_idx on public.jobs (parent_job_id) where parent_job_id is not null;
+
+drop trigger if exists jobs_set_updated_at on public.jobs;
+create trigger jobs_set_updated_at before update on public.jobs for each row execute function public.set_updated_at();
+drop trigger if exists jobs_guard_write on public.jobs;
+create trigger jobs_guard_write before insert or update or delete on public.jobs
+  for each row execute function public.guard_privileged_write();
+
+alter table public.jobs enable row level security;
+drop policy if exists jobs_select on public.jobs;
+create policy jobs_select on public.jobs for select to authenticated using (public.is_org_member(org_id));
+
+create or replace function public.enqueue_job(
+  p_org_id            uuid,
+  p_app_id            text,
+  p_queue             text,
+  p_job_type          text,
+  p_payload           jsonb       default '{}'::jsonb,
+  p_priority          integer     default 100,
+  p_run_after         timestamptz default now(),
+  p_max_attempts      integer     default 3,
+  p_credit_ledger_id  bigint      default null,
+  p_idempotency_key   text        default null,
+  p_parent_job_id     uuid        default null,
+  p_created_by        uuid        default null,
+  p_refund_on_failure boolean     default true
+)
+returns public.jobs
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.jobs;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'enqueue_job: service_role only' using errcode = '42501';
+  end if;
+  if p_idempotency_key is not null then
+    perform pg_advisory_xact_lock(hashtext('job:' || p_idempotency_key));
+    select * into v_row from public.jobs j where j.idempotency_key = p_idempotency_key;
+    if found then
+      return v_row;
+    end if;
+  end if;
+  insert into public.jobs (org_id, app_id, queue, job_type, payload, priority, run_after, max_attempts,
+                           credit_ledger_id, idempotency_key, parent_job_id, created_by, refund_on_failure)
+  values (p_org_id, p_app_id, coalesce(p_queue, 'default'), p_job_type, coalesce(p_payload, '{}'::jsonb), p_priority,
+          coalesce(p_run_after, now()), greatest(p_max_attempts, 1), p_credit_ledger_id, p_idempotency_key,
+          p_parent_job_id, p_created_by, p_refund_on_failure)
+  returning * into v_row;
+  return v_row;
+end;
+$$;
+
+create or replace function public.claim_jobs(
+  p_queue     text,
+  p_worker_id text,
+  p_limit     integer default 1,
+  p_job_types text[]  default null
+)
+returns setof public.jobs
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_privileged_session() then
+    raise exception 'claim_jobs: service_role only' using errcode = '42501';
+  end if;
+  return query
+  with picked as (
+    select j.id
+    from public.jobs j
+    where j.queue = p_queue
+      and j.status = 'queued'
+      and j.run_after <= now()
+      and (p_job_types is null or j.job_type = any (p_job_types))
+    order by j.priority asc, j.run_after asc, j.created_at asc
+    limit greatest(p_limit, 1)
+    for update skip locked
+  )
+  update public.jobs j
+  set status       = 'running',
+      locked_at    = now(),
+      locked_by    = p_worker_id,
+      heartbeat_at = now(),
+      started_at   = coalesce(j.started_at, now()),
+      attempts     = j.attempts + 1
+  from picked
+  where j.id = picked.id
+  returning j.*;
+end;
+$$;
+
+create or replace function public.heartbeat_job(p_job_id uuid, p_worker_id text, p_progress integer default null, p_message text default null)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_ok boolean;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'heartbeat_job: service_role only' using errcode = '42501';
+  end if;
+  update public.jobs
+  set heartbeat_at     = now(),
+      progress         = coalesce(p_progress, progress),
+      progress_message = coalesce(p_message, progress_message)
+  where id = p_job_id and status = 'running' and locked_by = p_worker_id;
+  v_ok := found;
+  return v_ok;
+end;
+$$;
+
+create or replace function public.complete_job(p_job_id uuid, p_worker_id text, p_result jsonb default '{}'::jsonb)
+returns public.jobs
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.jobs;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'complete_job: service_role only' using errcode = '42501';
+  end if;
+  update public.jobs
+  set status = 'succeeded', result = coalesce(p_result, '{}'::jsonb), progress = 100,
+      finished_at = now(), locked_at = null, locked_by = null
+  where id = p_job_id and status = 'running' and locked_by = p_worker_id
+  returning * into v_row;
+  if not found then
+    raise exception 'complete_job: job % is not running under worker %', p_job_id, p_worker_id using errcode = 'JB001';
+  end if;
+  return v_row;
+end;
+$$;
+
+-- 실패 처리. 재시도 가능 + attempts < max_attempts 면 지수 백오프 재큐잉, 아니면 최종 실패 + 자동 환불.
+create or replace function public.fail_job(
+  p_job_id              uuid,
+  p_worker_id           text,
+  p_error               text,
+  p_retryable           boolean default true,
+  p_retry_delay_seconds integer default 60
+)
+returns public.jobs
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.jobs; v_delay interval;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'fail_job: service_role only' using errcode = '42501';
+  end if;
+  select * into v_row from public.jobs where id = p_job_id for update;
+  if not found or v_row.status <> 'running' or v_row.locked_by is distinct from p_worker_id then
+    raise exception 'fail_job: job % is not running under worker %', p_job_id, p_worker_id using errcode = 'JB001';
+  end if;
+
+  if p_retryable and v_row.attempts < v_row.max_attempts then
+    v_delay := make_interval(secs => p_retry_delay_seconds * power(2, greatest(v_row.attempts - 1, 0)));
+    update public.jobs
+    set status = 'queued', run_after = now() + v_delay, last_error = left(p_error, 4000),
+        locked_at = null, locked_by = null, heartbeat_at = null
+    where id = p_job_id
+    returning * into v_row;
+    return v_row;
+  end if;
+
+  update public.jobs
+  set status = 'failed', last_error = left(p_error, 4000), finished_at = now(),
+      locked_at = null, locked_by = null
+  where id = p_job_id
+  returning * into v_row;
+
+  -- SECTION 4 의존(자동 환불)
+  if v_row.refund_on_failure and v_row.credit_ledger_id is not null then
+    perform public.refund_credits(v_row.credit_ledger_id, 'job_failed:' || v_row.job_type, null,
+                                  'refund:job:' || v_row.id::text, null);
+  end if;
+  return v_row;
+end;
+$$;
+
+-- 사용자가 대기 중(queued)인 자기 조직 잡을 취소(환불 포함). running 은 워커가 취소 플래그를 봐야 하므로 제외.
+create or replace function public.cancel_job(p_job_id uuid)
+returns public.jobs
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.jobs;
+begin
+  select * into v_row from public.jobs where id = p_job_id for update;
+  if not found then
+    raise exception 'cancel_job: not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.is_org_member(v_row.org_id) then
+    raise exception 'cancel_job: not a member' using errcode = '42501';
+  end if;
+  if v_row.status <> 'queued' then
+    raise exception 'cancel_job: only queued jobs can be canceled (status=%)', v_row.status using errcode = 'JB002';
+  end if;
+  update public.jobs set status = 'canceled', finished_at = now() where id = p_job_id returning * into v_row;
+  -- SECTION 4 의존(환불)
+  if v_row.refund_on_failure and v_row.credit_ledger_id is not null then
+    perform public.refund_credits(v_row.credit_ledger_id, 'job_canceled:' || v_row.job_type, null,
+                                  'refund:job:' || v_row.id::text, auth.uid());
+  end if;
+  perform public.write_audit(v_row.org_id, 'job.cancel', 'job', v_row.id::text);
+  return v_row;
+end;
+$$;
+
+-- 하트비트가 끊긴 running 잡을 실패 처리(스케줄러)
+create or replace function public.reap_stale_jobs(p_stale_seconds integer default 600)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare r record; v_count integer := 0;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'reap_stale_jobs: service_role only' using errcode = '42501';
+  end if;
+  for r in
+    select j.id, j.locked_by from public.jobs j
+    where j.status = 'running' and coalesce(j.heartbeat_at, j.locked_at) < now() - make_interval(secs => p_stale_seconds)
+    for update skip locked
+  loop
+    perform public.fail_job(r.id, r.locked_by, 'stale heartbeat', true, 60);
+    v_count := v_count + 1;
+  end loop;
+  return v_count;
+end;
+$$;
+
+-- Realtime: 진행률 UI 는 jobs 변경을 RLS 하에서 구독한다.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'jobs'
+  ) then
+    alter publication supabase_realtime add table public.jobs;
+  end if;
+end $$;
+
+
+-- =====================================================================
+-- SECTION 8. Storage: 버킷 3개 + "폴더 = org_id" 정책  [선택]
+-- 원본: 0005_core_jobs_storage.sql 2절. 의존: SECTION 5-A 헬퍼
+-- 경로 규칙: <org_id>/<app_id>/<entity>/<uuid>.<ext>
+-- 버킷: org-files(비공개 50MB), exports(비공개 200MB, 서명 URL), public-assets(공개 읽기, 10MB 이미지)
+-- =====================================================================
+
+create or replace function public.storage_org_id(p_name text)
+returns uuid
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when split_part(p_name, '/', 1) ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      then split_part(p_name, '/', 1)::uuid
+    else null
+  end;
+$$;
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('org-files',     'org-files',     false, 52428800,  null),
+  ('exports',       'exports',       false, 209715200, null),
+  ('public-assets', 'public-assets', true,  10485760,  array['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'])
+on conflict (id) do nothing;
+
+drop policy if exists org_files_select on storage.objects;
+create policy org_files_select on storage.objects for select to authenticated
+  using (bucket_id = 'org-files' and public.is_org_member(public.storage_org_id(name)));
+drop policy if exists org_files_insert on storage.objects;
+create policy org_files_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'org-files' and public.is_org_member(public.storage_org_id(name)));
+drop policy if exists org_files_update on storage.objects;
+create policy org_files_update on storage.objects for update to authenticated
+  using (bucket_id = 'org-files' and public.is_org_member(public.storage_org_id(name)))
+  with check (bucket_id = 'org-files' and public.is_org_member(public.storage_org_id(name)));
+drop policy if exists org_files_delete on storage.objects;
+create policy org_files_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'org-files' and (owner = auth.uid() or public.has_org_role(public.storage_org_id(name), array['owner', 'admin'])));
+
+drop policy if exists exports_select on storage.objects;
+create policy exports_select on storage.objects for select to authenticated
+  using (bucket_id = 'exports' and public.is_org_member(public.storage_org_id(name)));
+
+drop policy if exists public_assets_select on storage.objects;
+create policy public_assets_select on storage.objects for select to anon, authenticated
+  using (bucket_id = 'public-assets');
+drop policy if exists public_assets_insert on storage.objects;
+create policy public_assets_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'public-assets' and public.is_org_member(public.storage_org_id(name)));
+drop policy if exists public_assets_update on storage.objects;
+create policy public_assets_update on storage.objects for update to authenticated
+  using (bucket_id = 'public-assets' and public.is_org_member(public.storage_org_id(name)))
+  with check (bucket_id = 'public-assets' and public.is_org_member(public.storage_org_id(name)));
+drop policy if exists public_assets_delete on storage.objects;
+create policy public_assets_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'public-assets' and public.has_org_role(public.storage_org_id(name), array['owner', 'admin']));
+
+
+-- =====================================================================
+-- SECTION 9. affiliate: 제휴마케팅 공용 모듈 (확정 결정 12)  [선택: video, blog 계열만]
+-- 원본: 0006_core_affiliate.sql. 의존: SECTION 6-B(encrypted_credentials), SECTION 7(jobs)
+-- 제공자: coupang, naver_brandconnect, tenping, naver_shopping_connect (어댑터로 추가)
+-- 대가성 문구는 끌 수 없다(편집만). 브랜드커넥트 자동 지원은 owner/admin 위험 동의 없이는 지원서를 만들 수 없다.
+-- =====================================================================
+
+create table if not exists public.affiliate_accounts (
+  id                 uuid primary key default gen_random_uuid(),
+  org_id             uuid not null references public.organizations(id) on delete cascade,
+  provider           text not null
+                     constraint affiliate_accounts_provider_check
+                     check (provider in ('coupang', 'naver_brandconnect', 'tenping', 'naver_shopping_connect')),
+  credential_id      uuid references public.encrypted_credentials(id) on delete set null,
+  partner_id         text,
+  label              text,
+  status             text not null default 'active'
+                     constraint affiliate_accounts_status_check check (status in ('active', 'paused', 'error', 'revoked')),
+  risk_consented_at  timestamptz,
+  risk_consented_by  uuid,
+  last_error         text,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now(),
+  unique (org_id, provider, partner_id)
+);
+create index if not exists affiliate_accounts_org_idx on public.affiliate_accounts (org_id, provider);
+drop trigger if exists affiliate_accounts_set_updated_at on public.affiliate_accounts;
+create trigger affiliate_accounts_set_updated_at before update on public.affiliate_accounts
+  for each row execute function public.set_updated_at();
+drop trigger if exists affiliate_accounts_guard_write on public.affiliate_accounts;
+create trigger affiliate_accounts_guard_write before insert or update or delete on public.affiliate_accounts
+  for each row execute function public.guard_privileged_write();
+alter table public.affiliate_accounts enable row level security;
+
+create table if not exists public.affiliate_links (
+  id             uuid primary key default gen_random_uuid(),
+  org_id         uuid not null references public.organizations(id) on delete cascade,
+  account_id     uuid references public.affiliate_accounts(id) on delete set null,
+  provider       text not null
+                 constraint affiliate_links_provider_check
+                 check (provider in ('coupang', 'naver_brandconnect', 'tenping', 'naver_shopping_connect')),
+  source_app     text not null references public.apps(id)
+                 constraint affiliate_links_source_app_check check (source_app in ('video', 'blog')),
+  source_ref     text,
+  product_name   text,
+  original_url   text not null,
+  affiliate_url  text not null,
+  short_code     text not null unique,
+  utm            jsonb not null default '{}'::jsonb,
+  click_count    bigint not null default 0,
+  is_active      boolean not null default true,
+  created_by     uuid,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  constraint affiliate_links_url_check check (original_url ~* '^https?://' and affiliate_url ~* '^https?://')
+);
+create index if not exists affiliate_links_org_idx on public.affiliate_links (org_id, created_at desc);
+create index if not exists affiliate_links_source_idx on public.affiliate_links (source_app, source_ref);
+drop trigger if exists affiliate_links_set_updated_at on public.affiliate_links;
+create trigger affiliate_links_set_updated_at before update on public.affiliate_links
+  for each row execute function public.set_updated_at();
+drop trigger if exists affiliate_links_guard_write on public.affiliate_links;
+create trigger affiliate_links_guard_write before insert or update or delete on public.affiliate_links
+  for each row execute function public.guard_privileged_write();
+alter table public.affiliate_links enable row level security;
+
+-- 클릭 로그: /r/[code] 라우트가 service_role 로 기록. IP 원문 대신 일 단위 솔트 해시만.
+create table if not exists public.affiliate_clicks (
+  id          bigint generated always as identity primary key,
+  link_id     uuid not null references public.affiliate_links(id) on delete cascade,
+  org_id      uuid not null references public.organizations(id) on delete cascade,
+  clicked_at  timestamptz not null default now(),
+  referrer    text,
+  ip_hash     text,
+  user_agent  text,
+  country     text
+);
+create index if not exists affiliate_clicks_link_idx on public.affiliate_clicks (link_id, clicked_at desc);
+create index if not exists affiliate_clicks_org_idx on public.affiliate_clicks (org_id, clicked_at desc);
+drop trigger if exists affiliate_clicks_guard_write on public.affiliate_clicks;
+create trigger affiliate_clicks_guard_write before insert or update or delete on public.affiliate_clicks
+  for each row execute function public.guard_privileged_write();
+alter table public.affiliate_clicks enable row level security;
+
+-- 대가성 문구. 끄는 컬럼은 없다. org_id null 행 = 플랫폼 기본값(seed). placement: blog_top / video_description / video_pinned_comment
+create table if not exists public.affiliate_disclosures (
+  id          uuid primary key default gen_random_uuid(),
+  org_id      uuid references public.organizations(id) on delete cascade,
+  provider    text not null
+              constraint affiliate_disclosures_provider_check
+              check (provider in ('coupang', 'naver_brandconnect', 'tenping', 'naver_shopping_connect')),
+  placement   text not null
+              constraint affiliate_disclosures_placement_check
+              check (placement in ('blog_top', 'video_description', 'video_pinned_comment')),
+  body        text not null constraint affiliate_disclosures_body_check check (length(btrim(body)) >= 10),
+  updated_by  uuid,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create unique index if not exists affiliate_disclosures_org_uniq
+  on public.affiliate_disclosures (org_id, provider, placement) where org_id is not null;
+create unique index if not exists affiliate_disclosures_default_uniq
+  on public.affiliate_disclosures (provider, placement) where org_id is null;
+drop trigger if exists affiliate_disclosures_set_updated_at on public.affiliate_disclosures;
+create trigger affiliate_disclosures_set_updated_at before update on public.affiliate_disclosures
+  for each row execute function public.set_updated_at();
+drop trigger if exists affiliate_disclosures_guard_write on public.affiliate_disclosures;
+create trigger affiliate_disclosures_guard_write before insert or update or delete on public.affiliate_disclosures
+  for each row execute function public.guard_privileged_write();
+alter table public.affiliate_disclosures enable row level security;
+
+-- 네이버 브랜드커넥트 자동 지원(blog 소유). 상태: draft → submitting → submitted → accepted | rejected / submitting → failed → submitting
+create table if not exists public.brandconnect_applications (
+  id              uuid primary key default gen_random_uuid(),
+  org_id          uuid not null references public.organizations(id) on delete cascade,
+  account_id      uuid not null references public.affiliate_accounts(id) on delete cascade,
+  campaign_id     text not null,
+  brand_name      text,
+  product_name    text,
+  category        text,
+  blog_url        text not null,
+  message         text,
+  status          text not null default 'draft'
+                  constraint brandconnect_applications_status_check
+                  check (status in ('draft', 'submitting', 'submitted', 'accepted', 'rejected', 'failed')),
+  attempts        integer not null default 0,
+  job_id          uuid references public.jobs(id) on delete set null,   -- SECTION 7 의존
+  external_id     text,
+  last_error      text,
+  submitted_at    timestamptz,
+  decided_at      timestamptz,
+  created_by      uuid,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  unique (account_id, campaign_id)
+);
+create index if not exists brandconnect_applications_org_idx on public.brandconnect_applications (org_id, created_at desc);
+drop trigger if exists brandconnect_applications_set_updated_at on public.brandconnect_applications;
+create trigger brandconnect_applications_set_updated_at before update on public.brandconnect_applications
+  for each row execute function public.set_updated_at();
+drop trigger if exists brandconnect_applications_guard_write on public.brandconnect_applications;
+create trigger brandconnect_applications_guard_write before insert or update or delete on public.brandconnect_applications
+  for each row execute function public.guard_privileged_write();
+alter table public.brandconnect_applications enable row level security;
+
+create or replace function public.brandconnect_status_transition()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'UPDATE' and new.status is distinct from old.status then
+    if not (
+         (old.status = 'draft'      and new.status = 'submitting')
+      or (old.status = 'submitting' and new.status in ('submitted', 'failed'))
+      or (old.status = 'failed'     and new.status = 'submitting')
+      or (old.status = 'submitted'  and new.status in ('accepted', 'rejected'))
+    ) then
+      raise exception 'brandconnect: invalid status transition % -> %', old.status, new.status
+        using errcode = '22023';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists brandconnect_applications_transition on public.brandconnect_applications;
+create trigger brandconnect_applications_transition before update on public.brandconnect_applications
+  for each row execute function public.brandconnect_status_transition();
+
+create or replace function public.new_affiliate_short_code(p_len integer default 8)
+returns text
+language plpgsql
+volatile
+set search_path = ''
+as $$
+declare
+  v_alphabet constant text := 'abcdefghijkmnpqrstuvwxyz23456789';
+  v_code text;
+  v_bytes bytea;
+  i integer;
+begin
+  for attempt in 1..5 loop
+    v_bytes := extensions.gen_random_bytes(p_len);
+    v_code := '';
+    for i in 0..p_len - 1 loop
+      v_code := v_code || substr(v_alphabet, (get_byte(v_bytes, i) % length(v_alphabet)) + 1, 1);
+    end loop;
+    if not exists (select 1 from public.affiliate_links where short_code = v_code) then
+      return v_code;
+    end if;
+  end loop;
+  raise exception 'new_affiliate_short_code: collision retries exhausted';
+end;
+$$;
+
+-- 리다이렉트 라우트용: 클릭 기록 + 대상 URL 반환(service_role 전용; EXECUTE 도 service_role 만)
+create or replace function public.record_affiliate_click(
+  p_short_code text, p_referrer text default null, p_ip_hash text default null,
+  p_user_agent text default null, p_country text default null
+)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_link public.affiliate_links;
+begin
+  if not public.is_service_caller() then
+    raise exception 'record_affiliate_click: service_role only' using errcode = '42501';
+  end if;
+  select * into v_link from public.affiliate_links where short_code = p_short_code and is_active;
+  if v_link.id is null then
+    return null;
+  end if;
+  insert into public.affiliate_clicks (link_id, org_id, referrer, ip_hash, user_agent, country)
+  values (v_link.id, v_link.org_id, left(p_referrer, 500), p_ip_hash, left(p_user_agent, 300), p_country);
+  update public.affiliate_links set click_count = click_count + 1 where id = v_link.id;
+  return v_link.affiliate_url;
+end;
+$$;
+
+-- 유효 대가성 문구: org 문구 우선, 없으면 플랫폼 기본값
+create or replace function public.effective_disclosure(p_org_id uuid, p_provider text, p_placement text)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select d.body
+  from public.affiliate_disclosures d
+  where d.provider = p_provider and d.placement = p_placement
+    and (d.org_id = p_org_id or d.org_id is null)
+    and (public.is_service_caller() or public.is_org_member(p_org_id))
+  order by (d.org_id is null)
+  limit 1;
+$$;
+
+-- 문구 편집(owner/admin). 끄기는 불가, 빈 문구는 CHECK 로 거부.
+create or replace function public.upsert_affiliate_disclosure(
+  p_org_id uuid, p_provider text, p_placement text, p_body text
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_id uuid;
+begin
+  if not public.is_service_caller() and not public.has_org_role(p_org_id, array['owner', 'admin']) then
+    raise exception 'upsert_affiliate_disclosure: owner/admin only' using errcode = '42501';
+  end if;
+  insert into public.affiliate_disclosures (org_id, provider, placement, body, updated_by)
+  values (p_org_id, p_provider, p_placement, p_body, auth.uid())
+  on conflict (org_id, provider, placement) where org_id is not null
+  do update set body = excluded.body, updated_by = excluded.updated_by
+  returning id into v_id;
+  perform public.write_audit(p_org_id, 'affiliate.disclosure.upsert', 'affiliate_disclosure', v_id::text);
+  return v_id;
+end;
+$$;
+
+-- 브랜드커넥트 자동 지원 위험 동의(owner/admin)
+create or replace function public.consent_brandconnect_risk(p_account_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_org uuid; v_provider text;
+begin
+  select org_id, provider into v_org, v_provider from public.affiliate_accounts where id = p_account_id;
+  if v_org is null or v_provider <> 'naver_brandconnect' then
+    raise exception 'consent_brandconnect_risk: not a brandconnect account' using errcode = '22023';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_org, array['owner', 'admin']) then
+    raise exception 'consent_brandconnect_risk: owner/admin only' using errcode = '42501';
+  end if;
+  update public.affiliate_accounts
+     set risk_consented_at = now(), risk_consented_by = auth.uid()
+   where id = p_account_id;
+  perform public.write_audit(v_org, 'affiliate.brandconnect.risk_consent', 'affiliate_account', p_account_id::text);
+end;
+$$;
+
+-- 지원서 생성(멤버). 위험 동의 없으면 거부. 제출은 service_role 워커(job_type brandconnect.apply).
+create or replace function public.create_brandconnect_application(
+  p_account_id uuid, p_campaign_id text, p_blog_url text,
+  p_brand_name text default null, p_product_name text default null,
+  p_category text default null, p_message text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_acc public.affiliate_accounts; v_id uuid;
+begin
+  select * into v_acc from public.affiliate_accounts where id = p_account_id;
+  if v_acc.id is null or v_acc.provider <> 'naver_brandconnect' then
+    raise exception 'create_brandconnect_application: not a brandconnect account' using errcode = '22023';
+  end if;
+  if not public.is_service_caller() and not public.is_org_member(v_acc.org_id) then
+    raise exception 'create_brandconnect_application: not a member' using errcode = '42501';
+  end if;
+  if v_acc.risk_consented_at is null then
+    raise exception 'create_brandconnect_application: risk consent required' using errcode = '42501';
+  end if;
+  if v_acc.status <> 'active' then
+    raise exception 'create_brandconnect_application: account is %', v_acc.status using errcode = '22023';
+  end if;
+  insert into public.brandconnect_applications
+    (org_id, account_id, campaign_id, brand_name, product_name, category, blog_url, message, created_by)
+  values
+    (v_acc.org_id, p_account_id, p_campaign_id, p_brand_name, p_product_name, p_category, p_blog_url, p_message, auth.uid())
+  returning id into v_id;
+  return v_id;
+end;
+$$;
+
+drop policy if exists affiliate_accounts_select on public.affiliate_accounts;
+create policy affiliate_accounts_select on public.affiliate_accounts for select to authenticated
+  using (public.is_org_member(org_id));
+drop policy if exists affiliate_links_select on public.affiliate_links;
+create policy affiliate_links_select on public.affiliate_links for select to authenticated
+  using (public.is_org_member(org_id));
+drop policy if exists affiliate_clicks_select on public.affiliate_clicks;
+create policy affiliate_clicks_select on public.affiliate_clicks for select to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+drop policy if exists affiliate_disclosures_select on public.affiliate_disclosures;
+create policy affiliate_disclosures_select on public.affiliate_disclosures for select to authenticated
+  using (org_id is null or public.is_org_member(org_id));
+drop policy if exists brandconnect_applications_select on public.brandconnect_applications;
+create policy brandconnect_applications_select on public.brandconnect_applications for select to authenticated
+  using (public.is_org_member(org_id));
+
+
+-- =====================================================================
+-- SECTION 10. 권한 정리  [필수]  -- 절을 지워도 동작한다(존재하는 객체에만 적용)
+-- 1) public 의 모든 테이블/뷰/시퀀스/함수에서 anon, authenticated, PUBLIC 권한을 회수한다.
+--    (Supabase 가 public 에 기본으로 준 권한 + 위에서 만들어진 모든 객체)
+-- 2) 허용 목록만 다시 준다. 테이블은 SELECT(일부 컬럼 UPDATE), 함수는 사용자용 RPC 만.
+-- 3) service_role 은 모든 것을 가진다(BYPASSRLS).
+-- 이 파일은 제품 도메인 마이그레이션보다 먼저 적용되므로 이 시점의 public 객체는 코어 객체만이다.
+-- =====================================================================
+
+do $$
+declare r record;
+begin
+  for r in select c.relname, c.relkind from pg_class c join pg_namespace n on n.oid = c.relnamespace
+           where n.nspname = 'public' and c.relkind in ('r', 'v', 'p')
+  loop
+    execute format('revoke all on table public.%I from public, anon, authenticated', r.relname);
+    execute format('grant all on table public.%I to service_role', r.relname);
+  end loop;
+  for r in select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+           where n.nspname = 'public' and c.relkind = 'S'
+  loop
+    execute format('revoke all on sequence public.%I from public, anon, authenticated', r.relname);
+    execute format('grant all on sequence public.%I to service_role', r.relname);
+  end loop;
+  for r in select p.oid::regprocedure as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f'
+  loop
+    execute format('revoke all on function %s from public, anon, authenticated', r.sig);
+    execute format('grant execute on function %s to service_role', r.sig);
+  end loop;
+end $$;
+
+-- 허용 목록: 테이블 SELECT (+ 비권한 컬럼 UPDATE)
+do $$
+declare
+  t text;
+  v_auth_select text[] := array[
+    'profiles', 'organizations', 'org_members', 'audit_log',
+    'subscriptions', 'app_entitlements',
+    'payment_orders', 'payments', 'billing_key_summaries',
+    'wallets', 'credit_ledger', 'ai_usage', 'credit_balances',
+    'credential_summaries',
+    'jobs',
+    'affiliate_accounts', 'affiliate_links', 'affiliate_clicks', 'affiliate_disclosures', 'brandconnect_applications'
+  ];
+  v_public_select text[] := array['apps', 'plans', 'credit_packs'];
+begin
+  foreach t in array v_auth_select loop
+    if to_regclass('public.' || t) is not null then
+      execute format('grant select on public.%I to authenticated', t);
+    end if;
+  end loop;
+  foreach t in array v_public_select loop
+    if to_regclass('public.' || t) is not null then
+      execute format('grant select on public.%I to anon, authenticated', t);
+    end if;
+  end loop;
+  if to_regclass('public.profiles') is not null then
+    grant update (display_name, avatar_url, locale, last_seen_at) on public.profiles to authenticated;
+  end if;
+  if to_regclass('public.organizations') is not null then
+    grant update (name, settings) on public.organizations to authenticated;
+  end if;
+end $$;
+
+-- 허용 목록: 함수 EXECUTE
+--   anon + authenticated : 정책 안에서 쓰는 헬퍼(SECURITY DEFINER, 읽기 전용)
+--   authenticated        : 사용자용 RPC (안에서 is_service_caller + 역할 검사)
+--   service_role 전용    : consume/grant/refund_credits, confirm_payment_order, enqueue/claim/heartbeat/complete/fail_job,
+--                          create/consume_oauth_state, rate_limit_hit, record_affiliate_click, 스케줄 함수, purge_* (위 1)에서 이미 부여)
+do $$
+declare
+  s text;
+  v_anon_auth text[] := array[
+    'public.jwt_role()', 'public.is_privileged_session()', 'public.is_service_caller()',
+    'public.current_org_ids()', 'public.is_org_member(uuid)', 'public.has_org_role(uuid,text[])',
+    'public.current_org_role(uuid)', 'public.is_platform_admin()',
+    'public.has_entitlement(uuid,text)', 'public.entitled_plan_code(uuid,text)',
+    'public.storage_org_id(text)'
+  ];
+  v_auth text[] := array[
+    'public.personal_org_id()', 'public.session_context(text,uuid)', 'public.bootstrap_app_for_org(text,uuid)',
+    'public.write_audit(uuid,text,text,text,jsonb,jsonb,jsonb)',
+    'public.invite_member(uuid,uuid,text)', 'public.accept_invite(uuid)', 'public.approve_member(uuid,uuid)',
+    'public.change_member_role(uuid,uuid,text)', 'public.remove_member(uuid,uuid)',
+    'public.transfer_ownership(uuid,uuid)', 'public.approve_profile(uuid)',
+    'public.revoke_credential(uuid)',
+    'public.cancel_job(uuid)',
+    'public.effective_disclosure(uuid,text,text)', 'public.upsert_affiliate_disclosure(uuid,text,text,text)',
+    'public.consent_brandconnect_risk(uuid)',
+    'public.create_brandconnect_application(uuid,text,text,text,text,text,text)'
+  ];
+begin
+  foreach s in array v_anon_auth loop
+    if to_regprocedure(s) is not null then
+      execute format('grant execute on function %s to anon, authenticated', s);
+    end if;
+  end loop;
+  foreach s in array v_auth loop
+    if to_regprocedure(s) is not null then
+      execute format('grant execute on function %s to authenticated', s);
+    end if;
+  end loop;
+end $$;
+
+-- =====================================================================
+-- 끝. 다음 파일: 0002_<product>_domain.sql (제품 도메인 테이블. org_id FK + RLS + 명시적 GRANT)
+-- seed: apps 1행(id = 제품 스키마 이름), 기본 플랜 1행(is_default), 필요하면 affiliate 기본 문구.
+-- =====================================================================
