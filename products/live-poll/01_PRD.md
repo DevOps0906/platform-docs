@@ -97,7 +97,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | `retention_days` | int | 종료 후 원본 투표/참가자/질문 보존 일수(30) | `end_event_internal` |
 | `team_members` | int | 조직 멤버 수(Phase 2) | 초대 Route Handler |
 
-모듈러 seed의 free 행에는 `max_participants`만 있다. 나머지 키는 기본값으로 동작하며, seed 갱신은 06장 6절 코어 요청으로 남긴다. 결제(Phase 2)는 `CORE_SPEC.md` 5장 일반결제/빌링키 시퀀스를 그대로 쓴다. 환불: 결제 후 7일 이내 live 행사를 연 적이 없으면 전액(제안).
+모듈러 seed는 2026-10-13부터 모놀리스 seed와 같은 값이다. 키가 없으면 기본값으로 동작한다. 결제(Phase 2)는 `CORE_SPEC.md` 5장 일반결제/빌링키 시퀀스를 그대로 쓴다. 환불: 결제 후 7일 이내 live 행사를 연 적이 없으면 전액(제안).
 
 ## 5. 비기능 요구사항
 

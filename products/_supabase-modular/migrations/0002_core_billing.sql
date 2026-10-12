@@ -333,8 +333,7 @@ begin
 
   insert into core.audit_log (org_id, actor_id, actor_role, action, target_type, target_id, after)
   values (v_sub.org_id, null, 'service', 'subscription.' || p_to, 'subscription', v_sub.id::text,
-          jsonb_build_object('reason', p_reason, 'plan_id', v_sub.plan_id))
-  on conflict do nothing;
+          jsonb_build_object('reason', p_reason, 'plan_id', v_sub.plan_id));
 
   return v_sub;
 end;

@@ -80,7 +80,7 @@
 | `max_gallery_photos` / `max_hero_photos` | 사진 수 상한 | 30 / 5 (제안) |
 | `custom_slug` | slug 직접 지정 | true |
 
-모듈러 `seed.sql`의 microweb `free` 행은 `features='{}'`다. 서버는 키가 없으면 위 값을 코드 기본값으로 쓰고, seed 갱신은 코어 요청으로 남긴다(06장 6절).
+모듈러 `seed.sql`의 microweb `free` 행은 2026-10-13부터 모놀리스 seed와 같은 features를 담는다. 서버는 키가 없을 때를 대비해 위 값을 코드 기본값으로 둔다.
 
 | 상품(대행, `production_orders`) | 가격 | 근거 |
 |---|---|---|

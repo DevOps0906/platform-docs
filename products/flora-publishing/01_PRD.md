@@ -95,7 +95,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 
 ### 4.1 플랜 (정본 출처: 확정 결정 8 "크레딧팩 + 저가 구독")
 
-금액·크레딧은 모듈러 seed 샘플(`docs/products/_supabase-modular/seed.sql:33`, `:95`, `:100-101`)과 같게 두었다. 저가 구독 ₩9,900은 FP 기획의 NOMAD PRO 가격(`flora-publisher/frontend/docs/prd/02_user_flow.md:65`)이 근거다. 월 크레딧 수치는 제안이며 이유는 4.3절에 적었다.
+금액·크레딧은 모듈러 seed(`docs/products/_supabase-modular/seed.sql:33`, `:95`, `:100-101`)과 같게 두었다. 저가 구독 ₩9,900은 FP 기획의 NOMAD PRO 가격(`flora-publisher/frontend/docs/prd/02_user_flow.md:65`)이 근거다. 월 크레딧 수치는 제안이며 이유는 4.3절에 적었다.
 
 | 코드 | 이름 | 월 가격 | 월 크레딧(plan 버킷) | 가입 크레딧 | 이월 | 주요 features |
 |---|---|---|---|---|---|---|
@@ -106,8 +106,8 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 
 | 코드 | 크레딧 | 가격 | 크레딧당 | 근거 |
 |---|---|---|---|---|
-| `pack_100` | 100 | ₩9,900 | ₩99 | 모듈러 seed 샘플(`seed.sql:100`) |
-| `pack_500` | 500 | ₩39,900 | ₩79.8 | 모듈러 seed 샘플(`seed.sql:101`) |
+| `pack_100` | 100 | ₩9,900 | ₩99 | 모듈러 seed(`seed.sql:100`) |
+| `pack_500` | 500 | ₩39,900 | ₩79.8 | 모듈러 seed(`seed.sql:101`) |
 
 차감 순서는 plan 버킷 → pack 버킷(`CORE_SPEC.md:168`). 팩 크레딧은 Free 사용자도 살 수 있다(쓴 만큼만 내는 페르소나 이하은의 요구).
 
@@ -134,7 +134,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 
 ### 4.4 `core.plans.features` 키 해석 (서버만 읽는다, `DB_CONVENTIONS.md` 11장)
 
-키가 없으면 "기본값" 열(= Free 값)로 해석한다. 모듈러 seed에는 `watermark`, `exports_per_month`, `themes`, `persona_blend`만 있으므로 나머지는 기본값이 적용된다(06장 6절 코어 요청).
+키가 없으면 "기본값" 열(= Free 값)로 해석한다. 모듈러 seed는 2026-10-13부터 모놀리스 seed와 같은 16키를 담는다. 키가 누락된 경우의 대비로 기본값을 적용한다.
 
 | 키 | 타입 | 기본값 | 의미 | 강제 위치 |
 |---|---|---|---|---|

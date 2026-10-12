@@ -63,7 +63,7 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 | auth | 가입, 세션, `requireSession('blog')` | proxy.ts, 레이아웃, 모든 Route Handler | 프로필 없으면 로그아웃 |
 | org | 1인 1워크스페이스, Business 팀 5인 | 설정 > 멤버 | |
 | credits | AI 선차감·환불 `withCredits` | server/ai, 워커 generate | 단가는 01장 4.2절 |
-| toss | 구독·팩 결제, 빌링키 | billing 라우트, 정기결제는 공용 워커 | `confirm_payment_order` 금액 불일치 시 주문이 failed로 남지 않는 코어 결함이 알려져 있다. blog는 이 상태에 의존하지 않고 PM001을 받으면 운영 알림 + Toss 취소만 한다 |
+| toss | 구독·팩 결제, 빌링키 | billing 라우트, 정기결제는 공용 워커 | `confirm_payment_order` 금액 불일치는 `PM001`이며 같은 호출의 주문 UPDATE는 롤백된다. blog는 PM001을 받으면 별도 호출로 `fail_payment_order`(service_role, 2026-10-13 코어 반영)로 주문을 failed로 기록하고 운영 알림 + Toss 취소를 한다 |
 | webhooks | Toss 상태 동기화 | `/api/webhooks/toss` | 서명 필수 |
 | oauth | 인스타그램(Phase 2) | channels | 워드프레스·네이버·티스토리는 OAuth가 아니다 |
 | llm gateway | 모든 AI purpose | server/ai, 워커 | 모델 허용 목록 |

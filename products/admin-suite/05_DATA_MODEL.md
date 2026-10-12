@@ -208,7 +208,7 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 | `purge_organization` | 코어 0003에 있음 | SECTION 4와 함께 빠짐 | 06장 6절 코어 요청 |
 | PUBLIC EXECUTE | 조각 끝 `revoke execute on all functions in schema <app> from public`(0007 규칙) | 도메인 파일 끝 `... in schema public from public` | 트리거 함수 포함 |
 | Realtime | `erp.products/inventory_moves/sales`, `sms.attendance` | 같은 테이블(public), hms `appointments`, `staff_profiles` | |
-| 알려진 코어 결함 | `confirm_payment_order`가 금액 불일치 시 주문을 failed로 남기지 못함(raise가 롤백) | 같음 | 고치지 않고 의존하지 않는다(04장 6절) |
+| 결제 실패 기록(코어 수정 반영, 2026-10-13) | `confirm_payment_order`는 금액 불일치 시 `PM001`(계약 불변). 주문 failed 기록은 `fail_payment_order`가 맡는다 | 같음 | PM001이면 별도 호출로 `fail_payment_order`(04장 6절) |
 
 ## 9. 마이그레이션 파일
 

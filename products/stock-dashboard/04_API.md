@@ -105,7 +105,7 @@ quote-relay 워커(별도 호스트):
 | 수신 | 증권사 | 없음(증권사 푸시를 쓰지 않고 폴링·WebSocket만) | - | - |
 | 발신 | 없음 | - | - | - |
 
-코어 결함 대응: `confirm_payment_order`는 금액 불일치(`PM001`) 때 주문을 `failed`로 남기지 못한다(raise가 UPDATE를 롤백, `DB_CONVENTIONS.md:296`). 이 제품은 그 동작에 의존하지 않는다. 서버는 `PM001`을 받으면 (1) Toss 결제 취소 API 호출, (2) `audit_log`에 service INSERT `payment.amount_mismatch`(order_id, 기대·실제 금액), (3) 운영 알림을 보내고, 주문 상태는 만료 함수(`expire_stale_payment_orders`)가 처리하도록 둔다. 제품 SQL은 같은 함정을 피하려고 차단·만료를 예외가 아닌 상태 기록으로 처리한다(05장 3절).
+PM001 처리: `confirm_payment_order`는 금액 불일치(`PM001`) 때 raise하며 같은 호출의 UPDATE는 롤백된다(계약 불변). 서버는 `PM001`을 받으면 (1) 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`(service_role, 2026-10-13 코어 반영)를 불러 주문을 `failed`로 기록, (2) Toss 결제 취소 API 호출, (3) `audit_log`에 service INSERT `payment.amount_mismatch`(order_id, 기대·실제 금액), (4) 운영 알림을 보낸다. 남은 created 주문은 만료 함수(`expire_stale_payment_orders`)가 처리한다. 제품 SQL은 같은 롤백 함정을 피하려고 차단·만료를 예외가 아닌 상태 기록으로 처리한다(05장 3절).
 
 ## 6. 외부 API 어댑터
 

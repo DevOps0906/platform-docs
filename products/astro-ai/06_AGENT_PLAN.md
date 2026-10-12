@@ -119,10 +119,10 @@ Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 엔진 사양·
 | ID | 대상 | 요청 | 이유 | 그때까지의 우회 |
 |---|---|---|---|---|
 | R-1 | `_platform-core` 크레딧 | `adjust_credits`(음수 허용, service_role) 추가(`docs/products/_platform-core/CORE_SPEC.md:237` 제안) | 결제 환불 시 미사용 크레딧 회수 | `consume_credits(reason='refund_adjust')`로 회수 |
-| R-2 | `_supabase-modular/seed.sql` | astro 크레딧팩을 단가표(330/800/2,400cr, 12,900/27,900원)로, starter `features`를 01장 4.6절로, `signup_credits=0`(01장 D-3 확정 시) | 샘플값과 정본 불일치 | 서버가 `features` 누락 키를 403으로 처리하지 않도록 기본값 표를 둔다 |
+| R-2 | `_supabase-modular/seed.sql` | astro 크레딧팩을 단가표(330/800/2,400cr, 12,900/27,900원)로, starter `features`를 01장 4.6절로, `signup_credits=0`(01장 D-3 확정 시) | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치 | 서버가 `features` 누락 키를 403으로 처리하지 않도록 기본값 표를 둔다 |
 | R-3 | LLM 게이트웨이 | `credits: 0` 호출 허용 + `ai_usage.ledger_id`에 리딩 원장 id 지정 | 리딩 단위 선차감 | 게이트웨이를 `withCredits` 없이 호출하는 내부 모드 |
 | R-4 | `_platform-core` 삭제 | `purge_organization` 전에 `payments`, `payment_orders`를 5년 보존 아카이브로 옮기는 절차 | 전자상거래법 대금결제 기록 5년(01장 6.1절) | 탈퇴 purge 전 결제 기록을 운영 저장소로 내보내기(AS-06-026) |
-| R-5 | `_platform-core` 결제 | `confirm_payment_order` 금액 불일치 시 주문 failed 기록 결함 수정(`docs/products/_platform-core/DB_CONVENTIONS.md:13.2절`) | 알려진 코어 결함 | 이 제품은 의존하지 않는다. Route Handler가 별도 트랜잭션으로 알림·취소 |
+| R-5 | `_platform-core` 결제 | `confirm_payment_order` 금액 불일치 시 주문 failed 기록 결함 수정(`docs/products/_platform-core/DB_CONVENTIONS.md:13.2절`) | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가 | Route Handler가 PM001 시 별도 호출로 `fail_payment_order`를 부르고 알림·취소 |
 | R-6 | flora-publishing(렌더 서비스) | `app_id='astro'` 허용, A4 프리셋, 한자 포함 Noto Serif/Sans CJK KR 확인, 첫 페이지 PNG 미리보기 엔드포인트 | 공용 서비스 소비 | 없음(필수) |
 | R-7 | `_platform-core` webhooks | Toss 웹훅 서명 방식 확인 결과 공유 | 미확인 사항 | 수신 후 결제 조회 API 재검증 |
 

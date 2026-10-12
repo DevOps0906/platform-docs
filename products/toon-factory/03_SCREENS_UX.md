@@ -50,7 +50,7 @@
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | `/app/billing` 또는 잠금 에셋 안내 | "Pro 14,900원/월 시작" | `POST /api/billing/checkout`(subscription) → 주문 저장 → Toss 빌링키 발급창(customerKey `org_<org_id>`) | 창 닫음 → 주문 1시간 뒤 만료 |
-| 2 | `/app/billing/success` | - | `POST /api/billing/billing-key`(authKey) → 빌링키 암호화 저장 → 첫 청구 → `confirm_payment_order` → 구독·엔타이틀먼트 pro, 300크레딧 | 금액 불일치 `PM001` → "결제 확인 실패" + 운영 알림 + 승인 취소(코어 결함으로 주문이 failed로 남지 않을 수 있음, 05장 6절) |
+| 2 | `/app/billing/success` | - | `POST /api/billing/billing-key`(authKey) → 빌링키 암호화 저장 → 첫 청구 → `confirm_payment_order` → 구독·엔타이틀먼트 pro, 300크레딧 | 금액 불일치 `PM001` → "결제 확인 실패" + 운영 알림 + 승인 취소(주문 failed 기록은 별도 호출 `fail_payment_order`, 05장 6절) |
 | 3 | 에디터 복귀 | - | 세션 갱신, 워터마크 해제·Pro 에셋 잠금 해제 | - |
 
 ### 2.4 MP4 내보내기

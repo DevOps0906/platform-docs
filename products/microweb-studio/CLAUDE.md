@@ -18,7 +18,7 @@
 | 공개 읽기 | 하객 페이지는 anon 키로 `site_publications`만 읽는다. `sites`를 공개 경로에서 service_role로 읽지 않는다(예외: `/p/[token]` 시안) |
 | 하객/문의 쓰기 | `submit_guestbook_entry`, `submit_rsvp`, `create_lead`(service 전용, 리밋 내장)만. 테이블 직접 INSERT 금지 |
 | 크레딧 | 셀프 게시만 라우트에서 선차감(`consume:microweb:<request_id>`), 실패 시 잡 환불. 사용자 RPC 안에서 크레딧을 건드리지 않는다 |
-| 결제 | `confirm_payment_order`의 failed 기록에 의존하지 않는다(04장 2절) |
+| 결제 | PM001이면 별도 호출로 `fail_payment_order`를 부른다(04장 2절) |
 | 코어 | 공용 모듈을 다시 만들지 않는다. `_platform-core`, `_supabase-modular`의 다른 파일, core 마이그레이션 수정 금지. 필요하면 06장 6절 요청 |
 | 개인정보 | IP 원문 저장·로그 금지, 사진 EXIF 제거, 감사 로그에 이름·연락처·본문 금지 |
 | 문구 | 01장 6절 금지 문구(미검증 수치, 근거 없는 할인, 가상 후기, 가짜 포트폴리오) 금지 |

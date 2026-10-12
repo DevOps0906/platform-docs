@@ -120,7 +120,7 @@ anon에게는 테이블 권한이 없다. 비멤버 B가 `org_id = A`로 INSERT�
 
 `submit_inquiry`는 공개 함수이므로 호출자 판정이 없다. 대신 비인가 쓰기를 막는 것은 (1) 유일한 anon 쓰기 경로라는 구조, (2) DB 내 레이트 리밋(사이트 100/시간·500/일, 이메일 3/시간·6/일), (3) 허니팟·검증·스팸 점수, (4) 사이트·엔타이틀먼트 확인이다. 역할 비교는 `core.has_org_role`(exists 반환)을 써서 NULL 비교 문제가 없다(`SECURITY_BASELINE.md` 2장).
 
-초대제: 코어는 `signup_policy='invite'`를 강제하지 않는다(`_supabase-modular/migrations/1900_stock.sql:7`과 같은 사실). 누구나 `signup_app=site` 가입으로 엔타이틀먼트를 얻을 수 있어도, 사이트 행은 `provision_site`(service_role)로만 생기므로 등록되지 않은 조직은 볼 데이터와 쓸 수 있는 RPC가 없다. 이것이 2차 게이트다.
+초대제: 코어는 `signup_policy='invite'` 앱에서 가입 트리거가 구독·엔타이틀먼트를 만들지 않고 `bootstrap_app_for_org`는 비 service 호출자에 42501을 낸다(2026-10-13 코어 반영, 운영자 service_role은 가능). 엔타이틀먼트가 있어도 사이트 행은 `provision_site`(service_role)로만 생기므로 등록되지 않은 조직은 볼 데이터와 쓸 수 있는 RPC가 없다. 이것이 2차 게이트로 유지된다.
 
 ## 5. 인덱스와 성능
 

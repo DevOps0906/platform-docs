@@ -112,7 +112,7 @@
 
 | 객체 | 계약 | 근거 |
 |---|---|---|
-| `core.apps` | `id`는 모듈러 스키마 이름과 같다(`video`, `blog` 등). `signup_policy` open/approval/invite | `migrations/0002_core_billing.sql:12-21`, `seed.sql:12-27` |
+| `core.apps` | `id`는 모듈러 스키마 이름과 같다(`video`, `blog` 등). `signup_policy` open/approval/invite. invite 앱은 가입 트리거가 엔타이틀먼트를 만들지 않고, `bootstrap_app_for_org`도 service_role만 실행할 수 있다(운영자 부여). 초대받은 멤버는 조직의 엔타이틀먼트를 쓴다(2026-10-13 반영) | `migrations/0002_core_billing.sql:12-21`, `seed.sql:12-27` |
 | `core.plans` | 앱별 플랜. `monthly_credits`(월 지급, plan 버킷)와 `signup_credits`(가입 1회, pack 버킷)를 분리. `carry_over=false`면 월 지급 시 남은 plan 잔액을 expire. `features` jsonb는 서버에서만 읽는 기능 플래그 | `:26-48` |
 | `core.credit_packs` | 일회 구매 팩 | `:53-64` |
 | `core.subscriptions` | 조직 x 앱당 1개. 상태 trialing/active/past_due/canceled/expired. 전이는 `apply_subscription_transition()`만 | `:89-109`, `:265-341` |
@@ -218,7 +218,7 @@ LLM 게이트웨이처럼 잡 없이 동기 호출하는 경우도 2 → 호출 
 | 5 | 서버 | `core.confirm_payment_order(order_id, payment_key, amount_krw, method, raw, approved_at)` |
 | 6 | DB | 주문 잠금 → 금액 대조 → payments INSERT → 주문 confirmed → 종류별 지급(크레딧팩은 `grant_credits`, 구독은 subscriptions upsert + 엔타이틀먼트 + 첫 달 크레딧). 한 트랜잭션 |
 
-근거: `migrations/0003_core_credits.sql:534-631`. 실패 코드 `PM404` 주문 없음, `PM409` 다른 결제키로 재확인, `PM410` 상태 불가, `PM001` 금액 불일치(주문은 failed로 기록). 같은 `(order_id, payment_key)` 재호출은 기존 payments 행을 돌려준다(멱등). 이 흐름은 Astro AI 리뷰 권고 "결제창 → successUrl → 서버 confirm → 금액·orderId 대조 → 멱등 지급, 웹훅은 보조"(`docs/products/00_MERGE_ANALYSIS.md:356`)와 Shorts Maker 리뷰의 "payment_orders 선저장, confirm 멱등, 웹훅 서명 필수, 빌링키 정기결제"(`:545`)를 그대로 구현한 것이다.
+근거: `migrations/0003_core_credits.sql:534-631`. 실패 코드 `PM404` 주문 없음, `PM409` 다른 결제키로 재확인, `PM410` 상태 불가, `PM001` 금액 불일치. raise는 트랜잭션을 되돌리므로 confirm 안에서는 주문 상태가 바뀌지 않는다. 서버는 PM001을 받으면 별도 호출로 `core.fail_payment_order(order_id, 'amount_mismatch', detail)`(service_role 전용, 멱등, 감사 행 `payment_order.failed`)을 불러 주문을 failed로 남긴 뒤 Toss 취소와 운영 알림을 한다(2026-10-13 반영). 같은 `(order_id, payment_key)` 재호출은 기존 payments 행을 돌려준다(멱등). 이 흐름은 Astro AI 리뷰 권고 "결제창 → successUrl → 서버 confirm → 금액·orderId 대조 → 멱등 지급, 웹훅은 보조"(`docs/products/00_MERGE_ANALYSIS.md:356`)와 Shorts Maker 리뷰의 "payment_orders 선저장, confirm 멱등, 웹훅 서명 필수, 빌링키 정기결제"(`:545`)를 그대로 구현한 것이다.
 
 ### 5.3 빌링키 정기결제
 
@@ -409,7 +409,7 @@ pg_cron 또는 워커 크론으로 service_role이 호출한다(`docs/products/_
 | `PM001` | 금액 불일치 | `confirm_payment_order` |
 | `PM404` | 주문 없음 | `confirm_payment_order` |
 | `PM409` | 다른 결제키로 재확인 | `confirm_payment_order` |
-| `PM410` | 주문 상태 불가 | `confirm_payment_order` |
+| `PM410` | 주문 상태 불가 | `confirm_payment_order`, `fail_payment_order` |
 | `OA001` | OAuth state 무효 | `consume_oauth_state` |
 | `JB001` | 잡이 해당 워커의 running 상태가 아님 | `complete_job`, `fail_job` |
 | `JB002` | queued가 아닌 잡 취소 | `cancel_job` |

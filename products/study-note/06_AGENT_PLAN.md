@@ -58,7 +58,7 @@
 | NT-06-023 | 앱 README(설치/실행/빌드/env 변수 이름/보안 주의), 원본 README 사본 폐기 확인 | `apps/study-note/README.md` | 005 | P1 | S | Sonnet | env 키 값 사용 안내가 없다. 신규 개발자가 문서만으로 로컬 기동 | 리뷰 5장 #8 |
 | NT-06-024 | E2E(Playwright): 가입 → 인증 → 실행 → TXT 다운로드, 연타 방지(버튼 3종), 크레딧 부족, 재요청 | `tests/e2e/**` | 006, 010, 012, 017, 018 | P0 | M | Opus | 연타해도 run 1개, 차감 1회. 다운로드 파일명 규칙 일치 | 리뷰 #3, 01장 NT-F-003~006 |
 | NT-06-025 | 스케줄: `purge_deleted` 일 1회, 보존 정책 호출, 코어 스케줄 확인 | `apps/study-note-worker/src/cron/**` | 010 | P1 | S | Opus | 30일 지난 휴지통 항목이 사라진다. 실행 로그에 삭제 건수 | 05장 |
-| NT-06-026 | 결제(Phase 2): 주문 생성, confirm, 웹훅, Pro/크레딧팩 UI, `is_active` 전환 절차 | `src/app/api/billing/**`, `src/app/api/webhooks/**`, `src/app/(app)/app/billing/**` | 002, 005 | P1 | L | Fable | 금액 불일치는 지급 없음. 같은 `paymentKey` 재호출 멱등. 웹훅 서명 실패 401. `failed` 주문 저장에 의존하지 않는다 | 확정 결정 4, 코어 결함 |
+| NT-06-026 | 결제(Phase 2): 주문 생성, confirm, 웹훅, Pro/크레딧팩 UI, `is_active` 전환 절차 | `src/app/api/billing/**`, `src/app/api/webhooks/**`, `src/app/(app)/app/billing/**` | 002, 005 | P1 | L | Fable | 금액 불일치는 지급 없음. 같은 `paymentKey` 재호출 멱등. 웹훅 서명 실패 401. PM001 시 별도 호출로 `fail_payment_order`를 부른다 | 확정 결정 4, 코어 반영(2026-10-13) |
 | NT-06-027 | 결제 E2E(Toss 테스트 키): 성공, 취소, 금액 위조, 중복 confirm | `tests/e2e/billing/**` | 026 | P1 | M | Opus | 4 시나리오 통과, 잔액/원장 일치 | `DOC_TEMPLATE.md` 필수 |
 | NT-06-028 | 모델 카탈로그 관리 화면과 동기화 잡 | `src/app/(admin)/admin/models/**`, `apps/study-note-worker/src/handlers/sync*` | 010, 013 | P1 | M | Opus | platform_admin만 접근(일반 사용자 403). 비활성 처리 후 설정 화면에서 사라진다 | 리뷰 5장 #14, 분석 공백 3 |
 | NT-06-029 | 운영 리포트: 모델별 크레딧당 원가, 환불률, 상한 도달 일수. 단가 보정안 | `apps/study-note-worker/src/reports/**` | 010 | P1 | S | Opus | 주간 리포트가 01장 7절 지표를 출력 | 01장 4.3, 7장 |
@@ -120,11 +120,11 @@ P0 작업과 대응 테스트: 001(CI 자체 검사), 002 → 003, 005 → 003·
 
 | ID | 요청 | 이유 | 긴급도 |
 |---|---|---|---|
-| C-1 | 모듈러 코어 `core` 스키마의 함수 PUBLIC EXECUTE 회수. `alter default privileges in schema core revoke execute on functions from public`은 PUBLIC 기본 권한에 효과가 없어 `enqueue_job`, `claim_jobs`, `complete_job`, `fail_job`, `heartbeat_job`, `confirm_payment_order`, `apply_subscription_transition`, `run_monthly_credit_grants`, `purge_organization`, `create_oauth_state` 등이 authenticated/anon에 열려 있다. 이 함수들은 내부 검사를 `is_privileged_session()`에 의존하는데 DEFINER 안에서 항상 true라서 EXECUTE가 유일한 잠금이다(`SECURITY_BASELINE.md:17-25`). 모놀리스는 SECTION 10이 막는다. 확인 방법: 이 문서 작성 중 PGlite에서 `has_function_privilege('authenticated', oid, 'execute')`로 열거함 | 사용자가 결제 확인, 잡 탈취, 월 지급 호출을 시도할 수 있다 | 높음. 모듈러 출시 전 필수 |
+| C-1 | 모듈러 코어 `core` 스키마의 함수 PUBLIC EXECUTE 회수. `alter default privileges in schema core revoke execute on functions from public`은 PUBLIC 기본 권한에 효과가 없어 `enqueue_job`, `claim_jobs`, `complete_job`, `fail_job`, `heartbeat_job`, `confirm_payment_order`, `apply_subscription_transition`, `run_monthly_credit_grants`, `purge_organization`, `create_oauth_state` 등이 authenticated/anon에 열려 있다. 이 함수들은 내부 검사를 `is_privileged_session()`에 의존하는데 DEFINER 안에서 항상 true라서 EXECUTE가 유일한 잠금이다(`SECURITY_BASELINE.md:17-25`). 모놀리스는 SECTION 10이 막는다. 확인 방법: 이 문서 작성 중 PGlite에서 `has_function_privilege('authenticated', oid, 'execute')`로 열거함 | 사용자가 결제 확인, 잡 탈취, 월 지급 호출을 시도할 수 있다 | 해결(2026-10-13 `0007_core_function_privileges.sql`로 코어 반영 완료) |
 | C-2 | LLM 게이트웨이에 (a) 호출자가 지정하는 명시 모델(화이트리스트 검증), (b) 크레딧이 이미 선차감된 호출을 위한 `prepaid` 옵션(`ai_usage`만 기록) | 제품이 단계별 선택 모델과 일괄 선차감을 쓴다 | 중간 |
 | C-3 | 계정(조직) 삭제 요청 RPC 또는 문서화된 service_role 절차 | 30일 유예 삭제 UX 구현에 필요 | 중간 |
-| C-4 | 모듈러 `seed.sql`의 notes 행 병합: Free `features`, `pro` 플랜, 크레딧팩 2종(비활성) | 지금은 제품 조각이 대신 넣고 있다 | 낮음 |
-| C-5 | `confirm_payment_order` 금액 불일치 시 `failed` 주문이 롤백되는 알려진 결함 | 제품은 의존하지 않음(지급 없음 + 알림으로 처리) | 참고 |
+| C-4 | 모듈러 `seed.sql`의 notes 행 병합: Free `features`, `pro` 플랜, 크레딧팩 2종(비활성) | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치. 조각의 보충은 안전망으로 유지 | 완료 |
+| C-5 | `confirm_payment_order` 금액 불일치 시 `failed` 주문이 롤백되는 알려진 결함 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 별도 호출(지급 없음 + 알림) | 완료 |
 
 ## 7. 완료 정의
 

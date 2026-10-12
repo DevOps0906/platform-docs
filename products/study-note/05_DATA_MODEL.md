@@ -167,7 +167,7 @@ SECURITY DEFINER 함수 EXECUTE 정리: 서비스 전용 5개(`start_run`, `reco
 | `core.jobs`, `enqueue_job`, `cancel_job` | 잡 생성/취소 | 호출만 |
 | `core.ai_usage` | `run_steps.ai_usage_id` FK | 읽기 |
 
-모듈러 조각이 `core.plans`에 하는 일: Free 플랜 `features`를 `'{}'`일 때만 채우고, `pro` 플랜과 크레딧팩 2종을 비활성으로 INSERT한다(모듈러 `seed.sql`은 수정하지 않음. 코어 요청 C-4: 장기적으로 seed에 병합).
+모듈러 조각이 `core.plans`에 하는 일: Free 플랜 `features`를 `'{}'`일 때만 채우고, `pro` 플랜과 크레딧팩 2종을 비활성으로 INSERT한다(모듈러 `seed.sql`은 제품이 수정하지 않는다. 코어 요청 C-4는 2026-10-13 반영 완료: seed가 모놀리스 seed와 일치).
 
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
@@ -188,7 +188,7 @@ DBC 12장 기준.
 | 앱 등록, 플랜 seed | 조각 안(`apps` 등록) + 기존 `seed.sql`의 notes 행 | 0002에서 `apps` 등록, 플랜/팩은 `seed.sql` |
 | 코어 | 0000~0006 전체 | 축소판에서 SECTION 6-A(oauth_states), 6-B(encrypted_credentials), 8(Storage), 9(affiliate) 제거. 3, 4, 6-C, 7 유지 |
 | 가입 부트스트랩 | `signup_app='notes'` 필수 | apps 행이 1개면 자동 |
-| 함수 EXECUTE 기본 | 스키마 단위 기본 권한 회수가 PUBLIC 기본 EXECUTE에 효과가 없어 코어 일부 함수가 열려 있다(코어 결함, 06장 C-1). 제품 함수는 명시 회수 | 코어 SECTION 10이 public 전체를 회수 |
+| 함수 EXECUTE 기본 | 스키마 단위 기본 권한 회수는 PUBLIC 기본 EXECUTE에 효과가 없다. 코어는 `0007_core_function_privileges.sql`로 core 전 함수를 회수했다(06장 C-1 해결). 제품 함수는 명시 회수 | 코어 SECTION 10이 public 전체를 회수 |
 | Realtime | `supabase_realtime`에 `notes.runs`, `notes.run_steps` 추가 | `public.runs`, `public.run_steps` |
 | 이름 충돌 | 없음 | `entries`, `runs`, `run_steps`, `start_run` 등 `public` 이름. 코어 `jobs`와 충돌 없음(확인함) |
 
@@ -208,4 +208,4 @@ DBC 12장 기준.
 | 격리 | 타 조직 사용자가 entries/runs/run_steps/user_settings SELECT 0행, UPDATE/DELETE 0행, 타 조직으로 INSERT 42501, 자기 행을 타 조직으로 이동 42501, 엔타이틀먼트 없는 조직 0행 |
 | 권한 | 상태/최종본 직접 변경 42501, `start_run`/`record_step`/`finish_run`/`enforce_retention` 호출 42501, 타 조직 실행 취소 42501, `model_catalog`/`runtime_config`/`cost_guard` 쓰기·읽기 거부, 플랜/크레딧/역할 자기 변경(wallets, credit_ledger, grant_credits, app_entitlements, subscriptions, org_members, profiles.platform_role) 42501 |
 | 기능 | 선차감 4, 멱등 재호출, 활성 실행 중복 NT002, 프리미엄 모델 NT004, 크레딧 부족 CR001 후 고아 없음, 일일 상한 NT005 롤백, 부분 성공 환불 3, 카드 재요청(재사용 0 크레딧), 전부 실패 후 `fail_job` 이중 환불 없음, 원장 drift 0, 큐 취소 환불, 보존 50건, 휴지통/복원, 종료 실행 쓰기 NT003 |
-| 관찰된 코어 결함 | 모듈러에서 `core.enqueue_job`(및 `claim_jobs`, `confirm_payment_order` 등 `is_privileged_session()`만 믿는 함수)을 authenticated가 실행할 수 있다. `alter default privileges in schema core revoke execute ... from public`은 PUBLIC 기본 EXECUTE에 효과가 없다. 모놀리스는 SECTION 10이 막는다 |
+| 관찰된 코어 결함(해결) | 모듈러에서 `core.enqueue_job`, `claim_jobs`, `confirm_payment_order` 등을 authenticated가 실행할 수 있었다. `0007_core_function_privileges.sql`이 PUBLIC EXECUTE를 회수해 해결했고 통합 검증에서 확인했다. 모놀리스는 SECTION 10이 막는다 |

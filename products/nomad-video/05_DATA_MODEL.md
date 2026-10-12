@@ -229,7 +229,7 @@ workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없
 | `docs/reviews/Nomad-BlogStudio.md` 3장 #1 | `001_initial_schema.sql:286-287` | `org_members` FOR ALL로 타 조직 자가 가입 | 코어 `org_members`는 정책 없음 + guard(`migrations/0001_core_identity.sql:90`). 제품 정책은 `FOR ALL` 금지, 헬퍼만 사용 | VID-06-001, 002 |
 | BS #2 | `001_initial_schema.sql:226-234` | 멤버가 `credit_balance`, `plan_id` 직접 수정 | 잔액은 `core.wallets`, 플랜은 `app_entitlements`(SELECT만). 제품 테이블에 잔액·플랜 컬럼 없음. 스모크: B wallets/entitlements/subscriptions UPDATE 42501 | VID-06-002 |
 | BS #3 | `002_rpc_functions.sql:6-50` | `refund_credits` 권한 검사 없음 | 코어 refund는 service 전용, 제품은 Route Handler/워커에서만 호출 | VID-06-005 |
-| BS #4 | `src/app/api/billing/confirm/route.ts:32-34` | orderId split 실패, 금액 미검증, 멱등 없음 | `payment_orders` 선저장 + `confirm_payment_order` 금액 대조·멱등. PM001이 failed로 남지 않는 코어 결함에 의존하지 않고 서버가 운영 알림·Toss 취소 | VID-06-006, 007 |
+| BS #4 | `src/app/api/billing/confirm/route.ts:32-34` | orderId split 실패, 금액 미검증, 멱등 없음 | `payment_orders` 선저장 + `confirm_payment_order` 금액 대조·멱등. PM001이면 서버가 별도 호출로 `fail_payment_order`를 불러 주문을 failed로 기록한 뒤 운영 알림·Toss 취소 | VID-06-006, 007 |
 | BS #5 | `src/app/api/billing/checkout/route.ts:10-31` | 요청 본문의 orgId, 클라이언트 금액 | org는 세션에서, 금액은 plans/credit_packs에서. Advanced 할인 팩은 서버가 플랜 확인 | VID-06-006 |
 | BS #6 | `src/app/api/webhooks/toss/route.ts`, `webhooks/make/route.ts` | 웹훅 서명 없음, 임의 jobId done | 서명 필수, 잡 상태는 `complete_job`(워커 id 일치)만. Make 콜백은 Phase 2 automation-core HMAC | VID-06-025 |
 | BS #7 | `src/lib/billing/credits.ts:53-56` | refund가 Promise 객체를 값으로 넣어 잔액 복구 불가 | 코어 `refund_credits` + `fail_job` 자동 환불, 부분 환불은 `p_amount`. 스모크: drift 0(코어) | VID-06-005, 015 |

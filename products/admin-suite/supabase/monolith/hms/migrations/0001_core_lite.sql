@@ -265,6 +265,14 @@ begin
     having count(*) = 1;
   end if;
 
+  -- 초대제(invite) 앱은 가입만으로 이용 권한을 만들지 않는다.
+  -- 운영자가 서버(service_role)에서 bootstrap_app_for_org로 부여하거나, 초대받은 조직의 권한을 쓴다.
+  if v_app is not null and to_regclass('public.apps') is not null then
+    if exists (select 1 from public.apps a where a.id = v_app and a.signup_policy = 'invite') then
+      v_app := null;
+    end if;
+  end if;
+
   if v_app is not null then
     perform public.on_signup_app_bootstrap(v_org_id, new.id, v_app);
   end if;
@@ -1034,6 +1042,10 @@ begin
       raise exception 'bootstrap_app_for_org: owner/admin only' using errcode = '42501';
     end if;
   end if;
+  if not public.is_service_caller()
+     and exists (select 1 from public.apps a where a.id = p_app_id and a.signup_policy = 'invite') then
+    raise exception 'bootstrap_app_for_org: % is invite-only', p_app_id using errcode = '42501';
+  end if;
   perform public.on_signup_app_bootstrap(v_org, auth.uid(), p_app_id);
 end;
 $$;
@@ -1263,10 +1275,10 @@ declare
     'public.jwt_role()', 'public.is_privileged_session()', 'public.is_service_caller()',
     'public.current_org_ids()', 'public.is_org_member(uuid)', 'public.has_org_role(uuid,text[])',
     'public.current_org_role(uuid)', 'public.is_platform_admin()',
-    'public.has_entitlement(uuid,text)', 'public.entitled_plan_code(uuid,text)',
     'public.storage_org_id(text)'
   ];
   v_auth text[] := array[
+    'public.has_entitlement(uuid,text)', 'public.entitled_plan_code(uuid,text)',
     'public.personal_org_id()', 'public.session_context(text,uuid)', 'public.bootstrap_app_for_org(text,uuid)',
     'public.write_audit(uuid,text,text,text,jsonb,jsonb,jsonb)',
     'public.invite_member(uuid,uuid,text)', 'public.accept_invite(uuid)', 'public.approve_member(uuid,uuid)',

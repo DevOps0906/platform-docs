@@ -105,9 +105,9 @@ Opus가 큰 이유: 이 제품의 비 UI 작업이 API, 게이트, 테스트, �
 |---|---|---|
 | 1 | 모듈러 코어에서 서비스 전용 DEFINER 함수의 PUBLIC EXECUTE를 회수한다. 전역 `alter default privileges revoke execute on functions from public`과 함수별 명시 revoke. 확인된 anon 실행 가능 함수: `rate_limit_hit`, `run_monthly_credit_grants`, `expire_stale_payment_orders`, `purge_rate_limit_buckets`, `reap_stale_jobs`, `purge_expired_oauth_states`, `confirm_payment_order`(PM404까지 도달) 등 | 05장 6절 점검 |
 | 2 | `core.rate_limit_hit`, `purge_*` 등 service 전용 함수의 내부 검사를 `is_privileged_session()`에서 EXECUTE 의존 구조로 문서화(DEFINER 안에서 항상 true) | `SECURITY_BASELINE.md` 1장 |
-| 3 | `apps.signup_policy='invite'` 강제(가입 시 초대 테이블 검증) | stock 조각과 같은 사실(`1900_stock.sql:7`) |
+| 3 | `apps.signup_policy='invite'` 강제(가입 시 초대 테이블 검증) | 해결(2026-10-13 코어 반영 완료): invite 앱은 가입 트리거가 엔타이틀먼트를 만들지 않고 `bootstrap_app_for_org`는 비 service 호출자에 42501 |
 | 4 | 메일 발송 공용 모듈(확인/알림 메일) 필요 여부 | 현재 `SHARED_MODULES.md` 16개에 없음. 사업자 확정(D-6) 후 제품 로컬로 둘지 결정 |
-| 5 | 알려진 결함: `confirm_payment_order`는 금액 불일치 시 failed 주문을 남기지 못한다. 이 제품은 결제가 없어 의존하지 않는다 | `DB_CONVENTIONS.md:296` |
+| 5 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가(금액 불일치 시 failed 주문 기록). 이 제품은 결제가 없어 해당 없음 | `DB_CONVENTIONS.md:296` |
 
 ## 7. 완료 정의
 

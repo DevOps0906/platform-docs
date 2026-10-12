@@ -144,9 +144,9 @@
 
 | # | 요청 | 이유 | 대상 |
 |---|---|---|---|
-| R1 | 모듈러 `seed.sql`의 publishing 플랜 features를 01장 4.4절 16키로 갱신 | 현재 4키라 나머지는 서버 기본값(Free)으로 해석된다. Basic 사용자가 의도치 않게 제한될 수 있다 | `_supabase-modular/seed.sql:33`, `:95` |
+| R1 | 모듈러 `seed.sql`의 publishing 플랜 features를 01장 4.4절 16키로 갱신 | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치(`_supabase-modular/VERIFICATION.md`). 서버 기본값은 키 누락 대비로 유지 | `_supabase-modular/seed.sql:33`, `:95` |
 | R2 | `core.adjust_credits` RPC(음수 허용, service_role 전용) | 팩 환불 시 미사용분 회수와 운영자 조정(PB-06-027)에 필요(`CORE_SPEC.md:237` 제안) | `_platform-core` |
-| R3 | `confirm_payment_order` 금액 불일치 시 주문 `failed` 영속화 | 알려진 결함(raise가 UPDATE를 롤백). 제품은 의존하지 않고 운영 알림·취소 요청으로 우회한다. 수정은 코어 담당 | `_platform-core`, `DB_CONVENTIONS.md` 13.2 |
+| R3 | `confirm_payment_order` 금액 불일치 시 주문 `failed` 영속화 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` RPC 추가. 제품은 PM001 시 별도 호출로 이를 부르고 운영 알림·취소 요청을 한다 | `_platform-core`, `DB_CONVENTIONS.md` 13.2 |
 | R4 | `heartbeat_job` 반환값으로 취소 신호 제공 | 실행 중 잡 취소를 제품 테이블(`generation_runs.cancel_requested_at`) 없이도 하려면 필요(`CORE_SPEC.md:307` 제안). 그전까지는 제품 테이블로 처리 | `_platform-core` |
 | R5 | fal 웹훅 서명 검증 방식 확인과 verifier 제공 | 미확인 상태(SM 9장). 확인 전에는 request_id 대조만 | `packages/core-ai` |
 | R6 | 렌더 서비스를 `services/render-weasyprint`로 이 제품이 소유·운영함을 astro-ai와 계약 확정(요청 본문 상한, 동시성, 장애 연락) | 공용 서비스 운영 책임 명확화 | astro-ai, `_platform-core` |

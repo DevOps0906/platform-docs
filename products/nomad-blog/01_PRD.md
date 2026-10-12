@@ -169,7 +169,7 @@
 | `automation` | boolean | n8n/Make, 발신 웹훅(Phase 2) | 자동화 라우트 |
 | `team_members` | integer | 조직 멤버 수 상한 | 초대 라우트 |
 
-`_supabase-modular/seed.sql:36`의 blog free 행은 `{"posts_per_month": 10, "channels": 1}`, 월 크레딧 10인 샘플이다. seed가 조각 뒤에 실행되면 seed 값이 이긴다. 서버는 `max_channel_accounts`가 없으면 `channels`를 읽고 `channel_types`가 없으면 MVP 3채널을 허용한다(호환). seed를 위 표로 갱신하는 것은 seed 소유자에게 요청한다(06장 6절).
+모듈러 `seed.sql`은 2026-10-13에 모놀리스 seed와 같은 값(위 표)으로 맞춰졌다. 서버는 안전을 위해 `max_channel_accounts`가 없으면 `channels`를 읽고 `channel_types`가 없으면 MVP 3채널을 허용한다(호환).
 
 ### 4.4 크레딧팩
 
@@ -319,7 +319,7 @@
 | 6 | 네이버·티스토리 자격증명 | (a) 아이디·비밀번호 암호화 저장 후 워커 로그인 (b) 쿠키 가져오기(브라우저 확장) | MVP (a), Phase 2 (b) 추가. 2단계 인증 계정은 (b)만 가능 |
 | 7 | 티스토리 공식 API | 공개 API 제공 여부 미확인 | 확인 전 Playwright. API가 있으면 어댑터 교체 |
 | 8 | 모놀리스 스키마 | `public` | `MONOLITH_CORE_LITE.sql` 결정을 따른다. 사용자 최종 확인 |
-| 9 | seed의 blog 플랜 | seed 샘플(월 10cr, `channels:1`) vs 이 문서 4.1절 | 4.1절로 seed 갱신(seed 소유자 작업) |
+| 9 | seed의 blog 플랜 | seed 샘플(월 10cr, `channels:1`) vs 이 문서 4.1절 | 4.1절로 seed 갱신(2026-10-13 반영 완료) |
 | 10 | 인스타그램 | Phase 2 포함 vs 제외 | sns-uploader(video 소유) 일정에 맞춰 Phase 2 |
 | 11 | 환불 정책 | 4.5절 | 법률 검토 후 확정 |
 | 12 | 네이버 소셜 로그인 | 도입 여부. 도입 시 같은 이메일 자동 병합 금지, `naver_id` 매핑 + 로그인 상태에서 명시적 연결만 | MVP 미도입(이메일·Google·Kakao는 코어 auth 기본값을 따름) |

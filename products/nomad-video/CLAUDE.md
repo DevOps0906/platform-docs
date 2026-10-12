@@ -49,7 +49,7 @@
 | 채널 토큰 | `beginOAuth/completeOAuth`, `CredentialVault`. 페이로드에는 `credential_id`만 |
 | 제휴 | `createShortLink`, `disclosure`, `injectDisclosure`, `/r/[code]`는 `record_affiliate_click` |
 | 감사 | 제품 RPC가 이미 기록. 서버 쓰기 중 관리 동작은 `auditAsService` |
-| 결제 | 코어 toss. `confirm_payment_order` PM001이면 주문 상태에 기대지 말고 운영 알림 + Toss 취소 |
+| 결제 | 코어 toss. `confirm_payment_order` PM001이면 별도 호출로 `fail_payment_order(order_id,'amount_mismatch',{...})` 후 운영 알림 + Toss 취소 |
 
 ## 5. 코드 규칙
 

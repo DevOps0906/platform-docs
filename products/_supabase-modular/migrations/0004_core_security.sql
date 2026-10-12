@@ -176,9 +176,11 @@ grant execute on function core.current_org_ids() to anon, authenticated;
 grant execute on function core.is_org_member(uuid) to anon, authenticated;
 grant execute on function core.has_org_role(uuid, text[]) to anon, authenticated;
 grant execute on function core.current_org_role(uuid) to anon, authenticated;
-grant execute on function core.has_entitlement(uuid, text) to anon, authenticated;
+revoke execute on function core.has_entitlement(uuid, text) from anon;
+grant execute on function core.has_entitlement(uuid, text) to authenticated;
 grant execute on function core.is_platform_admin() to anon, authenticated;
-grant execute on function core.entitled_plan_code(uuid, text) to anon, authenticated;
+revoke execute on function core.entitled_plan_code(uuid, text) from anon;
+grant execute on function core.entitled_plan_code(uuid, text) to authenticated;
 
 -- ---------------------------------------------------------------------
 -- 2. 권한 컬럼 보호 트리거 (profiles: platform_role/status/email, organizations: owner_id/is_personal/deleted_at)

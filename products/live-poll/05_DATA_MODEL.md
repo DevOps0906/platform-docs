@@ -187,7 +187,7 @@ Realtime(`realtime.messages`, 조각:1462): 멤버는 `poll:<자기 org>:...` �
 | `confirm_payment_order` | 원본 | credit_pack 분기는 크레딧 절 삭제 지시대로 `grant_credits` 호출을 지우고 22023으로 거부 |
 | 플랜 | 모듈러 seed의 free(`max_participants`만) + 기본값 | seed에 free/pro/business 전체 features |
 | 금칙어 기본 목록 | 조각 18절 | 같은 내용(변환본 18절) |
-| 알려진 코어 결함 | `confirm_payment_order` 금액 불일치 시 주문 failed가 롤백되어 created로 남는다(`DB_CONVENTIONS.md` 13.2). 이 제품은 이에 의존하지 않는다: Phase 2 결제 Route Handler가 PM001을 받으면 주문 상태와 무관하게 Toss 취소를 호출하고 운영 알림을 보낸다 | 같음 |
+| 결제 실패 기록(코어 수정 반영, 2026-10-13) | `confirm_payment_order` 금액 불일치는 `PM001`(계약 불변, 같은 호출의 UPDATE는 롤백). 주문 failed 기록은 `fail_payment_order`가 맡는다: Phase 2 결제 Route Handler가 PM001을 받으면 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`를 부른 뒤 Toss 취소를 호출하고 운영 알림을 보낸다 | 같음 |
 
 ## 9. 마이그레이션 파일
 

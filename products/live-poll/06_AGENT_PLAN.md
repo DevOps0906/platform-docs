@@ -42,7 +42,7 @@
 | LP-06-025 | E2E(Playwright): 가입 → 행사 생성 → 시작 → 청중 2명(다른 브라우저 컨텍스트) 입장 → 투표 → 발표 화면 반영 → Q&A → 종료 | `tests/e2e/` | LP-06-008, LP-06-009, LP-06-010, LP-06-016, LP-06-017 | P0 | M | Opus | 전 흐름 통과. 청중 화면에서 결과 반영 1초 이내 단언 | 03장 2절 |
 | LP-06-026 | RLS/권한 회귀 테스트: 기획 단계 스모크(79항목, 05장 9절)를 저장소로 이식, 모듈러/모놀리스 둘 다, CI 연결 | `supabase/tests/` | LP-06-002 | P0 | M | Fable | B가 A 행사 데이터 0행, 역할/플랜/크레딧 변경 42501, anon 전부 42501, 종료 행사 스냅샷 poll/qna null. CI 실패 시 머지 차단 | `SECURITY_BASELINE.md` 15장 |
 | LP-06-027 | 부하 테스트: 3,000 구독 + 300 votes/s(k6 + Realtime 클라이언트 시뮬레이터), p95 측정, Realtime 플랜 한도 확인, 인원별 간격과 Redis 필요 여부 결론 | `tests/load/` | LP-06-010, LP-06-005 | P1 | L | Fable | 01장 5절 표의 인원별 p95를 측정해 보고서로 남긴다. 미달이면 원인과 1810 마이그레이션 제안 | 리뷰 5장 #11, 리뷰 3장 #1 |
-| LP-06-028 | 결제 E2E(Toss 테스트 키): Pro 구독 결제 → 엔타이틀먼트 pro → `max_participants` 1,000 반영, 금액 위조 PM001 시 Toss 취소 호출 | `tests/e2e-billing/` | LP-06-029 | P2 | M | Opus | 테스트 키로 전 흐름 통과. PM001에서 주문 상태와 무관하게 취소 API 호출(코어 결함 비의존) | 확정 결정 4, `CORE_SPEC.md` 5장 |
+| LP-06-028 | 결제 E2E(Toss 테스트 키): Pro 구독 결제 → 엔타이틀먼트 pro → `max_participants` 1,000 반영, 금액 위조 PM001 시 Toss 취소 호출 | `tests/e2e-billing/` | LP-06-029 | P2 | M | Opus | 테스트 키로 전 흐름 통과. PM001에서 `fail_payment_order` 호출 후 취소 API 호출 | 확정 결정 4, `CORE_SPEC.md` 5장 |
 | LP-06-029 | Phase 2 결제 라우트: checkout, confirm, Toss 웹훅(서명 필수), seed 플랜 활성화 요청 | `src/app/api/billing/`, `src/app/api/webhooks/toss/` | LP-06-003 | P2 | M | Fable | 클라이언트 금액 무시, 주문 선저장, 웹훅 서명 실패 401 | `SHARED_MODULES.md` 5, 6장 |
 | LP-06-030 | 접근성/반응형 체크(375/768/1024/1440, 포커스, reduced-motion, 대비, aria-live 요약) | `tests/a11y/` | LP-06-009, LP-06-016, LP-06-022 | P1 | S | Haiku | `DESIGN_PRINCIPLES.md` 7단계 12항목 통과 기록 | 03장 6절 |
 | LP-06-031 | 배포 설정: Vercel(icn1), Railway 워커 2대, env 기동 검증(누락 시 실패), 스케줄 | `src/env.ts`, `vercel.json`, `services/poll-broadcaster/deploy/` | LP-06-010 | P1 | S | Sonnet | 필수 env 하나라도 없으면 기동 실패. 워커 헬스체크 엔드포인트 | 02장 7, 8절 |
@@ -94,8 +94,8 @@
 |---|---|---|---|
 | `handle_new_user`가 `auth.users.is_anonymous = true`인 사용자에 대해 프로필/조직을 만들지 않게 | `_platform-core` 0001, `MONOLITH_CORE_LITE.sql` SECTION 1 | 익명 로그인을 쓰는 제품이 생기면 조직이 폭증한다. 해결 전까지 live-poll은 참가자 토큰을 쓴다(05장 7절) | P2 |
 | `core.rate_limit_peek(key, limit, window)`(히트 없이 조회) | 0004 | `join_event`가 사전 차단을 위해 `core.rate_limit_buckets`를 직접 읽는다(읽기만). 함수로 감싸면 코어 내부 구조와의 결합이 사라진다 | P2 |
-| 모듈러 seed의 `poll` free 플랜 features 보강과 pro/business 행 추가 | `_supabase-modular/seed.sql` | 01장 4절 키(현재는 조각의 기본값으로 동작). 금액은 D4 결정 뒤 | P1 |
-| `confirm_payment_order` 금액 불일치 시 failed 상태 보존 | 0003 | 알려진 코어 결함. live-poll은 의존하지 않는다(05장 8절) | 코어 일정 |
+| 모듈러 seed의 `poll` free 플랜 features 보강과 pro/business 행 추가 | `_supabase-modular/seed.sql` | 01장 4절 키(현재는 조각의 기본값으로 동작). 금액은 D4 결정 뒤. 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치 | P1 |
+| `confirm_payment_order` 금액 불일치 시 failed 상태 보존 | 0003 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. live-poll은 PM001 시 별도 호출(05장 8절) | 완료 |
 
 ## 7. 완료 정의
 

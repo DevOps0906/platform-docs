@@ -33,7 +33,7 @@
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | 메일 | 초대 링크 클릭 | - | 만료 → `/invite/...`에서 "초대가 만료되었습니다. 운영자에게 재발급을 요청하세요" |
-| 2 | `/invite/[token]` | 초대받은 이메일로 가입(또는 로그인) | `signUp(options.data.signup_app='stock')` → 코어 가입 트리거가 프로필, 개인 조직, default 엔타이틀먼트 생성 | 다른 이메일 → `ST031` "초대받은 이메일로 로그인하세요" |
+| 2 | `/invite/[token]` | 초대받은 이메일로 가입(또는 로그인) | `signUp(options.data.signup_app='stock')` → 코어 가입 트리거가 프로필, 개인 조직 생성(invite 앱이라 엔타이틀먼트는 만들지 않음) → 초대 토큰 검증 후 서버가 service_role로 `bootstrap_app_for_org('stock', 개인 조직)` 호출 | 다른 이메일 → `ST031` "초대받은 이메일로 로그인하세요" |
 | 3 | 같은 화면 | 자동 진행 | `POST /api/beta/redeem` → `redeem_beta_invite` → 플랜 beta 전환 → 첫 달 300 크레딧 | 이미 사용된 초대 `ST030` |
 | 4 | `/onboarding/disclaimer` | 고지 읽고 두 항목 동의 | `record_consent` 2회 | 거부 → 로그아웃 안내 |
 | 5 | `/dashboard`(빈 상태) | "모의투자 계좌 연결" 또는 "샘플 데이터로 둘러보기" | 샘플은 `mock` 연결 생성 + `stock.sync` | - |
@@ -63,7 +63,7 @@
 |---|---|---|---|---|
 | 1 | `/settings/billing` | "Pro로 변경(월 9,900원)" | `POST /api/billing/orders` → `payment_orders` INSERT(금액은 서버가 plans에서 읽음) | pro 비활성 → 버튼 없음 |
 | 2 | Toss 결제창 | 결제 | - | 취소 → 원래 화면 |
-| 3 | successUrl | 자동 | `POST /api/billing/confirm` → Toss confirm → `confirm_payment_order` | `PM001` 금액 불일치 → "결제 확인 실패. 승인 취소를 요청했습니다" + 운영 알림(코어 결함으로 주문이 failed로 남지 않을 수 있어 서버 로그·알림으로 별도 기록, 04장 5절) |
+| 3 | successUrl | 자동 | `POST /api/billing/confirm` → Toss confirm → `confirm_payment_order` | `PM001` 금액 불일치 → "결제 확인 실패. 승인 취소를 요청했습니다" + 운영 알림(주문 failed 기록은 별도 호출 `fail_payment_order`, 서버 로그·알림도 남김, 04장 5절) |
 | 4 | `/settings/billing` | 확인 | 엔타이틀먼트 pro, 월 600 크레딧 | - |
 
 ### 2.5 모의주문과 킬 스위치(Phase 3)

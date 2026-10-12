@@ -46,7 +46,7 @@
 | ST-06-028 | 계정 설정: 동의 이력, 내 데이터 내려받기, 탈퇴 | `src/app/(app)/settings/account/`, `src/app/api/me/` | 010 | P1 | S | Sonnet | JSON에 키·계좌 원문 없음, 탈퇴 시 조직 soft delete | 01_PRD 6.2 |
 | ST-06-029 | (P2) AI 아이디어, 성과 배치 `idea-eval-v1`, 내부 리더보드 | `workers/stock-jobs/src/eval/`, `src/app/api/ai/ideas/`, `src/app/api/leaderboard/`, `src/app/(app)/leaderboard/` | 021, 019 | P2 | M | Opus | 규칙 단위 테스트(다음 개장일 시가, 정지 종목), n<20 순위 미표시 | 리뷰 5장 #13, ST-F-013 |
 | ST-06-030 | (P2) AI 3사 비교 | `src/lib/ai/compare/`, `src/app/api/ai/compare/`, `src/app/(app)/ai/compare/` | 021 | P2 | M | Opus | 모델명 하드코딩 0, 한 모델 실패 시 부분 환불 | ST-F-014, 리뷰 #16 |
-| ST-06-031 | (P2) 결제: pro 주문, confirm, Toss 웹훅, 결제 E2E(Toss 테스트 키, 필수) | `src/app/api/billing/`, `src/app/api/webhooks/toss/`, `src/app/(app)/settings/billing/`, `tests/e2e/billing/` | 005(법률 의견), 009 | P2 | M | Fable | 테스트 키로 결제 → pro 엔타이틀먼트·600 크레딧, 금액 위조 → PM001 + 취소 + 알림(주문 failed 미기록 코어 결함에 의존하지 않음), 서명 없는 웹훅 401. 이유: 결제 | 확정 결정 4, ST-F-016 |
+| ST-06-031 | (P2) 결제: pro 주문, confirm, Toss 웹훅, 결제 E2E(Toss 테스트 키, 필수) | `src/app/api/billing/`, `src/app/api/webhooks/toss/`, `src/app/(app)/settings/billing/`, `tests/e2e/billing/` | 005(법률 의견), 009 | P2 | M | Fable | 테스트 키로 결제 → pro 엔타이틀먼트·600 크레딧, 금액 위조 → PM001 + `fail_payment_order` + 취소 + 알림, 서명 없는 웹훅 401. 이유: 결제 | 확정 결정 4, ST-F-016 |
 | ST-06-032 | (P3) 모의주문 모듈: 미리보기, 비중 검사, 확인, 제출 워커, 킬 스위치·한도 API | `src/lib/orders/`, `src/app/api/orders/`, `src/app/api/kill-switch/`, `src/app/api/order-limits/`, `workers/stock-jobs/src/orders/` | 003, 014 | P2 | L | Fable | `ORDERS_ENABLED=false`면 라우트 404, 제출 재시도 0회, 킬 스위치 뒤 제출 → blocked. 이유: 돈이 걸린 로직 | 리뷰 5장 #14, 리뷰 #2 |
 | ST-06-033 | (P3) 주문 패널, 확인 화면(60초), 한도·킬 스위치 화면, 모의투자 배너 | `src/app/(app)/orders/`, `src/app/(app)/settings/limits/`, `src/components/orders/` | 032 | P2 | M | Sonnet | 확인 전 주문 생성 없음, 만료 표시, "모의투자" 배너 상시 | 리뷰 5장 #14 |
 | ST-06-034 | (P3) 주문 안전장치 테스트 + 자동 킬 스위치 감시(시세 60초, 오류 3회, 잔고 불일치 1%) | `supabase/tests/orders/`, `tests/orders/`, `workers/stock-jobs/src/watchdog/` | 032 | P2 | M | Fable | 조건별 자동 스위치 작동, 사용자 해제 42501, 동시 주문 50건에서 일 한도 초과 0 | 리뷰 5장 #14, 리뷰 #2 |
@@ -104,9 +104,9 @@
 
 | # | 요청 | 이유 | 제품 측 임시 대응 |
 |---|---|---|---|
-| 1 | `apps.signup_policy = 'invite'` 강제: `on_signup_app_bootstrap`/`bootstrap_app_for_org`가 invite 앱이면 엔타이틀먼트를 만들지 않거나 초대 확인 훅을 호출 | 현재 approval만 처리(`migrations/0003_core_credits.sql:400-402`). 누구나 stock 엔타이틀먼트를 얻는다 | `beta_access` 게이트(스모크로 검증) |
+| 1 | `apps.signup_policy = 'invite'` 강제: `on_signup_app_bootstrap`/`bootstrap_app_for_org`가 invite 앱이면 엔타이틀먼트를 만들지 않거나 초대 확인 훅을 호출 | 해결(2026-10-13 코어 반영 완료): invite 앱은 가입 트리거가 구독·엔타이틀먼트를 만들지 않고 `bootstrap_app_for_org`는 비 service 호출자에 42501(이전에는 누구나 stock 엔타이틀먼트를 얻었다) | `beta_access` 게이트를 2차 게이트로 유지(스모크로 검증) |
 | 2 | 엔타이틀먼트 플랜 변경 RPC(`change_entitlement_plan(org, app, plan_code, source, actor)`, service_role, 구독·엔타이틀먼트·감사를 한 트랜잭션) | 베타 전환이 서버의 UPDATE 2회 + grant로 나뉜다 | 04장 3절 순서 + 멱등 키 |
-| 3 | `confirm_payment_order` 금액 불일치 시 주문 `failed` 기록(알려진 결함, `DB_CONVENTIONS.md:296`) | raise가 UPDATE를 롤백 | 의존하지 않음. 서버가 취소·감사·알림(04장 5절) |
+| 3 | `confirm_payment_order` 금액 불일치 시 주문 `failed` 기록(알려진 결함, `DB_CONVENTIONS.md:296`) | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가 | PM001 시 별도 호출 후 취소·감사·알림(04장 5절) |
 | 4 | `adjust_credits`(`CORE_SPEC.md:237`) | Phase 2 환불 시 미사용 크레딧 조정 | Phase 2 전까지 불필요 |
 | 5 | 공용 패키지 `packages/core-auth`의 vault가 `provider` 접두사 규칙(`broker:<broker>:<env>`)을 허용하는지 확인 | 연결별 자격증명 구분 | 제품 규칙으로 사용 |
 

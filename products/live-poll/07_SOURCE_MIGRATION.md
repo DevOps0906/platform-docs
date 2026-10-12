@@ -68,7 +68,7 @@
 | `FOR ALL` 플랜/크레딧 정책 | `SECURITY_BASELINE.md` 14장 | 셀프 업그레이드 | 플랜은 코어 엔타이틀먼트만 읽는다 |
 | 한글에 `\b` 경계 금지어 | `SECURITY_BASELINE.md` 14장 | 필터 무효 | `normalize_text` 부분 일치(조각:44) |
 | 공개 Broadcast 채널에서 서버 메시지와 클라이언트 메시지를 구분 없이 신뢰 | 이 기획(02장 5-1절) | 토픽을 아는 청중이 가짜 결과를 보낼 수 있다 | private 채널, 송신 정책 없음 |
-| 레이트 리밋 히트 뒤 raise | 이 기획(조각 머리 주석 5) | 히트가 롤백되어 대입 공격이 세어지지 않는다(코어 `confirm_payment_order` 결함과 같은 원리) | 청중 RPC는 jsonb `{ok:false, code}` 반환 |
+| 레이트 리밋 히트 뒤 raise | 이 기획(조각 머리 주석 5) | 히트가 롤백되어 대입 공격이 세어지지 않는다(코어 `confirm_payment_order`의 PM001도 같은 원리라 `fail_payment_order`를 별도 호출로 분리했다) | 청중 RPC는 jsonb `{ok:false, code}` 반환 |
 
 ## 5. 아카이브 절차
 

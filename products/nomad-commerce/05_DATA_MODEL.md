@@ -154,8 +154,8 @@ core.organizations (참조만)
 | 스키마 | `commerce` | `public`(사용자 최종 확인 대기) |
 | 코어 | `core` 0000~0006 | `MONOLITH_CORE_LITE.sql` 복사본. SECTION 9(affiliate)만 제거: commerce는 제휴 링크를 쓰지 않음(확정 결정 12). 3(Toss), 4(크레딧), 6-A(OAuth, Phase 2 SNS), 6-B(자격증명), 6-C(레이트 리밋), 7(jobs), 8(Storage) 유지 |
 | 앱 등록 | 조각 머리 `insert into core.apps` | `seed.sql` apps 1행(가입 시 자동 부트스트랩) |
-| 플랜 | 모듈러 `seed.sql` 샘플(01장 4.1과 다른 값 있음 → 06장 6절 요청) | `seed.sql`이 01장 4.1과 동일 |
-| 크레딧팩 | 모듈러 seed에 commerce 팩 없음 → 요청 | `seed.sql` 3개 |
+| 플랜 | 모듈러 `seed.sql`(2026-10-13 모놀리스 seed와 일치) | `seed.sql`이 01장 4.1과 동일 |
+| 크레딧팩 | 모듈러 seed에 commerce 팩 3개(2026-10-13 반영) | `seed.sql` 3개 |
 | 변환 | - | HEADER 블록 제거, `core.`/`commerce.` → `public.`, Realtime `schemaname` 치환(CM-06-002 스크립트) |
 | PostgREST | `config.toml [api].schemas`에 `commerce` 추가, 타입 `--schema core,commerce` | 기본 |
 

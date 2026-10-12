@@ -118,7 +118,7 @@
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | `/settings/billing` | standard 선택 | 서버가 `payment_orders` 선저장(금액은 plans) | - |
-| 2 | Toss 결제창 | 결제 | successUrl 복귀 → 서버 confirm → `confirm_payment_order` | PM001 금액 불일치(주문 failed 기록은 코어 결함으로 실패, 05장 6절) |
+| 2 | Toss 결제창 | 결제 | successUrl 복귀 → 서버 confirm → `confirm_payment_order` | PM001 금액 불일치(주문 failed 기록은 별도 호출 `fail_payment_order`, 05장 6절) |
 | 3 | 플랜 화면 | - | 엔타이틀먼트 standard | 결제 실패 → 기존 플랜 유지 |
 
 ## 3. 화면별 명세

@@ -40,7 +40,7 @@
 | TN-06-019 | 이미지 내보내기 핸들러: png/zip/strip, 원본 에셋 로드, 등급 재확인, 워터마크, AI 메타데이터·가시 표기, caption.txt | `services/toon-worker/src/handlers/export-image/` | TN-06-006, TN-06-018 | P0 | L | Opus | 무료 결과에 워터마크, AI 배경 사용 시 PNG iTXt `ai_generated=true`, 등급 밖 에셋이면 `TN003` 실패 | 리뷰 5장 #9, 리뷰 #1, #2 |
 | TN-06-020 | MP4 핸들러: Shorts Maker FFmpeg 인자 이식, 4:5 흐림 채움, 웹툰 팬, 전환, BGM, 메타데이터 | `services/toon-worker/src/handlers/export-mp4/`, `services/toon-worker/src/media/` | TN-06-019 | P0 | L | Opus | 10컷 x 2.5초 → 25초 1080x1920 30fps, 60초 영상 p95 120초 이하, 실패 시 환불 | 리뷰 5장 #10, TN-F-033 |
 | TN-06-021 | 내보내기 패널, 진행률(Realtime), 기록·다운로드 화면, 플랫폼 체크리스트 | `apps/toon/src/components/export/`, `apps/toon/src/app/app/exports/` | TN-06-018 | P0 | M | Sonnet | 대기 중 취소 시 환불 표시, 만료 행은 다시 내보내기 버튼 | 03장 3.4절, TN-F-037 |
-| TN-06-022 | Toss: checkout, confirm, 빌링키 발급·첫 청구, 해지, 웹훅(서명, 멱등) | `apps/toon/src/app/api/billing/`, `apps/toon/src/app/api/webhooks/toss/` | TN-06-037 | P0 | L | Fable | 클라이언트 금액 변조 시 미승인, 같은 결제키 재호출 멱등, `PM001` 시 취소 API 호출과 알림(코어 결함 비의존) | 리뷰 5장 #11 |
+| TN-06-022 | Toss: checkout, confirm, 빌링키 발급·첫 청구, 해지, 웹훅(서명, 멱등) | `apps/toon/src/app/api/billing/`, `apps/toon/src/app/api/webhooks/toss/` | TN-06-037 | P0 | L | Fable | 클라이언트 금액 변조 시 미승인, 같은 결제키 재호출 멱등, `PM001` 시 `fail_payment_order`, 취소 API 호출과 알림 | 리뷰 5장 #11 |
 | TN-06-023 | 워커 스케줄: 빌링키 정기 청구(재시도 1/3/7일), 만료 내보내기 파일 삭제, 30분 초과 생성 실패 처리 | `services/toon-worker/src/schedules/` | TN-06-022 | P0 | M | Fable | 청구 실패 3회 후 canceled, 30일 지난 파일 0개 | 리뷰 5장 #11, `CORE_SPEC.md:223-233` |
 | TN-06-024 | 결제/요금 화면(플랜, 팩, 원장, 해지 예약) | `apps/toon/src/app/app/billing/`, `apps/toon/src/app/(marketing)/pricing/` | TN-06-022 | P0 | M | Sonnet | 01장 4절 값과 화면 값 일치, "무제한" 문구 없음 | 리뷰 5장 #13 |
 | TN-06-025 | 결제 E2E(Toss 테스트 키): 구독 시작 → 워터마크 해제 → 해지 예약 → 기간 말 free 복귀, 크레딧팩 구매 | `tests/e2e/billing/` | TN-06-022, TN-06-023, TN-06-024 | P0 | M | Opus | 시나리오 5개 통과, 원장 drift 0 | `DOC_TEMPLATE.md` 2.7절 필수 |
@@ -110,10 +110,10 @@ P0 작업과 테스트 대응: DB(001, 005) → 002·029, 렌더(006, 019, 020) 
 
 | # | 요청 | 이유 | 급함 |
 |---|---|---|---|
-| 1 | `_supabase-modular/seed.sql` toon 플랜 features를 01장 4.1절 전체 키로 갱신, toon 크레딧팩 2종 추가 | 현재 seed에는 `watermark`, `export`만 있어 Pro도 트리거 기본값(무료 한도)을 받는다(05장 8절) | MVP 전 필수 |
+| 1 | `_supabase-modular/seed.sql` toon 플랜 features를 01장 4.1절 전체 키로 갱신, toon 크레딧팩 2종 추가 | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치(전체 키, 크레딧팩 2종). 이전에는 `watermark`, `export`만 있어 Pro도 무료 한도를 받았다(05장 8절) | 완료 |
 | 2 | fal client `FalSubmit`에 `negativePrompt`, `seed`, (Phase 2) `referenceImageUrls` 입력 추가 | 기준 인터페이스에 없다(`SHARED_MODULES.md:240`). 배경 부정 프롬프트는 MVP에 필요 | MVP 전 |
 | 3 | `core.adjust_credits` 추가 | 크레딧팩 미사용분 환불(`CORE_SPEC.md:237`) | MVP 직후 |
-| 4 | `confirm_payment_order` 금액 불일치 시 주문 failed 보존 결함 수정 | raise가 UPDATE를 롤백한다(`DB_CONVENTIONS.md:296`). 제품은 의존하지 않고 별도 처리 | 코어 일정 |
+| 4 | `confirm_payment_order` 금액 불일치 시 주문 failed 보존 결함 수정 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 별도 호출 | 완료 |
 | 5 | compliance 규칙 사전의 제품별 확장 지점(웹툰: 작가 화풍, 타 작품 캐릭터) | `SHARED_MODULES.md:347` | MVP 전 |
 | 6 | heartbeat 반환값으로 running 잡 취소 신호(`CORE_SPEC.md:307` 제안) | 긴 MP4 렌더 취소 | Phase 2 |
 

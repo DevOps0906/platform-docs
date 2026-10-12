@@ -45,16 +45,16 @@
 | POST `/api/webhooks/toss`(Phase 2) | Toss | rawBody | 200 | 0 | `webhook_events` | 401 |
 | 관리자(platform_admin, service) | - | studio_access 부여/회수, 템플릿/포트폴리오 편집 | - | 0 | service INSERT/UPDATE + 감사 | 403 |
 
-### Toss confirm 실패 처리 (코어 결함 회피)
+### Toss confirm 실패 처리
 
-`core.confirm_payment_order`는 금액 불일치(PM001) 때 raise가 주문 상태 UPDATE를 롤백해 주문이 `failed`로 남지 않는다(`DB_CONVENTIONS.md` 13.2). 제품은 이 상태에 의존하지 않는다.
+`core.confirm_payment_order`는 금액 불일치(PM001) 때 raise를 올린다(계약 불변, 같은 호출의 주문 UPDATE는 롤백). 주문 `failed` 기록은 service_role 전용 `fail_payment_order`(2026-10-13 코어 반영)를 별도 호출로 부른다.
 
 | 단계 | 동작 |
 |---|---|
 | 1 | confirm 전에 라우트가 `payment_orders.amount_krw`와 요청 amount를 직접 대조, 다르면 Toss confirm을 호출하지 않고 409 |
-| 2 | Toss 승인 뒤 RPC가 PM001/PM409를 내면 Toss 결제 취소 API 호출 → service 감사 INSERT `payment.confirm_mismatch`(order_id, 금액) → 운영 알림 |
-| 3 | 주문은 `created`로 남고 `expire_stale_payment_orders`가 1시간 뒤 `expired`로 바꾼다. UI는 라우트 응답으로 실패를 보여 준다 |
-| 4 | 코어 수정은 06장 6절 요청 |
+| 2 | Toss 승인 뒤 RPC가 PM001/PM409를 내면(PM001이면 먼저 별도 호출로 `fail_payment_order(order_id,'amount_mismatch',{...})`) Toss 결제 취소 API 호출 → service 감사 INSERT `payment.confirm_mismatch`(order_id, 금액) → 운영 알림 |
+| 3 | PM001 주문은 `fail_payment_order`로 `failed`가 된다. 그 밖에 `created`로 남은 주문은 `expire_stale_payment_orders`가 1시간 뒤 `expired`로 바꾼다. UI는 라우트 응답으로 실패를 보여 준다 |
+| 4 | 코어 수정은 반영 완료(06장 6절) |
 
 ## 3. RPC (SECURITY DEFINER)
 

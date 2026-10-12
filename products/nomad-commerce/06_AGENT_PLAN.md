@@ -39,7 +39,7 @@
 | CM-06-022 | 스마트스토어 커머스 API 어댑터 | `packages/commerce-markets/smartstore/` | CM-06-006 | P0 | L | Opus | 토큰 발급·캐시, 등록 1건(테스트 계정), 오류 정규화 | V2 #11 |
 | CM-06-023 | 등록 폼·업로드 API, 완성도 서버 계산, upload 핸들러, 상태 폴링 | `apps/nomad-commerce/app/api/listings/`, `apps/nomad-commerce/app/api/uploads/`, `services/commerce-worker/src/upload/` | CM-06-009, CM-06-021, CM-06-022 | P0 | M | Opus | CM004~CM008 → 422/403/409, 같은 request_id 업로드 1건, rejected 사유 저장 | V2 #11, CM #7 |
 | CM-06-024 | 엑셀(플레이오토 호환)/ZIP 내보내기 API와 핸들러 | `apps/nomad-commerce/app/api/exports/`, `services/commerce-worker/src/export/` | CM-06-016 | P0 | M | Opus | 쿠팡·스마트스토어 시트 4개씩, ZIP 마켓별 폴더, 서명 URL 7일, free 엑셀 403 | SS #14 |
-| CM-06-025 | Toss 결제(구독 빌링키, 크레딧팩, 업·다운그레이드, 해지), 웹훅(Toss, fal) 수신 | `apps/nomad-commerce/app/api/billing/`, `apps/nomad-commerce/app/api/webhooks/`, `apps/nomad-commerce/app/(app)/billing/` | CM-06-007 | P0 | M | Fable | 금액은 DB에서만, customerKey `org_<id>`, 서명 실패 401·중복 200, PM001 시 Toss 취소 호출 + 알림(코어 결함 의존 안 함) | V2 #12, CM #14, SS #3·#12 |
+| CM-06-025 | Toss 결제(구독 빌링키, 크레딧팩, 업·다운그레이드, 해지), 웹훅(Toss, fal) 수신 | `apps/nomad-commerce/app/api/billing/`, `apps/nomad-commerce/app/api/webhooks/`, `apps/nomad-commerce/app/(app)/billing/` | CM-06-007 | P0 | M | Fable | 금액은 DB에서만, customerKey `org_<id>`, 서명 실패 401·중복 200, PM001 시 `fail_payment_order` 호출 + Toss 취소 호출 + 알림 | V2 #12, CM #14, SS #3·#12 |
 | CM-06-026 | 결제 E2E(Toss 테스트 키) | `tests/e2e/billing/` | CM-06-025 | P0 | M | Opus | 구독 → 엔타이틀먼트 starter·150크레딧 1회, 크레딧팩 50 지급, 같은 confirm 재호출 멱등, 해지 예약 | DOC_TEMPLATE 2.7 |
 | CM-06-027 | 앱 셸·대시보드(KPI 실데이터, 환율, 크레딧, 소진 알림 표시) | `apps/nomad-commerce/app/(app)/layout.tsx`, `apps/nomad-commerce/app/(app)/dashboard/`, `apps/nomad-commerce/components/shell/` | CM-06-007 | P0 | M | Sonnet | 목 상수 0건, 서버 컴포넌트에서 1회 조회, 375px 레이아웃 | v1 #8, CM #11, SS #8 |
 | CM-06-028 | 상품DB·소싱 화면(가상 스크롤 표, 일괄 바, 엑셀 매핑) | `apps/nomad-commerce/app/(app)/products/`, `apps/nomad-commerce/app/(app)/sourcing/`, `apps/nomad-commerce/components/products/` | CM-06-020, CM-06-027 | P0 | L | Sonnet | 2,000행 스크롤, 빈 상태 문구, 키보드 선택 | V2 #13, CM #11, v1 #11 |
@@ -163,10 +163,10 @@
 
 | 대상 | 요청 | 이유 |
 |---|---|---|
-| `_supabase-modular/seed.sql` | commerce 플랜 features를 01장 4.1/4.4로 갱신(free·starter의 `market_api`, market_slots 1/3/10/-1, slot_sets, concurrency, image_quality 등), commerce 크레딧팩 3행 추가 | seed는 샘플이고 01장이 정본(`seed.sql:3-8`). 현재 free는 업로드가 CM007로 막힌다(스모크 확인) |
+| `_supabase-modular/seed.sql` | commerce 플랜 features를 01장 4.1/4.4로 갱신(free·starter의 `market_api`, market_slots 1/3/10/-1, slot_sets, concurrency, image_quality 등), commerce 크레딧팩 3행 추가 | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치. 이전에는 free 업로드가 CM007로 막혔다 |
 | `core.plans` | 이월 비율(예: `carry_over_pct`) 지원 검토 | SS 이월 50/100%(01장 8절 결정 2) |
 | core credits | `adjust_credits`(음수 조정) | 크레딧팩 환불(`CORE_SPEC.md` 5.4) |
-| core `confirm_payment_order` | 금액 불일치 시 failed 저장(현재 raise가 롤백) | 알려진 결함(`DB_CONVENTIONS.md` 13.2). 제품은 의존하지 않음 |
+| core `confirm_payment_order` | 금액 불일치 시 failed 저장(현재 raise가 롤백) | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 별도 호출 |
 | core jobs | 조직별 동시성 claim 옵션 | 지금은 commerce 디스패처로 우회(02장 4절) |
 | compliance 모듈 | 제품 사전 주입 인터페이스(`checkRules(input, dict)`) 확정 | commerce `banned_words` 사용 |
 | llm gateway | purpose `storyline`, `notice_autofill`, `category_suggest` 등록 | 02장 5절 |

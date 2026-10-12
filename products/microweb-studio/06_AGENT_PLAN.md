@@ -40,7 +40,7 @@
 | MW-06-024 | 가격표, 템플릿 카탈로그(선언형 목업 렌더), 포트폴리오 페이지 | `src/app/(showroom)/pricing/`, `src/app/(showroom)/templates/`, `src/app/(showroom)/portfolio/`, `src/showroom/components/catalog/` | 004, 022 | P0 | M | Sonnet | 카탈로그가 DB `templates`에서 렌더, picsum 0, published 포트폴리오만 노출. 근거: UI | MW-F-020~022, nexus #5, #7 |
 | MW-06-025 | 견적 문의 `/contact`, 공개 라우트, 운영자 메일 알림 | `src/app/(showroom)/contact/`, `src/app/api/public/leads/`, `src/server/notify/` | 002, 022 | P0 | M | Opus | 동의 없으면 422, 4번째 연속 제출 429, 메일 실패해도 리드 저장. 근거: 외부 연동 | MW-F-017, webcraft #12 |
 | MW-06-026 | 초대·허용 목록 관리(관리자 라우트, Auth 초대 메일, studio_access 부여/회수 감사) | `src/app/api/admin/`, `src/server/admin/` | 003 | P0 | S | Fable | platform_admin 외 403, 부여/회수 감사 행 1. 근거: 권한 | MW-F-024 |
-| MW-06-027 | (Phase 2) Toss 크레딧팩 결제, confirm 결함 회피, 웹훅 | `src/app/api/billing/`, `src/app/api/webhooks/toss/`, `src/app/studio/billing/` | 013 | P2 | M | Fable | 금액 위조 시 confirm 미호출, PM001 시 Toss 취소+감사, 웹훅 서명 실패 401. 근거: 결제 | 04장 2절, MW-F-025 |
+| MW-06-027 | (Phase 2) Toss 크레딧팩 결제, confirm 실패 처리, 웹훅 | `src/app/api/billing/`, `src/app/api/webhooks/toss/`, `src/app/studio/billing/` | 013 | P2 | M | Fable | 금액 위조 시 confirm 미호출, PM001 시 `fail_payment_order`+Toss 취소+감사, 웹훅 서명 실패 401. 근거: 결제 | 04장 2절, MW-F-025 |
 | MW-06-028 | (Phase 2) 돌잔치·부고장 블록(timeline, memorial, funeral_info)과 템플릿 출시 | `src/engine/blocks/phase2/` | 005 | P2 | M | Sonnet | `dol_basic`, `obituary_basic` beta 전환 후 생성 가능. 근거: UI | `00_MERGE_ANALYSIS.md:1091` |
 | MW-06-029 | 법적 고지와 문구: 약관, 개인정보처리방침, 하객 고지, 금지 문구 점검 목록 | `src/app/(legal)/`, `src/content/copy/` | 001 | P0 | S | Haiku | 01장 6절 항목 전부 반영, 금지 문구 grep 0. 근거: 문구 | 01장 6절 |
 | MW-06-030 | RLS/권한 회귀 테스트: 스모크 87항목 이식 + CI(PGlite) | `supabase/tests/` | 002 | P0 | M | Fable | mod/mono 모두 87/87, CI 필수 체크. 근거: RLS | `SECURITY_BASELINE.md` 15장, 05장 9절 |
@@ -118,11 +118,11 @@ W3 안의 021은 024와 같은 웨이브지만 024의 카탈로그 컴포넌트�
 
 | 요청 | 이유 | 대상 |
 |---|---|---|
-| `on_signup_app_bootstrap`/`bootstrap_app_for_org`가 `signup_policy='invite'`를 강제(초대 기록 없으면 엔타이틀먼트 미부여) | 현재 approval만 처리(`0003_core_credits.sql:400-402`). 제품은 `studio_access`로 우회 차단 중 | core 0003 |
-| `confirm_payment_order` PM001 시 주문 failed 영속(예외 대신 결과 반환 또는 별도 기록) | raise가 UPDATE를 롤백(`DB_CONVENTIONS.md` 13.2). 제품은 의존하지 않음(04장 2절) | core 0003 |
+| `on_signup_app_bootstrap`/`bootstrap_app_for_org`가 `signup_policy='invite'`를 강제(초대 기록 없으면 엔타이틀먼트 미부여) | 해결(2026-10-13 코어 반영 완료): invite 앱은 가입 트리거가 구독·엔타이틀먼트를 만들지 않고 `bootstrap_app_for_org`는 비 service 호출자에 42501. 제품의 `studio_access`는 2차 게이트로 유지 | core 0003 |
+| `confirm_payment_order` PM001 시 주문 failed 영속(예외 대신 결과 반환 또는 별도 기록) | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 별도 호출(04장 2절) | core 0003 |
 | `payment_orders.kind`에 일회성 상품(`one_time`) | 대행비를 Toss로 받으려면 필요(Phase 2 이후 검토) | core 0002 |
 | LLM 게이트웨이 `credits: 0` 호출 허용(차감 생략, ai_usage만) | 하객 기능은 과금 주체가 없다 | core-ai |
-| 모듈러 `seed.sql` microweb `free` 플랜 features를 01장 4절 값으로, 크레딧팩 2행(비활성) 추가 | 제품 조각은 core seed를 고치지 않는다 | `_supabase-modular/seed.sql` |
+| 모듈러 `seed.sql` microweb `free` 플랜 features를 01장 4절 값으로, 크레딧팩 2행(비활성) 추가 | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치. 제품 조각은 core seed를 고치지 않는다 | `_supabase-modular/seed.sql` |
 | 크레딧 `adjust_credits`(음수 조정) | 팩 미사용분 환불(`CORE_SPEC.md` 5.4) | core 0003 |
 | `public-assets` 버킷 MIME에 `audio/mpeg` 허용 또는 오디오 공개 버킷 | 현재 BGM은 서명 URL 302로 우회 | core 0005 |
 

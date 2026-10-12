@@ -89,7 +89,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | `alter default privileges in schema <s> revoke execute on functions from public`만으로는 회수되지 않는다. 스키마 단위 기본 권한은 권한을 더할 수만 있고, PostgreSQL 전역 기본값(함수 생성 시 PUBLIC EXECUTE)을 없애지 못한다. 그래서 스키마의 마지막 마이그레이션에서 `revoke execute on all functions in schema <s> from public`을 하거나, 함수마다 `revoke execute on function ... from public`을 명시한다. 2026-10-12 PGlite 검증에서 core 함수 대부분이 anon에 열려 있던 것을 확인하고 0007에서 회수했다 | `migrations/0007_core_function_privileges.sql`, `migrations/0000_core_extensions_and_schema.sql:27` |
 | service_role 전용 RPC는 `revoke ... from public, anon, authenticated`를 명시적으로 한 번 더 한다 | `migrations/0003_core_credits.sql:369-375` |
 | 사용자용 RPC만 `grant execute ... to authenticated` | `migrations/0004_core_security.sql:497-503` |
-| 정책 안에서 쓰는 헬퍼는 anon, authenticated에 EXECUTE | `:175-181` |
+| 정책 안에서 쓰는 헬퍼는 anon, authenticated에 EXECUTE. 단 `has_entitlement`·`entitled_plan_code`는 조직의 이용 여부·플랜을 드러내므로 authenticated만 준다(anon 정책에서 직접 쓰지 않는다. DEFINER 함수 안의 호출은 영향 없음) | `:175-181` |
 | 모놀리스(public 스키마)는 Supabase 기본 권한이 anon/authenticated에 ALL을 주므로 반드시 회수한다 | `MONOLITH_CORE_LITE.sql` SECTION 0, SECTION 10 |
 
 리뷰에서 "크레딧 RPC 권한 미회수"가 반복되었다(`docs/products/00_MERGE_ANALYSIS.md:516`). 브라우저에서 `rpc('grant_credits')`가 성공하면 과금 체계 전체가 무의미하다.
@@ -254,7 +254,10 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | B가 `select encrypted_credentials` / `webhook_events` / `oauth_states` | 42501 |
 | service가 같은 멱등 키로 `grant_credits` 2회 | 같은 ledger_id |
 | service가 잔액 초과 `consume_credits` | CR001 |
-| service가 `confirm_payment_order` 금액 불일치 | PM001, 주문 failed |
+| service가 `confirm_payment_order` 금액 불일치 | PM001, 주문은 created 유지(롤백). 이어서 `fail_payment_order` 호출 시 failed + 감사 행 |
+| 사용자가 `fail_payment_order` 호출 | 42501 |
+| 초대제 앱으로 가입 / 사용자가 초대제 앱 `bootstrap_app_for_org` | 엔타이틀먼트 0행 / 42501 |
+| anon이 `has_entitlement`·`entitled_plan_code` 호출 | 42501 |
 | service가 `fail_job(retryable=false)` | 환불 행 1개, 지갑 복원 |
 | `credit_ledger_reconciliation.drift` | 0 |
 | OAuth state 재사용 | OA001 |

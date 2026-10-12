@@ -229,8 +229,8 @@ astro.themes (전역 참조 데이터) ← readings.theme_key, reading_renders.t
 | apps 행 | `schema_name='astro'` | `schema_name='public'` |
 | 가입 부트스트랩 | `signup_app='astro'` 필수 | apps 1행이라 자동 |
 | 기본 권한 | 스키마에 기본 권한 없음 | 테이블마다 `revoke all from public, anon, authenticated` 후 GRANT |
-| 가입 크레딧 | 모듈러 seed는 `signup_credits=30`(가입 즉시) | `signup_credits=0` + `features.welcome_credits=30`(인증 후 서버 지급, 01장 D-3) |
-| 크레딧팩 | seed 샘플(가격 일부 다름) | 단가표 정본 4종 |
+| 가입 크레딧 | 모듈러 seed도 `signup_credits=0`(2026-10-13 갱신, 모놀리스와 일치) | `signup_credits=0` + `features.welcome_credits=30`(인증 후 서버 지급, 01장 D-3) |
+| 크레딧팩 | 단가표 정본 4종(2026-10-13 갱신) | 단가표 정본 4종 |
 | Realtime | `astro.readings`, `astro.reading_renders` 발행 | `public.` 같은 표 |
 | 앱 설정 | `SUPABASE_DB_SCHEMA=core`, `ASTRO_DB_SCHEMA=astro` | 둘 다 `public` |
 | PII 암호화 | 제품 표 암호문 컬럼(앱 계층). `core.encrypted_credentials`는 쓰지 않는다 | 같음(그래서 6-B 제거) |
@@ -265,4 +265,4 @@ RLS 스모크 결과(사용자 A·B 서로 다른 조직, X는 엔타이틀먼�
 | outbox 실패 1회 → pending, 3회 → dead, dead에 finish | pending / dead / AS003 | 일치 |
 | 원장 drift | 0 | 0 |
 
-스모크 스크립트는 저장소 `supabase/tests/rls_smoke`로 옮기는 작업이 AS-06-002다. 코어 결함(금액 불일치 시 `confirm_payment_order`가 주문을 failed로 남기지 못함)은 이 제품이 고치지 않으며 의존하지도 않는다(02장 6절 AA #7).
+스모크 스크립트는 저장소 `supabase/tests/rls_smoke`로 옮기는 작업이 AS-06-002다. 금액 불일치 시 주문 failed 기록은 코어 `fail_payment_order`(2026-10-13 반영)를 `PM001` 처리에서 별도 호출로 쓴다(02장 6절 AA #7).

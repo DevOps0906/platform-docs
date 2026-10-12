@@ -163,7 +163,7 @@ ERP 역할 매트릭스(`analysis:1241` 권고 A)
 | `max_staff` | int | HMS 직원 수 상한 | 50 | 직원 초대 Route Handler |
 | `phi_log_retention_days` | int | 접근 기록 보존(하한 730) | 730 | 프로비저닝 시 `workspaces.phi_log_retention_days`에 복사 |
 
-seed 주의: 통합 DB `seed.sql`은 erp/sms `default` 플랜을 features `{}`로 만든다(`docs/products/_supabase-modular/seed.sql:39-40`). 조각은 `on conflict do nothing`이라 덮어쓰지 않으므로, 키가 없을 때의 기본값(위 표)이 실제로 적용된다. seed 갱신은 `_supabase-modular` 담당에게 요청한다(06장 6절).
+seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같은 erp/sms 플랜 features를 담는다(`docs/products/_supabase-modular/VERIFICATION.md`). 조각은 `on conflict do nothing`이라 seed 값이 그대로 적용되며, 키가 없을 때의 기본값(위 표)은 대비용이다.
 
 ## 5. 비기능 요구사항
 

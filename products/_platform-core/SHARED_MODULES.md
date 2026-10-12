@@ -131,7 +131,7 @@ export interface CreditsApi {
 | 소유 / 소비 | _platform-core / 유료 플랜 제품 |
 | 코어 SQL | `core.payment_orders`, `core.payments`, `core.billing_keys`, `core.billing_key_summaries`(`migrations/0002_core_billing.sql:66-181`, `:245-251`), `core.confirm_payment_order`(`migrations/0003_core_credits.sql:534-631`), `core.apply_subscription_transition`(`migrations/0002_core_billing.sql:265-341`), `core.expire_stale_payment_orders`(`:347-363`) |
 | 금지 | 클라이언트가 보낸 amount를 믿는 것, orderId 파싱으로 org/plan 추출, `customerKey = Date.now()`(`docs/products/00_MERGE_ANALYSIS.md:545`), 웹훅만으로 지급 |
-| 실패/환불 | confirm 실패(`PM001`) → 주문 failed, 운영 알림, 사용자에게 "결제 확인 실패, 승인 취소 요청" 안내 후 서버가 Toss 취소 API 호출(제안). 정기결제 실패 → `past_due` → 재시도 1일/3일/7일(제안) → `canceled`. 환불 → Toss 취소 API → `payments` 갱신 → 크레딧 조정(`CORE_SPEC.md` 5.4) |
+| 실패/환불 | confirm 실패(`PM001`) → 별도 호출 `core.fail_payment_order`로 주문 failed 기록, 운영 알림, 사용자에게 "결제 확인 실패, 승인 취소 요청" 안내 후 서버가 Toss 취소 API 호출(제안). 정기결제 실패 → `past_due` → 재시도 1일/3일/7일(제안) → `canceled`. 환불 → Toss 취소 API → `payments` 갱신 → 크레딧 조정(`CORE_SPEC.md` 5.4) |
 
 ```ts
 // packages/core-billing/toss

@@ -181,10 +181,10 @@ publishing.waitlist (테넌트 아님)
 | 코어 | `migrations/0000~0006` | `0001_core_lite.sql`: SECTION 6-A(OAuth state), 9(affiliate) 제거. 3, 4, 6-B, 6-C, 7, 8 유지 | 제거 사유는 파일 안 주석 |
 | 제품 SQL | `1000_publishing.sql`(정본) | `0002_publishing_domain.sql` = 정본을 DBC 12장 규칙으로 변환(create schema 제거, `core.`/`publishing.` → `public.`, Realtime schemaname) | 직접 수정 금지, 변환 스크립트 작업 PB-06-001 |
 | 앱 등록 | `core.apps` + 모듈러 seed | `public.apps` 1행(`schema_name='public'`) → 가입 시 메타데이터 없이 자동 부트스트랩 | `DBC` 12장 |
-| 플랜 seed | 모듈러 seed(`seed.sql:33`, `:95`)의 features 4키 | `seed.sql`에 features 16키 | 금액·크레딧 같음. 키 차이는 서버 기본값으로 흡수, 코어 요청(06장 6절) |
+| 플랜 seed | 모듈러 seed(2026-10-13 모놀리스 seed와 일치, features 16키) | `seed.sql`에 features 16키 | 같음. 서버 기본값은 키 누락 대비로 유지 |
 | PostgREST | `[api].schemas`에 `publishing` 추가, 클라이언트 `supabase.schema('publishing')` | 기본 노출 | - |
 | 월 지급 | `run_monthly_credit_grants()` | `run_subscription_rollover()` + `run_monthly_credit_grants()` | DBC 12장 |
-| 알려진 코어 결함 | `confirm_payment_order` 금액 불일치 시 raise가 UPDATE를 롤백해 주문이 failed로 남지 않음(`DB_CONVENTIONS.md` 13.2) | 같음 | 제품은 이 동작에 의존하지 않는다: `PM001`이면 Route Handler가 별도 트랜잭션으로 운영 알림 + Toss 취소 요청을 하고, 주문 상태 정리는 코어 `expire_stale_payment_orders`에 맡긴다. 코어 수정은 하지 않는다 |
+| 결제 실패 기록(코어 수정 반영, 2026-10-13) | `confirm_payment_order`는 금액 불일치 시 `PM001`을 올린다(계약 불변, 같은 호출의 UPDATE는 롤백). 주문 failed 기록은 service_role 전용 `fail_payment_order`가 맡는다 | 같음(`public.fail_payment_order`) | `PM001`이면 Route Handler가 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`를 부르고, 이어 Toss 취소 요청 + 운영 알림을 한다. 남은 created 주문은 코어 `expire_stale_payment_orders`가 정리한다. 코어 수정은 하지 않는다 |
 
 ## 9. 마이그레이션 파일
 

@@ -339,7 +339,7 @@ create policy org_files_update on storage.objects for update to authenticated
   with check (bucket_id = 'org-files' and core.is_org_member(core.storage_org_id(name)));
 drop policy if exists org_files_delete on storage.objects;
 create policy org_files_delete on storage.objects for delete to authenticated
-  using (bucket_id = 'org-files' and (owner = auth.uid() or core.has_org_role(core.storage_org_id(name), array['owner', 'admin'])));
+  using (bucket_id = 'org-files' and (owner_id = auth.uid()::text or core.has_org_role(core.storage_org_id(name), array['owner', 'admin'])));
 
 -- exports: 서버(service_role)만 쓰고, 멤버는 읽기(서명 URL 발급용)
 drop policy if exists exports_select on storage.objects;

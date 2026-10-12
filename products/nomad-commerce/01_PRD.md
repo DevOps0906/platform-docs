@@ -151,7 +151,7 @@ V.2 PRD(`PRD.md:243-251`), DETAIL(`DETAIL_PAGE_SYSTEM.md:360-437`), CLAUDE 진�
 | `pro` | 69,000원 | 350 | 0 | 없음 | 상품 2,000, 계정 10, 동시 2, 고화질 모델 |
 | `enterprise` | 149,000원 | 550 | 0 | 없음 | 상품·계정 무제한, 동시 5, 최고 화질, API 접근(Phase 2) |
 
-연간 결제(월 x 10, `PRD.md:303`)와 Add-on(`PRD.md:304`)은 Phase 2. 이월(SS PRO 50%, ENT 100%, `sellingstudio/PRD.md:157-158`)은 core `plans.carry_over`가 boolean이라 MVP는 이월 없음(8장 결정). 모듈러 `seed.sql` 샘플(`_supabase-modular/seed.sql:37`, `:84-89`)과 다른 값(market_slots 8/20, starter의 market_api 없음 등)은 이 표가 정본이며 seed 갱신을 06장 6절로 요청한다. 모놀리스 `supabase/monolith/seed.sql`은 이 표와 같다.
+연간 결제(월 x 10, `PRD.md:303`)와 Add-on(`PRD.md:304`)은 Phase 2. 이월(SS PRO 50%, ENT 100%, `sellingstudio/PRD.md:157-158`)은 core `plans.carry_over`가 boolean이라 MVP는 이월 없음(8장 결정). 모듈러 `seed.sql`은 2026-10-13에 이 표(모놀리스 seed)와 같은 값으로 맞춰졌다. 모놀리스 `supabase/monolith/seed.sql`은 이 표와 같다.
 
 ### 4.2 크레딧 단가
 
@@ -212,7 +212,7 @@ V.2 PRD(`PRD.md:243-251`), DETAIL(`DETAIL_PAGE_SYSTEM.md:360-437`), CLAUDE 진�
 | 다운그레이드 | 다음 결제일 적용. 한도 초과 상품·계정은 삭제하지 않고 신규 추가만 막힌다(트리거가 신규만 검사) |
 | 결제 실패 | past_due → 1/3/7일 재시도 → canceled(`CORE_SPEC.md` 5.3 제안값) |
 | 환불 | 구독 첫 결제 후 7일 이내 미사용(크레딧 사용 0)이면 전액(제안: 전자상거래법 청약철회 기간 7일과 맞춤). 크레딧팩은 미사용분만 |
-| 알려진 코어 결함 | `confirm_payment_order` 금액 불일치 시 주문이 failed로 남지 않는다(`DB_CONVENTIONS.md` 13.2). 제품은 PM001을 받으면 Route Handler가 운영 알림 + Toss 취소를 호출하고 주문 상태에 의존하지 않는다 |
+| 결제 실패 기록(코어 수정 반영, 2026-10-13) | `confirm_payment_order` 금액 불일치는 `PM001`(계약 불변). 제품은 PM001을 받으면 Route Handler가 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`를 부른 뒤 운영 알림 + Toss 취소를 호출한다 |
 
 ## 5. 비기능 요구사항
 

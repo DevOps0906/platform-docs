@@ -174,7 +174,7 @@ anon에는 아무 권한이 없다(`1300:750`). `posts`에 쓰기 정책을 준 
 | `jobs`, `enqueue_job`, `cancel_job` 등 | 생성·발행 잡 | FK, RPC |
 | `affiliate_accounts`, `affiliate_links`, `affiliate_clicks`, `affiliate_disclosures`, `brandconnect_applications` + 함수 6개 | 제휴 전부 | 재정의하지 않음. blog는 매핑과 FK만 |
 | `consume/grant/refund_credits`, `wallets`, `credit_ledger` | AI 과금 | 서버만 |
-| `payment_orders`, `confirm_payment_order` | 결제 | `confirm_payment_order`가 금액 불일치 시 주문을 failed로 남기지 못하는 알려진 코어 결함(`DB_CONVENTIONS.md` 13.2절)에 의존하지 않는다 |
+| `payment_orders`, `confirm_payment_order` | 결제 | `confirm_payment_order`는 금액 불일치 시 `PM001`을 올린다. 주문 failed 기록은 별도 호출 `fail_payment_order`(2026-10-13 코어 반영)로 한다 |
 
 `core.*`를 ALTER하는 문장이 조각에 없음을 확인했다.
 

@@ -11,7 +11,7 @@
 | 대상 사용자 | (1) 방문자: 갤러리 디렉터, 이벤트 기획자, 하이엔드 개인 고객(로그인 없음) (2) 스튜디오 운영자: 문의를 받고 처리하는 초대받은 소수 | `WebSite/Botanic_Architecture/PRD.md:17-21`(타겟 오디언스 2장) |
 | 제품 성격 | 마케팅 사이트 + 문의/뉴스레터 백엔드. 요금, 크레딧, 결제가 없다 | `docs/products/_supabase-modular/ARCHITECTURE.md:42` |
 | 앱 ID / 스키마 | `core.apps.id = site`, 모듈러 스키마 `site`, 마이그레이션 번호 2200 | `docs/products/README.md:23` |
-| 가입 정책 | `invite`. 코어가 강제하지 않으므로 `provision_site`(service_role)로 사이트를 등록해야 콘솔이 열린다 | 05_DATA_MODEL.md 4장 |
+| 가입 정책 | `invite`. 코어가 강제하며(2026-10-13), 추가로 `provision_site`(service_role)로 사이트를 등록해야 콘솔이 열린다 | 05_DATA_MODEL.md 4장 |
 
 ## 2. 통합 근거
 

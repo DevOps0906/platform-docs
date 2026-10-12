@@ -40,7 +40,7 @@
 | auth | 가입(`signup_app='video'`), 세션, `requireSession` | `proxy.ts`, 레이아웃, 모든 Route Handler | 기본 역할 admin 금지 |
 | org | 1인 1워크스페이스, Advanced 멤버 초대 | `src/server/team` 대신 코어 RPC 직접 | `team_members` 상한은 서버 판정 |
 | credits | 생성·업로드·검사 선차감, 실패 환불, 부분 환불 | `src/server/*` | 멱등 키 `consume:video:<request_id>` |
-| toss | 구독, 크레딧팩, 빌링키 | `src/server/billing`, orchestrator cron | `confirm_payment_order` PM001 시 주문이 failed로 남지 않는 코어 결함에 의존하지 않고 운영 알림 + 취소를 직접 수행 |
+| toss | 구독, 크레딧팩, 빌링키 | `src/server/billing`, orchestrator cron | `confirm_payment_order` PM001 시 별도 호출로 `fail_payment_order`(service_role)를 불러 주문을 failed로 남기고 운영 알림 + Toss 취소를 수행 |
 | webhooks | Toss, fal, (Phase 2) Distrokid, Make/n8n | `src/app/api/webhooks/*` | 서명 없으면 거부 |
 | oauth | YouTube/Meta/TikTok 채널 연결, 쿠팡 키 저장 | `src/server/channels`, `src/server/affiliate` | state는 `create_oauth_state`만 |
 | llm gateway | 번역 후처리, 대본, 스토리라인, 블링, GEO 메타, 플리 메타, compliance | orchestrator steps, `src/server/radar` | 모델 허용 목록(YSM #6) |

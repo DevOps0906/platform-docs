@@ -88,7 +88,7 @@
 | Vercel 함수에서 장시간 SSE·WebSocket 유지 | `docs/reviews/Stock_Trader_nomad.md:44`, `:71` | 연결 끊김, 시세 누락 | 상주 워커 |
 | `EventSource`로 AI 스트리밍(GET 전용) | `docs/reviews/Stock_Trader_nomad.md:96` | POST 본문 전송 불가 | `fetch(POST)` + `ReadableStream` |
 | 개인 API 시세를 다른 사용자에게 재배포 | `docs/reviews/Stock_Trader_nomad.md:44` | 약관 충돌 | 사용자 본인 연결만, 틱 저장 없음 |
-| raise 뒤 상태 UPDATE 기대(롤백 함정) | `DB_CONVENTIONS.md:296`(코어 PM001 결함) | 실패 기록 소실 | 차단·만료는 상태 기록 후 반환 |
+| raise 뒤 상태 UPDATE 기대(롤백 함정) | `DB_CONVENTIONS.md:296`(코어 PM001. 코어는 2026-10-13 `fail_payment_order`로 분리 해결) | 실패 기록 소실 | 차단·만료는 상태 기록 후 반환 |
 
 ## 5. 아카이브 절차
 

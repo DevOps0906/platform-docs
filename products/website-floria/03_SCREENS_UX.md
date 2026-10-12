@@ -47,7 +47,7 @@ viewer 역할은 콘솔에서 `/admin/settings`의 읽기 전용 화면 외에�
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | 이메일 | 플랫폼 관리자가 보낸 초대 메일의 링크 클릭 | Auth Admin `inviteUserByEmail`(메타데이터 `signup_app=site`)로 만든 사용자. 가입 트리거가 프로필, 개인 조직, owner 멤버십, `site` 엔타이틀먼트(`default` 플랜)를 만든다 | 만료된 초대: 관리자에게 재발송 요청 |
+| 1 | 이메일 | 플랫폼 관리자가 보낸 초대 메일의 링크 클릭 | Auth Admin `inviteUserByEmail`(메타데이터 `signup_app=site`)로 만든 사용자. 가입 트리거가 프로필, 개인 조직, owner 멤버십을 만든다(invite 앱이라 엔타이틀먼트는 만들지 않고 운영자가 service_role로 `site` 엔타이틀먼트를 부트스트랩한다) | 만료된 초대: 관리자에게 재발송 요청 |
 | 2 | `/admin/login` | 비밀번호 설정 후 로그인 | `session_context('site')` 호출. 프로필이 없으면 로그아웃(기본 admin 금지) | `status='pending'/'suspended'`: 안내 페이지 |
 | 3 | `/admin` | 최초 진입 | 조직에 등록된 사이트가 없으면 "등록된 사이트가 없습니다. 담당자가 사이트를 등록하면 문의가 여기에 표시됩니다." | 이 화면에 문의 폼이나 가입 링크는 없다 |
 | 4 | 담당자 작업 | (플랫폼 관리자) `provision_site` 호출 | service_role RPC로 `sites` 행 생성, 감사 로그 | 엔타이틀먼트 없는 조직은 42501 |

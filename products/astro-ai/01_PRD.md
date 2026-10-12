@@ -109,7 +109,7 @@
 | `pack_700` | 27,900원 | 700 | 100 | 800 | `AA/공통/PRD.md:57` |
 | `pack_2000` | 69,900원 | 2,000 | 400 | 2,400 | `AA/공통/PRD.md:58` |
 
-모듈러 `seed.sql`의 astro 팩(`pack_300` 보너스 없음, `pack_1000` 39,900원)은 샘플값이라 위 표와 다르다(`docs/products/_supabase-modular/seed.sql:71-79`). 모놀리스 `seed.sql`은 위 표를 따른다. 모듈러 seed 갱신은 코어 요청이다(06장 6절).
+모듈러 `seed.sql`은 2026-10-13에 모놀리스 `seed.sql`과 같은 값으로 맞춰져 위 표를 따른다(`docs/products/_supabase-modular/VERIFICATION.md`).
 
 ### 4.4 크레딧 운영 규칙
 
@@ -142,7 +142,7 @@
 | `welcome_credits` | int | 인증 후 서버가 지급할 환영 크레딧 | 30 |
 | `monthly_fair_use` | int | Phase 2 Master 월 공정 사용 한도(cr) | 없음 |
 
-모듈러 seed의 `{"readings":["saju","tarot"],"pdf_themes":2}`(`docs/products/_supabase-modular/seed.sql:34`)는 통합 리딩이 빠져 있고 타입이 다르다. 갱신 요청은 06장 6절이다.
+모듈러 seed의 `{"readings":["saju","tarot"],"pdf_themes":2}`(`docs/products/_supabase-modular/seed.sql:34`)는 옛 값이었고, 2026-10-13에 모놀리스 seed와 일치하도록 갱신되었다(06장 6절 R-2 해결).
 
 ## 5. 비기능 요구사항
 
@@ -243,7 +243,7 @@
 |---|---|---|---|
 | D-1 | 제품 정체성(B-5 #1) | (a) 30초 즉시 리딩 + 3채널 (b) 소장형 책 (c) 소장형 책자 + 이메일·대시보드 | (c). 랜딩 메시지와 PDF 보관 정책(AS-F-016)이 이 가정을 따른다 |
 | D-2 | LLM(B-5 #5) | (a) Claude 단일 (b) 3사 체인 (c) Claude + OpenRouter 폴백 | (c). 코어 LLM 게이트웨이 기본 동작과 같다(`docs/products/_platform-core/SHARED_MODULES.md:204`) |
-| D-3 | 가입 크레딧 양과 지급 시점(B-5 #4) | (a) 30cr 가입 즉시 (b) 30cr 이메일 인증·Google 확인 뒤 (c) FD식 3cr | (b). 모놀리스 seed의 `signup_credits=0`과 `features.welcome_credits=30`이 이 가정이다. 모듈러 seed는 현재 (a)라 코어 요청 필요 |
+| D-3 | 가입 크레딧 양과 지급 시점(B-5 #4) | (a) 30cr 가입 즉시 (b) 30cr 이메일 인증·Google 확인 뒤 (c) FD식 3cr | (b). 모놀리스 seed의 `signup_credits=0`과 `features.welcome_credits=30`이 이 가정이다. 모듈러 seed도 2026-10-13부터 같은 값이다 |
 | D-4 | 만세력 데이터 소스(B-5 #6) | (a) KASI 실시간 (b) 로컬 절기 테이블 + KASI 검증 (c) 외부 라이브러리 | (b). 라이브러리를 쓰더라도 골든 테스트 통과가 조건 |
 | D-5 | 리포트·PDF 보관 기간 | (a) 계정 존속 기간 (b) 1년 (c) 원본 24시간 삭제 | (a). (c)는 다른 프로젝트 잔재(`docs/reviews/Astro_AI.md:55`) |
 | D-6 | 결제 환불 규정 | 4.5절 초안 | 법무 확인 후 확정 |

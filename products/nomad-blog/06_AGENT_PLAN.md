@@ -40,7 +40,7 @@
 | BL-06-022 | 에디터 화면, 보조 패널 5탭, 발행 시트 UI | `src/app/(app)/posts/[id]/`, `src/app/(app)/posts/new/`, `src/components/editor-shell/` | BL-06-007, BL-06-014 | P0 | L | Sonnet | AI 버튼마다 예상 크레딧, 잡 진행률 Realtime, 402/409 화면 03장 5절 문구 | 03장 3.2~3.3절, SM #14 |
 | BL-06-023 | 채널 화면과 위험 동의 모달(스크롤 완독, 체크 3개, 입력 확인) | `src/app/(app)/channels/`, `src/components/consent/` | BL-06-009 | P0 | M | Sonnet | 고지문 끝까지 스크롤 전 체크 비활성, member는 요청 안내만 | 01장 6.4절 |
 | BL-06-024 | 제휴 통계 화면, 브랜드커넥트 화면 | `src/app/(app)/affiliate/`, `src/app/(app)/brandconnect/` | BL-06-016, BL-06-017 | P0 | M | Sonnet | 수익 데이터 없으면 열 숨김, 지원 상태 칩 6종 | 03장 3.6~3.7절 |
-| BL-06-025 | 결제: 주문 생성, confirm, 빌링키, billing 화면, PM001 처리(운영 알림 + Toss 취소) | `src/app/api/billing/`, `src/app/(app)/billing/`, `src/server/billing/` | BL-06-004 | P0 | M | Fable | 금액을 클라이언트에서 받지 않음, confirm 2회 → 지급 1회, PM001 시 주문 상태에 의존하지 않고 취소 호출 | SM #1, #2; 01장 4장 |
+| BL-06-025 | 결제: 주문 생성, confirm, 빌링키, billing 화면, PM001 처리(운영 알림 + Toss 취소) | `src/app/api/billing/`, `src/app/(app)/billing/`, `src/server/billing/` | BL-06-004 | P0 | M | Fable | 금액을 클라이언트에서 받지 않음, confirm 2회 → 지급 1회, PM001 시 `fail_payment_order` 호출 후 취소 호출 | SM #1, #2; 01장 4장 |
 | BL-06-026 | 랜딩, 가격, 약관, 개인정보처리방침 | `src/app/(marketing)/`, `src/styles/tokens.css` | BL-06-003 | P0 | M | Sonnet | 03장 4절 토큰·와이어프레임 반영, 금지 문구 0건, 체크리스트 12항목 통과 | 03장 4절 |
 | BL-06-027 | 설정: 대가성 문구 편집(끄기 없음), 멤버, 활동 기록 | `src/app/(app)/settings/` | BL-06-016 | P1 | S | Sonnet | 이해관계 단어 없는 문구 저장 422, owner/admin 외 접근 403 | BL-F-006, BL-F-024 |
 | BL-06-028 | RLS/권한 회귀 테스트(05장 9절 69항목 + 추가) | `supabase/tests/` | BL-06-001 | P0 | M | Fable | 모듈러·모놀리스 모두 0 실패, CI 필수 단계 | `SECURITY_BASELINE.md` 15장, SM #15, YSM #15 |
@@ -118,9 +118,9 @@
 
 | 요청 | 대상 | 이유 |
 |---|---|---|
-| `_supabase-modular/seed.sql`의 blog 플랜을 01장 4.1절로 갱신(free 월 20, `max_channel_accounts` 등 키, pro/business 행, 팩 3종) | seed 소유자 | seed가 조각 뒤에 실행되어 샘플 값이 이긴다 |
+| `_supabase-modular/seed.sql`의 blog 플랜을 01장 4.1절로 갱신(free 월 20, `max_channel_accounts` 등 키, pro/business 행, 팩 3종) | seed 소유자 | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치 |
 | `adjust_credits` 함수 | `_platform-core` | 크레딧팩 환불 시 음수 조정(`CORE_SPEC.md` 5.4절) |
-| `confirm_payment_order` 금액 불일치 시 주문 failed 기록 | `_platform-core` | 알려진 결함. blog는 의존하지 않지만 운영 대사에 필요 |
+| `confirm_payment_order` 금액 불일치 시 주문 failed 기록 | `_platform-core` | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. PM001 시 별도 호출로 운영 대사 가능 |
 | 브랜드커넥트 위험 동의 고지문 버전 컬럼(`affiliate_accounts.risk_notice_version`) | `_platform-core` | 지금은 감사 로그 메타데이터로 대체 |
 | 브랜드커넥트 동의 철회 함수 | `_platform-core` | 지금은 서버가 service_role로 처리 |
 | compliance 규칙 사전에 blog 추가분(가상 후기, 수익 보장) 등록 경로 | `_platform-core` | 제품별 확장 지점 |

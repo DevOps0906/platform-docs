@@ -141,7 +141,7 @@ core.organizations (참조만)
 | | accepted | partially_filled / filled / canceled / rejected | 워커 | - |
 | | partially_filled | partially_filled / filled / canceled | 워커 | - |
 
-설계 원칙: 차단·만료는 예외로 롤백하지 않고 상태로 기록한 뒤 행을 반환한다. 코어 `confirm_payment_order`가 금액 불일치에서 `failed`를 남기지 못하는 결함(`DB_CONVENTIONS.md:296`)과 같은 함정을 제품에서 반복하지 않기 위해서다. 스모크 테스트에서 한도 초과·괴리·시세 지연·킬 스위치 주문이 모두 `blocked` 행과 `order_events`로 남는 것을 확인했다.
+설계 원칙: 차단·만료는 예외로 롤백하지 않고 상태로 기록한 뒤 행을 반환한다. 코어 `confirm_payment_order`의 raise가 같은 호출의 UPDATE를 롤백하는 것(그래서 코어가 `fail_payment_order`를 별도 호출로 분리했다)과 같은 함정을 제품에서 반복하지 않기 위해서다. 스모크 테스트에서 한도 초과·괴리·시세 지연·킬 스위치 주문이 모두 `blocked` 행과 `order_events`로 남는 것을 확인했다.
 
 ## 4. RLS 정책
 
@@ -184,7 +184,7 @@ core.organizations (참조만)
 | B RPC `redeem_beta_invite`, `revoke_beta_access`, `apply_order_update`, `expire_pending_orders` | 42501 | 42501 |
 | B 자기 조직 `beta_access` INSERT(셀프 베타) | 42501 | 42501 |
 | B 자기 `org_members.role`, `profiles.platform_role`, `app_entitlements.plan_id`, `subscriptions.plan_id`, `wallets` 변경, `grant_credits` | 42501 | 42501 |
-| C 가입 + `bootstrap_app_for_org('stock')` 뒤 자기 연결 조회 / 킬 스위치 | 0행 / 42501 | 일치 |
+| C 가입(초대 없음) 뒤 엔타이틀먼트 / 자기 `bootstrap_app_for_org('stock')` / 자기 연결 조회 / 킬 스위치 | 0행 / 42501(invite-only) / 0행 / 42501 | 2026-10-13 코어 반영 후 재실행 필요 |
 | A 양성 대조(자기 holdings, 메모 INSERT, 동의 기록, 주문 확인, 킬 스위치 작동·해제) | 성공 | 성공 |
 | A 메모 created_by 위조, holdings·order_limits 직접 UPDATE, `create_paper_order` 직접 호출 | 42501 | 42501 |
 | 마스킹 안 된 계좌번호, mock live, live 주문, AI 출력 `target_price`, 한도 상한 초과 | 23514 | 23514 |

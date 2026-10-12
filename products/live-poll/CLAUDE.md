@@ -35,7 +35,7 @@
 | 잡 | `core.jobs`를 쓰지 않는다. 브로드캐스트는 워커가 `poll.collect_broadcasts` |
 | 감사 | 진행자 RPC는 내부에서 `write_audit`. CSV 내보내기는 Route Handler가 service INSERT(`event.export`) |
 | 레이트 리밋 | RPC 내부 `core.rate_limit_hit`. 키 규약 `poll:<route>:<id>` |
-| 결제(Phase 2) | `CORE_SPEC.md` 5장 시퀀스. PM001이면 주문 상태와 무관하게 Toss 취소 + 알림(코어 결함 비의존) |
+| 결제(Phase 2) | `CORE_SPEC.md` 5장 시퀀스. PM001이면 별도 호출로 `fail_payment_order` 후 Toss 취소 + 알림 |
 
 ## 5. 코드 규칙
 

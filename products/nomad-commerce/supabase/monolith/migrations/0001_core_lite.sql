@@ -257,6 +257,14 @@ begin
     having count(*) = 1;
   end if;
 
+  -- 초대제(invite) 앱은 가입만으로 이용 권한을 만들지 않는다.
+  -- 운영자가 서버(service_role)에서 bootstrap_app_for_org로 부여하거나, 초대받은 조직의 권한을 쓴다.
+  if v_app is not null and to_regclass('public.apps') is not null then
+    if exists (select 1 from public.apps a where a.id = v_app and a.signup_policy = 'invite') then
+      v_app := null;
+    end if;
+  end if;
+
   if v_app is not null then
     perform public.on_signup_app_bootstrap(v_org_id, new.id, v_app);
   end if;
@@ -1026,6 +1034,10 @@ begin
       raise exception 'bootstrap_app_for_org: owner/admin only' using errcode = '42501';
     end if;
   end if;
+  if not public.is_service_caller()
+     and exists (select 1 from public.apps a where a.id = p_app_id and a.signup_policy = 'invite') then
+    raise exception 'bootstrap_app_for_org: % is invite-only', p_app_id using errcode = '42501';
+  end if;
   perform public.on_signup_app_bootstrap(v_org, auth.uid(), p_app_id);
 end;
 $$;
@@ -1261,9 +1273,8 @@ begin
   end if;
 
   if v_order.amount_krw <> p_amount_krw then
-    update public.payment_orders set status = 'failed',
-      metadata = metadata || jsonb_build_object('failure', 'amount_mismatch', 'received', p_amount_krw)
-    where order_id = p_order_id;
+    -- 이 raise는 트랜잭션 전체를 되돌리므로 여기서 상태를 바꿔도 남지 않는다.
+    -- PM001을 받은 서버는 별도 트랜잭션에서 fail_payment_order()로 주문을 failed로 남긴다.
     raise exception 'amount mismatch for order %: expected % got %', p_order_id, v_order.amount_krw, p_amount_krw
       using errcode = 'PM001';
   end if;
@@ -1315,6 +1326,48 @@ begin
   return v_payment;
 end;
 $$;
+
+-- ---------------------------------------------------------------------
+-- fail_payment_order (service_role 전용): 확정하지 못한 주문을 failed로 남긴다.
+--   confirm_payment_order는 PM001 등에서 raise로 끝나 상태 변경이 롤백되므로,
+--   서버가 PM001을 받으면 별도 트랜잭션에서 이 함수를 호출한다.
+--   created 상태에서만 바뀌고, 이미 failed면 그대로 돌려준다(멱등).
+--   SQLSTATE: PM404 주문 없음 / PM410 상태 불가
+-- ---------------------------------------------------------------------
+create or replace function public.fail_payment_order(p_order_id text, p_reason text, p_detail jsonb default '{}'::jsonb)
+returns public.payment_orders
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_order public.payment_orders;
+begin
+  if not public.is_service_caller() then
+    raise exception 'fail_payment_order: service_role only' using errcode = '42501';
+  end if;
+  select * into v_order from public.payment_orders where order_id = p_order_id for update;
+  if not found then
+    raise exception 'payment order not found: %', p_order_id using errcode = 'PM404';
+  end if;
+  if v_order.status = 'failed' then
+    return v_order;
+  end if;
+  if v_order.status <> 'created' then
+    raise exception 'order % is %, cannot mark failed', p_order_id, v_order.status using errcode = 'PM410';
+  end if;
+  update public.payment_orders
+     set status = 'failed',
+         metadata = metadata || jsonb_build_object('failure', coalesce(p_reason, 'unknown')) || coalesce(p_detail, '{}'::jsonb)
+   where order_id = p_order_id
+  returning * into v_order;
+  insert into public.audit_log (org_id, actor_id, actor_role, action, target_type, target_id, after)
+  values (v_order.org_id, null, 'service', 'payment_order.failed', 'payment_order', p_order_id,
+          jsonb_build_object('reason', p_reason));
+  return v_order;
+end;
+$$;
+revoke execute on function public.fail_payment_order(text, text, jsonb) from public, anon, authenticated;
+grant execute on function public.fail_payment_order(text, text, jsonb) to service_role;
 
 drop policy if exists payment_orders_select on public.payment_orders;
 create policy payment_orders_select on public.payment_orders for select to authenticated using (public.is_org_member(org_id));
@@ -2332,7 +2385,7 @@ create policy org_files_update on storage.objects for update to authenticated
   with check (bucket_id = 'org-files' and public.is_org_member(public.storage_org_id(name)));
 drop policy if exists org_files_delete on storage.objects;
 create policy org_files_delete on storage.objects for delete to authenticated
-  using (bucket_id = 'org-files' and (owner = auth.uid() or public.has_org_role(public.storage_org_id(name), array['owner', 'admin'])));
+  using (bucket_id = 'org-files' and (owner_id = auth.uid()::text or public.has_org_role(public.storage_org_id(name), array['owner', 'admin'])));
 
 drop policy if exists exports_select on storage.objects;
 create policy exports_select on storage.objects for select to authenticated
@@ -2442,10 +2495,10 @@ declare
     'public.jwt_role()', 'public.is_privileged_session()', 'public.is_service_caller()',
     'public.current_org_ids()', 'public.is_org_member(uuid)', 'public.has_org_role(uuid,text[])',
     'public.current_org_role(uuid)', 'public.is_platform_admin()',
-    'public.has_entitlement(uuid,text)', 'public.entitled_plan_code(uuid,text)',
     'public.storage_org_id(text)'
   ];
   v_auth text[] := array[
+    'public.has_entitlement(uuid,text)', 'public.entitled_plan_code(uuid,text)',
     'public.personal_org_id()', 'public.session_context(text,uuid)', 'public.bootstrap_app_for_org(text,uuid)',
     'public.write_audit(uuid,text,text,text,jsonb,jsonb,jsonb)',
     'public.invite_member(uuid,uuid,text)', 'public.accept_invite(uuid)', 'public.approve_member(uuid,uuid)',

@@ -96,7 +96,7 @@ guestbook_entries.status는 visible/hidden/spam 사이를 `moderate_guestbook_en
 
 쓰기 정책을 주는 sites, site_assets는 `DB_CONVENTIONS.md` 8.1 조건을 만족한다: 쓰기 가능한 컬럼은 콘텐츠뿐이고 상태·과금·동의·게시 컬럼은 GRANT에서 빠지며 상태는 트리거가 강제한다.
 
-초대제 베타: core 부트스트랩은 `signup_policy='invite'`를 강제하지 않는다(`_supabase-modular/migrations/0003_core_credits.sql:400-402`는 approval만 처리). 그래서 엔타이틀먼트만 가진 조직(SSO로 `bootstrap_app_for_org('microweb')`를 부른 다른 앱 사용자 포함)은 `studio_access`가 없어 0행이다. 코어 수정은 06장 6절 요청.
+초대제 베타: 코어는 `signup_policy='invite'` 앱에서 가입 트리거가 구독·엔타이틀먼트를 만들지 않고 `bootstrap_app_for_org`는 비 service 호출자에 42501을 낸다(2026-10-13 코어 반영, 운영자 service_role은 가능). `studio_access`는 2차 게이트로 유지하므로 엔타이틀먼트만 가진 조직도 `studio_access`가 없으면 0행이다.
 
 ## 5. 인덱스와 성능
 

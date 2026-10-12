@@ -34,7 +34,7 @@
 | 의료정보 | `apps/hms/src/server/phi/`만 `HMS_PHI_KEY_*`를 읽는다. 민감 읽기는 RPC(`get_patient_detail`, `get_patient_chart`, `list_lab_worklist`)만, 열람 사유 필수. 목록 화면 렌더 시 `log_phi_access('view.<screen>')` |
 | 날짜 | `kstDayRange()` 등 admin-kit date만. `toISOString().split('T')` 금지 |
 | Realtime | `useRealtimeTable`만, 채널명 `<app>:<org>:<entity>` |
-| 결제 | Phase 2. 공용 toss 모듈. `confirm_payment_order` PM001 후 주문 상태에 의존하지 않는다(코어 결함) |
+| 결제 | Phase 2. 공용 toss 모듈. `confirm_payment_order` PM001이면 별도 호출로 `fail_payment_order`를 부른다 |
 
 ## 5. 코드 규칙
 

@@ -28,7 +28,7 @@
 | ADM-06-010 | `useRealtimeTable` | `packages/admin-kit/src/realtime/` | ADM-06-006 | P1 | S | Opus | 한 화면 채널 1개, payload 부분 갱신, 언마운트 해제 테스트 | ERP 5장 #8, Hospital 5장 #11, School 5장 #9 |
 | ADM-06-011 | 가입 승인/초대 공통 흐름(화면 조각 + 서버 함수, Auth Admin 초대) | `packages/admin-kit/src/members/` | ADM-06-007 | P0 | M | Opus | 앱이 RPC 이름을 주입해 승인제·초대제 모두 동작, 본인 초대 차단 | KIT-F-005~007, School 5장 #8 |
 | ADM-06-012 | 감사 로그 뷰어 | `packages/admin-kit/src/audit/` | ADM-06-009 | P1 | S | Sonnet | owner/admin만 표시, 기간·action 필터 | KIT-F-012 |
-| ADM-06-013 | 플랜/구독 화면과 Route Handler(공용 toss 모듈 호출) | `packages/admin-kit/src/billing/` | ADM-06-007 | P2 | M | Fable | standard 구독 confirm 후 엔타이틀먼트 standard, PM001 시 주문 상태에 의존하지 않음 | 01장 4절 |
+| ADM-06-013 | 플랜/구독 화면과 Route Handler(공용 toss 모듈 호출) | `packages/admin-kit/src/billing/` | ADM-06-007 | P2 | M | Fable | standard 구독 confirm 후 엔타이틀먼트 standard, PM001 시 `fail_payment_order` 호출 후 취소·알림 | 01장 4절 |
 | ADM-06-014 | ERP 인증·가입(승인제)·대기 화면 | `apps/erp/src/app/(auth)/`, `apps/erp/src/app/pending/` | ADM-06-011 | P0 | M | Opus | signUp에 `signup_app`, `full_name`, 승인 후 accept까지 E2E 통과 | ERP 5장 #2,#4 |
 | ADM-06-015 | ERP 재고 화면과 서버 | `apps/erp/src/app/(app)/inventory/`, `apps/erp/src/server/inventory.ts`, `apps/erp/src/server/images.ts` | ADM-06-001, ADM-06-009 | P0 | M | Opus | 감소 조정, ER001 메시지, 위험 재고 `is_low_stock` 필터, 이미지 경로 강제 | ERP 5장 #3,#8,#13, ERP-F-001~003,014 |
 | ADM-06-016 | ERP 판매 화면과 서버 | `apps/erp/src/app/(app)/sales/`, `apps/erp/src/server/sales.ts` | ADM-06-001, ADM-06-009 | P0 | M | Opus | 상태 탭, 취소 사유, 재시도 멱등 | ERP 5장 #3,#9, ERP-F-004~005 |
@@ -134,8 +134,8 @@ P0 작업과 테스트 대응: SQL(001~003) → 034, 037 / admin-kit 가드·UI(
 |---|---|---|
 | 팀 조직 생성 함수 `core.create_team_organization(p_name, p_owner, p_app_id)` (service_role, 엔타이틀먼트 manual 포함) | `_platform-core` | 지금은 프로비저닝 스크립트가 코어 테이블에 직접 INSERT해야 한다. 함수가 있으면 감사와 검증을 한 곳에서 한다 |
 | 모놀리스 lite에서 `purge_organization`을 크레딧 절 밖으로 분리 | `_platform-core` | 크레딧 절을 지운 제품(admin-suite 3앱)은 조직 파기 함수가 없다 |
-| `confirm_payment_order` 금액 불일치 시 주문 failed 영속화 | `_platform-core` | 알려진 결함(`DB_CONVENTIONS.md` 13.2). 제품은 의존하지 않는다 |
-| 통합 seed의 erp/sms default 플랜 features 갱신 | `_supabase-modular/seed.sql` 담당 | 조각이 `on conflict do nothing`이라 01장 4절 features 키가 반영되지 않는다 |
+| `confirm_payment_order` 금액 불일치 시 주문 failed 영속화 | `_platform-core` | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 별도 호출 |
+| 통합 seed의 erp/sms default 플랜 features 갱신 | `_supabase-modular/seed.sql` 담당 | 해결(2026-10-13 코어 반영 완료): 통합 seed가 모놀리스 seed와 일치. 조각은 `on conflict do nothing`이라 seed 값이 그대로 적용된다 |
 | 팀 운영 예외 확인 | 사용자(확정 결정 5) | "1인 1워크스페이스" 운영 원칙과 달리 admin-suite는 고객사 조직에 다수 멤버가 필수다 |
 
 ## 7. 완료 정의

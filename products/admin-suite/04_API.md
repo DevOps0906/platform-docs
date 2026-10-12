@@ -136,7 +136,7 @@
 | API | 위치 | 실패 처리 |
 |---|---|---|
 | Supabase Auth Admin `inviteUserByEmail` | `packages/admin-kit/src/members/server.ts` | 이메일 중복 → 기존 사용자 id로 계속. 실패 시 도메인 RPC 호출 안 함 |
-| Toss(Phase 2) | 공용 toss 모듈 | `CORE_SPEC.md` 5장. 금액 불일치 시 주문 failed 기록이 되지 않는 코어 결함(`DB_CONVENTIONS.md` 13.2)이 있어 앱은 PM001을 받으면 서버 로그와 운영 알림을 남기고 주문 상태에 의존하지 않는다 |
+| Toss(Phase 2) | 공용 toss 모듈 | `CORE_SPEC.md` 5장. 금액 불일치(PM001) 시 앱은 별도 호출로 `fail_payment_order`(2026-10-13 코어 반영)를 불러 주문을 failed로 남기고 서버 로그와 운영 알림을 남긴다 |
 
 ## 7. 오류 코드
 

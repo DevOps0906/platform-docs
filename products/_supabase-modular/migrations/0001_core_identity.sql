@@ -146,6 +146,14 @@ begin
   values (v_org_id, new.id, 'owner', 'active', now())
   on conflict (org_id, user_id) do nothing;
 
+  -- 초대제(invite) 앱은 가입만으로 이용 권한을 만들지 않는다.
+  -- 운영자가 서버(service_role)에서 bootstrap_app_for_org로 부여하거나, 초대받은 조직의 권한을 쓴다.
+  if v_app is not null and to_regclass('core.apps') is not null then
+    if exists (select 1 from core.apps a where a.id = v_app and a.signup_policy = 'invite') then
+      v_app := null;
+    end if;
+  end if;
+
   if v_app is not null then
     perform core.on_signup_app_bootstrap(v_org_id, new.id, v_app);
   end if;

@@ -182,9 +182,9 @@ DB CHECK는 문서의 겉모양만 막고, 레이어 판별 유니온의 세부�
 | `core.is_org_member`, `has_org_role`, `has_entitlement`, `is_platform_admin`, `is_service_caller`, `storage_org_id`, `write_audit`, `set_updated_at`, `guard_privileged_write` | 정책, 함수, 트리거 |
 | `consume/refund_credits`, `enqueue_job` 등 | 서버 코드에서만(SQL에서 호출하지 않음) |
 
-`core.*`를 ALTER하지 않는다. 모듈러 seed 수정도 하지 않는다(features 확장 요청은 06장 6절).
+`core.*`를 ALTER하지 않는다. 모듈러 seed 수정도 하지 않는다(features 확장은 2026-10-13 코어 반영 완료, 06장 6절).
 
-알려진 코어 결함(의존하지 않음): `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 올리면서 주문 failed 기록까지 롤백한다(`DB_CONVENTIONS.md:296`). 제품은 주문 상태에 기대지 않고, `PM001`을 받으면 Route Handler가 서버 로그·운영 알림과 함께 Toss 취소 API를 호출한다. 코어 수정은 하지 않는다.
+PM001 처리: `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 올리며 같은 호출의 UPDATE는 롤백된다(계약 불변). 주문 failed 기록은 service_role 전용 `fail_payment_order`(2026-10-13 코어 반영)가 맡는다. `PM001`을 받으면 Route Handler가 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`를 부르고, 서버 로그·운영 알림과 함께 Toss 취소 API를 호출한다. 코어 수정은 하지 않는다.
 
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
@@ -207,8 +207,8 @@ DB CHECK는 문서의 겉모양만 막고, 레이어 판별 유니온의 세부�
 | 코어 | `core` 0000~0006 | `0001_core_lite.sql`. 제거: 6-A oauth_states, 6-B encrypted_credentials, 9 affiliate(외부 OAuth와 제휴 기능 없음). 유지: 3 Toss, 4 크레딧, 6-C 레이트 리밋, 7 잡, 8 Storage |
 | 앱 등록 | `core.apps('toon', schema 'toon')` | `public.apps('toon', schema 'public')`. 앱 행이 1개라 가입 메타데이터 없이도 부트스트랩 |
 | 권한 | 스키마 기본 권한 없음 + 명시 GRANT | 도메인 테이블마다 `revoke all ... from public, anon, authenticated` 후 GRANT(`0002_toon_domain.sql` 6-9절) |
-| features | 모듈러 seed의 toon 플랜은 `watermark`, `export`만 있음 → 나머지 키는 트리거 기본값(무료 값) 적용. Pro 사용자도 seed 갱신 전까지 무료 한도가 걸리므로 갱신 요청 필수 | `seed.sql`에 01장 4.1절 전체 키 |
-| 크레딧팩 | 모듈러 seed에 없음(요청) | `seed.sql`에 2종 |
+| features | 모듈러 seed가 2026-10-13부터 모놀리스 seed와 같은 전체 키를 담는다(이전에는 `watermark`, `export`만 있어 Pro도 무료 한도가 걸렸다) | `seed.sql`에 01장 4.1절 전체 키 |
+| 크레딧팩 | 모듈러 seed에 2종(2026-10-13 반영) | `seed.sql`에 2종 |
 | PostgREST | `[api].schemas`에 `toon` 추가 | 설정 불필요 |
 
 ## 9. 마이그레이션 파일

@@ -106,12 +106,20 @@
 
 | 과제 | 출처 |
 |---|---|
-| `signup_policy='invite'` 강제 (현재 stock, microweb, floria가 제품 게이트로 우회) | 제품 06장 6절 |
 | `adjust_credits` RPC 추가 | 여러 제품 06장 6절 |
-| `confirm_payment_order`가 금액 불일치 주문을 failed로 남기지 못함 | `_platform-core` 작성 보고 |
-| `has_entitlement`/`entitled_plan_code`의 anon 호출 허용 여부 | `_supabase-modular/VERIFICATION.md` |
 | 익명 사용자 가입 시 개인 조직 생성 건너뛰기 | `live-poll/06_AGENT_PLAN.md` 6절 |
 | 팀 조직 생성 함수, `purge_organization`과 결제 기록 보존 충돌 | `admin-suite`, `astro-ai` 06장 6절 |
-| storage 정책의 `owner` 컬럼 사용 확인, `write_audit` action 제한 | `_platform-core` 작성 보고 |
-| 제품 문서에 남은 "모듈러 seed 불일치" 문장 정리(seed는 이미 정합화됨) | `_supabase-modular/VERIFICATION.md` |
+| `write_audit` action 제한(멤버가 임의 action 기록 가능) | `_platform-core` 작성 보고 |
 | 로컬 Supabase(`supabase db reset`)에서 재검증 | 검증은 PGlite 기준 |
+
+2026-10-13에 처리한 결함
+
+| 결함 | 처리 |
+|---|---|
+| 금액 불일치 주문이 failed로 남지 않음 | `confirm_payment_order`는 PM001 유지, 서비스 전용 `fail_payment_order` 추가 |
+| `signup_policy='invite'` 미강제 | 가입 트리거가 invite 앱 엔타이틀먼트를 만들지 않음, 사용자 `bootstrap_app_for_org` 거부 |
+| `has_entitlement`/`entitled_plan_code` anon 호출 | anon EXECUTE 회수 |
+| storage 정책의 deprecated `owner` 컬럼 | `owner_id = auth.uid()::text` |
+| 감사 로그 INSERT의 무의미한 `on conflict` | 제거 |
+
+같은 수정을 모듈러 core(0001~0005), `MONOLITH_CORE_LITE.sql`, 제품별 `0001_core_lite.sql` 14개에 적용했다. 통합 적용, 모놀리스 14세트, 권한 감사, 교차 조직 스모크, 새 동작 13항목(모듈러·라이트 각각)을 다시 통과했다.
