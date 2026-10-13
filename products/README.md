@@ -66,6 +66,7 @@
 | 3 | SQL 통합 검증, 구조 점검 | 완료 | `_supabase-modular/VERIFICATION.md`, `_STRUCTURE_CHECK.md` |
 | 4 | 인덱스 마무리, 최종 보고 | 완료 | 이 절 |
 | 5 | AI 계층·음성·3D 히어로·디자인 시스템 반영, 개발 방법 문서 12개 | 완료 | 아래 "2026-10-13 AI 계층 추가", `../develop/<제품>/` |
+| 6 | 네이버 클립·브랜드커넥트 범용화·toon 벤치마킹·쇼츠 대행 (확정 결정 18~21) | 완료 | 아래 "2026-10-13 결정 18~21", PR #2 |
 
 ## 제품별 결과
 
@@ -204,3 +205,16 @@
 | C | 낭독류 TTS 기본 모드를 `auto` + ElevenLabs 우선으로 통일(같은 목소리 기능의 작업 도중 대체 금지는 유지) | 조각 1000·1100·1400·1900·2000과 해당 모놀리스 seed 5개, 5개 제품 02·05장, `VOICE_ARCHITECTURE.md` 3절 |
 
 반영 후 재검증: 통합 DB 정순·역순 OK, 모놀리스 14세트 OK, AI 보안 테스트 25/25(모듈러·라이트), root 12개 재생성 후 경로 누락 0.
+
+## 2026-10-13 결정 18~21 (네이버 클립, 브랜드커넥트, toon 벤치마킹, 쇼츠 대행)
+
+PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`). 결정 원문은 `00_MERGE_ANALYSIS.md` 확정 결정 18~21.
+
+| 주제 | 먼저 볼 문서 | 관련 문서 |
+|---|---|---|
+| 네이버 클립 채널(결정 18) | `nomad-video/01_PRD.md` VD-F-075, 6.5절 위험 고지, D-23 | `nomad-video/02~06`, `_platform-core/SHARED_MODULES.md` 11장, `_supabase-modular/migrations/1200_video.sql` |
+| 브랜드커넥트 범용화(결정 19) | `_platform-core/CORE_SPEC.md` 13장, 16.1절 | `nomad-blog/01_PRD.md` 3.4절(BL-F-036/037), `nomad-blog/04_API.md`, `_supabase-modular/migrations/0006_core_affiliate.sql` |
+| toon-factory 벤치마킹(결정 20) | `toon-factory/08_BENCHMARK.md` (비교표, 격차→제안, 분기 재점검 방법) | `toon-factory/01_PRD.md` TN-F-024/038/070~073/080/081, `_supabase-modular/migrations/2000_toon.sql` 11절 |
+| 쇼츠 대행사업(결정 21) | `nomad-video/08_AGENCY_OPERATIONS.md` (패키지, 가격 근거, 프로세스, 필요 문서 14종, 법적 위험) | `nomad-video/01_PRD.md` VD-F-120~126, `nomad-docs/01_PRD.md` DC-F-046 `shorts_agency`, `_supabase-modular/migrations/2300_docs.sql` |
+
+확인 필요: 네이버 약관의 자동화 조항(미확인), 공정위 AI 가상인물 표시 개정안 확정 여부(미확인), 이미 배포된 DB에는 별도 `alter table` 필요.
