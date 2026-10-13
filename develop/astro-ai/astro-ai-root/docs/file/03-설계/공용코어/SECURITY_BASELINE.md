@@ -42,7 +42,7 @@ begin
   end if;
 ```
 
-같은 패턴이 적용된 코어 함수: `bootstrap_app_for_org`(`migrations/0003_core_credits.sql:452`), `write_audit`(`migrations/0004_core_security.sql:295`), 멤버 함수 7개(`:324`, `:380`, `:403`, `:448`, `:468`, `:489`), `revoke_credential`(`:654`), `cancel_job`(`migrations/0005_core_jobs_storage.sql:252`), affiliate 함수 5개(`migrations/0006_core_affiliate.sql:245`, `:271`, `:288`, `:315`, `:343`).
+같은 패턴이 적용된 코어 함수: `bootstrap_app_for_org`(`migrations/0003_core_credits.sql:452`), `write_audit`(`migrations/0004_core_security.sql:295`), 멤버 함수 7개(`:324`, `:380`, `:403`, `:448`, `:468`, `:489`), `revoke_credential`(`:654`), `cancel_job`(`migrations/0005_core_jobs_storage.sql:252`), affiliate 함수 5개(`migrations/0006_core_affiliate.sql:256`, `:282`, `:299`, `:326`, `:357`, `:366`).
 
 ### 제품 조각 작성 시 점검
 
@@ -103,7 +103,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 권한 컬럼 보호 트리거 | GRANT가 1차, 트리거가 2차. `platform_role`, `status`, `email`, `owner_id`, `is_personal`, `deleted_at`, `slug` | `migrations/0004_core_security.sql:187-231` |
 | 이중 잠금 `guard_privileged_write` | 정책이 없는 테이블에도 트리거를 붙여 사용자 세션의 쓰기를 거부한다 | `migrations/0000_core_extensions_and_schema.sql:92-111`, 적용 `migrations/0002_core_billing.sql:232-240` |
 | append-only | `credit_ledger`, `audit_log`는 UPDATE/DELETE 불가. DELETE는 `purge_organization` 트랜잭션 안에서만 | `migrations/0003_core_credits.sql:52-67`, `migrations/0004_core_security.sql:256-270` |
-| 상태 전이는 함수로 | 구독 상태는 `apply_subscription_transition`, 브랜드커넥트는 트리거. 제품의 상태 머신(예약, 검사, 판매)도 같은 방식 | `migrations/0002_core_billing.sql:265-341`, `migrations/0006_core_affiliate.sql:178-200` |
+| 상태 전이는 함수로 | 구독 상태는 `apply_subscription_transition`, 브랜드커넥트는 트리거. 제품의 상태 머신(예약, 검사, 판매)도 같은 방식 | `migrations/0002_core_billing.sql:265-341`, `migrations/0006_core_affiliate.sql:189-211` |
 
 제품 테이블은 이 원칙을 "완화"해 멤버에게 INSERT/UPDATE 정책을 줄 수 있다. 조건은 (a) `with check (core.is_org_member(org_id) and core.has_entitlement(org_id, '<app>'))`, (b) 권한·과금·상태 컬럼이 없는 순수 콘텐츠 테이블, (c) 상태 컬럼이 있으면 전이 트리거 또는 RPC로만 변경(`D:/WorkSpace/platform/docs/products/_supabase-modular/README.md:107-119`).
 
@@ -149,7 +149,8 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 웹훅 수신 | 제공자당 600회/분 | `core.rate_limit_hit` |
 | `/r/[code]` 리다이렉트 | IP 해시당 60회/분 | `core.rate_limit_hit` |
 | 비회원 데모(astro Live Demo) | IP당 3회/일, 영속 저장 | `core.rate_limit_hit`(`docs/reference/00_MERGE_ANALYSIS.md:369`, `:422`) |
-| 브랜드커넥트 자동 지원 | 계정당 5건/시간 | `core.rate_limit_hit` |
+| 브랜드커넥트 자동 지원 | 계정당 5건/시간(blog 블로그형 + video 클립형 합산, 키 `brandconnect:apply:<account_id>`) | `core.rate_limit_hit` |
+| 네이버 클립 자동 업로드(Playwright) | 계정당 상한은 `D:/WorkSpace/platform/docs/products/nomad-video/01_PRD.md` VD-F-075가 정한다. 위험 동의(`clip-2026-10-v1`) 없으면 잡 생성 금지 | `core.rate_limit_hit` |
 | 가입 크레딧 반복 수령 | 멱등 키 `signup:<org>:<app>` + 이메일 인증 필수 | `migrations/0003_core_credits.sql:426` |
 
 함수 근거: `migrations/0004_core_security.sql:678-699`. 수치는 모두 제안이며 제품 01_PRD 비기능 절에서 확정한다.
@@ -160,7 +161,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 |---|---|
 | 멤버 초대/승인/역할 변경/제거, 소유권 이전, 프로필 승인 | 코어 함수가 `write_audit` 호출(`migrations/0004_core_security.sql:346`, `:366`, `:389`, `:426`, `:457`, `:477`, `:493`) |
 | 구독 전이 | `apply_subscription_transition` 내부 INSERT(`migrations/0002_core_billing.sql:334-337`) |
-| 자격증명 revoke, 잡 취소, 대가성 문구 편집, 브랜드커넥트 위험 동의 | `:658`, `migrations/0005_core_jobs_storage.sql:263`, `migrations/0006_core_affiliate.sql:296`, `:321` |
+| 자격증명 revoke, 잡 취소, 대가성 문구 편집, 브랜드커넥트 위험 동의 | `:658`, `migrations/0005_core_jobs_storage.sql:263`, `migrations/0006_core_affiliate.sql:307`, `:332` |
 | 제품 추가: 결제 환불, 수동 플랜 변경, 데이터 내보내기/삭제, 관리자 화면의 모든 쓰기, compliance WARN 수동 승인 | 제안 |
 | 기록 금지 | 비밀값, 토큰, 카드번호 전체, 원문 IP(해시만) |
 

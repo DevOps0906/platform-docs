@@ -31,6 +31,9 @@
 | POST `/api/billing/cancel` | owner/admin | `{reason}` | 구독 | - | `apply_subscription_transition` | SB001 → 409 |
 | GET `/api/channels` | 전 역할 | - | 채널 목록 | - | RLS select | - |
 | POST `/api/channels/connect` | owner/admin | `{platform, role, targetLanguage, riskAck: true}` | `{authorizeUrl}` | - | `create_oauth_state` | VD004 → 403 |
+| POST `/api/channels/connect/naver-clip` | owner/admin, `features.platforms`에 `naver_clip` | `{role, targetLanguage, profileUrl}` | `{sessionId}`(서버 브라우저 로그인 세션 시작. 사용자가 네이버 로그인 창에서 직접 인증, 비밀번호를 서버가 받지 않음) | - | 로그인 완료 시 credential INSERT(provider `naver`) + channels INSERT(service) | VD004 → 403, VD003 → 409 |
+| POST `/api/channels/[id]/clip-consent` | owner/admin | `{noticeVersion: 'clip-2026-10-v1', checks: [true,true,true], typed: '동의합니다'}` | 채널(동의 시각) | - | `video.consent_clip_automation_risk` | VD015 → 409(버전 불일치), 22023 → 400(naver_clip 아님), 42501 → 403 |
+| DELETE `/api/channels/[id]/clip-consent` | owner/admin | - | 채널 | 대기 중 클립 업로드 환불 | `video.revoke_clip_automation_consent` + queued `upload.naver_clip` 잡 `cancel_job` | 42501 → 403 |
 | GET `/api/channels/callback/[platform]` | 공개(state로 사용자 확정) | `code, state` | 302 `/dashboard/channels` | - | `consume_oauth_state`, credential INSERT, channels INSERT | OA001 → 400, VD003 → 409 |
 | PATCH `/api/channels/[id]` | owner/admin | `{role?, targetLanguage?, targetCountry?, status?}` | 채널 | - | `video.update_channel_settings` | 42501 → 403 |
 | DELETE `/api/channels/[id]` | owner/admin | - | 채널(revoked) | - | `video.disconnect_channel` | 403 |
@@ -55,10 +58,13 @@
 | POST `/api/playlists` | Pro+ member+ | `{title, mood, targetDurationMin, language}` | 플리 | 0 | RLS insert | 42501 → 403 |
 | PUT `/api/playlists/[id]/items` | member+ | `{items: [{musicTrackId?|libraryTrackId?}]}` | 항목 | 0 | RLS insert/update/delete(트랜잭션) | VD005, VD006 |
 | POST `/api/playlists/[id]/render` | Pro+ | `{request_id}` | rootJobId | 20/35/95 | consume, enqueue `playlist.render` | 409(합계 시간 목표 ±5% 밖) |
-| POST `/api/uploads` | member+ | `{outputId, channelId?, platform, title, description, tags, visibility, scheduledAt?, paidPromotion, affiliateLinkIds[], request_id}` | upload(draft, 문구 삽입 완료) | 0 | `effective_disclosure`, affiliate 링크, uploads INSERT(service) | VD008, VD002 |
+| POST `/api/uploads` | member+ | `{outputId, channelId?, platform, title, description, tags, visibility, scheduledAt?, paidPromotion, affiliateLinkIds[], brandconnectApplicationId?, request_id}` | upload(draft, 문구 삽입 완료) | 0 | `effective_disclosure`, affiliate 링크, uploads INSERT(service). `naver_clip`은 `injectDisclosure(..., { target: 'title_hashtag' })`로 `disclosure_title`·`disclosure_hashtag`를 채움. 지원서는 `accepted` 상태만 연결 | VD008, VD002, VD015(클립 동의 없음) → 409, 23514(문구 누락) → 422 |
 | POST `/api/uploads/[id]/check` | member+ | `{request_id}` | 검사 결과 | 1(LLM 단계) | consume, enqueue `compliance.check` | - |
 | POST `/api/uploads/[id]/acknowledge` | member+ | `{note?}` | upload(approved) | 0 | `video.acknowledge_compliance_warning` | VD011, VD008 |
-| POST `/api/uploads/[id]/schedule` | member+ | `{scheduledAt}` | upload(scheduled) | 1/채널 | consume, enqueue `upload.<platform>`(run_after) | VD008 |
+| POST `/api/uploads/[id]/schedule` | member+ | `{scheduledAt}` | upload(scheduled) | 1/채널 | consume, enqueue `upload.<platform>`(run_after). 네이버 클립은 계정당 3건/시간·15건/일 넘으면 다음 가능 시각으로 `run_after` | VD008, VD016(고객 승인 필요) → 409 |
+| POST `/api/uploads/[id]/client-review` | member+, `features.agency` | `{ttlHours?: 1~336, note?}` | `{reviewId, expiresAt, linkSentTo}` | 0 | 서버가 32바이트 토큰 생성 → sha256 → `video.open_client_review`(service) → 고객 담당자 메일(링크 원문은 응답·로그에 남기지 않음, 메일 실패 시 1회만 링크 표시) | VD008, VD016(고객 미연결) → 409 |
+| GET `/review/[token]` (페이지) | 공개(토큰) | - | 미리보기(서명 URL 10분), 제목·설명·태그·대가성 문구, 고객명 | 0 | 서버가 토큰 해시로 조회(service), `rate_limit` IP 해시당 30회/10분 | 404(없음·만료·이미 결정은 같은 화면 "사용할 수 없는 링크") |
+| POST `/api/review/[token]` | 공개(토큰) | `{decision: 'approved'|'changes_requested', reviewerName(1~40자), comment?(<=2000자)}` | `{decision}` | 0 | `video.decide_client_review`(service), 담당자 알림 | VD008 → 409, 404 |
 | POST `/api/uploads/[id]/cancel` | member+ | - | upload | 환불 | `video.cancel_upload` | VD008 |
 | GET/POST `/api/affiliate/accounts` | owner/admin | `{provider, partnerId?, apiKey?, secretKey?}` | 계정 | 0 | credential INSERT + affiliate_accounts INSERT(service) | 422 |
 | GET `/api/affiliate/search` | member+ | `{provider='coupang', q}` | 상품 | 0 | 어댑터 | 501(capability 없음) |
@@ -69,7 +75,17 @@
 | GET `/r/[code]` | 공개 | - | 302 | 0 | `rate_limit`, `record_affiliate_click`(service) | 404 → `/` |
 | GET `/landing/[slug]` (페이지) | 공개 | - | ISR 3600초 | 0 | `video.get_public_landing`(anon), `video.record_landing_view`(service, IP 해시 10분 1회) | 404 |
 | GET `/lb/[handle]` (페이지) | 공개 | - | ISR 300초(제안) | 0 | `video.get_public_linkinbio`(anon) | 404 |
-| GET `/api/analytics` | 전 역할 | `{from, to, channelId?}` | 집계 | 0 | RLS select | - |
+| GET `/api/analytics` | 전 역할 | `{from, to, channelId?, clientId?}` | 집계 | 0 | RLS select | - |
+| GET/POST `/api/clients` | 조회 전 역할 / 생성 owner/admin, `features.agency` | `{name, brandName?, businessNo?, contact{name,email,phone}, packageCode, contractStart?, contractEnd?, monthlyQuota?, reviewRequired, reportDay, notes?}` | 고객 | 0 | RLS select / insert | 42501 → 403, 23505 → 409(같은 이름) |
+| PATCH/DELETE `/api/clients/[id]` | owner/admin | 위 필드 일부 | 고객 | 0 | RLS update / delete | 42501 → 403 |
+| POST `/api/clients/[id]/status` | owner/admin | `{status: 'active'|'paused'|'ended'}` | 고객 | 0 | `video.set_client_status` | 22023 → 409 |
+| POST/DELETE `/api/clients/[id]/channels` | owner/admin | `{channelId, ownership: 'client'|'agency'}` | 고객 채널 | 0 | RLS insert / delete | VD002 → 403, 23505 → 409(다른 고객에 묶임) |
+| GET `/api/clients/[id]/reports` | 전 역할 | - | 월별 리포트 목록 + PDF 서명 URL | 0 | RLS select, Storage 서명 URL | - |
+| POST `/api/clients/[id]/reports` | owner/admin | `{periodMonth: 'YYYY-MM', request_id}` | `{reportId, jobId}` | 0 | service upsert `client_reports`(generating) + enqueue `client_report.build` | 409(생성 중) |
+| POST `/api/clients/[id]/reports/[reportId]/sent` | owner/admin | - | 리포트(sent) | 0 | service update + 감사 `client_report.sent` | 22023 |
+| GET `/api/brandconnect/campaigns` | member+, `features.brandconnect_clip` | `{q?}` | 클립형 캠페인 목록(blog 스캔 결과 중 `campaign_type='clip'`) | 0 | blog 스캔 잡 결과 읽기(service) | 501(캠페인 유형 판별 불가 시 빈 목록이 아니라 사유) |
+| POST `/api/brandconnect/handoff/accept` | member+ | `{handoffToken}`(blog `POST /api/brandconnect/handoff`가 발급, 같은 조직만) | `{campaign{id, title, brand, deadline, reward}}` → 지원 확인 화면 | 0 | 토큰 검증(service) | 404(만료·다른 조직) |
+| POST `/api/brandconnect/applications` | member+, `features.brandconnect_clip` | `{accountId, campaignId, channelId(naver_clip), message, brand?, product?, category?}` | 지원서(draft → submitting) | 0 | `core.create_brandconnect_application(account, campaign, target_url=채널 URL, 'clip', 'video', brand, product, category, message)` → 코어가 `brandconnect.apply` enqueue | 42501 → 403(위험 동의 없음·엔타이틀먼트 없음), 23505 → 409(이미 지원) |
 | POST `/api/webhooks/toss` | 공개(서명) | rawBody | 200 | - | `webhook_events` | 401 |
 | POST `/api/webhooks/fal` | 공개(서명 미확인, request_id 대조) | rawBody | 200 | - | `webhook_events`, 잡 갱신 | 401 |
 
@@ -113,6 +129,12 @@
 | `video.acknowledge_compliance_warning(p_upload_id, p_note)` | authenticated | owner/admin/member, 상태 awaiting_confirm, 최신 verdict warn, 감사 `upload.compliance_ack` | `video.uploads` | P0002, 42501, VD008, VD011 |
 | `video.cancel_upload(p_upload_id)` | authenticated | owner/admin/member, 상태 허용 목록, queued 잡은 `core.cancel_job`, running이면 거부 | `video.uploads` | P0002, 42501, VD008 |
 | `video.set_landing_status(p_landing_id, p_status)` | authenticated | owner/admin/member, 공개 시 `coupang_landing` + 제휴 링크 필수 | `video.landing_pages` | P0002, 42501, 22023, VD001, VD009 |
+| `video.consent_clip_automation_risk(p_channel_id, p_version)` | authenticated | owner/admin, `naver_clip` 채널만, 버전 = `video.clip_notice_version()`, 감사 `channel.clip_risk_consent` | `video.channels` | P0002, 42501, 22023, VD015 |
+| `video.revoke_clip_automation_consent(p_channel_id)` | authenticated | owner/admin, 감사 `channel.clip_risk_revoke`. 잡 취소는 Route Handler | `video.channels` | P0002, 42501 |
+| `video.set_client_status(p_client_id, p_status)` | authenticated | owner/admin, 전이 트리거(active↔paused, → ended), 감사 `client.status` | `video.clients` | P0002, 42501, 22023 |
+| `video.open_client_review(p_upload_id, p_token_hash, p_expires_at, p_requested_by)` | service_role | 업로드 approved/client_review, 채널이 고객에 묶임, 만료 14일 이내, 이전 pending 취소, 업로드 → client_review, 감사 | `video.client_reviews` | P0002, VD008, VD016, 22023 |
+| `video.decide_client_review(p_token_hash, p_decision, p_reviewer_name, p_comment)` | service_role | pending만, 만료면 expired로 닫아 반환, 수정 요청이면 업로드 → draft, 감사 | `video.client_reviews` | P0002, VD008, 22023 |
+| `video.clip_notice_version()` | 트리거·RPC 내부 | 상수 `clip-2026-10-v1` | text | - |
 | `video.set_music_distribution_status(p_track_id, p_status, p_note, p_isrc)` | authenticated | owner/admin/member, 사용자는 submitted/live/rejected/takedown만, 전이 트리거 | `video.music_tracks` | P0002, 42501, 22023 |
 | `video.get_public_landing(p_slug)` | anon, authenticated | published + 엔타이틀먼트. 공개 컬럼과 단축 코드, 대가성 문구만 | jsonb 또는 null | - |
 | `video.get_public_linkinbio(p_handle)` | anon, authenticated | is_published + 엔타이틀먼트. 활성 항목, 공개 랜딩, 활성 링크만 | jsonb 또는 null | - |
@@ -122,7 +144,7 @@
 
 제품 AI·음성 RPC는 만들지 않았다(05장 6절). AI는 코어 `set_ai_cross_border_ack`, `resolve_ai_route`, `match_ai_chunks`, `purge_wiki_page`와 FastAPI를 쓴다.
 
-사용하는 코어 RPC: `session_context`, `bootstrap_app_for_org`, `consume_credits`, `grant_credits`, `refund_credits`, `enqueue_job`, `claim_jobs`, `heartbeat_job`, `complete_job`, `fail_job`, `cancel_job`, `reap_stale_jobs`, `confirm_payment_order`, `apply_subscription_transition`, `expire_stale_payment_orders`, `create_oauth_state`, `consume_oauth_state`, `revoke_credential`, `write_audit`, `new_affiliate_short_code`, `record_affiliate_click`, `effective_disclosure`, `upsert_affiliate_disclosure`, `run_monthly_credit_grants`(CORE_SPEC 1.3 표).
+사용하는 코어 RPC: `session_context`, `bootstrap_app_for_org`, `consume_credits`, `grant_credits`, `refund_credits`, `enqueue_job`, `claim_jobs`, `heartbeat_job`, `complete_job`, `fail_job`, `cancel_job`, `reap_stale_jobs`, `confirm_payment_order`, `apply_subscription_transition`, `expire_stale_payment_orders`, `create_oauth_state`, `consume_oauth_state`, `revoke_credential`, `write_audit`, `new_affiliate_short_code`, `record_affiliate_click`, `effective_disclosure`, `upsert_affiliate_disclosure`, `run_monthly_credit_grants`, `create_brandconnect_application`(2026-10-13, 9개 인자, `target_kind='clip'`, `source_app='video'`)(CORE_SPEC 1.3 표, 13장).
 
 ## 4. 잡 페이로드 계약
 
@@ -158,6 +180,8 @@
 | `playlist.render` | `{playlist_id}` | `{output_id, tracklist: [{position, title, start_sec}], pinned_comment_body, thumbnail_path}` | - |
 | `compliance.check` | `{upload_id, platform, title, description, tags, transcript_path?, llm: bool}` | `{compliance_check_id, verdict}` | - |
 | `upload.youtube` 등 | SHARED_MODULES 11장 `UploadInput` + `{upload_id}` | `UploadResult` + `{pinned: bool}` | `"upload 55%"` |
+| `upload.naver_clip` | SHARED_MODULES 11장 `UploadInput` + `{upload_id, consent_version}`(워커가 실행 직전 채널의 동의 버전을 다시 확인, 다르면 실패·환불) | `UploadResult`(`pinned` 없음, `post_url`) | `"login"`, `"form"`, `"publish"` |
+| `client_report.build` | `{report_id, client_id, period_month}` | `{pdf_path, kpis}` | `"aggregate"`, `"render"` |
 | `radar.playboard` | `{countries: ['KR','US','JP'], periods}` | `{inserted}` | - |
 | `radar.channel_finder` / `radar.bling` | `{report_id, params}` | `{report_id}` | - |
 | `analytics.sync` | `{org_id?}` | `{snapshots}` | - |
@@ -182,6 +206,8 @@
 | YouTube Analytics API | orchestrator `analytics` | 일 1회, 실패 시 다음 날 | - |
 | Meta Graph(IG Reels, Threads) | `sns-uploader/src/meta` | 재시도 3회 | 앱 심사 일정 별도 |
 | TikTok Content Posting | `sns-uploader/src/tiktok` | 재시도 3회 | 앱 감사 필요(MA:607) |
+| 네이버 클립 크리에이터 PC 웹(공식 API 아님) | `sns-uploader/src/naver-clip`(Playwright) | 재시도 1회, 셀렉터 실패 시 `failed` + 환불 + 운영 알림, 로그인 만료 시 `channels.status=error` + 재연결 요청. `NAVER_CLIP_UPLOAD_ENABLED=false`로 즉시 끔 | 공식 업로드 API 미확인(2026-10-13). 계정당 3건/시간·15건/일(제안). 약관상 자동화 허용 여부 미확인(D-23) |
+| 네이버 브랜드커넥트 | blog 소유 Playwright 어댑터(`brandconnect.apply`) | blog 규칙 | video는 지원서 생성만(코어 RPC) |
 | DeepL | orchestrator `steps/translate` | 재시도 3회 → 실패(환불). 코어 라우팅 대상이 아님(D-21) | - |
 | ElevenLabs(TS SDK) | Next.js `/api/voice/*`(샘플·읽어 주기), orchestrator `steps/tts`(내레이션, D-22) | 대화형은 체인 다음으로 대체(`voice_jobs.fallback_from`), 내레이션·샘플은 대체 없이 실패 + 환불. OpenAI TTS-1-HD 백업은 제거(D-14) | 요금·상업 이용 조건·데이터 보관은 구현 시 확인 |
 | 오픈소스 음성 서버 | Next.js `/api/voice/*`, orchestrator `steps/tts`(서명 토큰 scope `voice`) | 같음 | 요청당 STT 10분·TTS 5,000자 상한(`docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:61`). 숏폼 대본은 구간 단위로 나눠 호출 |
@@ -247,6 +273,8 @@
 | 23514 | CHECK 위반(대가성 문구, 출처 없는 블링 등) | 422 |
 | VD013 | 같은 목소리 규칙 위반: 재생성 요청의 제공자·보이스가 기록된 값과 다름(앱 코드, DB 미사용) | 422 |
 | VD014 | 정밀 모드 실행이 만료됐거나 이미 재개됨(앱 코드) | 409 |
+| VD015 | 네이버 클립 자동 업로드 위험 동의 없음 또는 고지문 버전 불일치(DB 트리거·RPC) | 409 + "채널 설정에서 위험 안내에 동의해 주세요" |
+| VD016 | 고객 승인 필요: 고객 채널 업로드를 승인 없이 예약하려 함, 또는 고객에 묶이지 않은 채널에 승인 요청(DB 트리거·RPC) | 409 |
 | `AI001` | 플랫폼이 강제한 오픈소스 범위를 해제하려 함(운영 도구에서만 발생) | 403 |
 | `AI002` | 국외 이전 동의 없이 국외 제공자를 체인에 넣으려 함(운영 도구에서만 발생. 제품 화면은 `set_ai_routing`을 부르지 않는다) | 403 + "AI 처리 방식에서 국외 이전 동의가 필요합니다" |
 | 앱 코드 `AI_UNAVAILABLE` | 체인의 모든 제공자 실패(선차감 환불 완료) | 503 |

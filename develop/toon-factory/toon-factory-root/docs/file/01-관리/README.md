@@ -44,14 +44,21 @@
 | `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우(AI 채팅·음성·설정 위키 포함), 화면별 명세, 디자인 시스템(Atlassian 주 레퍼런스), 랜딩 디자인 방향(3D 히어로), 상태·오류, 접근성 |
 | `04_API.md` | Route Handler(AI·음성 포함), 제품 RPC, 잡 페이로드, 웹훅, 외부 API(FastAPI, Dify 계약), 오류 코드 |
 | `05_DATA_MODEL.md` | 테이블, 상태 전이, RLS, 인덱스, 코어 참조(AI·음성은 코어 표만, 제품 AI 표 없음), 리뷰 #1~#4 차단 설계, 모놀리스/모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 59개(AI·음성·3D·디자인 시스템 19개 포함), 소유 경계, 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `06_AGENT_PLAN.md` | 작업 66개(AI·음성·3D·디자인 시스템 19개, 2026-10-13 2차 보강 7개 포함), 소유 경계, 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 이식 시 수정점, 폐기 목록, 복사 금지 결함 |
+| `08_BENCHMARK.md` | 경쟁 AI 웹툰·숏툰 도구 비교표(12항목, 출처 포함), 격차 → 보강안 매핑, 분기별 반복 벤치마킹 방법(점검표, 점수 기준) |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `D:/WorkSpace/platform/docs/products/_platform-core/MONOLITH_CORE_LITE.sql` 복사본. 6-A, 6-B, 9절 제거 |
 | `supabase/monolith/migrations/0002_toon_domain.sql` | 도메인 테이블(모듈러 조각에서 변환) |
 | `supabase/monolith/seed.sql` | apps, 플랜 2개(AI 키 포함), 크레딧팩 2개, 샘플 카탈로그 팩, AI 라우팅 기본값 14행 |
-| `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/2000_toon.sql` | 모듈러 조각(정본, 10절에 AI·음성 기본값) |
+| `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/2000_toon.sql` | 모듈러 조각(정본, 10절에 AI·음성 기본값, 11절에 내보내기 프리셋·브랜디드 툰) |
 
 ## 5. DB 구조 선택
 
 기본값은 모듈러다. 이유는 (1) 크레딧과 결제를 다른 제품과 같은 원장·지갑으로 쓰면 크로스셀(예: video 사용자가 툰 숏폼을 만드는 경우)이 쉽고(`D:/WorkSpace/platform/docs/products/_supabase-modular/ARCHITECTURE.md:74`), (2) 의료정보 같은 격리 요구가 없으며, (3) 숏폼 렌더를 video와 공유할 가능성이 있기 때문이다. 모놀리스는 단독 판매나 별도 법인 운영이 필요할 때를 위해 같은 도메인 모델로 함께 둔다(`ARCHITECTURE.md:75`). 두 파일은 같은 조각에서 변환하며(05장 9절), PGlite 체커와 RLS 스모크 테스트(68항목)를 두 구조 모두 통과했다(05장 4절).
+
+## 6. 변경 이력
+
+| 날짜 | 변경 | 근거 |
+|---|---|---|
+| 2026-10-13 | 2차 개정(확정 결정 20): 경쟁 도구 벤치마킹 문서 `08_BENCHMARK.md` 추가. 로그라인·시놉시스 생성(TN-F-024), 플랫폼 내보내기 프리셋(TN-F-038), 브랜디드 툰(TN-F-070~073)을 MVP에, SNS 직접 업로드(TN-F-080, 네이버 클립 포함)와 숏툰 모션(TN-F-081)을 Phase 2에 넣었다. SQL `2000_toon.sql` 11절(프리셋, `sponsorships`)과 모놀리스 변환본 갱신 | `08_BENCHMARK.md`, 01장 2절 |

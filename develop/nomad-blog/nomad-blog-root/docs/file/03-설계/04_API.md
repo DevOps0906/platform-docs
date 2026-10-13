@@ -11,7 +11,7 @@
 | 멱등 | 생성·발행·지원 요청은 클라이언트 UUID `request_id` 필수. 키: `consume:blog:<request_id>`, `job:blog:<request_id>`, 발행 행 `idempotency_key = pub:<request_id>:<channel_account_id>` |
 | 크레딧 선차감 | Route Handler에서 service_role로 `consume_credits` → `enqueue_job(p_credit_ledger_id)` 또는 동기 호출(`withCredits`). 사용자 RPC 안에서 차감하지 않는다(`DB_CONVENTIONS.md` 11장). AI·음성의 선차감·정산은 2.1절의 라우트에서만 한다 |
 | 응답 봉투 | 성공 `{ data }`, 실패 `{ error: { code, message, details? } }`. `message`는 사용자 문구. 예외 원문·스택 금지 |
-| 레이트 리밋 | `core.rate_limit_hit` 키 `blog:<route>:<org_id>`. 생성 60회/분, 브랜드커넥트 지원 `blog:bc:<account_id>` 5회/시간, `/r` `affiliate:r:<ip_hash>` 60회/분 |
+| 레이트 리밋 | `core.rate_limit_hit` 키 `blog:<route>:<org_id>`. 생성 60회/분, 브랜드커넥트 지원 `brandconnect:apply:<account_id>` 5회/시간(video 클립형 요청과 합산, `SECURITY_BASELINE.md` 8장), `/r` `affiliate:r:<ip_hash>` 60회/분 |
 | 감사 | 01장 BL-F-006 행동은 서버가 `auditAsService` 또는 제품 RPC 내부 `write_audit` |
 
 ## 2. Route Handler
@@ -46,7 +46,8 @@
 | POST `/api/brandconnect/accounts/:id/consent` | owner/admin | `{ notice_version }` | `{ ok }` | 0 | `core.consent_brandconnect_risk` + 감사 `blog.brandconnect.risk_notice_ack` | 409 NOTICE_OUTDATED |
 | DELETE `/api/brandconnect/accounts/:id/consent` | owner/admin | - | `{ ok }` | 0 | service: `risk_consented_at=null`, 대기 지원 잡 `cancel_job`, 감사 | - |
 | POST `/api/brandconnect/scan` | member+ | `{ request_id, account_id, keyword? }` | `{ job_id }` | 0 | 하루 4회 제한 → `enqueue_job('blog.browser','brandconnect.scan')` | 429 |
-| POST `/api/brandconnect/applications` | member+ | `{ request_id, account_id, campaign_id, blog_url, brand_name?, product_name?, category?, message(≤1,000자) }` | `{ application_id, job_id }` | 0 | `rate_limit_hit(5/h, 20/d)` → `core.create_brandconnect_application` → `enqueue_job('brandconnect.apply')` | 403 42501(동의 없음), 429 |
+| POST `/api/brandconnect/applications` | member+ | `{ request_id, account_id, campaign_id, campaign_type, target_url(블로그 주소), brand_name?, product_name?, category?, message(≤1,000자) }` | `{ application_id, job_id }` | 0 | `campaign_type='clip'`이면 409 `CLIP_CAMPAIGN_USE_VIDEO`(BL-F-036). 그 외 `rate_limit_hit(5/h, 20/d)` → `core.create_brandconnect_application(target_kind='blog', source_app='blog')` → `enqueue_job('brandconnect.apply')` | 403 42501(동의 없음), 409, 429 |
+| POST `/api/brandconnect/handoff` | member+ | `{ account_id, campaign: { campaign_id, title, brand, deadline, reward } }` | `{ redirect_url }` | 0 | video 엔타이틀먼트 확인 → video 클립 캠페인 지원 화면 URL(서명된 1회용 파라미터, 10분) 반환. 지원서는 video가 만든다(BL-F-036) | 403(video 없음) |
 | POST `/api/brandconnect/message` | member+ | `{ request_id, campaign, draft }` | `{ message }` | 1 | `withCredits` | 402 |
 | POST `/api/billing/orders` | owner/admin | `{ kind: subscription\|credit_pack, plan_code?, pack_code? }` | `{ orderId, amountKrw, customerKey }` | 0 | `TossApi.createOrder` | 422 |
 | POST `/api/billing/confirm` | owner/admin | `{ orderId, paymentKey, amount }` | `{ payment }` | 0 | `TossApi.confirm` → `confirm_payment_order` | 409 PM001(운영 알림 + Toss 취소), PM409, PM410 |
@@ -105,8 +106,8 @@
 | `blog.publish.wordpress` | `{ publication_id, post_id, channel_account_id, rendered_hash }` | `{ external_post_id, published_url }` | 20 렌더 → 60 업로드 → 100 |
 | `blog.publish.naver` / `blog.publish.tistory` | 같음 | `{ external_post_id?, published_url?, outcome: published\|unconfirmed, screenshot_path? }` | 10 잠금 → 30 로그인 확인 → 60 원고 입력 → 80 발행 클릭(이후 취소 불가) → 100 |
 | `blog.channel.verify` | `{ channel_account_id }` | `{ status: active\|needs_reauth\|error, external_account_id, session_expires_at }` | - |
-| `brandconnect.scan` | `{ affiliate_account_id, keyword? }` | `{ campaigns: [{campaign_id, title, brand, deadline, reward}] (≤50), scanned_at }` | - |
-| `brandconnect.apply` | `{ application_id }` | `{ external_id?, outcome: submitted\|failed }` | 80 "제출 클릭" 이후 취소 불가 |
+| `brandconnect.scan` | `{ affiliate_account_id, keyword?, campaign_type? }` | `{ campaigns: [{campaign_id, title, brand, deadline, reward, campaign_type: 'blog'\|'clip'\|'shopping_connect'\|'unknown'}] (≤50), scanned_at }` | - |
+| `brandconnect.apply` | `{ application_id, source_app: 'blog'\|'video' }` | `{ external_id?, outcome: submitted\|failed }` | 80 "제출 클릭" 이후 취소 불가. video가 만든 클립형 지원서도 이 잡으로 처리(cross-app, `SHARED_MODULES.md` 17장). 워커는 지원서의 `target_kind`로 제출 양식(블로그 주소/클립 채널 주소)을 고른다 |
 | `brandconnect.sync` | `{ affiliate_account_id }` | `{ updated: [{application_id, status}] }` | - |
 | `blog.export` | `{ post_ids, format }` | `{ storage_path, count }` | 퍼센트 |
 | `blog.ai.rag_ingest` | `{ document_id, collection: 'blog-materials', contains_pii }` | `{ document_id, chunks, embedding_provider, embedding_model }` | 퍼센트 |

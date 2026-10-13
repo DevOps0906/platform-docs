@@ -32,7 +32,9 @@
 | 채널 연결과 발행: 네이버 블로그, 티스토리(Playwright), 워드프레스(REST) | MVP | 확정 결정 1, `:630-631` |
 | 예약 발행과 캘린더 | MVP | `NOMAD Shorts Maker/src/lib/plans.ts:49`(Pro "스케줄 자동 발행") |
 | 컴플라이언스 게이트(규칙 + LLM) | MVP | `SHARED_MODULES.md` 13장(blog는 발행 전) |
-| 브랜드커넥트: 계정 연결, 위험 고지·동의, 캠페인 탐색, 지원서 자동 제출, 상태 동기화 | MVP | 확정 결정 12 |
+| 브랜드커넥트: 계정 연결, 위험 고지·동의, 캠페인 탐색(유형 분류 포함), 지원서 자동 제출, 상태 동기화 | MVP | 확정 결정 12, 19 |
+| 브랜드커넥트 클립형 캠페인을 video로 넘김(BL-F-036) | MVP | 확정 결정 19. video가 지원서를 만들고 blog 워커가 제출 |
+| 블로그 원고 → 네이버 클립 대본 OSMU(BL-F-037) | Phase 2 | 확정 결정 18·19. video의 클립 업로드(VD-F-075) 이후 |
 | 제휴 클릭 통계 | MVP | 확정 결정 1(클릭 통계는 affiliate 모듈) |
 | 인스타그램 카드 포스팅 | Phase 2 | `docs/reference/00_MERGE_ANALYSIS.md:632`(Meta 업로더로 일원화, 업로더는 video 소유) |
 | 반복 발행 시리즈(cron 표현식) | Phase 2 | `NOMAD Shorts Maker/src/skill/schedule-engine/cron-handler.ts:10-41` |
@@ -95,14 +97,18 @@
 
 ### 3.4 네이버 브랜드커넥트(blog 소유)
 
+2026-10-13 확정 결정 19: 네이버 브랜드커넥트는 블로그뿐 아니라 클립 크리에이터와 캠페인사의 제휴도 지원한다([이코노미스트 2025-06](https://economist.co.kr/article/view/ecn202506130009)). 지원서(`core.brandconnect_applications`)의 대상은 `target_url` + `target_kind`(blog/clip) + `source_app`(blog/video)로 바뀌었다(`CORE_SPEC.md` 16.1절). 블로그형은 blog가, 클립형은 video가 지원서를 만들고, Playwright 어댑터와 워커는 blog가 그대로 소유한다.
+
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
 | BL-F-030 | 브랜드커넥트 계정 연결 | 신규 | 네이버 채널 연결에 쓴 자격증명을 공유해 `affiliate_accounts(provider='naver_brandconnect')`를 만든다(service_role). 별도 네이버 계정도 허용 | 연결 직후 상태는 "위험 동의 필요"이고 지원 버튼이 잠겨 있다 | `CORE_SPEC.md` 13.1절 |
-| BL-F-031 | 위험 고지와 동의 | 신규 | 6.4절 고지문 전문을 보여 주고 owner/admin만 동의한다. 동의 = 고지문 끝까지 읽음 + 체크 3개 + "동의합니다" 입력 → `consent_brandconnect_risk(account)` + 고지문 버전 감사 기록. 고지문 버전이 바뀌면 재동의 전까지 지원 잡을 만들지 않는다. 철회하면 대기 중 지원 잡을 취소한다 | member가 동의 버튼을 누르면 403이다. 동의 없이 지원서를 만들면 core가 42501을 돌려준다. 철회 후 대기 지원 잡이 canceled로 바뀐다 | 확정 결정 12, `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0006_core_affiliate.sql:303-360` |
-| BL-F-032 | 캠페인 탐색 | 디벨롭 | 잡 `brandconnect.scan`이 Playwright로 공개 캠페인 목록(제목, 브랜드, 마감, 보상)을 가져와 잡 결과로 돌려준다. 하루 최대 4회, 결과는 테이블에 저장하지 않는다(잡 결과 7일 보관, 제안). Mock 목록 금지 | 스캔 실패 시 빈 목록이 아니라 실패 사유("로그인이 필요합니다" 등)가 보인다 | `NOMAD Shorts Maker/src/skill/playwright-engine/brand-connect.ts:101-134`, `NOMAD Shorts Maker/src/app/api/brand-connect/recommend/route.ts:3-12`(Mock, 폐기) |
-| BL-F-033 | 지원서 자동 제출 | 유지 | 사용자가 캠페인을 고르고 지원 메시지(템플릿 + AI 다듬기 선택)를 확인하면 `create_brandconnect_application` → 잡 `brandconnect.apply`가 Playwright로 제출한다. 사람 개입 없이 끝까지 진행하고, 상태는 draft → submitting → submitted / failed. 계정당 5건/시간, 20건/일(제안) | 제출 성공 시 `submitted_at`과 지원서 상태 "제출됨"이 보인다. 6번째 요청(1시간 내)은 429다. CAPTCHA가 나오면 failed + "네이버에 다시 로그인해 주세요" | 확정 결정 12, `SECURITY_BASELINE.md` 8장, `NOMAD Shorts Maker/src/skill/playwright-engine/brand-connect.ts:22-96` |
+| BL-F-031 | 위험 고지와 동의 | 신규 | 6.4절 고지문 전문을 보여 주고 owner/admin만 동의한다. 동의 = 고지문 끝까지 읽음 + 체크 3개 + "동의합니다" 입력 → `consent_brandconnect_risk(account)` + 고지문 버전 감사 기록. 고지문 버전이 바뀌면 재동의 전까지 지원 잡을 만들지 않는다. 철회하면 대기 중 지원 잡(video가 요청한 클립형 포함)을 취소한다 | member가 동의 버튼을 누르면 403이다. 동의 없이 지원서를 만들면 core가 42501을 돌려준다. 철회 후 대기 지원 잡이 canceled로 바뀐다 | 확정 결정 12, `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0006_core_affiliate.sql:313-377` |
+| BL-F-032 | 캠페인 탐색 | 디벨롭 | 잡 `brandconnect.scan`이 Playwright로 공개 캠페인 목록(제목, 브랜드, 마감, 보상, 유형)을 가져와 잡 결과로 돌려준다. 유형 `campaign_type`은 `blog`/`clip`/`shopping_connect`/`unknown`이며 캠페인 화면의 채널 표기(블로그·클립)와 쇼핑 커넥트 여부로 분류한다(셀렉터 상수, 분류 불가는 `unknown`, D-21). 하루 최대 4회, 결과는 테이블에 저장하지 않는다(잡 결과 7일 보관, 제안). Mock 목록 금지 | 스캔 실패 시 빈 목록이 아니라 실패 사유("로그인이 필요합니다" 등)가 보인다. 목록에 유형 칩(블로그/클립/쇼핑 커넥트/미분류)과 필터가 있다. `unknown`은 블로그형으로 지원할 수 있지만 확인 문구를 보여 준다 | `NOMAD Shorts Maker/src/skill/playwright-engine/brand-connect.ts:101-134`, `NOMAD Shorts Maker/src/app/api/brand-connect/recommend/route.ts:3-12`(Mock, 폐기) |
+| BL-F-033 | 지원서 자동 제출 | 유지 | 사용자가 블로그형(또는 `unknown`) 캠페인을 고르고 지원 메시지(템플릿 + AI 다듬기 선택)를 확인하면 `create_brandconnect_application(target_url=블로그 주소, target_kind='blog', source_app='blog')` → 잡 `brandconnect.apply`가 Playwright로 제출한다. 사람 개입 없이 끝까지 진행하고, 상태는 draft → submitting → submitted / failed. 계정당 5건/시간, 20건/일(제안) | 제출 성공 시 `submitted_at`과 지원서 상태 "제출됨"이 보인다. 6번째 요청(1시간 내)은 429다. CAPTCHA가 나오면 failed + "네이버에 다시 로그인해 주세요" | 확정 결정 12, `SECURITY_BASELINE.md` 8장, `NOMAD Shorts Maker/src/skill/playwright-engine/brand-connect.ts:22-96` |
 | BL-F-034 | 지원 상태 동기화 | 신규 | 잡 `brandconnect.sync`가 하루 1회 제출 건의 선정/미선정을 읽어 accepted/rejected로 바꾼다 | 선정되면 대시보드에 "선정된 캠페인 원고 쓰기" 행동이 생긴다 | 제안 |
-| BL-F-035 | 선정 캠페인 원고 | 신규 | 원고에 지원서를 연결하면(`posts.brandconnect_application_id`) 제휴 링크가 없어도 naver_brandconnect 대가성 문구가 상단에 들어간다 | 연결된 원고는 문구 없이 발행 단계로 갈 수 없다(DB 불변식) | 확정 결정 12 |
+| BL-F-035 | 선정 캠페인 원고 | 신규 | 원고에 지원서를 연결하면(`posts.brandconnect_application_id`) 제휴 링크가 없어도 naver_brandconnect 대가성 문구가 상단에 들어간다. 원고에는 블로그형 지원서(`target_kind='blog'`)만 연결한다 | 연결된 원고는 문구 없이 발행 단계로 갈 수 없다(DB 불변식). 클립형 지원서를 연결하면 42501(트리거, `1300_blog.sql`) | 확정 결정 12, 19 |
+| BL-F-036 | 클립형 캠페인 넘김 | 신규 | 캠페인 목록에서 `campaign_type='clip'`을 고르면 지원 버튼 대신 "영상으로 지원"을 보여 준다. 조직에 video 엔타이틀먼트가 있으면 캠페인 정보(campaign_id, 브랜드, 상품, 마감, 보상)를 담아 video의 클립 캠페인 지원 화면으로 넘기고, video가 `create_brandconnect_application(target_url=클립 채널 주소, target_kind='clip', source_app='video')`로 지원서를 만든다. 제출 잡은 같은 `brandconnect.apply`(blog 워커)가 처리한다. video가 없으면 "nomad-video에서 지원할 수 있습니다" 안내만 | blog 화면에서 클립형 지원서를 직접 만들 수 없다(CHECK `brandconnect_applications_kind_app_check`, API 409). 레이트 리밋은 blog·video 합산(계정당 5건/시간). 지원 목록에는 클립형도 "video에서 지원" 표시로 함께 보인다 | 확정 결정 19, `CORE_SPEC.md` 13.3절 |
+| BL-F-037 | 블로그 원고 → 클립 대본(OSMU) | 신규(Phase 2) | 발행된 원고에서 "클립으로 만들기"를 누르면 제목·소제목·핵심 문단·제휴 상품을 30~60초 세로 영상 대본(훅 3초, 장면 5~8개, 자막 문구)으로 요약해 video에 넘긴다. 원고의 제휴 매핑과 대가성 문구 제공자도 함께 넘겨, video가 클립 업로드 때 제목 앞머리 + 첫 해시태그로 표시한다 | 넘긴 대본에 원고 출처(post_id)가 남는다. 대가성 문구 제공자가 빠지면 video 업로드 단계에서 차단된다 | 확정 결정 18, 19, `D:/WorkSpace/platform/docs/products/nomad-video/01_PRD.md`(VD-F-075) |
 
 ### 3.5 채널과 발행
 
@@ -426,7 +432,7 @@ AI 대화·생성 추가 규칙(6.5절에 더해 채팅, 위키, 그래프에 �
 | 1 | 네이버 블로그에 쿠팡 링크 | (a) 경고 후 사용자 확인 시 허용 (b) 네이버 채널에서는 쿠팡 카드 차단 | (a). 확정 결정 12는 본문 자동 삽입을 정했고, 원본 주석(`naver-blog-poster.ts:2`)은 페널티 위험만 말한다. 자동 삽입은 네이버 채널에서 쿠팡 대신 네이버쇼핑 커넥트·브랜드커넥트를 우선한다 |
 | 2 | 네이버 채널 링크 형식 | (a) 단축 링크 `/r/` (b) 제공자 직접 링크 | (b) 네이버, (a) 티스토리·워드프레스. 외부 단축 도메인이 노출에 미치는 영향은 미확인이라 보수적으로 |
 | 3 | 텐핑·네이버쇼핑 커넥트 | (a) 공개 API 확인 후 어댑터 (b) Playwright (c) 수동 등록 유지 | (a) 확인 전까지 (c). (b)는 약관 확인 후에만 |
-| 4 | 브랜드커넥트 무인 자동 지원(Phase 2) | (a) 키워드·카테고리 규칙 + 일일 상한 (b) 제공하지 않음 | (a). 규칙 저장용 `blog` 테이블은 Phase 2에서 추가(확정 결정 12의 "blog 스키마는 원고와 매핑만" 원칙과 충돌 여부 확인 필요) |
+| 4 | 브랜드커넥트 무인 자동 지원(Phase 2) | (a) 키워드·카테고리·캠페인 유형(`campaign_type`) 규칙 + 일일 상한 (b) 제공하지 않음 | (a). 클립형은 무인 지원에서 제외(영상 제작에 사람 확인이 필요). 규칙 저장용 `blog` 테이블은 Phase 2에서 추가(확정 결정 12의 "blog 스키마는 원고와 매핑만" 원칙과 충돌 여부 확인 필요) |
 | 5 | AI 활용 표기 | (a) 기본 ON, 사용자 해제 가능 (b) 해제 불가 (c) 표기 안 함 | 법률 검토 후 결정. 확인 전 (a) |
 | 6 | 네이버·티스토리 자격증명 | (a) 아이디·비밀번호 암호화 저장 후 워커 로그인 (b) 쿠키 가져오기(브라우저 확장) | MVP (a), Phase 2 (b) 추가. 2단계 인증 계정은 (b)만 가능 |
 | 7 | 티스토리 공식 API | 공개 API 제공 여부 미확인 | 확인 전 Playwright. API가 있으면 어댑터 교체 |
@@ -443,3 +449,4 @@ AI 대화·생성 추가 규칙(6.5절에 더해 채팅, 위키, 그래프에 �
 | D-18 | 운영자 규정 해설집(표시광고법, 채널 가이드, SEO 원칙) 컬렉션 | (a) MVP는 규칙 사전만, Phase 2에 운영자 컬렉션 + 공개 위키 (b) MVP부터 운영자 컬렉션 | (a). 규정 해설은 법률 검토가 필요하고, MVP에서 AI가 법 해석을 답하지 않도록 한다(6.7절) |
 | D-19 | 공정 사용 한도와 월 크레딧 재산정 | (a) 하루 채팅 턴 50/200/500, 문서 10/100/1,000, 4.1절 월 크레딧 유지 (b) 그래프 단가 5를 반영해 월 크레딧 상향(Free 25, Pro 375 등) | (a)로 출시, 실사용 원가(`core.ai_usage`)로 재산정 |
 | D-20 | 반복 시리즈(BL-F-050) 무인 AI 초안의 사람 승인 | (a) 승인 면제 없음: 초안은 만들되 승인 전에는 발행 안 함 (b) 규칙 통과 시 면제(브랜드커넥트 무인 규칙과 함께) | (a). BL-F-052 원칙(되돌리기 어려운 발행 앞에는 사람 승인)을 유지, 면제는 Phase 2에서 법률 검토 후 |
+| D-21 | 캠페인 유형 분류 방식(BL-F-032) | (a) 캠페인 화면의 채널 표기 셀렉터로 분류 (b) 제목·요강 키워드 규칙 (c) LLM 분류 | (a) + 실패 시 `unknown`. 네이버 화면 구조는 미확인(2026-10-13)이라 셀렉터 상수 파일에 두고 분류 실패율(`unknown` 비율)을 운영 지표로 본다 |

@@ -67,8 +67,8 @@
 | `generation_mode` | text | 아니오 |  | 값: template, hybrid, ai |
 | `phase` | text | 아니오 | `'mvp'` | 값: mvp, phase2, phase3 |
 | `credits` | integer | 아니오 |  |  |
-| `in_package` | text[] | 아니오 | `'{}'` | 포함되는 패키지 code 목록(예: outsourcing_basic) |
-| `package_order` | integer | 예 |  | 패키지 생성 순서(의존) |
+| `in_package` | text[] | 아니오 | `'{}'` | 포함되는 패키지 code 목록(예: outsourcing_basic, shorts_agency). 한 유형이 여러 패키지에 속할 수 있다(quote, sow, acceptance) |
+| `package_order` | integer | 예 |  | 패키지 생성 순서(의존). 유형마다 한 값이라 패키지들이 같은 순서 체계를 쓴다(`01_PRD.md` 3.5.1절) |
 | `number_prefix` | text | 아니오 | `'DOC'` | 문서번호 {TYPE}(01_PRD 3.6) |
 | `notice_version` | text | 예 |  | 고위험 유형의 현재 고지문 버전(risk_acknowledgements 와 대조) |
 | `is_active` | boolean | 아니오 | `true` |  |
@@ -112,7 +112,7 @@
 | `input_type` | text | 아니오 |  |  |
 | `options` | jsonb | 아니오 | `'[]'::jsonb` |  |
 | `effects` | jsonb | 아니오 | `'[]'::jsonb` | 결정적 효과 엔진 입력: [{when, create: requirement\|artifact\|line_item\|clause, ...}] |
-| `applies_to` | text[] | 아니오 | `'{}'` | 비면 전체 project_type |
+| `applies_to` | text[] | 아니오 | `'{}'` | 비면 전체 project_type. dev 전용 항목은 `{web,app,ai,mixed,other}`, shorts_agency 항목은 `{content}`(`01_PRD.md` 3.3.1절) |
 | `is_required` | boolean | 아니오 | `false` |  |
 | `version` | integer | 아니오 | `1` |  |
 | `is_active` | boolean | 아니오 | `true` |  |
@@ -210,7 +210,7 @@
 | `client_party_id` | uuid | 예 |  |  |
 | `name` | text | 아니오 |  |  |
 | `code` | text | 예 |  |  |
-| `project_type` | text | 아니오 | `'web'` | 값: web, app, ai, mixed, other |
+| `project_type` | text | 아니오 | `'web'` | 값: web, app, ai, mixed, other, content(Phase 2 숏폼 대행, DC-F-046) |
 | `status` | text | 아니오 | `'draft'` | 값: draft, active, delivered, archived |
 | `profile` | jsonb | 아니오 | `'{}'::jsonb` |  |
 | `checklist_version` | integer | 아니오 | `1` |  |
@@ -300,9 +300,9 @@
 | `id` | uuid | 아니오 | `gen_random_uuid()` |  |
 | `org_id` | uuid | 아니오 |  | FK core.organizations. |
 | `project_id` | uuid | 아니오 |  |  |
-| `category` | text | 아니오 | `'dev'` | 값: dev, design, pm, qa, infra, license, etc |
+| `category` | text | 아니오 | `'dev'` | 값: dev, design, pm, qa, infra, license, etc, production, channel_ops, media(뒤 3개는 content용) |
 | `name` | text | 아니오 |  |  |
-| `unit` | text | 아니오 | `'man_day'` | 값: man_day, man_month, ea, lump |
+| `unit` | text | 아니오 | `'man_day'` | 값: man_day, man_month, ea, lump, per_video, per_month, per_channel(뒤 3개는 content용) |
 | `quantity` | numeric(10, 2) | 아니오 | `1` |  |
 | `unit_price_krw` | bigint | 아니오 | `0` |  |
 | `amount_krw` | bigint | 예 | `생성: round(quantity * unit_price_krw)::bigint` |  |
@@ -887,10 +887,10 @@ seed 내용(전부 제안값, 정본은 `01_PRD.md` 3·4장).
 
 | 대상 | 내용 |
 |---|---|
-| `doc_types` | MVP 9종 활성(quote, sow, req_spec, wbs, screen_list, dev_contract, acceptance, minutes, trace_matrix), Phase 2/3 유형 비활성. `dev_contract`는 고위험 + `notice-contract-2026-10-13` |
-| `doc_type_versions` | MVP 유형별 v1(섹션 구조, 필수 입력, lint 규칙 코드, 템플릿 경로) |
-| `checklist_items` | 대표 항목(구축 유형, 로그인·결제 등 기능, 산출물, 계약 조건)과 효과. 전체 목록과 효과 문법은 `01_PRD.md` 3장 |
-| `clauses` | `dev_contract` 표준 조항 골격 9개. 원문 출처·이용 조건이 미확인(D-8)이라 전부 `status='draft'`(사용자에게 보이지 않음). 법무 검토(D-3) 후 운영자가 본문을 채워 `published`로 바꾼다. 그 전에는 `dev_contract` 확정을 lint `L-REQUIRED-CLAUSE`가 막는다 |
+| `doc_types` | MVP 9종 활성(quote, sow, req_spec, wbs, screen_list, dev_contract, acceptance, minutes, trace_matrix), Phase 2/3 유형 비활성. `dev_contract`는 고위험 + `notice-contract-2026-10-13`. Phase 2 shorts_agency 7종(content_brief, video_service_contract, channel_access_mandate, brand_guide_ack, ad_disclosure_checklist, monthly_report, service_intro) 비활성. 계약서는 `notice-contract-2026-10-13`, 위임 동의서는 `notice-channel-mandate-2026-10-13` |
+| `doc_type_versions` | MVP 유형별 v1(섹션 구조, 필수 입력, lint 규칙 코드, 템플릿 경로). shorts_agency 7종은 v1 초안(`published_at` null, 사용자에게 보이지 않음) |
+| `checklist_items` | 대표 항목(구축 유형, 로그인·결제 등 기능, 산출물, 계약 조건)과 효과. 전체 목록과 효과 문법은 `01_PRD.md` 3장. content 항목 14개(`applies_to={content}`, 3.3.1절) |
+| `clauses` | `dev_contract` 표준 조항 골격 9개, `video_service_contract` 18개(`vsc.*`), `channel_access_mandate` 5개(`cam.*`, 출처 미확인 D-15). 원문 출처·이용 조건이 미확인(D-8)이라 전부 `status='draft'`(사용자에게 보이지 않음). 법무 검토(D-3) 후 운영자가 본문을 채워 `published`로 바꾼다. 그 전에는 `dev_contract` 확정을 lint `L-REQUIRED-CLAUSE`가 막는다 |
 | `runtime_config` | `max_active_generations_per_org`=3, `daily_credit_cap` 등 |
 | 플랜·크레딧팩 | free(가입 50, 월 30), pro(19,900원, 월 400), team(59,000원, 월 1,500, Phase 2 비활성), 팩 100/300/1,000 |
 | `ai_routing_settings` | 기능별 13행. `docs.minutes`(llm)와 `meeting_minutes`(stt), `dify.aux`는 오픈소스 강제 |

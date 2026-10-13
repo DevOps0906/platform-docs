@@ -4,12 +4,15 @@
 
 2026-10-13 개정: 확정 결정 13~17(`docs/reference/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(채널 코치 채팅, RAG, 채널·브랜드 가이드 위키, LangGraph `video.script`), 음성(음성 대화, 오픈소스 TTS 내레이션 선택, Whisper STT의 공용 음성 구조 편입), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/file/03-설계/디자인/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 기능 ID는 `VD-F-100`번대(AI), 열린 결정은 `D-13` 이후다(기존 #1~#12는 `D-1`~`D-12`와 같다).
 
+2026-10-13 2차 개정(확정 결정 18, 19, 21): (1) 업로드 채널에 **네이버 클립**(`naver_clip`)을 추가한다. 공식 업로드 API를 찾지 못해(2026-10-13 조사, 미확인) Playwright 브라우저 자동화로 게시하고, owner/admin의 위험 동의(고지문 `clip-2026-10-v1`)를 채널마다 받는다(VD-F-075, D-23). (2) 브랜드커넥트 지원을 blog 전용에서 범용으로 넓힌 코어 변경(`core.brandconnect_applications.target_kind`, `source_app`)에 맞춰 video가 **클립 캠페인 지원을 요청**하고 선정 영상에 대가성 문구를 강제한다(VD-F-063). (3) 숏폼 **직접 대행 사업**의 내부 도구로 쓰도록 대행 고객(clients), 고객 채널 묶음, 고객 승인, 월간 리포트를 넣는다(VD-F-120~126). 외부 대행사 판매·화이트라벨은 Phase 2(D-24). 사업 운영 기준은 `08_AGENCY_OPERATIONS.md`.
+
 ## 1. 페르소나와 핵심 과제
 
 | 페르소나 | 상황 | 목표 | 좌절 |
 |---|---|---|---|
 | 민재(29, 1인 숏폼 크리에이터) | 퇴근 후 2시간, YouTube 채널 3개 | 중국 드라마 숏폼을 매일 3편씩 KO/JA/EN으로 올려 광고 수익 | 번역·더빙·자막·업로드를 손으로 하면 1편에 2시간. 채널 정지 위험을 모른다 |
 | 수진(35, 커머스 리뷰 채널) | 쿠팡파트너스 수익이 주 수입 | 상품 시연 숏폼마다 랜딩과 제휴 링크를 자동으로 붙인다 | 대가성 문구를 빠뜨려 경고를 받은 적이 있다. 링크 클릭 통계가 흩어져 있다 |
+| 지훈(37, 숏폼 대행 운영 PD, 팀 4인) | 고객사 8곳의 YouTube·클립 채널을 월 리테이너로 운영 | 고객별 채널·브랜드 가이드를 나눠 생산하고, 고객 승인 후 예약하고, 월말 리포트를 보낸다 | 승인 요청을 카톡·메일로 주고받다 버전이 섞이고, 리포트를 엑셀로 손으로 만든다 |
 | 태호(41, 음원·플리 채널 운영, 팀 3인) | Lofi 채널 2개 + 플리 채널 1개 | Suno 곡을 단일 곡 영상으로 올리고 무드별 1시간 플리를 주 2회 만든다 | 곡별 저작권 근거와 트랙리스트·타임스탬프 작성이 번거롭다 |
 
 | 핵심 과제 | 측정 |
@@ -32,6 +35,10 @@
 | Track F 플레이리스트(30분/1시간/3시간, 트랙리스트·타임스탬프·무드 썸네일·고정 댓글) | MVP | 확정 결정 7. 관리 단위는 플레이리스트 프로젝트 |
 | MODULE 0 레이더(플레이보드, 채널파인더, 블링) | MVP | PRD 3장, MA:550-557 |
 | YouTube 다채널(최대 40), IG Reels, TikTok, Threads 업로더 | MVP | PRD 10장, SHARED_MODULES 11장 |
+| 네이버 클립 업로더(Playwright, 위험 동의 필수, Pro 이상) | MVP | 확정 결정 18. 공식 API 미확인(D-23) |
+| 브랜드커넥트 클립 캠페인 지원 요청 + 선정 영상 대가성 문구 강제 | MVP | 확정 결정 19. 지원 제출은 blog 소유 어댑터(`brandconnect.apply`, `source_app='video'`) |
+| 대행 운영: 고객·고객 채널, 고객 승인 링크, 고객별 브랜드 가이드, 월간 리포트 PDF, 고객별 생산 현황 | MVP(Advanced, `features.agency`) | 확정 결정 21, `08_AGENCY_OPERATIONS.md` |
+| 외부 대행사 판매(화이트라벨, 고객 포털 로그인, 고객별 과금) | Phase 2 | D-24 |
 | 제휴 링크·대가성 문구 자동 삽입(전 Track), 링크인바이오 `/lb/[handle]` | MVP | 확정 결정 12, MA:621 |
 | compliance 게이트(규칙 + LLM) | MVP | PRD 9-4 |
 | Toss 구독·크레딧팩 | MVP | 확정 결정 4 |
@@ -91,13 +98,14 @@
 | VD-F-060 | Track B 랜딩 | 통합 | `/landing/[slug]` ISR 1시간. 상품명 + YouTube 임베드 + 특징 3개 + CTA + 관련 상품 3개. 대가성 문구를 CTA 위에 표시. 공개는 `set_landing_status`(제휴 링크 필수, Basic 이상) | 공개 랜딩 응답에 대가성 문구 포함. 비공개 slug는 404 | PRD:181-190, SM #12 |
 | VD-F-061 | 링크인바이오 | 유지 | `/lb/[handle]` 공개 허브. 항목 link/landing/affiliate/video. 제휴 항목 옆에 대가성 문구 | 비공개 프로필 404. 제휴 항목에 문구 렌더 | MA:621 |
 | VD-F-062 | 제휴 링크 자동 삽입 | 신규 | 모든 Track 업로드에서 연결된 제휴 링크를 `/r/[code]` 단축 URL로 설명란과 고정 댓글에 넣고, 대가성 문구를 설명란 첫 줄과 고정 댓글 첫 줄에 넣는다. 문구는 끌 수 없고 편집만(owner/admin). 링크 생성 실패 시 링크와 문구 모두 넣지 않고 업로드는 진행 | `has_affiliate=true`인데 첫 줄이 문구가 아니면 DB 23514. 링크 0개면 문구 0 | 확정 결정 12, CORE_SPEC 13장 |
-| VD-F-063 | 제휴 제공자 | 신규 | 쿠팡파트너스: API 검색·링크 생성. 텐핑, 네이버쇼핑 커넥트: 공개 API 미확인 → MVP는 사용자가 제공자 화면에서 만든 링크를 붙여 넣어 등록, Phase 2에서 API 확인 후 어댑터 또는 Playwright(제안/확인 필요). 브랜드커넥트: video는 링크 등록만(지원 자동화는 blog 소유) | 제공자별 `capabilities` 표가 UI에 반영 | 확정 결정 12, SHARED_MODULES 17장 |
+| VD-F-063 | 제휴 제공자 | 신규 | 쿠팡파트너스: API 검색·링크 생성. 텐핑, 네이버쇼핑 커넥트: 공개 API 미확인 → MVP는 사용자가 제공자 화면에서 만든 링크를 붙여 넣어 등록, Phase 2에서 API 확인 후 어댑터 또는 Playwright(제안/확인 필요). 브랜드커넥트(2026-10-13 개정, 결정 19): 클립형 캠페인(`campaign_type='clip'`)은 video 화면에서 고르고 지원 메시지를 확인하면 서버가 `core.create_brandconnect_application(account, campaign, target_url=클립 채널 URL, target_kind='clip', source_app='video', brand, product, category, message)`(9개 인자, 위험 동의나 video 엔타이틀먼트가 없으면 42501, 테이블 CHECK가 clip↔video 조합만 허용)을 호출하고, 코어가 잡 `brandconnect.apply`(payload `{application_id, source_app:'video'}`)를 넣는다. 실제 제출은 blog가 소유한 Playwright 어댑터가 한다(video는 어댑터를 갖지 않는다). blog 캠페인 탐색에서 클립형 캠페인을 고르면 blog의 `POST /api/brandconnect/handoff`가 video로 넘기고, video는 `POST /api/brandconnect/handoff/accept`로 받아 지원 확인 화면을 연다(04장 2절). 계정 연결·위험 동의(`consent_brandconnect_risk`)는 코어 공용이라 blog에서 이미 동의한 계정을 그대로 쓴다. 선정(accepted)된 지원서를 업로드에 연결하면(`uploads.brandconnect_application_id`) 제휴 링크가 없어도 대가성 문구가 필수다 | 제공자별 `capabilities` 표가 UI에 반영. 지원서가 연결된 업로드는 문구 없이 저장 불가(DB 23514). 위험 동의가 없는 계정으로 지원 요청 시 42501 | 확정 결정 12, 19, SHARED_MODULES 17장, `CORE_SPEC.md` 13장 |
 | VD-F-064 | 유료 프로모션 표시 | 제안 | 업로드 화면에 "유료 프로모션 포함" 체크박스. 제휴 링크가 있으면 체크를 권하는 안내만 하고 자동 체크하지 않는다 | `paid_promotion` 기본 false | 확정 결정 12 |
-| VD-F-070 | 채널 연결 | 통합 | OAuth(서버 state, PKCE). 토큰은 `core.encrypted_credentials`. 역할 main/commerce/trend/longform/lofi/playlist/insurance + 언어 KO/JA/EN + 국가. YouTube 활성 채널 수 <= `max_channels`, 그 외 플랫폼은 `features.platforms` | Starter 2번째 YouTube 채널 연결 시 VD003 | ADD 추가 3, SM #5 |
-| VD-F-071 | 업로드 | 통합 | resumable 스트리밍 업로드, 재시도 3회, 쿼터 초과 시 같은 언어·역할 대체 채널 → 없으면 다음 쿼터 리셋 시각으로 재예약. 예약 발행 | 300MB 파일 업로드 중 워커 RSS 512MB 이하(제안) | PRD 10-4, SM #18 |
+| VD-F-070 | 채널 연결 | 통합 | OAuth(서버 state, PKCE). 토큰은 `core.encrypted_credentials`. 역할 main/commerce/trend/longform/lofi/playlist/insurance + 언어 KO/JA/EN + 국가. YouTube 활성 채널 수 <= `max_channels`, 그 외 플랫폼은 `features.platforms`. 네이버 클립은 OAuth가 아니라 네이버 로그인 세션을 `core.encrypted_credentials`(provider `naver`)에 암호화 저장하고 연결 직후 상태는 "위험 동의 필요"(VD-F-075) | Starter 2번째 YouTube 채널 연결 시 VD003. Basic 조직의 `naver_clip` 연결 시 VD004 | ADD 추가 3, SM #5 |
+| VD-F-071 | 업로드 | 통합 | resumable 스트리밍 업로드, 재시도 3회, 쿼터 초과 시 같은 언어·역할 대체 채널 → 없으면 다음 쿼터 리셋 시각으로 재예약. 예약 발행 | 300MB 파일 업로드 중 워커 RSS 512MB 이하(제안). `naver_clip`은 잡 `upload.naver_clip`(VD-F-075) | PRD 10-4, SM #18 |
 | VD-F-072 | compliance 게이트 | 유지 | 규칙 사전(플랫폼 공통 + `banned_words`) → LLM 판정(compliance:true 플랜). FAIL 차단, WARN은 사용자 확인 RPC 후 진행, LLM 오류는 WARN 처리. Starter는 규칙 단계만(제안) | FAIL 업로드를 approved로 바꾸면 DB VD011 | PRD 9-4, SHARED_MODULES 13장 |
 | VD-F-073 | 다국어 GEO 메타 | 통합 | 제목/설명/태그 KO/JA/EN 생성 | 언어판마다 메타 3종 | YSM:98, PRD 10-2 |
 | VD-F-074 | 국가별 권장 시각 | 유지 | KO 18~21시 KST, JA 19~22시 JST, EN 18~21시 EST 기본값. Analytics 기반 보정은 Phase 3 | 예약 기본값이 표와 일치 | ADD 추가 8 |
+| VD-F-075 | 네이버 클립 자동 업로드 | 신규 | 공식 업로드 API를 찾지 못했다(2026-10-13, PC 웹 업로드만 확인: https://www.dioramarketing.co.kr/blog/naver-clip-pc-upload-guide). `packages/sns-uploader`의 `naver-clip` 어댑터가 Playwright로 클립 크리에이터 PC 웹에 로그인해 9:16 영상·제목·설명·해시태그를 올린다(잡 `upload.naver_clip`, 원본 `NOMAD Shorts Maker/src/skill/playwright-engine/naver-login.ts` 재사용). 채널마다 owner/admin이 6.5절 고지문을 읽고 `video.consent_clip_automation_risk(channel, 'clip-2026-10-v1')`로 동의해야 업로드를 만들 수 있다. 고지문 버전이 바뀌면 재동의 전까지 새 업로드 거부, 철회(`revoke_clip_automation_consent`)하면 대기 중 업로드 잡은 서버가 취소·환불. 계정당 1시간 3건, 하루 15건(제안), 업로드 사이 무작위 지연 없음(사람처럼 보이게 꾸미지 않는다). 대가성 문구는 새 배치 값 없이 코어 `video_description` 배치 문구(`effective_disclosure`)를 `injectDisclosure(..., { target: 'title_hashtag' })`로 제목 앞(`disclosure_title`)과 첫 해시태그(`disclosure_hashtag`), 설명 첫 줄에 넣는다(공정위 추천·보증 심사지침 2024 개정: 영상은 제목·영상 내·첫 해시태그). 어댑터·잡·`naver-login.ts` 재사용은 `SHARED_MODULES.md` 11장 정의를 따르고 여기서 다시 정의하지 않는다. 화면 구조가 바뀌어 셀렉터가 실패하면 재시도 1회 후 `failed` + 업로드 크레딧 환불, 운영 알림 | 동의 없는 채널에 업로드 INSERT 시 DB VD015. 제휴·브랜드커넥트 업로드의 제목 앞 문구·첫 해시태그가 없으면 DB 23514. 셀렉터 실패 시 환불 원장 1행. 공식 API가 확인되면 어댑터만 교체(D-23) | 확정 결정 18, `docs/file/03-설계/공용코어/SHARED_MODULES.md` 11장 |
 | VD-F-080 | 성과 수집 | 디벨롭 | YouTube Analytics 일 1회 스냅샷. 제휴 클릭은 `core.affiliate_clicks` 집계 | 대시보드 수치가 스냅샷과 일치, 더미 0건 | SM #17, BS #16 |
 | VD-F-090 | 결제 | 통합 | 코어 Toss 모듈: 주문 선저장 → 결제창 → confirm. 구독은 빌링키. Advanced는 `adv_pack_*` 할인 팩만 허용(서버 판정) | 금액 위조 요청 PM001. 결제 E2E 통과 | SM #2-3, BS #4-5 |
 | VD-F-091 | 크레딧 | 통합 | 선차감 → 잡 → 실패 자동 환불. 잔액 부족 402 + 필요량 표시 | 동시 50요청에 음수 잔액 0 | CORE_SPEC 4장 |
@@ -115,6 +123,20 @@
 | VD-F-110 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원본 클립 타일이 소싱 레인에서 들어와 가공 게이트에서 언어판(KO/JA/EN) 타일로 갈라지며 번인 자막 띠가 붙고 다채널 슬롯에 안착하는 풀 3D, 모바일은 타일 수를 줄인 1줄 흐름, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 사용자 결정 2026-10-13으로 기존 "플레이헤드 1회 스윕" 연출을 대체한다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과. 생성 건수·수익 같은 미검증 수치 0 | `docs/file/03-설계/디자인/HERO_3D.md:5-81`, `:83` |
 | VD-F-111 | AI 출력 규칙(대본·채팅·메타) | 신규 | 6장 금지 문구와 6.1절 AI 대화 규칙을 그래프 compliance 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`packages/video-rules/banned.json`, 제안 위치)로 적용한다. 수익·조회수 보장, 가상 후기, "1위"·"최저가" 단정, 의료·금융 단정, 타사 상표 오용 문구를 차단한다. 제휴 대가성 문구를 LLM이 쓰거나 지우지 못하게 한다 | 금지 문구 평가셋 30문항(제안) 위반 0. 대가성 문구 첫 줄 규칙 위반 업로드 0 | `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:117`, 확정 결정 12 |
 
+### 3.1 대행 운영(직접 대행 + 내부 도구, 확정 결정 21)
+
+숏폼 제작·채널 운영을 고객사 대신 해 주는 사업을 운영사(또는 Advanced 조직)가 이 제품으로 돌린다. 고객은 로그인하지 않고 승인 링크와 리포트 PDF만 받는다. 사업 기준(패키지, 가격, 계약 문서, 법적 위험)은 `08_AGENCY_OPERATIONS.md`, 계약·견적 문서 생성은 nomad-docs `shorts_agency` 패키지가 맡는다.
+
+| ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
+|---|---|---|---|---|---|
+| VD-F-120 | 대행 고객 관리 | 신규 | `video.clients`: 고객사·브랜드명, 사업자번호, 담당자 연락처, 패키지(`produce` 제작만 / `produce_upload` 제작+업로드 / `full_ops` 풀 운영), 계약 기간, 월 편수(`monthly_quota`), 승인 필요 여부, 리포트 발송일. owner/admin만 생성·수정, 상태(active/paused/ended)는 `video.set_client_status` RPC로만. 플랜 `features.agency`(Advanced) 필요 | 비 Advanced 조직의 고객 INSERT 42501. 다른 조직 멤버 조회 0행. status 직접 UPDATE 42501. ended → active 22023 | 결정 21 |
+| VD-F-121 | 고객 채널 묶음 | 신규 | `video.client_channels`로 연결 채널을 고객에 묶는다. 한 채널은 한 고객에만. 소유 구분 `client`(고객 계정을 위임받음) / `agency`(운영사 계정으로 개설). 고객 계정 위임은 nomad-docs의 "채널 계정 접근·운영 위임 동의서" 서명 후에만 연결한다(운영 절차, DB 미강제) | 같은 채널을 두 고객에 묶으면 23505. 다른 조직 채널 연결 VD002 | 결정 21 |
+| VD-F-122 | 고객별 생산·브랜드 가이드 | 디벨롭(VD-F-102) | 생산 요청에 `client_id`를 붙이고, 대본 그래프 `plan`·`compliance` 노드가 그 고객의 브랜드 가이드(`clients.brand_wiki_ref` 위키 문서, `brand_guide_path` 원본)와 금지어를 근거로 쓴다. 고객 A의 가이드가 고객 B 생산에 섞이지 않게 그래프 입력에 `client_id`를 넣고 위키 검색을 그 범위로 좁힌다 | 고객 B 생산의 근거 목록에 고객 A 문서 0. 다른 조직 고객 id 지정 VD002 | 결정 21, VD-F-102 |
+| VD-F-123 | 고객 승인 | 신규 | 고객 채널(`review_required=true`)의 업로드는 compliance 통과(`approved`) 뒤 바로 예약할 수 없고 `client_review` 단계를 거친다. 서버가 32바이트 무작위 토큰을 만들어 sha256 해시만 `video.client_reviews`에 저장(`video.open_client_review`, service_role)하고 링크 `/review/[token]`을 고객 담당자에게 메일로 보낸다. 고객은 로그인 없이 미리보기(서명 URL 10분)·제목·설명·해시태그·대가성 문구를 보고 승인 또는 수정 요청(코멘트 2,000자)을 남긴다(`video.decide_client_review`). 링크 유효기간 기본 72시간, 최대 14일. 수정 요청이면 업로드가 `draft`로 돌아간다 | 승인 전 예약 시 DB VD016. 같은 링크로 두 번 결정 VD008. 만료 링크는 `expired`로 닫히고 결정 불가. 사용자 세션에서 `token_hash` 조회 42501. 공개 라우트 IP 해시당 30회/10분(제안) | 결정 21 |
+| VD-F-124 | 월간 성과 리포트 | 신규 | 매월 `clients.report_day`에 지난달 리포트 잡 `client_report.build`: `analytics_snapshots`(조회, 시청 시간, 좋아요·댓글), 업로드 준수율(게시 편수 / `monthly_quota`), 구독 순증(채널 지표를 수집하는 플랫폼만), 완주율(제공 플랫폼만, 없으면 "미제공"), 제휴 클릭(`core.affiliate_clicks`), 상위·하위 영상 3개, 다음 달 계획 메모. PDF는 core `exports` 버킷, 표 데이터는 `client_reports.kpis`. 발송은 담당자 확인 후 수동(`sent`) | 리포트 수치가 스냅샷 집계와 일치(단위 테스트). 수집하지 않는 지표는 0이 아니라 "미제공". 같은 고객·같은 달 리포트 1행(재생성은 덮어쓰기) | 결정 21, `08_AGENCY_OPERATIONS.md` 5장 |
+| VD-F-125 | 대행 대시보드 | 신규 | `/dashboard/clients`: 고객별 이번 달 편수/할당, 승인 대기, 수정 요청, 예약·게시, 다음 리포트일. 고객 상세에서 채널·가이드·생산·업로드·리포트 탭 | 고객 8곳·채널 20개에서 첫 화면 p95 1초(제안) | 결정 21 |
+| VD-F-126 | 대행 감사 기록 | 신규 | 고객 생성·상태 변경, 승인 요청·결정, 리포트 발송을 감사 기록(`client.status`, `upload.client_review_open`, `upload.client_review_decide`, `client_report.sent`)으로 남긴다. 고객 분쟁 시 "누가 언제 승인했는가"를 증빙한다 | 승인된 업로드마다 감사 2행(요청·결정) | 결정 21, CORE_SPEC 감사 절 |
+
 ## 4. 요금과 크레딧
 
 정본: PRC(확정 결정 8). 모듈러 `seed.sql:209-223`, 모놀리스 `supabase/monolith/seed.sql`과 같다. Track F는 확정 결정으로 추가된 Track이라 PRC에 없다. E와 같은 Suno 엔진을 쓰므로 Pro 이상으로 둔다(모듈러 seed와 같음, 제안).
@@ -123,8 +145,8 @@
 |---|---|---|---|---|---|
 | starter(기본) | 0원 | 0 | 100(1회) | 없음 | tracks A, KO, 채널 1, watermark, youtube |
 | basic | 49,000원/월 | 1,200 | 0 | 불가 | A~C, KO, 채널 5, 플레이보드, compliance, 무음컷, 쿠팡 랜딩 |
-| pro | 99,000원/월 | 3,000 | 0 | 불가 | A~F, KO/JA/EN, 채널 15, 4개 플랫폼, 레이더 전체, 레이어, Suno, OSMU, 블링 20회 |
-| advanced | 149,000원/월 | 5,000 | 0 | 불가 | Pro + 채널 40, 팀 5인, React Flow, API, 블링 무제한, 크레딧팩 30% 할인 |
+| pro | 99,000원/월 | 3,000 | 0 | 불가 | A~F, KO/JA/EN, 채널 15, 5개 플랫폼(네이버 클립 포함), 레이더 전체, 레이어, Suno, OSMU, 블링 20회, 브랜드커넥트 클립 캠페인 |
+| advanced | 149,000원/월 | 5,000 | 0 | 불가 | Pro + 채널 40, 팀 5인, React Flow, API, 블링 무제한, 크레딧팩 30% 할인, 대행 운영(`agency`) |
 
 `core.plans.features` 키 해석(서버만 읽는다):
 
@@ -133,7 +155,9 @@
 | `tracks` | text[] | 생성 가능한 Track. DB 정책은 D, F를 `org_has_feature(org,'tracks',x)`로 검사 |
 | `languages` | text[] | TTS·메타 생성 언어 |
 | `max_channels` | int | 활성 YouTube 채널 상한(트리거 `enforce_channel_limit`) |
-| `platforms` | text[] | 연결·업로드 가능한 플랫폼 |
+| `platforms` | text[] | 연결·업로드 가능한 플랫폼: `youtube`, `instagram`, `tiktok`, `threads`, `naver_clip`(2026-10-13 추가, Pro·Advanced) |
+| `brandconnect_clip` | bool | 브랜드커넥트 클립 캠페인 지원 요청(VD-F-063). Pro·Advanced |
+| `agency` | bool | 대행 운영 기능(VD-F-120~126). Advanced |
 | `watermark` | bool | true면 렌더 워커가 워터마크 강제 |
 | `radar` | false 또는 text[] | playboard / channel_finder / bling |
 | `compliance` | bool | LLM 판정 단계 사용. false여도 규칙 단계는 필수(제안) |
@@ -162,7 +186,8 @@
 | 쿠팡 랜딩 생성 | 3 | PRD:633 |
 | 롱폼 스토리라인 | 5 | PRD:634 |
 | Suno 곡 생성 | 15 | PRD:635 |
-| compliance LLM 검사 / 업로드(채널당) | 1 / 1 | PRD:637-638 |
+| compliance LLM 검사 / 업로드(채널당) | 1 / 1 | PRD:637-638. 네이버 클립 업로드도 1(제안) |
+| 고객 승인 링크 / 월간 리포트 PDF | 0 / 0 | 제안: 대행 운영은 Advanced 구독에 포함. 리포트 원가는 운영사 부담 |
 | 단일 곡 루프 영상 인코딩 | 5 | 제안: 정지 이미지 루프라 롱폼 10분 단가의 절반 |
 | 플리 렌더(30/60/180분) | 15 / 30 / 90 | 제안: 롱폼 인코딩 10분당 10의 절반(이미지 1장 + 오디오 연결로 연산이 적음) |
 | 플리 메타(트랙리스트·타임스탬프·고정 댓글) / 무드 썸네일 | 2 / 3 | 제안: 트렌드 분석·이미지 단가와 같게 |
@@ -220,7 +245,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `ai_script`)는 20
 | 파일 상한 | 원본 500MB, 라이브러리 음원 50MB(org-files), 산출물 5GB(video-media 버킷) | 제안 |
 | 보존 | 원본 24시간, 중간 산출물 7일, 최종 산출물 Starter 30일·유료 90일 후 삭제(게시 URL은 유지), 분석 스냅샷 1년, 감사 2년 | PRD:706, CORE_SPEC 11장, 나머지 제안 |
 | 가용성 | 웹 99.5%/월, 워커 큐 지연 p95 5분 | 제안 |
-| 레이트 리밋 | 생성 API 조직당 60회/분, 웹훅 제공자당 600회/분, `/r/[code]` IP 해시당 60회/분, 로그인 IP당 10회/10분, 랜딩 조회수 집계 IP 해시당 1회/10분 | SECURITY_BASELINE 8장, 마지막은 제안 |
+| 레이트 리밋 | 생성 API 조직당 60회/분, 웹훅 제공자당 600회/분, `/r/[code]` IP 해시당 60회/분, 로그인 IP당 10회/10분, 랜딩 조회수 집계 IP 해시당 1회/10분, 네이버 클립 업로드 계정당 3건/시간·15건/일, 고객 승인 공개 라우트 IP 해시당 30회/10분 | SECURITY_BASELINE 8장, 마지막 3개는 제안 |
 | 하트비트 | 60초, `reap_stale_jobs(600)` 10분 | CORE_SPEC 9.2 |
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 200턴, STT 사용자당 10회/분, 샘플 듣기 사용자당 20회/시간, 그래프 실행 조직당 30회/시간, 잡 토큰 발급 120회/분 | 제안: `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:278-305` 기준 |
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 음성 발화 60초·5MB, 샘플 100자, 위키 문서 1건 2MB | 제안 |
@@ -240,8 +265,9 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `ai_script`)는 20
 | 약관·고지 | 이용약관, 개인정보처리방침, 생성물 권리와 책임(사용자가 원본 권리 근거를 선언하고 책임진다), AI 생성 표시(제안: 업로드 시 플랫폼의 합성 콘텐츠 표시를 기본 체크하고, AI 합성 음성 내레이션이 들어간 영상은 특히 권한다. YouTube의 합성·변형 콘텐츠 표시 항목의 API 지원 여부와 TikTok·Meta의 AI 생성 라벨 정책은 미확인, 구현 시 확인). 채팅 답변마다 "AI가 생성한 답변", 샘플·읽어 주기 플레이어에 "AI가 생성한 음성입니다", 위키 페이지에 "AI가 정리한 문서(사람이 수정한 블록은 표시)". 다른 모델로 대체된 답변은 "다른 AI 모델로 답했습니다" 표시 |
 | 원본 저작권 | Track A/B/C Mode2 원본은 "무료 배포"여도 재가공·수익화 허락이 아니다. 소싱 시 `rights_basis`(public_free/creative_commons/licensed/own) 선택과 근거 메모 필수, 권리자 신고 시 해당 업로드 비공개·삭제 절차(제안: 접수 후 24시간 내 처리). 법률 검토 필요(01장 8절) |
 | 음원 권리 | Suno 생성곡의 상업 이용 권리는 Suno 요금제에 따라 다르다(미확인). DSP의 AI 음원 정책도 미확인. 플리 곡은 Suno 생성곡 또는 증빙 업로드한 라이선스 곡만(DB 트리거 VD006) |
-| 제휴·광고 | 공정위 "추천·보증 등에 관한 표시·광고 심사지침"에 따라 대가성 문구를 설명란 첫 줄과 고정 댓글 첫 줄에(CORE_SPEC 13.3). 끌 수 없음(DB CHECK `uploads_disclosure_check`). 랜딩·링크인바이오는 CTA·링크 옆에 표시 |
-| 플랫폼 약관 | YouTube API 서비스 약관(쿼터, 데이터 삭제 의무 세부 미확인), 다채널 "보험 채널" 운영은 스팸·반복 콘텐츠 정책 위반 위험이 있어 첫 연결 시 위험 고지와 동의 기록(audit `channel.risk_ack`, 제안). 도우인·샤오홍슈 수집은 각 플랫폼 약관 위반 위험 고지. 쿠팡파트너스 운영 정책 준수(문구 원문 사용) |
+| 제휴·광고 | 공정위 "추천·보증 등에 관한 표시·광고 심사지침"에 따라 대가성 문구를 설명란 첫 줄과 고정 댓글 첫 줄에(CORE_SPEC 13.3). 끌 수 없음(DB CHECK `uploads_disclosure_check`). 랜딩·링크인바이오는 CTA·링크 옆에 표시. 네이버 클립(고정 댓글 없음)은 제목 앞 + 첫 해시태그 + 설명 첫 줄(2024 개정 지침: 영상은 제목·영상 내·첫 해시태그 표시, 2025-12 개정 Q&A 안내서 https://www.ajunews.com/view/20251202085042877). 브랜드커넥트 선정 영상은 제휴 링크가 없어도 같은 규칙. 대행 영상은 광고주가 고객사이므로 고객 브랜드 협찬 표시("[광고] ○○ 제공")를 기본값으로 둔다(08 문서 6장) |
+| AI 가상인물 광고 | 공정위가 2026-04 AI 가상인물이 추천·보증하는 광고에 "가상인물" 표시를 의무화하는 개정안을 행정예고했다(최종 확정 미확인). AI 합성 인물·아바타가 상품을 추천하는 영상은 확정 전이라도 "AI 가상인물" 표시를 기본으로 넣는다(제안) |
+| 플랫폼 약관 | YouTube API 서비스 약관(쿼터, 데이터 삭제 의무 세부 미확인), 다채널 "보험 채널" 운영은 스팸·반복 콘텐츠 정책 위반 위험이 있어 첫 연결 시 위험 고지와 동의 기록(audit `channel.risk_ack`, 제안). 네이버 클립은 공식 API 없이 브라우저 자동화로 게시하므로 네이버 이용약관·클립 운영정책의 자동화 조항 위반 위험이 있다(조항 원문 미확인, 6.5절 고지와 동의). 대행에서 고객 계정을 위임받아 운영할 때는 고객의 위임 동의서와 계정 소유자 확인을 먼저 받는다. 도우인·샤오홍슈 수집은 각 플랫폼 약관 위반 위험 고지. 쿠팡파트너스 운영 정책 준수(문구 원문 사용) |
 | 금지 문구(마케팅) | 가상 후기·평점, 미검증 수치(원본 랜딩의 "128,470+ 생성", `NOMAD Shorts Maker/src/app/page.tsx:164`, "-95% 시간단축" DESIGN.md:468), 보장 표현("확정 수익", "100% 통과", "채널 정지 없음"), 타사 상표 오용(YouTube 로고·빨간색 브랜드) |
 | 금지 문구(생성물) | 블링 수익 추정은 "추정"과 출처를 항상 표시, 보장 표현 금지. 의료·금융 단정 표현은 compliance 규칙 사전에 등록. 커머스 대본에 허위 효능·최상급 단정("1위", "최저가") 금지. AI 계층 추가: 출처 없는 조회수·성장률·수익 수치 생성 금지(근거 id가 있는 수치만 인용), 존재하지 않는 고객 후기·평점·"써 봤더니" 체험담 생성 금지(상품 정보 밖의 사용 경험 서술 포함), "이 대본대로 하면 조회수가 오른다" 같은 성과 보장 금지, 제휴 대가성 문구를 대본·설명에서 생략하거나 비슷한 문장으로 대체하는 일 금지 |
 | 규제 특례 | 해당 없음(의료·금융·미성년 특례 없음). 단 만 14세 미만 가입 불가(제안) |
@@ -275,6 +301,29 @@ AI 대화 추가 규칙(6장 금지 문구에 더해 채팅·대본에 적용):
 | 타인 권리 | 원본 배우·크리에이터 목소리 복제 권유, 권리 근거 없는 재가공 권유 | 권리 근거 선언 안내(VD-F-020) |
 | 개인정보 요구 | 비밀번호, 토큰, 카드번호 요구 | 묻지 않는다 |
 
+### 6.5 네이버 클립 자동 업로드 위험 고지 (버전 `clip-2026-10-v1`)
+
+nomad-blog의 채널 자동 게시 고지(`ch-2026-10-v1`)와 같은 구조다. 채널마다 owner/admin이 끝까지 읽고 체크 3개 + "동의합니다"를 직접 입력한 뒤 `video.consent_clip_automation_risk`를 호출한다. 고지문 버전은 `video.clip_notice_version()`과 화면 상수를 함께 바꾼다.
+
+```
+네이버 클립 자동 업로드 위험 안내
+
+1. 네이버 클립은 외부 프로그램용 공식 업로드 API를 제공하지 않는 것으로 확인되었습니다(2026-10-13 기준).
+   NOMAD AI Factory는 회원님의 네이버 계정으로 클립 크리에이터 PC 웹에 로그인해 화면을 자동으로 조작합니다.
+2. 네이버 이용약관과 클립 운영정책은 자동화 프로그램 사용을 제한할 수 있습니다. 다음 불이익이 생길 수 있습니다.
+   - 클립 업로드 제한, 노출 제한, 계정 보호조치 또는 이용 정지
+   - 클립 크리에이터 선정·혜택, 브랜드커넥트 활동, 수익 정산 제한
+3. 회사는 위 불이익을 막거나 보상할 수 없습니다. 업로드 횟수 상한(계정당 1시간 3건, 하루 15건)을 지켜도 위험은 남습니다.
+4. 광고·협찬 영상은 제목 앞과 첫 해시태그에 대가성 표시가 자동으로 들어가며 끌 수 없습니다.
+5. 동의는 이 채널에만 적용되며 설정에서 언제든 철회할 수 있습니다. 철회하면 예약된 클립 업로드는 취소되고 크레딧은 환불됩니다.
+```
+
+| 체크 항목 | 문구 |
+|---|---|
+| 1 | 공식 API가 아닌 브라우저 자동화로 게시된다는 점을 이해했습니다 |
+| 2 | 계정 제한·정지와 정산 제한 위험을 회사가 보상하지 않는다는 점을 이해했습니다 |
+| 3 | 이 계정의 소유자이거나 소유자에게서 운영을 위임받았습니다 |
+
 ## 7. KPI
 
 | 지표 | 목표 | 측정 방법 | 기간 |
@@ -293,6 +342,9 @@ AI 대화 추가 규칙(6장 금지 문구에 더해 채팅·대본에 적용):
 | 정밀 모드 대본 채택률 | 정밀 모드 결과로 생산을 이어 간 비율 50% 이상(제안) | `ai_runs`(graph `video.script`) 대비 `productions` | 3개월 |
 | 오픈소스 내레이션 선택 비율 | 측정만(목표 없음) | `voice_jobs`(feature `narration`) provider 비율 | 3개월 |
 | 미정산 AI 사용 | `settled_at is null` 1시간 초과 0건 | `core.ai_usage` | 상시 |
+| 네이버 클립 업로드 성공률 | 90% 이상(제안) | `uploads`(platform `naver_clip`) published / (published + failed) | 주 |
+| 고객 승인 리드타임 | 중앙값 24시간 이내(제안) | `client_reviews.decided_at - created_at` | 월 |
+| 대행 업로드 준수율 | 고객별 95% 이상(제안) | 게시 편수 / `clients.monthly_quota` | 월 |
 
 ## 8. 열린 결정
 
@@ -319,4 +371,7 @@ AI 대화 추가 규칙(6장 금지 문구에 더해 채팅·대본에 적용):
 | D-19 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md:11`). VID-06-041에서 확인 결과를 기록 |
 | D-20 | 파이프라인 LLM 단계(translate, analyze, bling, compliance LLM)의 경로 | (a) FastAPI 1노드 그래프 `video.step`으로 등록해 서명 토큰 경로 사용 (b) 코어에 단일 호출 엔드포인트 추가 요청(R-V4) 후 사용 | (a)(제안). 코어 엔드포인트가 생기면 (b)로 옮긴다. 어느 쪽이든 LLM 키는 FastAPI에만 둔다 |
 | D-21 | 코어 제공자 목록에 없는 외부 서비스(DeepL, fal, Suno)의 국외 이전 고지 | (a) 온보딩 국외 이전 화면에 별도 항목으로 고지하고 동의 없으면 해당 기능 비활성 (b) 약관·처리방침 고지만 | (a)(제안). 라우팅 레지스트리 편입은 코어 요청 R-V3 |
+| D-23 | 네이버 클립 업로드 방식(VD-F-075) | (a) Playwright 자동 업로드 + 위험 동의 (b) 업로드 패키지(영상·메타·문구)만 만들고 사용자가 PC 웹에서 직접 올림 (c) 공식 API | (a)로 확정(사용자 결정 2026-10-13). 공식 업로드 API·파트너 제휴가 확인되면 (c)로 어댑터만 교체한다. 셀렉터 실패율이 주 10%를 넘으면 (b)를 대체 경로로 연다(제안) |
+| D-24 | 대행 기능 외부 판매 | (a) 내부 도구로만(운영사·Advanced 조직) (b) Phase 2에 대행사용 플랜(고객 포털 로그인, 화이트라벨 도메인, 고객별 과금·크레딧 분리) | (a)로 시작(사용자 결정 2026-10-13: 직접 대행 + 내부 도구). 직접 대행 고객 10곳 이상 운영 뒤 (b) 검토 |
+| D-25 | 고객 승인 링크 수단 | (a) 메일 링크(토큰 72시간) (b) 카카오 알림톡 (c) 고객 포털 로그인 | (a)(제안). (b)는 발신 프로필·템플릿 심사가 필요하고 (c)는 D-24 (b)와 함께 |
 | D-22 | 내레이션 TTS 호출 위치와 ElevenLabs 키 | (a) 오케스트레이터(서버 전용 TS 워커)가 `packages/core-voice`로 호출 (b) Next.js Route Handler만 호출(요청 시간 한도 안에서만 가능) | (a)(제안). 롱폼 10분 x 3언어 합성은 요청-응답 시간 안에 끝나지 않는다. `VOICE_ARCHITECTURE.md:79`의 "Next.js 서버에서만"을 "브라우저와 클라이언트 번들 밖의 서버 전용 프로세스"로 넓히는 확인을 코어에 요청(R-V6). 오픈소스 음성 서버 호출에는 잡에 묶인 서명 토큰이 필요하다(R-V5) |

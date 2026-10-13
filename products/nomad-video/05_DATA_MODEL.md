@@ -28,7 +28,12 @@ core.organizations (참조만)
  ├─ video.linkinbio_profiles
  │    └─ video.linkinbio_items ── landing_pages | core.affiliate_links
  ├─ video.workflows (Phase 2 저장)
- └─ video.banned_words
+ ├─ video.banned_words
+ └─ video.clients (대행 고객, 2026-10-13)
+      ├─ video.client_channels ── video.channels (채널당 고객 1)
+      ├─ video.client_reviews ── video.uploads (고객 승인, 토큰 해시)
+      └─ video.client_reports (월 1행, PDF)
+video.productions.client_id → video.clients, video.uploads.brandconnect_application_id → core.brandconnect_applications
 Storage: video-media 버킷(제품 소유, 서버 쓰기만), core org-files/exports/public-assets
 ```
 
@@ -40,7 +45,7 @@ Storage: video-media 버킷(제품 소유, 서버 쓰기만), core org-files/exp
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
-| platform | text | N | - | youtube/instagram/tiktok/threads |
+| platform | text | N | - | youtube/instagram/tiktok/threads/naver_clip(2026-10-13) |
 | credential_id | uuid | Y | - | `core.encrypted_credentials`. 평문 토큰 컬럼 없음 |
 | external_channel_id, name, handle | text | N/Y/Y | - | 플랫폼 식별자 |
 | role | text | N | main | main/commerce/trend/longform/lofi/playlist/insurance(E=lofi, F=playlist 분리) |
@@ -48,6 +53,7 @@ Storage: video-media 버킷(제품 소유, 서버 쓰기만), core org-files/exp
 | daily_quota_units / quota_used_today / quota_reset_at | int/int/tstz | N/N/Y | 10000 / 0 | YouTube 쿼터 |
 | status | text | N | active | active/paused/error/revoked |
 | last_error, created_by, updated_at | - | - | - | - |
+| automation_consent_version / automation_consented_at / automation_consented_by | text/tstz/uuid | Y | - | 브라우저 자동화 채널(naver_clip) 위험 동의. `video.consent_clip_automation_risk`만 쓴다. 둘 다 null이거나 둘 다 값(CHECK `channels_automation_consent_check`). 버전이 `video.clip_notice_version()`과 다르면 업로드 INSERT VD015 |
 
 제약: `unique(org_id, platform, external_channel_id)`. 쓰기: service_role + RPC.
 
@@ -86,6 +92,7 @@ track(A/B/C), platform(douyin/xiaohongshu/youtube/tiktok), source_url(https만),
 | root_job_id / credit_ledger_id | uuid/bigint | `core.jobs`, `core.credit_ledger` |
 | credits_charged / credits_refunded | int | refunded <= charged CHECK |
 | request_id | uuid unique | 멱등 |
+| client_id | uuid | 대행 고객(`video.clients`, on delete set null). 같은 조직 검사(VD002) |
 | started_at / finished_at / last_error | - | - |
 
 ### 2.6 longform_projects (1200:467)
@@ -136,8 +143,10 @@ production_id, slug(유니크, `^[a-z0-9][a-z0-9-]{2,63}$`), product_name, headl
 | title(1~100자) / description / pinned_comment / tags / visibility | - | 최종 게시 문구(대가성 문구 포함) |
 | scheduled_at | tstz | 예약 |
 | paid_promotion | boolean | 기본 false. 자동 설정은 제안 단계 |
-| has_affiliate / disclosure_description / disclosure_pinned | bool/text/text | 대가성 문구 강제 CHECK(1200:749) |
-| status | text | draft/checking/blocked/awaiting_confirm/approved/scheduled/uploading/published/failed/canceled |
+| has_affiliate / disclosure_description / disclosure_pinned | bool/text/text | 대가성 문구 강제 CHECK `uploads_disclosure_check` |
+| disclosure_title / disclosure_hashtag | text/text | naver_clip 전용: 코어 `video_description` 배치 문구를 `injectDisclosure(target 'title_hashtag')`로 제목 앞·첫 해시태그에 넣은 값. CHECK가 `starts_with(title, disclosure_title)`, `tags[1] = disclosure_hashtag` 확인 |
+| brandconnect_application_id | uuid | 선정된 브랜드커넥트 지원서(`core.brandconnect_applications`). 값이 있으면 제휴 링크가 없어도 대가성 문구 필수 |
+| status | text | draft/checking/blocked/awaiting_confirm/approved/client_review/scheduled/uploading/published/failed/canceled |
 | compliance_check_id / compliance_ack_by / compliance_ack_at | - | 게이트 |
 | job_id / credit_ledger_id / platform_post_id / post_url / published_at / attempts / last_error / request_id | - | `unique(channel_id, platform_post_id)`로 중복 발행 방지 |
 
@@ -148,6 +157,45 @@ upload_links: upload_id, link_id(`core.affiliate_links`), placement(video_descri
 ### 2.18 workflows (1200:809), banned_words (1200:822)
 
 workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없음, Phase 2). banned_words: word(1~60자), severity(warn/fail), `unique(org_id, word)`.
+
+대가성 문구 CHECK 규칙(`has_affiliate or brandconnect_application_id is not null`일 때):
+
+| 플랫폼 | 필수 |
+|---|---|
+| naver_clip | `disclosure_title`(2자 이상)로 제목 시작 + `tags[1] = disclosure_hashtag` + `disclosure_description`(10자 이상)으로 설명 시작. 고정 댓글 없음 |
+| 그 외 | 설명란 첫 줄(`disclosure_description`) + 고정 댓글 첫 줄(`disclosure_pinned`), 각 10자 이상(기존 규칙) |
+
+### 2.19 clients (대행 고객, VD-F-120)
+
+| 이름 | 타입 | 설명 |
+|---|---|---|
+| name(1~120자) / brand_name / business_no | text | `unique(org_id, name)` |
+| contact_name / contact_email / contact_phone | text | 고객 담당자(승인 메일·리포트 수신). 개인정보: 계약 종료 후 1년 보존(제안) |
+| brand_guide_path / brand_wiki_ref | text | 브랜드 가이드 원본(org-files) / 위키 문서 키(VD-F-122) |
+| package_code | text | produce / produce_upload / full_ops(`08_AGENCY_OPERATIONS.md` 2장) |
+| contract_start / contract_end | date | end >= start CHECK |
+| monthly_quota | int | 월 편수(업로드 준수율 분모) |
+| review_required | bool | 기본 true. true면 고객 채널 업로드는 고객 승인 뒤에만 예약(VD016) |
+| report_day | int | 1~28, 리포트 생성일 |
+| status | text | active/paused/ended. `set_client_status` RPC로만 |
+
+### 2.20 client_channels (VD-F-121)
+
+client_id, channel_id, ownership(client/agency). `unique(channel_id)`: 채널 하나는 고객 하나에만. 고객·채널 모두 같은 조직(VD002).
+
+### 2.21 client_reviews (VD-F-123)
+
+| 이름 | 타입 | 설명 |
+|---|---|---|
+| client_id / upload_id | uuid | 같은 조직(VD002) |
+| token_hash | text unique | sha256 hex 64자. 원문 토큰은 저장하지 않는다. 사용자 SELECT 컬럼에서 제외 |
+| expires_at | tstz | 요청 시각 + 1~336시간(기본 72) |
+| decision | text | pending/approved/changes_requested/expired/canceled. 업로드당 pending 1개(부분 unique 인덱스) |
+| reviewer_name / comment(<=2000자) / decided_at / requested_by | - | 고객 입력과 감사 |
+
+### 2.22 client_reports (VD-F-124)
+
+client_id, period_month(월 첫날만 CHECK), kpis jsonb(`views`, `watch_time_sec`, `likes`, `comments`, `uploads_published`, `upload_adherence`, `subscriber_gain`(수집 플랫폼만), `completion_rate`(제공 플랫폼만, 없으면 null = "미제공"), `affiliate_clicks`, `top`/`bottom` 업로드 id 3개), summary, pdf_path(core exports 버킷), status(generating/ready/failed/sent), job_id, sent_at. `unique(client_id, period_month)`. 쓰기 service_role만.
 
 ## 3. 상태 전이
 
@@ -167,7 +215,10 @@ workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없
 | music_library.status | active→expired/revoked, expired→active/revoked | 서버 | 만료 곡은 플리 추가 불가(VD006) |
 | playlists.status | draft→rendering/canceled, rendering→ready/failed/draft, failed→draft, ready→draft | 서버 | 사용자 편집은 draft에서만 |
 | landing_pages.status | draft→published, published→unpublished, unpublished→published/draft | 사용자 RPC | 공개 조건 검사 + 감사 |
-| uploads.status | draft→checking/canceled, checking→blocked/awaiting_confirm/approved/draft, blocked→draft/canceled, awaiting_confirm→approved/draft/canceled, approved→scheduled/canceled, scheduled→uploading/canceled, uploading→published/failed/scheduled, failed→scheduled/canceled | 서버, 사용자 RPC(확인·취소) | approved 진입은 compliance 게이트(VD011), 취소 시 queued 잡 취소·환불 |
+| uploads.status | draft→checking/canceled, checking→blocked/awaiting_confirm/approved/draft, blocked→draft/canceled, awaiting_confirm→approved/draft/canceled, approved→client_review/scheduled/canceled, client_review→scheduled/draft/canceled, scheduled→uploading/canceled, uploading→published/failed/scheduled, failed→scheduled/canceled | 서버, 사용자 RPC(확인·취소), 고객 결정(service) | approved 진입은 compliance 게이트(VD011). 고객 채널(`review_required`)은 approved→scheduled 금지, client_review→scheduled는 approved 결정이 있어야(VD016). 취소 시 queued 잡 취소·환불 |
+| clients.status | active→paused/ended, paused→active/ended | owner/admin RPC | 감사 `client.status` |
+| client_reviews.decision | pending→approved/changes_requested/expired/canceled | 서버(고객 결정·만료·재요청) | changes_requested면 업로드 → draft |
+| client_reports.status | generating→ready/failed, failed→generating, ready→sent/generating | 서버 | sent는 감사 `client_report.sent` |
 
 ## 4. RLS 정책
 
@@ -184,6 +235,10 @@ workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없
 | linkinbio_profiles | 같음 | owner/admin | owner/admin | owner/admin | 컬럼 단위 |
 | linkinbio_items, workflows | 같음 | 역할 | 역할 | owner/admin | 컬럼 단위 |
 | banned_words | 같음 | 역할 | 없음 | owner/admin | insert 컬럼, delete |
+| clients | 같음 | owner/admin + `org_has_feature(org,'agency')` | 같음 | owner/admin | insert/update 컬럼 단위(status 제외), delete |
+| client_channels | 같음 | owner/admin + agency | 없음 | owner/admin | insert 컬럼, delete |
+| client_reviews | 같음(컬럼 단위 SELECT, `token_hash` 제외) | 없음 | 없음 | 없음 | select 컬럼 + guard |
+| client_reports | 같음 | 없음 | 없음 | 없음 | select + guard |
 | storage `video-media` | 멤버 + 엔타이틀먼트(`storage_org_id(name)`) | 없음(서버) | 없음 | 없음 | - |
 
 쓰기 정책을 준 테이블의 조건 충족(SECURITY_BASELINE 4장): (a) 모든 쓰기 정책에 `with check`, (b) 돈·권한·상태 컬럼은 컬럼 GRANT에서 제외(status, credit_ledger_id, root_job_id, is_active, view_count 등. 스모크 테스트에서 `status` 지정 INSERT 42501 확인), (c) 상태는 전이 트리거, 부모 상태 잠금은 `guard_user_edit`(1200:140), 교차 조직 참조는 `check_refs`(1200:178)가 VD002로 거부. viewer는 쓰기 불가.
@@ -288,8 +343,9 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 
 | 파일 | 내용 | 검증 |
 |---|---|---|
-| `docs/products/_supabase-modular/migrations/1200_video.sql` | 스키마, 헬퍼 2, 트리거 함수 4, 테이블 22, 정책, RPC 8(사용자 6 + 공개 2), service 함수 3, `video-media` 버킷, 10절 `revoke execute on all functions in schema video from public` 후 역할별 GRANT(코어 0007과 같은 규칙), **11절 AI·음성 기본값(라우팅 17행, 플랜 AI 키, 체인 검사; 2026-10-13)** | 체커 OK(0000~0009 + seed 뒤, `--vector`), 2회 연속 적용 OK |
+| `docs/products/_supabase-modular/migrations/1200_video.sql` | 스키마, 헬퍼 3(`clip_notice_version` 추가), 트리거 함수 4, 테이블 26(2026-10-13 대행 4개 추가), 정책, RPC 11(사용자 9 + 공개 2), service 함수 5(`open_client_review`, `decide_client_review` 추가), `video-media` 버킷, 10절 `revoke execute on all functions in schema video from public` 후 역할별 GRANT(코어 0007과 같은 규칙), **11절 AI·음성 기본값(라우팅 17행, 플랜 AI 키, 체인 검사; 2026-10-13)** | 체커 OK(0000~0009 + seed 뒤, `--vector`), 2회 연속 적용 OK |
 | `supabase/monolith/migrations/0001_core_lite.sql` | 코어 lite 복사본 | 체커 OK |
 | `supabase/monolith/migrations/0002_video_domain.sql` | 위 조각의 public 변환본 | 체커 OK |
 | `supabase/monolith/seed.sql` | apps, 플랜 4(AI 키 포함), 팩 8, 대가성 문구 8, AI 라우팅 기본값 17행 + 체인 검사 | 체커 OK(`--vector mono`), 반복 적용 OK |
 | RLS 스모크(06장 VID-06-002가 저장소로 옮김) | B 비멤버 21개 테이블 0행, 쓰기·RPC 42501, 자기 권한 상승 42501, 공개 RPC, 게이트(VD002/VD003/VD004/VD007/VD011/22023/23514) | 모듈러 65/65, 모놀리스 65/65 |
+| 2026-10-13 추가 행동 검사(클립·대행) | 클립 동의 없음 VD015, 다른 조직 동의 42501, 구버전 동의 VD015, 동의 컬럼 직접 수정 42501, 클립 제휴 업로드 제목·해시태그 문구 누락 23514, 고객 생성(agency) / 다른 조직 고객 0행·42501, status 직접 수정 42501, 고객 승인 전 예약 VD016, 승인 요청 RPC authenticated 42501, `token_hash` 조회 42501, 두 번 결정 VD008, 리포트 월 첫날 CHECK 23514, 사용자 리포트 INSERT 42501, YouTube 기존 문구 규칙 유지 23514 | 모듈러 33/33, 모놀리스 33/33(PGlite, VID-06-002에 편입) |

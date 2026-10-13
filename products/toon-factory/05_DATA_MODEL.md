@@ -12,7 +12,8 @@ core.organizations ─┬─ toon.series (org_id) ─┬─ toon.series_characte
                     │        │                        └─ toon.cuts (episode_id, org_id)   doc jsonb = 레이어 판별 유니온
                     ├─ toon.generations ── core.jobs, core.credit_ledger
                     │        └─ toon.user_assets (generation_id)
-                    └─ toon.exports ── toon.episodes(set null), core.jobs, core.credit_ledger
+                    ├─ toon.exports ── toon.episodes(set null), core.jobs, core.credit_ledger, toon.sponsorships(set null)
+                    └─ toon.sponsorships (series_id, org_id) ── toon.episodes.sponsorship_id (복합 FK, restrict)  [2026-10-13 2차]
 
 카탈로그(org 없음, 플랫폼 소유)
 toon.asset_packs ─┬─ toon.characters ── toon.assets(kind pose|expression)
@@ -107,6 +108,30 @@ DB CHECK는 문서의 겉모양만 막고, 레이어 판별 유니온의 세부�
 
 `toon.exports`(`2000:303-330`): episode_id(set null), kind(png/zip/webtoon_strip/mp4), status, plan_code, watermark(서버 결정), ai_label, ai_label_visible(CHECK: 표기 해제는 AI 레이어가 있을 때만 의미), options, job_id, credit_ledger_id, credits, request_id(유일), output_paths, bytes, duration_ms, error, started_at, finished_at, expires_at.
 
+### 2.6 브랜디드 툰과 내보내기 프리셋 (2026-10-13 2차, 확정 결정 20)
+
+`2000_toon.sql` 11절. 설계 근거는 `08_BENCHMARK.md` G2~G4, 기능은 01장 TN-F-038, TN-F-070~073.
+
+`toon.sponsorships`(콘텐츠 테이블, 멤버 쓰기 + 상태 트리거):
+
+| 컬럼 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| series_id | uuid | N | - | 복합 FK(series_id, org_id) cascade |
+| advertiser_name / product_name | text | N / Y | - | 1~80 / 80 |
+| brief | text | Y | - | 3,000자 |
+| key_messages / banned_terms | text[] | N | `{}` | 10개 / 50개 이하. 콘티·대사 그래프 입력과 compliance 금지어 |
+| compensation_kind | text | N | - | `paid`, `free_product`, `commission`, `other` |
+| disclosure_text | text | N | `광고` | 2~60자. 내보내기 행으로 복사되는 대가성 문구 |
+| virtual_character | boolean | N | true | 캐릭터(가상인물) 추천·보증이면 "가상인물" 표시 |
+| status | text | N | `draft` | `draft`, `in_review`, `changes_requested`, `approved`, `closed` |
+| decided_at / decided_by / decision_note | | Y | - | `decide_sponsorship`만 기록. CHECK: approved·changes_requested면 decided_* 필수 |
+
+추가 컬럼: `episodes.sponsorship_id`(복합 FK (sponsorship_id, org_id), restrict. 협찬을 지우려면 회차 연결을 먼저 끊는다), `exports.preset`(`instagram_carousel`, `webtoon_canvas`, `naver_challenge`, `vertical_9x16`, CHECK `exports_preset_kind_check`로 종류 조합 강제), `exports.sponsorship_id`, `exports.disclosure_text`(CHECK: 협찬이면 필수), `exports.virtual_character_label`.
+
+트리거:
+- `sponsorships_status`(`toon.enforce_sponsorship_status`): 사용자 INSERT는 `draft`만 허용하고 `features.sponsorship`이 true가 아니면 `TN002`. 사용자 전이는 draft ↔ in_review, changes_requested → draft/in_review, approved → closed만. approved·changes_requested는 `decide_sponsorship` 안에서만(42501). 승인 뒤 브리프·문구·보상·광고주·가상인물 값이 바뀌면 `in_review`로 되돌리고 결정 기록을 지운다.
+- `exports_apply_sponsorship`(`toon.apply_export_sponsorship`, BEFORE INSERT): 회차의 협찬을 찾아 `sponsorship_id`, `disclosure_text`, `virtual_character_label`을 서버가 채운다(요청 값은 무시). 협찬이 승인 전이면 `options.purpose='review'`일 때만 허용하고 `watermark=true`를 강제, 그 밖은 `TN008`.
+
 ### 2.4 쓰지 않는 것
 
 플랜, 구독, 크레딧, 결제, 잡 테이블은 제품 스키마에 만들지 않는다(`DB_CONVENTIONS.md:237`). 월 내보내기 한도는 별도 쿼터 테이블 없이 `toon.exports` 카운트로 판정한다(`CORE_SPEC.md:138`). AI·음성 전용 제품 표도 만들지 않는다(6절).
@@ -132,6 +157,10 @@ DB CHECK는 문서의 겉모양만 막고, 레이어 판별 유니온의 세부�
 | episodes.status | 자유 | draft/storyboarded/editing/done 사이 | 사용자, 워커(storyboarded) | 표시용이라 트리거 없음(돈·권한 무관) |
 | cuts.revision | n | n+1(doc/크기/시간 변경 시) | 트리거 `bump_cut_revision` | 사용자가 값을 지정해도 덮어씀 |
 | user_assets.deleted_at | null | now() | `toon.archive_user_asset` | 감사 `user_asset.archive` |
+| sponsorships.status | draft | in_review | 멤버 | 트리거 `enforce_sponsorship_status` |
+| 같음 | in_review | approved, changes_requested | owner/admin(`decide_sponsorship`) | 감사 `sponsorship.approved` / `sponsorship.changes_requested`. 사용자 직접 변경은 42501 |
+| 같음 | in_review / changes_requested | draft(, in_review) | 멤버 | - |
+| 같음 | approved | closed, 또는 내용 수정 시 자동 in_review | 멤버 | 결정 기록 삭제 |
 
 ## 4. RLS 정책
 
@@ -261,6 +290,7 @@ PM001 처리: `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 �
 | AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
 | AI 라우팅 기본값 | `2000_toon.sql` 10.1절 | `seed.sql`(같은 14행) |
 | 플랜 AI 키 | `2000_toon.sql` 10.2절 병합 UPDATE(모듈러 `seed.sql` 반영은 코어 요청, 06장 6절 요청 7) | `seed.sql` free·pro `features`에 직접 |
+| `sponsorship` 키 | `2000_toon.sql` 11-3절 병합 UPDATE(free false / pro true) | `seed.sql` free·pro `features`에 직접(0002의 11절에는 병합 UPDATE 없음) |
 | 체인 검사 | 10.3절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 
 ## 9. 마이그레이션 파일
@@ -281,5 +311,8 @@ PM001 처리: `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 �
 | 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app toon) | 14행(모듈러·모놀리스) |
 | free·pro `features` | 기존 키 + `ai_chat`, `ai_chat_turns_per_day`(20 / 200), `voice_chat`, `dialogue_voice`, `video_voice`(false / true) |
 | 기존 RLS 스모크 68항목 | 제품 표·정책 변경이 없어 그대로 유효. 라우팅 행 증가는 `resolve_ai_route` 스냅샷 테스트(TN-06-057)에서 확인 |
+| 2026-10-13 2차(11절): 모듈러 0000~0009 + seed + 2000 2회 + 동작 테스트 | OK. 협찬 미승인 최종 내보내기 `TN008`, 검토용 시안 워터마크·문구 강제, 승인 후 내보내기 성공, 승인 뒤 브리프 수정 시 in_review 복귀, 프리셋·종류 불일치 23514, 사용자 INSERT 플랜 게이트 `TN002`, 사용자 자가 승인 42501, owner `decide_sponsorship` 승인 |
+| 2026-10-13 2차: 모놀리스 0001 + 0002 + seed + 0002 재적용 + 같은 동작 테스트(public 변환) | OK |
+| RLS 스모크 추가 항목(TN-06-060) | `sponsorships` 4정책(조직 격리, viewer 포함 멤버 쓰기, owner/admin 삭제), `decide_sponsorship` 역할 검사 |
 
 AI 기능별 기본값 행(정본 02장 5.1절): `toon.storyboard`, `toon.dialogue`, `chat`(llm, auto, anthropic → openai → google → oss-llm), `toon.consistency`, `toon.prompt_en`, `wiki.query`, `wiki.ingest`, `wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `toon.knowledge`(embedding, open_source, oss-embed), `voice_chat` stt(auto, oss-voice → elevenlabs), `voice_chat` tts·`dialogue_voice` tts(auto, elevenlabs → oss-voice), `video_voice` tts(auto, elevenlabs → oss-voice, 작업 중 대체 금지는 음성 어댑터가 강제).

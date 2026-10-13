@@ -56,7 +56,7 @@ core.organizations
 | `experience_note` | text | Y | - | experience면 50자 이상(CHECK) |
 | `cover_image_path` | text | Y | - | `<org_id>/blog/...`로 시작(CHECK) |
 | `seo_score`, `seo_feedback` | int/jsonb | Y/N | -/[] | 서버 기록 |
-| `brandconnect_application_id` | uuid | Y | - | 같은 조직 지원서만(트리거) |
+| `brandconnect_application_id` | uuid | Y | - | 같은 조직의 블로그형 지원서(`target_kind='blog'`)만(트리거, 확정 결정 19) |
 | `status` | text | N | draft | draft, generating, scheduled, publishing, published, partially_published, failed, archived |
 | `compliance_verdict`, `compliance_issues`, `compliance_checked_at`, `compliance_ack_by/at` | - | - | unchecked | 서버 기록, WARN 확인은 RPC |
 | `ai_job_id` | uuid | Y | - | → `core.jobs` |

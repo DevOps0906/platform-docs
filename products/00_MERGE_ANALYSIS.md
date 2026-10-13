@@ -23,6 +23,10 @@
 | 15 | 3D 히어로 표준 (2026-10-13) | 전 제품 메인페이지 히어로는 PC·태블릿 풀 3D, 모바일은 절충안(HTML 즉시 표시 + 가벼운 3D 지연 로딩), 저사양·미지원·reduced-motion은 정지 이미지. 정본 `_design-guide/HERO_3D.md`. |
 | 16 | 음성 (2026-10-13) | 음성 대화 전체(말하기 → STT → AI → TTS)와 제품별 음성 기능을 12개 제품 MVP에 넣는다. 제공자는 ElevenLabs(TypeScript SDK)와 오픈소스 공용 GPU 음성 서버(faster-whisper + silero-vad + 상업 이용 가능한 한국어 TTS)로 이원화한다. 정본 `_platform-core/VOICE_ARCHITECTURE.md`, DB `0009_core_voice.sql`. |
 | 17 | LLM 이원화 (2026-10-13) | 상용(ChatGPT, Claude, Gemini, OpenRouter 등)과 오픈소스(vLLM 서빙) 모델을 병행한다. 라우팅은 FastAPI 라우터가 `core.resolve_ai_route` 설정(commercial/open_source/auto)과 대체 체인으로 정한다. 민감 데이터는 오픈소스 강제(`force_open_source`, 조직이 해제 불가). 설치 `docs/develop/_shared/llm/`. |
+| 18 | 네이버 클립 채널 (2026-10-13) | nomad-video 업로드 플랫폼에 `naver_clip`을 추가한다(pro/advanced). 공식 업로드 API가 확인되지 않아(2026-10-13 조사) Playwright 자동 업로드로 하고, owner/admin 위험 고지·동의(`clip-2026-10-v1`)가 있어야 업로드 잡을 만든다. 대가성 문구는 제목과 첫 해시태그에 넣는다(공정위 추천보증 지침). 공식 API가 확인되면 어댑터를 교체한다(video D-23). 정본: `nomad-video/01_PRD.md` VD-F-075 |
+| 19 | 브랜드커넥트 범용화 (2026-10-13) | `core.brandconnect_applications`의 `blog_url`을 `target_url` + `target_kind`(blog/clip) + `source_app`(blog/video)으로 바꾼다. Playwright 지원 어댑터는 blog가 계속 소유하고, video는 `brandconnect.apply` 잡을 `source_app='video'`로 요청한다. blog 스캔 결과에 `campaign_type`을 붙여 클립형 캠페인을 video로 넘긴다. 정본: `_platform-core/CORE_SPEC.md` 13장, `nomad-blog/01_PRD.md` 3.4절 |
+| 20 | toon-factory 벤치마킹 보강 (2026-10-13) | 경쟁 서비스 비교(`toon-factory/08_BENCHMARK.md`) 결과로 로그라인·시놉시스 생성과 플랫폼 포맷 프리셋을 MVP에, 직접 업로드(naver_clip 포함)와 숏툰 모션을 Phase 2에, 브랜디드 툰(광고 표시·고객 승인)을 신규로 넣는다. 벤치마크는 분기마다 다시 확인한다 |
+| 21 | 쇼츠 대행사업 (2026-10-13) | 직접 대행으로 시작하고 nomad-video를 내부 도구로 쓴다(고객사 `video.clients`, 고객 승인 단계, 월간 리포트, VD-F-120~126). 영업·계약·운영 문서는 nomad-docs `shorts_agency` 패키지로 만든다. 다른 대행사에 판매하는 화이트라벨 SaaS는 Phase 2에서 검토한다(video D-24). 사업 운영 정본: `nomad-video/08_AGENCY_OPERATIONS.md` |
 
 ### video 트랙 정의 (확정)
 

@@ -152,6 +152,7 @@
 | `confirm_payment_order` 금액 불일치 시 주문 failed 기록 | `_platform-core` | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. PM001 시 별도 호출로 운영 대사 가능 |
 | 브랜드커넥트 위험 동의 고지문 버전 컬럼(`affiliate_accounts.risk_notice_version`) | `_platform-core` | 지금은 감사 로그 메타데이터로 대체 |
 | 브랜드커넥트 동의 철회 함수 | `_platform-core` | 지금은 서버가 service_role로 처리 |
+| 브랜드커넥트 지원서 대상 범용화(`target_url`/`target_kind`/`source_app`) | `_platform-core` | 해결(2026-10-13 코어 반영 완료, `CORE_SPEC.md` 16.1절). blog는 BL-06-017·018·024를 새 시그니처와 BL-F-036 넘김으로 구현 |
 | compliance 규칙 사전에 blog 추가분(가상 후기, 수익 보장) 등록 경로 | `_platform-core` | 제품별 확장 지점 |
 
 ### 6.1 AI 계층 요청 (2026-10-13)

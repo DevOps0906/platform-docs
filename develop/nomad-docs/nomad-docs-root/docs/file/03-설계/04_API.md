@@ -35,7 +35,7 @@
 | `DELETE /api/parties/[id]` | member+ / F | - | `{ ok }`(soft delete) | 0 | - | 409(진행 중 프로젝트 거래처) |
 | `POST /api/parties/import` | member+ / F | multipart CSV/XLSX ≤ 5MB + `{ mapping: Record<column, field>, dry_run: bool }` | `{ created, updated, skipped, errors: [{ row, message }] }` | 0 | - | 413, 415, 422 |
 | `GET /api/projects` | 멤버 / F | `?status&cursor` | `{ items, next }` | 0 | - | - |
-| `POST /api/projects` | member+ / F | `{ name 1..120, project_type: web\|app\|ai\|mixed\|other, client_party_id?, start_date?, end_date? (≥ start), budget_krw? }` | `{ project }`(checklist_version = 현재 게시 버전) | 0 | - | 402/403 `DC006`(`projects_max`), 422 |
+| `POST /api/projects` | member+ / F | `{ name 1..120, project_type: web\|app\|ai\|mixed\|other\|content(Phase 2, team 플랜), client_party_id?, start_date?, end_date? (≥ start), budget_krw? }` | `{ project }`(checklist_version = 현재 게시 버전) | 0 | - | 402/403 `DC006`(`projects_max`), 422 |
 | `GET /api/projects/[id]` | 멤버 / F | - | `{ project, progress: { answered, required_missing[] }, totals }` | 0 | - | 404 |
 | `PATCH /api/projects/[id]` | member+ / F | `{ name?, client_party_id?, start_date?, end_date?, profile? }`(status 제외) | `{ project, affected_doc_types[] }` | 0 | - | 404, 422 |
 | `POST /api/projects/[id]/status` | oa / F | `{ to: active\|delivered\|archived }` | `{ project }` | 0 | 사용자 세션 `docs.set_project_status` | 409 `DC001` |
@@ -53,7 +53,7 @@
 | `POST /api/projects/[id]/line-items/import` | member+ / F | multipart CSV/XLSX(단가표) + `{ mapping, dry_run }` | 위 `import`와 같음 | 0 | - | 413, 415, 422 |
 | `GET /api/doc-types` | 멤버 / F | - | `[{ code, name, category, risk_level, generation_mode, phase, credits, required_fields, current_version }]` | 0 | - | - |
 | `POST /api/projects/[id]/documents` | member+ / F | `{ request_id, doc_type_code }`(문서가 없으면 만들고 생성 시작, 있으면 재생성) | `{ document, run, job_id, estimated_credits }` | template 2 / hybrid 6 / ai 12 | service_role `docs.start_generation`(내부 `enqueue_job`, `consume_credits`) | 402 `CR001`, 403 `DC006`(doc_phase), 409 `DC002`, 422 `DC004`, 428 `DC007`, 429 |
-| `POST /api/projects/[id]/packages` | member+ / F | `{ request_id, package_code: 'outsourcing_basic', include?: doc_type_code[] }` | `{ run, parent_job_id, estimated_credits: 28 }` | 자식 합계(28) | `docs.start_generation`(부모 run), 자식은 워커가 같은 RPC | 402(합계 부족), 409 `DC002`, 422 `DC004`(`details.missing`를 유형별로), 428 `DC007`(`dev_contract` 포함 시) |
+| `POST /api/projects/[id]/packages` | member+ / F | `{ request_id, package_code: 'outsourcing_basic' \| 'shorts_agency'(Phase 2, `project_type=content`만, 아니면 422), include?: doc_type_code[] }` | `{ run, parent_job_id, estimated_credits: 28(shorts_agency 20 또는 18) }` | 자식 합계(28) | `docs.start_generation`(부모 run), 자식은 워커가 같은 RPC | 402(합계 부족), 409 `DC002`, 422 `DC004`(`details.missing`를 유형별로), 428 `DC007`(`dev_contract` 포함 시) |
 | `POST /api/generation-runs/[id]/cancel` | member+ / F | - | `{ run }`(대기 자식 환불) | 0 | `cancel_job` | 409 `JB002`, 404 |
 | `GET /api/documents/[id]` | 멤버 / F | - | `{ document, version (current), lint_result, compliance_verdict, needs_regeneration }` | 0 | - | 404 |
 | `PATCH /api/documents/[id]` | member+ / F | `{ title 1..200 }` | `{ document }` | 0 | - | 409 `DC003`(final) |
@@ -137,7 +137,7 @@
 | job_type | payload | result | progress 메시지 |
 |---|---|---|---|
 | `docs.generate` | `{ run_id, document_id, doc_type_code, doc_type_version, project_id, mode: 'template'\|'hybrid'\|'ai', parent_run_id?: uuid }` | `{ version: int, version_id: uuid, ai_run_id?: uuid, lint: { errors: int, warnings: int }, compliance_verdict, skipped_ai_sections: string[] }` | "자료 모으는 중" → "표·고정 섹션 채우는 중" → "서술 섹션 작성 중 2/4" → "일관성 검사 중" → "검사 중" → "저장 중" |
-| `docs.package` | `{ run_id, project_id, package_code: 'outsourcing_basic', stages: [['req_spec','screen_list','wbs'],['quote'],['sow'],['dev_contract'],['acceptance'],['trace_matrix']], include: string[] }` | `{ succeeded: string[], failed: string[], canceled: string[], credits_used: int, refunded: int }` | "3/8 문서 완료(견적서 작성 중)" |
+| `docs.package` | `{ run_id, project_id, package_code: 'outsourcing_basic', stages: [['req_spec','screen_list','wbs'],['quote'],['sow'],['dev_contract'],['acceptance'],['trace_matrix']] / shorts_agency: [['content_brief'],['quote'],['sow'],['video_service_contract','channel_access_mandate'],['acceptance']], include: string[] }` | `{ succeeded: string[], failed: string[], canceled: string[], credits_used: int, refunded: int }` | "3/8 문서 완료(견적서 작성 중)" |
 | `docs.extract` | `{ project_id, upload_id, ai_document_id, pages: int }` | `{ ai_run_id, checklist_suggestions: int, requirement_candidates: int, duplicates_skipped: int }` | "문서 읽는 중" → "색인 중" → "체크리스트 후보 찾는 중" → "요구사항 후보 찾는 중" → "중복 정리 중" |
 | `docs.minutes` | `{ project_id, document_id, upload_id, kind: 'audio'\|'text', attendees: [{ name, role? }], meeting_at, stt_feature: 'meeting_minutes' }` | `{ ai_run_id, version, duration_seconds?, decisions: int, action_items: int, requirement_candidates: int, audio_deleted_at? }` | "받아쓰는 중 12/40분" → "회의록 작성 중" → "결정·할 일 정리 중" → "요구사항 후보 찾는 중" |
 | `render.pdf` | `{ export_id, document_version_id, preset: 'a4_official', options: { watermark: bool, page_numbers: 'n / N', header_title: bool, ganin: bool } }` | `{ storage_path, pages, bytes, duration_ms }` | "PDF 만드는 중" |

@@ -86,6 +86,13 @@
 | TN-06-057 | AI·음성 보안·라우팅 회귀 테스트(서명 토큰, 대화 매핑, 국외 동의 필터, 강제 오픈소스, 선차감·정산·환불, 작품 간 격리, 영상 음성 대체 금지, 라우팅 seed 스냅샷) | `apps/api/tests/toon/security/`, `tests/e2e/ai/`, `scripts/ai-routing/` | TN-06-045, TN-06-049, TN-06-051, TN-06-053, TN-06-055 | P0 | M | Fable | `resolve_ai_route` 스냅샷(기능 14행 × 동의 유/무)이 02장 5.1절과 일치, 위조·만료·재사용 토큰 401, 타인 대화 이어 쓰기 404, 미동의 조직 상용 호출 0·AI 배경 `TN007`, 작품 A 대화로 작품 B 설정 접근 0, 영상 음성 도중 대체 0, 원장 drift 0, CI 실패 시 머지 차단 | `SECURITY_BASELINE.md` 16장 |
 | TN-06-058 | 생성 규칙 사전(금지 대상 6.3절, 의료·금융 단정 문형, 대화 규칙 6.7절, 위기 신호 문장) JSON과 단위 테스트 | `packages/toon-doc/rules/`, `packages/toon-doc/tests/rules/` | 없음 | P0 | S | Sonnet | 한글 경계 처리 테스트 통과(`\b` 미사용), TS와 Python이 같은 JSON 파일을 읽는 스모크 테스트, 평가 문장 30개에서 위반 검출 100% | 01장 TN-F-061, 6.3·6.7절, 6절 요청 5 |
 | TN-06-059 | AI 처리 방식 온보딩 화면과 고지문(국외 이전, 음성 처리 고지문 버전 상수) | `apps/toon/src/app/onboarding/ai/`, `apps/toon/src/lib/ai-notices.ts` | TN-06-043, TN-06-045 | P0 | S | Sonnet | 03장 3.6절 구성, 건너뛰면 미동의로 기록, 고지문 버전이 서버 상수와 같다, 설정에서 철회 가능 | 01장 TN-F-059 |
+| TN-06-060 | 모듈러 2000 11절(프리셋·협찬) 적용, 모놀리스 변환 결과 일치 확인, RLS 스모크에 `sponsorships`·`decide_sponsorship`·`TN008`·`TN002` 항목 추가 | `supabase/migrations/2000_toon.sql`, `supabase/tests/toon/` | TN-06-001, TN-06-002 | P0 | S | Fable | 05장 9절 2차 검증 항목 전부 통과(두 구조), 사용자 자가 승인 42501, 협찬 미승인 최종 내보내기 `TN008` | 01장 TN-F-038, 070~073 |
+| TN-06-061 | 로그라인·시놉시스 생성: 그래프 `toon.logline`(FastAPI), `POST /api/logline`, 아이디어 시트 화면 | `apps/api/app/ai/graphs/toon_logline/`, `apps/toon/src/app/api/logline/`, `apps/toon/src/components/ideation/` | TN-06-044, TN-06-045, TN-06-043 | P0 | M | Opus | 3안 중복 판정 2건 이하(평가셋 20), 금지 키워드 `TN006`, 적용 전 DB 변경 0, 실패 환불 1행, 2단계 추가 차감 0 | 01장 TN-F-024, 03장 2.10절 |
+| TN-06-062 | 내보내기 프리셋: `packages/toon-doc/presets/`, 내보내기 패널 프리셋 단계, Route Handler 프리셋 검사 | `packages/toon-doc/src/presets/`, `apps/toon/src/components/export/`, `apps/toon/src/app/api/exports/` | TN-06-018, TN-06-021 | P0 | S | Sonnet | 프리셋 4종 결과 픽셀 크기가 01장 TN-F-038 표와 같다(골든 테스트), 캐러셀 11장 거부, 프리셋·종류 불일치 422 | 01장 TN-F-038 |
+| TN-06-063 | 브랜디드 툰: 협찬 탭·회차 연결·승인 기록 화면, `POST /api/sponsorships/{id}/decide`, 콘티·대사 그래프에 협찬 메시지·금지어 입력 | `apps/toon/src/app/series/[id]/sponsorships/`, `apps/toon/src/app/api/sponsorships/`, `apps/api/app/ai/graphs/toon_storyboard/sponsor.py` | TN-06-060, TN-06-049, TN-06-050 | P0 | M | Opus | 무료 플랜 잠금·`TN002`, 승인 기록 감사 1행, 금지어 대사 WARN, 승인 뒤 브리프 수정 시 상태 in_review 표시 | 01장 TN-F-070, 071, 03장 2.11절 |
+| TN-06-064 | 렌더 워커 대가성·가상인물 표시 삽입(이미지 상단 띠, 스트립 첫 파일, MP4 첫 3초, caption.txt, 메타데이터), 검토용 시안 띠 | `services/toon-worker/src/render/disclosure/` | TN-06-019, TN-06-020, TN-06-060 | P0 | M | Opus | 협찬 회차 결과물 100%에 문구(K12 쿼리 0건), 요청 페이로드로 문구 변경 불가, 골든 이미지 차이 0.5% 이하 | 01장 TN-F-072, 073, 6.8절 |
+| TN-06-065 | (Phase 2) SNS 직접 업로드: 코어 공용 업로더 소비, 네이버 클립 위험 고지·동의 화면, 협찬 회차 제목·해시태그 문구 강제 | `apps/toon/src/app/api/uploads/`, `apps/toon/src/components/upload/` | 6절 요청 13, TN-06-064 | P1 | L | Opus | 동의 없는 `naver_clip` 업로드 잡 0, 협찬 회차 업로드 제목 첫 줄 문구 100% | 01장 TN-F-080, D18 |
+| TN-06-066 | (Phase 2) 숏툰 모션·자막·효과음 | `services/toon-worker/src/media-motion/`, `packages/toon-doc/src/motion/` | TN-06-020, TN-06-055 | P1 | L | Opus | 모션 프리셋 3종 골든 영상, 자막 타이밍 오차 100ms 이하, 60초 상한 유지 | 01장 TN-F-081 |
 
 P0 작업과 테스트 대응: DB(001, 005) → 002·029, 렌더(006, 019, 020) → 006 골든·030, 에디터(007, 008, 009, 010) → 029·030, API(011, 014, 015, 018, 037) → 002·030·037 단위 테스트, 결제(022, 023, 024) → 025, AI·음성(044, 045, 046, 047, 049, 050, 051, 053, 054, 055) → 057·030(각 작업의 평가셋·단위 테스트 포함), 디자인 시스템 2단계(034) → 042 사람 검토.
 
@@ -100,8 +107,9 @@ P0 작업과 테스트 대응: DB(001, 005) → 002·029, 렌더(006, 019, 020) 
 | W3 | 019, 021, 023, 024, 026, 027, 036, 046, 052, 056, 059 | 11 | W2 완료, 화면은 043 | 이미지 렌더 워커, 내보내기 화면, 스케줄, 결제 화면, 랜딩, 온보딩, 플랫폼 규격, 설정 RAG, 채팅 시트, 3D 히어로, AI 온보딩 |
 | W4 | 020, 025, 029, 031, 047, 049, 050, 053 | 8 | W3 완료(020은 019 완료) | MP4, 결제 E2E, 에디터 테스트, 린트, 설정 위키 운영, 콘티 그래프, 보조 그래프, 음성 대화 |
 | W5 | 014, 015, 017, 035, 048, 051, 054, 055 | 8 | W4 완료 | AI 콘티·배경·대사 API(그래프 연결), 화면(콘티), 설정 위키 화면, Dify 채팅, 대사 미리듣기, MP4 음성 |
-| W6 | 030, 032, 057 | 3 | W5 완료 | 핵심 E2E, 내 에셋, AI 보안·라우팅 회귀 → MVP 완료 조건 |
-| W7 | 038 → 039, 040 | 2(039는 038 뒤) | MVP 출시 후 | Phase 2·3 |
+| W5-B | 060(W0에서 시작 가능), 061, 062, 063, 064 | 5 | 060은 001·002 뒤, 나머지는 W5 완료 | 2026-10-13 2차 보강: 프리셋·협찬 DB, 로그라인, 프리셋 화면, 브랜디드 툰, 표시 렌더 |
+| W6 | 030, 032, 057 | 3 | W5·W5-B 완료 | 핵심 E2E(협찬 회차 내보내기 포함), 내 에셋, AI 보안·라우팅 회귀 → MVP 완료 조건 |
+| W7 | 038 → 039, 040, 065, 066 | 4(039는 038 뒤) | MVP 출시 후 | Phase 2·3(직접 업로드·숏툰 모션 포함) |
 
 ## 4. 모델별 비율
 
@@ -156,6 +164,7 @@ Fable은 이전 항목(결제, RLS, 데이터 모델)에 더해 AI 보안 경계
 | 10 | ai-service 공용 기능: (a) 사용자 조직 위키 페이지 저장 API(`expected_version`, 사람 소유 블록, 권한은 토큰 org + 작품 slug 접두사) (b) `/v1/chat/completions`가 `dify.aux`·`wiki.query` 기능 키를 `model`로 받기 (c) 작품(컬렉션) 삭제·고아 컬렉션 정리 엔드포인트 | `docs/products/_platform-core/LLM_WIKI.md:30-31`, `:45`. 사용자 조직 위키는 공용 설계에 편집 API가 없다 | MVP 전 |
 | 11 | core-voice: 기능 단위 "작업 중 대체 금지" 플래그 일반화(`narration`, `video_voice`) | 현재는 기능 이름별 규칙이다(`VOICE_ARCHITECTURE.md:47`) | MVP 전 |
 | 12 | core-voice: 서버 배치 합성 헬퍼(대사 목록 → mp3 클립, 분할 호출·진행 콜백·Storage 저장) | 영상 음성 준비 단계(TN-F-058) | MVP 직후 |
+| 13 | 공용 SNS 업로더 진입점(video 외 앱이 `upload.<platform>` 잡을 요청, 채널 토큰은 `core.encrypted_credentials`, `naver_clip` 위험 동의 기록 표준화) | toon TN-F-080(2026-10-13 2차). video 스키마에 쓰지 않기 위해 | Phase 2 전 |
 
 ## 7. 완료 정의
 
@@ -169,4 +178,4 @@ Fable은 이전 항목(결제, RLS, 데이터 모델)에 더해 AI 보안 경계
 | 렌더 일치 | 골든 이미지 차이 0.5% 이하 |
 | AI·음성 | `pytest apps/api` 통과, TN-06-057 녹색, 콘티 그래프 평가셋 20개를 상용·오픈소스 경로 모두 통과, 채팅 평가셋 30문항 금지 문구 0, 영상 음성 대체 금지 테스트 통과, 정산 크론 뒤 `settled_at is null` 0 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준, 디자인 시스템 4단계(TN-06-043) 완료, `tailwind.config.js`·hex 하드코딩 0 |
-| 작업 | W0~W6 작업(001~037, 041~059) 전부 완료. W7(038~040)은 MVP 범위 밖 |
+| 작업 | W0~W6 작업(001~037, 041~064) 전부 완료. W7(038~040, 065, 066)은 MVP 범위 밖 |

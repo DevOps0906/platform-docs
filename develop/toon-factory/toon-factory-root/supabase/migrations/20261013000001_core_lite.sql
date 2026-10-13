@@ -2360,7 +2360,7 @@ declare
     'public.cancel_job(uuid)',
     'public.effective_disclosure(uuid,text,text)', 'public.upsert_affiliate_disclosure(uuid,text,text,text)',
     'public.consent_brandconnect_risk(uuid)',
-    'public.create_brandconnect_application(uuid,text,text,text,text,text,text)'
+    'public.create_brandconnect_application(uuid,text,text,text,text,text,text,text,text)'
   ];
 begin
   foreach s in array v_anon_auth loop

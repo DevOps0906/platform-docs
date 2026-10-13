@@ -12,7 +12,7 @@
 | `tpl/` | `packages/docs-templates/` |
 | `int/` | `packages/docs-integrations/` |
 
-작업 수는 59개(사람 작업 1개 포함)로 `DOC_TEMPLATE.md:266`의 15~40개 권장을 넘는다. 확정 결정 13~17(AI·Dify·3D·음성·LLM 이원화)이 MVP 필수이고, 디자인 시스템 4단계와 Phase 2 연동 4개가 더해졌다. 검증할 수 있는 크기(`docs/products/_design-guide/DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다(flora-publishing 55개와 같은 판단, `docs/products/flora-publishing/06_AGENT_PLAN.md:3`).
+작업 수는 60개(사람 작업 1개 포함, Phase 2 shorts_agency DC-06-060 포함)로 `DOC_TEMPLATE.md:266`의 15~40개 권장을 넘는다. 확정 결정 13~17(AI·Dify·3D·음성·LLM 이원화)이 MVP 필수이고, 디자인 시스템 4단계와 Phase 2 연동 4개가 더해졌다. 검증할 수 있는 크기(`docs/products/_design-guide/DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다(flora-publishing 55개와 같은 판단, `docs/products/flora-publishing/06_AGENT_PLAN.md:3`).
 
 ## 1. 원칙과 소유 경계
 
@@ -209,6 +209,7 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 | DC-06-057 | 핵심 플로우 E2E: (a) 가입 → AI 온보딩 → 회사 정보 → 프로젝트 → 체크리스트 → 패키지 → 확정 → PDF (b) RFP → 추출 → 확인 → 효과 → 재생성 (c) 회의 텍스트 → 회의록 → 후보 수락 (d) 채팅 1턴(목 제공자) (e) 3D 히어로 3기기 렌더 스모크 | `web/e2e/flows/` | DC-06-038~DC-06-044, DC-06-047 | P0 | M | Opus | 스테이징에서 5개 플로우 통과, (a)는 30분 KPI 목표 경로를 10분 안에 완주(자동화). 새로고침 후 세션 유지 | `03_SCREENS_UX.md:78-174` |
 | DC-06-058 | AI·음성 보안·라우팅 회귀: 서명 토큰 위조·만료·재사용, 대화 매핑, 국외 동의 필터, 강제 오픈소스(`meeting_minutes`, `docs.minutes`, `dify.aux`), 고위험 문서 LLM 0, 선차감·정산·환불, 라우팅 seed 스냅샷 | `api/tests/docs/security/`, `web/e2e/ai/`, `scripts/nomad-docs/ai-routing/` | DC-06-024, DC-06-025, DC-06-033, DC-06-034, DC-06-036 | P0 | M | Fable | `resolve_ai_route` 스냅샷(13행 × 동의 유/무)이 seed와 일치(1.1절 I-9). 위조 토큰 401, 타인 대화 404, 미동의 조직 상용 0, `dev_contract` LLM 행 0, 원장 drift 0. 실패 시 병합 차단 | `docs/products/_platform-core/SECURITY_BASELINE.md:278-305` |
 | DC-06-059 | 배포 설정: Vercel(web), Railway(worker, api), 렌더 서비스 private network 연결(`RENDER_SERVICE_URL`, `X-Render-Token`), env 문서 | `infra/nomad-docs/`, `docs/nomad-docs/ops/env.md` | DC-06-005, DC-06-006 | P0 | S | Sonnet | env 문서 = `02_ARCHITECTURE.md:348-382`(누락 0). 스테이징에서 가입 → PDF 1회 성공. 렌더 서비스 공개 URL 호출 불가 확인 | flora 5장 #5, #15, SellingDocs 3장 #1 |
+| DC-06-060 | shorts_agency 패키지(Phase 2, DC-F-046, 확정 결정 21): content 체크리스트 14개 게시(효과 스키마 검증, `catalog:<key>` 단가 해석), 템플릿 7종(`content_brief`, `video_service_contract`, `channel_access_mandate`, `brand_guide_ack`, `ad_disclosure_checklist`, `monthly_report`, `service_intro`) v1, lint `L-NO-GUARANTEE`·`L-AD-DISCLOSURE`, 패키지 단계(`01_PRD.md` 3.5.1절), 위임 동의서 고지문 상수, 월간 리포트 KPI 입력(수동·CSV) | `tpl/content_brief/` 외 6개, `web/src/features/effects-engine/`(catalog 토큰만), `web/src/app/api/projects/[id]/packages/`(package_code 분기), `api/app/ai/products/docs/rules/`(lint 2종) | DC-06-020, DC-06-021, DC-06-027, DC-06-049 | P2 | L | Opus(계약 템플릿·lint), Sonnet(나머지) | content 프로젝트 체크리스트에 dev 전용 항목 0개. 월 12편 × 130,000원이 quote·sow·video_service_contract에 같은 값. `delivery.naver_clip_upload` 켜면 `vsc.automation_risk`·제약 요구사항 생성. 성과 보장 문구가 있는 계약서 확정 시 `DC005`. 업로드 대행 끄면 패키지 5종·18크레딧. 계약서·위임 동의서는 D-3·D-15 전 `is_active=false` 유지. RLS 러너 두 대상 통과 | `01_PRD.md` DC-F-046, 3.1.1·3.3.1·3.5.1·6.4절, `2300_docs.sql` 25절 |
 
 ## 3. 웨이브(병렬 실행 순서)
 
@@ -223,7 +224,7 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 | W5 | 026, 034, 040, 041, 042, 051 | 6 | W4 완료 | 골든·평가, Dify 채팅, 편집기, 화면 3·4, 계정 삭제·정리 |
 | W6 | 043, 050 | 2 | W5 완료 | 화면 5(채팅·위키), KPI |
 | W7 | 056, 057, 058 | 3 | W6 완료 | 통합·E2E·AI 회귀. 녹색이면 공개 베타(MVP). `dev_contract` 활성은 D-3 법무 검토 완료가 별도 조건 |
-| W8 | 052 → 053, 054, 055 | 1 → 3 | MVP 출시 후, team 플랜(C-5) 준비 | 연동 프레임워크, 발신 웹훅·Make/n8n, HubSpot, admin-suite ERP(Phase 2) |
+| W8 | 052 → 053, 054, 055, 060 | 1 → 3 | MVP 출시 후, team 플랜(C-5) 준비 | 연동 프레임워크, 발신 웹훅·Make/n8n, HubSpot, admin-suite ERP(Phase 2) |
 
 ## 4. 모델별 비율
 

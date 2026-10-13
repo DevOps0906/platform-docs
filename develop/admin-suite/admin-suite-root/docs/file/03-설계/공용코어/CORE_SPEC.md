@@ -346,7 +346,7 @@ OAuth state 위조 결함(`docs/reference/00_MERGE_ANALYSIS.md:516`, `:604`)의 
 
 ## 13. 제휴마케팅(affiliate) 모듈
 
-확정 결정 12(`docs/reference/00_MERGE_ANALYSIS.md:20`). video와 blog가 함께 쓴다. commerce는 쓰지 않는다(`:957`).
+확정 결정 12(`docs/reference/00_MERGE_ANALYSIS.md:20`). video와 blog가 함께 쓴다. commerce는 쓰지 않는다(`:957`). 2026-10-13 확정 결정 19로 브랜드커넥트 지원서를 블로그형/클립형으로 나눴다(16.1절).
 
 ### 13.1 모델
 
@@ -354,30 +354,32 @@ OAuth state 위조 결함(`docs/reference/00_MERGE_ANALYSIS.md:516`, `:604`)의 
 |---|---|---|
 | `core.affiliate_accounts` | org별 제공자 연결. provider는 coupang / naver_brandconnect / tenping / naver_shopping_connect. 키는 `credential_id`로 `encrypted_credentials`를 가리킨다. `risk_consented_at/by`는 브랜드커넥트 자동 지원 동의 | `migrations/0006_core_affiliate.sql:24-49` |
 | `core.affiliate_links` | 원본 URL, 제휴 URL, `short_code`(유일), `utm` jsonb, `source_app`(video/blog), `source_ref`, `click_count` 캐시 | `:54-84` |
-| `core.affiliate_clicks` | 클릭 로그. IP는 일 단위 솔트 해시만. owner/admin만 읽는다 | `:90-105`, `:376-378` |
+| `core.affiliate_clicks` | 클릭 로그. IP는 일 단위 솔트 해시만. owner/admin만 읽는다 | `:90-105`, `:393-395` |
 | `core.affiliate_disclosures` | 대가성 문구. `org_id null`은 플랫폼 기본값. placement blog_top / video_description / video_pinned_comment. 끄는 컬럼이 없다. 10자 미만 거부 | `:112-136` |
-| `core.brandconnect_applications` | 브랜드커넥트 지원서. 상태 draft → submitting → submitted → accepted/rejected, submitting → failed → submitting. 트리거가 강제 | `:144-200` |
+| `core.brandconnect_applications` | 브랜드커넥트 지원서. 대상은 `target_url`(https) + `target_kind`(blog/clip) + `source_app`(blog/video)이고, 짝은 blog↔blog, clip↔video만 허용(CHECK `brandconnect_applications_kind_app_check`). 상태 draft → submitting → submitted → accepted/rejected, submitting → failed → submitting. 트리거가 강제 | `:144-211` |
 
 ### 13.2 함수
 
 | 함수 | 누가 | 동작 | 근거 |
 |---|---|---|---|
-| `new_affiliate_short_code(len=8)` | service_role | 혼동 문자 제외 32자 알파벳 난수, 충돌 재시도 5회 | `:207-231` |
-| `record_affiliate_click(code, referrer, ip_hash, ua, country)` | service_role | 클릭 INSERT + 카운트 증가 + 제휴 URL 반환. 비활성/없음이면 null | `:234-257` |
-| `effective_disclosure(org, provider, placement)` | 멤버 | org 문구 우선, 없으면 기본값 | `:260-275` |
-| `upsert_affiliate_disclosure(org, provider, placement, body)` | owner/admin | 편집만. 삭제/끄기 경로 없음 | `:278-300` |
-| `consent_brandconnect_risk(account)` | owner/admin | 동의 시각 기록 + 감사 | `:303-324` |
-| `create_brandconnect_application(account, campaign, blog_url, ...)` | 멤버 | 동의 없으면 42501. 제출은 워커 | `:327-360` |
+| `new_affiliate_short_code(len=8)` | service_role | 혼동 문자 제외 32자 알파벳 난수, 충돌 재시도 5회 | `:218-242` |
+| `record_affiliate_click(code, referrer, ip_hash, ua, country)` | service_role | 클릭 INSERT + 카운트 증가 + 제휴 URL 반환. 비활성/없음이면 null | `:245-268` |
+| `effective_disclosure(org, provider, placement)` | 멤버 | org 문구 우선, 없으면 기본값 | `:271-286` |
+| `upsert_affiliate_disclosure(org, provider, placement, body)` | owner/admin | 편집만. 삭제/끄기 경로 없음 | `:289-311` |
+| `consent_brandconnect_risk(account)` | owner/admin | 동의 시각 기록 + 감사 | `:314-335` |
+| `create_brandconnect_application(account, campaign, target_url, target_kind, source_app, ...)` | 멤버 | 동의 없으면 42501. `source_app` 앱 엔타이틀먼트 없으면 42501. 짝이 맞지 않으면 23514(CHECK). 제출은 워커. 이전 7인자 시그니처(`blog_url`)는 제거 | `:338-377` |
 
 ### 13.3 규칙
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
-| 대가성 문구 위치 | 공정위 "추천·보증 등에 관한 표시·광고 심사지침"에 따라 제목 또는 본문 시작 부분에 둔다. blog는 글 상단(blog_top), video는 설명란 첫 줄(video_description)과 고정 댓글(video_pinned_comment) | 확정 결정 12, `seed.sql:114-115` |
-| 끌 수 없음 | 사용자는 문구를 편집할 수 있지만 비울 수 없다(CHECK 10자). 삽입을 끄는 설정은 제품 UI에도 두지 않는다 | `:121`, `:277` |
+| 대가성 문구 위치 | 공정위 "추천·보증 등에 관한 표시·광고 심사지침"에 따라 제목 또는 본문 시작 부분에 둔다. blog는 글 상단(blog_top), video는 설명란 첫 줄(video_description)과 고정 댓글(video_pinned_comment). 네이버 클립(`naver_clip`)은 설명란·고정 댓글 구조가 확인되지 않아, video 앱이 `video_description` 문구를 **제목 앞머리 + 첫 번째 해시태그(#광고 등)**로 렌더한다(영상은 제목·영상 내·첫 해시태그 표시 원칙). placement 값은 늘리지 않는다 | 확정 결정 12·18, `seed.sql:114-115` |
+| 끌 수 없음 | 사용자는 문구를 편집할 수 있지만 비울 수 없다(CHECK 10자). 삽입을 끄는 설정은 제품 UI에도 두지 않는다 | `:121`, `:288` |
 | 단축 링크 | `/r/[code]` 라우트가 service_role로 `record_affiliate_click`을 호출하고 302 리다이렉트. 레이트 리밋 적용 | 7, 12장 |
 | UTM | `utm` jsonb에 `utm_source=<app>`, `utm_medium=affiliate`, `utm_campaign=<source_ref>`, `utm_content=<provider>`를 넣고 제휴 URL에 붙인다(제안). 제공자가 UTM을 허용하지 않으면 생략 |
-| 브랜드커넥트 | blog가 소유. 완전 자동 지원은 Playwright로 수행하며 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의가 필수. 실제 제출은 `core.jobs` `job_type='brandconnect.apply'` 워커가 하고, 상태 전이는 트리거가 강제한다. 레이트 리밋 적용 | `:13-15`, `:139-142` |
+| 브랜드커넥트 | Playwright 어댑터는 blog가 소유. 완전 자동 지원은 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의가 필수. 실제 제출은 `core.jobs` `job_type='brandconnect.apply'` 워커가 하고, 상태 전이는 트리거가 강제한다. 레이트 리밋(계정당 5건/시간)은 blog·video 요청을 합산한다 | `:13-15`, `:139-142` |
+| 클립형 캠페인 | 네이버 브랜드커넥트는 클립 크리에이터와 캠페인사의 제휴를 지원한다([이코노미스트 2025-06](https://economist.co.kr/article/view/ecn202506130009)). 클립형 지원서는 video가 만든다(`target_kind='clip'`, `source_app='video'`, `target_url`=클립 채널 주소). video는 같은 `brandconnect.apply` 잡을 cross-app으로 요청하고, 워커는 blog의 어댑터로 제출한다(`SHARED_MODULES.md` 17장). 같은 네이버 계정의 `affiliate_accounts` 행과 위험 동의를 공유한다 | 확정 결정 19 |
+| 쇼핑 커넥트 | 네이버 브랜드커넥트의 어필리에이트 솔루션(스마트스토어 상품 홍보, 판매 실적 수익 공유, [네이버 보도자료](https://www.navercorp.com/media/pressReleasesDetail?seq=33116)). provider `naver_shopping_connect`로 이미 있다 | 확정 결정 12 |
 | 미확인 | 텐핑과 네이버쇼핑 커넥트에 공개 API가 있는지 확인하지 않았다. 없으면 Playwright 또는 수동 링크 등록으로 대체한다 | 확정 결정 12 |
 | 제안 단계 | YouTube "유료 프로모션 포함" 플래그 자동 설정은 제안이며 확정이 아니다 | 확정 결정 12 |
 
@@ -431,6 +433,12 @@ pg_cron 또는 워커 크론으로 service_role이 호출한다(`D:/WorkSpace/pl
 | 적용 조건 | 전 제품 RLS/RPC 회귀 테스트 통과 후에만(`ARCHITECTURE.md:76`). 검사 항목은 `README.md:145-156` |
 | 번호 | 0000~0099 (`D:/WorkSpace/platform/docs/products/README.md:9`). 현재 코어는 0009까지(0008 AI, 0009 음성). 다음 코어 마이그레이션은 0010 |
 | 제품이 코어를 바꾸고 싶으면 | 제품 06_AGENT_PLAN에 "코어 요청" 작업으로 적고 `_platform-core`에 이슈를 남긴다. 제품 조각에서 `core.*`를 ALTER하지 않는다 |
+
+### 16.1 변경 이력
+
+| 날짜 | 변경 | 근거 | 영향 |
+|---|---|---|---|
+| 2026-10-13 | `core.brandconnect_applications.blog_url` → `target_url` + `target_kind`(blog/clip) + `source_app`(blog/video), 짝 CHECK 추가. `create_brandconnect_application`을 9인자로 바꾸고 `source_app` 엔타이틀먼트 검사 추가. 이전 시그니처 drop | 확정 결정 19(`docs/reference/00_MERGE_ANALYSIS.md`) | `0006_core_affiliate.sql`, `MONOLITH_CORE_LITE.sql`, 모든 제품 모놀리스 `0001_core_lite.sql`(권한 목록 시그니처), blog `posts` 트리거(블로그형만 연결), `SHARED_MODULES.md` 17장 `applyCampaign`. 회귀: `_tools-sqlcheck`로 코어 0000~0009 + blog/video 체인 통과 |
 
 ## 17. AI, 음성, 위키 계약 (2026-10-13 추가)
 

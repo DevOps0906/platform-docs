@@ -20,7 +20,9 @@
 --     public.has_org_role()(NULL-safe)로 호출자를 판정한다. is_privileged_session()은 쓰지 않는다.
 --   - 크레딧 차감/환불은 이 파일의 함수에서 하지 않는다(Route Handler/워커가 service_role로 core RPC 호출).
 --   - 플랜/구독/크레딧/결제/잡/자격증명/제휴 테이블을 다시 만들지 않는다. public.* 를 ALTER하지 않는다.
--- 사용자 정의 SQLSTATE: VD001~VD012 (05_DATA_MODEL.md, 04_API.md 7장)
+-- 사용자 정의 SQLSTATE: VD001~VD016 (05_DATA_MODEL.md, 04_API.md 7장)
+-- 2026-10-13 개정: 네이버 클립 채널(VD-F-075, 확정 결정 18), 브랜드커넥트 클립 캠페인 연결(VD-F-063, 결정 19),
+--   대행 운영(clients, client_channels, client_reviews, client_reports, VD-F-120~126, 결정 21)
 -- 반복 실행 가능.
 -- =====================================================================
 
@@ -123,7 +125,10 @@ declare
     "music_library.status":       {"active":["expired","revoked"], "expired":["active","revoked"]},
     "playlists.status":           {"draft":["rendering","canceled"], "rendering":["ready","failed","draft"], "failed":["draft"], "ready":["draft"]},
     "landing_pages.status":       {"draft":["published"], "published":["unpublished"], "unpublished":["published","draft"]},
-    "uploads.status":             {"draft":["checking","canceled"], "checking":["blocked","awaiting_confirm","approved","draft"], "blocked":["draft","canceled"], "awaiting_confirm":["approved","draft","canceled"], "approved":["scheduled","canceled"], "scheduled":["uploading","canceled"], "uploading":["published","failed","scheduled"], "failed":["scheduled","canceled"]}
+    "uploads.status":             {"draft":["checking","canceled"], "checking":["blocked","awaiting_confirm","approved","draft"], "blocked":["draft","canceled"], "awaiting_confirm":["approved","draft","canceled"], "approved":["client_review","scheduled","canceled"], "client_review":["scheduled","draft","canceled"], "scheduled":["uploading","canceled"], "uploading":["published","failed","scheduled"], "failed":["scheduled","canceled"]},
+    "clients.status":             {"active":["paused","ended"], "paused":["active","ended"]},
+    "client_reviews.decision":    {"pending":["approved","changes_requested","expired","canceled"]},
+    "client_reports.status":      {"generating":["ready","failed"], "failed":["generating"], "ready":["sent","generating"]}
   }'::jsonb;
 begin
   if v_old is distinct from v_new then
@@ -195,6 +200,10 @@ begin
       select org_id into v_org from public.sources where id = new.source_id;
       if v_org is distinct from new.org_id then raise exception 'video: source org mismatch' using errcode = 'VD002'; end if;
     end if;
+    if new.client_id is not null then
+      select org_id into v_org from public.clients where id = new.client_id;
+      if v_org is distinct from new.org_id then raise exception 'video: client org mismatch' using errcode = 'VD002'; end if;
+    end if;
 
   elsif tg_table_name = 'outputs' then
     select org_id into v_org from (
@@ -260,12 +269,22 @@ begin
       select org_id, status into v_org, v_status from public.outputs where id = new.output_id;
       if v_org is distinct from new.org_id then raise exception 'video: output org mismatch' using errcode = 'VD002'; end if;
       if v_status <> 'ready' then raise exception 'video: output is not ready (%)', v_status using errcode = 'VD008'; end if;
-      select org_id, platform, status into v_ch from public.channels where id = new.channel_id;
+      select org_id, platform, status, automation_consent_version into v_ch from public.channels where id = new.channel_id;
       if v_ch.org_id is distinct from new.org_id then raise exception 'video: channel org mismatch' using errcode = 'VD002'; end if;
       if v_ch.platform <> new.platform or v_ch.status <> 'active' then
         raise exception 'video: channel is not an active % channel', new.platform using errcode = 'VD008';
       end if;
-    else
+      -- 네이버 클립: 공식 업로드 API가 없어 Playwright로 게시한다. 현재 고지문 버전에 대한 owner/admin 동의가 있어야 한다(VD015).
+      if new.platform = 'naver_clip' and v_ch.automation_consent_version is distinct from public.clip_notice_version() then
+        raise exception 'video: naver clip automation risk consent required (%)', public.clip_notice_version() using errcode = 'VD015';
+      end if;
+    end if;
+    if new.brandconnect_application_id is not null
+       and (tg_op = 'INSERT' or new.brandconnect_application_id is distinct from old.brandconnect_application_id) then
+      select org_id into v_org from public.brandconnect_applications where id = new.brandconnect_application_id;
+      if v_org is distinct from new.org_id then raise exception 'video: brandconnect application org mismatch' using errcode = 'VD002'; end if;
+    end if;
+    if tg_op = 'UPDATE' then
       if old.has_affiliate and not new.has_affiliate
          and exists (select 1 from public.upload_links l where l.upload_id = new.id) then
         raise exception 'video: affiliate links exist; disclosure cannot be removed' using errcode = 'VD007';
@@ -281,6 +300,17 @@ begin
           raise exception 'video: compliance gate not satisfied (%)', coalesce(v_verdict, 'none') using errcode = 'VD011';
         end if;
       end if;
+      -- 고객 승인 게이트: 검토가 필요한 고객 채널이면 approved 에서 바로 scheduled 로 갈 수 없다(VD016).
+      if new.status = 'scheduled' and old.status = 'approved'
+         and exists (select 1 from public.client_channels cc join public.clients c on c.id = cc.client_id
+                     where cc.channel_id = new.channel_id and c.review_required) then
+        raise exception 'video: client review required before scheduling' using errcode = 'VD016';
+      end if;
+      if new.status = 'scheduled' and old.status = 'client_review'
+         and not exists (select 1 from public.client_reviews r
+                         where r.upload_id = new.id and r.decision = 'approved') then
+        raise exception 'video: client has not approved this upload' using errcode = 'VD016';
+      end if;
     end if;
 
   elsif tg_table_name = 'upload_links' then
@@ -292,6 +322,20 @@ begin
     select org_id into v_org from public.affiliate_links where id = new.link_id;
     if v_org is distinct from new.org_id then raise exception 'video: affiliate link org mismatch' using errcode = 'VD002'; end if;
 
+  elsif tg_table_name = 'client_channels' then
+    select org_id into v_org from public.clients where id = new.client_id;
+    if v_org is distinct from new.org_id then raise exception 'video: client org mismatch' using errcode = 'VD002'; end if;
+    select org_id into v_org from public.channels where id = new.channel_id;
+    if v_org is distinct from new.org_id then raise exception 'video: channel org mismatch' using errcode = 'VD002'; end if;
+
+  elsif tg_table_name in ('client_reviews', 'client_reports') then
+    select org_id into v_org from public.clients where id = new.client_id;
+    if v_org is distinct from new.org_id then raise exception 'video: client org mismatch' using errcode = 'VD002'; end if;
+    if tg_table_name = 'client_reviews' then
+      select org_id into v_org from public.uploads where id = new.upload_id;
+      if v_org is distinct from new.org_id then raise exception 'video: upload org mismatch' using errcode = 'VD002'; end if;
+    end if;
+
   elsif tg_table_name in ('compliance_checks', 'analytics_snapshots') then
     select org_id into v_org from public.uploads where id = new.upload_id;
     if v_org is distinct from new.org_id then raise exception 'video: upload org mismatch' using errcode = 'VD002'; end if;
@@ -299,6 +343,14 @@ begin
   return new;
 end;
 $$;
+
+-- 네이버 클립 자동 업로드 위험 고지문 현재 버전(01_PRD.md 6.5절). 바꾸면 기존 동의는 무효가 되어 재동의 전까지 업로드를 만들지 않는다.
+create or replace function public.clip_notice_version()
+returns text
+language sql
+immutable
+set search_path = ''
+as $$ select 'clip-2026-10-v1'::text $$;
 
 -- 채널 한도: YouTube 활성 채널 수 <= features.max_channels, 그 외 플랫폼은 features.platforms 포함(VD003, VD004)
 create or replace function public.enforce_channel_limit()
@@ -342,7 +394,7 @@ $$;
 create table if not exists public.channels (
   id                  uuid primary key default gen_random_uuid(),
   org_id              uuid not null references public.organizations(id) on delete cascade,
-  platform            text not null constraint channels_platform_check check (platform in ('youtube', 'instagram', 'tiktok', 'threads')),
+  platform            text not null constraint channels_platform_check check (platform in ('youtube', 'instagram', 'tiktok', 'threads', 'naver_clip')),
   credential_id       uuid references public.encrypted_credentials(id) on delete set null,
   external_channel_id text not null,
   name                text,
@@ -357,10 +409,16 @@ create table if not exists public.channels (
   status              text not null default 'active'
                       constraint channels_status_check check (status in ('active', 'paused', 'error', 'revoked')),
   last_error          text,
+  -- 브라우저 자동화(Playwright) 채널의 위험 동의(naver_clip). public.consent_clip_automation_risk 로만 기록한다.
+  automation_consent_version text,
+  automation_consented_at    timestamptz,
+  automation_consented_by    uuid,
   created_by          uuid,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
-  unique (org_id, platform, external_channel_id)
+  unique (org_id, platform, external_channel_id),
+  constraint channels_automation_consent_check check (
+    (automation_consent_version is null) = (automation_consented_at is null))
 );
 create index if not exists channels_pick_idx on public.channels (org_id, platform, target_language, role) where status = 'active';
 
@@ -440,6 +498,7 @@ create table if not exists public.productions (
   track            text not null constraint productions_track_check check (track in ('A', 'B', 'C')),
   mode             text constraint productions_mode_check check (mode in ('ai_generate', 're_edit')),
   source_id        uuid references public.sources(id) on delete set null,
+  client_id        uuid,  -- 대행 고객(public.clients). FK는 clients 생성 뒤 3.22에서 건다.
   topic            text,
   topic_score      integer constraint productions_topic_score_check check (topic_score between 0 and 100),
   languages        text[] not null default array['KO']::text[],
@@ -718,7 +777,7 @@ create table if not exists public.uploads (
   org_id                 uuid not null references public.organizations(id) on delete cascade,
   output_id              uuid not null references public.outputs(id),
   channel_id             uuid not null references public.channels(id),
-  platform               text not null constraint uploads_platform_check check (platform in ('youtube', 'instagram', 'tiktok', 'threads')),
+  platform               text not null constraint uploads_platform_check check (platform in ('youtube', 'instagram', 'tiktok', 'threads', 'naver_clip')),
   language               text constraint uploads_language_check check (language in ('KO', 'JA', 'EN')),
   title                  text not null constraint uploads_title_check check (length(btrim(title)) between 1 and 100),
   description            text not null default '',
@@ -730,8 +789,12 @@ create table if not exists public.uploads (
   has_affiliate          boolean not null default false,
   disclosure_description text,
   disclosure_pinned      text,
+  -- naver_clip: 대가성 표시를 제목 앞과 첫 해시태그에 둔다(공정위 추천·보증 심사지침, 영상은 제목·영상 내·첫 해시태그)
+  disclosure_title       text,
+  disclosure_hashtag     text,
+  brandconnect_application_id uuid references public.brandconnect_applications(id) on delete set null,
   status                 text not null default 'draft'
-                         constraint uploads_status_check check (status in ('draft', 'checking', 'blocked', 'awaiting_confirm', 'approved', 'scheduled', 'uploading', 'published', 'failed', 'canceled')),
+                         constraint uploads_status_check check (status in ('draft', 'checking', 'blocked', 'awaiting_confirm', 'approved', 'client_review', 'scheduled', 'uploading', 'published', 'failed', 'canceled')),
   compliance_check_id    uuid,
   compliance_ack_by      uuid,
   compliance_ack_at      timestamptz,
@@ -747,12 +810,24 @@ create table if not exists public.uploads (
   created_at             timestamptz not null default now(),
   updated_at             timestamptz not null default now(),
   unique (channel_id, platform_post_id),
+  -- 제휴 링크가 있거나 브랜드커넥트 선정 캠페인 영상이면 대가성 문구 필수.
+  --   naver_clip: 제목 앞 문구 + 첫 해시태그 + 설명 첫 줄(고정 댓글 없음)
+  --   그 외     : 설명란 첫 줄 + 고정 댓글 첫 줄(기존 규칙)
   constraint uploads_disclosure_check check (
-    not has_affiliate or (
-          disclosure_description is not null and length(btrim(disclosure_description)) >= 10
-      and starts_with(description, disclosure_description)
-      and disclosure_pinned is not null and length(btrim(disclosure_pinned)) >= 10
-      and pinned_comment is not null and starts_with(pinned_comment, disclosure_pinned)))
+    not (has_affiliate or brandconnect_application_id is not null) or (
+      case when platform = 'naver_clip' then
+            disclosure_title is not null and length(btrim(disclosure_title)) >= 2
+        and starts_with(title, disclosure_title)
+        and disclosure_hashtag is not null and length(btrim(disclosure_hashtag)) >= 2
+        and cardinality(tags) >= 1 and tags[1] = disclosure_hashtag
+        and disclosure_description is not null and length(btrim(disclosure_description)) >= 10
+        and starts_with(description, disclosure_description)
+      else
+            disclosure_description is not null and length(btrim(disclosure_description)) >= 10
+        and starts_with(description, disclosure_description)
+        and disclosure_pinned is not null and length(btrim(disclosure_pinned)) >= 10
+        and pinned_comment is not null and starts_with(pinned_comment, disclosure_pinned)
+      end))
 );
 create index if not exists uploads_org_idx on public.uploads (org_id, created_at desc);
 create index if not exists uploads_due_idx on public.uploads (scheduled_at) where status = 'scheduled';
@@ -830,6 +905,94 @@ create table if not exists public.banned_words (
   unique (org_id, word)
 );
 
+-- 3.22 clients: 대행 고객사(브랜드). 직접 대행 + 내부 도구 운영(확정 결정 21, VD-F-120). 플랜 features.agency 필요.
+create table if not exists public.clients (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  name             text not null constraint clients_name_check check (length(btrim(name)) between 1 and 120),
+  brand_name       text,
+  business_no      text,
+  contact_name     text,
+  contact_email    text,
+  contact_phone    text,
+  brand_guide_path text,   -- org-files 버킷 경로(<org_id>/video/clients/<uuid>.pdf)
+  brand_wiki_ref   text,   -- 채널·브랜드 가이드 위키(VD-F-102) 문서 키
+  package_code     text constraint clients_package_check check (package_code in ('produce', 'produce_upload', 'full_ops')),
+  contract_start   date,
+  contract_end     date,
+  monthly_quota    integer constraint clients_quota_check check (monthly_quota is null or monthly_quota >= 0),
+  review_required  boolean not null default true,
+  report_day       integer not null default 5 constraint clients_report_day_check check (report_day between 1 and 28),
+  status           text not null default 'active' constraint clients_status_check check (status in ('active', 'paused', 'ended')),
+  notes            text,
+  created_by       uuid default auth.uid(),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  unique (org_id, name),
+  constraint clients_contract_check check (contract_end is null or contract_start is null or contract_end >= contract_start)
+);
+create index if not exists clients_org_idx on public.clients (org_id, status);
+
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'productions_client_fk') then
+    alter table public.productions add constraint productions_client_fk
+      foreign key (client_id) references public.clients(id) on delete set null;
+  end if;
+end $$;
+create index if not exists productions_client_idx on public.productions (client_id) where client_id is not null;
+
+-- 3.23 client_channels: 고객 ↔ 운영 채널. 한 채널은 한 고객에만 묶인다(VD-F-121).
+create table if not exists public.client_channels (
+  id         uuid primary key default gen_random_uuid(),
+  org_id     uuid not null references public.organizations(id) on delete cascade,
+  client_id  uuid not null references public.clients(id) on delete cascade,
+  channel_id uuid not null references public.channels(id) on delete cascade,
+  ownership  text not null default 'client' constraint client_channels_ownership_check check (ownership in ('client', 'agency')),
+  created_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  unique (channel_id)
+);
+create index if not exists client_channels_client_idx on public.client_channels (client_id);
+
+-- 3.24 client_reviews: 고객 승인 요청 1건(VD-F-123). 토큰 원문은 저장하지 않고 sha256 해시(hex 64자)만 둔다.
+--      토큰은 서버가 만들어 고객에게 보내고, 공개 검토 화면은 Route Handler 가 레이트 리밋 뒤 service_role 로
+--      public.decide_client_review 를 호출한다.
+create table if not exists public.client_reviews (
+  id             uuid primary key default gen_random_uuid(),
+  org_id         uuid not null references public.organizations(id) on delete cascade,
+  client_id      uuid not null references public.clients(id) on delete cascade,
+  upload_id      uuid not null references public.uploads(id) on delete cascade,
+  token_hash     text not null unique constraint client_reviews_token_check check (token_hash ~ '^[0-9a-f]{64}$'),
+  expires_at     timestamptz not null,
+  decision       text not null default 'pending'
+                 constraint client_reviews_decision_check check (decision in ('pending', 'approved', 'changes_requested', 'expired', 'canceled')),
+  reviewer_name  text,
+  comment        text constraint client_reviews_comment_check check (comment is null or length(comment) <= 2000),
+  decided_at     timestamptz,
+  requested_by   uuid,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create index if not exists client_reviews_upload_idx on public.client_reviews (upload_id, created_at desc);
+create unique index if not exists client_reviews_one_pending on public.client_reviews (upload_id) where decision = 'pending';
+
+-- 3.25 client_reports: 고객 월간 성과 리포트(VD-F-124). analytics_snapshots 집계 → PDF(core exports 버킷). 서버 전용 쓰기.
+create table if not exists public.client_reports (
+  id           uuid primary key default gen_random_uuid(),
+  org_id       uuid not null references public.organizations(id) on delete cascade,
+  client_id    uuid not null references public.clients(id) on delete cascade,
+  period_month date not null constraint client_reports_period_check check (period_month = date_trunc('month', period_month)::date),
+  kpis         jsonb not null default '{}'::jsonb,  -- views, completion_rate, subscriber_gain, upload_adherence, affiliate_clicks
+  summary      text,
+  pdf_path     text,
+  status       text not null default 'generating' constraint client_reports_status_check check (status in ('generating', 'ready', 'failed', 'sent')),
+  job_id       uuid references public.jobs(id) on delete set null,
+  sent_at      timestamptz,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  unique (client_id, period_month)
+);
+
 -- =====================================================================
 -- 4. 트리거 연결
 -- =====================================================================
@@ -839,25 +1002,29 @@ begin
   -- updated_at
   foreach t in array array['channels', 'sources', 'productions', 'longform_projects', 'longform_sections', 'longform_highlights',
                            'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs', 'landing_pages',
-                           'linkinbio_profiles', 'linkinbio_items', 'uploads', 'workflows'] loop
+                           'linkinbio_profiles', 'linkinbio_items', 'uploads', 'workflows',
+                           'clients', 'client_reviews', 'client_reports'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_set_updated_at', t);
     execute format('create trigger %I before update on public.%I for each row execute function public.set_updated_at()', t || '_set_updated_at', t);
   end loop;
   -- 사용자 쓰기 정책이 없는 테이블: 이중 잠금
   foreach t in array array['channels', 'trend_videos', 'radar_reports', 'sources', 'productions', 'longform_highlights',
-                           'outputs', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots'] loop
+                           'outputs', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots',
+                           'client_reviews', 'client_reports'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_guard_write', t);
     execute format('create trigger %I before insert or update or delete on public.%I for each row execute function public.guard_privileged_write()', t || '_guard_write', t);
   end loop;
   -- 상태 전이
   foreach t in array array['channels', 'sources', 'productions', 'outputs', 'longform_projects', 'longform_sections',
-                           'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'landing_pages', 'uploads'] loop
+                           'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'landing_pages', 'uploads',
+                           'clients', 'client_reports'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_status_transition', t);
     execute format('create trigger %I before update of status on public.%I for each row execute function public.enforce_status_transition(''status'')', t || '_status_transition', t);
   end loop;
   -- 참조 무결성
   foreach t in array array['productions', 'outputs', 'longform_sections', 'longform_highlights', 'playlist_items', 'landing_pages',
-                           'linkinbio_items', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots'] loop
+                           'linkinbio_items', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots',
+                           'client_channels', 'client_reviews', 'client_reports'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_check_refs', t);
     execute format('create trigger %I before insert or update on public.%I for each row execute function public.check_refs()', t || '_check_refs', t);
   end loop;
@@ -872,6 +1039,10 @@ drop trigger if exists music_tracks_distribution_transition on public.music_trac
 create trigger music_tracks_distribution_transition before update of distribution_status on public.music_tracks
   for each row execute function public.enforce_status_transition('distribution_status');
 
+drop trigger if exists client_reviews_decision_transition on public.client_reviews;
+create trigger client_reviews_decision_transition before update of decision on public.client_reviews
+  for each row execute function public.enforce_status_transition('decision');
+
 drop trigger if exists channels_limit on public.channels;
 create trigger channels_limit before insert or update of status on public.channels
   for each row execute function public.enforce_channel_limit();
@@ -882,7 +1053,7 @@ create trigger channels_limit before insert or update of status on public.channe
 do $$
 declare t text;
 begin
-  foreach t in array array['channels', 'trend_videos', 'radar_reports', 'sources', 'productions', 'longform_projects', 'longform_sections', 'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs', 'landing_pages', 'linkinbio_profiles', 'linkinbio_items', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots', 'workflows', 'banned_words'] loop
+  foreach t in array array['channels', 'trend_videos', 'radar_reports', 'sources', 'productions', 'longform_projects', 'longform_sections', 'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs', 'landing_pages', 'linkinbio_profiles', 'linkinbio_items', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots', 'workflows', 'banned_words', 'clients', 'client_channels', 'client_reviews', 'client_reports'] loop
     execute format('revoke all on table public.%I from public, anon, authenticated', t);
     execute format('grant all on table public.%I to service_role', t);
   end loop;
@@ -914,6 +1085,10 @@ alter table public.compliance_checks   enable row level security;
 alter table public.analytics_snapshots enable row level security;
 alter table public.workflows           enable row level security;
 alter table public.banned_words        enable row level security;
+alter table public.clients             enable row level security;
+alter table public.client_channels     enable row level security;
+alter table public.client_reviews      enable row level security;
+alter table public.client_reports      enable row level security;
 
 -- SELECT: 같은 조직 멤버 + video 엔타이틀먼트 (org 테이블 전부)
 do $$
@@ -922,7 +1097,8 @@ begin
   foreach t in array array['channels', 'radar_reports', 'sources', 'productions', 'longform_projects', 'longform_sections',
                            'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs',
                            'landing_pages', 'linkinbio_profiles', 'linkinbio_items', 'uploads', 'upload_links',
-                           'compliance_checks', 'analytics_snapshots', 'workflows', 'banned_words'] loop
+                           'compliance_checks', 'analytics_snapshots', 'workflows', 'banned_words',
+                           'clients', 'client_channels', 'client_reports'] loop
     execute format('grant select on public.%I to authenticated', t);
     execute format('drop policy if exists %I on public.%I', t || '_select', t);
     execute format('create policy %I on public.%I for select to authenticated using (public.is_org_member(org_id) and public.has_entitlement(org_id, ''video''))', t || '_select', t);
@@ -1084,6 +1260,40 @@ create policy banned_words_insert on public.banned_words for insert to authentic
   with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
 drop policy if exists banned_words_delete on public.banned_words;
 create policy banned_words_delete on public.banned_words for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- client_reviews: 토큰 해시는 사용자에게 보이지 않는다(컬럼 단위 SELECT). 쓰기는 RPC/서버만.
+grant select (id, org_id, client_id, upload_id, expires_at, decision, reviewer_name, comment, decided_at, requested_by, created_at, updated_at)
+  on public.client_reviews to authenticated;
+drop policy if exists client_reviews_select on public.client_reviews;
+create policy client_reviews_select on public.client_reviews for select to authenticated
+  using (public.is_org_member(org_id) and public.has_entitlement(org_id, 'video'));
+
+-- clients (대행 고객, features.agency 필요). 생성·수정·삭제는 owner/admin. status 는 RPC(set_client_status)로만.
+grant insert (org_id, name, brand_name, business_no, contact_name, contact_email, contact_phone, brand_guide_path, brand_wiki_ref,
+              package_code, contract_start, contract_end, monthly_quota, review_required, report_day, notes) on public.clients to authenticated;
+grant update (name, brand_name, business_no, contact_name, contact_email, contact_phone, brand_guide_path, brand_wiki_ref,
+              package_code, contract_start, contract_end, monthly_quota, review_required, report_day, notes) on public.clients to authenticated;
+grant delete on public.clients to authenticated;
+drop policy if exists clients_insert on public.clients;
+create policy clients_insert on public.clients for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin']) and public.org_has_feature(org_id, 'agency'));
+drop policy if exists clients_update on public.clients;
+create policy clients_update on public.clients for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']) and public.org_has_feature(org_id, 'agency'))
+  with check (public.has_org_role(org_id, array['owner', 'admin']) and public.org_has_feature(org_id, 'agency'));
+drop policy if exists clients_delete on public.clients;
+create policy clients_delete on public.clients for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- client_channels: owner/admin 이 고객에 채널을 묶고 푼다
+grant insert (org_id, client_id, channel_id, ownership) on public.client_channels to authenticated;
+grant delete on public.client_channels to authenticated;
+drop policy if exists client_channels_insert on public.client_channels;
+create policy client_channels_insert on public.client_channels for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin']) and public.org_has_feature(org_id, 'agency'));
+drop policy if exists client_channels_delete on public.client_channels;
+create policy client_channels_delete on public.client_channels for delete to authenticated
   using (public.has_org_role(org_id, array['owner', 'admin']));
 
 -- =====================================================================
@@ -1315,6 +1525,174 @@ end;
 $$;
 revoke execute on function public.set_music_distribution_status(uuid, text, text, text) from public, anon;
 grant execute on function public.set_music_distribution_status(uuid, text, text, text) to authenticated;
+
+-- 네이버 클립 자동 업로드 위험 동의 (owner/admin, VD-F-075). 고지문 버전이 현재 버전과 같아야 한다.
+create or replace function public.consent_clip_automation_risk(p_channel_id uuid, p_version text)
+returns public.channels
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.channels;
+begin
+  select * into v_row from public.channels where id = p_channel_id for update;
+  if not found then
+    raise exception 'consent_clip_automation_risk: channel not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'consent_clip_automation_risk: owner/admin only' using errcode = '42501';
+  end if;
+  if v_row.platform <> 'naver_clip' then
+    raise exception 'consent_clip_automation_risk: not a naver_clip channel' using errcode = '22023';
+  end if;
+  if p_version is distinct from public.clip_notice_version() then
+    raise exception 'consent_clip_automation_risk: notice version % is not current (%)', p_version, public.clip_notice_version()
+      using errcode = 'VD015';
+  end if;
+  update public.channels
+     set automation_consent_version = p_version, automation_consented_at = now(), automation_consented_by = auth.uid()
+   where id = p_channel_id
+  returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'channel.clip_risk_consent', 'channel', p_channel_id::text, null, null,
+                           jsonb_build_object('notice_version', p_version));
+  return v_row;
+end;
+$$;
+revoke execute on function public.consent_clip_automation_risk(uuid, text) from public, anon;
+grant execute on function public.consent_clip_automation_risk(uuid, text) to authenticated;
+
+-- 네이버 클립 위험 동의 철회 (owner/admin). 대기 중 업로드 잡은 서버가 취소한다(01_PRD 6.5절).
+create or replace function public.revoke_clip_automation_consent(p_channel_id uuid)
+returns public.channels
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.channels;
+begin
+  select * into v_row from public.channels where id = p_channel_id for update;
+  if not found then
+    raise exception 'revoke_clip_automation_consent: channel not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'revoke_clip_automation_consent: owner/admin only' using errcode = '42501';
+  end if;
+  update public.channels
+     set automation_consent_version = null, automation_consented_at = null, automation_consented_by = null
+   where id = p_channel_id
+  returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'channel.clip_risk_revoke', 'channel', p_channel_id::text);
+  return v_row;
+end;
+$$;
+revoke execute on function public.revoke_clip_automation_consent(uuid) from public, anon;
+grant execute on function public.revoke_clip_automation_consent(uuid) to authenticated;
+
+-- 대행 고객 상태 변경 (owner/admin, VD-F-120). 종료(ended)는 되돌릴 수 없다.
+create or replace function public.set_client_status(p_client_id uuid, p_status text)
+returns public.clients
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.clients;
+begin
+  select * into v_row from public.clients where id = p_client_id for update;
+  if not found then
+    raise exception 'set_client_status: client not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'set_client_status: owner/admin only' using errcode = '42501';
+  end if;
+  update public.clients set status = p_status where id = p_client_id returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'client.status', 'client', p_client_id::text, null, null,
+                           jsonb_build_object('status', p_status));
+  return v_row;
+end;
+$$;
+revoke execute on function public.set_client_status(uuid, text) from public, anon;
+grant execute on function public.set_client_status(uuid, text) to authenticated;
+
+-- 고객 승인 요청 열기 (service_role 전용, VD-F-123). Route Handler 가 토큰을 만들어 해시만 넘긴다.
+-- approved 업로드 → client_review. 이전 pending 요청은 canceled 로 닫는다.
+create or replace function public.open_client_review(p_upload_id uuid, p_token_hash text, p_expires_at timestamptz,
+                                                    p_requested_by uuid default null)
+returns public.client_reviews
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_up     public.uploads;
+  v_client uuid;
+  v_row    public.client_reviews;
+begin
+  select * into v_up from public.uploads where id = p_upload_id for update;
+  if not found then
+    raise exception 'open_client_review: upload not found' using errcode = 'P0002';
+  end if;
+  if v_up.status not in ('approved', 'client_review') then
+    raise exception 'open_client_review: invalid state %', v_up.status using errcode = 'VD008';
+  end if;
+  select cc.client_id into v_client from public.client_channels cc where cc.channel_id = v_up.channel_id;
+  if v_client is null then
+    raise exception 'open_client_review: channel is not linked to a client' using errcode = 'VD016';
+  end if;
+  if p_expires_at <= now() or p_expires_at > now() + interval '14 days' then
+    raise exception 'open_client_review: expires_at must be within 14 days' using errcode = '22023';
+  end if;
+  update public.client_reviews set decision = 'canceled' where upload_id = p_upload_id and decision = 'pending';
+  insert into public.client_reviews (org_id, client_id, upload_id, token_hash, expires_at, requested_by)
+  values (v_up.org_id, v_client, p_upload_id, p_token_hash, p_expires_at, p_requested_by)
+  returning * into v_row;
+  if v_up.status = 'approved' then
+    update public.uploads set status = 'client_review' where id = p_upload_id;
+  end if;
+  perform public.write_audit(v_up.org_id, 'upload.client_review_open', 'upload', p_upload_id::text, null, null,
+                           jsonb_build_object('review_id', v_row.id, 'expires_at', p_expires_at));
+  return v_row;
+end;
+$$;
+revoke execute on function public.open_client_review(uuid, text, timestamptz, uuid) from public, anon, authenticated;
+
+-- 고객 결정 기록 (service_role 전용). 승인 → 업로드 scheduled 가능, 수정 요청 → 업로드 draft.
+create or replace function public.decide_client_review(p_token_hash text, p_decision text, p_reviewer_name text default null,
+                                                      p_comment text default null)
+returns public.client_reviews
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.client_reviews;
+begin
+  select * into v_row from public.client_reviews where token_hash = p_token_hash for update;
+  if not found then
+    raise exception 'decide_client_review: review not found' using errcode = 'P0002';
+  end if;
+  if v_row.decision <> 'pending' then
+    raise exception 'decide_client_review: already %', v_row.decision using errcode = 'VD008';
+  end if;
+  if v_row.expires_at <= now() then
+    -- 만료: 예외로 되돌리지 않고 expired 로 닫아 돌려준다(라우트가 decision 으로 만료 화면을 보인다)
+    update public.client_reviews set decision = 'expired' where id = v_row.id returning * into v_row;
+    return v_row;
+  end if;
+  if p_decision not in ('approved', 'changes_requested') then
+    raise exception 'decide_client_review: invalid decision %', p_decision using errcode = '22023';
+  end if;
+  update public.client_reviews
+     set decision = p_decision, reviewer_name = p_reviewer_name, comment = p_comment, decided_at = now()
+   where id = v_row.id
+  returning * into v_row;
+  if p_decision = 'changes_requested' then
+    update public.uploads set status = 'draft' where id = v_row.upload_id and status = 'client_review';
+  end if;
+  perform public.write_audit(v_row.org_id, 'upload.client_review_decide', 'upload', v_row.upload_id::text, null, null,
+                           jsonb_build_object('review_id', v_row.id, 'decision', p_decision));
+  return v_row;
+end;
+$$;
+revoke execute on function public.decide_client_review(text, text, text, text) from public, anon, authenticated;
 
 -- =====================================================================
 -- 7. 공개 읽기 RPC (anon). 공개 상태 행의 공개 컬럼만 jsonb 로 반환한다.

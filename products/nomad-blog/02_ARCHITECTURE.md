@@ -110,7 +110,7 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 | storage | 대표·본문 이미지, 내보내기 ZIP | 에디터 업로드, 내보내기 | `<org>/blog/<entity>/<uuid>.<ext>` |
 | audit | 01장 BL-F-006 목록 | server/*, 제품 RPC 내부 | |
 | jobs | 생성·발행·검증·브랜드커넥트 | server/publish, 워커 | |
-| affiliate | 링크, 클릭, 대가성 문구, 브랜드커넥트 | server/affiliate, render, brandconnect, `/r` | 브랜드커넥트 어댑터와 Playwright 플로우는 blog 소유 |
+| affiliate | 링크, 클릭, 대가성 문구, 브랜드커넥트 | server/affiliate, render, brandconnect, `/r` | 브랜드커넥트 어댑터와 Playwright 플로우는 blog 소유. video가 만든 클립형 지원서(`source_app='video'`)도 blog 워커가 같은 `brandconnect.apply` 잡으로 제출한다(확정 결정 19) |
 | weasyprint | 사용 안 함 | - | |
 
 ## 4. 잡과 워커
@@ -123,7 +123,7 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 | `blog.publish.tistory` | `blog.browser` | TS + Playwright | 아니오 | naver와 같음 | - |
 | `blog.channel.verify` | `blog.browser` | TS + Playwright | 아니오 | 1회 | - |
 | `brandconnect.scan` | `blog.browser` | TS + Playwright | 아니오 | 1회 | - |
-| `brandconnect.apply` | `blog.browser` | TS + Playwright | 아니오 | 제출 버튼 전 실패만 2회. 이후 불확실은 failed + 사용자 확인 | - |
+| `brandconnect.apply` | `blog.browser` | TS + Playwright | 아니오 | 제출 버튼 전 실패만 2회. 이후 불확실은 failed + 사용자 확인. blog·video 요청 모두 처리(payload `source_app`) | - |
 | `brandconnect.sync` | `blog.browser` | TS + Playwright | 아니오 | 1회 | - |
 | `blog.export` | `blog.ai` | TS | 아니오 | 2회 | - |
 | `blog.publish.instagram`(Phase 2) | `blog.publish` | TS(sns-uploader) | 아니오 | 3회 | - |
@@ -225,7 +225,7 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 | `docs/reviews/NOMAD_Shorts_Maker.md` 3장 #4 | `docs/reviews/NOMAD_Shorts_Maker.md:81` | `x-internal-call` 헤더 하나로 발행·큐 실행 인증 우회 | 리뷰 #4 → 차단 설계: 자기 HTTP 호출이 없다. 예약 발행은 `core.jobs.run_after`로 워커가 직접 실행하고, 웹 라우트는 모두 `requireSession`만 받는다. 내부 호출 헤더 분기 금지(CLAUDE.md 7장), 정적 검사로 `x-internal-call` 문자열을 CI에서 거부 | 4절, BL-06-014, BL-06-032 |
 | 같은 리뷰 #6 | `:83` | 미들웨어 없음, 대시보드 무인증, Mock 로그인 상시 노출 | 리뷰 #6 → 차단 설계: `src/proxy.ts`가 `(app)` 경로와 `/api/**`(웹훅, `/r` 제외)를 보호하고, 레이아웃과 라우트가 `requireSession('blog')`로 서버에서 다시 확인. Mock 로그인 파일 자체를 만들지 않는다 | BL-06-004 |
 | 같은 리뷰 #8 | `:85` | 웹훅·cron·워커가 쿠키 anon 클라이언트를 써서 RLS로 0행 처리, 에러 미확인 | 리뷰 #8 → 차단 설계: 2절 3계층. 워커와 웹훅은 `createAdminClient`만 import 가능(ESLint 경계 규칙). 모든 쓰기의 `error`를 검사하고 0행 갱신을 오류로 취급하는 래퍼 사용 | BL-06-010, BL-06-003 |
-| 같은 리뷰 #9 | `:86` | 단계 간 의존 없이 동시 enqueue, placeholder 전달, 즉시 done, fire-and-forget | 리뷰 #9 → 차단 설계: blog 잡은 단계 1개(생성) 또는 1개(발행)다. 상태 정본은 `core.jobs`와 `post_publications`이고, 원고 집계 상태는 발행 행 트리거가 계산한다(`1300_blog.sql:436`). 라우트는 enqueue까지만 하고 응답한다 | 4절, 05장 3절 |
+| 같은 리뷰 #9 | `:86` | 단계 간 의존 없이 동시 enqueue, placeholder 전달, 즉시 done, fire-and-forget | 리뷰 #9 → 차단 설계: blog 잡은 단계 1개(생성) 또는 1개(발행)다. 상태 정본은 `core.jobs`와 `post_publications`이고, 원고 집계 상태는 발행 행 트리거가 계산한다(`1300_blog.sql:438`). 라우트는 enqueue까지만 하고 응답한다 | 4절, 05장 3절 |
 | 같은 리뷰 #10 | `:87` | 워커가 `next/headers`에 의존해 독립 실행 불가, TS/Python이 같은 큐 소비 | 리뷰 #10 → 차단 설계: `workers/blog-worker`는 Next를 import하지 않는 독립 패키지(`npm run worker`), 큐 이름 `blog.ai`, `blog.publish`, `blog.browser`는 blog 워커만 소비. Python 워커 없음 | BL-06-010 |
 | 같은 리뷰 #11 | `:88` | tsc 21개 오류로 빌드 실패 | 리뷰 #11 → 차단 설계: 새 저장소. 원본 파일을 통째로 복사하지 않고 07장 2절의 수정 목록을 적용해 이식. CI에서 `tsc --noEmit`, lint, build 실패 시 병합 차단 | BL-06-032 |
 | 같은 리뷰 #12 | `:89` | Next 16 `params` Promise 미대응, `generateStaticParams`에서 쿠키 클라이언트, 마이그레이션에 없는 RPC 호출 | 리뷰 #12 → 차단 설계: 동적 라우트는 `params: Promise<...>`를 await하는 템플릿만 사용. 빌드 시점 데이터 조회 없음(랜딩은 정적, 플랜 표는 요청 시 anon 조회). 호출하는 RPC는 모두 `1300_blog.sql`과 core에 있으며 생성 타입(`supabase gen types`)으로만 호출 | BL-06-001, BL-06-003 |
