@@ -35,13 +35,13 @@
 |---|---|---|---|
 | auth | _platform-core | 전 제품 | `profiles`, `handle_new_user`, `session_context` |
 | org | _platform-core | 전 제품 | `organizations`, `org_members`, 멤버 함수, `is_org_member` 등 헬퍼 |
-| credits | _platform-core | 크레딧 쓰는 제품(publishing, astro, video, blog, commerce, toon, notes) | `wallets`, `credit_ledger`, `consume/grant/refund_credits`, `ai_usage` |
+| credits | _platform-core | 크레딧 쓰는 제품(publishing, astro, video, blog, commerce, toon, notes, docs) | `wallets`, `credit_ledger`, `consume/grant/refund_credits`, `ai_usage` |
 | toss | _platform-core | 유료 플랜 있는 제품 | `payment_orders`, `payments`, `billing_keys`, `confirm_payment_order`, `apply_subscription_transition` |
 | webhooks | _platform-core | 웹훅 받는 제품 전부 | `webhook_events` |
 | oauth | _platform-core | SNS/마켓/제휴 연동 제품 | `oauth_states`, `create/consume_oauth_state`, `encrypted_credentials` |
 | llm gateway | _platform-core (sellingstudio 구현 기준). 2026-10-13부터 라우터 본체는 ai-service | 전 제품 | `ai_usage`, `consume_credits`, `resolve_ai_route` |
 | fal client | _platform-core (sellingstudio 구현 기준) | video, commerce, toon, publishing(표지), astro(테마 이미지) | `jobs`, `webhook_events`, `ai_usage` |
-| weasyprint render | flora-publishing | astro-ai | `jobs`, Storage `exports` |
+| weasyprint render | flora-publishing | astro-ai, nomad-docs(DOCX·공문서 프리셋은 nomad-docs 코어 요청 C-1) | `jobs`, Storage `exports` |
 | sns uploader | nomad-video | nomad-commerce(2단계), nomad-blog(인스타 포스팅) | `encrypted_credentials`, `oauth_states`, `jobs` |
 | automation-core | _platform-core | video, commerce, (blog) | `jobs`(parent_job_id), `webhook_events` |
 | compliance | _platform-core | video(LLM 판정), commerce(금지어), blog | `ai_usage` |

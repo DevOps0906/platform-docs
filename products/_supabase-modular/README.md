@@ -11,7 +11,7 @@ Supabase 프로젝트 1개에 `core` 스키마와 제품별 스키마를 함께 
 | Supabase 프로젝트 수 | 1 (hms 제외) |
 | PostgreSQL | 15 |
 | 공통 스키마 | `core` |
-| 제품 스키마 | `publishing`, `astro`, `video`, `blog`, `commerce`, `microweb`, `erp`, `sms`, `poll`, `stock`, `toon`, `notes`, `site` |
+| 제품 스키마 | `publishing`, `astro`, `video`, `blog`, `commerce`, `microweb`, `erp`, `sms`, `poll`, `stock`, `toon`, `notes`, `site`, `docs` |
 | 제외 | `hms` (병원). 의료정보 격리 때문에 별도 프로젝트(모놀리스)로만 운영 |
 | 멱등성 | 모든 core 마이그레이션은 반복 실행 가능 (`if not exists`, `create or replace`, `drop ... if exists`) |
 
@@ -62,6 +62,7 @@ supabase gen types typescript --local --schema core,video > apps/nomad-video/src
 | 2000~2099 | `toon` | toon-factory |
 | 2100~2199 | `notes` | study-note |
 | 2200~2299 | `site` | website-floria |
+| 2300~2399 | `docs` | nomad-docs |
 
 ## 4. API에 스키마 노출
 

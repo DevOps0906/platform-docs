@@ -19,7 +19,7 @@
 | RPC 인자 | `p_` 접두사 | `p_org_id` | `migrations/0003_core_credits.sql:131-139` |
 | 변수 | `v_` 접두사 | `v_plan` | 코어 전체 |
 | 큐/채널 | 큐 `<app>.<type>`, Realtime 채널 `<app>:<org>:<entity>` | `video.render`, `video:<org>:jobs` | `D:/WorkSpace/platform/docs/products/_supabase-modular/ARCHITECTURE.md:77` |
-| 사용자 정의 SQLSTATE | 도메인 2글자 + 숫자 3자리. 코어는 CR/PM/SB/OA/JB/AU 사용. 제품은 스키마 머리글자 2자(제안: video `VD`, blog `BL`, publishing `PB`, astro `AS`, commerce `CM`, microweb `MW`, erp `ER`, sms `SM`, poll `PL`, stock `ST`, toon `TN`, notes `NT`, site `SI`) | `VD001` | `CORE_SPEC.md` 15장 |
+| 사용자 정의 SQLSTATE | 도메인 2글자 + 숫자 3자리. 코어는 CR/PM/SB/OA/JB/AU 사용. 제품은 스키마 머리글자 2자(제안: video `VD`, blog `BL`, publishing `PB`, astro `AS`, commerce `CM`, microweb `MW`, erp `ER`, sms `SM`, poll `PL`, stock `ST`, toon `TN`, notes `NT`, site `SI`, docs `DC`) | `VD001` | `CORE_SPEC.md` 15장 |
 
 ## 2. 모듈러 DB: 제품당 스키마 1개와 번호 범위
 
@@ -39,6 +39,7 @@
 | 2000~2099 | `toon` | toon-factory |
 | 2100~2199 | `notes` | study-note |
 | 2200~2299 | `site` | website-floria |
+| 2300~2399 | `docs` | nomad-docs |
 
 근거: `D:/WorkSpace/platform/docs/products/README.md:7-23`, `D:/WorkSpace/platform/docs/products/_supabase-modular/README.md:46-61`. 같은 범위 안에서는 10 단위로 올린다(`1000`, `1010`). hms는 모듈러에 없다(확정 결정 2). `public`에는 제품 테이블을 만들지 않는다(`README.md:78`).
 

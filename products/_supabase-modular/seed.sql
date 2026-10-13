@@ -4,7 +4,7 @@
 -- 정본: 각 제품 docs/products/<제품>/01_PRD.md 4장(요금과 크레딧). 플랜/팩/features 값은 각 제품
 --   모놀리스 seed(docs/products/<제품>/supabase/monolith/seed.sql)와 같게 맞춘다(3단계 대조, VERIFICATION.md 5장).
 --   금액과 크레딧 중 "제안" 표시는 각 01_PRD.md 4장의 근거를 따른다. 확정 시 모놀리스 seed와 이 파일을 함께 갱신한다.
--- 제품 조각(1300 blog, 1600 erp, 1700 sms, 1900 stock, 2100 notes)도 자기 플랜을 on conflict do nothing 으로 넣는다.
+-- 제품 조각(1300 blog, 1600 erp, 1700 sms, 1900 stock, 2100 notes, 2300 docs)도 자기 플랜을 on conflict do nothing 으로 넣는다.
 --   이 파일은 on conflict do update 이므로 seed 를 조각 앞에 돌리든 뒤에 돌리든 최종 값은 이 파일 값이다.
 -- 반복 실행 가능(upsert).
 -- =====================================================================
@@ -22,7 +22,8 @@ insert into core.apps (id, name, schema_name, signup_policy, status) values
   ('stock',      'Stock Dashboard',      'stock',      'invite', 'beta'),
   ('toon',       'Toon Factory',         'toon',       'open', 'beta'),
   ('notes',      'Study Note',           'notes',      'open', 'beta'),
-  ('site',       'Website Floria',       'site',       'invite', 'beta')
+  ('site',       'Website Floria',       'site',       'invite', 'beta'),
+  ('docs',       'NOMAD Docs',           'docs',       'open', 'beta')
 on conflict (id) do update
   set name = excluded.name, schema_name = excluded.schema_name, signup_policy = excluded.signup_policy, status = excluded.status;
 
@@ -132,7 +133,17 @@ insert into core.plans (app_id, code, name, description, price_krw, billing_inte
    '{"max_input_chars": 10000, "allowed_tiers": ["lite", "standard", "premium"], "history_max_entries": 500, "history_max_bytes": 50000000}',
    false, false, 1),
   -- site (website-floria/01_PRD.md 4장, 요금 없음)
-  ('site', 'default', 'Default', null, 0, 'none', 0, 0, false, '{}', true, true, 0)
+  ('site', 'default', 'Default', null, 0, 'none', 0, 0, false, '{}', true, true, 0),
+  -- docs (nomad-docs/01_PRD.md 4장, 전부 제안. team 은 Phase 2 전까지 비활성)
+  ('docs', 'free', 'Free', null, 0, 'month', 30, 50, false,
+   '{"projects_max": 2, "formats": ["pdf"], "watermark": true, "doc_phase": "mvp", "members_max": 1, "integrations": ["csv"], "approvals": false, "share_links": false, "ai_chat_turns_per_day": 30, "minutes_max_minutes": 30, "storage_mb": 200}',
+   true, true, 0),
+  ('docs', 'pro', 'Pro', null, 19900, 'month', 400, 0, false,
+   '{"projects_max": 50, "formats": ["pdf", "docx", "zip"], "watermark": false, "doc_phase": "mvp", "members_max": 1, "integrations": ["csv", "webhook"], "approvals": false, "share_links": false, "ai_chat_turns_per_day": 200, "minutes_max_minutes": 120, "storage_mb": 5000}',
+   false, true, 1),
+  ('docs', 'team', 'Team', null, 59000, 'month', 1500, 0, false,
+   '{"projects_max": null, "formats": ["pdf", "docx", "zip"], "watermark": false, "doc_phase": "phase2", "members_max": 5, "integrations": ["csv", "webhook", "hubspot", "admin_suite_erp", "make", "n8n"], "approvals": true, "share_links": true, "ai_chat_turns_per_day": 500, "minutes_max_minutes": 180, "storage_mb": 20000}',
+   false, false, 2)
 on conflict (app_id, code) do update
   set name = excluded.name, description = excluded.description, price_krw = excluded.price_krw,
       billing_interval = excluded.billing_interval, monthly_credits = excluded.monthly_credits,
@@ -177,7 +188,11 @@ insert into core.credit_packs (app_id, code, name, credits, price_krw, is_active
   ('toon', 'pack_300', '300 크레딧', 300, 15900, true, 2),
   -- notes (Phase 2, 베타 동안 비활성)
   ('notes', 'pack_100', '100 크레딧', 100, 2900, false, 1),
-  ('notes', 'pack_300', '300 크레딧', 300, 7900, false, 2)
+  ('notes', 'pack_300', '300 크레딧', 300, 7900, false, 2),
+  -- docs
+  ('docs', 'pack_100',  '100 크레딧',   100,  4900,  true, 1),
+  ('docs', 'pack_300',  '300 크레딧',   300,  12900, true, 2),
+  ('docs', 'pack_1000', '1,000 크레딧', 1000, 39000, true, 3)
 on conflict (app_id, code) do update
   set name = excluded.name, credits = excluded.credits, price_krw = excluded.price_krw, is_active = excluded.is_active, sort_order = excluded.sort_order;
 
