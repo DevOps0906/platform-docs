@@ -38,7 +38,7 @@
 | `/app/projects/[pid]/artifacts?kind=screen` | 산출물 항목(화면, 마일스톤, 산출물 탭, DC-F-008) | 쓰기 member 이상 | 전 플랜 | P0 |
 | `/app/projects/[pid]/costs` | 비용 항목과 합계(DC-F-009) | 쓰기 member 이상 | 전 플랜 | P0 |
 | `/app/projects/[pid]/documents` | 문서 목록(유형, 상태, 버전, 재생성 필요, 문서번호) | 전원 | 전 플랜(Phase 2 유형은 `doc_phase`) | P0 |
-| `/app/projects/[pid]/package` | 패키지 생성기(`outsourcing_basic`, DC-F-012) | member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/package` | 패키지 생성기(`outsourcing_basic`, DC-F-012. Phase 2 content 프로젝트는 `shorts_agency`, DC-F-046) | member 이상 | 전 플랜 | P0 |
 | `/app/projects/[pid]/documents/[did]` | 문서 편집기(Tiptap, 섹션, 고정 섹션 잠금, AI Diff 카드, lint·compliance 패널, DC-F-013, DC-F-016) | 편집 member 이상, viewer 읽기 | 전 플랜(AI 제안은 저위험 유형만) | P0 |
 | `/app/projects/[pid]/documents/[did]/versions?a=..&b=..` | 버전 이력과 두 버전 비교(DC-F-014) | 전원 | 전 플랜 | P0 |
 | 편집기 위 대화 상자 | 확정 대화 상자(문서번호, 게이트, WARN 확인, DC-F-015) | member 이상(제안: Phase 2 승인 흐름이 켜지면 승인자) | 전 플랜 | P0 |
@@ -251,7 +251,7 @@
 
 | 단계 | 포함 group | 설명 |
 |---|---|---|
-| 1 공통 프로필 | `profile`, `project_type` | 회사·거래처·기간·예산 확인, 유형별 기본 질문 |
+| 1 공통 프로필 | `profile`, `project_type` | 회사·거래처·기간·예산 확인, 유형별 기본 질문. `project_type=content`면 채널·월 편수·채널 수(`01_PRD.md` 3.3.1절)를 묻고 dev 전용 질문(플랫폼, 구축 유형)은 숨긴다(`checklist_items.applies_to`) |
 | 2 프로젝트 체크 | `feature`, `nfr`, `delivery` | 기능(로그인, 결제, 관리자 등), 비기능(성능, 보안), 납품물 |
 | 3 문서별 옵션 | `contract_terms`와 문서 유형별 옵션 | 지급 조건, 하자보수 기간, 지식재산 귀속, 견적 유효기간, VAT 포함 여부 |
 
@@ -358,7 +358,7 @@
 
 ### 3.10 패키지 생성기 `/app/projects/[pid]/package`
 
-목적: 한 번의 실행으로 문서 묶음을 의존 순서대로 만든다. 데이터: `docs.doc_types`, `docs.documents`(이미 있는 문서), `docs.generation_runs`(package_code `outsourcing_basic`), `core.jobs`.
+목적: 한 번의 실행으로 문서 묶음을 의존 순서대로 만든다. 데이터: `docs.doc_types`, `docs.documents`(이미 있는 문서), `docs.generation_runs`(package_code `outsourcing_basic`, Phase 2 `shorts_agency`), `core.jobs`.
 
 ```
 +----------------------------------------------------------------------+

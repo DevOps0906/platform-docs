@@ -4,6 +4,8 @@
 
 AI 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`다. 이 문서는 그 규칙을 인용만 하고 재정의하지 않는다.
 
+2026-10-13 추가(확정 결정 21, `docs/products/00_MERGE_ANALYSIS.md`): 숏폼 제작·채널 운영 대행 문서 패키지 `shorts_agency`(DC-F-046, Phase 2)를 더했다. 대행 운영 자체(고객사, 고객 승인, 성과 수집)는 nomad-video의 에이전시 운영 기능이 맡고, 이 제품은 영업·계약·검수·보고 문서만 만든다. 새 내용은 3.1.1절, 3.3.1절, 3.5.1절, 6.4절, D-13~D-16이다.
+
 ## 1. 페르소나와 핵심 과제
 
 | 페르소나 | 상황 | 목표 | 좌절 |
@@ -12,6 +14,7 @@ AI 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI
 | 서연(39, 12인 에이전시 PM) | 동시에 프로젝트 5개. 고객 RFP(PDF 40~80쪽)를 읽고 요구사항을 뽑아 내부 개발팀과 고객에게 각각 문서를 준다 | RFP를 올리면 요구사항 후보와 체크리스트가 채워지고, 회의가 끝나면 회의록과 변경된 요구사항이 정리된다. 문서마다 버전이 남는다 | RFP 정리에 하루가 걸리고, 회의에서 바뀐 범위가 견적·WBS에 반영되지 않는다. 최종본이 어느 파일인지 모른다 |
 | 민재(31, 예비창업자, 정부지원사업 준비) | 지원사업 신청서와 외주 개발 견적·과업지시서를 함께 제출해야 한다 | 서비스 개요를 한 번 쓰면 개발 외주 문서와 사업계획서(Phase 2)가 같은 내용으로 나온다 | 개발 용어를 몰라 외주사 견적을 비교하지 못한다. 신청서 양식과 외주 문서 내용이 어긋난다 |
 | 지현(36, 사내 서비스 기획 PM) | 사내 개발 요청을 받아 요구사항정의서·WBS·화면목록을 만들고 회의록을 남긴다 | 요구사항 ID가 화면·일정·검수 항목까지 이어지는 추적표를 보고서로 바로 낸다 | 요구사항이 바뀔 때마다 엑셀 추적표 4개를 손으로 고친다 |
+| 태윤(33, 숏폼 대행 1인 사업자, Phase 2) | 브랜드 고객 3곳의 쇼츠·릴스·네이버 클립을 월 리테이너로 대행한다. 상담마다 견적서, 계약서, 채널 위임 동의서를 따로 만들고 매달 성과 리포트를 손으로 쓴다 | 상담 당일 견적서와 콘텐츠 기획안을 보내고, 수주하면 계약서·위임 동의서를 같은 편수·금액으로 만든다. 매달 리포트를 같은 양식으로 낸다 | 수정 횟수·2차 사용 범위·광고 표시 책임이 계약서에 없어 분쟁이 난다. 고객이 조회수 보장을 요구한다 |
 
 핵심 과제:
 
@@ -75,6 +78,7 @@ AI 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI
 | DC-F-043 | 문서 유형 2차 확장 | | O | | 기준서 3장 Phase 2 유형 |
 | DC-F-044 | 문서 유형 3차 확장(인사·노무, 약관·방침, HWPX) | | | O | 기준서 3장 Phase 3 유형, D-5 |
 | DC-F-045 | 조직 맞춤 서식(DOCX 업로드 → 변수 매핑) | | O | | 기준서 4장 |
+| DC-F-046 | 숏폼 제작·채널 운영 대행 패키지 `shorts_agency` | | O(D-13) | | 확정 결정 21, 3.1.1절, 6.4절 |
 
 ## 3. 기능 요구사항과 수용 기준
 
@@ -85,12 +89,12 @@ AI 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI
 | DC-F-001 | 가입·로그인·워크스페이스 부트스트랩 | 통합 | 이메일+비밀번호, Google. 가입 폼은 `options.data.signup_app='docs'`. 이메일 인증 전에는 생성·추출·채팅·녹음 불가. 기존 다른 앱 사용자는 첫 진입 때 `bootstrap_app_for_org('docs')`. 첫 진입 시 `workspace_settings` 1행과 `parties.kind='self'` 빈 행 1개를 서버가 만든다 | 가입 직후 `entitled=true`, 잔액 = 가입 50(pack) + 월 30(plan) = 80. 인증 전 생성 요청은 403 `email_not_verified`. 같은 조직에 `workspace_settings` 1행, self 당사자 1행(재진입 10회에도 1행) | `docs/products/_platform-core/CORE_SPEC.md:83-84`, `:121`, 기준서 10장 |
 | DC-F-002 | 워크스페이스 설정 | 신규 | 자사 정보(self 당사자: 상호, 사업자등록번호, 대표자, 주소, 담당자), 문서번호 형식(`doc_number_format`, 기본 `{TYPE}-{YYYY}-{SEQ:4}`. 토큰 `{TYPE}`(=`{PREFIX}`, 유형 접두사), `{YYYY}`, `{YY}`, `{SEQ:n}`), 기본 일단가(`default_day_rate_krw`), VAT 비율(`vat_rate_bp`, 기본 1000 = 10%), 직인 이미지(PNG/WebP, 2MB, 비공개 Storage). owner/admin만 수정 | member가 저장하면 403. 직인 2MB 초과 413, PNG/WebP 매직바이트가 아니면 415. `vat_rate_bp=1000`이면 공급가 1,000,000원의 VAT가 100,000원으로 표시된다. 문서번호 형식에 `{SEQ`가 없으면 422 | 기준서 6장, 3.6절 |
 | DC-F-003 | 거래처(당사자) 관리 | 신규 | kind(self·client·vendor·freelancer), 상호/이름, 사업자등록번호(10자리, 체크섬 검사), 대표자, 주소, 담당자 이름·이메일·전화, 메모. 소프트 삭제(휴지통 30일). 주민등록번호 입력란 없음, 모든 텍스트 필드에 주민등록번호 패턴 lint(6장) | 사업자등록번호 체크섬 오류는 422. 메모에 `900101-1234567` 형식을 넣으면 저장이 422 `pii_detected`로 거부된다. 삭제한 거래처는 목록에서 즉시 빠지고 30일 안에 복원된다. 확정 문서에 쓰인 거래처는 삭제해도 그 문서 버전의 `variables_snapshot`이 그대로 남는다 | 기준서 2장 원칙 9, 6장 `parties` |
-| DC-F-004 | 프로젝트 생성 | 신규 | 이름, 코드(조직 내 유니크, 자동 제안 `P-YYYY-NNN`), 거래처, `project_type`(web·app·ai·mixed·other), 시작일·종료일, 예산(선택), 통화 KRW 고정. 상태 draft → active → delivered → archived(`docs.set_project_status`). 생성 시점의 체크리스트 버전을 `checklist_version`에 고정 | 플랜 `projects_max` 초과 생성은 403 `DC006`. 종료일 < 시작일은 422. delivered → draft 전이는 409 `DC001`. archived 프로젝트에서 생성 요청은 409 `DC001` | 기준서 6장, 7장 |
+| DC-F-004 | 프로젝트 생성 | 신규 | 이름, 코드(조직 내 유니크, 자동 제안 `P-YYYY-NNN`), 거래처, `project_type`(web·app·ai·mixed·other, Phase 2 content), 시작일·종료일, 예산(선택), 통화 KRW 고정. 상태 draft → active → delivered → archived(`docs.set_project_status`). 생성 시점의 체크리스트 버전을 `checklist_version`에 고정 | 플랜 `projects_max` 초과 생성은 403 `DC006`. 종료일 < 시작일은 422. delivered → draft 전이는 409 `DC001`. archived 프로젝트에서 생성 요청은 409 `DC001` | 기준서 6장, 7장 |
 | DC-F-005 | 체크리스트 마법사 | 신규 | 3단계: (1) 공통 프로필(`profile`, `project_type`) (2) 프로젝트 체크(`feature`, `nfr`, `delivery`) (3) 문서별 옵션(`contract_terms` 등 문서 유형의 `required_fields`). 그룹별 진행률, 필수 누락 배지, 항목마다 도움말과 "이 체크가 만드는 것" 미리보기(효과 요약). 답은 입력 즉시 자동 저장(디바운스 800ms, 제안) | 필수 항목 12개 중 9개를 답하면 진행률 75%와 누락 3개 링크가 보인다. 새로고침 후에도 답이 그대로다. "결제" 항목 미리보기에 "요구사항 2, 화면 2, 비용 1, 조항 1"이 보인다 | 기준서 4장, 3.2~3.3절 |
 | DC-F-006 | 체크리스트 효과 엔진 | 신규 | 3.2절 명세. 서버 코드(TS 순수 함수 + DB 트랜잭션)가 `checklist_items.effects`를 적용한다. LLM을 쓰지 않는다. 사용자가 고친 행(`is_user_modified=true`)은 수정·삭제하지 않는다. 정본이 바뀌면 영향받는 문서의 `needs_regeneration=true` | `feat.payment`를 체크하면 FR 2개, 화면 SCR 2개, 비용 항목 1개가 3초 안에(p95) 생성된다. 체크 해제 시 그 체크가 만든 행 중 사용자 미수정 행만 제거되고, 사용자가 이름을 고친 SCR 1개는 남아 "출처 체크 해제됨" 경고가 붙는다. 같은 답 집합을 빈 프로젝트 2개에 적용하면 두 프로젝트의 요구사항(code, title, priority)·산출물·비용 항목 목록이 완전히 같다. 같은 답을 두 번 저장해도 행 수가 변하지 않는다(멱등). 이미 `req_spec` 초안이 있으면 그 문서에 "재생성 필요"가 1초 안에 표시된다 | 기준서 2장 원칙 1·2 |
 | DC-F-007 | 요구사항 관리 | 신규 | kind(functional·nonfunctional·constraint) → 코드 FR-001/NFR-001/CON-001(트리거 자동, 프로젝트 내 유니크, 재사용 안 함). 제목, 설명, 우선순위 MoSCoW(must·should·could·wont), 수용 기준, 상태(proposed·accepted·rejected·changed), 출처(checklist·extract·manual·integration·minutes). 수동 추가·편집·정렬·필터 | 수동 추가 2건이 FR-004, FR-005로 번호가 붙는다. FR-004를 삭제하고 새로 추가하면 FR-006이다(번호 재사용 없음). 사용자가 `req_code`를 바꾸려 하면 403. 효과 엔진이 만든 요구사항을 편집하면 `is_user_modified=true`가 된다 | 기준서 6장 `requirements` |
 | DC-F-008 | 산출물 항목 관리 | 신규 | kind screen(SCR-001), milestone(MS-001), deliverable(DLV-001) 코드 자동. 화면: 메뉴 경로, 역할, 연결 요구사항. 마일스톤: 시작·종료일, 선행. 산출물: 인도 형태. 정렬 순서. test_case·api·table은 Phase 2 | 화면 3개 추가 시 SCR-001~003. 마일스톤 종료일이 프로젝트 종료일보다 늦으면 lint 경고 1건. Phase 2 kind로 생성 요청은 403 `DC006` | 기준서 6장 `artifacts`. 코드 접두 MS·DLV는 제안 |
-| DC-F-009 | 비용 항목과 금액 계산 | 신규 | 분류(dev·design·pm·qa·infra·license·etc), 단위(man_day·man_month·ea·lump), 수량(소수 2자리), 단가(원, 정수). 금액 = 수량 × 단가(DB 생성 컬럼, 원 단위 반올림), 공급가 합계, VAT(`round(합계 × vat_rate_bp / 10000)`), 총액은 서버가 계산. 일단가 미입력 시 `default_day_rate_krw` 적용. LLM은 금액을 쓰지 않고 서버가 넣은 값을 읽기만 | 수량 2.5 × 단가 400,000 = 1,000,000원. 항목 3개 합계 3,250,000원이면 VAT 325,000원, 총액 3,575,000원이 견적서·과업지시서·계약서에 같은 값으로 들어간다. 클라이언트가 `amount_krw`를 보내면 무시된다 | 기준서 2장 원칙 4, `docs/reviews/FortuneDocs.md:47` |
+| DC-F-009 | 비용 항목과 금액 계산 | 신규 | 분류(dev·design·pm·qa·infra·license·etc, content용 production·channel_ops·media), 단위(man_day·man_month·ea·lump, content용 per_video·per_month·per_channel), 수량(소수 2자리), 단가(원, 정수). 금액 = 수량 × 단가(DB 생성 컬럼, 원 단위 반올림), 공급가 합계, VAT(`round(합계 × vat_rate_bp / 10000)`), 총액은 서버가 계산. 일단가 미입력 시 `default_day_rate_krw` 적용. LLM은 금액을 쓰지 않고 서버가 넣은 값을 읽기만 | 수량 2.5 × 단가 400,000 = 1,000,000원. 항목 3개 합계 3,250,000원이면 VAT 325,000원, 총액 3,575,000원이 견적서·과업지시서·계약서에 같은 값으로 들어간다. 클라이언트가 `amount_krw`를 보내면 무시된다 | 기준서 2장 원칙 4, `docs/reviews/FortuneDocs.md:47` |
 | DC-F-010 | 문서 유형 카탈로그 | 신규 | 3.1절 유형. 유형마다 위험도, 생성 방식, 필수 입력, 현재 게시 버전, 플랜 단계. 게시된 `doc_type_versions`는 불변(`checksum`) | Free에서 Phase 2 유형은 "준비 중"으로 보이고 생성 요청은 403 `DC006`. 게시된 버전 행 UPDATE는 409 `DC003` | 기준서 3장, 6장 |
 | DC-F-011 | 단일 문서 생성 | 신규 | `docs.generate` 잡. 필수 입력 검사 → 크레딧 선차감 → 그래프 `docs.generate`(load_context → plan_sections → fill_template → draft_ai_sections → consistency_check → lint → compliance → output). template은 LLM 0회. hybrid는 서술 섹션만 LLM. 고위험 유형은 draft_ai_sections를 건너뛴다. 결과는 새 `document_versions`(created_kind=generated). 문서당 활성 생성 1건 | template 문서(견적서) p95 5초, hybrid 문서(과업지시서) p95 60초 안에 버전이 생긴다. 필수 입력 누락은 422 `DC004`와 누락 필드 목록(잔액 변화 없음). 같은 문서 생성 중 재요청은 409 `DC002`. LLM 제공자 오류로 버전이 전달되지 않으면 선차감 전액 환불 행 1개. `dev_contract` 생성 1건의 `core.ai_usage` LLM 행 0개. 서술 섹션마다 근거(요구사항 ID 또는 업로드 청크) 표시 1개 이상 | 기준서 8장, 9장, `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, `:129` |
 | DC-F-012 | 패키지 생성 | 디벨롭 | `outsourcing_basic` = quote, sow, req_spec, wbs, screen_list, dev_contract, acceptance + trace_matrix(부록). 부모 잡 `docs.package`가 의존 순서(3.5절)로 자식 `docs.generate` 잡을 만든다. 예상 크레딧(28)을 실행 전에 보여 주고 자식 단위로 선차감한다. 자식이 실패하면 그 자식과 하류 자식만 canceled + 환불하고 나머지는 남긴다 | 8종 패키지가 p95 4분 안에 끝난다. 진행률이 자식 완료마다 Realtime으로 1초 안에 갱신된다. `req_spec` 실패 시 하류(sow, acceptance, trace_matrix)가 canceled이고 환불 합계 = 실패·취소 자식 단가 합. `dev_contract`의 고지 동의가 없으면 패키지 시작 전에 428 `DC007`(잔액 변화 없음) | 기준서 3장, 8장, `docs/reviews/SellingDocs.md:51` |
@@ -127,6 +131,7 @@ AI 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI
 | DC-F-043 | 문서 유형 2차 확장(Phase 2) | 신규 | nda, maint_contract, proposal, change_request, test_cases, api_spec, db_design, invoice, biz_plan | 유형마다 3.1절 형식의 필수 입력·lint 규칙 게시 후 활성 | 기준서 3장 |
 | DC-F-044 | 문서 유형 3차 확장(Phase 3) | 신규 | 인사·노무 계약서, 개인정보처리방침·이용약관, HWPX 내보내기 | 법무 검토(6장 규제 특례)와 D-5 이후 | 기준서 3장 |
 | DC-F-045 | 조직 맞춤 서식(Phase 2) | 신규 | 자사 DOCX 업로드 → `{{var}}` 자리 표시 감지 → 정본 변수 매핑 → 그 서식으로 DOCX 생성. 조직 맞춤 조항(`clauses.org_id` 값 있음) 편집 | 매핑되지 않은 자리 표시가 있으면 생성 전 422와 목록 | 기준서 4장 |
+| DC-F-046 | 숏폼 제작·채널 운영 대행 패키지(Phase 2) | 신규 | `project_type=content` 프로젝트에 3.3.1절 체크리스트(채널, 월 편수, 촬영·출연·음원, 업로드 대행, 네이버 클립, 광고·제휴, 수정 횟수, 2차 사용 기간)를 적용하고 `shorts_agency` = content_brief, quote, sow, video_service_contract, channel_access_mandate, acceptance(3.5.1절)를 만든다. brand_guide_ack, ad_disclosure_checklist, monthly_report, service_intro는 단독 생성. 계약서·위임 동의서는 고위험(템플릿만, 고지 동의, D-3·D-15 게이트). 월간 리포트 KPI는 사용자가 입력하거나 CSV로 넣는다(nomad-video 연동은 D-16) | content 프로젝트의 체크리스트에 dev 전용 항목(플랫폼, 로그인, 결제, 소스코드 인도, 하자보수)이 0개 보인다. 월 12편·단가 130,000원이면 비용 항목 "숏폼 영상 제작" 12 × 130,000 = 1,560,000원이 견적서·과업지시서·계약서에 같은 값으로 들어간다. `delivery.naver_clip_upload`를 켜면 계약서에 `vsc.automation_risk` 조항과 제약 요구사항 1개가 생긴다. 계약서에 "조회수 보장" 류 문구가 있으면 `L-NO-GUARANTEE` error. 광고·제휴를 켠 프로젝트의 계약서에 `vsc.ad_disclosure`가 빠지면 `L-REQUIRED-CLAUSE` error. 비활성 유형 생성 요청은 22023 | 확정 결정 21, 6.4절 근거 |
 
 ### 3.1 문서 유형과 필수 입력
 
@@ -143,7 +148,26 @@ AI 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI
 | `acceptance` | 검수확인서 | low | template | MVP | O | `requirements(accepted)>=1`, `acceptance.date`, `contract_terms.acceptance_days` | 대상(variable), 검수 항목(table, 요구사항별 합격/불합격), 서명란(fixed) |
 | `minutes` | 회의록 | low | ai | MVP | X | 전사본 또는 텍스트, `minutes.attendees>=1`, `minutes.date` | 개요(ai), 논의(ai), 결정 사항(table), 할 일(table), 요구사항 후보(table) |
 | `trace_matrix` | 요구사항 추적표 | low | template | MVP | O(부록) | `requirements>=1` | 추적표(table), 빈칸 요약(variable) |
-| Phase 2·3 유형 | `nda`, `maint_contract`, `proposal`, `change_request`, `test_cases`, `api_spec`, `db_design`, `invoice`, `biz_plan` / 인사·노무, `privacy_policy`, `terms` | 기준서 3장 | 기준서 3장 | Phase 2 / 3 | X | DC-F-043·044 착수 때 정의 | 같음 |
+| Phase 2·3 유형 | `nda`, `maint_contract`, `proposal`, `change_request`, `test_cases`, `api_spec`, `db_design`, `invoice`, `biz_plan`, shorts_agency 7종(3.1.1절) / 인사·노무, `privacy_policy`, `terms` | 기준서 3장 | 기준서 3장 | Phase 2 / 3 | X | DC-F-043·044 착수 때 정의 | 같음 |
+
+### 3.1.1 shorts_agency 문서 유형 (DC-F-046, Phase 2)
+
+전부 `phase='phase2'`, `is_active=false`로 카탈로그에 넣고, 게시 전 초안 버전(`published_at` null)만 둔다(`docs/products/_supabase-modular/migrations/2300_docs.sql` 25절). quote·sow·acceptance는 `outsourcing_basic`과 같은 유형을 `in_package`로 함께 쓴다.
+
+| code | 이름 | 위험 | 생성 방식 | 패키지 | 필수 입력(`required_fields`) | 섹션 구성 요약(`structure`) |
+|---|---|---|---|---|---|---|
+| `content_brief` | 콘텐츠 브리프·기획안 | low | hybrid | O(1) | `client_party`, `content.channels`, `content.monthly_videos`, `profile.service_summary` | 목표·타깃(ai), 채널·규격(table), 편수·일정(table), 훅·스크립트 초안(ai), 참고 영상(variable), 광고 표시 방식(variable) |
+| `quote` | 견적서(공유) | low | template | O(2) | 3.1절과 같음. 단위 per_video·per_month·per_channel 표시 | 3.1절과 같음 |
+| `sow` | 과업지시서(공유) | low | hybrid | O(3) | 3.1절과 같음. 마일스톤·산출물은 `content.monthly_videos` 효과가 만든다 | 3.1절과 같음 |
+| `video_service_contract` | 영상 제작·채널 운영 대행 계약서 | high | template | O(4) | `client_party`, `self_party`, `total_krw`, `contract_terms.payment_schedule`, 기간, `contract_terms.ip_ownership`, `contract_terms.revision_rounds`, `contract_terms.secondary_use_months`, `contract_terms.acceptance_days`, 고지 동의 | 전문(fixed), 조항(clause `vsc.*`), 납품 사양(table), 대금 지급표(table), 서명란(fixed), 별첨(variable) |
+| `channel_access_mandate` | 채널 계정 접근·운영 위임 동의서 | high | template | O(4) | `client_party`, `self_party`, `content.channels`, 기간, 고지 동의(`notice-channel-mandate-2026-10-13`) | 전문, 위임 채널(table), 위임 범위·책임(clause `cam.*`), 자동화 위험 고지(fixed), 서명란 |
+| `acceptance` | 검수확인서(공유) | low | template | O(5) | 3.1절과 같음(검수 항목 = 월 납품 요구사항) | 3.1절과 같음 |
+| `brand_guide_ack` | 브랜드 가이드 확인서 | low | template | X | `client_party`, `self_party` | 브랜드 정보(variable), 써야 할 표현·톤(table), 금지 표현·경쟁사(table), 제공 소재·사용 범위(table), 확인(fixed) |
+| `ad_disclosure_checklist` | 광고 표시 준수 체크리스트 | low | template | X | `content.channels`, `feat.content_affiliate` | 캠페인·대가 관계, 채널별 표시 위치(table), 표시 문구(table), AI 가상인물 표시(variable), 게시 전 확인(table) |
+| `monthly_report` | 월간 성과 리포트 | low | hybrid | X | `client_party`, `report.period`, `report.kpis`(사용자 입력 또는 CSV, D-16) | 핵심 지표 요약(table), 상위·하위 영상(table), 분석(ai), 다음 달 계획(ai), 고객 요청 처리(table) |
+| `service_intro` | 서비스 소개서 | low | ai | X | `self_party`, `profile.service_summary` | 회사·서비스 소개(ai), 서비스 패키지(table), 진행 절차(table), 포트폴리오(variable), 문의(fixed) |
+
+`report.kpis` 표준 열(제안): 기간, 채널, 업로드 수, 조회수, 평균 시청 지속률, 구독 순증, 제휴 클릭. 서술 섹션(ai)은 입력된 숫자만 인용하고 새 수치를 만들지 않는다(`L-AI-CLAIM`).
 
 ### 3.2 체크리스트 효과 엔진 명세 (DC-F-006)
 
@@ -220,20 +244,45 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 
 수량과 MD 값은 seed 초안(제안)이며 운영자 화면(DC-F-040)에서 버전으로 관리한다. 조항 code(`dev.*`)는 제안 식별자다.
 
+### 3.3.1 content 체크리스트 (shorts_agency, `applies_to = {content}`)
+
+dev 전용 항목(`profile.platforms`, `project_type.build_kind`, `feat.*` 개발 기능, `nfr.*`, `delivery.source_code`, `contract_terms.warranty_months`)은 `applies_to`를 web·app·ai·mixed·other로 좁혔다. `profile.service_summary`, `contract_terms.payment_schedule`(monthly 포함), `contract_terms.ip_ownership`, `contract_terms.acceptance_days`는 모든 유형에 나온다. 견적 항목은 크몽 숏폼 견적 체크리스트(촬영 포함 여부, 수정 횟수, 납기, 플랫폼별 재가공, 편수)를 참고했다([출처](https://kmong.com/prices/%EC%88%8F%ED%8F%BC-%EC%98%81%EC%83%81-%EC%A0%9C%EC%9E%91), 확인일 2026-10-13).
+
+| key | group | input_type | 필수 | 효과 요약 |
+|---|---|---|---|---|
+| `content.channels` | profile | multi(youtube_shorts, instagram_reels, tiktok, naver_clip, threads) | O | 채널마다 NFR "업로드 규격(9:16, 길이, 자막 안전영역)" 1개 |
+| `content.monthly_videos` | profile | number | O | FR "월 n편 제작·납품", 산출물 "숏폼 영상 월 n편", 마일스톤 "월간 납품·검수", 비용 production "숏폼 영상 제작" n × `catalog:short_video`(per_video) |
+| `content.channel_count` | profile | number | | 업로드 대행 비용의 수량 |
+| `feat.content_shooting` | feature | boolean | | CON "촬영 일정·장소 사전 합의", 비용 production "촬영"(ea), 조항 `vsc.shooting` |
+| `feat.content_talent` | feature | boolean | | CON "출연자 초상권·출연 동의서 확보", 비용 media "출연료", 조항 `vsc.publicity_rights` |
+| `feat.content_music_license` | feature | single(free_library, licensed_paid, client_provided) | O | licensed_paid면 비용 license(per_month), 조항 `vsc.license`(항상) |
+| `feat.content_multilingual` | feature | multi(en, ja, zh, vi) | | 언어마다 비용 production "자막·더빙" n편(per_video) |
+| `feat.content_affiliate` | feature | multi(brandconnect, shopping_connect, coupang, direct_sponsor) | | NFR "경제적 이해관계 표시(제목·영상 안·첫 해시태그)", 조항 `vsc.ad_disclosure`, `ad_disclosure_checklist` 생성 권장 |
+| `delivery.upload_service` | delivery | boolean | | FR "채널 업로드·제목·해시태그·고정 댓글 관리", 비용 channel_ops 채널 수 × `catalog:channel_ops_month`(per_channel), 조항 `vsc.channel_ops`. 켜면 패키지에 `channel_access_mandate` 포함 |
+| `delivery.naver_clip_upload` | delivery | boolean | | CON "네이버 클립 자동 업로드 위험 고지·동의", 조항 `vsc.automation_risk`(위임 동의서에는 `cam.automation_risk`) |
+| `delivery.monthly_report` | delivery | boolean | | 산출물 "월간 성과 리포트", 비용 channel_ops(per_month) |
+| `contract_terms.revision_rounds` | contract_terms | number | O(계약서) | 조항 `vsc.revision` |
+| `contract_terms.secondary_use_months` | contract_terms | number | O(계약서) | 조항 `vsc.secondary_use` |
+| `contract_terms.retainer_months` | contract_terms | number | | 조항 `vsc.term` |
+
+단가 토큰 `catalog:<key>`(short_video, shooting_day, talent_fee, music_license, localize_video, channel_ops_month, monthly_report)는 조직 단가 카탈로그(`workspace_settings.defaults`, DC-F-028)에서 읽는다. 키가 없으면 단가 0으로 넣고 견적서 lint warn "단가 미입력"을 낸다(D-14). 효과 엔진 결정성(3.2절)은 그대로다: 같은 설정·답이면 같은 결과다.
+
 ### 3.4 lint 규칙 (DC-F-016, 문서 유형 버전의 `lint_rules`)
 
 | 코드(제안) | 수준 | 규칙 | 적용 유형 |
 |---|---|---|---|
-| `L-AMOUNT-MATCH` | error | 공급가·VAT·총액이 정본 계산값과 같고, quote·sow·dev_contract 사이에서 같다 | quote, sow, dev_contract |
-| `L-PAY-100` | error | 지급 비율 합 = 100%, 지급 금액 합 = 총액 | dev_contract |
-| `L-PERIOD` | error | 기간이 프로젝트 시작·종료일과 같고 마일스톤이 기간 안에 있다 | sow, wbs, dev_contract |
-| `L-PARTY` | error | 당사자 상호·대표자가 `parties`와 같고 문서 전체에서 같다 | quote, sow, dev_contract, acceptance |
+| `L-AMOUNT-MATCH` | error | 공급가·VAT·총액이 정본 계산값과 같고, quote·sow·dev_contract 사이에서 같다 | quote, sow, dev_contract, video_service_contract |
+| `L-PAY-100` | error | 지급 비율 합 = 100%, 지급 금액 합 = 총액 | dev_contract, video_service_contract |
+| `L-PERIOD` | error | 기간이 프로젝트 시작·종료일과 같고 마일스톤이 기간 안에 있다 | sow, wbs, dev_contract, video_service_contract, channel_access_mandate |
+| `L-PARTY` | error | 당사자 상호·대표자가 `parties`와 같고 문서 전체에서 같다 | quote, sow, dev_contract, acceptance, shorts_agency 계약·확인 문서 |
 | `L-REQ-REF` | error | 본문의 FR/NFR/CON 코드가 실제 요구사항이다 | 전체 |
-| `L-REQUIRED-CLAUSE` | error | 필수 조항이 모두 있다 | dev_contract |
+| `L-REQUIRED-CLAUSE` | error | 필수 조항이 모두 있다 | dev_contract, video_service_contract, channel_access_mandate. content 프로젝트에서 광고·제휴(`feat.content_affiliate`)를 켰으면 `vsc.ad_disclosure` 필수 |
 | `L-RRN` | error | 13자리 주민등록번호 패턴(`\d{6}-?[1-8]\d{6}`, 외국인등록번호 `[5-8]` 포함)이 없다 | 전체 |
 | `L-UNTRACED` | warn | 화면 연결 없는 FR, 검수 항목 없는 must 요구사항 | req_spec, trace_matrix |
 | `L-AI-CLAIM` | warn | 서술 섹션이 정본에 없는 기능·수치를 언급(경량 LLM 판정) | hybrid, ai 유형 |
 | `L-BANNED` | error/warn | 6.1절 금지 문구(compliance 규칙 사전) | 전체 |
+| `L-NO-GUARANTEE` | error | 조회수·구독자·매출 등 성과 보장 표현("조회수 100만 보장", "구독자 보장")이 없다. 계약서에는 `vsc.no_guarantee` 조항이 있다 | content_brief, video_service_contract, monthly_report, service_intro |
+| `L-AD-DISCLOSURE` | error | 광고·제휴 채널마다 표시 위치(제목, 영상 안, 첫 해시태그 중 하나 이상)와 표시 문구가 있고, "소정의 수수료를 받을 수 있음" 같은 조건부 표현만 쓰지 않는다(6.4절) | ad_disclosure_checklist |
 
 ### 3.5 패키지 생성 순서와 크레딧
 
@@ -248,12 +297,26 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 | 6 | `trace_matrix` | 1, 5 | 2 |
 | 합계 | 8종 | | 28 |
 
+### 3.5.1 shorts_agency 생성 순서와 크레딧
+
+| 순서 | 문서 | 선행 | 크레딧 |
+|---|---|---|---|
+| 0 | 효과 엔진 적용(content 체크리스트 → 정본) | 없음 | 0 |
+| 1 | `content_brief` | 0 | 6 |
+| 2 | `quote` | 0 | 2 |
+| 3 | `sow` | 1, 2 | 6 |
+| 4 | `video_service_contract`, `channel_access_mandate`(업로드 대행을 켠 경우만) | 2, 3, 유형별 고지 동의 | 2, 2 |
+| 5 | `acceptance` | 1 | 2 |
+| 합계 | 6종(업로드 대행 없으면 5종) | | 20(18) |
+
+`package_order`는 유형마다 한 값이라 두 패키지가 같은 순서 체계(1 기획 → 2 견적 → 3 과업 → 4 계약 → 5 검수)를 쓴다. 추적표는 shorts_agency에 넣지 않는다(요구사항 수가 적다).
+
 ### 3.6 문서번호
 
 | 항목 | 값 |
 |---|---|
 | 기본 형식 | `{TYPE}-{YYYY}-{SEQ:4}`(제안, DB 기본값과 같음). 토큰 `{TYPE}`/`{PREFIX}`, `{YYYY}`, `{YY}`, `{SEQ:n}`. `doc_counters`(org, 유형, 연도)로 연도별 일련번호, 확정 때만 증가 |
-| 유형 접두(제안) | quote `QT`, sow `SOW`, req_spec `REQ`, wbs `WBS`, screen_list `SL`, dev_contract `CT`, acceptance `AC`, minutes `MN`, trace_matrix `TM` |
+| 유형 접두(제안) | quote `QT`, sow `SOW`, req_spec `REQ`, wbs `WBS`, screen_list `SL`, dev_contract `CT`, acceptance `AC`, minutes `MN`, trace_matrix `TM`. Phase 2 shorts_agency: content_brief `CB`, video_service_contract `VC`, channel_access_mandate `CAM`, brand_guide_ack `BG`, ad_disclosure_checklist `ADC`, monthly_report `MR`, service_intro `SI` |
 | 연도 기준 | KST 확정 일자 |
 
 ## 4. 요금과 크레딧
@@ -292,6 +355,7 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 | hybrid 문서 생성 | 6 | 기준서 10장(제안). 서술 섹션 3~5개 LLM |
 | ai 문서 생성(회의록 제외) | 12 | 기준서 10장(제안). Phase 2 proposal, biz_plan |
 | 패키지 `outsourcing_basic` | 28(구성 합계) | 3.5절 |
+| 패키지 `shorts_agency`(Phase 2) | 20(구성 합계, 업로드 대행 없으면 18) | 3.5.1절 |
 | 다시 쓰기 제안 1회 | 1 | 기준서 10장(제안) |
 | RFP 추출 | 10(50쪽까지), 이후 50쪽당 +5 | 기준서 10장(제안). 300쪽 = 35 |
 | 회의록 | STT 분당 1 + 그래프 5 | 기준서 10장(제안). 60분 = 65 |
@@ -383,7 +447,7 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 | 녹음 동의와 제3자 음성 | 회의 녹음 전 매번 고지: "이 녹음에는 회의 참석자의 목소리와 발언이 담깁니다. 녹음 전에 참석자에게 알리고 동의를 받는 책임은 사용자에게 있습니다. 녹음은 회의록 작성에만 쓰고 처리 후 24시간 안에 삭제합니다." `consent_kind=third_party_notice`, 고지문 버전 기록(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:95`). 대화 당사자가 아닌 사람이 타인 간 대화를 녹음하는 용도로 쓰지 말라는 문구(통신비밀보호법 해석 미확인) |
 | 계약서 법률 서비스 규제 | 문서 자동 작성이 변호사법상 비변호사의 법률사무 취급 금지 규정과 충돌하는지 미확인. 출시 게이트 D-3: 법무 검토 완료 전 `dev_contract`는 `doc_types.is_active=false`(패키지는 7종으로 축소 표시). 완화 설계: 템플릿만, AI 조항 생성·수정 없음, 개별 사안 판단 없음, 채팅의 법률 판단 거절 |
 | 표준계약서 원문 | 조항 라이브러리의 기반으로 쓸 공공 표준계약서(후보: 과학기술정보통신부 소프트웨어사업 표준계약서, 공정거래위원회 표준하도급계약서 소프트웨어업종)의 존재·최신판·이용 조건 미확인(D-8). 확인 전에는 운영자가 직접 작성한 조항만 게시하고 `source_note`에 출처를 적는다 |
-| 제휴/광고 | 해당 없음. 제휴 링크와 광고가 없다(affiliate 모듈 미사용) |
+| 제휴/광고 | 제품 자체에는 제휴 링크와 광고가 없다(affiliate 모듈 미사용). 다만 shorts_agency 문서는 고객의 광고 영상 표시 의무를 다루므로 6.4절 근거로 `vsc.ad_disclosure` 조항과 `ad_disclosure_checklist`를 둔다 |
 | 플랫폼 약관 | HubSpot(Phase 2), Salesforce·이카운트·더존(Phase 3) API 이용 약관·호출 한도·앱 등록 요건 미확인. 연동 시작 시 사용자가 외부 계정 연결과 데이터 이동 범위(필드 매핑)를 확인하는 동의 화면을 둔다 |
 | 규제 특례 | 의료·금융·미성년자 데이터를 다루지 않는다. 만 14세 이상 가입 확인(제안). 인사·노무 문서(근로계약서 등, Phase 3)는 근로기준법상 필수 기재 사항과 최저임금 등 강행 규정 위반 위험이 있어 별도 법무 검토 후 연다(DC-F-044). 개인정보처리방침·이용약관 생성(Phase 3)도 같은 이유 |
 
@@ -395,6 +459,7 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 | 허위 수치 | "1만 건 생성", "문서 작성 시간 90% 단축", "고객사 500곳" | 수치를 쓰지 않거나 측정값을 측정 기간과 함께 |
 | 법적 효력 보장 | "법적 효력 보장", "분쟁 걱정 없는 계약서", "법적으로 완벽" | "표준 조항을 바탕으로 한 초안입니다. 서명 전에 전문가 검토를 권합니다" |
 | 결과 보장 | "100% 승소", "지원사업 100% 통과", "검수 무조건 통과" | "필요한 항목을 빠짐없이 챙기도록 돕습니다" |
+| 성과 보장(shorts_agency) | "조회수 100만 보장", "구독자 1만 명 보장", "알고리즘 노출 보장" | "목표 지표와 측정 방법을 합의하고 매달 보고합니다"(`L-NO-GUARANTEE`) |
 | 전문가 대체 | "변호사 수준", "변호사 없이 계약 끝", "노무사가 필요 없습니다" | "법률 자문이 아닙니다" |
 | 공공기관 보증 | "정부 인증 양식", "공정위 승인" | 표준계약서 출처 표기는 D-8 확인 후 "OO 표준계약서를 참고" 수준만 |
 | 타사 상표 오용 | HubSpot·Salesforce 로고를 제휴·보증처럼 사용 | 연동 대상 이름은 텍스트로만 |
@@ -410,10 +475,13 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 |---|---|---|
 | 상용 AI 국외 이전 | 이메일 인증 직후 온보딩, 설정에서 변경 | `core.set_ai_cross_border_ack` + 감사 `docs_consent.ai_cross_border`(고지문 버전) |
 | 고위험 문서 | 유형별 첫 생성 전, 고지문 버전 변경 시 | `docs.risk_acknowledgements` + 감사 |
+| 채널 위임 동의서(Phase 2) | `channel_access_mandate` 첫 생성 전, 고지문 `notice-channel-mandate-2026-10-13` | `docs.risk_acknowledgements` + 감사 |
 | 회의 녹음(제3자) | 녹음·업로드마다 | `voice_jobs` 동의 컬럼 + 감사 `docs_consent.minutes_notice` |
 | 음성 대화 | 첫 마이크 사용 | 감사 `docs_consent.voice` |
 | 업로드 권한 | 업로드마다 | 감사 `docs_upload_rights` |
 | 연동 데이터 이동 | 연동 연결 시(Phase 2) | 감사 `docs_consent.integration` |
+
+채널 위임 동의서 고지문(버전 `notice-channel-mandate-2026-10-13`, 제안): "이 위임 동의서는 초안이며 법률 자문이 아닙니다. 공식 업로드 API가 확인되지 않은 채널(예: 네이버 클립)에 자동화 도구로 업로드하면 플랫폼 약관 위반으로 업로드 제한, 계정 정지, 수익 정산 보류가 생길 수 있습니다. 채널 소유자인 고객에게 이 위험을 알리고 서면 동의를 받을 책임은 사용자에게 있습니다. 계정 접근은 비밀번호 공유보다 플랫폼의 관리자 초대 기능을 먼저 쓰세요. NOMAD Docs의 AI는 이 문서의 조항을 만들거나 고치지 않습니다."
 
 ### 6.3 AI 대화 규칙 (채팅, 다시 쓰기, 회의록)
 
@@ -424,6 +492,19 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 | 근거 없는 단정 | 자료에 없는 요구사항·금액을 사실처럼 서술 | "프로젝트 자료에서 근거를 찾지 못했습니다" |
 | 금액 계산 | LLM이 합계·VAT 계산 | 서버 계산값 인용 |
 | 개인정보 요구 | 주민등록번호, 계좌 비밀번호 요청 | 묻지 않는다 |
+
+### 6.4 숏폼 제작·채널 운영 대행 문서의 근거 (DC-F-046, 확인일 2026-10-13)
+
+| 주제 | 확인한 내용 | 반영 | 출처 |
+|---|---|---|---|
+| 광고 표시(추천보증 심사지침) | 2024년 개정으로 경제적 이해관계를 게시물 첫 부분에 표시하도록 했고, 영상은 제목·영상 안·첫 해시태그 등으로 알리도록 안내됐다. "소정의 수수료를 받을 수 있음" 같은 조건부 표현은 불명확한 표시로 제시됐다. 2025-12 Q&A 안내서 개정본이 배포됐다. 시행일은 보도마다 달라 원문 확인 필요(미확인) | `vsc.ad_disclosure`, `ad_disclosure_checklist`, `L-AD-DISCLOSURE` | [아주경제 2025-12-02](https://www.ajunews.com/view/20251202085042877), [법무법인 세종 뉴스레터](https://shinkim.com/kor/media/newsletter/2613) |
+| AI 가상인물 광고 | 2026-04 AI 가상인물 추천·보증 시 '가상인물' 표시 의무화 개정안이 행정예고됐다는 보도가 있다. 최종 확정 여부는 미확인 | `ad_disclosure_checklist`의 "AI 가상인물 표시" 섹션(확정 전에는 권고 문구) | 위 보도 검색 결과. 원문 확인 필요 |
+| 표준계약서 | 문체부 고시 중 영상 제작·MCN 전용 표준계약서를 찾지 못했다. 가까운 후보는 방송프로그램 제작 표준계약서, 디지털콘텐츠 공급 표준계약서다 | 조항은 자체 작성 초안(`status='draft'`, `source_note='미확인(D-8, D-15)'`), 법무 검토 전 비활성 | [문화체육관광부 훈령·고시](https://www.mcst.go.kr/site/s_data/ordinance/instruction/instructionView.jsp?pSeq=150) |
+| 견적 관행 | 숏폼 견적은 촬영 포함 여부, 수정 횟수, 납기, 플랫폼별 재가공, 편수에 따라 달라진다 | 3.3.1절 체크리스트, 단위 per_video·per_channel·per_month | [크몽 숏폼 영상 제작 비용](https://kmong.com/prices/%EC%88%8F%ED%8F%BC-%EC%98%81%EC%83%81-%EC%A0%9C%EC%9E%91) |
+| 성과 보장 | 조회수·구독자 보장이나 구매는 플랫폼 정책 위반 위험이 있다(일반 실무 판단, 법령 해석 아님) | `vsc.no_guarantee`, `L-NO-GUARANTEE`, 6.1절 금지 문구 | 제안 |
+| 네이버 클립 업로드 | 공식 업로드 API를 찾지 못했다. 업로드 대행은 브라우저 자동화가 된다(nomad-video 기획) | `delivery.naver_clip_upload`, `vsc.automation_risk`, `cam.automation_risk`, 위임 동의서 고지문 | `docs/products/nomad-video/01_PRD.md`(클립 채널 기획) |
+
+nomad-video와의 경계: 고객사·고객 승인·성과 수집 같은 대행 운영 데이터는 nomad-video의 에이전시 운영 기능(별도 작업)이 소유한다. 이 제품은 그 데이터를 DB로 참조하지 않는다(외래키·교차 스키마 조회 없음). `monthly_report`의 KPI는 사용자가 입력하거나 nomad-video에서 내려받은 CSV를 올린다. 자동 연동은 D-16에서 정한다.
 
 ## 7. KPI
 
@@ -462,3 +543,7 @@ effects jsonb 예(`feat.payment`, input_type boolean). 정본 형식은 **효과
 | D-10 | 업로드 자료 보존 | (a) 원본 90일 + 텍스트는 프로젝트 삭제 시까지 (b) 프로젝트 삭제 시까지 전부 (c) 색인 후 원본 즉시 삭제 | (a)(제안). 고객 기밀 RFP 보관 기간을 줄이되 재파싱 여지를 둔다 |
 | D-11 | 회의 녹음 원본 보존, 전사본 처리 경로 | (a) 24시간 후 삭제 + 전사본 그래프 오픈소스 강제 (b) 24시간 후 삭제 + 기준서 체인(oss → anthropic) (c) 사용자 선택 30일 보관 | (a). 제3자 음성·발언을 국외로 보내지 않는다 |
 | D-12 | 정부지원 신청서(`biz_plan`)를 Phase 2 맨 앞으로 | (a) 앞으로 (b) 순서대로 | 페르소나 3(민재) 인터뷰 후 결정. 앞당기면 HWPX(D-5)와 묶어 판단 |
+| D-13 | shorts_agency 공개 시점 | (a) Phase 2(team 플랜 `doc_phase='phase2'`) (b) MVP로 당김 | (a). 카탈로그는 Phase 2로 두고, 직접 대행 사업(확정 결정 21)에 쓰는 운영 조직에만 team 플랜을 수동 부여해 먼저 쓴다. 계약서·위임 동의서는 D-3·D-15 게이트를 따른다 |
+| D-14 | content 단가 토큰 `catalog:<key>` 저장 위치 | (a) `workspace_settings.defaults` jsonb(DC-F-028 단가 카탈로그) (b) 새 테이블 | (a). 새 테이블 없이 기존 단가 카탈로그를 쓴다. 키가 없으면 0 + lint warn |
+| D-15 | 영상 제작 계약서·위임 동의서 조항의 원문 출처 | (a) 공공 표준계약서 기반(방송프로그램 제작, 디지털콘텐츠 공급 후보) (b) 자체 작성 + 법무 검토 | 확인 전까지 (b). 원문·이용 조건을 확인하면 (a)로 `source_note` 표기(D-8과 같은 절차) |
+| D-16 | 월간 리포트 KPI 입력 | (a) 사용자 입력·CSV (b) nomad-video 읽기 연동(같은 org + 두 엔타이틀먼트, service_role 함수, DC-F-031 패턴) | (a)로 시작. nomad-video 에이전시 기능의 리포트 데이터 형식이 확정되면 (b)를 Phase 2 연동 작업으로 추가 |

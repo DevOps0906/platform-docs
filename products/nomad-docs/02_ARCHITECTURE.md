@@ -97,7 +97,7 @@ type Qty = number | { from: string; factor?: number; min?: number; max?: number 
 type Effect =                                                                            // checklist_items.effects = Effect[] (평평한 배열)
   | { id: string; target: 'requirements'; kind: 'functional' | 'nonfunctional' | 'constraint'; title: string; description?: string; priority: 'must' | 'should' | 'could' | 'wont'; acceptance_criteria?: string; when?: When }
   | { id: string; target: 'artifacts'; kind: 'screen' | 'milestone' | 'deliverable'; name: string; attributes?: Record<string, unknown>; links?: string[]; when?: When }
-  | { id: string; target: 'line_items'; category: 'dev' | 'design' | 'pm' | 'qa' | 'infra' | 'license' | 'etc'; name: string; unit: 'man_day' | 'man_month' | 'ea' | 'lump'; quantity: Qty; unit_price: number | 'default_day_rate'; when?: When }
+  | { id: string; target: 'line_items'; category: 'dev' | 'design' | 'pm' | 'qa' | 'infra' | 'license' | 'etc' | 'production' | 'channel_ops' | 'media'; name: string; unit: 'man_day' | 'man_month' | 'ea' | 'lump' | 'per_video' | 'per_month' | 'per_channel'; quantity: Qty; unit_price: number | 'default_day_rate' | `catalog:${string}`; when?: When }   // catalog:<key> = workspace_settings.defaults 단가, 없으면 0(01_PRD 3.3.1절)
   | { id: string; target: 'clauses'; code: string; vars?: Record<string, unknown>; when?: When }
 
 interface EffectPlan {                          // apply_checklist_effects 의 p_plan 과 같은 모양
@@ -143,7 +143,7 @@ doc_type_versions.structure(섹션 key/title/kind) ─▶ plan_sections ─▶ f
 | 크기 | `body_html` 2MB 상한. 초과하면 실패(환불) |
 | 버전 | `docs.finish_generation`이 `document_versions`를 INSERT(append-only, `created_kind='generated'`), `documents.current_version` 증가, `needs_regeneration=false`, `inputs_hash` 기록 |
 | 편집 | 사용자 편집은 Route Handler가 섹션 단위로 받아 잠금 섹션 변경 여부 확인 → 같은 허용 목록으로 sanitize → `expected_version` 비교(DC010) → 새 버전(`created_kind='edited'`). Tiptap 출력 그대로 저장하지 않는다(`SECURITY_BASELINE.md:172`) |
-| 패키지 | `outsourcing_basic`은 부모 잡이 의존 순서(브리프 3장: `req_spec`·`screen_list`·`wbs` → `quote` → `sow` → `dev_contract` → `acceptance` → `trace_matrix`)로 자식 `docs.generate`를 연다. 같은 단계는 병렬(최대 3, 제안) |
+| 패키지 | Phase 2 `shorts_agency`는 같은 부모 잡 구조로 `content_brief` → `quote` → `sow` → `video_service_contract`·`channel_access_mandate` → `acceptance`를 연다(`01_PRD.md` 3.5.1절). `outsourcing_basic`은 부모 잡이 의존 순서(브리프 3장: `req_spec`·`screen_list`·`wbs` → `quote` → `sow` → `dev_contract` → `acceptance` → `trace_matrix`)로 자식 `docs.generate`를 연다. 같은 단계는 병렬(최대 3, 제안) |
 
 ### 2.3 서버 측 번호와 금액
 
@@ -164,7 +164,7 @@ type Provider = 'csv' | 'hubspot' | 'salesforce' | 'admin_suite_erp' | 'ecount' 
 type Entity = 'party' | 'project' | 'line_item' | 'document'
 interface CanonicalParty { kind: 'client' | 'vendor' | 'freelancer'; name: string; biz_reg_no?: string; representative?: string; address?: string; contact_name?: string; contact_email?: string; contact_phone?: string }
 interface CanonicalProject { name: string; client_external_id?: string; start_date?: string; end_date?: string; budget_krw?: number; stage?: string }
-interface CanonicalLineItem { name: string; category: string; unit: 'man_day' | 'man_month' | 'ea' | 'lump'; unit_price_krw: number; sku?: string }
+interface CanonicalLineItem { name: string; category: string; unit: 'man_day' | 'man_month' | 'ea' | 'lump' | 'per_video' | 'per_month' | 'per_channel'; unit_price_krw: number; sku?: string }
 interface PullPage<T> { items: Array<{ externalType: string; externalId: string; etag?: string; data: T }>; nextCursor?: string }
 interface PushResult { externalType: string; externalId: string; etag?: string }
 

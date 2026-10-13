@@ -54,7 +54,7 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, 범위, 기능 요구사항(DC-F-001~045), 체크리스트 효과 엔진 명세, 문서 유형 표, 요금/크레딧(전부 제안), 비기능 수치, 법/개인정보/금지 문구, KPI, 열린 결정(D-1~D-12) |
+| `01_PRD.md` | 페르소나, 범위, 기능 요구사항(DC-F-001~046, Phase 2 숏폼 대행 패키지 `shorts_agency` 포함), 체크리스트 효과 엔진 명세, 문서 유형 표, 요금/크레딧(전부 제안), 비기능 수치, 법/개인정보/금지 문구, KPI, 열린 결정(D-1~D-12) |
 | `02_ARCHITECTURE.md` | 스택, 모듈 경계(효과 엔진, 생성 그래프, 렌더, 연동 어댑터), 공용 모듈 사용, 잡 타입, AI 라우팅, 리뷰 "높음" 비보안 결함의 차단 설계, 배포, 환경변수 |
 | `03_SCREENS_UX.md` | 화면 목록, 플로우(가입 → 첫 패키지 → 결제 포함), 체크리스트 마법사·편집기·추적표 화면 명세, 랜딩 디자인 방향(3D 히어로), 상태/오류, 접근성 |
 | `04_API.md` | Route Handler, RPC(SECURITY DEFINER), 잡 페이로드 계약, 수신·발신 웹훅, 외부 API 어댑터(HubSpot, ERP), 오류 코드(`DC001`~`DC010`) |
@@ -75,3 +75,9 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 | 이동 | 모놀리스 → 모듈러 흡수 절차는 `docs/products/_supabase-modular/ARCHITECTURE.md:50-59`를 따른다 |
 | 코어 사용 | 크레딧 선차감, 잡 큐, Storage(`org-files`, `exports`), 자격증명 vault(`core.encrypted_credentials`, 연동 토큰), OAuth state(HubSpot), 웹훅 이벤트, AI·음성 테이블(`core.ai_*`, `core.wiki_*`, `core.voice_*`)을 쓰므로 모놀리스 코어 축소판에서도 해당 SECTION을 유지한다. 제거 범위와 사유는 `0001_core_lite.sql` 안 주석에 적는다 |
 | 주의 | `docs.clauses`, `docs.doc_type_versions`, `docs.checklist_items`는 org가 없는 플랫폼 카탈로그라 service_role만 쓴다. 조직 맞춤 조항(`clauses.org_id` 값 있음)은 Phase 2에서 쓰기 경로를 연다(`01_PRD.md` DC-F-019, DC-F-045) |
+
+## 6. 변경 이력
+
+| 날짜 | 변경 | 근거 |
+|---|---|---|
+| 2026-10-13 | Phase 2 패키지 `shorts_agency`(숏폼 제작·채널 운영 대행) 추가: `project_type=content`, 비용 분류·단위 확장, 문서 유형 7종(비활성, 초안 버전), content 체크리스트 14개, 계약·위임 동의서 조항 골격 23개, lint 2종, D-13~D-16 | 확정 결정 21(`docs/products/00_MERGE_ANALYSIS.md`), `01_PRD.md` DC-F-046·6.4절 |

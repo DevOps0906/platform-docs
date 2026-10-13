@@ -223,10 +223,10 @@ grant execute on function blog.publish_post(uuid) to authenticated;
 | 규칙 | 내용 | 근거 |
 |---|---|---|
 | 정의 | text + CHECK(6장) | |
-| 전이 강제 | (a) 전이 트리거: 허용 (old, new) 쌍 외에는 22023으로 거부. service_role 쓰기에도 적용된다 (b) 전이 RPC: `apply_<entity>_transition(id, to, reason)` 형태 | (a) `migrations/0006_core_affiliate.sql:178-200` (b) `migrations/0002_core_billing.sql:265-341` |
+| 전이 강제 | (a) 전이 트리거: 허용 (old, new) 쌍 외에는 22023으로 거부. service_role 쓰기에도 적용된다 (b) 전이 RPC: `apply_<entity>_transition(id, to, reason)` 형태 | (a) `migrations/0006_core_affiliate.sql:189-211` (b) `migrations/0002_core_billing.sql:265-341` |
 | 선택 기준 | 전이에 부수 효과(엔타이틀먼트 동기화, 환불, 감사)가 있으면 RPC. 단순 순서 강제면 트리거 | |
 | 문서화 | 제품 05_DATA_MODEL에 "현재 → 허용 전이 → 누가" 표를 둔다(예약, 검사, 판매, 발행) | `docs/reference/00_MERGE_ANALYSIS.md:1231` |
-| 시각 | 전이마다 `<state>_at` 컬럼(`submitted_at`, `decided_at`) | `migrations/0006_core_affiliate.sql:160-161` |
+| 시각 | 전이마다 `<state>_at` 컬럼(`submitted_at`, `decided_at`) | `migrations/0006_core_affiliate.sql:169-170` |
 
 ## 11. `core.apps` 등록과 코어 참조
 

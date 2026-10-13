@@ -54,10 +54,10 @@ insert into core.plans (app_id, code, name, description, price_krw, billing_inte
    '{"tracks": ["A","B","C"], "languages": ["KO"], "max_channels": 5, "watermark": false, "platforms": ["youtube"], "radar": ["playboard"], "compliance": true, "silence_cut": true, "coupang_landing": true, "team_members": 1}',
    false, true, 1),
   ('video', 'pro', 'Pro', null, 99000, 'month', 3000, 0, false,
-   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 15, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads"], "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "bling_monthly_limit": 20, "team_members": 1, "priority_render": true}',
+   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 15, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads","naver_clip"], "brandconnect_clip": true, "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "bling_monthly_limit": 20, "team_members": 1, "priority_render": true}',
    false, true, 2),
   ('video', 'advanced', 'Advanced', null, 149000, 'month', 5000, 0, false,
-   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 40, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads"], "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "react_flow_full": true, "bling_monthly_limit": -1, "team_members": 5, "api_access": true, "priority_render": true, "credit_discount_pct": 30}',
+   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 40, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads","naver_clip"], "brandconnect_clip": true, "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "react_flow_full": true, "bling_monthly_limit": -1, "team_members": 5, "api_access": true, "agency": true, "priority_render": true, "credit_discount_pct": 30}',
    false, true, 3),
   -- blog (nomad-blog/01_PRD.md 4장)
   ('blog', 'free', 'Free', null, 0, 'month', 20, 0, false,

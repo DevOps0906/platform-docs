@@ -21,7 +21,7 @@
 | 에셋 | 원본·편집용 경로를 클라이언트로 보내지 않는다. 서명 URL은 `toon.org_asset_access` 통과분만 |
 | AI 표시 | 메타데이터 표시는 끌 수 없다. 가시 표기 해제는 사용자 확인 + 감사 로그 |
 | 코어 | 플랜·구독·크레딧·결제·잡 테이블을 제품 스키마에 만들지 않는다. `core.*` ALTER 금지. `_platform-core`, `_supabase-modular`의 다른 파일 수정 금지(6장 6절 요청으로) |
-| DB 변경 | SQL은 Fable 작업(TN-06-001, 002, 038)만. 모놀리스 파일은 변환 스크립트로만 재생성 |
+| DB 변경 | SQL은 Fable 작업(TN-06-001, 002, 038, 060)만. 모놀리스 파일은 변환 스크립트로만 재생성 |
 | LLM·음성 키 | LLM 키는 FastAPI(`apps/api`)에만. Vercel과 `toon-worker`에 두지 않는다. ElevenLabs 키와 서명 토큰 개인키(`AI_TOKEN_PRIVATE_KEY`)는 Next.js 서버에만. `FAL_KEY`는 워커만 |
 | AI 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자 직접 호출 금지. Next.js → FastAPI·음성 서버는 EdDSA 서명 토큰, Dify 경로는 대화 매핑(`platform_conversation_id`, `dify_user`)만. Dify 입력에 토큰·org·개인정보를 넣지 않는다 |
 | AI 입력 | 시놉시스, 설정 요약, 컷 단위 장면·대사만 보낸다. 이메일·이름·결제 정보는 어떤 AI 제공자에도 보내지 않는다. 사용자 메시지는 마스킹 후 |
@@ -29,6 +29,8 @@
 | AI 크레딧 | 채팅·음성·위키 갱신은 제공자 호출 전에 선차감하고 끝나면 정산, 결과가 전달되지 않으면 전액 환불(01장 4.6절). 콘티·대사·배경은 정액 선차감. 그 밖의 파일에서 차감하지 않는다 |
 | 라우팅 | 기능 키와 기본 체인은 02장 5.1절과 seed가 정본. 코드에 제공자·모델을 하드코딩하지 않고 `resolve_ai_route` 결과만 쓴다. 국외 이전 미동의 조직에 상용 제공자를 쓰지 않고, AI 배경(fal)은 `TN007`로 막는다 |
 | 영상 음성 | `feature='video_voice'`는 작업 도중 다른 제공자로 대체하지 않는다. 실패하면 클립을 남기지 않고 환불 |
+| 협찬 표시 | 협찬 회차의 대가성 문구·가상인물 표시는 `exports.disclosure_text`·`virtual_character_label`만 믿는다(DB 트리거가 채움). 요청 값으로 바꾸거나 끄는 경로를 만들지 않는다. 승인(`approved`)은 `decide_sponsorship`으로만 |
+| 프리셋 | 플랫폼 규격 수치는 `packages/toon-doc/presets/`에만 둔다. 화면·워커에 크기 상수를 복제하지 않는다 |
 | 음성 | 녹음 원본 저장 금지(`store_audio=false`). 첫 마이크 사용 전 음성 처리 고지(감사 `voice.notice_ack`). TTS 텍스트는 저장된 문서·DB 메시지에서만. 보이스는 사전 정의 6종만(복제·모방 금지) |
 | Tailwind | 반드시 Tailwind CSS v4(4.x 고정). CSS 우선 설정(`@import "tailwindcss"`, `@theme`, `@custom-variant dark`). `tailwind.config.js`, `@tailwind base` 같은 v3 문법 금지. 지시·문서에 "Tailwind"가 아니라 "Tailwind CSS v4"라고 쓴다 |
 | 디자인 시스템 | 정답은 코드 하나: `apps/toon/src/styles/tokens.css`(`@theme`)와 `src/components/ui/`. 피그마·문서 hex 표는 정답이 아니다. 컴포넌트 작업은 `DESIGN_SYSTEM.md` 8장 템플릿(대상, 근거, 버전, 배리언트, 수치, 금지, 검증)으로 1개씩 맡긴다. 화면 작업은 TN-06-043 뒤 |

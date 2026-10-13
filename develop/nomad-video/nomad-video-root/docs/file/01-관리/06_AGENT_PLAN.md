@@ -37,8 +37,8 @@
 
 | ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
 |---|---|---|---|---|---|---|---|---|
-| VID-06-001 | 1200 조각 적용, 모놀리스 변환 스크립트, 타입 생성(`--schema core,video`) | `supabase/migrations/1200_video.sql`, `supabase/monolith/**`, `scripts/mono-convert.mjs`, `apps/nomad-video/src/types/supabase.ts` | 없음 | P0 | M | Fable(데이터 모델) | `supabase db reset` 성공, 체커 OK(모듈러·모놀리스), 타입 파일에 22개 테이블, 11절 AI 라우팅 17행과 체인 검사 DO 블록 통과 | 05장, SM 작업 6, BS 작업 1·11·14 |
-| VID-06-002 | RLS/권한 회귀 테스트(PGlite + 로컬 Supabase) | `supabase/tests/**` | 001 | P0 | M | Fable(RLS) | 05장 9절 65항목 + SECURITY_BASELINE 15장이 CI에서 통과, 실패 시 머지 불가 | SM 작업 1·15, BS 작업 1, YSM 작업 6 |
+| VID-06-001 | 1200 조각 적용, 모놀리스 변환 스크립트, 타입 생성(`--schema core,video`) | `supabase/migrations/1200_video.sql`, `supabase/monolith/**`, `scripts/mono-convert.mjs`, `apps/nomad-video/src/types/supabase.ts` | 없음 | P0 | M | Fable(데이터 모델) | `supabase db reset` 성공, 체커 OK(모듈러·모놀리스), 타입 파일에 26개 테이블(2026-10-13 대행 4개 포함), 11절 AI 라우팅 17행과 체인 검사 DO 블록 통과 | 05장, SM 작업 6, BS 작업 1·11·14 |
+| VID-06-002 | RLS/권한 회귀 테스트(PGlite + 로컬 Supabase) | `supabase/tests/**` | 001 | P0 | M | Fable(RLS) | 05장 9절 65항목 + 2026-10-13 클립·대행 33항목 + SECURITY_BASELINE 15장이 CI에서 통과, 실패 시 머지 불가 | SM 작업 1·15, BS 작업 1, YSM 작업 6 |
 | VID-06-003 | 앱 골격: `proxy.ts` 공개 경로 배열, `lib/env.ts`(zod), 코어 클라이언트 3계층 연결, `requireSession`, enqueue 전용 lazy Redis 모듈, 응답 봉투 | `apps/nomad-video/src/proxy.ts`, `src/lib/**`, `package.json` | 001 | P0 | M | Opus(골격·연동) | 비로그인 `/dashboard` 302, `/landing/x` 200, env 누락 시 기동 실패, `x-internal-call` 문자열 0건, 02장 8절 AI 변수(`AI_TOKEN_PRIVATE_KEY` 등)는 Next.js 서버 범위만 검증하고 `NEXT_PUBLIC_`에 비밀 0 | SM 작업 3·4·8·10·12, BS 작업 5·7·13, YSM 작업 9 |
 | VID-06-004 | 로그인·가입·온보딩 화면(`signup_app='video'`, 프로필 없으면 로그아웃) | `src/app/(auth)/**`, `src/components/auth/**` | 003, 044 | P0 | S | Sonnet(UI) | 가입 직후 Starter 100크레딧 표시, Mock 로그인 없음, 네이버 로그인 없음 | SM 작업 4, BS 작업 4, YSM 작업 5 |
 | VID-06-005 | 플랜 게이팅·단가표(`priceOf`)·크레딧 래퍼(consume→enqueue→환불, 부분 환불) | `src/server/billing/**` | 003 | P0 | M | Fable(과금·권한) | 01장 4절 단가와 일치하는 단위 테스트, Starter Track B 403 VD009, 동시 50요청 음수 0, AI 단가(01장 4.1절)와 `src/server/ai-pricing.ts`(046) 값이 같은지 비교하는 테스트 | BS 작업 2, 01장 VD-F-003/091 |
@@ -47,6 +47,12 @@
 | VID-06-008 | 채널 OAuth 연결·콜백·역할 변경·해제(코어 oauth, 자격증명 vault), 다채널 위험 동의 | `src/app/api/channels/**`, `src/server/channels/**` | 003, 001 | P0 | M | Fable(OAuth·권한) | state 재사용 OA001, Starter 2번째 채널 VD003, 오류 원문을 쿼리스트링에 싣지 않음, 토큰 평문 0 | SM 작업 4, BS 작업 8, YSM 작업 4·10·13 |
 | VID-06-009 | sns-uploader YouTube: resumable 스트리밍, 고정 댓글, 쿼터, 대체 채널 선택, 재예약 | `packages/sns-uploader/src/{youtube,registry.ts,types.ts}` | 008 | P0 | L | Opus(API 연동) | 1GB 파일 업로드 시 RSS 512MB 이하, 쿼터 초과 시 대체 채널 또는 `run_after` 재예약 | SM 작업 12 |
 | VID-06-010 | sns-uploader Meta(IG Reels, Threads)·TikTok 어댑터 | `packages/sns-uploader/src/{meta,tiktok}/**` | 009 | P1 | M | Opus(API 연동) | 샌드박스 계정 업로드 성공, 토큰 만료 시 credentials error + 재연결 요청 | 01장 VD-F-071 |
+| VID-06-057 | sns-uploader 네이버 클립 어댑터(Playwright): 서버 브라우저 로그인 세션 저장(`naver-login.ts` 재사용, SHARED_MODULES 11장), 업로드 폼 자동화, `capabilities`(고정 댓글·통계 없음), 계정당 3건/시간·15건/일, 실행 직전 동의 버전 재확인, 셀렉터 실패 시 환불·운영 알림, `NAVER_CLIP_UPLOAD_ENABLED` 스위치, 수동 업로드용 패키지(영상·제목·설명·해시태그·문구) 다운로드 | `packages/sns-uploader/src/naver-clip/**`, `apps/nomad-video/src/app/api/channels/connect/naver-clip/**` | 009 | P1 | L | Opus(브라우저 자동화) | 테스트 계정으로 업로드 성공, 동의 없는 채널 VD015, 버전 바뀐 뒤 대기 잡 실패·환불, 상한 초과 시 `run_after` 재예약, 셀렉터 실패 모의 테스트에서 환불 원장 1행, 비밀번호를 서버가 받지 않음(로그인은 사용자가 브라우저 창에서) | VD-F-075, 확정 결정 18 |
+| VID-06-058 | 클립 위험 동의 화면·API(고지문 `clip-2026-10-v1`, 체크 3개 + 입력, 철회 시 대기 업로드 취소·환불) | `src/app/api/channels/[id]/clip-consent/**`, `src/app/(dashboard)/dashboard/channels/[id]/clip-consent/**` | 008, 044 | P1 | S | Sonnet(UI) | 01장 6.5절 문구 그대로, 끝까지 읽기 전 체크 비활성, member 접근 403, 철회 후 queued 잡 0 | VD-F-075 |
+| VID-06-059 | 브랜드커넥트 클립 캠페인(video 쪽): 캠페인 목록(blog 스캔 결과 중 클립형), blog handoff 수신(`/api/brandconnect/handoff/accept`), 지원 요청(코어 9인자 RPC, `target_kind='clip'`, `source_app='video'`), 선정 지원서 ↔ 업로드 연결, `injectDisclosure(target 'title_hashtag')` | `src/server/brandconnect/**`, `src/app/api/brandconnect/**`, `dashboard/monetize/brandconnect/**` | 021, 022, blog 어댑터(BL 작업) | P1 | M | Opus(연동) | 위험 동의 없는 계정 지원 42501 → 403, 지원서 연결 업로드의 문구 누락 23514, 다른 조직 handoff 토큰 404, video는 Playwright 코드를 갖지 않음 | VD-F-063, 확정 결정 19 |
+| VID-06-060 | 대행 고객·고객 채널 API와 화면(목록·상세 탭, 상태 RPC, 생산 요청 `client_id`, 그래프 입력의 고객 범위) | `src/server/clients/**`, `src/app/api/clients/**`, `dashboard/clients/**` | 001, 016, 044, 049 | P1 | M | Sonnet(UI) + Opus(그래프 범위) | 비 Advanced 403, 고객 B 생산 근거에 고객 A 문서 0, 고객 8곳·채널 20개 목록 p95 1초 | VD-F-120~122, 125 |
+| VID-06-061 | 고객 승인: 토큰 생성·해시·메일, 공개 `/review/[token]`(레이트 리밋, 서명 URL 10분), 결정 처리, 만료 정리 크론, 감사 | `src/app/api/uploads/[id]/client-review/**`, `src/app/review/**`, `src/app/api/review/**`, `workers/video-orchestrator/src/agency/review-expire.ts` | 021, 060 | P1 | M | Fable(보안) | 토큰 원문이 DB·로그에 0, 승인 전 예약 VD016, 두 번 결정 409, 만료 링크 결정 불가, IP 해시 30회/10분 초과 429 | VD-F-123, 126 |
+| VID-06-062 | 월간 고객 리포트: 집계(조회·시청·준수율·구독 순증·완주율·제휴 클릭, 미제공 지표 null), PDF 렌더(core exports), 발송 처리, 매일 06:00 크론 | `workers/video-orchestrator/src/agency/report.ts`, `src/app/api/clients/[id]/reports/**` | 026, 060 | P1 | M | Opus(집계) | 스냅샷 집계와 수치 일치(단위 테스트), 미제공 지표가 0으로 표시되지 않음, 같은 달 재생성 시 1행 유지 | VD-F-124, `08_AGENCY_OPERATIONS.md` 5장 |
 | VID-06-011 | Python 미디어 워커 골격: claim/heartbeat/complete/fail 루프, 취소 신호, 하위 프로세스 타임아웃·kill, settings 검증, pytest | `services/media-worker/{core,tests}/**` | 001 | P0 | M | Opus(워커) | 타임아웃 초과 프로세스 kill 후 fail_job, 하트비트 60초, pytest 통과 | SM 작업 7, BS 작업 9, YSM 작업 8·11·12·15 |
 | VID-06-012 | Whisper STT(모델 1회 로드, 동시성 1), demucs 핸들러. 호출마다 사용량 기록(052의 `handlers/usage/`) | `services/media-worker/handlers/{stt,separate}.py` | 011 | P0 | M | Opus(기능) | 60초 중국어 클립 세그먼트 반환, 전역 asyncio Lock 없음, 호출 1건당 `core.ai_usage` stt 행 1개(provider `oss-voice`, feature `video.stt`, `audio_seconds`), 공용 음성 서버와 같은 세그먼트 형식(01장 D-13) | YSM 작업 11·12 |
 | VID-06-013 | FFmpeg 핸들러: 워터마크 제거·삽입, 무음컷(-30dB/0.5초), ASS+강조 자막 합성, 인코딩, 켄번스, 루프, 플리 연결, 하이라이트 컷 | `services/media-worker/handlers/ffmpeg/**` | 011 | P0 | L | Opus(기능) | 04장 4절 계약대로 결과 경로 반환, 레이어 순서 테스트, 3시간 플리 90분 이내 | YSM 작업 12, 01장 VD-F-030~050 |
@@ -107,6 +113,7 @@
 | W5 | 021, 024, 026, 029, 030, 031, 048, 049, 050, 051, 053 | 11 | W4 | 업로드 API, 레이더, 분석, 화면, 위키, 대본 그래프, Dify 채팅, 채팅 패널, 제품 음성 기능 |
 | W6 | 032, 033, 034, 037, 056 | 5 | 021, 024, 049 | 업로드·수익화·레이더 화면, 통합 테스트, 대본 기획 UI |
 | W7 | 038, 055 | 2 | W6 | 사용자 플로우 E2E, AI 보안 회귀. MVP 출시 조건 |
+| W8(2026-10-13 추가) | 057, 058, 059, 060 → 061, 062 | 4 → 2 | W7(057은 009, 059는 blog 브랜드커넥트 어댑터) | 네이버 클립 업로더·동의, 브랜드커넥트 클립, 대행 고객·승인·리포트. 002에 클립·대행 33항목 편입 |
 
 034(레이더·분석·크레딧·결제 화면)는 선행 024와 같은 웨이브에 있던 것을 W6으로 옮겼다(2026-10-13 정리).
 
@@ -189,6 +196,10 @@ AI·음성·3D·디자인 시스템 작업(041~056)은 리뷰 작업이 아니�
 | 네이버 로그인(Phase 2): 로그인 상태에서만 identity 연결, 이메일 자동 병합 금지 | core auth | YSM #3 |
 | features 키 `max_concurrent_productions` 추가 | seed | 현재 서버 상수(01장 5절) |
 | automation-core 캔버스 실행 엔진(Phase 2) | packages/automation-core | `video.workflows` 저장만 MVP |
+| 브랜드커넥트 범용화(`target_url`, `target_kind`, `source_app`, 9인자 RPC, `brandconnect.apply` payload `source_app`) | 0006, CORE_SPEC 13장 | 해결(2026-10-13 코어 반영): video 클립 캠페인 지원(VD-F-063) |
+| `injectDisclosure` 대상 `title_hashtag`(제목 앞 + 첫 해시태그) | SHARED_MODULES 17장 | 해결(2026-10-13 코어 반영): 네이버 클립은 고정 댓글이 없다 |
+| sns-uploader `naver_clip`(Platform 타입, `capabilities`, 잡 `upload.naver_clip`, `naver-login.ts` 재사용) | SHARED_MODULES 11장 | 해결(2026-10-13 코어 반영). 구현은 video(VID-06-057) |
+| 공용 메일 발송(승인 요청·리포트) 템플릿 등록 | core 메일 모듈 | 고객 승인 링크(VD-F-123). 그때까지 링크 복사 경로 |
 
 AI·음성 요청(2026-10-13, 01장 D-13~D-22와 연결):
 

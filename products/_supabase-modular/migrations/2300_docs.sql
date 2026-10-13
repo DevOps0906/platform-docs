@@ -330,7 +330,7 @@ create table if not exists docs.projects (
   client_party_id    uuid,
   name               text not null constraint projects_name_check check (char_length(name) between 1 and 160),
   code               text constraint projects_code_check check (code is null or code ~ '^[A-Za-z0-9][A-Za-z0-9_-]{0,29}$'),
-  project_type       text not null default 'web' constraint projects_type_check check (project_type in ('web', 'app', 'ai', 'mixed', 'other')),
+  project_type       text not null default 'web' constraint projects_type_check check (project_type in ('web', 'app', 'ai', 'mixed', 'other', 'content')),  -- content: 숏폼 제작·채널 운영 대행(shorts_agency, Phase 2)
   status             text not null default 'draft' constraint projects_status_check check (status in ('draft', 'active', 'delivered', 'archived')),
   profile            jsonb not null default '{}'::jsonb,
   checklist_version  integer not null default 1,
@@ -715,9 +715,9 @@ create table if not exists docs.line_items (
   id                uuid primary key default gen_random_uuid(),
   org_id            uuid not null references core.organizations(id) on delete cascade,
   project_id        uuid not null,
-  category          text not null default 'dev' constraint line_items_category_check check (category in ('dev', 'design', 'pm', 'qa', 'infra', 'license', 'etc')),
+  category          text not null default 'dev' constraint line_items_category_check check (category in ('dev', 'design', 'pm', 'qa', 'infra', 'license', 'etc', 'production', 'channel_ops', 'media')),
   name              text not null constraint line_items_name_check check (char_length(name) between 1 and 200),
-  unit              text not null default 'man_day' constraint line_items_unit_check check (unit in ('man_day', 'man_month', 'ea', 'lump')),
+  unit              text not null default 'man_day' constraint line_items_unit_check check (unit in ('man_day', 'man_month', 'ea', 'lump', 'per_video', 'per_month', 'per_channel')),
   quantity          numeric(10, 2) not null default 1 constraint line_items_quantity_check check (quantity >= 0),
   unit_price_krw    bigint not null default 0 constraint line_items_unit_price_check check (unit_price_krw >= 0),
   amount_krw        bigint generated always as (round(quantity * unit_price_krw)::bigint) stored,
@@ -2524,13 +2524,13 @@ grant execute on function docs.next_project_code(uuid, text, text) to authentica
 --     on conflict do nothing 으로만 넣는다. 크레딧·수량·조항 본문은 제안값이다(01_PRD 3장, 4장).
 -- ---------------------------------------------------------------------
 insert into docs.doc_types (code, name, category, risk_level, generation_mode, phase, credits, in_package, package_order, number_prefix, notice_version, is_active, sort_order) values
-  ('quote',          '견적서',                       'sales',    'low',  'template', 'mvp',    2,  '{outsourcing_basic}', 2, 'QT',  null, true,  10),
-  ('sow',            '과업지시서(SOW)',               'sales',    'low',  'hybrid',   'mvp',    6,  '{outsourcing_basic}', 3, 'SOW', null, true,  20),
+  ('quote',          '견적서',                       'sales',    'low',  'template', 'mvp',    2,  '{outsourcing_basic,shorts_agency}', 2, 'QT',  null, true,  10),
+  ('sow',            '과업지시서(SOW)',               'sales',    'low',  'hybrid',   'mvp',    6,  '{outsourcing_basic,shorts_agency}', 3, 'SOW', null, true,  20),
   ('req_spec',       '요구사항정의서',                 'dev',      'low',  'hybrid',   'mvp',    6,  '{outsourcing_basic}', 1, 'REQ', null, true,  30),
   ('wbs',            'WBS·일정표',                    'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic}', 1, 'WBS', null, true,  40),
   ('screen_list',    '화면목록·메뉴구조도',            'dev',      'low',  'hybrid',   'mvp',    6,  '{outsourcing_basic}', 1, 'SL',  null, true,  50),
   ('dev_contract',   '소프트웨어 개발 용역계약서',      'contract', 'high', 'template', 'mvp',    2,  '{outsourcing_basic}', 4, 'CT',  'notice-contract-2026-10-13', true, 60),
-  ('acceptance',     '검수확인서',                    'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic}', 5, 'AC',  null, true,  70),
+  ('acceptance',     '검수확인서',                    'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic,shorts_agency}', 5, 'AC',  null, true,  70),
   ('minutes',        '회의록',                        'ops',      'low',  'ai',       'mvp',    0,  '{}',                  null, 'MN', null, true, 80),
   ('trace_matrix',   '요구사항 추적표',                'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic}', 6, 'TM',  null, true,  90),
   ('nda',            '비밀유지계약서',                 'contract', 'high', 'template', 'phase2', 2,  '{}', null, 'NDA', 'notice-contract-2026-10-13', false, 110),
@@ -2544,7 +2544,16 @@ insert into docs.doc_types (code, name, category, risk_level, generation_mode, p
   ('biz_plan',       '사업계획서·정부지원사업 신청서',  'business', 'low',  'ai',       'phase2', 12, '{}', null, 'BP',  null, false, 190),
   ('employment',     '근로계약서',                    'hr',       'high', 'template', 'phase3', 2,  '{}', null, 'EM',  'notice-contract-2026-10-13', false, 210),
   ('privacy_policy', '개인정보처리방침',               'legal',    'high', 'template', 'phase3', 2,  '{}', null, 'PP',  'notice-contract-2026-10-13', false, 220),
-  ('terms',          '이용약관',                      'legal',    'high', 'template', 'phase3', 2,  '{}', null, 'TS',  'notice-contract-2026-10-13', false, 230)
+  ('terms',          '이용약관',                      'legal',    'high', 'template', 'phase3', 2,  '{}', null, 'TS',  'notice-contract-2026-10-13', false, 230),
+  -- shorts_agency(숏폼 제작·채널 운영 대행, DC-F-046, Phase 2). quote·sow·acceptance 는 위 행에서 in_package 로 공유한다.
+  -- package_order 는 유형마다 1개라 두 패키지가 같은 순서 체계(1 기획 → 2 견적 → 3 과업 → 4 계약 → 5 검수)를 쓴다.
+  ('content_brief',           '콘텐츠 브리프·기획안',           'sales',    'low',  'hybrid',   'phase2', 6,  '{shorts_agency}', 1,    'CB',  null, false, 310),
+  ('video_service_contract',  '영상 제작·채널 운영 대행 계약서', 'contract', 'high', 'template', 'phase2', 2,  '{shorts_agency}', 4,    'VC',  'notice-contract-2026-10-13', false, 320),
+  ('channel_access_mandate',  '채널 계정 접근·운영 위임 동의서', 'contract', 'high', 'template', 'phase2', 2,  '{shorts_agency}', 4,    'CAM', 'notice-channel-mandate-2026-10-13', false, 330),
+  ('brand_guide_ack',         '브랜드 가이드 확인서',           'ops',      'low',  'template', 'phase2', 2,  '{}', null, 'BG',  null, false, 340),
+  ('ad_disclosure_checklist', '광고 표시 준수 체크리스트',       'ops',      'low',  'template', 'phase2', 2,  '{}', null, 'ADC', null, false, 350),
+  ('monthly_report',          '월간 성과 리포트',               'ops',      'low',  'hybrid',   'phase2', 6,  '{}', null, 'MR',  null, false, 360),
+  ('service_intro',           '서비스 소개서',                  'sales',    'low',  'ai',       'phase2', 12, '{}', null, 'SI',  null, false, 370)
 on conflict (code) do update
   set name = excluded.name, category = excluded.category, risk_level = excluded.risk_level, generation_mode = excluded.generation_mode,
       phase = excluded.phase, credits = excluded.credits, in_package = excluded.in_package, package_order = excluded.package_order,
@@ -2584,28 +2593,80 @@ insert into docs.doc_type_versions (doc_type_code, version, structure, required_
    '{requirements}', '["L-REQ-REF","L-UNTRACED","L-RRN"]', 'templates/trace_matrix/v1.html.j2', now())
 on conflict (doc_type_code, version) do nothing;
 
+-- shorts_agency 유형 초안 버전(published_at null = 운영자 편집 가능, 사용자에게 보이지 않음). DC-F-046 착수 때 게시한다(01_PRD 3.1.1절).
+insert into docs.doc_type_versions (doc_type_code, version, structure, required_fields, lint_rules, template_ref, published_at) values
+  ('content_brief', 1,
+   '[{"key":"goal","title":"목표와 타깃","kind":"ai"},{"key":"channels","title":"채널·규격","kind":"table"},{"key":"cadence","title":"편수·일정","kind":"table"},{"key":"hooks","title":"훅·스크립트 초안","kind":"ai"},{"key":"references","title":"참고 영상","kind":"variable"},{"key":"disclosure","title":"광고 표시 방식","kind":"variable"}]',
+   '{client_party,content.channels,content.monthly_videos,profile.service_summary}', '["L-REQ-REF","L-RRN","L-AI-CLAIM","L-NO-GUARANTEE","L-BANNED"]', 'templates/content_brief/v1.html.j2', null),
+  ('video_service_contract', 1,
+   '[{"key":"preamble","title":"전문","kind":"fixed"},{"key":"clauses","title":"조항","kind":"variable"},{"key":"specs","title":"납품 사양","kind":"table"},{"key":"payment","title":"대금 지급","kind":"table"},{"key":"signature","title":"서명","kind":"fixed"},{"key":"attachments","title":"별첨","kind":"variable"}]',
+   '{client_party,self_party,total_krw,contract_terms.payment_schedule,project.start_date,project.end_date,contract_terms.ip_ownership,contract_terms.revision_rounds,contract_terms.secondary_use_months,contract_terms.acceptance_days}',
+   '["L-AMOUNT-MATCH","L-PAY-100","L-PERIOD","L-PARTY","L-REQUIRED-CLAUSE","L-NO-GUARANTEE","L-RRN","L-BANNED"]', 'templates/video_service_contract/v1.html.j2', null),
+  ('channel_access_mandate', 1,
+   '[{"key":"preamble","title":"전문","kind":"fixed"},{"key":"channels","title":"위임 채널","kind":"table"},{"key":"clauses","title":"위임 범위·책임","kind":"variable"},{"key":"risk","title":"자동화 위험 고지","kind":"fixed"},{"key":"signature","title":"서명","kind":"fixed"}]',
+   '{client_party,self_party,content.channels,project.start_date,project.end_date}', '["L-PARTY","L-PERIOD","L-REQUIRED-CLAUSE","L-RRN","L-BANNED"]', 'templates/channel_access_mandate/v1.html.j2', null),
+  ('brand_guide_ack', 1,
+   '[{"key":"brand","title":"브랜드 기본 정보","kind":"variable"},{"key":"dos","title":"써야 할 표현·톤","kind":"table"},{"key":"donts","title":"금지 표현·경쟁사","kind":"table"},{"key":"assets","title":"제공 소재·사용 범위","kind":"table"},{"key":"signature","title":"확인","kind":"fixed"}]',
+   '{client_party,self_party}', '["L-PARTY","L-RRN","L-BANNED"]', 'templates/brand_guide_ack/v1.html.j2', null),
+  ('ad_disclosure_checklist', 1,
+   '[{"key":"campaign","title":"캠페인·대가 관계","kind":"variable"},{"key":"placement","title":"채널별 표시 위치","kind":"table"},{"key":"wording","title":"표시 문구","kind":"table"},{"key":"virtual_human","title":"AI 가상인물 표시","kind":"variable"},{"key":"check","title":"게시 전 확인","kind":"table"}]',
+   '{content.channels,feat.content_affiliate}', '["L-AD-DISCLOSURE","L-RRN","L-BANNED"]', 'templates/ad_disclosure_checklist/v1.html.j2', null),
+  ('monthly_report', 1,
+   '[{"key":"summary","title":"핵심 지표 요약","kind":"table"},{"key":"top_bottom","title":"상위·하위 영상","kind":"table"},{"key":"insights","title":"분석","kind":"ai"},{"key":"next_plan","title":"다음 달 계획","kind":"ai"},{"key":"requests","title":"고객 요청 처리","kind":"table"}]',
+   '{client_party,report.period,report.kpis}', '["L-PARTY","L-RRN","L-AI-CLAIM","L-NO-GUARANTEE","L-BANNED"]', 'templates/monthly_report/v1.html.j2', null),
+  ('service_intro', 1,
+   '[{"key":"intro","title":"회사·서비스 소개","kind":"ai"},{"key":"packages","title":"서비스 패키지","kind":"table"},{"key":"process","title":"진행 절차","kind":"table"},{"key":"portfolio","title":"포트폴리오","kind":"variable"},{"key":"contact","title":"문의","kind":"fixed"}]',
+   '{self_party,profile.service_summary}', '["L-RRN","L-AI-CLAIM","L-NO-GUARANTEE","L-BANNED"]', 'templates/service_intro/v1.html.j2', null)
+on conflict (doc_type_code, version) do nothing;
+
 -- 대표 체크리스트 항목(01_PRD 3.3절 예시 중 일부). 나머지 항목과 효과 수량은 운영자 화면(DC-F-040)에서 게시한다.
-insert into docs.checklist_items (key, group_key, label, input_type, options, effects, is_required, sort_order) values
-  ('profile.service_summary', 'profile', '서비스 한 줄 소개', 'text', '[]', '[]', true, 10),
-  ('profile.platforms', 'profile', '플랫폼', 'multi', '["web","android","ios","desktop","admin_web"]', '[]', true, 20),
-  ('project_type.build_kind', 'project_type', '구축 유형', 'single', '["new","renewal","maintenance"]', '[]', true, 30),
+insert into docs.checklist_items (key, group_key, label, input_type, options, effects, is_required, sort_order, applies_to) values
+  ('profile.service_summary', 'profile', '서비스 한 줄 소개', 'text', '[]', '[]', true, 10, '{}'),
+  ('profile.platforms', 'profile', '플랫폼', 'multi', '["web","android","ios","desktop","admin_web"]', '[]', true, 20, '{web,app,ai,mixed,other}'),
+  ('project_type.build_kind', 'project_type', '구축 유형', 'single', '["new","renewal","maintenance"]', '[]', true, 30, '{web,app,ai,mixed,other}'),
   ('feat.login', 'feature', '회원가입·로그인', 'boolean', '[]',
    '[{"id":"fr_signup","target":"requirements","kind":"functional","title":"회원가입","priority":"must"},{"id":"fr_login","target":"requirements","kind":"functional","title":"로그인","priority":"must"},{"id":"fr_reset","target":"requirements","kind":"functional","title":"비밀번호 재설정","priority":"should"},{"id":"scr_login","target":"artifacts","kind":"screen","name":"로그인","links":["fr_login"]},{"id":"li_login","target":"line_items","category":"dev","name":"회원·인증 개발","unit":"man_day","quantity":3,"unit_price":"default_day_rate"}]',
-   false, 100),
+   false, 100, '{web,app,ai,mixed,other}'),
   ('feat.payment', 'feature', '결제', 'boolean', '[]',
    '[{"id":"fr_pg","target":"requirements","kind":"functional","title":"카드·간편결제 결제","priority":"must"},{"id":"fr_refund","target":"requirements","kind":"functional","title":"결제 취소·환불","priority":"should"},{"id":"nfr_pg_sec","target":"requirements","kind":"nonfunctional","title":"카드정보 미저장","priority":"must"},{"id":"scr_checkout","target":"artifacts","kind":"screen","name":"결제","links":["fr_pg"]},{"id":"li_pg","target":"line_items","category":"dev","name":"PG 결제 연동","unit":"man_day","quantity":5,"unit_price":"default_day_rate"},{"id":"cl_pg","target":"clauses","code":"dev.pg_responsibility"}]',
-   false, 110),
-  ('nfr.security_level', 'nfr', '보안 수준', 'single', '["basic","standard","high"]', '[]', true, 200),
+   false, 110, '{web,app,ai,mixed,other}'),
+  ('nfr.security_level', 'nfr', '보안 수준', 'single', '["basic","standard","high"]', '[]', true, 200, '{web,app,ai,mixed,other}'),
   ('delivery.source_code', 'delivery', '소스코드 인도', 'boolean', '[]',
-   '[{"id":"dlv_src","target":"artifacts","kind":"deliverable","name":"소스코드"},{"id":"cl_src","target":"clauses","code":"dev.source_delivery"}]', true, 300),
+   '[{"id":"dlv_src","target":"artifacts","kind":"deliverable","name":"소스코드"},{"id":"cl_src","target":"clauses","code":"dev.source_delivery"}]', true, 300, '{web,app,ai,mixed,other}'),
   ('contract_terms.payment_schedule', 'contract_terms', '대금 지급 방식', 'single', '["advance_balance_50_50","advance_mid_balance_30_40_30","monthly"]',
-   '[{"id":"cl_pay","target":"clauses","code":"dev.payment"}]', true, 400),
-  ('contract_terms.warranty_months', 'contract_terms', '하자보수 기간(개월)', 'number', '[]', '[{"id":"cl_warranty","target":"clauses","code":"dev.warranty"}]', true, 410),
-  ('contract_terms.ip_ownership', 'contract_terms', '지식재산권 귀속', 'single', '["client","developer","shared"]', '[{"id":"cl_ip","target":"clauses","code":"dev.ip"}]', true, 420),
-  ('contract_terms.acceptance_days', 'contract_terms', '검수 기간(일)', 'number', '[]', '[{"id":"cl_accept","target":"clauses","code":"dev.acceptance"}]', true, 430)
+   '[{"id":"cl_pay","target":"clauses","code":"dev.payment"}]', true, 400, '{}'),
+  ('contract_terms.warranty_months', 'contract_terms', '하자보수 기간(개월)', 'number', '[]', '[{"id":"cl_warranty","target":"clauses","code":"dev.warranty"}]', true, 410, '{web,app,ai,mixed,other}'),
+  ('contract_terms.ip_ownership', 'contract_terms', '지식재산권 귀속', 'single', '["client","developer","shared"]', '[{"id":"cl_ip","target":"clauses","code":"dev.ip"}]', true, 420, '{}'),
+  ('contract_terms.acceptance_days', 'contract_terms', '검수 기간(일)', 'number', '[]', '[{"id":"cl_accept","target":"clauses","code":"dev.acceptance"}]', true, 430, '{}'),
+  -- shorts_agency 체크리스트(applies_to = content). dev 전용 항목은 위에서 applies_to 로 content 를 뺐다.
+  -- 단가 "catalog:<key>"는 조직 단가 카탈로그(workspace_settings.defaults, DC-F-028)에서 읽고 없으면 0 + lint warn(01_PRD 3.3.1절, D-14).
+  ('content.channels', 'profile', '운영 채널', 'multi', '["youtube_shorts","instagram_reels","tiktok","naver_clip","threads"]',
+   '[{"id":"nfr_spec","target":"requirements","kind":"nonfunctional","title":"{{answer.label}} 업로드 규격(9:16, 길이, 자막 안전영역) 준수","priority":"must"}]', true, 1000, '{content}'),
+  ('content.monthly_videos', 'profile', '월 제작 편수', 'number', '[]',
+   '[{"id":"fr_cadence","target":"requirements","kind":"functional","title":"월 {{answer}}편 숏폼 제작·납품","priority":"must"},{"id":"dlv_video","target":"artifacts","kind":"deliverable","name":"숏폼 영상(9:16) 월 {{answer}}편","links":["fr_cadence"]},{"id":"ms_month","target":"artifacts","kind":"milestone","name":"월간 납품·검수"},{"id":"li_video","target":"line_items","category":"production","name":"숏폼 영상 제작(기획·편집·자막)","unit":"per_video","quantity":{"from":"content.monthly_videos","factor":1,"min":1,"max":300},"unit_price":"catalog:short_video"}]', true, 1010, '{content}'),
+  ('content.channel_count', 'profile', '운영 채널 수(계정 기준)', 'number', '[]', '[]', false, 1020, '{content}'),
+  ('feat.content_shooting', 'feature', '촬영 포함', 'boolean', '[]',
+   '[{"id":"con_shoot","target":"requirements","kind":"constraint","title":"촬영 일정·장소는 발주자와 사전 합의","priority":"must"},{"id":"li_shoot","target":"line_items","category":"production","name":"촬영(장비·장소·인력)","unit":"ea","quantity":1,"unit_price":"catalog:shooting_day"},{"id":"cl_shoot","target":"clauses","code":"vsc.shooting"}]', false, 1100, '{content}'),
+  ('feat.content_talent', 'feature', '출연자 섭외', 'boolean', '[]',
+   '[{"id":"con_talent","target":"requirements","kind":"constraint","title":"출연자 초상권·출연 동의서 확보","priority":"must"},{"id":"li_talent","target":"line_items","category":"media","name":"출연료","unit":"ea","quantity":1,"unit_price":"catalog:talent_fee"},{"id":"cl_publicity","target":"clauses","code":"vsc.publicity_rights"}]', false, 1110, '{content}'),
+  ('feat.content_music_license', 'feature', '음원·폰트·스톡 소재', 'single', '["free_library","licensed_paid","client_provided"]',
+   '[{"id":"li_music","target":"line_items","category":"license","name":"유료 음원·스톡 라이선스","unit":"per_month","quantity":1,"unit_price":"catalog:music_license","when":{"eq":"licensed_paid"}},{"id":"cl_license","target":"clauses","code":"vsc.license"}]', true, 1120, '{content}'),
+  ('feat.content_multilingual', 'feature', '다국어 자막·더빙', 'multi', '["en","ja","zh","vi"]',
+   '[{"id":"li_lang","target":"line_items","category":"production","name":"{{answer.label}} 자막·더빙","unit":"per_video","quantity":{"from":"content.monthly_videos","factor":1,"min":1,"max":300},"unit_price":"catalog:localize_video"}]', false, 1130, '{content}'),
+  ('feat.content_affiliate', 'feature', '광고·제휴(대가 관계) 포함', 'multi', '["brandconnect","shopping_connect","coupang","direct_sponsor"]',
+   '[{"id":"nfr_disclosure","target":"requirements","kind":"nonfunctional","title":"경제적 이해관계 표시(제목·영상 내·첫 해시태그, 추천보증 심사지침)","priority":"must"},{"id":"cl_ad","target":"clauses","code":"vsc.ad_disclosure"}]', false, 1140, '{content}'),
+  ('delivery.upload_service', 'delivery', '채널 업로드·운영 대행', 'boolean', '[]',
+   '[{"id":"fr_upload","target":"requirements","kind":"functional","title":"합의된 일정에 채널 업로드와 제목·해시태그·고정 댓글 관리","priority":"must"},{"id":"li_ops","target":"line_items","category":"channel_ops","name":"채널 업로드·운영(월)","unit":"per_channel","quantity":{"from":"content.channel_count","factor":1,"min":1,"max":40},"unit_price":"catalog:channel_ops_month"},{"id":"cl_ops","target":"clauses","code":"vsc.channel_ops"}]', false, 1200, '{content}'),
+  ('delivery.naver_clip_upload', 'delivery', '네이버 클립 자동 업로드 포함', 'boolean', '[]',
+   '[{"id":"con_clip","target":"requirements","kind":"constraint","title":"네이버 클립 자동 업로드(공식 API 미확인, 브라우저 자동화)의 약관·계정 제한 위험을 발주자가 고지받고 위임 동의서에 동의","priority":"must"},{"id":"cl_auto","target":"clauses","code":"vsc.automation_risk"}]', false, 1210, '{content}'),
+  ('delivery.monthly_report', 'delivery', '월간 성과 리포트', 'boolean', '[]',
+   '[{"id":"dlv_report","target":"artifacts","kind":"deliverable","name":"월간 성과 리포트"},{"id":"li_report","target":"line_items","category":"channel_ops","name":"월간 성과 리포트","unit":"per_month","quantity":1,"unit_price":"catalog:monthly_report"}]', false, 1220, '{content}'),
+  ('contract_terms.revision_rounds', 'contract_terms', '편당 무상 수정 횟수', 'number', '[]', '[{"id":"cl_rev","target":"clauses","code":"vsc.revision"}]', true, 1400, '{content}'),
+  ('contract_terms.secondary_use_months', 'contract_terms', '2차 사용(광고 집행·타 채널) 허용 기간(개월)', 'number', '[]', '[{"id":"cl_2nd","target":"clauses","code":"vsc.secondary_use"}]', true, 1410, '{content}'),
+  ('contract_terms.retainer_months', 'contract_terms', '월 리테이너 최소 기간(개월)', 'number', '[]', '[{"id":"cl_term","target":"clauses","code":"vsc.term"}]', false, 1420, '{content}')
 on conflict (key) do update
   set group_key = excluded.group_key, label = excluded.label, input_type = excluded.input_type, options = excluded.options,
-      effects = excluded.effects, is_required = excluded.is_required, sort_order = excluded.sort_order;
+      effects = excluded.effects, is_required = excluded.is_required, sort_order = excluded.sort_order, applies_to = excluded.applies_to;
 
 -- 표준 조항 골격(org_id null). 본문 원문 출처와 이용 조건은 미확인(D-8)이라 status='draft'(사용자에게 보이지 않음).
 -- 법무 검토(D-3) 후 운영자가 본문을 채워 published 로 바꾼다. 그 전에는 dev_contract 확정 시 L-REQUIRED-CLAUSE 가 막는다.
@@ -2618,7 +2679,31 @@ insert into docs.clauses (org_id, code, doc_type_code, title, body_template, var
   (null, 'dev.confidentiality',    'dev_contract', '비밀유지',       '당사자는 계약 이행 중 알게 된 상대방의 비밀을 제3자에게 누설하지 않는다.', '{}', true, '미확인(D-8)', 1, 'draft', 60),
   (null, 'dev.source_delivery',    'dev_contract', '소스코드 인도',  '수급인은 검수 완료 시 소스코드와 빌드 방법을 인도한다.', '{}', false, '미확인(D-8)', 1, 'draft', 70),
   (null, 'dev.pg_responsibility',  'dev_contract', '결제대행 책임',  'PG 계약과 수수료는 {{pg_contract_party_text}}가 부담한다.', '{pg_contract_party_text}', false, '미확인(D-8)', 1, 'draft', 80),
-  (null, 'dev.delay_penalty',      'dev_contract', '지체상금',       '수급인의 책임으로 납기를 지체하면 지체 1일당 계약 금액의 {{delay_rate_text}}를 지체상금으로 한다.', '{delay_rate_text}', false, '미확인(D-8)', 1, 'draft', 90)
+  (null, 'dev.delay_penalty',      'dev_contract', '지체상금',       '수급인의 책임으로 납기를 지체하면 지체 1일당 계약 금액의 {{delay_rate_text}}를 지체상금으로 한다.', '{delay_rate_text}', false, '미확인(D-8)', 1, 'draft', 90),
+  -- shorts_agency 계약서·위임 동의서 골격. 영상 제작 전용 공공 표준계약서는 찾지 못했다(D-15, 01_PRD 6.4절).
+  (null, 'vsc.purpose', 'video_service_contract', '계약의 목적', '{{self_name}}(이하 "수급인")은 {{client_name}}(이하 "도급인")을 위해 {{project_name}}의 숏폼 영상 제작{{channel_ops_text}} 용역을 수행한다.', '{self_name,client_name,project_name,channel_ops_text}', true, '미확인(D-8, D-15)', 1, 'draft', 10),
+  (null, 'vsc.deliverables', 'video_service_contract', '납품 사양', '수급인은 별첨 납품 사양(월 {{monthly_videos}}편, 화면비 9:16, 길이, 해상도, 파일 형식, 자막)에 맞춰 납품한다.', '{monthly_videos}', true, '미확인(D-8, D-15)', 1, 'draft', 20),
+  (null, 'vsc.acceptance', 'video_service_contract', '검수', '도급인은 납품일로부터 {{acceptance_days}}일 이내에 검수 결과를 통지하며, 기간 안에 통지가 없으면 검수를 마친 것으로 본다.', '{acceptance_days}', true, '미확인(D-8, D-15)', 1, 'draft', 30),
+  (null, 'vsc.revision', 'video_service_contract', '수정', '편당 무상 수정은 {{revision_rounds}}회로 하고, 이를 넘는 수정과 기획 변경은 변경요청서로 합의한 추가 비용으로 진행한다.', '{revision_rounds}', true, '미확인(D-8, D-15)', 1, 'draft', 40),
+  (null, 'vsc.payment', 'video_service_contract', '대금과 지급', '계약 금액은 금 {{total_krw_korean}}원(부가세 포함)이며 {{payment_schedule_text}}에 따라 지급한다.', '{total_krw_korean,payment_schedule_text}', true, '미확인(D-8, D-15)', 1, 'draft', 50),
+  (null, 'vsc.ip', 'video_service_contract', '저작권 귀속', '{{ip_ownership_text}} 단, 수급인이 기존에 보유한 템플릿·편집 노하우·범용 소재의 권리는 수급인에게 남는다.', '{ip_ownership_text}', true, '미확인(D-8, D-15)', 1, 'draft', 60),
+  (null, 'vsc.secondary_use', 'video_service_contract', '2차 사용', '도급인은 납품 영상을 계약 채널 밖의 광고 집행·타 채널 게시에 납품일로부터 {{secondary_use_months}}개월 동안 쓸 수 있으며, 그 뒤의 사용은 별도로 합의한다.', '{secondary_use_months}', true, '미확인(D-8, D-15)', 1, 'draft', 70),
+  (null, 'vsc.license', 'video_service_contract', '음원·폰트·스톡 소재', '영상에 쓰인 음원·폰트·스톡 소재의 출처는 {{license_source_text}}이며, 라이선스 범위를 넘겨 사용해 생긴 분쟁은 넘겨 사용한 당사자가 책임진다.', '{license_source_text}', true, '미확인(D-8, D-15)', 1, 'draft', 80),
+  (null, 'vsc.publicity_rights', 'video_service_contract', '초상권·출연 동의', '출연자의 초상·음성 사용 범위와 기간은 출연 동의서에 따르며, 수급인은 촬영 전에 서면 동의를 받는다.', '{}', false, '미확인(D-8, D-15)', 1, 'draft', 90),
+  (null, 'vsc.ad_disclosure', 'video_service_contract', '광고 표시', '대가를 받은 홍보 영상에는 추천·보증 등에 관한 표시·광고 심사지침에 따라 경제적 이해관계를 제목·영상 안·첫 해시태그 등 소비자가 쉽게 알 수 있는 위치에 표시한다. 표시 문구는 도급인이 최종 확인한다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 100),
+  (null, 'vsc.no_guarantee', 'video_service_contract', '성과 비보장', '수급인은 조회수·구독자 수·매출 등 특정 성과를 보장하지 않으며, 플랫폼 알고리즘·정책 변경에 따른 성과 변동은 계약 위반이 아니다. 수급인은 조회수·구독자 구매 등 플랫폼 정책 위반 수단을 쓰지 않는다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 110),
+  (null, 'vsc.channel_ops', 'video_service_contract', '채널 운영 대행', '채널 업로드·운영 범위와 계정 접근 방법은 별첨 채널 계정 접근·운영 위임 동의서에 따른다.', '{}', false, '미확인(D-8, D-15)', 1, 'draft', 120),
+  (null, 'vsc.automation_risk', 'video_service_contract', '자동 업로드 위험', '공식 업로드 API가 확인되지 않은 채널(예: 네이버 클립)의 자동 업로드는 플랫폼 약관상 제한될 수 있으며, 도급인은 이 위험을 고지받고 동의하였다. 계정 제재가 생기면 수급인은 즉시 자동 업로드를 멈춘다.', '{}', false, '미확인(D-8, D-15)', 1, 'draft', 130),
+  (null, 'vsc.shooting', 'video_service_contract', '촬영', '촬영 일정·장소·소품은 도급인과 사전에 합의하며, 도급인 사유로 촬영이 취소되면 이미 발생한 실비를 도급인이 부담한다.', '{}', false, '미확인(D-8, D-15)', 1, 'draft', 140),
+  (null, 'vsc.term', 'video_service_contract', '계약 기간', '계약 기간은 {{project_start}}부터 {{project_end}}까지로 하며, 월 리테이너는 최소 {{retainer_months}}개월 유지한 뒤 한쪽이 30일 전에 서면으로 통지하면 끝난다.', '{project_start,project_end,retainer_months}', false, '미확인(D-8, D-15)', 1, 'draft', 150),
+  (null, 'vsc.confidentiality', 'video_service_contract', '비밀유지', '당사자는 계약 이행 중 알게 된 상대방의 비밀(계정 정보, 미공개 제품·캠페인 정보 포함)을 제3자에게 누설하지 않는다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 160),
+  (null, 'vsc.termination', 'video_service_contract', '해지', '한쪽이 계약을 위반하고 14일 안에 시정하지 않으면 상대방은 서면 통지로 해지할 수 있으며, 해지 시점까지 납품·검수된 분량의 대금은 정산한다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 170),
+  (null, 'vsc.liability', 'video_service_contract', '손해배상', '고의 또는 중과실이 없는 한 손해배상 총액은 직전 {{liability_cap_months}}개월 동안 지급된 대금을 한도로 한다.', '{liability_cap_months}', true, '미확인(D-8, D-15)', 1, 'draft', 180),
+  (null, 'cam.scope', 'channel_access_mandate', '위임 범위', '{{client_name}}은 별표 채널에 대해 {{self_name}}에게 영상 업로드, 제목·설명·해시태그 편집, 댓글 관리 권한을 {{project_start}}부터 {{project_end}}까지 위임한다. 채널 삭제와 수익 정산 계좌 변경 권한은 위임하지 않는다.', '{client_name,self_name,project_start,project_end}', true, '미확인(D-8, D-15)', 1, 'draft', 10),
+  (null, 'cam.credentials', 'channel_access_mandate', '계정 접근 방법', '접근은 플랫폼이 제공하는 관리자·편집자 초대 기능을 먼저 쓴다. 비밀번호를 넘겨받아야 하면 수급인은 암호화 저장소에만 보관하고 계약이 끝나면 즉시 삭제하며, 도급인은 종료 뒤 비밀번호를 바꾼다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 20),
+  (null, 'cam.automation_risk', 'channel_access_mandate', '자동화 위험 고지', '공식 업로드 API가 확인되지 않은 채널(예: 네이버 클립)에 브라우저 자동화로 업로드하면 플랫폼 약관 위반으로 업로드 제한·계정 정지·수익 정산 보류가 생길 수 있다. 도급인은 이를 이해하고 자동 업로드에 동의한다.', '{}', false, '미확인(D-8, D-15)', 1, 'draft', 30),
+  (null, 'cam.revocation', 'channel_access_mandate', '위임 철회', '도급인은 언제든 서면(이메일 포함)으로 위임을 철회할 수 있고, 수급인은 통지를 받는 즉시 예약 업로드를 취소하고 접근 권한을 반납한다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 40),
+  (null, 'cam.liability', 'channel_access_mandate', '책임', '수급인은 위임 범위를 넘는 계정 사용으로 생긴 손해를 배상한다. 위임 범위 안의 사용에 대해 플랫폼이 정책 변경으로 내린 제재는 수급인의 책임이 아니다.', '{}', true, '미확인(D-8, D-15)', 1, 'draft', 50)
 on conflict (doc_type_code, code, version) where org_id is null do nothing;
 
 insert into docs.runtime_config (key, value_int, note) values

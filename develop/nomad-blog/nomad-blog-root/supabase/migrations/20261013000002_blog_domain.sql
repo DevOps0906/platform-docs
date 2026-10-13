@@ -155,9 +155,11 @@ begin
   end if;
   if new.brandconnect_application_id is not null
      and (tg_op = 'INSERT' or new.brandconnect_application_id is distinct from old.brandconnect_application_id) then
-    select a.org_id into v_app_org from public.brandconnect_applications a where a.id = new.brandconnect_application_id;
+    -- 블로그 원고에는 블로그형 지원서만 연결한다(클립형은 video 소유, 확정 결정 19)
+    select a.org_id into v_app_org from public.brandconnect_applications a
+     where a.id = new.brandconnect_application_id and a.target_kind = 'blog';
     if v_app_org is null or v_app_org <> new.org_id then
-      raise exception 'public.posts: brandconnect application belongs to another organization' using errcode = '42501';
+      raise exception 'public.posts: brandconnect application belongs to another organization or is not a blog campaign' using errcode = '42501';
     end if;
   end if;
   return new;

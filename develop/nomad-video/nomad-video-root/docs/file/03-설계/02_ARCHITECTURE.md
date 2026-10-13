@@ -32,10 +32,11 @@
 | web-public | `apps/nomad-video/src/app/(marketing)`, `landing/[slug]`, `lb/[handle]`, `r/[code]`, `legal` | 마케팅, 공개 랜딩, 링크인바이오, 단축 링크 | 공개 RPC `get_public_landing`, `get_public_linkinbio`, 코어 `record_affiliate_click` |
 | web-app | `apps/nomad-video/src/app/(dashboard)/dashboard/**` | 대시보드 화면 | `src/server/*` 서버 함수, Realtime(`core.jobs`) |
 | api | `apps/nomad-video/src/app/api/**` | Route Handler(얇게) | `requireSession` → `src/server/<domain>` 호출 |
-| server domain | `apps/nomad-video/src/server/{billing,channels,sources,productions,longform,music,playlists,publish,affiliate,radar,analytics}` | 게이팅, 크레딧 선차감, 잡 enqueue, 영속화 | 코어 패키지(`core-db`, `core-billing`, `core-jobs`, `core-affiliate`, `core-ai`) |
+| server domain | `apps/nomad-video/src/server/{billing,channels,sources,productions,longform,music,playlists,publish,affiliate,radar,analytics,clients,brandconnect}` | 게이팅, 크레딧 선차감, 잡 enqueue, 영속화 | 코어 패키지(`core-db`, `core-billing`, `core-jobs`, `core-affiliate`, `core-ai`) |
 | orchestrator | `workers/video-orchestrator/src/{flows,steps,radar,analytics,cron,bridge}` | FlowProducer 체인, AI 단계, 업로드, 레이더 수집, 스케줄 | BullMQ 큐 `video.*`(TS), 미디어 단계는 `core.jobs` 자식 잡으로 브리지 |
 | media-worker | `services/media-worker/{core,handlers}` | Whisper, demucs, 다운로드, FFmpeg 전 처리 | `core.claim_jobs(queue='video.media.gpu'|'video.media.cpu')`만 소비 |
-| sns-uploader | `packages/sns-uploader/src/{youtube,meta,tiktok}` | 공용 업로더 구현(video 소유, commerce·blog 소비) | 인터페이스는 SHARED_MODULES 11장 그대로 |
+| sns-uploader | `packages/sns-uploader/src/{youtube,meta,tiktok,naver-clip}` | 공용 업로더 구현(video 소유, commerce·blog 소비). `naver-clip`은 Playwright 어댑터(공식 API 미확인, D-23) | 인터페이스·`capabilities`·`naver-login.ts` 재사용은 SHARED_MODULES 11장 그대로(재정의하지 않음) |
+| agency(대행 운영) | `src/server/clients/**`, `src/app/api/clients/**`, `src/app/(dashboard)/dashboard/clients/**`, 공개 `src/app/review/[token]/**`, 오케스트레이터 `src/agency/{report,review-expire}` | 고객·고객 채널, 승인 링크(토큰 생성·메일·결정), 월간 리포트 PDF | DB RPC `set_client_status`, `open_client_review`·`decide_client_review`(service_role), `client_reports`(service_role) |
 | db | `supabase/migrations/1200_video.sql`, `supabase/monolith/**` | 스키마 | 이 폴더 05장 |
 | ai-service | `apps/api/`: 공용 ai-service(`app/core`, `app/ai/llm`, `rag`, `wiki`, `tools` 공용 부분)를 그대로 쓰고 video 확장만 둔다: `app/ai/graphs/video_script.py`·`video_step.py`, `app/ai/tools/video/`(채널 코치 답변 모드, 컬렉션 로더), `app/ai/compliance/video.py`, `app/ai/products/video/`(운영자 지식 조직 id, 컬렉션 이름, 프롬프트 로더) | Supabase(service_role), 상용 LLM API, 공용 GPU 서버(`oss-llm`, `oss-embed`), Dify 내부 키 호출 수신 |
 | ai-gate | `apps/nomad-video/src/app/api/{ai,internal,onboarding}/**`, `src/app/onboarding/**`, `src/server/ai/**`, `src/server/ai-pricing.ts` | 대화 생성, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, EdDSA 서명 토큰·잡 토큰 발급, 정산 크론, 온보딩 국외 이전 동의 | `packages/ai-gateway` |
@@ -88,7 +89,7 @@ STT 두 경로(01장 VD-F-105, D-13):
 | credits | 생성·업로드·검사 선차감, 실패 환불, 부분 환불 | `src/server/*` | 멱등 키 `consume:video:<request_id>` |
 | toss | 구독, 크레딧팩, 빌링키 | `src/server/billing`, orchestrator cron | `confirm_payment_order` PM001 시 별도 호출로 `fail_payment_order`(service_role)를 불러 주문을 failed로 남기고 운영 알림 + Toss 취소를 수행 |
 | webhooks | Toss, fal, (Phase 2) Distrokid, Make/n8n | `src/app/api/webhooks/*` | 서명 없으면 거부 |
-| oauth | YouTube/Meta/TikTok 채널 연결, 쿠팡 키 저장 | `src/server/channels`, `src/server/affiliate` | state는 `create_oauth_state`만 |
+| oauth | YouTube/Meta/TikTok 채널 연결, 쿠팡 키 저장. 네이버 클립은 OAuth가 아니라 로그인 세션을 `CredentialVault`(provider `naver`)에 저장 | `src/server/channels`, `src/server/affiliate` | state는 `create_oauth_state`만 |
 | llm gateway | 사용하지 않는다(2026-10-13). 번역 후처리, 대본, 스토리라인, 블링, GEO 메타, 플리 메타, compliance의 LLM 호출은 라우터(ai-service)로 옮겼다 | - | 라우터 본체가 ai-service로 옮겨졌다(`docs/file/03-설계/공용코어/SHARED_MODULES.md:42`). 모델 허용 목록(YSM #6)은 `core.ai_model_prices` 등록 모델과 라우팅 체인으로 대체. 그래프 `video.script`와 `video.step`(D-20)이 호출 경로 |
 | ai-gateway | 대화 매핑, 서명 토큰·잡 토큰 발급, 턴 선차감·정산, Dify 중계와 장애 시 직접 경로 | `src/app/api/ai/`, `src/app/api/internal/`, `src/server/ai/` | `docs/file/03-설계/공용코어/SHARED_MODULES.md:498` |
 | ai-service | 라우터, RAG(트렌드·성과·대본·가이드), 위키, 그래프 `video.script`·`video.step`, 도구 `/tools/answer` | `apps/api` | 제품 확장은 2절 `ai-service` 행 |
@@ -96,7 +97,8 @@ STT 두 경로(01장 VD-F-105, D-13):
 | core-voice | STT(대화형), TTS(샘플·읽어 주기·내레이션). 내레이션은 `feature='narration'`에서 대체를 끈다 | `src/app/api/voice/`, 오케스트레이터 `steps/tts/`(D-22) | `docs/file/03-설계/공용코어/SHARED_MODULES.md:501` |
 | llm-wiki | 채널·브랜드 가이드 위키(제품 지식 위키), 운영자 가이드(`video-guide`) | `apps/api`(ingest, lint), `src/components/wiki/`, `dashboard/wiki/` | 조직 위키는 조직 간 공유 없음. 운영자 지식은 외부 지식 API로만 노출 |
 | fal client | Track C/D 이미지, 썸네일, 플리 무드 썸네일, 곡 커버 | orchestrator steps | 결과를 `video-media`로 복사 |
-| sns uploader | 업로드, 고정 댓글, 쿼터, 통계 | orchestrator `upload.*` | video가 구현 소유 |
+| sns uploader | 업로드, 고정 댓글, 쿼터, 통계. `naver_clip`은 고정 댓글·통계 미지원(`capabilities`) | orchestrator `upload.*` | video가 구현 소유 |
+| affiliate(브랜드커넥트) | 클립 캠페인 지원 요청(`create_brandconnect_application`, `target_kind='clip'`, `source_app='video'`), blog handoff 수신, 선정 지원서 ↔ 업로드 연결. 제출 어댑터는 blog 소유 | `src/server/brandconnect` | 대가성 문구는 `injectDisclosure(..., { target: 'title_hashtag' })`(naver_clip) |
 | automation-core | Phase 2 캔버스 실행 | (Phase 2) | 저장만 `video.workflows` |
 | compliance | 업로드 게이트 | orchestrator `compliance.check` | 조직 추가 사전 `video.banned_words` |
 | storage | 사용자 업로드(org-files), 서명 URL | 전역 | 대용량은 제품 버킷 `video-media` |
@@ -129,6 +131,9 @@ STT 두 경로(01장 VD-F-105, D-13):
 | `media.loop`, `media.playlist_concat`, `media.highlight_cut` | `video.media.cpu` | Python | 루트에 포함 | 2 | 루트 규칙 |
 | `compliance.check` | `video.ai` | TS | 1(LLM 단계가 있을 때). LLM 판정은 `video.step`(kind `compliance_llm`, D-20) 경유 | 1 | LLM 실패 시 환불 + WARN |
 | `upload.youtube` / `upload.instagram` / `upload.tiktok` / `upload.threads` | `video.upload` | TS | 1/채널 | 3 | 최종 실패. 쿼터 초과는 실패가 아니라 `run_after` 재예약 |
+| `upload.naver_clip` | `video.upload.browser`(동시성 1/계정, 제안) | TS(Playwright, 헤드리스 Chromium) | 1/채널 | 1 | 최종 실패(셀렉터 실패 포함). 계정당 3건/시간·15건/일 초과는 `run_after` 재예약. 동의 철회 시 queued 잡 취소·환불 |
+| `brandconnect.apply`(`source_app='video'`) | blog 큐(blog 소유 어댑터) | TS(Playwright) | 0 | blog 규칙 | 해당 없음. video는 지원서 상태만 읽는다 |
+| `client_report.build` | `video.orchestrate` | TS(집계) + PDF 렌더(코어 exports) | 0 | 2 | 해당 없음. 실패 시 `client_reports.status=failed` + 운영 알림 |
 | `radar.playboard` | `video.radar` | TS | 0(플랫폼 공용 수집) | 3 | 해당 없음 |
 | `radar.channel_finder`, `radar.bling` | `video.radar` | TS | 2 / 5 | 1 | 최종 실패 |
 | `analytics.sync` | `video.radar` | TS | 0 | 3 | 해당 없음 |
@@ -145,6 +150,8 @@ STT 두 경로(01장 VD-F-105, D-13):
 | 수집 직후 | `ai.trend_ingest`(운영자 `video-trends` 컬렉션), `analytics.sync` 직후 `ai.rag_ingest`(조직 `video-performance`) |
 | 매 5분 | AI 정산(`ai.settle` → `/api/internal/ai-settle`, `settled_at is null` 10분 경과 행) |
 | 주 1회 | 채널·브랜드 가이드 위키 lint(`ai.wiki_lint`, 운영사 부담 한도 안) |
+| 매 시간 | 만료된 고객 승인 요청 정리(`client_reviews` pending + `expires_at<now()` → expired, 업로드는 `client_review` 유지, 담당자 알림) |
+| 매일 06:00 KST | `clients.report_day`가 오늘인 활성 고객의 지난달 `client_report.build` enqueue |
 
 ## 5. AI 라우팅
 
@@ -275,6 +282,9 @@ STT 두 경로(01장 VD-F-105, D-13):
 | `CREDENTIALS_KEY_V<n>`, `CREDENTIALS_KEY_VERSION` | 토큰 AES-256-GCM | 비공개 | 기동 실패(0키 폴백 금지) |
 | `TOSS_CLIENT_KEY` / `TOSS_SECRET_KEY`, `TOSS_WEBHOOK_SECRET` | 결제 | 클라이언트 키만 공개 | 기동 실패 |
 | `GOOGLE_CLIENT_ID/SECRET`, `META_APP_ID/SECRET`, `TIKTOK_CLIENT_KEY/SECRET` | 채널 OAuth | 비공개 | 해당 플랫폼 연결 비활성 + 경고 |
+| `NAVER_CLIP_UPLOAD_ENABLED`, `PLAYWRIGHT_BROWSERS_PATH` | 네이버 클립 업로더 스위치(셀렉터 장애 시 끔), 브라우저 경로 | 비공개(오케스트레이터) | 기본 false. false면 `naver_clip` 업로드 예약 거부 + 대시보드 경고 |
+| `CLIENT_REVIEW_BASE_URL`, `CLIENT_REVIEW_TTL_HOURS` | 고객 승인 링크 주소, 기본 유효시간(72) | 비공개(Next.js 서버) | 대행 승인 요청 비활성 |
+| `MAIL_FROM_AGENCY` | 승인 요청·리포트 메일 발신 주소(코어 메일 모듈) | 비공개 | 승인 메일 발송 실패 → 링크 복사만 |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `OPENROUTER_API_KEY` | 상용 LLM | **FastAPI 전용**(Vercel·오케스트레이터·미디어 워커에 넣지 않음) | 해당 제공자만 비활성(체인에서 다음으로). 전부 없으면 오픈소스만 |
 | `OSS_LLM_BASE_URL`, `OSS_EMBED_BASE_URL` | 오픈소스 LLM·임베딩 서버 | FastAPI 전용 | 기동 실패(`video.rag`·`video.knowledge` 임베딩과 미동의 조직 처리에 필수) |
 | `VOYAGE_API_KEY` | 상용 임베딩 | FastAPI 전용 | video는 `oss-embed`만 쓰므로 없어도 동작(플랫폼 기본값 호환용) |

@@ -293,15 +293,16 @@ astro-ai는 같은 계약으로 사주/타로 PDF를 렌더한다. 테마 미리
 |---|---|
 | 소유 / 소비 | nomad-video / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:811`), nomad-blog(인스타 포스팅, `:632`) |
 | 기준 자산 | Shorts Maker `lib/platforms/*`, `channels/oauth-manager.ts`, YSM `account_manager`(AES-GCM). 이식 전에 0키 폴백, state 결함, tsc 오류를 먼저 고친다(`:955`) |
-| 플랫폼 | YouTube Data API v3(resumable 업로드), Instagram Reels/Threads(Meta Graph), TikTok Content Posting(`NOMAD Shorts Maker/PRD.md` 10-3) |
+| 플랫폼 | YouTube Data API v3(resumable 업로드), Instagram Reels/Threads(Meta Graph), TikTok Content Posting(`NOMAD Shorts Maker/PRD.md` 10-3), 네이버 클립(`naver_clip`, 확정 결정 18) |
+| 네이버 클립 | 공식 업로드 API 미확인(2026-10-13 기준. 클립 크리에이터 PC 웹 업로드만 확인). Playwright로 사용자 네이버 계정에 로그인해 PC 웹에서 업로드한다. OAuth가 없으므로 `connect()`는 로그인 세션(쿠키)을 `encrypted_credentials`에 저장하는 흐름이고, 원본 `NOMAD Shorts Maker/src/skill/playwright-engine/naver-login.ts`를 재사용한다. 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의(고지문 버전 `clip-2026-10-v1`)가 없으면 업로드 잡을 만들지 않는다. 잡 `upload.naver_clip`. `pinComment`·`quota`는 지원하지 않음(capabilities로 표시), `fetchStats`는 PC 웹 화면 수집(제안). 공식 API가 확인되면 같은 `UploaderAdapter`로 교체한다 |
 | 코어 SQL | `core.encrypted_credentials`(채널 토큰), `oauth_states`, `core.jobs`(`job_type='upload.<platform>'`), `rate_limit_hit` |
 | 채널 한도 | 플랜 `features.max_channels`(`seed.sql:35`, `:55-57`)를 서버가 강제. 쿼터 초과 시 같은 언어 그룹의 대체 채널 선택(`docs/reference/00_MERGE_ANALYSIS.md:687`) |
 | 실패/환불 | 업로드 실패 → 재시도 3회(`PRD.md` 10-4) → 최종 실패 시 환불(업로드 1크레딧/채널). 쿼터 초과 → 재시도 불가로 두지 않고 `run_after`를 다음 쿼터 리셋 시각(PT 자정)으로 미뤄 재큐잉(제안). 토큰 만료 → 갱신 1회 → 실패 시 `credentials.status='error'`, 잡 실패, 사용자 재연결 요청 |
-| 대가성 문구 | affiliate 모듈의 `effective_disclosure`를 설명란 첫 줄과 고정 댓글에 삽입(확정 결정 12). 업로더는 `description`을 받기 전에 affiliate 모듈이 끼워 넣은 결과를 받는다 |
+| 대가성 문구 | affiliate 모듈의 `effective_disclosure`를 설명란 첫 줄과 고정 댓글에 삽입(확정 결정 12). 업로더는 `description`을 받기 전에 affiliate 모듈이 끼워 넣은 결과를 받는다. `naver_clip`은 `video_description` 문구를 제목 앞머리와 첫 번째 해시태그로 넣는다(`injectDisclosure(..., 'video_description', { target: 'title_hashtag' })`, 17장) |
 
 ```ts
 // packages/sns-uploader
-export type Platform = 'youtube' | 'instagram' | 'tiktok' | 'threads'
+export type Platform = 'youtube' | 'instagram' | 'tiktok' | 'threads' | 'naver_clip'   // naver_clip: Playwright, 공식 API 미확인
 export interface UploadInput {
   orgId: string; appId: string; platform: Platform; credentialId: string; channelRef: string
   media: { storagePath: string; mime: string; durationSec?: number }
@@ -311,6 +312,7 @@ export interface UploadInput {
 export interface UploadResult { platformPostId: string; url: string; publishedAt?: string }
 export interface UploaderAdapter {
   platform: Platform
+  capabilities: { oauth: boolean; pinComment: boolean; quota: boolean; stats: boolean }   // naver_clip: 모두 false, stats만 제안
   connect(ctx: { userId: string; orgId: string; appId: string }): Promise<string>        // oauth.beginOAuth
   upload(input: UploadInput, onProgress: (pct: number) => void): Promise<UploadResult>   // resumable, 스트리밍(파일을 메모리에 통째로 올리지 않는다)
   pinComment(credentialId: string, postId: string, text: string): Promise<void>
@@ -440,14 +442,14 @@ Python 쪽은 같은 RPC를 `supabase.rpc('claim_jobs', {...})`로 호출한다.
 
 | 항목 | 내용 |
 |---|---|
-| 소유 / 소비 | _platform-core / nomad-video, nomad-blog(확정 결정 12). 브랜드커넥트 어댑터와 Playwright 지원 플로우는 blog가 소유 |
-| 코어 SQL | `core.affiliate_accounts`, `affiliate_links`, `affiliate_clicks`, `affiliate_disclosures`, `brandconnect_applications`(`migrations/0006_core_affiliate.sql:24-200`), 함수 `new_affiliate_short_code`, `record_affiliate_click`, `effective_disclosure`, `upsert_affiliate_disclosure`, `consent_brandconnect_risk`, `create_brandconnect_application`(`:207-360`) |
+| 소유 / 소비 | _platform-core / nomad-video, nomad-blog(확정 결정 12). 브랜드커넥트 어댑터와 Playwright 지원 플로우는 blog가 소유. video는 클립형 캠페인 지원을 cross-app 잡으로 요청한다(확정 결정 19) |
+| 코어 SQL | `core.affiliate_accounts`, `affiliate_links`, `affiliate_clicks`, `affiliate_disclosures`, `brandconnect_applications`(`migrations/0006_core_affiliate.sql:24-211`), 함수 `new_affiliate_short_code`, `record_affiliate_click`, `effective_disclosure`, `upsert_affiliate_disclosure`, `consent_brandconnect_risk`, `create_brandconnect_application`(`:218-377`) |
 | 제공자 | coupang(쿠팡파트너스 API), naver_brandconnect(Playwright, blog 소유), tenping(미확인), naver_shopping_connect(미확인). 공개 API가 없으면 Playwright 또는 수동 링크 등록 |
 | 키 보관 | 제공자 API 키/세션 쿠키는 `encrypted_credentials`에, `affiliate_accounts.credential_id`로 연결(`:30`) |
 | 단축 링크 | `/r/[code]` Route Handler가 service_role로 `record_affiliate_click` 호출 → 302. 레이트 리밋 키 `affiliate:r:<ip_hash>`(제안). 봇 UA는 기록만 하고 집계에서 제외(제안) |
 | UTM | `utm_source=<source_app>`, `utm_medium=affiliate`, `utm_campaign=<source_ref>`, `utm_content=<provider>`를 `utm` jsonb에 저장하고 제휴 URL에 붙인다(제안). 제공자가 쿼리 파라미터를 보존하지 않으면 생략 |
-| 대가성 문구 | `effective_disclosure(org, provider, placement)`로 가져와 blog는 본문 최상단(blog_top), video는 설명란 첫 줄(video_description)과 고정 댓글(video_pinned_comment)에 삽입. 끌 수 없고 편집만 가능(`upsert_affiliate_disclosure`, owner/admin). 근거: 공정위 "추천·보증 등에 관한 표시·광고 심사지침"은 표시를 제목 또는 본문 시작 부분에 두도록 한다 |
-| 브랜드커넥트 | 위험 동의(`consent_brandconnect_risk`, owner/admin) 없으면 지원서 생성 불가. 지원서는 `core.jobs` `job_type='brandconnect.apply'`로 워커(Playwright)가 제출. 상태 전이는 트리거가 강제(`:178-200`). 계정당 지원 레이트 리밋(제안: 시간당 5건) |
+| 대가성 문구 | `effective_disclosure(org, provider, placement)`로 가져와 blog는 본문 최상단(blog_top), video는 설명란 첫 줄(video_description)과 고정 댓글(video_pinned_comment)에 삽입. 네이버 클립은 `video_description` 문구를 제목 앞머리 + 첫 번째 해시태그로 넣는다(영상은 제목·영상 내·첫 해시태그 표시). 끌 수 없고 편집만 가능(`upsert_affiliate_disclosure`, owner/admin). 근거: 공정위 "추천·보증 등에 관한 표시·광고 심사지침"은 표시를 제목 또는 본문 시작 부분에 두도록 한다 |
+| 브랜드커넥트 | 위험 동의(`consent_brandconnect_risk`, owner/admin) 없으면 지원서 생성 불가. 지원서는 `core.jobs` `job_type='brandconnect.apply'`로 워커(Playwright)가 제출. 상태 전이는 트리거가 강제(`:189-211`). 계정당 지원 레이트 리밋(제안: 시간당 5건, blog·video 합산). 지원서 대상은 `targetKind`로 나눈다: 블로그형(`blog`, blog가 생성) / 클립형(`clip`, video가 생성, `target_url`=클립 채널 주소). video가 만든 잡도 payload `{ applicationId, sourceApp: 'video' }`로 같은 워커가 blog 어댑터로 처리한다(cross-app 잡, 확정 결정 19) |
 | 실패/환불 | 링크 생성 실패(제공자 오류) → 제품 작업은 링크 없이 진행하되 대가성 문구는 삽입하지 않음(링크가 없으면 대가성 관계가 없으므로). 브랜드커넥트 제출 실패 → `failed` → 재시도는 사용자가 명시적으로. 크레딧은 쓰지 않는다(제안: 제휴 기능은 플랜 기능 플래그 `features.affiliate`로 게이팅) |
 | 제안 단계 | YouTube 유료 프로모션 플래그 자동 설정(확정 아님) |
 
@@ -455,6 +457,8 @@ Python 쪽은 같은 RPC를 `supabase.rpc('claim_jobs', {...})`로 호출한다.
 // packages/core-affiliate
 export type AffiliateProvider = 'coupang' | 'naver_brandconnect' | 'tenping' | 'naver_shopping_connect'
 export type Placement = 'blog_top' | 'video_description' | 'video_pinned_comment'
+export type BrandconnectTargetKind = 'blog' | 'clip'                 // blog↔sourceApp 'blog', clip↔sourceApp 'video' (DB CHECK)
+export type BrandconnectCampaignType = 'blog' | 'clip' | 'shopping_connect' | 'unknown'   // 스캔 결과 분류(nomad-blog BL-F-032)
 
 export interface AffiliateProduct { externalId: string; name: string; price?: number; imageUrl?: string; productUrl: string; category?: string }
 export interface AffiliateAdapter {
@@ -463,17 +467,17 @@ export interface AffiliateAdapter {
   searchProducts(accountId: string, query: string, opts?: { limit?: number }): Promise<AffiliateProduct[]>
   createLink(accountId: string, product: AffiliateProduct, utm: Record<string, string>): Promise<{ affiliateUrl: string }>
   fetchStats(accountId: string, range: { from: string; to: string }): Promise<Array<{ date: string; clicks: number; orders?: number; commission?: number }>>
-  applyCampaign?(accountId: string, application: { campaignId: string; blogUrl: string; message?: string }): Promise<{ externalId?: string }>  // brandconnect 전용, Playwright, blog 소유
+  applyCampaign?(accountId: string, application: { campaignId: string; targetUrl: string; targetKind: BrandconnectTargetKind; message?: string }): Promise<{ externalId?: string }>  // brandconnect 전용, Playwright, blog 소유(video는 잡으로 요청)
 }
 
 export interface AffiliateApi {
   connectAccount(input: { orgId: string; provider: AffiliateProvider; partnerId?: string; credentialId?: string; label?: string }): Promise<string>   // service_role INSERT affiliate_accounts
   createShortLink(input: { orgId: string; accountId: string; provider: AffiliateProvider; sourceApp: 'video' | 'blog'; sourceRef: string; product: AffiliateProduct }): Promise<{ linkId: string; shortCode: string; shortUrl: string; affiliateUrl: string }>
   disclosure(orgId: string, provider: AffiliateProvider, placement: Placement): Promise<string>        // rpc effective_disclosure
-  injectDisclosure(content: string, disclosure: string, placement: Placement): string                 // blog_top: 본문 맨 앞 단락. video_description: 첫 줄
+  injectDisclosure(content: string, disclosure: string, placement: Placement, opts?: { target?: 'body' | 'title_hashtag' }): string   // blog_top: 본문 맨 앞 단락. video_description: 첫 줄. title_hashtag: 제목 앞머리 + 첫 해시태그(naver_clip)
   resolveClick(shortCode: string, req: { referrer?: string; ipHash?: string; userAgent?: string; country?: string }): Promise<string | null>  // rpc record_affiliate_click
   consentBrandconnectRisk(accountId: string): Promise<void>
-  createBrandconnectApplication(input: { accountId: string; campaignId: string; blogUrl: string; brandName?: string; productName?: string; category?: string; message?: string }): Promise<string>
+  createBrandconnectApplication(input: { accountId: string; campaignId: string; targetUrl: string; targetKind: BrandconnectTargetKind; sourceApp: 'blog' | 'video'; brandName?: string; productName?: string; category?: string; message?: string }): Promise<string>   // rpc create_brandconnect_application
 }
 ```
 

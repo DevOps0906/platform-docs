@@ -17,7 +17,7 @@
 
 | 규칙 | 내용 |
 |---|---|
-| 고위험 문서 | `risk_level='high'`(MVP `dev_contract`)는 `generation_mode='template'`만. AI가 계약 조항을 생성·수정·요약하지 않는다: 그래프는 `draft_ai_sections`를 건너뛰고, `docs.assist`는 403 `assist_disabled_high_risk`, 채팅은 조항 작성·법률 판단을 거절한다. 첫 생성 전 고지 동의(`DC007`), D-3 법무 검토 전 `doc_types.is_active=false` |
+| 고위험 문서 | `risk_level='high'`(MVP `dev_contract`, Phase 2 `video_service_contract`·`channel_access_mandate`)는 `generation_mode='template'`만. AI가 계약 조항을 생성·수정·요약하지 않는다: 그래프는 `draft_ai_sections`를 건너뛰고, `docs.assist`는 403 `assist_disabled_high_risk`, 채팅은 조항 작성·법률 판단을 거절한다. 첫 생성 전 고지 동의(`DC007`), D-3 법무 검토 전 `doc_types.is_active=false` |
 | 숫자는 DB가 계산 | 금액(`line_items.amount_krw` 생성 컬럼), 소계·VAT·합계(뷰 `project_totals`), 기간, 요구사항·산출물 코드(트리거), 문서번호(`docs.next_doc_number`)는 DB가 만든다. 클라이언트 값과 LLM 출력의 숫자를 저장하지 않는다. 불일치는 조용히 고치지 않고 실패·lint 오류 |
 | 효과 엔진 결정성 | `computeEffects`는 순수 함수: 시각, 난수, LLM, 네트워크, env 접근 금지. 적용은 service_role `docs.apply_checklist_effects` 1회(해시 비교 `DC010`). `is_user_modified=true` 행과 `source<>'checklist'` 행은 건드리지 않는다 |
 | 버전 불변 | `document_versions`는 append-only. 편집도 새 버전. `final` 문서는 수정 불가(`DC003`), 고치려면 `docs.create_revision` |
@@ -48,7 +48,7 @@
 | `web/src/app/api/<리소스>/` | Route Handler(리소스별 단일 소유) | 06장 2절 표 |
 | `worker/src/handlers/` | 생성·패키지·렌더·ZIP·동기화·웹훅·purge 잡 | 027, 029, 052, 053, 051 |
 | `api/` 공용 부분 / `app/ai/graphs/docs_*.py` / `app/ai/products/docs/**` / `app/ai/tools/docs/` | ai-service 설치 / 그래프 4종 / 프롬프트·규칙·파서·RAG·위키 / 채팅 도구 | 006 / 022~025 / 021, 022, 024, 031, 032, 035 / 034 |
-| `tpl/`(`tpl/tests/` 제외) | 문서 템플릿 9종, lint 규칙, 조항 골격, sanitize 허용 목록, 체크섬 | 020 |
+| `tpl/`(`tpl/tests/` 제외) | 문서 템플릿 9종(+ Phase 2 shorts_agency 7종, DC-06-060), lint 규칙, 조항 골격, sanitize 허용 목록, 체크섬 | 020 |
 | `int/` | 연동 어댑터(Phase 2) | 052~055 |
 | `web/src/styles/`, `web/src/components/ui/`, `web/src/app/dev/components/` | 디자인 시스템 코드 | 009 |
 | `web/src/features/hero3d/`, `web/public/hero/` | 3D 히어로(three.js는 여기서만 import) | 045 |
@@ -120,3 +120,9 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 | 런타임·배포 | Vercel·Route Handler에서 WeasyPrint 실행, async 안 동기 호출, mock 폴백, `.single()` 0행 500, step `if`의 `secrets`, Windows 폰트 경로, 실키 `.env` 커밋, `latest` 의존성, 빈 `CLAUDE.md` |
 | AI·음성 | LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자·렌더 직접 호출, Dify 입력에 토큰·org·본문, 무인증 AI 프록시, 회의 녹음·전사본의 상용 대체 전송, 임의 텍스트 TTS, 사람 소유 위키 블록 덮어쓰기, 전역 n8n 키 |
 | 디자인 | 토큰 밖 색(3D 재질 포함), hex 하드코딩, 이모지 아이콘, "Tailwind"만 적은 지시(v3 혼입), 가상 후기·허위 수치·법적 효력 보장 문구 |
+
+## 8. 변경 이력
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-10-13 | Phase 2 `shorts_agency` 패키지(DC-F-046, DC-06-060). 효과 엔진 단가 토큰 `catalog:<key>` 추가(결정성 규칙 동일: 설정에서만 읽는다). content 프로젝트에서 성과 보장 문구는 `L-NO-GUARANTEE` error |

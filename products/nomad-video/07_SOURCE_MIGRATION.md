@@ -13,6 +13,8 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 LLM 클라이
 | `PRD.md`, `PRD_add.md`, `PRD_pricing.md` | 기획만 | 참고(이 폴더 01장으로 흡수) | `docs/products/nomad-video/01_PRD.md` | 확정 결정 8 |
 | `src/lib/media/{silence-cut,ken-burns,layer-composite,watermark,thumbnail,ffmpeg}.ts`, `workers/*.py` | 부분 | 이식(로직만, Python 핸들러로) | `services/media-worker/handlers/ffmpeg/` | MA:579-581 |
 | `src/lib/platforms/{youtube,instagram,threads,tiktok}.ts`, `src/lib/channels/{oauth-manager,quota-monitor}.ts` | 부분 | 이식 | `packages/sns-uploader/` | SHARED_MODULES 11장 |
+| `src/skill/playwright-engine/naver-login.ts` | 부분 | 이식(로그인 세션 처리만, 네이버 클립 어댑터용. 비밀번호 저장 코드가 있으면 폐기하고 세션만 `CredentialVault`에) | `packages/sns-uploader/src/naver-clip/` | VD-F-075, SHARED_MODULES 11장 |
+| `src/skill/playwright-engine/brand-connect.ts`, `src/app/api/brand-connect/**` | 부분 | 이관(nomad-blog 소유). video는 가져오지 않는다 | - | 확정 결정 19 |
 | `src/lib/platforms/{coupang,suno,distrokid,serpapi,google-trends,youtube-analytics}.ts` | 부분 | 이식(coupang은 공용 affiliate 어댑터가 소유, 참고만) | orchestrator steps/radar | MA:618 |
 | `src/lib/radar/{playboard,channel-finder,bling,scorer}.ts` | 부분 | 이식(난수 제거) | `workers/video-orchestrator/src/radar/` | SM #17 |
 | `src/lib/ai/{deepl,elevenlabs,openai-tts,whisper}.ts` | 부분 | 이식(deepl, elevenlabs는 `core-voice` 어댑터 규약으로 감싸 이식), openai-tts 폐기(01장 D-14), whisper.ts 폐기(Python 미디어 워커로) | orchestrator `steps/{translate,tts}` | MA:572 |

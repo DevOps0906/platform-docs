@@ -136,7 +136,7 @@ create trigger affiliate_disclosures_guard_write before insert or update or dele
 alter table core.affiliate_disclosures enable row level security;
 
 -- ---------------------------------------------------------------------
--- 5. brandconnect_applications: 네이버 브랜드커넥트 자동 지원(blog 소유)
+-- 5. brandconnect_applications: 네이버 브랜드커넥트 자동 지원(blog 소유, 클립형은 video가 요청)
 --    상태 전이: draft → submitting → submitted → accepted | rejected
 --               submitting → failed → (재시도) submitting
 --    실제 제출은 core.jobs(job_type = 'brandconnect.apply')로 워커가 처리한다.
@@ -149,7 +149,15 @@ create table if not exists core.brandconnect_applications (
   brand_name      text,
   product_name    text,
   category        text,
-  blog_url        text not null,
+  target_url      text not null
+                  constraint brandconnect_applications_target_url_check
+                  check (target_url ~* '^https://[^/@[:space:]]+'),
+  target_kind     text not null
+                  constraint brandconnect_applications_target_kind_check
+                  check (target_kind in ('blog', 'clip')),
+  source_app      text not null
+                  constraint brandconnect_applications_source_app_check
+                  check (source_app in ('blog', 'video')),
   message         text,
   status          text not null default 'draft'
                   constraint brandconnect_applications_status_check
@@ -163,7 +171,10 @@ create table if not exists core.brandconnect_applications (
   created_by      uuid,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now(),
-  unique (account_id, campaign_id)
+  unique (account_id, campaign_id),
+  -- 블로그형은 blog가, 클립형은 video가 만든다(확정 결정 19)
+  constraint brandconnect_applications_kind_app_check
+    check ((target_kind = 'blog' and source_app = 'blog') or (target_kind = 'clip' and source_app = 'video'))
 );
 create index if not exists brandconnect_applications_org_idx on core.brandconnect_applications (org_id, created_at desc);
 drop trigger if exists brandconnect_applications_set_updated_at on core.brandconnect_applications;
@@ -324,8 +335,11 @@ $$;
 grant execute on function core.consent_brandconnect_risk(uuid) to authenticated;
 
 -- 브랜드커넥트 지원서 생성(멤버). 위험 동의 없으면 거부. 제출은 service_role 워커가 한다.
+-- 2026-10-13: blog_url 단일 인자 → target_url/target_kind/source_app(확정 결정 19). 이전 시그니처 제거.
+drop function if exists core.create_brandconnect_application(uuid, text, text, text, text, text, text);
 create or replace function core.create_brandconnect_application(
-  p_account_id uuid, p_campaign_id text, p_blog_url text,
+  p_account_id uuid, p_campaign_id text, p_target_url text,
+  p_target_kind text, p_source_app text,
   p_brand_name text default null, p_product_name text default null,
   p_category text default null, p_message text default null
 )
@@ -349,15 +363,18 @@ begin
   if v_acc.status <> 'active' then
     raise exception 'create_brandconnect_application: account is %', v_acc.status using errcode = '22023';
   end if;
+  if not core.is_service_caller() and not core.has_entitlement(v_acc.org_id, p_source_app) then
+    raise exception 'create_brandconnect_application: % entitlement required', p_source_app using errcode = '42501';
+  end if;
   insert into core.brandconnect_applications
-    (org_id, account_id, campaign_id, brand_name, product_name, category, blog_url, message, created_by)
+    (org_id, account_id, campaign_id, brand_name, product_name, category, target_url, target_kind, source_app, message, created_by)
   values
-    (v_acc.org_id, p_account_id, p_campaign_id, p_brand_name, p_product_name, p_category, p_blog_url, p_message, auth.uid())
+    (v_acc.org_id, p_account_id, p_campaign_id, p_brand_name, p_product_name, p_category, p_target_url, p_target_kind, p_source_app, p_message, auth.uid())
   returning id into v_id;
   return v_id;
 end;
 $$;
-grant execute on function core.create_brandconnect_application(uuid, text, text, text, text, text, text) to authenticated;
+grant execute on function core.create_brandconnect_application(uuid, text, text, text, text, text, text, text, text) to authenticated;
 
 -- ---------------------------------------------------------------------
 -- 7. 권한과 RLS 정책 (SELECT만)

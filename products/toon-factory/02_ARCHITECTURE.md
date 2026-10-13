@@ -170,6 +170,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 | `export.strip` | `toon.render` | TS | 0 | 3 | 해당 없음 |
 | `export.mp4` | `toon.render` | TS + FFmpeg | 3 | 2 | 최종 실패 자동 |
 | `cut.thumbnail` | `toon.render` | TS | 0 | 1 | 해당 없음 |
+| (동기) 로그라인·시놉시스 | Route Handler → FastAPI 그래프 `toon.logline` | Python | 1(정액) | 없음 | 실패 시 즉시 `refund_credits` |
 | `rag.ingest` | `toon.knowledge` | Python(FastAPI) | 0(위키 갱신 비용에 포함) | 3 | 해당 없음 |
 | `wiki.ingest` | `toon.knowledge` | Python(FastAPI) | 2(정산 1~4) | 2 | 최종 실패 자동 |
 | `wiki.lint` | `toon.knowledge` | Python(FastAPI) | 1 | 1 | 최종 실패 자동 |
@@ -182,7 +183,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 
 스케줄(워커 크론, service_role): 매일 03:00 KST `expires_at < now()`인 내보내기 파일 삭제, 매일 빌링키 청구(`CORE_SPEC.md:223-233`), 매 10분 30분 넘은 `image.generate` 실패 처리, 매 10분 `job_id` 없이 30분 넘은 `queued` 내보내기(영상 음성 준비 중단) 실패 처리와 환불, 5분 주기 AI 정산(`ai_usage.settled_at is null`, `POST /api/internal/ai-settle`). 매일 04:00 KST 작품이 없는 설정·위키 컬렉션(이름의 `series_id`가 `toon.series`에 없음)과 그 문서·청크·위키 페이지를 FastAPI 정리 엔드포인트로 삭제한다(개인정보 잔존 방지, 06장 6절 요청 10). 코어 스케줄(`CORE_SPEC.md:383-395`)은 코어 담당 크론이 돈다.
 
-렌더 워커의 판정 순서(리뷰 #1, #2 차단의 서버 쪽): (1) `exports` 행의 `watermark` 값만 믿는다(요청 페이로드의 값은 없다), (2) 문서가 참조하는 카탈로그 에셋을 `toon.org_asset_access`로 다시 확인하고 하나라도 허용 밖이면 `fail_job(retryable=false)` + `TN003`, (3) 원본은 `toon-catalog` 버킷에서 service_role로 읽는다, (4) 사용자 에셋의 `ai_generated`를 모아 `exports.ai_label`을 기록하고, `options.voice`가 있으면 `ai_label`을 true로 하고 메타데이터에 `ai_voice=true`를 넣는다. (5) 음성 클립은 `exports.options.voice.clips`의 Storage 경로만 읽고, 경로가 `exports/<org_id>/toon/voice/<export_id>/`로 시작하지 않으면 `fail_job(retryable=false)`.
+렌더 워커의 판정 순서(리뷰 #1, #2 차단의 서버 쪽): (1) `exports` 행의 `watermark` 값만 믿는다(요청 페이로드의 값은 없다), (2) 문서가 참조하는 카탈로그 에셋을 `toon.org_asset_access`로 다시 확인하고 하나라도 허용 밖이면 `fail_job(retryable=false)` + `TN003`, (3) 원본은 `toon-catalog` 버킷에서 service_role로 읽는다, (4) 사용자 에셋의 `ai_generated`를 모아 `exports.ai_label`을 기록하고, (4-1) 대가성 문구·가상인물 표시는 `exports.disclosure_text`·`virtual_character_label`만 믿고(DB 트리거가 협찬 행에서 복사, 2026-10-13 2차) 프리셋 크기는 `exports.preset`으로 `packages/toon-doc/presets/`에서 찾는다, `options.voice`가 있으면 `ai_label`을 true로 하고 메타데이터에 `ai_voice=true`를 넣는다. (5) 음성 클립은 `exports.options.voice.clips`의 Storage 경로만 읽고, 경로가 `exports/<org_id>/toon/voice/<export_id>/`로 시작하지 않으면 `fail_job(retryable=false)`.
 
 ## 5. AI 라우팅
 
@@ -229,6 +230,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 | `toon.storyboard` | `plot` → `panel_split` → `consistency` → `image_prompts` → `compliance` → (걸린 컷만 `panel_split` 1회 재작성 → `consistency` → `compliance`) | `toon.storyboard`, `toon.consistency`, `toon.prompt_en` | 있음(마지막 노드) | 워커 요청, 잡 `storyboard.generate` |
 | `toon.dialogue` | `retrieve` → `polish` → `compliance` | `toon.dialogue` | 있음 | Route Handler 동기 호출(서명 토큰) |
 | `toon.image_prompt` | `translate` → `compliance` | `toon.prompt_en` | 있음 | 워커 `image.generate` 핸들러(잡 토큰) |
+| `toon.logline` | `premise`(키워드·장르·톤 → 로그라인 3안) → `synopsis`(고른 로그라인 → 시놉시스·비트, 2단계 호출 때만) → `compliance` | `toon.storyboard` 라우팅 행 재사용(이야기 품질 체인, 새 라우팅 행 없음) | 있음 | Route Handler 동기 호출(서명 토큰), 2026-10-13 2차 |
 
 `toon.storyboard` 노드:
 
@@ -324,3 +326,12 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 | `NEXT_PUBLIC_HERO3D_ENABLED` | 3D 히어로 전체 끄기 스위치(장애 대응) | 공개 | 기본 true. false면 정지 이미지 |
 
 AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(EdDSA).
+
+## 9. 2026-10-13 2차 보강 (확정 결정 20)
+
+| 항목 | 설계 |
+|---|---|
+| 내보내기 프리셋 | `packages/toon-doc/presets/index.ts`가 프리셋 4종의 크기·분할·장수·파일 형식 정본. Route Handler가 요청을 프리셋으로 검사(캐러셀 10장 등)하고 `exports.preset`에 코드를 기록한다. DB는 코드와 종류 조합만 검사 |
+| 브랜디드 툰 | `toon.sponsorships`(RLS 멤버 쓰기) + 상태 트리거 + `decide_sponsorship`(owner/admin). 콘티·대사 그래프 입력에 협찬 `key_messages`를 넣고 `banned_terms`를 compliance 금지어에 더한다(조직·작품 범위, 규칙 파일 수정 없음). 렌더 워커는 내보내기 행의 문구만 넣는다 |
+| SNS 직접 업로드(Phase 2) | toon은 video 스키마에 쓰지 않는다. 코어에 공용 업로더 진입점(요청: 06장 6절 13)이 생기면 `upload.<platform>` 잡을 요청하고, 채널 연결·토큰은 코어 `encrypted_credentials`를 쓴다. `naver_clip` 어댑터는 Playwright이고 위험 고지·동의 기록 없이는 잡을 만들지 않는다 |
+| 숏툰 모션(Phase 2) | 렌더 워커 `export.mp4`에 모션 타임라인(컷별 팬·줌 키프레임, 말풍선 등장 시각, 자막 트랙)을 추가. TTS 클립 길이(TN-F-058)로 자막 타이밍을 맞춘다 |

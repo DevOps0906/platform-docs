@@ -27,9 +27,11 @@
 | `POST /api/catalog/sign` | member | `{ assetIds: uuid[1..200], variant: 'editor' }` | `{ urls: {assetId: url}, denied: uuid[] , expiresAt }` | 0 | `toon.org_asset_access` → Storage 서명 URL(`toon-catalog`, 15분) | 403 `TN003`(전부 거부 시), 429 |
 | `POST /api/storyboard` | member | `{ requestId, episodeId, synopsis(1..2000), cutCount(4..30), tone: 'daily'\|'info'\|'comic'\|'emotional', castIds: uuid[1..6] }` | 202 `{ jobId }` | 3 | `consume_credits`, `enqueue_job('toon.ai','storyboard.generate')`(워커가 그래프 `toon.storyboard` 실행, 4.1절) | 402 `CR001`, 422(인스타툰 cutCount>10), `TN006` |
 | `POST /api/dialogue/polish` | member | `{ requestId, cutId, layerId, text(1..120), tone }` | `{ options: string[3] }` | 1 | 서명 토큰 scope `graph:toon.dialogue` → FastAPI `POST /graphs/toon.dialogue/runs`(동기), `consume_credits`(정액 1), 실패 시 `refund_credits` | 402, `TN006` |
+| `POST /api/logline` | member | `{ requestId, keywords: string[1..5](각 1..20), genre?, tone, format: 'instatoon'\|'webtoon', castIds?: uuid[0..6], step: 'logline'\|'synopsis', pickedLogline?(1..80) }` | `{ loglines: string[3] }` 또는 `{ synopsis, beats: string[] }` | 1(같은 `requestId`의 두 단계 합계) | 서명 토큰 scope `graph:toon.logline` → FastAPI `POST /graphs/toon.logline/runs`(동기), `consume_credits`(정액 1, 첫 단계에서), 실패 시 `refund_credits`. 결과는 저장하지 않는다(사용자가 "작품에 적용"하면 브라우저가 RLS로 `series.synopsis` 또는 `episodes.logline` 갱신) | 402, `TN006` |
 | `POST /api/generations` | member | `{ requestId, kind: 'background', prompt(1..500), seriesId?, width, height(256..2048), numImages(1..2) }` | 202 `{ generationId, jobId }` | 4 x n | compliance 규칙 → 국외 이전 동의 확인(`core.ai_org_settings`, 미동의 `TN007`) → `consume_credits` → `toon.generations` INSERT → `enqueue_job('toon.ai','image.generate')` | 402, 403 `TN007`, 413(용량), `TN006`, 429 |
-| `POST /api/exports` | member | `{ requestId, episodeId, kind: 'png'\|'zip'\|'webtoon_strip'\|'mp4', options: { gutterPx?(0..200), gutterColor?, splitHeight?(640..1600), format?: 'jpg'\|'png', transition?: 'cut'\|'crossfade', zoom?: boolean, bgmAssetId?, aiLabelVisible: boolean, aiLabelOptOutConfirmed?: true, voice?: { mode: 'off'\|'dialogue' } } }` | 202 `{ exportId, jobId }`(`voice.mode='dialogue'`이면 `jobId: null`이고 이어서 `POST /api/voice/video-lines`) | mp4만 3(음성은 `video-lines`에서 따로 선차감) | `toon.plan_features`, `toon.monthly_export_count`, `toon.org_asset_access`, `consume_credits`(mp4), `toon.exports` INSERT(watermark는 서버 값), `enqueue_job('toon.render','export.<kind>')`, 가시 표기 해제 시 감사 `export.ai_label_opt_out` | 403 `TN002`(음성은 `features.video_voice`도 확인), 403 `TN003`, 422 `TN004`, 429 `TN005`, 402 |
+| `POST /api/exports` | member | `{ requestId, episodeId, kind: 'png'\|'zip'\|'webtoon_strip'\|'mp4', options: { gutterPx?(0..200), gutterColor?, splitHeight?(640..1600), format?: 'jpg'\|'png', transition?: 'cut'\|'crossfade', zoom?: boolean, bgmAssetId?, aiLabelVisible: boolean, aiLabelOptOutConfirmed?: true, voice?: { mode: 'off'\|'dialogue' }, purpose?: 'final'\|'review' }, preset?: 'instagram_carousel'\|'webtoon_canvas'\|'naver_challenge'\|'vertical_9x16' }` | 202 `{ exportId, jobId }`(`voice.mode='dialogue'`이면 `jobId: null`이고 이어서 `POST /api/voice/video-lines`) | mp4만 3(음성은 `video-lines`에서 따로 선차감) | `toon.plan_features`, `toon.monthly_export_count`, `toon.org_asset_access`, `consume_credits`(mp4), `toon.exports` INSERT(watermark는 서버 값), `enqueue_job('toon.render','export.<kind>')`, 가시 표기 해제 시 감사 `export.ai_label_opt_out` | 403 `TN002`(음성은 `features.video_voice`도 확인), 403 `TN003`, 422 `TN004`, 429 `TN005`, 402, 409 `TN008`(협찬 미승인 회차의 최종 내보내기), 422(프리셋 규격 위반: 캐러셀 10장 초과 등, 프리셋·종류 불일치는 DB 23514) |
 | `GET /api/exports/{id}/download?i=` | member | 파일 인덱스 | 302 서명 URL(1시간) | 0 | Storage `exports`, 감사 `export.download` | 404, 410(만료) |
+| `POST /api/sponsorships/{id}/decide` | owner/admin | `{ decision: 'approved'\|'changes_requested', note?(..500) }` | `{ status }` | 0 | 사용자 세션 `rpc toon.decide_sponsorship`(감사 `sponsorship.<decision>`) | 403(42501), 409(22023: 검토 중이 아님) |
 | `POST /api/jobs/{id}/cancel` | member | - | `{ status }` | 환불 | 사용자 세션 `core.cancel_job` → service로 제품 행 `canceled` 미러 | 409 `JB002` |
 | `POST /api/billing/checkout` | owner/admin | `{ kind: 'subscription', planCode: 'pro' }` 또는 `{ kind: 'credit_pack', packCode }` | `{ orderId, amountKrw, customerKey }` | 0 | `payment_orders` INSERT(금액은 DB) | 409(이미 Pro) |
 | `POST /api/billing/confirm` | owner/admin | `{ paymentKey, orderId, amount }` | `{ status }` | 지급 | Toss confirm → `core.confirm_payment_order` | 409 `PM001`/`PM409`, 404 `PM404` |
@@ -40,7 +42,7 @@
 | `POST /api/admin/catalog/packs/{id}/verify` | platform_admin | `{ licenseRef, note }` | `{ pack }` | 0 | service UPDATE `toon.asset_packs` + 감사 `asset_pack.verify` | 403 |
 | `POST /api/admin/catalog/packs/{id}/publish` | platform_admin | `{ status: 'published'\|'retired' }` | `{ pack }` | 0 | service UPDATE + 감사 | 409(검증 없음, CHECK 23514) |
 
-브라우저 직접 호출(RLS): `toon.series`, `series_characters`, `episodes`, `cuts` CRUD, `rpc toon.save_cut_doc`, `rpc toon.reorder_cuts`, `rpc toon.archive_user_asset`, `toon.catalog_assets`, `toon.generations`/`user_assets`/`exports` 조회, `core.jobs` Realtime.
+브라우저 직접 호출(RLS): `toon.series`, `series_characters`, `episodes`, `cuts`, `sponsorships`(2026-10-13 2차. INSERT는 DB가 `features.sponsorship`을 검사해 `TN002`, 상태는 `draft`/`in_review`/`closed`만 직접 변경) CRUD, `rpc toon.save_cut_doc`, `rpc toon.reorder_cuts`, `rpc toon.archive_user_asset`, `toon.catalog_assets`, `toon.generations`/`user_assets`/`exports` 조회, `core.jobs` Realtime.
 
 
 ### 2.1 AI·음성 Route Handler (2026-10-13)
@@ -86,10 +88,11 @@ SECURITY INVOKER 함수도 이 절에 함께 적는다.
 | `toon.org_asset_access(p_org_id, p_asset_ids)` | authenticated, service | 서비스 또는 멤버 + 엔타이틀먼트 | `(asset_id, tier, allowed)` | 42501 |
 | `toon.monthly_export_count(p_org_id)` | authenticated, service | 서비스 또는 멤버 | int(KST 월) | 42501 |
 | `toon.archive_user_asset(p_user_asset_id)` | authenticated | 서비스 또는 `has_org_role(owner,admin,member)` + 감사 | void | `P0002`, 42501 |
+| `toon.decide_sponsorship(p_sponsorship_id, p_decision, p_note)` | authenticated, service | 서비스 또는 `has_org_role(owner,admin)`, 상태가 `in_review`일 때만 + 감사 | void | `P0002`, 42501, 22023 |
 
 AI·음성용 제품 함수는 없다. 코어 `set_ai_cross_border_ack`는 온보딩에서 사용자 세션으로, `resolve_ai_route`는 service_role로만 부른다.
 
-트리거 함수(`enforce_plan_limits` `TN001`, `bump_cut_revision`, `enforce_run_status_transition` 22023)는 EXECUTE를 열지 않는다. 코어 RPC: `consume_credits`/`refund_credits`(`CORE_SPEC.md:152-160`), `enqueue_job`/`claim_jobs`/`heartbeat_job`/`complete_job`/`fail_job`/`cancel_job`(`:278-307`), `confirm_payment_order`(`:210-221`), `rate_limit_hit`(`:332-340`).
+트리거 함수(`enforce_plan_limits` `TN001`, `bump_cut_revision`, `enforce_run_status_transition` 22023, `enforce_sponsorship_status` `TN002`/42501/22023, `apply_export_sponsorship` `TN008`)는 EXECUTE를 열지 않는다. 코어 RPC: `consume_credits`/`refund_credits`(`CORE_SPEC.md:152-160`), `enqueue_job`/`claim_jobs`/`heartbeat_job`/`complete_job`/`fail_job`/`cancel_job`(`:278-307`), `confirm_payment_order`(`:210-221`), `rate_limit_hit`(`:332-340`).
 
 ## 4. 잡 페이로드 계약
 
@@ -144,7 +147,7 @@ AI·음성용 제품 함수는 없다. 코어 `set_ai_cross_border_ack`는 온�
 }
 ```
 
-워터마크, AI 표기, 옵션은 페이로드가 아니라 `toon.exports` 행(`watermark`, `ai_label_visible`, `options`)에서 읽는다. `kind='mp4'`이고 `options.voice.mode='dialogue'`이면 `exports.options.voice = { mode, provider, clips: [{ cut_id, layer_id, path, duration_ms, characters }] }`가 `video-lines` 단계에서 채워진 뒤에만 잡이 만들어진다. 워커는 `clips`의 경로(`exports/<org_id>/toon/voice/<export_id>/` 접두사)만 읽는다. 컷 문서는 잡 시작 시 DB에서 읽은 스냅샷을 쓴다(진행 중 편집은 반영하지 않음). 결과 `expires_at = now() + 30일`.
+워터마크, AI 표기, 옵션은 페이로드가 아니라 `toon.exports` 행(`watermark`, `ai_label_visible`, `options`)에서 읽는다. `kind='mp4'`이고 `options.voice.mode='dialogue'`이면 `exports.options.voice = { mode, provider, clips: [{ cut_id, layer_id, path, duration_ms, characters }] }`가 `video-lines` 단계에서 채워진 뒤에만 잡이 만들어진다. 워커는 `clips`의 경로(`exports/<org_id>/toon/voice/<export_id>/` 접두사)만 읽는다. 2026-10-13 2차: 프리셋은 `exports.preset`, 대가성 문구와 가상인물 표시는 `exports.disclosure_text`, `virtual_character_label`(DB 트리거가 협찬 행에서 복사)에서만 읽는다. 문구가 있으면 01장 TN-F-072 위치에 넣고, 렌더 결과 메타데이터에 `sponsored=true`, `disclosure`를 기록한다. 검토용 시안(`options.purpose='review'`)은 워터마크 외에 "검토용 시안" 띠를 넣는다. 컷 문서는 잡 시작 시 DB에서 읽은 스냅샷을 쓴다(진행 중 편집은 반영하지 않음). 결과 `expires_at = now() + 30일`.
 
 ### 4.4 `cut.thumbnail`
 
@@ -231,6 +234,7 @@ AI·음성용 제품 함수는 없다. 코어 `set_ai_cross_border_ack`는 온�
 | `TN005` | 월 이미지 내보내기 한도 | Route Handler | 429 |
 | `TN006` | 프롬프트·대사 규칙 위반 | Route Handler | 422 |
 | `TN007` | 국외 이전 동의 없이 AI 배경(fal) 요청 | Route Handler | 403 + "AI 처리 방식에서 국외 이전 동의가 필요합니다" |
+| `TN008` | 협찬 회차인데 협찬이 승인되지 않았는데 최종 내보내기 요청 | DB 트리거 `apply_export_sponsorship` | 409 + "광고주 승인 후 내보낼 수 있습니다. 검토용 시안으로 내보내 보세요" |
 | `TN409` | 컷 revision 충돌 | `toon.save_cut_doc` | 409 |
 | `23514` | 문서 형식·라이선스 CHECK 위반 | DB | 422 |
 | `23503` | 다른 조직 부모 참조(복합 FK) | DB | 404 |

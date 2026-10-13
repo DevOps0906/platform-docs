@@ -7,6 +7,7 @@
 --   카탈로그(플랫폼 소유, org 없음): asset_packs → characters → assets
 --   작품(조직 소유)               : series → episodes → cuts(doc jsonb = 레이어 판별 유니온)
 --                                   series_characters (작품 캐스트)
+--                                   sponsorships (브랜디드 툰 협찬, 11절. episodes.sponsorship_id 로 연결)
 --   서버 기록(쓰기는 service_role): generations(AI 생성), user_assets(채택한 생성물), exports(내보내기)
 --
 -- 보안 원칙 (SECURITY_BASELINE.md)
@@ -780,6 +781,232 @@ begin
     end if;
   end if;
 end $$;
+
+-- =====================================================================
+-- 11. 벤치마킹 보강 (2026-10-13, 확정 결정 20)
+--   설계: docs/products/toon-factory/08_BENCHMARK.md 2장, 01_PRD.md TN-F-038·TN-F-070~073, 05_DATA_MODEL.md 2.6절.
+--   11-1 내보내기 플랫폼 프리셋(exports.preset). 규격 수치는 packages/toon-doc/presets 가 정본이고 DB 는 코드만 검사한다.
+--   11-2 브랜디드 툰(sponsorships): 광고주 브리프 + 대가성 문구 + 승인. 승인된 협찬 회차만 최종 내보내기,
+--        대가성 문구와 가상인물 표시는 서버(이 트리거)가 협찬 행에서 복사한다(요청 페이로드 불신).
+--   SNS 직접 업로드(Phase 2)와 숏툰 모션(Phase 2)은 이 조각에 테이블을 만들지 않는다(01_PRD 2절).
+-- =====================================================================
+
+-- 11-1. 플랫폼 프리셋
+alter table toon.exports add column if not exists preset text;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'exports_preset_check' and conrelid = 'toon.exports'::regclass) then
+    alter table toon.exports add constraint exports_preset_check check (
+      preset is null or preset in ('instagram_carousel', 'webtoon_canvas', 'naver_challenge', 'vertical_9x16'));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'exports_preset_kind_check' and conrelid = 'toon.exports'::regclass) then
+    -- 프리셋과 내보내기 종류의 조합: 캐러셀은 png/zip, 웹툰 계열은 webtoon_strip, 9:16 은 mp4
+    alter table toon.exports add constraint exports_preset_kind_check check (
+      preset is null
+      or (preset = 'instagram_carousel' and kind in ('png', 'zip'))
+      or (preset in ('webtoon_canvas', 'naver_challenge') and kind = 'webtoon_strip')
+      or (preset = 'vertical_9x16' and kind = 'mp4'));
+  end if;
+end $$;
+
+-- 11-2. 브랜디드 툰(협찬)
+create table if not exists toon.sponsorships (
+  id                uuid primary key default gen_random_uuid(),
+  org_id            uuid not null references core.organizations(id) on delete cascade,
+  series_id         uuid not null,
+  advertiser_name   text not null constraint sponsorships_advertiser_check check (char_length(advertiser_name) between 1 and 80),
+  product_name      text constraint sponsorships_product_check check (product_name is null or char_length(product_name) <= 80),
+  brief             text constraint sponsorships_brief_check check (brief is null or char_length(brief) <= 3000),
+  key_messages      text[] not null default '{}' constraint sponsorships_key_messages_check check (cardinality(key_messages) <= 10),
+  banned_terms      text[] not null default '{}' constraint sponsorships_banned_terms_check check (cardinality(banned_terms) <= 50),
+  compensation_kind text not null
+                    constraint sponsorships_compensation_check check (compensation_kind in ('paid', 'free_product', 'commission', 'other')),
+  disclosure_text   text not null default '광고'
+                    constraint sponsorships_disclosure_check check (char_length(btrim(disclosure_text)) between 2 and 60),
+  virtual_character boolean not null default true,   -- 캐릭터(가상인물)가 상품을 추천·보증하는 형식이면 true → 가상인물 표시
+  status            text not null default 'draft'
+                    constraint sponsorships_status_check check (status in ('draft', 'in_review', 'changes_requested', 'approved', 'closed')),
+  decided_at        timestamptz,
+  decided_by        uuid,
+  decision_note     text constraint sponsorships_decision_note_check check (decision_note is null or char_length(decision_note) <= 500),
+  created_by        uuid default auth.uid(),
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  constraint sponsorships_series_fk foreign key (series_id, org_id) references toon.series (id, org_id) on delete cascade,
+  constraint sponsorships_id_org_uniq unique (id, org_id),
+  constraint sponsorships_decided_check check (status not in ('approved', 'changes_requested') or (decided_at is not null and decided_by is not null))
+);
+create index if not exists sponsorships_org_updated_idx on toon.sponsorships (org_id, updated_at desc);
+
+alter table toon.episodes add column if not exists sponsorship_id uuid;
+alter table toon.exports  add column if not exists sponsorship_id uuid references toon.sponsorships(id) on delete set null;
+alter table toon.exports  add column if not exists disclosure_text text;
+alter table toon.exports  add column if not exists virtual_character_label boolean not null default false;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'episodes_sponsorship_fk' and conrelid = 'toon.episodes'::regclass) then
+    alter table toon.episodes add constraint episodes_sponsorship_fk
+      foreign key (sponsorship_id, org_id) references toon.sponsorships (id, org_id) on delete restrict;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'exports_disclosure_check' and conrelid = 'toon.exports'::regclass) then
+    alter table toon.exports add constraint exports_disclosure_check check (sponsorship_id is null or disclosure_text is not null);
+  end if;
+end $$;
+create index if not exists episodes_sponsorship_idx on toon.episodes (sponsorship_id) where sponsorship_id is not null;
+
+drop trigger if exists sponsorships_set_updated_at on toon.sponsorships;
+create trigger sponsorships_set_updated_at before update on toon.sponsorships for each row execute function core.set_updated_at();
+
+-- 협찬 상태 전이. 사용자: draft ↔ in_review, changes_requested → draft, approved → closed.
+--   approved / changes_requested 는 toon.decide_sponsorship(owner/admin)만 만든다.
+--   승인 뒤 브리프·문구·보상 형태를 고치면 다시 in_review 로 돌아가고 결정 기록을 지운다.
+create or replace function toon.enforce_sponsorship_status()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare v_deciding boolean := coalesce(current_setting('toon.sponsorship_decision', true), '') = 'on';
+begin
+  if tg_op = 'INSERT' then
+    if new.status <> 'draft' and not core.is_service_caller() then
+      raise exception 'sponsorship: must start as draft' using errcode = '22023';
+    end if;
+    if not core.is_service_caller() then
+      -- 플랜 게이트(01_PRD 4.2절 sponsorship). 키가 없으면 false. RLS 직접 INSERT 도 여기서 막힌다.
+      if coalesce(toon.plan_features(new.org_id) ->> 'sponsorship', 'false') <> 'true' then
+        raise exception 'toon: sponsorship is not in this plan' using errcode = 'TN002';
+      end if;
+      new.decided_at := null; new.decided_by := null; new.decision_note := null;
+    end if;
+    return new;
+  end if;
+  if old.status = 'approved' and new.status = 'approved' and not v_deciding
+     and (new.brief is distinct from old.brief or new.key_messages is distinct from old.key_messages
+          or new.disclosure_text is distinct from old.disclosure_text or new.compensation_kind is distinct from old.compensation_kind
+          or new.virtual_character is distinct from old.virtual_character or new.advertiser_name is distinct from old.advertiser_name
+          or new.product_name is distinct from old.product_name) then
+    new.status := 'in_review'; new.decided_at := null; new.decided_by := null;
+    return new;
+  end if;
+  if new.status = old.status then
+    if not v_deciding and not core.is_service_caller() then
+      new.decided_at := old.decided_at; new.decided_by := old.decided_by; new.decision_note := old.decision_note;
+    end if;
+    return new;
+  end if;
+  if v_deciding or core.is_service_caller() then
+    if not ((old.status = 'in_review' and new.status in ('approved', 'changes_requested'))
+            or (old.status = 'approved' and new.status = 'closed')
+            or (old.status in ('draft', 'changes_requested') and new.status = 'in_review')
+            or (old.status = 'in_review' and new.status = 'draft')) then
+      raise exception 'sponsorship: invalid status transition % -> %', old.status, new.status using errcode = '22023';
+    end if;
+    return new;
+  end if;
+  if not ((old.status = 'draft' and new.status = 'in_review')
+          or (old.status = 'in_review' and new.status = 'draft')
+          or (old.status = 'changes_requested' and new.status in ('draft', 'in_review'))
+          or (old.status = 'approved' and new.status = 'closed')) then
+    raise exception 'sponsorship: status % -> % needs decide_sponsorship', old.status, new.status using errcode = '42501';
+  end if;
+  new.decided_at := old.decided_at; new.decided_by := old.decided_by; new.decision_note := old.decision_note;
+  return new;
+end;
+$$;
+drop trigger if exists sponsorships_status on toon.sponsorships;
+create trigger sponsorships_status before insert or update on toon.sponsorships
+  for each row execute function toon.enforce_sponsorship_status();
+
+-- 승인·수정 요청 기록. 광고주(고객) 확인 결과를 owner/admin 이 기록한다(외부 검토 링크는 Phase 2).
+create or replace function toon.decide_sponsorship(p_sponsorship_id uuid, p_decision text, p_note text default null)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row toon.sponsorships;
+begin
+  if p_decision not in ('approved', 'changes_requested') then
+    raise exception 'decide_sponsorship: decision must be approved or changes_requested' using errcode = '22023';
+  end if;
+  select * into v_row from toon.sponsorships where id = p_sponsorship_id for update;
+  if not found then
+    raise exception 'decide_sponsorship: not found' using errcode = 'P0002';
+  end if;
+  if not core.is_service_caller() and not core.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'decide_sponsorship: owner/admin only' using errcode = '42501';
+  end if;
+  if v_row.status <> 'in_review' then
+    raise exception 'decide_sponsorship: sponsorship is not in review' using errcode = '22023';
+  end if;
+  perform set_config('toon.sponsorship_decision', 'on', true);
+  update toon.sponsorships
+     set status = p_decision, decided_at = now(), decided_by = auth.uid(), decision_note = left(p_note, 500)
+   where id = p_sponsorship_id;
+  perform set_config('toon.sponsorship_decision', 'off', true);
+  perform core.write_audit(v_row.org_id, 'sponsorship.' || p_decision, 'sponsorship', p_sponsorship_id::text);
+end;
+$$;
+
+-- 내보내기 행(서버 기록)에 협찬 정보를 서버가 채운다. 협찬 회차는 승인 전 최종 내보내기 금지(TN008).
+--   예외: options.purpose = 'review'(광고주 검토용 시안)는 승인 전에도 만들 수 있고 워터마크를 강제한다.
+create or replace function toon.apply_export_sponsorship()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare v_sp toon.sponsorships;
+begin
+  new.sponsorship_id := null; new.disclosure_text := null; new.virtual_character_label := false;
+  if new.episode_id is null then
+    return new;
+  end if;
+  select s.* into v_sp
+  from toon.episodes e join toon.sponsorships s on s.id = e.sponsorship_id and s.org_id = e.org_id
+  where e.id = new.episode_id;
+  if not found then
+    return new;
+  end if;
+  if coalesce(new.options ->> 'purpose', '') = 'review' then
+    new.watermark := true;
+  elsif v_sp.status <> 'approved' then
+    raise exception 'toon: sponsored episode needs an approved sponsorship before export' using errcode = 'TN008';
+  end if;
+  new.sponsorship_id := v_sp.id;
+  new.disclosure_text := v_sp.disclosure_text;
+  new.virtual_character_label := v_sp.virtual_character;
+  return new;
+end;
+$$;
+drop trigger if exists exports_apply_sponsorship on toon.exports;
+create trigger exports_apply_sponsorship before insert on toon.exports
+  for each row execute function toon.apply_export_sponsorship();
+
+alter table toon.sponsorships enable row level security;
+grant select, insert, update, delete on toon.sponsorships to authenticated;
+drop policy if exists sponsorships_select on toon.sponsorships;
+create policy sponsorships_select on toon.sponsorships for select to authenticated
+  using (core.is_org_member(org_id) and core.has_entitlement(org_id, 'toon'));
+drop policy if exists sponsorships_insert on toon.sponsorships;
+create policy sponsorships_insert on toon.sponsorships for insert to authenticated
+  with check (core.is_org_member(org_id) and core.has_entitlement(org_id, 'toon'));
+drop policy if exists sponsorships_update on toon.sponsorships;
+create policy sponsorships_update on toon.sponsorships for update to authenticated
+  using (core.is_org_member(org_id) and core.has_entitlement(org_id, 'toon'))
+  with check (core.is_org_member(org_id) and core.has_entitlement(org_id, 'toon'));
+drop policy if exists sponsorships_delete on toon.sponsorships;
+create policy sponsorships_delete on toon.sponsorships for delete to authenticated
+  using (core.has_org_role(org_id, array['owner', 'admin']));
+
+revoke execute on function toon.enforce_sponsorship_status() from public, anon, authenticated;
+revoke execute on function toon.apply_export_sponsorship() from public, anon, authenticated;
+revoke execute on function toon.decide_sponsorship(uuid, text, text) from public, anon;
+grant execute on function toon.decide_sponsorship(uuid, text, text) to authenticated, service_role;
+
+-- 11-3. 플랜 키 병합(sponsorship: free false / pro true). 10.2 와 같은 방식, 행이 없으면 아무 일도 하지 않는다.
+--   서버는 키가 없으면 false 로 읽는다(01_PRD.md 4.2절). 모놀리스는 seed.sql 의 features 에 직접 넣는다.
+update core.plans set features = features || '{"sponsorship": false}'::jsonb where app_id = 'toon' and code = 'free';
+update core.plans set features = features || '{"sponsorship": true}'::jsonb  where app_id = 'toon' and code = 'pro';
 
 -- =====================================================================
 -- 끝. PostgREST 노출: config.toml [api].schemas 에 toon 추가.

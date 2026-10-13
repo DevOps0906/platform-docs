@@ -23,6 +23,7 @@
 | 수정 금지 | `_platform-core/`, `_supabase-modular/`의 다른 파일, `packages/core-*`. 필요하면 06장 6절 요청 |
 | 대가성 문구 | 제휴 링크·스폰서 원고에는 글 상단 문구가 반드시 들어간다. 끄는 옵션, 숨김 스타일을 만들지 않는다 |
 | 브랜드커넥트·자동 게시 | 위험 동의(owner/admin, 고지문 버전) 없이 Playwright 작업을 실행하지 않는다. CAPTCHA 우회·봇 감지 우회·프록시 순환 금지 |
+| 브랜드커넥트 유형 | blog는 블로그형 지원서만 만든다(`target_kind='blog'`, `source_app='blog'`). 클립형은 video로 넘긴다(BL-F-036). `brandconnect.apply` 워커는 video 요청도 처리하므로 payload `source_app`과 지원서 `target_kind`를 함께 확인한다 |
 | 생성 콘텐츠 | 사용자 메모 없는 체험담, 지어낸 수치, 가상 후기 금지(01장 6.5절) |
 | 원본 | 원본 폴더를 고치지 않는다. YSM은 `git show 5f6d262:<경로>`로만 읽는다 |
 | LLM 키 | FastAPI(`apps/api`)에만. Vercel과 `blog-worker`에 두지 않는다. ElevenLabs 키와 서명 토큰 개인키(`AI_TOKEN_PRIVATE_KEY`)는 Next.js 서버에만 |

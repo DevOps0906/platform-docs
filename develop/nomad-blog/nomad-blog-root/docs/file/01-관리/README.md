@@ -40,7 +40,7 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase, 기능 요구사항과 수용 기준(AI·음성·3D 포함), 요금과 크레딧(AI 단가 4.6절), 비기능 수치, 법·약관·브랜드커넥트 위험 고지·AI 개인정보 규칙, KPI, 열린 결정(D-1~D-20) |
+| `01_PRD.md` | 페르소나, MVP/Phase, 기능 요구사항과 수용 기준(AI·음성·3D 포함), 요금과 크레딧(AI 단가 4.6절), 비기능 수치, 법·약관·브랜드커넥트 위험 고지·AI 개인정보 규칙, KPI, 열린 결정(D-1~D-21) |
 | `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅 기본값 12행과 그래프 `blog.post_draft`, 리뷰 "높음" 결함 중 구조 결함 차단 설계, 배포, 환경변수 |
 | `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우, 화면별 명세(AI 채팅·음성·자료·위키·승인 화면, 디자인 시스템), 랜딩 디자인 방향(레퍼런스·브리프·토큰·3D 히어로), 상태와 오류 |
 | `04_API.md` | Route Handler(`/api/ai/*`, `/api/voice/*` 포함), 제품 RPC, 잡 페이로드, 웹훅, 외부 어댑터(FastAPI 엔드포인트, Dify 계약), 오류 코드 |
@@ -50,6 +50,8 @@
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 `0001_core_lite.sql`(코어 원본 그대로), `0002_blog_domain.sql`, `seed.sql`(AI 라우팅 기본값 12행 포함) |
 | `../_supabase-modular/migrations/1300_blog.sql` | 통합 DB용 `blog` 스키마 조각 |
+
+2026-10-13 확정 결정 19: 브랜드커넥트 지원서가 블로그형/클립형으로 나뉘었다. blog는 블로그형을 만들고 클립형 캠페인은 video로 넘기며(BL-F-036), 블로그 원고를 클립 대본으로 넘기는 OSMU는 Phase 2다(BL-F-037). 코어 변경은 `../_platform-core/CORE_SPEC.md` 16.1절.
 
 ## 5. DB 구조 선택
 
