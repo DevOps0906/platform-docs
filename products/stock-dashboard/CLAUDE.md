@@ -6,9 +6,10 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성), `DB_CONVENTIONS.md`(14장 pgvector), `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 2 | 이 폴더 `01_PRD.md`(특히 6장 법·금지 문구), `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `06_AGENT_PLAN.md`(자기 작업 행), `07_SOURCE_MIGRATION.md` 4장 |
-| 3 | 디자인 작업이면 `docs/products/_design-guide/` 전부 |
+| 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` stock-dashboard 절, 랜딩이면 `HERO_3D.md` |
 
 ## 2. 절대 규칙
 
@@ -24,6 +25,15 @@
 | 코어 | `_platform-core`, `_supabase-modular`의 다른 파일을 수정하지 않는다. 코어 재정의 금지. 필요하면 06장 6절 요청 |
 | 스키마 | 정본은 `_supabase-modular/migrations/1900_stock.sql`. 모놀리스 파일은 변환 스크립트로만 재생성 |
 | 문구 | 01_PRD 6.6 금지 문구. 수익률 예시, 후기, "추천 종목", 보장 표현 금지 |
+| 투자 권유 금지 | 사용자에게 보이거나 저장되는 모든 AI·음성 텍스트는 투자 권유 금지 검사(`advice_check`, 02장 5.3절)를 통과해야 한다. 검사를 실행할 수 없으면 출력하지 않는다(fail-closed). 목표가·매수가·손절가, 외부 인용 목표주가, 평가·전망 표현을 만들지 않는다. DB는 `advice_check.passed` 없는 성공 저장을 거부한다 |
+| 보유 내역 비유출 | 수량·금액·평단·계좌번호를 FastAPI, Dify, LLM·음성 제공자에 보내지 않는다. 진단 입력은 비율 스냅샷, 요약·채팅·브리핑은 종목코드·기간·마스킹한 질문만 |
+| LLM 키 | FastAPI(`apps/api`)에만. Vercel과 워커에 두지 않는다. ElevenLabs 키와 서명 토큰 개인키(`AI_TOKEN_PRIVATE_KEY`)는 Next.js 서버에만 |
+| AI 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자 직접 호출 금지. Next.js → FastAPI·음성 서버는 EdDSA 서명 토큰, Dify 경로는 대화 매핑(`platform_conversation_id`, `dify_user`)만. Dify 입력에 토큰·org·개인정보를 넣지 않고, Dify 안에서 사용자 노출 텍스트를 모델로 만들지 않는다 |
+| AI 크레딧 | 진단·요약·브리핑은 정액 선차감, 채팅·음성은 선차감 후 정산, 결과가 전달되지 않으면 전액 환불(01_PRD 4.4절). 그 밖의 파일에서 차감하지 않는다 |
+| 데이터 이용 | 공시·뉴스 색인은 `STOCK_RAG_SOURCES` 허용 목록과 `docs/legal/data-sources.md` 확인 기록이 있는 소스만. 시세 틱 저장·재배포 금지 |
+| Tailwind | 반드시 Tailwind CSS v4(4.x 고정). CSS 우선 설정(`@import "tailwindcss"`, `@theme`, `@custom-variant dark`). `tailwind.config.js`, `@tailwind base` 같은 v3 문법 금지. 지시·문서에 "Tailwind"가 아니라 "Tailwind CSS v4"라고 쓴다 |
+| 디자인 시스템 | 정답은 코드 하나: `apps/stock-dashboard/src/styles/tokens.css`(`@theme`)와 `src/components/ui/`. 피그마·문서 hex 표는 정답이 아니다. 컴포넌트 작업은 `DESIGN_SYSTEM.md` 8장 템플릿으로 1개씩 맡긴다. 화면 작업은 ST-06-037 뒤. 상승/하락 색은 미결(D-5)이므로 `--color-up`/`--color-down` 토큰만 참조 |
+| 3D | three.js는 `src/components/hero3d/`에서만 import. `HERO_3D.md` 성능 예산과 대체 화면을 지키고, 3D 재질 색도 토큰만. 장면에 수익률·`%`·상승/하락 색·실제 시세를 쓰지 않는다 |
 
 ## 3. 디렉토리와 소유 경계
 
@@ -39,6 +49,16 @@
 | `src/app/api/<영역>/` | Route Handler | 06장 표 |
 | `workers/quote-relay/` | 시세 중계 | ST-06-015 |
 | `workers/stock-jobs/src/<sync\|reference\|eval\|orders\|watchdog>/` | 잡 | 013, 019, 029, 032, 034 |
+| `src/app/api/ai/`, `src/app/api/internal/`, `src/app/api/onboarding/`, `src/server/ai/` | AI 게이트(diagnoses 021, research·briefings 049, ideas 029, compare 030) | 039 |
+| `src/app/api/voice/`, `src/components/voice/` | 음성(briefings는 049) | 048, 049 |
+| `src/components/ai-chat/`, `src/app/(app)/chat/` | 채팅 패널 | 047 |
+| `src/app/(app)/research/`, `briefing/`, `src/components/briefing/` | 리서치·브리핑 | 049 |
+| `src/app/(app)/wiki/`, `src/app/(admin)/admin/wiki/`, `admin/knowledge/` | 위키 | 043, 044 |
+| `src/components/hero3d/`, `public/hero/` | 3D 히어로 | 050 |
+| `src/styles/`, `src/components/ui/`, `src/app/dev/components/` | 디자인 시스템 | 011 |
+| `src/content/banned.json` | 금칙어 사전(언어 중립) | 026 |
+| `apps/api/` | FastAPI AI 서비스(설치 038, compliance 040, 지식·수집 041, 위키 043, 그래프 045, 도구 046) | 038~046 |
+| `infra/dify/`, `content/knowledge/` | Dify 앱 정의, 해설집 원고 | 046, 042 |
 | `supabase/` | 마이그레이션, 테스트 | ST-06-001, 003 |
 
 다른 작업의 디렉토리를 고치지 않는다. 공유 파일(`package.json` 등) 변경은 006 담당에게 요청한다.
@@ -62,7 +82,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 스택 | Next 16.2.9, React 19, Tailwind v4, shadcn/ui, Recharts 3, zustand, zod, TanStack Query(서버 데이터만), Node 22 워커 |
+| 스택 | Next 16.2.9, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전), Recharts 3, zustand, zod, TanStack Query(서버 데이터만), Node 22 워커, three.js + React Three Fiber + drei(React 19 호환 버전), FastAPI(Python 3.12 제안) + LangChain/LangGraph. `latest` 태그 금지, lockfile 커밋 |
 | 타입 | TS strict, Supabase 생성 타입 사용, `any`로 우회 금지. `supabase gen types typescript --local > src/types/supabase.ts` |
 | 린트 | ESLint flat, `latest` 버전 태그 금지, lockfile 커밋 |
 | 시간 | DB는 timestamptz(UTC), 표시는 KST. "오늘"은 KST 자정 경계를 서버가 계산 |
@@ -81,8 +101,9 @@
 | SQL 체커 | `cd docs/products/_tools-sqlcheck && node check.mjs mono ...` / `mod ...` |
 | RLS 스모크 | `pnpm test:rls`(모듈러·모놀리스 둘 다 0 실패) |
 | E2E | `pnpm test:e2e` |
+| AI·음성 | `pytest apps/api`(평가셋 포함), `pnpm test:ai`(선차감·정산·환불, 서명 토큰, 보유 내역 비유출, 브리핑 대체 금지), `node docs/products/_tools-sqlcheck/check.mjs --vector mod ...0000~0009 seed 1900_stock.sql`(AI 표가 있어 `--vector` 필수) |
 | 비밀 번들 검사 | `pnpm check:bundle-secrets` |
 
 ## 7. 금지 패턴
 
-07장 4절 요약: 크레딧 RPC 권한 미회수, 비원자 차감, 웹훅 서명 미검증, 토큰 평문·0키 폴백, 세션 없는 워커, `FOR ALL` 정책, 프로필 없으면 admin, 정책 자기참조, 공개 AI 프록시, `.env` 커밋, 한글 `\b` 금칙어, 증권사 키 클라이언트 노출, 계좌번호 로그, 샘플 무표시, AI의 주문 직접 생성, Vercel 장시간 SSE, `EventSource` AI 스트리밍, 시세 재배포, raise 뒤 상태 기록 기대, 스크래핑, GEO/JSON-LD 성과 노출, Context로 시세 관리.
+07장 4절 요약: 크레딧 RPC 권한 미회수, 비원자 차감, 웹훅 서명 미검증, 토큰 평문·0키 폴백, 세션 없는 워커, `FOR ALL` 정책, 프로필 없으면 admin, 정책 자기참조, 공개 AI 프록시, `.env` 커밋, 한글 `\b` 금칙어, 증권사 키 클라이언트 노출, 계좌번호 로그, 샘플 무표시, AI의 주문 직접 생성, Vercel 장시간 SSE, `EventSource` AI 스트리밍, 시세 재배포, raise 뒤 상태 기록 기대, 스크래핑, GEO/JSON-LD 성과 노출, Context로 시세 관리, 검사 없는 AI 텍스트 노출, 보유 내역의 AI 전송, LLM 키를 Next.js·워커에 두기, Dify에서 모델 답변 생성, 임의 텍스트 TTS, 3D 장면의 수익 약속 표현.

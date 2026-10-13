@@ -31,6 +31,22 @@ core.organizations (테넌트 = 고객사/학교/병원. 코어 참조만)
      └─ phi_access_log (append-only)
 ```
 
+AI·음성(2026-10-13)은 코어 표만 참조하고 제품 AI 표를 만들지 않는다(이유는 2.4절):
+
+```
+core AI·음성 (참조만, 모놀리스는 public)
+ ├─ ai_conversations (본인만 SELECT, dify_user는 erp·sms만)
+ │    ├─ ai_messages (citations, provider, model)
+ │    └─ voice_sessions ─ voice_jobs (feature voice_chat, store_audio=false)
+ ├─ ai_runs (graph admin.assistant, 본문 없는 메타데이터만) ─ ai_run_steps
+ ├─ ai_usage (원가 기록, 차감 없음)
+ ├─ ai_org_settings (국외 이전 동의: erp, sms만. hms 조직은 사용 안 함)
+ ├─ ai_collections (역할별 공개 범위당 1개: 01장 3.7절) ─ ai_documents ─ ai_chunks (vector(1024), HNSW, 사용자 SELECT 없음)
+ ├─ wiki_pages ─ wiki_links, wiki_revisions ("위키 대상" 컬렉션 문서에서만 생성)
+ └─ ai_routing_settings (org null, app erp/sms 8행, hms 7행: 9절)
+Storage ai-docs/<org>/<app>/<collection>/<document_id>.<ext> (사용자 정책 없음, service_role 전용)
+```
+
 공통 설계: 테넌트 테이블은 모두 `org_id → core.organizations on delete cascade`. 같은 조직 내부 참조는 `(org_id, id)` 복합 FK로 조직을 건너뛰는 참조를 DB가 거부한다. 도메인 데이터를 가지려면 `<app>.workspaces` 행이 있어야 한다(서버 프로비저닝). 가입 트리거가 만드는 개인 조직은 엔타이틀먼트가 있어도 workspace가 없어 접근 불가다(스모크 테스트 "C insert product into own personal org" 42501).
 
 ## 2. 테이블
@@ -76,6 +92,33 @@ core.organizations (테넌트 = 고객사/학교/병원. 코어 참조만)
 | `lab_tests` | 검사 | `id`, `org_id`, `patient_id`, `appointment_id`, `test_code`, `status` 5종, `result_values` jsonb, `abnormal_keys` text[], 요청/시작/결과/승인/취소 행위자·시각, `correction_reason`. CHECK 승인자 <> 입력자 | 없음(RPC만) |
 | `visit_charges` | 수납 | `id`, `org_id`, `appointment_id`(유일), `patient_id`, `amount_krw` 0..1억, `status` unpaid/paid/refunded/void, `method`, 시각, `refund_reason`, `handled_by` | SELECT(RLS) |
 | `phi_access_log` | 의료정보 접근 기록 | `id` bigint, `org_id`, `actor_id`, `actor_role`, `action` `<entity>.<verb>`, `patient_id`, `target_type/id`, `purpose`, `row_count`, `created_at` | SELECT(admin), append-only |
+
+### 2.4 AI·음성 (코어 참조, 제품 AI 표 없음)
+
+| core 객체(모놀리스는 `public.`) | admin-suite 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 채팅 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `admin.assistant` 실행 기록, 위키 lint 결과. **본문 금지**(id, 개수, 상태만, 02장 5.3절 8항) | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량과 원가(`credits` 컬럼은 환산 값 기록용, 차감 없음) | FastAPI, Next.js 음성 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값(9절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의(erp, sms). hms는 호출하지 않는다 | 설정 화면(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 역할별 규정·매뉴얼 컬렉션(01장 3.7절) | FastAPI(쓰기·검색), Next.js(서버 업로드) |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 기관 운영 위키("위키 대상" 컬렉션만) | FastAPI(쓰기), Next.js 서버(읽기) |
+| `voice_sessions`, `voice_jobs` | 음성 질의 | Next.js |
+| `ai_providers`, `ai_model_prices` | 제공자·단가. hms는 `hms-llm`, `hms-embed`, `hms-voice`만 활성 | 코어 seed(모놀리스 SECTION 11) |
+| Storage `ai-docs` 버킷 | AI 문서 원본(업로드 20MB, 사용자 정책 없음) | Next.js 서버(service_role) |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 문서 접근 권한 표(문서별 ACL) | 문서마다 허용 역할 | 공개 범위별 컬렉션 고정(01장 3.7절, D-15). 컬렉션 이름과 역할 매핑은 `collections.json` |
+| AI 한도·사용량 표 | 질문 수 집계 | `core.rate_limit_hit` 카운터(하루 한도) + `ai_usage` 집계 |
+| 음성 고지 확인 표 | 첫 사용 전 고지 증빙 | `write_audit('ai.voice.notice_ack')` + 서명된 쿠키. 녹음을 저장하지 않으므로 `voice_jobs.consent_*`는 비워 둔다 |
+| 국외 이전 동의 표 | 동의 증빙 | `core.ai_org_settings`(동의 여부, 고지문 버전, 동의자, 시각) |
+| 역할 확인용 뷰 | FastAPI가 service_role로 역할을 읽기 위해 | 허용 목록 테이블 직접 조회(`erp.employees`, `sms.members`, hms `staff_profiles`, `org_members`). 필요하면 ADM-06-045에서 결정 |
+
+조각은 `core.*`를 ALTER하지 않는다. 플랜·크레딧·결제·잡 테이블을 앱 스키마에 다시 만들지 않는다.
 
 ## 3. 상태 전이
 
@@ -147,6 +190,21 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 
 `<app>.has_access`, `has_role`, `my_role`(sms는 `is_admin`, `is_staff`)는 SECURITY DEFINER + STABLE + `search_path=''`이며 exists로 판정해 NULL이 나오지 않는다(`SECURITY_BASELINE.md` 2장). 정책 안에서 `org_members`나 자기 테이블을 직접 조회하지 않아 42P17 재귀가 없다. `has_access`는 `core.profiles.status = 'active'`를 요구해 승인 전(pending) 사용자는 멤버십이 있어도 0행을 본다.
 
+### 4.5 AI 코어 표 접근과 한계
+
+코어 정책(`docs/products/_supabase-modular/migrations/0008_core_ai.sql:607-642`, `0009_core_voice.sql:81-87`)을 그대로 쓴다. 제품이 정책을 추가하거나 바꾸지 않는다(`DB_CONVENTIONS.md:238`).
+
+| 테이블 | authenticated SELECT | 쓰기 | 이 제품의 취급 |
+|---|---|---|---|
+| `ai_conversations`, `ai_messages`, `voice_sessions`, `voice_jobs` | 본인 행만 | service_role | 대화 본문은 여기에만 둔다 |
+| `ai_chunks` | 없음 | service_role | 검색은 `match_ai_chunks`(service_role)로만 |
+| `ai_documents`, `ai_collections`, `wiki_pages`, `wiki_links`, `wiki_revisions`, `ai_runs`, `ai_run_steps` | **같은 조직 구성원 전원** | service_role | 한계: 직원·학생이 PostgREST로 직접 읽을 수 있다. 제품 규칙으로 완화(02장 5.3절 8항): run에 본문 금지, 위키는 "위키 대상" 컬렉션만, 문서 제목은 비밀 금지. 근본 해결은 06장 R-14 |
+| `ai_routing_settings`, `ai_org_settings` | 같은 조직(또는 플랫폼 기본) | service_role / `set_ai_cross_border_ack` | 라우팅 정보가 보여도 비밀이 아니다 |
+| `ai_providers`, `ai_model_prices` | 활성 행 전체 | service_role | hms는 공용 제공자 `is_active=false`라 목록에도 나오지 않는다 |
+| `storage.objects` `ai-docs` 버킷 | 정책 없음 = 접근 불가 | service_role | org-files처럼 구성원 전체 열람이 되지 않게 별도 버킷 |
+
+회귀 테스트(ADM-06-057): (1) staff 세션이 `ai_chunks` 조회 42501, (2) 모든 역할이 `ai-docs` 객체 직접 다운로드 거부, (3) 다른 사람의 `ai_messages` 0행, (4) `ai_runs`/`ai_run_steps` 본문 필드에 질문 문자열이 없음, (5) 직원 세션이 제한 컬렉션 문서에서 만든 위키를 읽지 못함(R-14 이전에는 "만들지 않음"으로 확인), (6) `resolve_ai_route`·`match_ai_chunks`를 authenticated가 호출 시 42501.
+
 ## 5. 인덱스와 성능
 
 | 인덱스 | 조회 패턴 |
@@ -177,6 +235,8 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 | `invite_member`, `accept_invite`, `change_member_role`, `remove_member`, `approve_profile` | 수명주기 | 안 함 |
 | `apps`, `plans` | 조각 머리에서 `on conflict do nothing` 등록 | 데이터만 |
 | Storage `org-files` | ERP 상품 이미지 | 안 함 |
+| AI·음성: `ai_*`, `wiki_*`, `voice_*`, `match_ai_chunks`, `resolve_ai_route`, `set_ai_cross_border_ack`(erp, sms), `ai_providers`, `ai_model_prices` | 2.4절. 참조만, 제품 AI 표 없음 | 안 함 |
+| 데이터만 추가: `ai_routing_settings` 기본 행, `plans.features` AI 키, `ai-docs` 버킷 행 | 9절 | 안 함(행 추가) |
 
 프로비저닝(조직 생성, owner 멤버십, manual 엔타이틀먼트)은 service_role 서버 스크립트가 코어 테이블에 직접 쓴다(`CORE_SPEC.md` 1.1 "service_role 키를 가진 서버 코드"). 제품 SQL은 코어 테이블에 쓰지 않는다. 전용 코어 함수는 06장 6절에 요청한다.
 
@@ -208,6 +268,12 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 | `purge_organization` | 코어 0003에 있음 | SECTION 4와 함께 빠짐 | 06장 6절 코어 요청 |
 | PUBLIC EXECUTE | 조각 끝 `revoke execute on all functions in schema <app> from public`(0007 규칙) | 도메인 파일 끝 `... in schema public from public` | 트리거 함수 포함 |
 | Realtime | `erp.products/inventory_moves/sales`, `sms.attendance` | 같은 테이블(public), hms `appointments`, `staff_profiles` | |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함). hms는 같은 절에서 공용 제공자를 비활성화하고 `hms-llm`, `hms-embed`, `hms-voice`만 활성(`0001_core_lite.sql:2020-2034`) | 세 모놀리스 모두 SECTION 11, 12 유지 |
+| AI 라우팅 기본값 | 조각 끝 7절(erp 8행, sms 8행) | `seed.sql` 끝(erp 8행, sms 8행, hms 7행) | 같은 값. hms는 모듈러 조각이 없다 |
+| 플랜 AI 키 | 조각 7절 병합 UPDATE(통합 `seed.sql` 반영은 06장 R-12) | `seed.sql` 플랜 삽입에 직접 | 키: `ai_assistant`, `ai_turns_per_day`, `ai_voice`, `ai_docs_max`, `ai_wiki` |
+| `ai-docs` 버킷 | 조각 7절 | `seed.sql` 끝. sms, hms는 SECTION 8(Storage)을 제거했지만 `storage.buckets`는 Supabase 기본 제공이라 버킷 행만 넣는다 | 사용자 정책을 만들지 않는다 |
+| 체인 검사 | 조각 끝 DO 블록(제공자 행이 있을 때만) | `seed.sql` 끝 DO 블록. hms는 모든 체인 제공자가 `hms-%`인지 추가 검사 | 어긋나면 적용 실패 |
+| 크레딧 | 모듈러에는 크레딧 모듈이 있으나 사용하지 않음 | SECTION 4 제거(`consume_credits` 없음) | AI도 선차감하지 않는다(01장 4.1절) |
 | 결제 실패 기록(코어 수정 반영, 2026-10-13) | `confirm_payment_order`는 금액 불일치 시 `PM001`(계약 불변). 주문 failed 기록은 `fail_payment_order`가 맡는다 | 같음 | PM001이면 별도 호출로 `fail_payment_order`(04장 6절) |
 
 ## 9. 마이그레이션 파일
@@ -220,5 +286,6 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 | `supabase/monolith/sms/migrations/0001_core_lite.sql`, `0002_sms_domain.sql`, `seed.sql` | 같음 |
 | `supabase/monolith/hms/migrations/0001_core_lite.sql`, `0002_hms_domain.sql`, `seed.sql` | lite(절 제거), 의료정보 보호 도메인, apps 1행 + contract 플랜 + 검사 카탈로그 3종 |
 | hms 조각 | 없음(통합 DB 제외) |
+| AI 기본값(2026-10-13) | `1600_erp.sql` 7절(라우팅 8행, 플랜 AI 키, `ai-docs` 버킷, 체인 검사), `1700_sms.sql` 7절(같음), 모놀리스 `erp/seed.sql`, `sms/seed.sql`(같은 8행 + 플랜 features), `hms/seed.sql`(7행 + contract features + 버킷 + `hms-%` 검사) |
 
-검증 결과(2026-10-12, PGlite): 모듈러(0000~0007 + seed + 1600 + 1700) OK, 모놀리스 erp/sms/hms 각 OK. RLS 스모크: 모듈러 92/92, 모놀리스 erp 21/21, sms 19/19, hms 52/52 통과. erp/sms 스키마에서 anon이 EXECUTE 가능한 함수 0개.
+검증 결과(2026-10-12, PGlite): 모듈러(0000~0007 + seed + 1600 + 1700) OK, 모놀리스 erp/sms/hms 각 OK. 2026-10-13 AI 기본값 추가 후 재검증(`check.mjs --vector`, 모듈러는 0000~0009 + seed + 1600 + 1700): 모듈러 OK, 모놀리스 erp/sms/hms 각 OK, 마지막 파일 2회 반복 적용 OK, 라우팅 행 수 erp 8·sms 8·hms 7, 미동의 조직 `resolve_ai_route`는 erp·sms가 `oss-llm`/`oss-embed`/`oss-voice`, hms는 모든 기능에서 `hms-llm`/`hms-embed`/`hms-voice`(force_open_source true). RLS 스모크: 모듈러 92/92, 모놀리스 erp 21/21, sms 19/19, hms 52/52 통과. erp/sms 스키마에서 anon이 EXECUTE 가능한 함수 0개.

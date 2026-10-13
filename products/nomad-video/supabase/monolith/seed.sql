@@ -2,7 +2,8 @@
 -- seed.sql (nomad-video 모놀리스)
 -- apps 1행, 플랜 4개(PRD_pricing.md 정본, 확정 결정 8), 크레딧팩 4개 + Advanced 30% 할인팩 4개, video 배치 대가성 문구 기본값.
 -- 정본: NOMAD Shorts Maker/PRD_pricing.md:116-155. Track F 는 확정 결정 7 로 추가(모듈러 seed.sql:211-212 와 같게 Pro 이상).
--- features 키 해석은 docs/products/nomad-video/01_PRD.md 4장. 반복 실행 가능(upsert).
+-- features 키 해석은 docs/products/nomad-video/01_PRD.md 4장(AI 키 4개 ai_chat, ai_chat_turns_per_day, voice_chat, ai_script 는 2026-10-13 추가). 반복 실행 가능(upsert).
+-- AI 라우팅 기본값 17행과 체인 검사는 파일 끝.
 -- =====================================================================
 
 insert into public.apps (id, name, schema_name, signup_policy, status)
@@ -11,16 +12,16 @@ on conflict (id) do update set name = excluded.name, signup_policy = excluded.si
 
 insert into public.plans (app_id, code, name, price_krw, billing_interval, monthly_credits, signup_credits, carry_over, features, is_default, is_active, sort_order) values
   ('video', 'starter',  'Starter',  0,      'none',  0,    100, false,
-   '{"tracks": ["A"], "languages": ["KO"], "max_channels": 1, "watermark": true, "platforms": ["youtube"], "radar": false, "compliance": false, "team_members": 1}',
+   '{"tracks": ["A"], "languages": ["KO"], "max_channels": 1, "watermark": true, "platforms": ["youtube"], "radar": false, "compliance": false, "team_members": 1, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": false}',
    true, true, 0),
   ('video', 'basic',    'Basic',    49000,  'month', 1200, 0, false,
-   '{"tracks": ["A","B","C"], "languages": ["KO"], "max_channels": 5, "watermark": false, "platforms": ["youtube"], "radar": ["playboard"], "compliance": true, "silence_cut": true, "coupang_landing": true, "team_members": 1}',
+   '{"tracks": ["A","B","C"], "languages": ["KO"], "max_channels": 5, "watermark": false, "platforms": ["youtube"], "radar": ["playboard"], "compliance": true, "silence_cut": true, "coupang_landing": true, "team_members": 1, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}',
    false, true, 1),
   ('video', 'pro',      'Pro',      99000,  'month', 3000, 0, false,
-   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 15, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads"], "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "bling_monthly_limit": 20, "team_members": 1, "priority_render": true}',
+   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 15, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads"], "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "bling_monthly_limit": 20, "team_members": 1, "priority_render": true, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}',
    false, true, 2),
   ('video', 'advanced', 'Advanced', 149000, 'month', 5000, 0, false,
-   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 40, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads"], "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "react_flow_full": true, "bling_monthly_limit": -1, "team_members": 5, "api_access": true, "priority_render": true, "credit_discount_pct": 30}',
+   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 40, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads"], "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "react_flow_full": true, "bling_monthly_limit": -1, "team_members": 5, "api_access": true, "priority_render": true, "credit_discount_pct": 30, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}',
    false, true, 3)
 on conflict (app_id, code) do update
   set name = excluded.name, price_krw = excluded.price_krw, billing_interval = excluded.billing_interval,
@@ -52,3 +53,44 @@ insert into public.affiliate_disclosures (org_id, provider, placement, body) val
   (null, 'naver_shopping_connect', 'video_pinned_comment', '이 영상에는 네이버쇼핑 커넥트 제휴 링크가 포함되어 있으며, 구매 시 일정액의 수수료를 제공받습니다.')
 on conflict (provider, placement) where org_id is null do update
   set body = excluded.body;
+
+-- =====================================================================
+-- AI·음성 기능별 라우팅 기본값 17행 (2026-10-13). 정본 02_ARCHITECTURE.md 5.1절, 1200_video.sql 11.1절과 같다.
+-- 체인 제공자는 0001_core_lite.sql SECTION 11, 12 가 먼저 넣은 ai_providers 행이어야 한다. 반복 실행 가능(upsert).
+-- =====================================================================
+insert into public.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'video', 'video.script',     'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'video.translate',  'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'video.analyze',    'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'video.bling',      'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'video.compliance', 'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'chat',             'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'wiki.query',       'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'wiki.ingest',      'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'wiki.lint',        'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'dify.aux',         'llm',        'open_source',  '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'video', 'video.knowledge',  'embedding',  'open_source',  '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'video', 'video.rag',        'embedding',  'open_source',  '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'video', 'video.stt',        'stt',        'open_source',  '[{"provider":"oss-voice","model":"*"}]', true),
+  (null, 'video', 'voice_chat',       'stt',        'auto',         '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'video', 'dictation',        'stt',        'auto',         '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'video', 'voice_chat',       'tts',        'auto',         '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'video', 'narration',        'tts',        'auto',         '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 체인 검사: 존재하지 않거나 종류가 다른 제공자, 오픈소스 모드의 상용 제공자가 있으면 실패한다.
+do $$
+declare v_bad text;
+begin
+  select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+  from public.ai_routing_settings s
+  cross join lateral jsonb_array_elements(s.chain) as e(item)
+  left join public.ai_providers p on p.id = e.item ->> 'provider'
+  where s.org_id is null and s.app_id = 'video'
+    and (p.id is null or not (s.kind = any (p.kinds))
+         or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+  if v_bad is not null then
+    raise exception 'video routing defaults: invalid chain providers %', v_bad;
+  end if;
+end $$;

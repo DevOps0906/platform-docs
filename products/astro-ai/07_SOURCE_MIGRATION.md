@@ -2,6 +2,8 @@
 
 두 원본 모두 코드가 없고 기획 문서만 있다(`docs/reviews/Astro_AI.md:3`, `docs/reviews/FortuneDocs.md:3`). 그래서 "이식"은 요구사항·수치·구조를 이 기획서와 새 코드로 옮기는 것을 뜻한다. 경로 표기: `AA/`는 `Astro AI/기획안/`, `FD/`는 `FortuneDocs/`.
 
+AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 Claude API 단일 호출(`AA/공통/CLAUDE.md:17`), Claude Skill 모듈 디렉토리(`AA/공통/CLAUDE.md:44-47`), FD의 3사 역할 분담(`FD/PRD.MD:39-41`)뿐이다. OpenRouter 폴백은 원본이 아니라 분석(`docs/products/00_MERGE_ANALYSIS.md:337`)에서 나왔다. RAG, 위키, Dify, 음성, 3D는 원본에 없어 모두 신규다(원본 랜딩의 canvas 별자리 파티클은 3D가 아니라 P-26으로 폐기). 아래 표의 AI 행이 이 자산들의 대응이다.
+
 ## 1. 원본별 자산 분류
 
 ### 1.1 Astro AI
@@ -16,6 +18,10 @@
 | `AA/공통/PRD.md` 6장 아키텍처 | 기획만 | 폐기(Edge Function) | 02장 머리 결정표 | `:142-152` |
 | `AA/공통/PRD.md` 7장 멀티버티컬 | 기획만 | 폐기 | 3절 P-06 | `:156-164` |
 | `AA/공통/CLAUDE.md` 스택·폴더·금지사항 | 기획만 | 참고(스택), 디벨롭(크레딧·웹훅·RLS 규칙) | `CLAUDE.md`, 02장 1절 | `:7-271` |
+| `AA/공통/CLAUDE.md` AI 스택(Claude API `claude-sonnet-4-6` 단일) | 기획만 | 디벨롭 | 02장 1절 LLM 행(FastAPI 라우터 체인의 첫 순위 Claude), 모델 id는 `core.ai_model_prices` 행 | `:17`, 확정 결정 17 |
+| `AA/공통/CLAUDE.md` `skills/`(Claude Skill 모듈: reading, delivery, marketplace) | 기획만 | 폐기(대체) | reading → 그래프 `astro.reading`(02장 5.2절), delivery → 워커 outbox, marketplace → P-03. 3절 P-27 | `:44-47`, `AA/공통/PRD.md:71` |
+| `AA/공통/PRD.md` 6장 FastAPI(Railway) → Claude API → WeasyPrint | 기획만 | 디벨롭 | FastAPI는 AI 서비스(`apps/api`, 그래프·RAG·위키)로, PDF는 공용 렌더 서비스로 나눔 | `:142-152`, 확정 결정 3, 13 |
+| `AA/공통/CLAUDE.md` `CLAUDE_API_KEY`("FastAPI 서버에서만") | 기획만 | 이식(원칙) | LLM 키는 FastAPI 전용(02장 8절). 원본 원칙과 같다 | `:241` |
 | `AA/공통/DESIGN.md` Taste 4종·ThemeConfig | 기획만 | 이식(2종, 타입 구조), 디벨롭(팔레트 재추출) | 03장 4.3절, `astro.themes` | `:44-85` |
 | `AA/공통/GEO.md` | 기획만 | 이식(JSON-LD 구조, `/llms.txt`, 블로그 주제), 폐기(가상 평점, 다국어 문구) | 03장 4.4절 | `:38-218` |
 | `AA/공통/ROADMAP.md` | 기획만 | 참고 | 06장 웨이브로 대체 | `:6-148` |
@@ -27,7 +33,7 @@
 | `AA/랜딩페이지/PRD_LANDING.md` 11섹션 | 기획만 | 통합(7섹션으로 축소), 폐기(후기·카운터·파티클·페인포인트) | 03장 4절 | `:16-83` |
 | `AA/랜딩페이지/CLAUDE_LANDING.md` SSR 분리·성능 체크리스트·Live Demo | 기획만 | 이식(성능 체크리스트, 데모 흐름), 폐기(파티클·카운터 코드, v3 config) | AS-06-023, AS-06-024 | `:39-291` |
 | `AA/랜딩페이지/DESIGN_LANDING.md` | 기획만 | 참고만(색·파티클은 폐기) | 03장 4.4절 | `:7-185` |
-| `AA/멀티버티컬_템플릿/*.md` | 기획만 | 폐기(보류 아카이브) | 3절 P-06, P-15 | `docs/products/00_MERGE_ANALYSIS.md:397` |
+| `AA/멀티버티컬_템플릿/*.md` | 기획만 | 폐기(보류 아카이브) | 3절 P-06, P-15 | `docs/products/00_MERGE_ANALYSIS.md:402` |
 
 ### 1.2 FortuneDocs
 
@@ -37,6 +43,8 @@
 | `FD/PRD.MD` 2.2 KASI + `lib/astrology.ts` | 기획만 | 디벨롭(로컬 엔진, KASI 검증용) | `packages/saju-engine` | `:31-32` |
 | `FD/PRD.MD` 2.2 QuickChart | 기획만 | 폐기 | 3절 P-11 | `:33` |
 | `FD/PRD.MD` 2.3 Vercel AI SDK 3사 | 기획만 | 폐기 | 3절 P-09 | `:35-41` |
+| `FD/PRD.MD` 2.3 3사 역할 분담(ChatGPT 격국·용신 판별, Claude 스토리텔링, Gemini 장문) | 기획만 | 폐기(역할 분담), 디벨롭(3사를 같은 작업의 대체 체인으로) | 02장 5.1절. 격국·용신 LLM 판별 금지(01장 D-10, 3절 P-28) | `:39-41` |
+| `FD/PRD.MD` 6장 `api/generate/route.ts`(Vercel AI SDK Multi-LLM 스위칭) | 기획만 | 폐기 | FastAPI 라우터와 그래프(02장 5절) | `:156` |
 | `FD/PRD.MD` 3.1 다중 프로필 보관함 | 기획만 | 이식 | `astro.subjects`, 03장 | `:50` |
 | `FD/PRD.MD` 3.1 매직링크, 가입 3크레딧 | 기획만 | 폐기(매직링크 연기), 결정 대기(크레딧 양) | 01장 D-3 | `:49`, `:51` |
 | `FD/PRD.MD` 3.2 입력 모델, 원국 프리뷰 | 기획만 | 이식(+ 생시 모름, 출생지) | 05장 2.2절, AS-F-007 | `:55-56` |
@@ -66,39 +74,50 @@
 | FD 오행 색 규칙 | 金·水 테두리 규칙 추가, 범례와 함께만 사용 |
 | FD 현대적 재해석 원칙 | 사전으로 구체화(AS-06-011), 의료·투자 단정 금지 규칙과 함께 |
 | AA GEO JSON-LD | `aggregateRating`, `Review` 제거, Product는 크레딧팩 offers로, 다국어 문구 제거 |
+| Claude 단일 호출(`AA/공통/CLAUDE.md:17`) | 모델 id 하드코딩을 없애고 `core.ai_model_prices` 행 + 라우터 체인(`astro.reading`: Claude → ChatGPT → Gemini → 오픈소스)으로. 분석의 OpenRouter 폴백(`docs/products/00_MERGE_ANALYSIS.md:337`)은 플랫폼 제공자 `openrouter`로 남지만 astro 기본 체인에는 넣지 않는다(같은 모델의 중복 경로이고 국외 이전 제공자만 늘어난다) |
+| Claude Skill 기반 개인화(`AA/공통/PRD.md:71`) | 스킬 파일 대신 그래프 노드와 언어 중립 프롬프트 파일(`packages/astro-report/prompts/`). "이름·질문 3회 이상 언급"은 `{{호칭}}` 3회 이상 + 질문 반영 규칙으로 바꾸고 compliance 노드가 검사 |
+| FD 3사 체인(`FD/PRD.MD:39-41`) | 역할 분담 없이 같은 작업의 대체 순서로만 쓴다. 국외 이전에 동의하지 않은 조직은 오픈소스만 |
+| 원본 랜딩 v3 설정(`AA/랜딩페이지/CLAUDE_LANDING.md:178`) | Tailwind CSS v4 `@theme` 토큰(P-13, 03장 3.2절) |
 
 ## 3. 폐기 목록과 사유
 
-분석 B-2 "폐기"와 B-3 "버려지는 것"(`docs/products/00_MERGE_ANALYSIS.md:302-401`)을 빠짐없이 옮겼다.
+분석 B-2 "폐기"와 B-3 "버려지는 것"(`docs/products/00_MERGE_ANALYSIS.md:307-406`)을 빠짐없이 옮겼다.
 
 | ID | 폐기 항목 | 출처 | 사유 |
 |---|---|---|---|
-| P-01 | FD 해설서 편집 화면 | `FD/PRD.MD:163`, `docs/products/00_MERGE_ANALYSIS.md:332` | 편집 범위가 정의되지 않았고 사주 리포트를 편집할 필요가 적음 |
-| P-02 | Puppeteer(AA 테마 미리보기, FD PDF) | `AA/공통/PRD.md:91`, `FD/PRD.MD:84`, `docs/products/00_MERGE_ANALYSIS.md:337`, `:381` | 실제 PDF(WeasyPrint)와 렌더러가 달라 결과 불일치, Vercel 서버리스·Edge에서 동작 안 함. 미리보기는 렌더 서비스 첫 페이지 이미지로 대체 |
-| P-03 | 템플릿 마켓플레이스(업로드, 검수, 구매, 정산 70/30, 리뷰) | `AA/공통/PRD.md:47-50`, `:89-94`, `docs/products/00_MERGE_ANALYSIS.md:362` | 업로드 JSON이 렌더러에 들어가는 보안 문제, 검수 권한 문제, 통신판매중개·원천징수 법무. Phase 3 이후 재기획 |
-| P-04 | 크리에이터 대시보드 6탭, `creator` 역할 | `AA/대시보드/PRD_DASHBOARD.md:59-92`, `docs/products/00_MERGE_ANALYSIS.md:309`, `:363` | 마켓과 함께 보류 |
-| P-05 | 가상 평점·후기·카운터(`aggregateRating 4.9`, 후기 12개, "12,470+") | `AA/공통/GEO.md:70-73`, `AA/랜딩페이지/PRD_LANDING.md:69-72`, `AA/공통/DESIGN.md:111`, `docs/products/00_MERGE_ANALYSIS.md:368` | 근거 없는 수치는 검색엔진 정책 위반, 표시광고법 위험 |
-| P-06 | 멀티버티컬(재테크, 건강, 학습, 연애)과 템플릿 문서 2개 | `AA/공통/PRD.md:156-164`, `AA/멀티버티컬_템플릿/`, `docs/products/00_MERGE_ANALYSIS.md:371`, `:397` | 건강·재테크는 의료법·유사투자자문 규제 대상. 연애AI만 이후 재검토. 문서는 아카이브 |
-| P-07 | 기업 API/화이트라벨 | `AA/공통/PRD.md:23`, `docs/products/00_MERGE_ANALYSIS.md:372` | 기능 정의가 없음 |
-| P-08 | 다국어(KO/JA/EN) | `AA/공통/GEO.md:62`, `docs/products/00_MERGE_ANALYSIS.md:373`, `:399` | v1은 한국어 전용 |
-| P-09 | FD Vercel AI SDK 3사 역할 분담 체인과 `response_format` | `FD/PRD.MD:35-41`, `docs/products/00_MERGE_ANALYSIS.md:382` | OpenAI 전용 파라미터, 체인/선택 불명확, 일관성과 비용 추적이 어려움 |
-| P-10 | FD "Pure JavaScript, Edge 런타임" 원칙, Next 14, 단일 `supabaseClient.ts`, 디렉토리 트리 | `FD/CLAUDE.MD:13`, `FD/PRD.MD:150-175`, `docs/products/00_MERGE_ANALYSIS.md:383` | 워크스페이스 표준(Next 16, SSR 클라이언트 3종)과 불일치, Edge에서 PDF·ePub 불가 |
-| P-11 | QuickChart 외부 API | `FD/PRD.MD:33`, `docs/products/00_MERGE_ANALYSIS.md:385` | 렌더 시 외부 네트워크 의존, 사용자 데이터를 제3자로 전송. 인라인 SVG로 대체 |
-| P-12 | KASI 음력 간지를 그대로 쓰는 방식 | `FD/PRD.MD:31`, `docs/products/00_MERGE_ANALYSIS.md:384` | 사주는 입춘·절기 기준이라 규칙이 다름. KASI는 검증용 |
-| P-13 | AA 랜딩 예시의 Tailwind v3식 `tailwind.config.ts` | `docs/reviews/Astro_AI.md:66`, `docs/products/00_MERGE_ANALYSIS.md:386` | Tailwind v4는 CSS 테마 토큰 방식 |
-| P-14 | 문서 잔재: FD `PRD.MD` 1~7행 챗봇 응답, `CLAUDE.MD`의 `[cite: 3]`와 닫히지 않은 코드펜스, 두 문서의 DDL·트리 중복 | `FD/PRD.MD:1-7`, `docs/reviews/FortuneDocs.md:27-28`, `:56`, `docs/products/00_MERGE_ANALYSIS.md:396` | 구현 지침이 아니며 동기화 위험 |
-| P-15 | AA `CLAUDE_TEMPLATE.md` 5절 `generateReading`(Next에서 차감·호출·PDF·발송, `max_tokens: 4096` 단일 호출) | `AA/멀티버티컬_템플릿/CLAUDE_TEMPLATE.md:117-145`, `docs/products/00_MERGE_ANALYSIS.md:389` | 공통 CLAUDE.md와 모순, 분량·시간 목표 동시 달성 불가 |
-| P-16 | FD 스키마에서 LLM이 `five_elements` 점수 생성 | `FD/PRD.MD:66`, `docs/products/00_MERGE_ANALYSIS.md:390` | 엔진 계산값과 중복·불일치 |
-| P-17 | AA broadcast 진행률 채널 | `AA/대시보드/CLAUDE_DASHBOARD.md:176-182`, `docs/products/00_MERGE_ANALYSIS.md:391` | 채널 인가 없음. `postgres_changes` + RLS로 대체 |
-| P-18 | 웹훅 중심 결제 처리 | `AA/공통/CLAUDE.md:186-208`, `docs/products/00_MERGE_ANALYSIS.md:391` | confirm API 누락, 서명 헤더 미보장 |
-| P-19 | AA `approveTemplate`/`rejectTemplate` 예시 | `AA/대시보드/CLAUDE_DASHBOARD.md:219-243`, `docs/products/00_MERGE_ANALYSIS.md:392` | role 확인 없이 service_role 업데이트 |
-| P-20 | "Taste 외 하드코딩 금지"와 hex 하드코딩 예시 공존 | `docs/reviews/Astro_AI.md:58`, `docs/products/00_MERGE_ANALYSIS.md:393` | 모순. 토큰 CSS 변수만 사용 |
-| P-21 | "원본 영상 24시간 삭제" 문구와 "PDF 원본 24시간 삭제" | `AA/공통/PRD.md:118`, `AA/공통/CLAUDE.md:182`, `docs/products/00_MERGE_ANALYSIS.md:398` | 다른 프로젝트 잔재, 히스토리 재다운로드와 모순. 01장 AS-F-016으로 대체 |
-| P-22 | Storybook 스냅샷 | `AA/공통/CLAUDE.md:256`, `docs/products/00_MERGE_ANALYSIS.md:375` | 솔로 개발 단계에서 비용 대비 효과 낮음 |
-| P-23 | Apple 로그인(연기) | `AA/공통/ROADMAP.md:15`, `docs/products/00_MERGE_ANALYSIS.md:308`, `:399` | MVP 범위 축소 |
-| P-24 | 매직링크 로그인(연기) | `FD/PRD.MD:49`, `docs/products/00_MERGE_ANALYSIS.md:308` | 무료 크레딧 반복 수령 문제 |
-| P-25 | Supabase Edge Function 단계 | `AA/공통/PRD.md:145`, `AA/공통/CLAUDE.md:143`, `docs/products/00_MERGE_ANALYSIS.md:380` | Vercel 서버와 역할 중복, 크레딧·AI 키 위치 모순 |
+| P-01 | FD 해설서 편집 화면 | `FD/PRD.MD:163`, `docs/products/00_MERGE_ANALYSIS.md:337` | 편집 범위가 정의되지 않았고 사주 리포트를 편집할 필요가 적음 |
+| P-02 | Puppeteer(AA 테마 미리보기, FD PDF) | `AA/공통/PRD.md:91`, `FD/PRD.MD:84`, `docs/products/00_MERGE_ANALYSIS.md:342`, `:386` | 실제 PDF(WeasyPrint)와 렌더러가 달라 결과 불일치, Vercel 서버리스·Edge에서 동작 안 함. 미리보기는 렌더 서비스 첫 페이지 이미지로 대체 |
+| P-03 | 템플릿 마켓플레이스(업로드, 검수, 구매, 정산 70/30, 리뷰) | `AA/공통/PRD.md:47-50`, `:89-94`, `docs/products/00_MERGE_ANALYSIS.md:367` | 업로드 JSON이 렌더러에 들어가는 보안 문제, 검수 권한 문제, 통신판매중개·원천징수 법무. Phase 3 이후 재기획 |
+| P-04 | 크리에이터 대시보드 6탭, `creator` 역할 | `AA/대시보드/PRD_DASHBOARD.md:59-92`, `docs/products/00_MERGE_ANALYSIS.md:314`, `:368` | 마켓과 함께 보류 |
+| P-05 | 가상 평점·후기·카운터(`aggregateRating 4.9`, 후기 12개, "12,470+") | `AA/공통/GEO.md:70-73`, `AA/랜딩페이지/PRD_LANDING.md:69-72`, `AA/공통/DESIGN.md:111`, `docs/products/00_MERGE_ANALYSIS.md:373` | 근거 없는 수치는 검색엔진 정책 위반, 표시광고법 위험 |
+| P-06 | 멀티버티컬(재테크, 건강, 학습, 연애)과 템플릿 문서 2개 | `AA/공통/PRD.md:156-164`, `AA/멀티버티컬_템플릿/`, `docs/products/00_MERGE_ANALYSIS.md:376`, `:402` | 건강·재테크는 의료법·유사투자자문 규제 대상. 연애AI만 이후 재검토. 문서는 아카이브 |
+| P-07 | 기업 API/화이트라벨 | `AA/공통/PRD.md:23`, `docs/products/00_MERGE_ANALYSIS.md:377` | 기능 정의가 없음 |
+| P-08 | 다국어(KO/JA/EN) | `AA/공통/GEO.md:62`, `docs/products/00_MERGE_ANALYSIS.md:378`, `:404` | v1은 한국어 전용 |
+| P-09 | FD Vercel AI SDK 3사 역할 분담 체인과 `response_format` | `FD/PRD.MD:35-41`, `docs/products/00_MERGE_ANALYSIS.md:387` | OpenAI 전용 파라미터, 체인/선택 불명확, 일관성과 비용 추적이 어려움 |
+| P-10 | FD "Pure JavaScript, Edge 런타임" 원칙, Next 14, 단일 `supabaseClient.ts`, 디렉토리 트리 | `FD/CLAUDE.MD:13`, `FD/PRD.MD:150-175`, `docs/products/00_MERGE_ANALYSIS.md:388` | 워크스페이스 표준(Next 16, SSR 클라이언트 3종)과 불일치, Edge에서 PDF·ePub 불가 |
+| P-11 | QuickChart 외부 API | `FD/PRD.MD:33`, `docs/products/00_MERGE_ANALYSIS.md:390` | 렌더 시 외부 네트워크 의존, 사용자 데이터를 제3자로 전송. 인라인 SVG로 대체 |
+| P-12 | KASI 음력 간지를 그대로 쓰는 방식 | `FD/PRD.MD:31`, `docs/products/00_MERGE_ANALYSIS.md:389` | 사주는 입춘·절기 기준이라 규칙이 다름. KASI는 검증용 |
+| P-13 | AA 랜딩 예시의 Tailwind v3식 `tailwind.config.ts` | `docs/reviews/Astro_AI.md:66`, `docs/products/00_MERGE_ANALYSIS.md:391` | Tailwind v4는 CSS 테마 토큰 방식 |
+| P-14 | 문서 잔재: FD `PRD.MD` 1~7행 챗봇 응답, `CLAUDE.MD`의 `[cite: 3]`와 닫히지 않은 코드펜스, 두 문서의 DDL·트리 중복 | `FD/PRD.MD:1-7`, `docs/reviews/FortuneDocs.md:27-28`, `:56`, `docs/products/00_MERGE_ANALYSIS.md:401` | 구현 지침이 아니며 동기화 위험 |
+| P-15 | AA `CLAUDE_TEMPLATE.md` 5절 `generateReading`(Next에서 차감·호출·PDF·발송, `max_tokens: 4096` 단일 호출) | `AA/멀티버티컬_템플릿/CLAUDE_TEMPLATE.md:117-145`, `docs/products/00_MERGE_ANALYSIS.md:394` | 공통 CLAUDE.md와 모순, 분량·시간 목표 동시 달성 불가 |
+| P-16 | FD 스키마에서 LLM이 `five_elements` 점수 생성 | `FD/PRD.MD:66`, `docs/products/00_MERGE_ANALYSIS.md:395` | 엔진 계산값과 중복·불일치 |
+| P-17 | AA broadcast 진행률 채널 | `AA/대시보드/CLAUDE_DASHBOARD.md:176-182`, `docs/products/00_MERGE_ANALYSIS.md:396` | 채널 인가 없음. `postgres_changes` + RLS로 대체 |
+| P-18 | 웹훅 중심 결제 처리 | `AA/공통/CLAUDE.md:186-208`, `docs/products/00_MERGE_ANALYSIS.md:396` | confirm API 누락, 서명 헤더 미보장 |
+| P-19 | AA `approveTemplate`/`rejectTemplate` 예시 | `AA/대시보드/CLAUDE_DASHBOARD.md:219-243`, `docs/products/00_MERGE_ANALYSIS.md:397` | role 확인 없이 service_role 업데이트 |
+| P-20 | "Taste 외 하드코딩 금지"와 hex 하드코딩 예시 공존 | `docs/reviews/Astro_AI.md:58`, `docs/products/00_MERGE_ANALYSIS.md:398` | 모순. 토큰 CSS 변수만 사용 |
+| P-21 | "원본 영상 24시간 삭제" 문구와 "PDF 원본 24시간 삭제" | `AA/공통/PRD.md:118`, `AA/공통/CLAUDE.md:182`, `docs/products/00_MERGE_ANALYSIS.md:403` | 다른 프로젝트 잔재, 히스토리 재다운로드와 모순. 01장 AS-F-016으로 대체 |
+| P-22 | Storybook 스냅샷 | `AA/공통/CLAUDE.md:256`, `docs/products/00_MERGE_ANALYSIS.md:380` | 솔로 개발 단계에서 비용 대비 효과 낮음 |
+| P-23 | Apple 로그인(연기) | `AA/공통/ROADMAP.md:15`, `docs/products/00_MERGE_ANALYSIS.md:313`, `:404` | MVP 범위 축소 |
+| P-24 | 매직링크 로그인(연기) | `FD/PRD.MD:49`, `docs/products/00_MERGE_ANALYSIS.md:313` | 무료 크레딧 반복 수령 문제 |
+| P-25 | Supabase Edge Function 단계 | `AA/공통/PRD.md:145`, `AA/공통/CLAUDE.md:143`, `docs/products/00_MERGE_ANALYSIS.md:385` | Vercel 서버와 역할 중복, 크레딧·AI 키 위치 모순 |
 | P-26 | 원본 랜딩의 canvas 별자리 파티클, 라이브 카운터, 페인포인트 카드 6개, 로고 마퀴 | `AA/랜딩페이지/PRD_LANDING.md:25-42` | 디자인 가이드 생성형 기본값과 피할 인상(`docs/products/_design-guide/REFERENCES.md:65`). 로고 마퀴는 제휴 근거 없는 로고 노출 위험 |
+
+AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 B-2 목록 밖이라 따로 번호를 붙인다.
+
+| ID | 폐기 항목 | 출처 | 사유 |
+|---|---|---|---|
+| P-27 | AA `skills/` Claude Skill 모듈 디렉토리(reading, delivery, marketplace) | `AA/공통/CLAUDE.md:44-47` | 스킬 파일은 런타임 계약이 아니다. 리딩은 그래프 `astro.reading`과 프롬프트 파일, 발송은 워커 outbox로 대체 |
+| P-28 | FD "ChatGPT가 격국·용신 판별" | `FD/PRD.MD:39` | 명리 판정을 LLM에 맡기면 엔진과 결과가 갈린다(01장 D-10) |
 
 ## 4. 복사 금지 결함
 
@@ -106,10 +125,10 @@
 
 | 패턴 | 출처 | 왜 금지 | 대체 |
 |---|---|---|---|
-| 크레딧 RPC EXECUTE 미회수 | `docs/products/00_MERGE_ANALYSIS.md:516`, `docs/reviews/FortuneDocs.md:78` | 브라우저에서 크레딧 지급 | 코어 RPC(service_role 전용), 스모크로 42501 확인 |
+| 크레딧 RPC EXECUTE 미회수 | `docs/products/00_MERGE_ANALYSIS.md:521`, `docs/reviews/FortuneDocs.md:78` | 브라우저에서 크레딧 지급 | 코어 RPC(service_role 전용), 스모크로 42501 확인 |
 | 비원자 차감(읽고 → 빼고 → 쓰기) | `:481`, `docs/reviews/Astro_AI.md:93` | 동시 요청 음수 잔액 | `core.consume_credits` |
 | 웹훅 서명 미검증, 웹훅만으로 지급 | `AA/공통/CLAUDE.md:186-208` | 위조 결제 | confirm 경로 + 웹훅 재조회 |
-| orderId 파싱으로 대상 추출, 클라이언트 금액 신뢰 | `docs/products/_platform-core/SHARED_MODULES.md:133` | 금액 위조 | `payment_orders` 선저장 |
+| orderId 파싱으로 대상 추출, 클라이언트 금액 신뢰 | `docs/products/_platform-core/SHARED_MODULES.md:145` | 금액 위조 | `payment_orders` 선저장 |
 | `FOR ALL` 정책(`fortune_books`, `readings`, `templates`) | `FD/PRD.MD:141-142`, `AA/공통/CLAUDE.md:217-222` | 크레딧 없이 리포트 생성, 셀프 변경 | SELECT 전용 + guard 트리거 |
 | 가입 트리거 없이 FK 의존 | `docs/reviews/FortuneDocs.md:44` | 가입 직후 INSERT 실패 | 코어 `handle_new_user` |
 | role 확인 없는 service_role 서버 액션 | `AA/대시보드/CLAUDE_DASHBOARD.md:222-243` | 누구나 승인 | `requireSession` + `platform_role` 재검증 후 admin 클라이언트 |
@@ -119,8 +138,17 @@
 | 생년월일시·이름 평문 저장 | `FD/PRD.MD:113-122` | 유출 시 민감정보 노출 | 앱 계층 AES-256-GCM, 암호문 컬럼 GRANT 없음 |
 | 메모리/서버리스 IP 제한 | `AA/랜딩페이지/CLAUDE_LANDING.md:274-275` | 인스턴스마다 초기화 | `core.rate_limit_hit` |
 | 장애를 mock 응답이나 일반 토스트로 숨기기 | `AA/공통/CLAUDE.md:129-134` | 실패·환불 여부를 모름 | 01장 AS-F-012 상태와 환불 표시 |
-| `.env` 실키 커밋 | `docs/products/00_MERGE_ANALYSIS.md:198` | 키 유출 | 원본에 코드 없음. 신규 저장소에서 `.env*` gitignore와 CI 비밀 검사 |
-| 한글에 `\b` 금지어 매칭 | `docs/products/00_MERGE_ANALYSIS.md:786` | 필터 무효 | 금지 표현 규칙의 한글 경계 처리 |
+| `.env` 실키 커밋 | `docs/products/00_MERGE_ANALYSIS.md:203` | 키 유출 | 원본에 코드 없음. 신규 저장소에서 `.env*` gitignore와 CI 비밀 검사 |
+| 한글에 `\b` 금지어 매칭 | `docs/products/00_MERGE_ANALYSIS.md:791` | 필터 무효 | 금지 표현 규칙의 한글 경계 처리 |
+| LLM·음성 키를 브라우저·Vercel·워커에 두기 | `AA/공통/CLAUDE.md:241`(원본은 FastAPI 전용으로 맞음) | 키 유출, 비용 남용 | LLM 키는 FastAPI 전용, ElevenLabs 키와 토큰 개인키는 Next.js 서버 전용 |
+| 브라우저에서 Dify·FastAPI·AI 제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*` |
+| Dify 입력에 토큰·org·개인정보 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남음 | 대화 매핑(`platform_conversation_id`, `dify_user`) |
+| 생년월일 원문·실명을 AI 제공자에 전송 | 01장 6.5절 | 국외 이전, 개인 식별 | 엔진 수치와 `{{호칭}}` 토큰만 |
+| LLM이 격국·용신 판정 또는 수치 생성 | `FD/PRD.MD:39`, `:66` | 엔진과 불일치 | 엔진 값 주입 + compliance 노드 |
+| 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | DB의 assistant 메시지와 리딩 본문만 낭독 |
+| 낭독 도중 다른 제공자로 대체 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 목소리가 바뀜 | 대체 금지, 실패 + 환불 |
+| 3D 재질에 토큰 밖 색, 별 파티클·황도 기호 | `docs/products/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.5절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 

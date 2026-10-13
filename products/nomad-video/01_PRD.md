@@ -2,6 +2,8 @@
 
 근거 약칭: PRD=`NOMAD Shorts Maker/PRD.md`, ADD=`NOMAD Shorts Maker/PRD_add.md`, PRC=`NOMAD Shorts Maker/PRD_pricing.md`, MA=`docs/products/00_MERGE_ANALYSIS.md`, SM/BS/YSM=`docs/reviews/NOMAD_Shorts_Maker.md` / `Nomad-BlogStudio.md` / `Youtube_shots_Maker.md`. 근거 없는 값은 "제안", 외부 사실을 확인하지 않은 값은 "미확인"으로 표시한다.
 
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(채널 코치 채팅, RAG, 채널·브랜드 가이드 위키, LangGraph `video.script`), 음성(음성 대화, 오픈소스 TTS 내레이션 선택, Whisper STT의 공용 음성 구조 편입), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 기능 ID는 `VD-F-100`번대(AI), 열린 결정은 `D-13` 이후다(기존 #1~#12는 `D-1`~`D-12`와 같다).
+
 ## 1. 페르소나와 핵심 과제
 
 | 페르소나 | 상황 | 목표 | 좌절 |
@@ -33,6 +35,13 @@
 | 제휴 링크·대가성 문구 자동 삽입(전 Track), 링크인바이오 `/lb/[handle]` | MVP | 확정 결정 12, MA:621 |
 | compliance 게이트(규칙 + LLM) | MVP | PRD 9-4 |
 | Toss 구독·크레딧팩 | MVP | 확정 결정 4 |
+| AI 채널 코치 채팅(트렌드·채널 성과·과거 대본 질문), 제품별 Dify 채팅 앱 `video-chat` | MVP | 확정 결정 13, 14(`docs/products/00_MERGE_ANALYSIS.md:21-22`) |
+| RAG(트렌드, 채널 성과, 과거 대본) + 채널·브랜드 가이드 위키(제품 지식 위키) | MVP | 확정 결정 13, `docs/products/_platform-core/LLM_WIKI.md:37-47` |
+| LangGraph `video.script`(트렌드 검색 → 기획 → 대본 → 메타데이터 → compliance) | MVP | 확정 결정 13, `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119` |
+| 음성 대화, 대본 받아쓰기, 오픈소스 TTS 내레이션 선택(ElevenLabs와 병행), Whisper STT의 공용 음성 구조 편입 | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
+| 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
+| 랜딩 3D 히어로(소싱 → 가공 → 다채널 배포 영상 타일 파이프라인) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:83` |
+| 비회원 AI 상담(랜딩 채팅) | Phase 2 | 제안: 비로그인 상담은 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/products/_platform-core/AI_ARCHITECTURE.md:130`) |
 | Distrokid 자동 배포 | Phase 2 | 확정 결정 7 |
 | YouTube 24시간 라이브 | Phase 2 | 확정 결정 7 |
 | ElevenLabs 보이스 클로닝 | Phase 2 | 확정 결정 7 |
@@ -93,6 +102,18 @@
 | VD-F-090 | 결제 | 통합 | 코어 Toss 모듈: 주문 선저장 → 결제창 → confirm. 구독은 빌링키. Advanced는 `adv_pack_*` 할인 팩만 허용(서버 판정) | 금액 위조 요청 PM001. 결제 E2E 통과 | SM #2-3, BS #4-5 |
 | VD-F-091 | 크레딧 | 통합 | 선차감 → 잡 → 실패 자동 환불. 잔액 부족 402 + 필요량 표시 | 동시 50요청에 음수 잔액 0 | CORE_SPEC 4장 |
 | VD-F-092 | 팀 멤버 | 유지 | Advanced만 초대 화면(최대 5인, `team_members`) | Pro 조직 초대 API 403 | PRC:105 |
+| VD-F-100 | AI 채널 코치 채팅 | 신규 | 로그인 사용자 전용. 대시보드 채팅 패널에서 "지난달 조회수가 떨어진 이유", "이 주제의 최근 트렌드", "내 채널 톤으로 훅 3개"를 묻는다. 근거는 조직 컬렉션(`video-performance`, `video-scripts`, `video-brand`)과 채널·브랜드 가이드 위키, 운영자 컬렉션(`video-trends`, `video-guide`)이다. 대화 매핑 경로(조직 데이터), 스트리밍, 답변마다 출처, "AI가 생성한 답변" 표시. 메시지 1,000자, 대화당 50턴(제안). 크레딧은 턴 선차감 후 정산(4.1절) | 답변에 출처 1개 이상 또는 "근거 자료를 찾지 못했습니다" 표시. 수치(조회수, 성장률)는 출처 없이 말하지 않는다. 응답이 전달되지 않은 턴은 선차감 전액 환불. 잔액 부족 402(`CR001`). Dify 장애 시 `/tools/answer-direct`로 답한다. 다른 사용자의 대화 id로 이어 쓰면 404 | `docs/products/_platform-core/AI_ARCHITECTURE.md:44-56`, `:121-130` |
+| VD-F-101 | RAG: 트렌드·채널 성과·과거 대본 | 신규 | 조직 컬렉션 3개: `video-performance`(업로드별 `analytics_snapshots` 요약: 제목, 채널, 언어, 조회·시청 시간 변화), `video-scripts`(완료된 productions·longform의 대본과 스토리라인), `video-brand`(위키 원본 문서). 운영자 컬렉션 2개(제품 공통 지식, 조직 구분 없음): `video-trends`(`trend_videos` 일 1회 요약, `is_estimated` 표시 포함), `video-guide`(Track 사용법, 플랫폼 정책 요약). 임베딩은 모두 오픈소스(`video.rag`, `video.knowledge`, 대체 없음, 02장 5절). 색인은 `analytics.sync`와 생산 완료 뒤 잡으로 자동 실행한다. 운영자 컬렉션은 Dify에 외부 지식 API로만 노출하고 조직 데이터는 노출하지 않는다 | 평가셋 40문항(제안)에서 상위 8개 안 정답 청크 재현율 0.8 이상(제안). 다른 조직 컬렉션 요청 42501. 외부 지식 응답에 사용자 조직 데이터 0. `is_estimated=true` 트렌드는 답변에서 "추정"으로 표시. 난수·더미 지표 색인 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107` |
+| VD-F-102 | 채널·브랜드 가이드 위키 | 신규 | 조직·앱 단위 제품 지식 위키(조직 간 공유 없음). 원본: 사용자가 올린 브랜드·채널 문서, 채널 설정(역할, 언어, 국가), 조직 금지어(`banned_words`), 성과 상위 대본. ingest가 `entity`(채널), `concept`(톤·용어·금지어), `topic`(시리즈·포맷), `index` 페이지를 만든다. 사람이 고친 블록은 사람 소유로 표시되어 ingest가 덮어쓰지 않고, 저장은 `expected_version` 낙관적 잠금, 문서 1건당 갱신 페이지는 5개까지(`docs/products/_platform-core/LLM_WIKI.md:30-31`, `:47`). 주 1회 lint. 대본 그래프와 채팅이 근거로 쓴다 | 새 페이지는 `draft`로 만들고 owner/admin이 게시한 뒤에만 그래프 근거로 쓴다. 사람 소유 블록 수정 0. 버전 충돌 409. 출처 없는 페이지 게시 불가 | `docs/products/_platform-core/LLM_WIKI.md:12-47` |
+| VD-F-103 | 대본 그래프 `video.script` | 디벨롭(VD-F-032, 040 확장) | FastAPI 그래프 5노드: `trend`(트렌드 검색: `video-trends` RAG + `trend_videos` 정형 조회) → `plan`(기획: 채널 성과·브랜드 위키 근거로 각도, 훅, 구조, 권장 Track) → `script`(Track B/C Mode1은 훅 15초/본문 30초/CTA 5초, Track D는 스토리라인과 10섹션) → `compliance`(규칙 사전 + `banned_words` + 금지 문구, 걸린 부분만 1회 재작성) → `metadata`(제목·설명·태그 KO/JA/EN, 제휴 링크 슬롯). **제휴 링크와 대가성 문구는 그래프가 쓰지 않는다**: `metadata`는 설명란 첫 줄과 고정 댓글 첫 줄에 `effective_disclosure` 문구가 들어갈 자리만 비워 두고, 실제 삽입은 기존 업로드 경로(VD-F-062)가 한다. 모드 2가지: 빠른 모드(`trend`·`plan` 건너뜀, 기존 `ai.script` 단가), 정밀 모드(전체 5노드) | 그래프 1회 = `core.ai_runs` 1행 + 노드별 `ai_run_steps`. 대본에 출처 없는 수치 0(`trend`가 준 근거 id만 인용). 생성물에 대가성 문구와 비슷한 문장이 있으면 compliance가 제거. `has_affiliate=true` 업로드의 첫 줄은 기존 DB CHECK(`uploads_disclosure_check`)가 보장. 걸린 부분 1회 재작성, 2회 실패면 run `failed` + 환불. 주제 점수 60 미만 게이트(VD-F-013)는 그래프 앞에서 유지 | `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119`, 확정 결정 12 |
+| VD-F-104 | 음성 대화 | 신규 | 채팅 패널의 마이크 버튼(누르고 말하기). 발화 최대 60초(제안). STT(`voice_chat`, 오픈소스 우선) → 변환 텍스트 미리보기·수정 → 전송 → 답변 → "읽어 주기"(TTS, ElevenLabs 우선, 자동 재생 기본 꺼짐). 녹음 원본은 저장하지 않는다. 첫 사용 때 음성 처리 고지를 확인받는다 | 60초가 되면 녹음 자동 중지. `voice_jobs.store_audio=false` 100%. 마이크 권한을 거부해도 텍스트 채팅 정상. 고지 확인 없이 STT 호출 시 403 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:40-48`, `:85-95`, `:106-110` |
+| VD-F-105 | Whisper STT의 공용 음성 구조 편입 | 디벨롭(VD-F-030) | 파이프라인 STT(`media.stt`, 원본 영상 오디오·롱폼 내레이션 역방향 자막)는 Python 미디어 워커의 Whisper를 유지하되 라우팅 기능 `video.stt`(오픈소스 `oss-voice`로 고정)에 편입한다. 공용 음성 서버와 같은 모델 계열(faster-whisper)·무음 감지(silero-vad)로 맞추고, 호출마다 `core.ai_usage`(kind `stt`, provider `oss-voice`, `audio_seconds`, feature `video.stt`)를 기록한다. 대화형 짧은 발화(음성 대화, 받아쓰기)는 Next.js `/api/voice/*` → 공용 음성 서버 `/stt`로 처리한다. 두 경로의 경계는 02장 2절 | 파이프라인 STT 호출 100%가 `ai_usage`에 stt 행을 남긴다. 원본 오디오가 ElevenLabs 등 국외 제공자로 가는 경로 0건. 60초 중국어 클립 세그먼트 반환 유지(VID-06-012) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:5-20`, `:50-62` |
+| VD-F-106 | 오픈소스 TTS 내레이션 선택 + 같은 목소리 규칙 | 디벨롭(VD-F-030, 040) | 생산 요청의 옵션 `voice.provider`: `elevenlabs`, `oss-voice`, `auto`(체인 순서로 작업 시작 때 쓸 수 있는 첫 제공자). 선택한 제공자와 보이스는 **작업 시작 때 하나로 고정**하고 한 언어판(숏폼) 또는 한 롱폼의 모든 구간에 같은 제공자·같은 보이스를 쓴다. 중간 실패는 다른 제공자로 대체하지 않고 그 언어판 실패 + 그 언어분 환불(VD-F-035). 롱폼 섹션 재생성은 첫 섹션의 제공자·보이스(`longform_sections.narration_paths`에 기록)를 따르고, 그 제공자를 쓸 수 없으면 전체 섹션 재내레이션을 제안한다. 국외 이전 미동의 조직은 ElevenLabs가 체인에서 빠져 오픈소스만 선택된다. 언어별 오픈소스 보이스는 KO/JA/EN 품질 검증을 통과한 것만 선택지에 노출한다(D-15) | 한 언어판 `voice_jobs`(feature `narration`)의 `provider_id`·`voice_id`가 모두 같고 `fallback_from` null. 3구간 중 2구간째 강제 실패 시 산출물 미생성 + 그 언어분 환불 1행. 재생성 섹션의 보이스가 기존과 다르면 거부(422 `VD013`) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47`, `:63-73` |
+| VD-F-107 | 대본 받아쓰기, 샘플 듣기 | 신규 | (a) 생산 요청의 주제·대본 입력란 마이크 버튼: 음성을 받아 써 준다(`dictation`, 60초, 원본 미저장). (b) 보이스 선택 옆 "샘플 듣기": 대본 첫 100자를 선택한 제공자로 합성해 들려준다(`narration`, 대체 없음). (c) 대본 검수용 "읽어 주기"(`voice_chat` tts) | 받아쓰기 텍스트는 사용자가 수정해 보낼 수 있다. 샘플 듣기에서 쓴 제공자와 본 작업의 제공자가 같다. 샘플은 저장하지 않는다 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110` |
+| VD-F-108 | AI 라우팅과 국외 이전 동의 | 신규 | 첫 로그인 직후 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`을 호출하고 설정에서 철회한다. 기능별 기본 체인은 02장 5절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. 코어 제공자 목록에 없는 외부 서비스(DeepL, fal, Suno)는 라우팅 대상이 아니므로 같은 화면에서 별도 항목으로 고지한다(6장, D-21) | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings`에 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
+| VD-F-109 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴·음성·위키·그래프 정밀 모드는 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 기존 생산 합계에 묶이는 그래프 빠른 모드·내레이션은 정액(4.1절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
+| VD-F-110 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원본 클립 타일이 소싱 레인에서 들어와 가공 게이트에서 언어판(KO/JA/EN) 타일로 갈라지며 번인 자막 띠가 붙고 다채널 슬롯에 안착하는 풀 3D, 모바일은 타일 수를 줄인 1줄 흐름, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 사용자 결정 2026-10-13으로 기존 "플레이헤드 1회 스윕" 연출을 대체한다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과. 생성 건수·수익 같은 미검증 수치 0 | `docs/products/_design-guide/HERO_3D.md:5-81`, `:83` |
+| VD-F-111 | AI 출력 규칙(대본·채팅·메타) | 신규 | 6장 금지 문구와 6.1절 AI 대화 규칙을 그래프 compliance 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`packages/video-rules/banned.json`, 제안 위치)로 적용한다. 수익·조회수 보장, 가상 후기, "1위"·"최저가" 단정, 의료·금융 단정, 타사 상표 오용 문구를 차단한다. 제휴 대가성 문구를 LLM이 쓰거나 지우지 못하게 한다 | 금지 문구 평가셋 30문항(제안) 위반 0. 대가성 문구 첫 줄 규칙 위반 업로드 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 확정 결정 12 |
 
 ## 4. 요금과 크레딧
 
@@ -122,6 +143,10 @@
 | `priority_render` | bool | BullMQ priority 1(기본 100) |
 | `react_flow_full`, `api_access` | bool | Phase 2 기능 |
 | `credit_discount_pct` | int | 30이면 `adv_pack_*` 구매 허용 |
+| `ai_chat` | bool | AI 채널 코치 채팅 허용. 키가 없으면 true로 읽는다 |
+| `ai_chat_turns_per_day` | int | 사용자당 하루 채팅 턴 상한(공정 사용). 키가 없으면 200(제안) |
+| `voice_chat` | bool | 음성 대화·받아쓰기 허용. 키가 없으면 true |
+| `ai_script` | bool | 그래프 `video.script` 정밀 모드(트렌드·성과 근거 기획) 허용. Starter false, Basic 이상 true(제안: Starter는 Track A만이고 근거 기획이 필요한 Track이 없다). 빠른 모드는 모든 플랜 |
 
 크레딧 단가(PRD 13장, ADD 추가 10). 서버 `priceOf` 상수가 정본이며 코어는 단가를 모른다.
 
@@ -148,6 +173,37 @@
 
 크레딧팩(PRC:149-154): pack_500 15,000원 / pack_1000 28,000원 / pack_3000 75,000원 / pack_5000 110,000원. Advanced 전용 adv_pack 4종 10,500 / 19,600 / 52,500 / 77,000원. 모듈러 seed에도 adv_pack이 반영되었다(2026-10-13, 모놀리스 seed와 일치).
 
+AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `ai_script`)는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/seed.sql`의 플랜 4행에, 모듈러는 `docs/products/_supabase-modular/migrations/1200_video.sql` 11절의 병합 UPDATE에 있다(모듈러 `seed.sql` 반영은 06장 6절 R-V1). 플랜 가격·월 크레딧·팩은 바꾸지 않았다.
+
+### 4.1 AI·음성 크레딧 단가 (2026-10-13, 제안)
+
+기존 단가표(위)와 크레딧팩은 바꾸지 않는다. 제공자 단가는 코어 seed `core.ai_model_prices`(`docs/products/_supabase-modular/seed.sql:228-246`: LLM 상용 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자, 모두 제안값)이고 이 표는 그 값을 video 기능에 적용한 것이다. 계산 상수는 `apps/nomad-video/src/server/ai-pricing.ts`(기존 `priceOf`와 같은 이유로 코드 상수, VID-06-046 소유). 선차감과 정산 규칙은 `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:97-104`를 따른다.
+
+| 작업 | 선차감(예상) | 정산 | 상용 경로 예 | 오픈소스 경로 예 | 멱등 키 |
+|---|---|---|---|---|---|
+| 대본 그래프 빠른 모드(Track B/C Mode1 숏폼 / Track D 스토리라인) | 3 / 5 (기존 `AI 대본`, `롱폼 스토리라인` 단가 그대로) | 정액. 차액 없음. `ai_usage`에 원가만 기록 | Claude 우선 | `oss-llm` | 기존 생산 요청 `consume:video:<request_id>`에 포함 |
+| 대본 그래프 정밀 모드(트렌드·성과 근거 기획 포함) | 5 / 8 (제안: 기존 단가 + 근거 기획 2 / 3) | 정액. 상한 초과 원가는 운영사 부담 | 같음 | 같음 | `run:<ai_run_id>` |
+| AI 채널 코치 채팅 1턴 | 3 | 실제 토큰 × 단가 + Dify 보조 노드 오버헤드 0.5, 올림. 최소 1, 상한 5 | 약 3~5 | 약 1~2 | `conv:<id>:turn:<n>` |
+| 음성 질문·받아쓰기 STT(60초 이하) | 분 단위 올림: 오픈소스 1, ElevenLabs 3 | 실제 `audio_seconds` | 3 | 1 | `voice:<voice_job_id>` |
+| 대본 읽어 주기 TTS | 글자 수 천 자 단위 올림 × (오픈소스 1, ElevenLabs 5) | 실제 `characters` | 600자 5 | 600자 1 | `voice:<voice_job_id>` |
+| 샘플 듣기(100자 이하) | 최소 단위 1 | 실제 | 1 | 1 | `voice:<voice_job_id>` |
+| 내레이션 TTS 숏폼 1언어 / 3언어 | ElevenLabs 5 / 12 (기존 `TTS` 단가), 오픈소스 2 / 5 (제안: 코어 단가비 1:5와 최소 단위를 반영해 기존의 약 40%) | 정액. 언어당 대본 1,000자 초과분은 천 자 단위 추가(제안) | 5 / 12 | 2 / 5 | 기존 생산 요청에 포함 |
+| 내레이션 TTS 롱폼(언어당 10분) | ElevenLabs 5 (기존 04장 롱폼 렌더 합계), 오픈소스 2 | 정액 | 5 | 2 | 기존 롱폼 렌더 요청에 포함 |
+| 파이프라인 STT(원본 1분당) | 기존 `STT + 번역` 5 그대로 | 정액. 오픈소스 Whisper 원가는 `ai_usage`(provider `oss-voice`)에 기록만 | - | 5 | 기존 생산 요청에 포함 |
+| 위키 ingest(문서 1건) | 2 | 실제 사용량 | 약 2 | 약 1 | `run:<ai_run_id>` |
+| 위키 lint 수동 실행 / 주간 자동 | 1 / 0 | 실제 / 자동은 운영사 부담, 기능별 일일 상한 안에서(`docs/products/_platform-core/LLM_WIKI.md:47`) | - | - | `run:<ai_run_id>` |
+| RAG 자동 색인(성과·과거 대본) | 0 (사용자 과금 없음) | 조직당 월 청크 상한 20,000(제안) 초과 시 색인 보류 | - | 임베딩 원가는 운영사 부담 | `run:<ai_run_id>` |
+| 운영자 컬렉션(`video-trends`, `video-guide`) 색인 | 사용자 과금 없음. 운영자 조직 지갑에서 사용량 차감 | 사용량 | - | - | `run:<ai_run_id>` |
+| 위키·가이드 열람, 채팅 기록 열람 | 0 | - | - | - | - |
+
+| 규칙 | 내용 | 근거 |
+|---|---|---|
+| 경로별 단가 | 국외 이전에 동의하지 않은 조직은 체인에 오픈소스만 남으므로 오픈소스 단가가 자동 적용된다. 화면은 실제로 고른 경로의 예상치를 보여 준다 | `docs/products/_supabase-modular/migrations/0008_core_ai.sql:452-460` |
+| 실패 환불 | 사용자에게 결과가 전달되지 않은 실패는 선차감 전액 환불. 내레이션은 구간 하나라도 실패하면 그 언어판 전체 실패(VD-F-035 부분 환불 규칙) | `docs/products/_platform-core/AI_ARCHITECTURE.md:129` |
+| 정산 시점 | 응답·작업 종료 직후. 스트림이 끊기면 선차감을 남기고 정산 잡이 `settled_at is null` 행을 5분 주기로 처리(제안) | `docs/products/_platform-core/AI_ARCHITECTURE.md:128` |
+| 표시 | 보내기 전 "약 3크레딧(정산 후 1~5)", 보이스 선택에 엔진별 예상치, 정산 결과는 메시지 아래와 원장 표에 | 제안 |
+| 공정 사용 | 사용자당 하루 200턴(`features.ai_chat_turns_per_day`) | 제안 |
+
 환불 정책(제안): 크레딧팩은 결제 후 7일 이내 미사용분 전액 환불, 구독은 다음 결제일부터 해지(당월 크레딧 유지). 근거 없음, 전자상거래법 청약철회 기준 확인 필요.
 
 ## 5. 비기능 요구사항
@@ -166,6 +222,12 @@
 | 가용성 | 웹 99.5%/월, 워커 큐 지연 p95 5분 | 제안 |
 | 레이트 리밋 | 생성 API 조직당 60회/분, 웹훅 제공자당 600회/분, `/r/[code]` IP 해시당 60회/분, 로그인 IP당 10회/10분, 랜딩 조회수 집계 IP 해시당 1회/10분 | SECURITY_BASELINE 8장, 마지막은 제안 |
 | 하트비트 | 60초, `reap_stale_jobs(600)` 10분 | CORE_SPEC 9.2 |
+| AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 200턴, STT 사용자당 10회/분, 샘플 듣기 사용자당 20회/시간, 그래프 실행 조직당 30회/시간, 잡 토큰 발급 120회/분 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:278-305` 기준 |
+| AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 음성 발화 60초·5MB, 샘플 100자, 위키 문서 1건 2MB | 제안 |
+| AI 응답 시간 | 채팅 첫 토큰 p95 5초(Dify HTTP 노드 경로는 전체 답 도착 후 표시라 "근거를 찾는 중" 표시), 그래프 정밀 모드 p95 90초, 샘플 듣기 p95 5초 | 제안 |
+| 공용 음성 서버 한도 | 요청당 STT 10분, TTS 5,000자, 파일 50MB. 이를 넘는 파이프라인 STT(롱폼 역방향 자막, 원본 500MB)는 미디어 워커가 처리한다(02장 2절) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:61` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/products/_design-guide/HERO_3D.md:32-41` |
+| AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 조직 삭제 후 30일, 성과·대본 컬렉션은 해당 업로드·생산물 삭제 시 함께 삭제 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 
 ## 6. 법, 개인정보, 금지 문구
 
@@ -174,15 +236,44 @@
 | 개인정보 수집 | 이메일, 표시 이름, 결제 식별자(Toss), 연결 채널 식별자와 OAuth 토큰(암호문), 제휴 클릭의 IP 일 단위 솔트 해시·UA·국가. 목적: 서비스 제공, 결제, 업로드, 수익 통계 |
 | 보존과 삭제 | 5장 보존 표. 조직 삭제는 soft delete 후 30일 유예 뒤 `purge_organization`(SECURITY_BASELINE 12장). 채널 연결 해제 시 토큰 즉시 폐기(`revoke_credential`) |
 | 암호화 대상 | `core.encrypted_credentials`(YouTube/Meta/TikTok 토큰, 쿠팡·제휴 키), `core.billing_keys`. 제품 테이블에 평문 토큰 컬럼 없음 |
-| 제3자 제공 | OpenAI/Anthropic(OpenRouter 경유)에 대본·자막 텍스트, DeepL에 번역 텍스트, ElevenLabs에 TTS 텍스트, fal에 이미지 프롬프트, Suno에 곡 프롬프트, 플랫폼(YouTube/Meta/TikTok)에 영상·메타. 개인정보처리방침에 위탁·국외 이전으로 명시 |
-| 약관·고지 | 이용약관, 개인정보처리방침, 생성물 권리와 책임(사용자가 원본 권리 근거를 선언하고 책임진다), AI 생성 표시(제안: 업로드 시 플랫폼의 합성 콘텐츠 표시를 기본 체크. 플랫폼 정책 세부는 미확인) |
+| 제3자 제공 | OpenAI/Anthropic(OpenRouter 경유)에 대본·자막 텍스트, DeepL에 번역 텍스트, ElevenLabs에 TTS 텍스트, fal에 이미지 프롬프트, Suno에 곡 프롬프트, 플랫폼(YouTube/Meta/TikTok)에 영상·메타. 개인정보처리방침에 위탁·국외 이전으로 명시. AI 계층 추가(2026-10-13): 상용 AI 제공자(LLM: Anthropic, OpenAI, Google, OpenRouter / 음성: ElevenLabs)는 국외 이전에 동의한 조직의 요청에만 쓴다. 보내는 범위: 대본·주제·채팅 메시지, 채널 성과 요약(제목, 조회·시청 시간 수치), 브랜드 가이드 문서, 트렌드 요약, 대본 읽어 주기·내레이션 텍스트, 음성 질문 오디오(STT). 연결 채널의 OAuth 토큰, 이메일, 결제 정보, 원본 영상·오디오는 어떤 AI 제공자에도 보내지 않는다. 오픈소스 LLM·임베딩·음성 서버와 Dify는 운영사가 자체 운영한다(서버 위치·위탁 여부 구현 시 확인) |
+| 약관·고지 | 이용약관, 개인정보처리방침, 생성물 권리와 책임(사용자가 원본 권리 근거를 선언하고 책임진다), AI 생성 표시(제안: 업로드 시 플랫폼의 합성 콘텐츠 표시를 기본 체크하고, AI 합성 음성 내레이션이 들어간 영상은 특히 권한다. YouTube의 합성·변형 콘텐츠 표시 항목의 API 지원 여부와 TikTok·Meta의 AI 생성 라벨 정책은 미확인, 구현 시 확인). 채팅 답변마다 "AI가 생성한 답변", 샘플·읽어 주기 플레이어에 "AI가 생성한 음성입니다", 위키 페이지에 "AI가 정리한 문서(사람이 수정한 블록은 표시)". 다른 모델로 대체된 답변은 "다른 AI 모델로 답했습니다" 표시 |
 | 원본 저작권 | Track A/B/C Mode2 원본은 "무료 배포"여도 재가공·수익화 허락이 아니다. 소싱 시 `rights_basis`(public_free/creative_commons/licensed/own) 선택과 근거 메모 필수, 권리자 신고 시 해당 업로드 비공개·삭제 절차(제안: 접수 후 24시간 내 처리). 법률 검토 필요(01장 8절) |
 | 음원 권리 | Suno 생성곡의 상업 이용 권리는 Suno 요금제에 따라 다르다(미확인). DSP의 AI 음원 정책도 미확인. 플리 곡은 Suno 생성곡 또는 증빙 업로드한 라이선스 곡만(DB 트리거 VD006) |
 | 제휴·광고 | 공정위 "추천·보증 등에 관한 표시·광고 심사지침"에 따라 대가성 문구를 설명란 첫 줄과 고정 댓글 첫 줄에(CORE_SPEC 13.3). 끌 수 없음(DB CHECK `uploads_disclosure_check`). 랜딩·링크인바이오는 CTA·링크 옆에 표시 |
 | 플랫폼 약관 | YouTube API 서비스 약관(쿼터, 데이터 삭제 의무 세부 미확인), 다채널 "보험 채널" 운영은 스팸·반복 콘텐츠 정책 위반 위험이 있어 첫 연결 시 위험 고지와 동의 기록(audit `channel.risk_ack`, 제안). 도우인·샤오홍슈 수집은 각 플랫폼 약관 위반 위험 고지. 쿠팡파트너스 운영 정책 준수(문구 원문 사용) |
 | 금지 문구(마케팅) | 가상 후기·평점, 미검증 수치(원본 랜딩의 "128,470+ 생성", `NOMAD Shorts Maker/src/app/page.tsx:164`, "-95% 시간단축" DESIGN.md:468), 보장 표현("확정 수익", "100% 통과", "채널 정지 없음"), 타사 상표 오용(YouTube 로고·빨간색 브랜드) |
-| 금지 문구(생성물) | 블링 수익 추정은 "추정"과 출처를 항상 표시, 보장 표현 금지. 의료·금융 단정 표현은 compliance 규칙 사전에 등록. 커머스 대본에 허위 효능·최상급 단정("1위", "최저가") 금지 |
+| 금지 문구(생성물) | 블링 수익 추정은 "추정"과 출처를 항상 표시, 보장 표현 금지. 의료·금융 단정 표현은 compliance 규칙 사전에 등록. 커머스 대본에 허위 효능·최상급 단정("1위", "최저가") 금지. AI 계층 추가: 출처 없는 조회수·성장률·수익 수치 생성 금지(근거 id가 있는 수치만 인용), 존재하지 않는 고객 후기·평점·"써 봤더니" 체험담 생성 금지(상품 정보 밖의 사용 경험 서술 포함), "이 대본대로 하면 조회수가 오른다" 같은 성과 보장 금지, 제휴 대가성 문구를 대본·설명에서 생략하거나 비슷한 문장으로 대체하는 일 금지 |
 | 규제 특례 | 해당 없음(의료·금융·미성년 특례 없음). 단 만 14세 미만 가입 불가(제안) |
+
+### 6.1 AI·음성 개인정보 판단과 대화 규칙 (2026-10-13)
+
+| 항목 | 판단 | 이유와 처리 |
+|---|---|---|
+| 채널 성과·대본·브랜드 문서 | 조직 영업정보. 개인정보는 아니지만 외부 유출 시 손해가 크다 | 상용 제공자는 국외 이전 동의 조직에만 쓴다. 강제 오픈소스는 두지 않는다(`force_open_source=false`, 품질 우선). 동의가 없으면 `resolve_ai_route`가 상용을 걸러 낸다(`docs/products/_supabase-modular/migrations/0008_core_ai.sql:419-476`) |
+| 원본 영상·오디오 | 제3자 저작물과 제3자 목소리(도우인·샤오홍슈 크리에이터)를 담고 있다 | 파이프라인 STT는 `video.stt`를 오픈소스 `oss-voice` 단일로 고정해 국외 제공자로 보내지 않는다. 원본은 24시간 뒤 삭제(VD-F-021). 화자 식별·음성 특징 추출·복제를 하지 않는다 |
+| 채팅·받아쓰기 자유 입력 | 사용자가 이메일, 전화번호, 계정 정보를 적을 수 있다 | 입력란에 "비밀번호, API 키, 개인정보를 적지 마세요" 안내. 보내기 전 서버가 이메일·전화번호·카드·계정 번호 형식을 마스킹한다(제안) |
+| 채널 토큰 | `core.encrypted_credentials`에만 있다 | 어떤 AI 입력에도 넣지 않는다. 그래프 입력의 채널은 `channel_id`와 이름·역할·언어만 |
+| Dify 보조 노드 | 조직을 알 수 없어 동의를 확인할 수 없다 | `dify.aux`는 오픈소스 강제(`force_open_source=true`, 02장 5절) |
+| 보이스 클로닝 | 본인 목소리가 아닌 복제는 초상·음성 권리 침해 위험 | MVP 미제공. Phase 2도 본인 신원 확인 + 동의가 있을 때만. 타인(유명인, 원본 배우)의 목소리 복제는 제공하지 않는다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:80`) |
+
+| 고지·동의 | 시점 | 기록 |
+|---|---|---|
+| 상용 AI 국외 이전 | 첫 로그인 직후 온보딩(`/onboarding/ai`), 설정에서 변경. 코어 제공자 목록에 없는 외부 서비스(DeepL, fal, Suno)는 같은 화면의 별도 항목(D-21) | `core.ai_org_settings`(고지문 버전) |
+| 음성 처리 고지(녹음) | 첫 마이크 사용 직전. 녹음 목적, 원본 미저장, 상용 제공자 사용 시 국외 이전 | 녹음 원본을 저장하지 않으므로 `voice_jobs.store_audio=false`이고 보관 동의는 받지 않는다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:85-95`). 고지 확인은 감사 기록(`write_audit`, action `voice.notice_ack`, 고지문 버전을 메타데이터에)으로 남긴다(제품 동의 테이블을 만들지 않음) |
+| 제3자 녹음 고지 | 해당 없음: 이 제품은 강의 녹음처럼 타인의 목소리를 사용자가 녹음해 저장하는 기능이 없다. 파이프라인 원본의 제3자 음성은 위 표 처리 | - |
+| AI 생성 표시 | 채팅·읽어 주기·샘플·위키·업로드 화면 | 6장 약관·고지 행 |
+
+AI 대화 추가 규칙(6장 금지 문구에 더해 채팅·대본에 적용):
+
+| 분류 | 금지 | 대신 |
+|---|---|---|
+| 성과 보장 | "이렇게 하면 조회수 10만", "수익 보장" | "최근 같은 주제 평균 조회수는 N(출처, 추정 여부)이며 보장되지 않습니다" |
+| 수치 생성 | 근거 없는 수치, 난수 지표 | 근거 id가 있는 수치만. 없으면 "근거 자료를 찾지 못했습니다" |
+| 제휴 | 대가성 문구를 쓰지 않거나 지우거나 우회 표현으로 바꾸기 | 문구는 서버가 삽입(`effective_disclosure`). 채팅은 규칙을 안내만 한다 |
+| 플랫폼 정책 | 정지 회피, 보험 채널로 반복 업로드 유도, 약관 우회 | 정책 위험 안내(6장 플랫폼 약관 행) |
+| 타인 권리 | 원본 배우·크리에이터 목소리 복제 권유, 권리 근거 없는 재가공 권유 | 권리 근거 선언 안내(VD-F-020) |
+| 개인정보 요구 | 비밀번호, 토큰, 카드번호 요구 | 묻지 않는다 |
 
 ## 7. KPI
 
@@ -198,20 +289,34 @@
 | compliance 통과율 | 95% 이상 | 첫 검사 PASS 비율 | 상시(PRD:726) |
 | 대가성 문구 누락 | 0건 | 제휴 링크 있는 업로드 중 문구 없음(DB로 불가능해야 함) | 상시 |
 | 원장 drift | 0 | `credit_ledger_reconciliation` | 매일 |
+| AI 채팅 사용률 | 활성 조직의 30%(제안) | `core.ai_conversations` 1개 이상 조직 / 월 업로드 1건 이상 조직 | 3개월 |
+| 정밀 모드 대본 채택률 | 정밀 모드 결과로 생산을 이어 간 비율 50% 이상(제안) | `ai_runs`(graph `video.script`) 대비 `productions` | 3개월 |
+| 오픈소스 내레이션 선택 비율 | 측정만(목표 없음) | `voice_jobs`(feature `narration`) provider 비율 | 3개월 |
+| 미정산 AI 사용 | `settled_at is null` 1시간 초과 0건 | `core.ai_usage` | 상시 |
 
 ## 8. 열린 결정
 
 | # | 항목 | 선택지 | 권고 |
 |---|---|---|---|
-| 1 | 모놀리스 스키마 | (a) `public`(코어 lite 그대로) (b) 제품 스키마 | (a). 사용자 최종 확인 대기 |
-| 2 | Track F 허용 플랜 | (a) Pro 이상(seed 현재값) (b) Basic 포함 | (a). Suno 엔진을 쓰는 E와 같은 등급 |
-| 3 | Starter compliance | (a) 규칙 단계만 필수 (b) 검사 없음(PRC 그대로) | (a). "업로드 전 검증 필수"(PRD:710)와 플랜표(PRC:28) 충돌을 비용 0인 규칙 단계로 해소 |
-| 4 | Advanced 30% 할인 | (a) adv_pack 4종 seed 추가 (b) 코어 주문에 할인 지원 | (a). 코어 변경 없음. 모듈러 seed 갱신은 2026-10-13 반영 완료 |
-| 5 | 네이버 로그인 | (a) MVP 제외 (b) naver_id 매핑 + 명시적 연결 | (a). Phase 2에서 (b), 이메일 자동 병합 금지(YSM #3) |
-| 6 | 대용량 미디어 저장소 | (a) Supabase `video-media` 버킷 5GB (b) 외부 객체 저장소(R2 등) | (a)로 시작, 월 저장량 1TB 초과 시 (b) 검토(제안) |
-| 7 | Track A 원본 권리 | 법률 검토 전 출시 범위 | 권리 근거 선언 + 신고 처리 절차를 갖추고 출시, 법률 검토 병행 |
-| 8 | Suno 연동 방식 | 공식 API / 대행 API / 수동 업로드 | 공식 API 확인 전에는 사용자가 생성한 곡 파일 업로드 경로를 함께 둔다(제안) |
-| 9 | 유료 프로모션 자동 표시 | 자동 / 안내만 | 안내만(확정 결정 12 "제안") |
-| 10 | 텐핑·네이버쇼핑 커넥트 | API / Playwright / 수동 | 수동으로 출시, API 확인 후 결정 |
-| 11 | 랜딩·링크인바이오 문구 배치 | `video_description` 재사용 / 코어에 `landing` 배치 추가 | 재사용으로 시작, 코어 요청 등록 |
-| 12 | 산출물 보존 기간 | 5장 제안값 | 사용자 확인 필요 |
+| D-1 | 모놀리스 스키마 | (a) `public`(코어 lite 그대로) (b) 제품 스키마 | (a). 사용자 최종 확인 대기 |
+| D-2 | Track F 허용 플랜 | (a) Pro 이상(seed 현재값) (b) Basic 포함 | (a). Suno 엔진을 쓰는 E와 같은 등급 |
+| D-3 | Starter compliance | (a) 규칙 단계만 필수 (b) 검사 없음(PRC 그대로) | (a). "업로드 전 검증 필수"(PRD:710)와 플랜표(PRC:28) 충돌을 비용 0인 규칙 단계로 해소 |
+| D-4 | Advanced 30% 할인 | (a) adv_pack 4종 seed 추가 (b) 코어 주문에 할인 지원 | (a). 코어 변경 없음. 모듈러 seed 갱신은 2026-10-13 반영 완료 |
+| D-5 | 네이버 로그인 | (a) MVP 제외 (b) naver_id 매핑 + 명시적 연결 | (a). Phase 2에서 (b), 이메일 자동 병합 금지(YSM #3) |
+| D-6 | 대용량 미디어 저장소 | (a) Supabase `video-media` 버킷 5GB (b) 외부 객체 저장소(R2 등) | (a)로 시작, 월 저장량 1TB 초과 시 (b) 검토(제안) |
+| D-7 | Track A 원본 권리 | 법률 검토 전 출시 범위 | 권리 근거 선언 + 신고 처리 절차를 갖추고 출시, 법률 검토 병행 |
+| D-8 | Suno 연동 방식 | 공식 API / 대행 API / 수동 업로드 | 공식 API 확인 전에는 사용자가 생성한 곡 파일 업로드 경로를 함께 둔다(제안) |
+| D-9 | 유료 프로모션 자동 표시 | 자동 / 안내만 | 안내만(확정 결정 12 "제안") |
+| D-10 | 텐핑·네이버쇼핑 커넥트 | API / Playwright / 수동 | 수동으로 출시, API 확인 후 결정 |
+| D-11 | 랜딩·링크인바이오 문구 배치 | `video_description` 재사용 / 코어에 `landing` 배치 추가 | 재사용으로 시작, 코어 요청 등록 |
+| D-12 | 산출물 보존 기간 | 5장 제안값 | 사용자 확인 필요 |
+| D-13 | 파이프라인 STT 일원화 방식(VD-F-105) | (a) 미디어 워커의 Whisper 유지 + `video.stt` 라우팅·사용량 기록, 대화형 발화만 공용 음성 서버 (b) 파이프라인 STT도 공용 음성 서버 `/stt`로 일원화(10분·50MB 한도 상향과 워커의 토큰 발급 경로 필요) | (a)(제안). 원본 60초 클립은 한도 안이지만 롱폼 역방향 자막(최대 60분)과 원본 500MB가 공용 서버 한도를 넘는다. 한도 상향이 확인되면 재검토 |
+| D-14 | OpenAI TTS-1-HD 백업 처리 | (a) 제거하고 체인을 `elevenlabs → oss-voice`로 대체 (b) 코어 `openai` 제공자 kinds에 `tts` 추가 요청 | (a)(제안). 코어 제공자 `openai`는 `llm`만이다(`docs/products/_supabase-modular/seed.sql:216`). 요청 R-V2를 열어 두고 (a)로 진행 |
+| D-15 | 오픈소스 TTS 내레이션 모델과 언어 범위 | (a) KO 먼저, JA·EN은 품질 검증 통과 시 노출 (b) 3언어 동시 | (a)(제안). 후보는 `VOICE_ARCHITECTURE.md` 4.1절(코드·가중치 라이선스와 3언어 품질 확인 전 채택하지 않음). 통과 전 JA·EN은 ElevenLabs만 선택 가능 |
+| D-16 | 같은 목소리 규칙의 범위 | (a) 언어판(숏폼)·롱폼 프로젝트 단위 (b) 채널 시리즈 단위까지 보이스 고정 | (a)(제안). (b)는 채널·브랜드 가이드 위키에 "채널 보이스" 항목을 두고 권고만 표시하는 선에서 시작 |
+| D-17 | 3D 히어로 타일 질감 | (a) 자체 제작 샘플 영상의 정지 프레임만 (b) 단색 타일 | (a)(제안). 도우인 등 제3자 원본 프레임은 쓰지 않는다. 샘플은 운영사가 권리를 가진 자체 제작물 |
+| D-18 | 트렌드 RAG 수집 범위 | (a) 플레이보드·SerpApi 지표 요약 + 출처 링크만 색인 (b) 제목·본문 전문 색인 | (a)(제안). 제공자 약관의 재가공·보관 허용 범위는 미확인이므로 확인 전까지 요약 지표만. 약관이 금지하면 해당 출처 제외 |
+| D-19 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). VID-06-041에서 확인 결과를 기록 |
+| D-20 | 파이프라인 LLM 단계(translate, analyze, bling, compliance LLM)의 경로 | (a) FastAPI 1노드 그래프 `video.step`으로 등록해 서명 토큰 경로 사용 (b) 코어에 단일 호출 엔드포인트 추가 요청(R-V4) 후 사용 | (a)(제안). 코어 엔드포인트가 생기면 (b)로 옮긴다. 어느 쪽이든 LLM 키는 FastAPI에만 둔다 |
+| D-21 | 코어 제공자 목록에 없는 외부 서비스(DeepL, fal, Suno)의 국외 이전 고지 | (a) 온보딩 국외 이전 화면에 별도 항목으로 고지하고 동의 없으면 해당 기능 비활성 (b) 약관·처리방침 고지만 | (a)(제안). 라우팅 레지스트리 편입은 코어 요청 R-V3 |
+| D-22 | 내레이션 TTS 호출 위치와 ElevenLabs 키 | (a) 오케스트레이터(서버 전용 TS 워커)가 `packages/core-voice`로 호출 (b) Next.js Route Handler만 호출(요청 시간 한도 안에서만 가능) | (a)(제안). 롱폼 10분 x 3언어 합성은 요청-응답 시간 안에 끝나지 않는다. `VOICE_ARCHITECTURE.md:79`의 "Next.js 서버에서만"을 "브라우저와 클라이언트 번들 밖의 서버 전용 프로세스"로 넓히는 확인을 코어에 요청(R-V6). 오픈소스 음성 서버 호출에는 잡에 묶인 서명 토큰이 필요하다(R-V5) |

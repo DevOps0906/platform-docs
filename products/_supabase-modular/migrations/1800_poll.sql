@@ -1493,3 +1493,78 @@ end $$;
 insert into poll.banned_words (org_id, word)
 select null, w from unnest(array['시발', '씨발', '병신', '개새끼', '좆', 'fuck', 'shit']) as w
 where not exists (select 1 from poll.banned_words b where b.org_id is null and b.normalized = poll.normalize_text(w));
+
+-- @@modular-only-begin
+-- ---------------------------------------------------------------------
+-- 19. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/live-poll/02_ARCHITECTURE.md 5절, 01_PRD.md 4.2절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 이 조각과 모놀리스 seed 에서만 바꾼다. 표 구조는 바꾸지 않는다(데이터만).
+--   이 절은 core.* 만 쓰므로 모놀리스 변환본(0002_poll_domain.sql)에는 없다. 모놀리스는 seed.sql 에 같은 값이 있다.
+--   19.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'poll'. 기능 키는 소문자. 체인 제공자는 seed.sql 의
+--        core.ai_providers 행이고 kind 가 맞아야 한다(19.3 검사).
+--        원칙: 청중이 쓴 원문(질문, 음성)을 입력으로 받는 단계는 청중이 국외 이전에 동의하지 않았으므로
+--        오픈소스 강제(force_open_source)다. 진행자 조직의 국외 이전 동의로 청중 데이터를 상용으로 보내지 않는다.
+--        - chat           : 진행자 어시스턴트(행사 자료 + 과거 Q&A 근거). 상용 우선. 검색 근거에 contains_pii 청크(과거 Q&A)가
+--                           들어가면 FastAPI 라우터가 그 요청을 오픈소스로 강제한다(AI_ARCHITECTURE.md 5장 임베딩 규칙과 같은 원리).
+--        - poll.moderate  : 질문 모더레이션 분류(그래프 poll.qna_assist). 청중 원문 입력 → 오픈소스 강제.
+--        - poll.summary   : 군집 대표문과 요약. 청중 원문 입력 → 오픈소스 강제.
+--        - poll.knowledge : 행사 자료와 과거 Q&A 임베딩, 질문 군집용 임베딩. 청중 원문이 섞이므로 오픈소스 강제.
+--                           컬렉션마다 임베딩 모델 1종이므로 모델을 바꾸면 재색인.
+--        - wiki.*         : 행사 위키. 오픈소스 먼저. Q&A에서 파생된 페이지는 derived_from_pii 라 라우터가 오픈소스로 강제.
+--        - dify.aux       : Dify 보조 LLM 노드. 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - voice_question : 청중 음성 질문 STT. 청중 원문(음성) → 오픈소스 강제. 상용 STT 대체 없음.
+--        - voice_chat     : 진행자 음성 대화. STT 는 오픈소스 먼저, 읽어 주기 TTS 는 ElevenLabs 먼저(진행자 본인 음성과 AI 답변).
+--        - qna_read_aloud : Q&A 요약 읽어 주기 TTS. 입력은 compliance 를 통과한 요약문(닉네임·개인정보 제거)이므로
+--                           ElevenLabs 먼저(조직이 국외 이전에 동의한 경우만 체인에 남는다).
+--   19.2 플랜 크레딧과 AI 키(병합). 모듈러 seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로 seed.sql 반영을 코어에
+--        요청했다(06_AGENT_PLAN.md 6절). 서버는 누락 키를 기본값으로 읽는다. 금액(price_krw)은 건드리지 않는다.
+--        free: 가입 크레딧 100(1회, 월 지급 없음), pro: 월 1,000, business: 월 5,000 (모두 제안, 01_PRD.md 4.2절)
+-- ---------------------------------------------------------------------
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'poll', 'chat',            'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'poll', 'poll.moderate',   'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'poll', 'poll.summary',    'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'poll', 'poll.knowledge',  'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', true),
+  (null, 'poll', 'wiki.query',      'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'poll', 'wiki.ingest',     'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'poll', 'wiki.lint',       'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'poll', 'dify.aux',        'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'poll', 'voice_question',  'stt',       'open_source', '[{"provider":"oss-voice","model":"*"}]', true),
+  (null, 'poll', 'voice_chat',      'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'poll', 'voice_chat',      'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'poll', 'qna_read_aloud',  'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 19.2 플랜 크레딧과 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+update core.plans
+   set signup_credits = 100,
+       features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 100, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 5, "voice_question": true, "audience_voice_per_event": 20, "audience_voice_per_participant": 5, "event_wiki": true, "materials_max_docs": 10, "materials_max_mb": 20}'::jsonb
+ where app_id = 'poll' and code = 'free';
+update core.plans
+   set monthly_credits = 1000,
+       features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 300, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 20, "voice_question": true, "audience_voice_per_event": 100, "audience_voice_per_participant": 10, "event_wiki": true, "materials_max_docs": 50, "materials_max_mb": 200}'::jsonb
+ where app_id = 'poll' and code = 'pro';
+update core.plans
+   set monthly_credits = 5000,
+       features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 1000, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 100, "voice_question": true, "audience_voice_per_event": 500, "audience_voice_per_participant": 20, "event_wiki": true, "materials_max_docs": 200, "materials_max_mb": 1000}'::jsonb
+ where app_id = 'poll' and code = 'business';
+
+-- 19.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'poll'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'poll routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;
+-- @@modular-only-end

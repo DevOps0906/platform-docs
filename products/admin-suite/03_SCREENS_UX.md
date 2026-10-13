@@ -16,6 +16,13 @@
 | `/settings/account` | 계정(이름, 비밀번호, 로그아웃) | 전원 | 전체 | P0 |
 | `/settings/audit` | 감사 로그 | owner/admin | 전체 | P1 |
 | `/settings/billing` | 플랜과 구독(erp, sms) | owner | 전체 | P2 |
+| 채팅 패널(모든 앱 화면 오른쪽 시트), `/assistant` | AI 업무 어시스턴트(텍스트·음성), 대화 목록 | 로그인 + 허용 컬렉션이 1개 이상인 역할(SMS student 제외) | `features.ai_assistant`, 질문은 `ai_turns_per_day`, 음성은 `ai_voice` | P0 |
+| `/settings/ai` | AI 처리 방식(상용 AI 국외 이전 동의 / 국내 오픈소스만). **hms에는 없음** | owner | 전체 | P0 |
+| `/settings/knowledge` | 규정·매뉴얼 문서 업로드, 색인 상태, 컬렉션 | 앱 관리자(erp master_admin, sms admin, hms admin) | `ai_docs_max` | P0 |
+| `/wiki`, `/wiki/[...slug]` | 기관 운영 위키 목록·페이지(허용 컬렉션 범위만 표시) | 허용 컬렉션 역할 | `ai_wiki` | P0 |
+| `/settings/wiki` | 위키 검수·게시, 변경 이력, 점검 결과 | 앱 관리자 | `ai_wiki` | P0 |
+| `/settings/ai-usage` | AI 사용량·한도 | 앱 관리자 | 전체 | P1 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
 
 ### 1.2 ERP
 
@@ -121,6 +128,43 @@
 | 2 | Toss 결제창 | 결제 | successUrl 복귀 → 서버 confirm → `confirm_payment_order` | PM001 금액 불일치(주문 failed 기록은 별도 호출 `fail_payment_order`, 05장 6절) |
 | 3 | 플랜 화면 | - | 엔타이틀먼트 standard | 결제 실패 → 기존 플랜 유지 |
 
+### 2.8 AI 질문 (erp, sms: Dify 경유 / hms: 직접 경로)
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | 아무 앱 화면 | 헤더의 "어시스턴트" 버튼 → 채팅 패널 열기 | `POST /api/ai/conversations` → `core.ai_conversations` 행(erp, sms는 `dify_user`=HMAC) | `ai_assistant` 꺼짐 403 `AI_DISABLED`, student 403 |
+| 2 | 채팅 패널 | 질문 입력(1,000자) → 보내기 | 서버가 형식 마스킹(hms는 환자 식별정보면 차단) → 하루 한도 확인 → erp, sms: Dify Chat API → HTTP 노드 `/tools/answer` / hms: FastAPI `/tools/answer-direct` | 한도 429 `AI_DAILY_LIMIT`, hms 환자 식별정보 422 `AI_PHI_BLOCKED` |
+| 3 | 같은 화면 | 스트리밍 답변 읽기 | 그래프 `admin.assistant`: `permission`(DB 역할 확인, 허용 컬렉션 계산) → `retrieve` → `answer` → `compliance` | 허용 컬렉션 없음 403 `AI_NO_PERMISSION`, 근거 없음 "근거 자료를 찾지 못했습니다" |
+| 4 | 같은 화면 | 출처 칩 열기 | 출처(문서 제목, 컬렉션, 검수일) 표시. 위키 페이지면 `/wiki/...` 링크 | - |
+| 5 | 같은 화면 | 제공자 장애 | 체인 대체(해당 시 "다른 AI 모델로 답했습니다" 표시). hms는 대체 없음 | 전부 실패 503 `AI_UNAVAILABLE`, 오류 띠 |
+
+### 2.9 문서 업로드 → 색인 → 위키 게시 (앱 관리자)
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | `/settings/knowledge` | 컬렉션 선택(공개 범위), 파일 선택(md, txt, pdf, docx, 20MB), "개인정보(hms는 환자 정보)를 포함하지 않았음" 체크 | 서버가 형식·탐지 검사 → `ai-docs` 버킷 저장 → `core.ai_documents`(pending) → FastAPI `/rag/ingest`(서명 토큰) | 탐지 실패 422 `AI_DOC_PII_DETECTED`, 중복 409, 상한 402 |
+| 2 | 같은 화면 | 색인 상태 확인 | pending → indexing → ready(청크 수 표시) | failed → 오류 메시지 + 재시도 |
+| 3 | `/settings/wiki` | (ready 직후, "위키 대상" 컬렉션 문서만) 새 draft 페이지 검토, 문단 수정, 게시 | 위키 ingest가 draft 생성. 수정은 FastAPI 경유(`expected_version`, 사람 소유 표시). 게시 → `published` | 출처 없는 페이지 게시 불가, 버전 충돌 409 `WIKI_VERSION_CONFLICT` |
+| 4 | `/settings/wiki` | 주간 점검 결과 확인 | lint 결과 표시(모순, 낡음, 고아, 깨진 링크, 출처 없음) | - |
+
+### 2.10 음성 질의
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | 채팅 패널 | 마이크 버튼을 처음 누름 | 음성 처리 고지 모달(목적, 원본 미저장, 처리 제공자: erp·sms는 국외 여부 / hms는 "병원 전용 서버") → 확인 시 `POST /api/voice/consent`(감사 기록) | 거부 → 텍스트 입력 유지 |
+| 2 | 같은 화면 | 누르고 말하기(최대 60초, 경과 시간 막대) | MediaRecorder → `POST /api/voice/stt`(`store_audio=false`) → 변환 텍스트 | 마이크 권한 거부·미지원 브라우저 안내, STT 실패 "다시 말하기" |
+| 3 | 같은 화면 | 변환 텍스트 확인·수정 → 보내기 | 2.8절 2~5단계(대화 `channel='voice'`) | hms는 변환 텍스트도 PHI 패턴 검사 |
+| 4 | 같은 화면 | "읽어 주기"(자동 재생은 설정에서, 기본 꺼짐) | `POST /api/voice/tts {message_id}` → 오디오 스트림 | TTS 실패 → 텍스트 답변은 그대로 |
+
+### 2.11 AI 처리 방식 선택 (erp, sms 온보딩, hms 없음)
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | 첫 로그인한 owner의 `/settings/ai`(첫 진입 시 안내 배너) | "상용 AI 사용(국외 이전 동의)" 또는 "국내 오픈소스만" 선택. 고지문(제공자, 이전 국가, 항목, 목적, 보유 기간) 펼쳐 보기 | `POST /api/ai/consent` → 동의 시 사용자 세션 `core.set_ai_cross_border_ack(org, true, 고지문 버전)` | 선택 없이 닫으면 미동의(오픈소스만) |
+| 2 | 설정 | 언제든 철회 | `set_ai_cross_border_ack(org, false, ...)`. 다음 요청부터 상용 제공자 제외 | 고지문 버전 불일치 409 `CONSENT_VERSION_MISMATCH` |
+
+hms 조직의 `/settings/ai` 경로는 존재하지 않고(404), 설정 화면 머리에 "AI는 병원 전용 서버에서만 처리됩니다" 안내 한 줄만 표시한다.
+
 ## 3. 화면별 명세
 
 | 화면 | 목적 | 구성 | 데이터 출처 | 행동 | 크레딧 표시 |
@@ -135,6 +179,74 @@
 | HMS `/settings/access-log` | 감사 | 기간·행위자·환자 필터, 사유, 건수 | `phi_access_log` | CSV 내보내기(P1, 기록 남김) | 없음 |
 | SMS `/admin/attendance` | 출석 | 학급/과목/날짜 선택 바 + 학생 그리드(학번, 이름, 4상태 토글) + 일괄 저장 | `sms.members`, `sms.attendance` | 상태 변경, 일괄 저장 | 없음 |
 | SMS `/student/dashboard` | 본인 확인 | 이번 달 출석률, 지각/조퇴/결석 횟수, 오늘 과목 목록 | `sms.student_summary`, `sms.attendance` Realtime | 없음 | 없음 |
+
+### 3.1 AI 업무 어시스턴트, 음성, 지식·위키 화면
+
+공통 요소는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`(음성)와 `docs/products/_platform-core/LLM_WIKI.md:45`(위키)를 따른다. 컴포넌트는 `packages/admin-kit/src/ai/`에 두고 앱 3개가 같은 것을 쓴다.
+
+| 화면 | 목적 | 구성 | 데이터 출처 | 행동 | 크레딧 표시 |
+|---|---|---|---|---|---|
+| 채팅 패널 | 규정·매뉴얼 질문 | 머리: 제목, 대화 새로 시작, 닫기. 본문: 메시지 스레드(스트리밍, 출처 칩, "AI가 생성한 답변", 대체 표시). 바닥: 마이크 버튼, 입력(1,000자, 개인정보 안내), 보내기, 오늘 남은 질문 수 | `core.ai_conversations`, `core.ai_messages`(RLS 본인), `POST /api/ai/chat`(SSE) | 보내기, 중지, 출처 열기, 읽어 주기, 새 대화 | 없음(크레딧 미사용). 남은 질문 수만 표시 |
+| 대화 목록 `/assistant` | 지난 대화 | 대화 행: 제목, 마지막 시각, 삭제 | `core.ai_conversations` | 열기, 삭제 요청 | 없음 |
+| 음성 입력 | 말로 묻기 | 누르고 말하기 버튼, 경과 시간 막대, 남은 시간, 변환 텍스트 미리보기·수정 | `POST /api/voice/stt` | 녹음, 취소, 수정 후 보내기 | 없음 |
+| 음성 처리 고지 모달 | 녹음 전 고지 | 목적, 원본 미저장, 처리 제공자, 확인/취소 | `POST /api/voice/consent` | 확인, 취소 | 없음 |
+| `/settings/knowledge` | 문서 관리 | 컬렉션 탭(공개 범위 이름과 읽을 수 있는 역할 표시), 문서 표(제목, 상태 pending/indexing/ready/failed, 청크 수, 검수일, 올린 사람), 업로드 대화상자(확인 체크 포함) | `core.ai_documents`, `core.ai_collections`, `/api/ai/knowledge/*` | 업로드, 재시도, 삭제(보관), 검수일 갱신 | 문서 수 / `ai_docs_max` |
+| `/wiki` | 운영 위키 찾기 | 검색, 분류(컬렉션 범위), 페이지 행(제목, 요약 1줄, 검수 상태) | 서버가 `core.wiki_pages`를 읽되 사용자 허용 컬렉션 페이지만(service_role 서버 렌더, 사용자 입력은 slug 조회뿐) | 검색, 열기 | 없음 |
+| `/wiki/[...slug]` | 규정 이해 | 제목, 요약, 본문, "출처"(문서), "관련"(위키 링크), "AI가 정리하고 기관 관리자가 검수한 문서", "이 내용으로 질문하기" | 같음 | 관련 이동, 채팅 시작 | 없음 |
+| `/settings/wiki` | 검수·게시 | 페이지 표(draft/published/archived, 마지막 편집자 agent/user, 낡음 표시), 편집기, 변경 이력(`wiki_revisions`), 점검 결과 탭 | `core.wiki_pages`, `core.wiki_revisions`, `core.ai_runs`(wiki.lint) | 게시, 보관, 수정, 제안 반영 | 없음 |
+| `/settings/ai-usage` | 사용량·한도 | 기간별 질문 수·음성 분, 제공자별 호출 수와 대체 발생, 오늘 한도 상태 | `core.ai_usage` 집계 RPC(구현 시 확인) | 기간 변경 | 원가 환산 크레딧을 "참고"로 표시 |
+| `/settings/ai` (erp, sms) | AI 처리 방식 | 두 선택지 카드 대신 라디오 2개 + 고지문 펼침 + 현재 상태 | `core.ai_org_settings` | 동의, 철회 | 없음 |
+
+채팅 패널 와이어프레임(PC 오른쪽 시트 400px, 375px에서는 전체 화면):
+
+```
++------------------------------------------+
+| 어시스턴트                  [새 대화] [x] |
++------------------------------------------+
+| (AI) 반품은 수령 후 7일 안에 ...          |
+|      출처 [구매·반품 규정 2025-03 검수]    |
+|      AI가 생성한 답변                      |
+| (나) 해외 거래처는 어떻게 하나요           |
++------------------------------------------+
+| 개인정보는 적지 마세요                      |
+| [마이크] [질문을 입력하세요        ] [보내기]|
+| 오늘 남은 질문 27                          |
++------------------------------------------+
+```
+
+hms 채팅 패널은 같은 구성에 두 가지가 다르다: 머리에 "병원 전용 서버에서 처리됩니다. 환자 이름·차트번호·연락처를 적지 마세요" 고정 배너, 답변 상단에 "AI가 생성한 참고 답변이며 임상 판단을 대신하지 않습니다".
+
+### 3.2 디자인 시스템
+
+`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 admin-suite의 선택만 적는다.
+
+| 항목 | 내용 | 근거 |
+|---|---|---|
+| 주 레퍼런스 | **Primer**(정보 밀도, 표·목록·상태 표시, 컴팩트/기본 두 밀도) + 보조 **Atlassian**(권한 표시, 상태 배지/로젠지, 모달·사이드바 중첩, 승인 흐름). AI 채팅·음성·위키 화면은 Astryx 패턴(존재·라이선스 미확인, D-18)을 참고하되 확인 실패 시 Primer + shadcn/ui 패턴. 랜딩은 없다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 가져올 것 | Primer: 컴팩트(행 32px)/기본(행 40px) 밀도, 숫자 열 정렬, 상태 라벨(아이콘 + 텍스트), 필터 바. Atlassian: 역할·상태 배지, 승인/대기/정지 흐름 표시, 권한 없는 항목은 숨김(자물쇠 노출 금지는 기존 규칙). Astryx(확인 후): 메시지 스레드 구조, 출처 칩 | 같은 곳 |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Atlassian, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX, 마케팅 랜딩 패턴 | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16.x, React 19.x, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), lucide-react. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | 앱별 `apps/<app>/src/theme/tokens.css`의 `@theme` 블록과 라이트/다크 변수 + 공통 기반 `packages/admin-kit/src/theme/base.css`(간격, radius, 밀도). 앱 토큰 값은 4.3절 토큰 플랜(ERP 코발트, HMS 야간 병동, SMS 칠판 인디고). 의미 기반 이름: `--color-surface`, `--color-surface-raised`, `--color-text`, `--color-text-muted`, `--color-border`, `--color-accent`, `--color-success`, `--color-warning`, `--color-danger`, `--radius-panel`(8px), `--radius-control`(6px), `--radius-badge`(999px), `--space-row-compact`(32px), `--space-row-default`(40px). 전환은 `data-theme` 하나 | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37` |
+| 라이트/다크 | 세 앱 모두 두 벌의 토큰을 둔다. 기본값: ERP, SMS 라이트(장부 회색/분필 회색 바탕), HMS 다크(야간 병동 바탕, 장시간 응시). 앱마다 기본 모드는 바뀌지 않고 사용자가 계정 설정에서 전환(제안) | `docs/products/_design-guide/DESIGN_SYSTEM.md:70` |
+| 컴포넌트(정답) | `packages/admin-kit/src/ui/`(shadcn/ui를 토큰으로 재스타일). 앱은 토큰만 바꿔 같은 컴포넌트를 쓴다. 컴포넌트 안 hex 금지(린트로 `bg-[#...]` 차단, ADM-06-039) | 같은 곳 |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드가 이긴다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | 앱마다 `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다: 1단계 ADM-06-041(W0), 2단계 ADM-06-042(W1), 3단계 사람 비주얼 검토 ADM-06-043, 4단계 ADM-06-044. 앱 화면 작업은 044 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+
+기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
+
+| 컴포넌트 | 배리언트 | 크기 | 상태 |
+|---|---|---|---|
+| Button | primary, secondary, ghost, danger | sm 32 / md 36 / lg 40px | 기본, 호버, 포커스, 비활성, 로딩 |
+| Input, Textarea, Select, Combobox | default, error | md 36px | 기본, 포커스, 비활성, 오류 |
+| Checkbox, Radio, Switch | - | md | 기본, 포커스, 비활성 |
+| DataTable | compact(행 32px), default(행 40px) | - | 빈 상태, 로딩 스켈레톤, 행 선택 |
+| StatusBadge(로젠지) | 판매(pending, completed, canceled), 가입 요청(pending, approved, rejected), 예약·검사(HMS 상태 11종), 출석 4상태(SMS), AI 문서(pending, indexing, ready, failed), 위키(draft, published, archived) | sm | 아이콘 + 텍스트(색만으로 구분하지 않음) |
+| RoleBadge | 앱별 역할(master_admin 등) | sm | - |
+| Dialog, ConfirmDialog, Sheet(채팅 패널 400px, 모바일 전체 화면), Toast | - | - | 열림, 닫힘 |
+| Tabs, Tooltip, Skeleton, EmptyState | - | - | - |
+
+제품 고유 컴포넌트(기본 세트 뒤): AppShell, FormModal, KpiText(매출 1개 크게), AttendanceToggle(출석 4색), QueueTicket(대기번호), LabRangeBar(정상범위 막대), ChatPanel, MessageBubble, CitationChip, VoiceButton, KnowledgeTable, WikiArticle.
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
@@ -221,6 +333,18 @@ ERP 홈 와이어프레임(좌측 정렬)
 
 카피는 01장 6.4절 금지 문구를 통과해야 한다. 예: 로그인 화면에 고객사 수, 절감률 같은 수치를 넣지 않는다.
 
+### 4.5 3D 히어로: 적용하지 않음 (2026-10-13)
+
+2026-10-13 확정 결정 15(전 제품 메인페이지 히어로 3D)에 대해 admin-suite는 **적용 제외**다. 이유: 공개 마케팅 랜딩이 없는 내부 업무용 앱이고(`docs/products/_design-guide/REFERENCES.md:165`), `HERO_3D.md` 5장 표도 admin-suite를 "적용 제외(제안). 공개 랜딩이 없는 업무용 앱이라 로그인 화면만 가볍게"로 두었다(`docs/products/_design-guide/HERO_3D.md:92`). 따라서 이 장 4.1~4.4의 디자인 방향(토큰, 피할 인상, 안 B 로그인 화면)은 바뀌지 않았다.
+
+| 항목 | 규칙 |
+|---|---|
+| 3D 소재·장면 | 없음. three.js, React Three Fiber, drei 의존성 0(02장 2절 린트 규칙). 3D 대체 정지 이미지, 기기별 3D 구성도 만들지 않는다 |
+| 로그인 화면 | 4.3절 안 B(좌측 정렬 2열). 오른쪽 열은 앱 주제 그림 1개(ERP 입출고 전표, HMS 대기번호표, SMS 출석부 칸)를 인라인 SVG로, 로그인 폼은 HTML. 로드 시퀀스·스크롤 연동·자동 재생 모션 없음. `prefers-reduced-motion`에서 모션 0 |
+| 성능(제안) | 로그인 LCP 2.5초 이하(`HERO_3D.md:38`과 같은 값을 채택), 3D 번들 0 |
+| 접근성 | 장식 SVG `aria-hidden`, 폼 필드 레이블과 키보드 순서 보장 |
+| 재검토 조건 | 공개 마케팅 랜딩이 생기면 그 랜딩에만 `HERO_3D.md` 표준을 적용한다(앱 화면에는 적용하지 않는다) |
+
 ## 5. 상태, 오류, 빈 화면
 
 | 상황 | 표시 |
@@ -234,8 +358,21 @@ ERP 홈 와이어프레임(좌측 정렬)
 | 검사 값 누락 HM004 | 해당 입력칸 강조 + "HGB 값을 입력하세요" |
 | 네트워크 오류 | 토스트 + 재시도 버튼(지수 백오프 1s, 2s, 4s, 최대 3회, `School_Management_System/PRD.md:112`) |
 | 빈 상태 | "아직 상품이 없습니다. 첫 상품을 등록하세요", "오늘 접수된 환자가 없습니다", "이 학급에 학생이 없습니다. 학생을 초대하세요" |
-| compliance WARN/FAIL | 해당 없음 |
-| 잡 진행률 | 해당 없음 |
+| compliance WARN/FAIL | 제품 도메인 compliance는 해당 없음. AI 답변은 그래프 compliance 노드가 걸러 재작성하고, 끝내 걸리면 "근거 문서를 직접 확인하세요" 안내로 대체 |
+| 잡 진행률 | 해당 없음(문서 색인 상태만 `/settings/knowledge`에 표시) |
+| AI 답변 생성 중 | 스트리밍 + 중지 버튼. erp, sms는 Dify 경로라 전체 답이 오기 전 "근거를 찾는 중" 표시 |
+| 대체 모델로 답함 (erp, sms) | 답변 아래 작은 표시 "다른 AI 모델로 답했습니다" |
+| AI 실패(모든 제공자) | 오류 띠 "지금은 답변을 만들 수 없습니다. 잠시 뒤 다시 시도하세요"(hms는 "병원 전용 AI 서버에 연결할 수 없습니다. 관리자에게 알려 주세요"). 다른 서버로 대체하지 않았음을 hms에서만 명시 |
+| 근거 없음 | 안내 + 위키 검색 링크 "근거 자료를 찾지 못했습니다" |
+| 권한 없는 문서 | 답변에서 권한 밖 문서의 존재를 암시하지 않는다. 허용 범위 안에 근거가 없으면 위 "근거 없음"과 같은 문구 |
+| 환자 식별정보 감지 (hms) | 입력란 아래 경고 "환자 정보가 포함된 것 같습니다. 이름·차트번호·연락처를 빼고 다시 입력하세요". 전송 차단 |
+| 하루 질문 한도 | 입력 비활성 "오늘 질문 30개를 모두 썼습니다. 내일 다시 이용하세요"(숫자는 플랜 값) |
+| 마이크 권한 거부 | 마이크 버튼 비활성 + 안내 "마이크 권한이 꺼져 있습니다. 텍스트로 물어보세요" |
+| 음성 미지원 브라우저·`ai_voice` 꺼짐 | 마이크 버튼 숨김 |
+| 음성 변환 실패 | "말씀을 알아듣지 못했습니다. 다시 말하거나 입력해 주세요" |
+| 국외 이전 미동의(erp, sms) | 채팅 패널 상단 한 줄 "국내 오픈소스 AI로 답하고 있습니다. 설정에서 바꿀 수 있습니다"(owner에게만 링크) |
+| 문서 반입 거절 | "개인정보로 보이는 내용이 있어 올릴 수 없습니다. 해당 부분을 지우고 다시 올려 주세요"(hms: 환자 정보) |
+| 위키 페이지 없음 | 404 + 검색 "아직 정리되지 않은 내용입니다" |
 
 ## 6. 접근성과 반응형
 
@@ -245,3 +382,5 @@ ERP 홈 와이어프레임(좌측 정렬)
 | 대비 | 본문 4.5:1 이상. HMS 다크에서 #E2E8F0/#0F172A 확인. 상태는 색 + 아이콘 + 텍스트 |
 | 폭 | 1024px 미만 햄버거 사이드바, 375px에서 표는 가로 스크롤 컨테이너(페이지 전체 가로 스크롤 없음). 출석 보드는 768px 태블릿 우선 |
 | 모션 | `prefers-reduced-motion` 시 대기열 깜빡임(Live 배지) 정지 |
+| 채팅 | 메시지 목록 `aria-live="polite"`(스트리밍은 완료 때 한 번 읽음), 출처 칩 키보드 접근, 375px에서 전체 화면 시트 |
+| 음성 | 음성은 텍스트 입력의 대안이며 모든 기능은 음성 없이 쓸 수 있다. 녹음 중 상태를 텍스트로도 표시. 읽어 주기는 스페이스(재생/정지) |

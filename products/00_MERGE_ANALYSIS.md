@@ -18,6 +18,11 @@
 | 10 | 브랜드와 폴더명 | video: NOMAD AI Factory(폴더 `nomad-video`) / commerce: NOMAD Commerce / 사주: 신비로운AI(폴더 `astro-ai`) |
 | 11 | 마이크로웹 | 대행 제작으로 시작해 셀프서비스로 확장한다. Next.js + platform-core로 이전한다. |
 | 12 | 제휴마케팅(affiliate) | `_platform-core`에 affiliate 공용 모듈을 둔다. 제공자는 쿠팡파트너스, 네이버 브랜드커넥트, 텐핑, 네이버쇼핑 커넥트이며, 어댑터 구조로 추가할 수 있게 한다. 텐핑과 네이버쇼핑 커넥트는 공개 API 여부를 확인하지 않았다(없으면 Playwright 또는 수동 링크 등록). blog: 본문에 제휴 상품 카드와 링크를 자동 삽입하고, 대가성 문구를 글 상단에 자동 삽입한다. 네이버 브랜드커넥트 지원은 blog가 소유하며 완전 자동(Playwright)으로 한다. video: 모든 Track의 설명란과 고정댓글에 제휴링크와 대가성 문구를 자동 삽입하고, Track B 랜딩은 유지한다. 플랫폼의 유료 프로모션 표시 자동 설정은 제안 단계이며 확정이 아니다. C-5-1은 (b)로 결정됐다. |
+| 13 | AI 계층 (2026-10-13) | FastAPI(`apps/api`)에 LangChain/LangGraph로 AI 계층을 구성하고, RAG는 Supabase pgvector(HNSW, 1024차원. 임베딩은 플랫폼 기본 Voyage, 제품 지식 컬렉션 기본 오픈소스, 기존 컬렉션은 기록된 모델로만 처리: 2026-10-13 사용자 결정)를 쓴다. 12개 제품 모두 MVP에 AI 기능을 넣는다. AI 크레딧은 선차감 + 정산이며 admin-suite만 예외(플랜 포함 한도 + 원가 기록, 2026-10-13 사용자 결정)다. LLM Wiki는 제품 지식 위키(DB + FastAPI)와 개발용 프로젝트 위키(`docs/wiki/` + 스킬) 두 가지다. 설계 정본 `_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, DB `0008_core_ai.sql`. |
+| 14 | Dify (2026-10-13) | Dify는 채팅·운영 화면용으로 공용 자체 호스팅 1개를 쓴다(제품마다 앱 1개). 조직 데이터 검색·답변 생성·그래프 실행 같은 지식·도구는 FastAPI가 맡고, Dify는 서명 토큰을 전달만 한다. 설치 `docs/develop/_shared/dify/`. |
+| 15 | 3D 히어로 표준 (2026-10-13) | 전 제품 메인페이지 히어로는 PC·태블릿 풀 3D, 모바일은 절충안(HTML 즉시 표시 + 가벼운 3D 지연 로딩), 저사양·미지원·reduced-motion은 정지 이미지. 정본 `_design-guide/HERO_3D.md`. |
+| 16 | 음성 (2026-10-13) | 음성 대화 전체(말하기 → STT → AI → TTS)와 제품별 음성 기능을 12개 제품 MVP에 넣는다. 제공자는 ElevenLabs(TypeScript SDK)와 오픈소스 공용 GPU 음성 서버(faster-whisper + silero-vad + 상업 이용 가능한 한국어 TTS)로 이원화한다. 정본 `_platform-core/VOICE_ARCHITECTURE.md`, DB `0009_core_voice.sql`. |
+| 17 | LLM 이원화 (2026-10-13) | 상용(ChatGPT, Claude, Gemini, OpenRouter 등)과 오픈소스(vLLM 서빙) 모델을 병행한다. 라우팅은 FastAPI 라우터가 `core.resolve_ai_route` 설정(commercial/open_source/auto)과 대체 체인으로 정한다. 민감 데이터는 오픈소스 강제(`force_open_source`, 조직이 해제 불가). 설치 `docs/develop/_shared/llm/`. |
 
 ### video 트랙 정의 (확정)
 

@@ -1,6 +1,6 @@
 # DB_CONVENTIONS: 제품 스키마 작성 규칙
 
-작성일 2026-10-12. 제품 에이전트가 모듈러 조각(`_supabase-modular/migrations/<번호>_<schema>.sql`)과 모놀리스 마이그레이션(`<제품>/supabase/monolith/`)을 쓸 때 따르는 규칙이다. 코어 SQL이 이미 쓰고 있는 패턴을 규칙으로 옮겼으므로 근거는 대부분 `docs/products/_supabase-modular/migrations/0000~0006`이다(아래 `migrations/`). PostgreSQL 15, Supabase 표준 객체만 쓴다(`docs/products/_PRODUCT_AGENT_BRIEF.md:68`).
+작성일 2026-10-12. 제품 에이전트가 모듈러 조각(`_supabase-modular/migrations/<번호>_<schema>.sql`)과 모놀리스 마이그레이션(`<제품>/supabase/monolith/`)을 쓸 때 따르는 규칙이다. 코어 SQL이 이미 쓰고 있는 패턴을 규칙으로 옮겼으므로 근거는 대부분 `docs/products/_supabase-modular/migrations/0000~0009`이다(아래 `migrations/`). PostgreSQL 15, Supabase 표준 객체만 쓴다(`docs/products/_PRODUCT_AGENT_BRIEF.md:68`).
 
 ## 1. 이름 규칙
 
@@ -47,7 +47,7 @@
 ```sql
 -- =====================================================================
 -- 1200_video.sql
--- nomad-video 도메인. 선행: core 0000~0006
+-- nomad-video 도메인. 선행: core 0000~0009
 -- =====================================================================
 create schema if not exists video;
 grant usage on schema video to anon, authenticated, service_role;
@@ -244,7 +244,7 @@ grant execute on function blog.publish_post(uuid) to authenticated;
 
 | 항목 | 모듈러(`_supabase-modular`) | 모놀리스(`MONOLITH_CORE_LITE.sql`) |
 |---|---|---|
-| 코어 위치 | `core` 스키마, 파일 7개(0000~0006) | `public` 스키마, 파일 1개 |
+| 코어 위치 | `core` 스키마, 파일 10개(0000~0009. 모놀리스 쪽은 SECTION 11 AI, 12 음성) | `public` 스키마, 파일 1개 |
 | 제품 테이블 위치 | 제품 스키마 | `public` |
 | 함수 접두사 | `core.` | `public.`(이름·시그니처 동일). 앱은 `SUPABASE_DB_SCHEMA`로 전환 |
 | 기본 권한 | core 스키마에 기본 권한 없음 → 명시 GRANT만 | Supabase가 public에 anon/authenticated ALL을 기본 부여 → 코어가 회수(SECTION 0, 10). 제품 테이블도 명시 GRANT 필요 |
@@ -273,6 +273,7 @@ grant execute on function blog.publish_post(uuid) to authenticated;
 | PGlite 체커 | `node check.mjs <label> <file.sql> ...` 가 OK를 출력해야 한다. pg_cron 등 확장은 스텁 처리 | `docs/products/_tools-sqlcheck/check.mjs`, `prelude.sql` |
 | RLS 스모크 테스트 | `auth.users`에 사용자 2명 삽입 → `set role authenticated` + `set_config('request.jwt.claim.role', 'authenticated')` + `set_config('request.jwt.claim.sub', <uuid>)` → B가 A 데이터 0행, 역할/크레딧/플랜 자기 변경 42501 확인. 항목은 `SECURITY_BASELINE.md` 15장 | 제품 저장소 `supabase/tests/`(제안) |
 | 로컬 Supabase | `supabase db reset` 후 `README.md:145-156` 검사 | |
+| PGlite 체커 `--vector` | pgvector가 필요한 SQL(0008 이후, `MONOLITH_CORE_LITE.sql` SECTION 11)은 `node check.mjs --vector <label> <file.sql> ...`로 검사한다. 0.5.x PGlite에 pgvector가 없어서 0.3.15(별칭 `pglite-vec`)를 쓴다. `--vector` 없이 돌리면 `vector` 확장을 스텁 처리하므로 AI 테이블 검사가 안 된다 | `docs/products/_tools-sqlcheck/check.mjs:1-3` |
 
 ### 13.2 MONOLITH_CORE_LITE.sql 검증 결과 (2026-10-12, PGlite)
 
@@ -310,3 +311,18 @@ grant execute on function blog.publish_post(uuid) to authenticated;
 | member가 owner/admin 전용 DELETE | 0행 또는 42501 |
 | 상태 전이 위반 | 22023 또는 제품 코드 |
 | 제품 RPC를 비멤버가 호출 | 42501 |
+
+## 14. pgvector와 ai_runtime 규약 (2026-10-13 추가)
+
+| 항목 | 규칙 | 근거 |
+|---|---|---|
+| 확장 위치 | `create extension if not exists vector with schema extensions`. 타입은 `extensions.vector(1024)`처럼 스키마를 붙여 쓴다 | `migrations/0008_core_ai.sql:18`, `:112-126` |
+| 차원 | 1024(Voyage 기본, 제안). 컬렉션마다 임베딩 제공자·모델·차원을 기록한다 | `AI_ARCHITECTURE.md` 5장 |
+| 모델 혼용 금지 | 한 컬렉션에는 임베딩 모델 하나만. 모델을 바꾸면 컬렉션 단위로 재색인한다 | 같은 곳 |
+| 인덱스 | HNSW + cosine: `using hnsw (embedding extensions.vector_cosine_ops)`. 조직·앱·컬렉션 b-tree 인덱스를 함께 둔다 | `migrations/0008_core_ai.sql:126-127` |
+| 연산자 | `search_path=''` 함수 안에서는 `embedding operator(extensions.<=>) p_embedding`처럼 스키마 한정 연산자를 쓴다. `<=>`만 쓰면 해석되지 않는다 | `migrations/0008_core_ai.sql:307-345` |
+| 검색 함수 | org·app 필터를 함수 안에서 강제하고 service_role만 호출(PUBLIC EXECUTE 회수). 제품이 `ai_chunks`를 직접 SELECT하는 검색 쿼리를 만들지 않는다 | `SECURITY_BASELINE.md` 16장 |
+| `ai_runtime` 스키마 | LangGraph 체크포인트(`langgraph-checkpoint-postgres` `setup()`이 표준 테이블 생성). service_role만 `usage, create`, 다른 역할은 모두 회수. 제품 SQL이 이 스키마를 건드리지 않는다. PostgREST 노출 스키마에 넣지 않는다 | `migrations/0008_core_ai.sql:262-265` |
+| 모놀리스 | `public` 스키마에 같은 이름·시그니처. 확장은 `extensions` 스키마 유지 | `MONOLITH_CORE_LITE.sql` SECTION 11 |
+| 검증 | 0008 이후 SQL은 `check.mjs --vector`로만 검사한다(13.1) | `docs/products/_tools-sqlcheck/check.mjs` |
+

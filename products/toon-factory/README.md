@@ -10,6 +10,7 @@
 |---|---|
 | 대상 사용자 | 그림 실력보다 이야기를 가진 인스타툰·웹툰 지망 작가, SNS 마케터, 지식 크리에이터, 1인 창업자(`Toon-Factory/PRD.md:13`, `docs/reviews/Toon-Factory.md:10`) |
 | 핵심 차별점 | AI 이미지의 약점인 캐릭터 일관성을 "생성"이 아니라 "조립"으로 해결한다(`Toon-Factory/PRD.md:15-17`). AI는 캐릭터를 그리지 않고 콘티, 대사, 배경만 맡는다(MVP) |
+| AI 요약(2026-10-13) | 작품 설정 위키(캐릭터 바이블)와 설정 RAG, 콘티 그래프 `toon.storyboard`(줄거리 → 컷 분할 → 캐릭터 일관성 검사 → 이미지 프롬프트 → compliance), 창작 어시스턴트 채팅(Dify `toon-chat`), 음성 대화·대사 음성 미리듣기·MP4 음성 입히기, 3D 히어로가 MVP에 들어간다(확정 결정 13~17). AI 생성 표시와 이미지 생성 저작권 규칙은 그대로 유지한다 |
 | 앱 ID / 스키마 | `toon` / 모듈러 `toon`, 모놀리스 `public` |
 | SQLSTATE / 작업 ID 접두사 | `TN` (`docs/products/_platform-core/DB_CONVENTIONS.md:22`) |
 
@@ -39,17 +40,17 @@
 | 파일 | 내용 |
 |---|---|
 | `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구사항과 수용 기준, 플랜과 크레딧 단가, 비기능 수치, 저작권·AI 생성 표시·플랫폼 제출 규칙, KPI, 열린 결정 |
-| `02_ARCHITECTURE.md` | 스택, 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅, 리뷰 #5·#6 차단 설계, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우, 화면별 명세, 랜딩 디자인 방향, 상태·오류, 접근성 |
-| `04_API.md` | Route Handler, 제품 RPC, 잡 페이로드, 웹훅, 외부 API, 오류 코드 |
-| `05_DATA_MODEL.md` | 테이블, 상태 전이, RLS, 인덱스, 코어 참조, 리뷰 #1~#4 차단 설계, 모놀리스/모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 38개, 소유 경계, 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅 기본값 14행과 그래프 3개, 리뷰 #5·#6 차단 설계, 배포, 환경변수 |
+| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우(AI 채팅·음성·설정 위키 포함), 화면별 명세, 디자인 시스템(Atlassian 주 레퍼런스), 랜딩 디자인 방향(3D 히어로), 상태·오류, 접근성 |
+| `04_API.md` | Route Handler(AI·음성 포함), 제품 RPC, 잡 페이로드, 웹훅, 외부 API(FastAPI, Dify 계약), 오류 코드 |
+| `05_DATA_MODEL.md` | 테이블, 상태 전이, RLS, 인덱스, 코어 참조(AI·음성은 코어 표만, 제품 AI 표 없음), 리뷰 #1~#4 차단 설계, 모놀리스/모듈러 차이 |
+| `06_AGENT_PLAN.md` | 작업 59개(AI·음성·3D·디자인 시스템 19개 포함), 소유 경계, 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 이식 시 수정점, 폐기 목록, 복사 금지 결함 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `_platform-core/MONOLITH_CORE_LITE.sql` 복사본. 6-A, 6-B, 9절 제거 |
 | `supabase/monolith/migrations/0002_toon_domain.sql` | 도메인 테이블(모듈러 조각에서 변환) |
-| `supabase/monolith/seed.sql` | apps, 플랜 2개, 크레딧팩 2개, 샘플 카탈로그 팩 |
-| `docs/products/_supabase-modular/migrations/2000_toon.sql` | 모듈러 조각(정본) |
+| `supabase/monolith/seed.sql` | apps, 플랜 2개(AI 키 포함), 크레딧팩 2개, 샘플 카탈로그 팩, AI 라우팅 기본값 14행 |
+| `docs/products/_supabase-modular/migrations/2000_toon.sql` | 모듈러 조각(정본, 10절에 AI·음성 기본값) |
 
 ## 5. DB 구조 선택
 

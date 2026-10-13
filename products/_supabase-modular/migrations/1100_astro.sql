@@ -1,6 +1,6 @@
 -- =====================================================================
 -- 1100_astro.sql
--- astro-ai(신비로운AI) 도메인. 선행: core 0000~0006 (+ seed.sql 의 core.apps 'astro' 행은 없어도 된다)
+-- astro-ai(신비로운AI) 도메인. 선행: core 0000~0006, 13절 AI·음성 기본값은 0008~0009 (+ seed.sql 의 core.apps 'astro' 행은 없어도 된다)
 -- 기획 문서: docs/products/astro-ai/05_DATA_MODEL.md
 --
 -- 테이블
@@ -9,7 +9,8 @@
 --   astro.readings        리딩(사주/타로/통합) 1건 = 크레딧 차감 1건 = 잡 1건. 상태 전이 트리거
 --   astro.reading_renders PDF 렌더 이력(최초 렌더 + 테마 변경 재생성 5cr). 상태 전이 트리거
 --   astro.deliveries      발송 outbox(이메일). 재시도 5분 x 3회
---   astro.consents        동의 기록(개인정보, 제3자 생년월일시, 국외 이전, 마케팅). 증빙용
+--   astro.consents        동의 기록(개인정보, 제3자 생년월일시, 국외 이전, 마케팅, 음성 처리 고지). 증빙용
+--   (13절) AI·음성 기능별 라우팅 기본값(core.ai_routing_settings, app 'astro')과 starter 플랜 AI 키. AI 전용 제품 표는 두지 않는다
 --   astro.preferences     조직별 기본 테마, 이메일 발송 on/off. 멤버가 직접 쓰는 유일한 테이블
 --
 -- 보안 원칙 (SECURITY_BASELINE.md)
@@ -362,13 +363,19 @@ create table if not exists astro.consents (
   user_id     uuid not null,
   subject_id  uuid references astro.subjects(id) on delete set null,
   kind        text not null constraint consents_kind_check check (kind in (
-                'terms_required', 'privacy_required', 'third_party_birth', 'overseas_transfer', 'marketing_email')),
+                'terms_required', 'privacy_required', 'third_party_birth', 'overseas_transfer', 'marketing_email',
+                'voice_processing')),
   version     text not null,
   granted     boolean not null,
   ip_hash     text,
   created_at  timestamptz not null default now()
 );
 create index if not exists consents_org_user_idx on astro.consents (org_id, user_id, kind, created_at desc);
+-- 2026-10-13: 음성 처리 고지 확인(voice_processing) 추가. 이미 만들어진 표에도 반영되도록 CHECK 를 다시 건다(반복 실행 안전).
+--   overseas_transfer 는 상용 AI·음성 제공자(국외) 이전 동의로 쓴다(선택 동의, core.set_ai_cross_border_ack 와 함께 기록).
+alter table astro.consents drop constraint if exists consents_kind_check;
+alter table astro.consents add constraint consents_kind_check check (kind in (
+  'terms_required', 'privacy_required', 'third_party_birth', 'overseas_transfer', 'marketing_email', 'voice_processing'));
 
 drop trigger if exists consents_guard_write on astro.consents;
 create trigger consents_guard_write before insert or update or delete on astro.consents
@@ -607,3 +614,60 @@ revoke execute on all functions in schema astro from public;
 revoke execute on all functions in schema astro from anon, authenticated;
 grant execute on all functions in schema astro to service_role;
 grant execute on function astro.cancel_reading(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------
+-- 13. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/astro-ai/02_ARCHITECTURE.md 5절, 01_PRD.md 4.7절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 운영 화면이 아니라 이 조각과 모놀리스 seed 에서만 바꾼다.
+--   13.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'astro'. 기능 키는 소문자.
+--        체인 제공자는 seed.sql 의 core.ai_providers 행이어야 하고 kind 가 맞아야 한다(13.3 검사).
+--        - astro.reading : 리딩 그래프 초안 노드. 품질 우선 Claude 먼저. 생년월일시 원문·실명은 보내지 않으므로
+--                          오픈소스 강제는 두지 않고, 국외 이전 동의가 없는 조직은 resolve_ai_route 가 상용을 걸러 낸다.
+--        - chat          : 내 사주 질문(/tools/answer). astro.reading 과 같은 체인.
+--        - wiki.*        : 운영자 조직의 해설집·위키(개인정보 없음). 대량 처리라 오픈소스 먼저.
+--        - dify.aux      : Dify 보조 LLM 노드(질문 분류 등). 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - astro.knowledge(embedding): 제품 공통 지식 컬렉션. 동의 없는 사용자의 검색 질의도 같은 모델로 임베딩해야 하므로
+--                          국내 오픈소스 임베딩으로 고정(대체 없음, 모델을 바꾸면 컬렉션 재색인).
+--        - voice_chat    : 음성 질문 STT 는 오픈소스 먼저, 응답 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - narration     : 리딩 낭독 TTS. ElevenLabs 먼저. 같은 목소리로 이어져야 하므로 작업 도중 다른 제공자로
+--                          대체하지 않는다. 이 금지는 체인이 아니라 음성 어댑터(packages/core-voice, feature=narration)가 강제한다.
+--                          체인의 oss-voice 는 작업 시작 전에 ElevenLabs 를 쓸 수 없을 때(국외 동의 없음, 비활성)만 고른다.
+--   13.2 플랜 features 의 AI 키(starter). seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로
+--        _supabase-modular/seed.sql 반영을 코어에 요청했다(06_AGENT_PLAN.md 6절 R-9). 서버는 누락 키를 기본값으로 읽는다.
+-- ---------------------------------------------------------------------
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'astro', 'astro.reading',   'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'astro', 'chat',            'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'astro', 'wiki.query',      'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'astro', 'wiki.ingest',     'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'astro', 'wiki.lint',       'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'astro', 'dify.aux',        'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'astro', 'astro.knowledge', 'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'astro', 'voice_chat',      'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'astro', 'voice_chat',      'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'astro', 'narration',       'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 13.2 starter 플랜 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "narration": true}'::jsonb
+ where app_id = 'astro' and code = 'starter';
+
+-- 13.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'astro'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'astro routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;

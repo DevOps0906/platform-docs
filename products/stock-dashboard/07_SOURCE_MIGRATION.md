@@ -2,6 +2,8 @@
 
 작성일 2026-10-12. 원본 `구현해야 할 프로젝트/Stock_Trader_nomad`는 문서 2개(`PRD.md` 61행, `claude.md` 32행)뿐이고 코드가 없다(`docs/reviews/Stock_Trader_nomad.md:3`). 따라서 "이식"은 요구사항과 화면 지침의 이식이며, 코드 자산은 리뷰 4.3이 지목한 다른 워크스페이스 모듈을 `_platform-core` 경유로 쓴다.
 
+AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 PRD 3.3의 멀티 AI 어드바이저(GPT-4o, Sonnet 3.5, Opus 4.5, Haiku 4.5 모델명 하드코딩, 3사 x 4전략, 매수가/목표가/손절가 카드, `PRD.md:32-36`)와 `claude.md` 2.2의 우측 AI 패널뿐이다. RAG, 위키, Dify, 음성, 3D는 원본에 없어 모두 신규다(확정 결정 13~17). 매핑: 어드바이저 → 그래프 `stock.diagnosis`(가격 카드 폐기, 위험 수준은 서버 규칙), 3사 비교 → Phase 2(코어 요청 R-8), AI 패널 위치 → 채팅 패널(03장 3.7절), 모델 토글 → 라우터 설정(코드에 모델명 없음), 리더보드 → Phase 2 내부용. 신규 AI 기능은 `docs/reviews/Stock_Trader_nomad.md`의 리뷰 #3(투자 권유), #16(모델명)을 차단 설계로 흡수한다.
+
 ## 1. 원본별 자산 분류
 
 ### 1.1 Stock_Trader_nomad
@@ -25,7 +27,7 @@
 | `claude.md` 2.3 블러 Dialog 모달, Recharts 녹색 라인 | 기획만 | 이식(색은 토큰) | ST-06-018 | `claude.md:24-25` |
 | `claude.md` 3장 룰 2 실존 종목 + 극단 수익률 목업 | 기획만 | 디벨롭: 실존 종목명 사용 가능, 모든 표시값에 "샘플 데이터" 배지 | 01_PRD 6.3 | `claude.md:31`, `docs/reviews/Stock_Trader_nomad.md:56` |
 | `claude.md` 3장 룰 3 마이크로데이터 `itemprop` | 기획만 | 폐기(GEO와 함께) | - | `claude.md:32` |
-| 서비스명 "InvestGEN" | 기획만 | 보류(상표 확인 전) | 01_PRD 8장 #6 | `PRD.md:4` |
+| 서비스명 "InvestGEN" | 기획만 | 보류(상표 확인 전) | 01_PRD D-6 | `PRD.md:4` |
 
 ### 1.2 리뷰 4.3이 지목한 재사용 모듈(다른 원본)
 
@@ -89,6 +91,15 @@
 | `EventSource`로 AI 스트리밍(GET 전용) | `docs/reviews/Stock_Trader_nomad.md:96` | POST 본문 전송 불가 | `fetch(POST)` + `ReadableStream` |
 | 개인 API 시세를 다른 사용자에게 재배포 | `docs/reviews/Stock_Trader_nomad.md:44` | 약관 충돌 | 사용자 본인 연결만, 틱 저장 없음 |
 | raise 뒤 상태 UPDATE 기대(롤백 함정) | `DB_CONVENTIONS.md:296`(코어 PM001. 코어는 2026-10-13 `fail_payment_order`로 분리 해결) | 실패 기록 소실 | 차단·만료는 상태 기록 후 반환 |
+| 브라우저·Next.js에서 LLM 직접 호출, LLM 키를 Vercel·워커에 두기 | `docs/reviews/Stock_Trader_nomad.md:93`(openrouter.ts 이식안), `SECURITY_BASELINE.md:299` | 키 유출, 라우팅·국외 이전 동의 우회 | LLM 키는 FastAPI 전용, 브라우저는 `/api/ai/*`만 |
+| 모델이 만든 텍스트를 검사 없이 사용자에게 스트리밍 | `docs/reviews/Stock_Trader_nomad.md:96`(스트리밍 권고), 원본 `PRD.md:32-36` | 투자 권유·가격 표현이 먼저 노출됨 | 투자 권유 금지 검사 통과 뒤 재생(02장 5.3절) |
+| Dify 안의 LLM 노드로 사용자 노출 답변 생성 | `docs/products/_platform-core/AI_ARCHITECTURE.md:62-64` | 검사 우회 경로 | 답변은 FastAPI `/tools/answer`만, Dify는 분류와 고정 문구 |
+| 보유 수량·금액·평단을 AI·Dify·음성 제공자에 전송 | 01_PRD 6.7절 | 개인신용정보 국외 이전, 개별 맞춤 조언으로 해석될 위험 | 비율·종목코드만, 요청 캡처 테스트(ST-06-051) |
+| 뉴스 본문·시세를 허락 없이 색인·재배포 | 01_PRD 6.1절 | 저작권·약관 | `STOCK_RAG_SOURCES` 허용 목록, 틱 저장 없음 |
+| 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 검사 우회 | DB의 검사 통과 텍스트만 낭독 |
+| 3D 장면에 수익률·우상향 곡선·상승/하락 색 | 01_PRD 6.6절, `HERO_3D.md:88` | 수익 약속 오인 | 03장 4.5절 규칙과 단위 테스트 |
+| 공유 비밀키 서명 토큰, Dify 입력에 토큰·개인정보 | `SECURITY_BASELINE.md:284-285` | 한 곳 유출 시 위조, Dify 로그 평문 | EdDSA 서명 토큰, 대화 매핑 |
+| `tailwind.config.js`, v3 문법, hex 하드코딩 | `DESIGN_SYSTEM.md:63-73` | 디자인 시스템 정답 소스 이중화 | Tailwind CSS v4 `@theme` |
 
 ## 5. 아카이브 절차
 

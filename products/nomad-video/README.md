@@ -2,7 +2,7 @@
 
 ## 1. 한 줄 정의
 
-여러 YouTube 채널(최대 40개)과 IG/TikTok/Threads를 운영하는 1인 크리에이터, 커머스 운영자, 소규모 에이전시가 트렌드 레이더로 소재를 고르고, 숏폼(Track A~C), 롱폼(Track D), Lofi 단일 곡(Track E), 플레이리스트(Track F)를 크레딧 과금으로 자동 생산, 검사, 다채널 배포, 제휴 수익화까지 하는 조직 단위 SaaS다.
+여러 YouTube 채널(최대 40개)과 IG/TikTok/Threads를 운영하는 1인 크리에이터, 커머스 운영자, 소규모 에이전시가 트렌드 레이더로 소재를 고르고, 숏폼(Track A~C), 롱폼(Track D), Lofi 단일 곡(Track E), 플레이리스트(Track F)를 크레딧 과금으로 자동 생산, 검사, 다채널 배포, 제휴 수익화까지 하는 조직 단위 SaaS다. 2026-10-13부터 AI 채널 코치 채팅(트렌드·채널 성과·과거 대본 RAG), 채널·브랜드 가이드 위키, 근거 기반 대본 그래프 `video.script`, 음성 대화·받아쓰기, 오픈소스 TTS 내레이션 선택(ElevenLabs와 병행, 한 영상은 같은 목소리), 소싱 → 가공 → 다채널 배포 영상 타일 3D 히어로가 MVP에 들어간다(확정 결정 13~17). 제휴 링크와 대가성 문구 자동 삽입은 그대로 필수다(확정 결정 12).
 
 | 대상 사용자 | 상황 |
 |---|---|
@@ -36,16 +36,16 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, Track A~F 범위, 기능 요구사항과 수용 기준, 플랜·크레딧, 비기능, 법·금지 문구, KPI, 열린 결정 |
-| `02_ARCHITECTURE.md` | 스택, 모듈 경계, 공용 모듈 사용, 잡/큐, AI 라우팅, 리뷰 "높음" 차단 설계(비보안), 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 플로우, 화면 명세, 랜딩 디자인 방향, 상태 화면 |
-| `04_API.md` | Route Handler, RPC, 잡 페이로드, 웹훅, 외부 어댑터, 오류 코드 |
-| `05_DATA_MODEL.md` | 테이블 22개, 상태 전이, RLS, 리뷰 "높음" 차단 설계(보안·데이터) |
-| `06_AGENT_PLAN.md` | 작업 40개, 웨이브, 모델 비율, 리뷰 작업 흡수표 |
+| `01_PRD.md` | 페르소나, Track A~F 범위, 기능 요구사항과 수용 기준(AI·음성·3D 포함, VD-F-100번대), 플랜·크레딧(AI 단가 4.1절), 비기능, 법·개인정보·금지 문구(AI·음성 6.1절), KPI, 열린 결정(D-13~D-22) |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D·Tailwind CSS v4 포함), 모듈 경계와 미디어 워커/FastAPI 경계, 공용 모듈 사용, 잡/큐, AI 라우팅 기본값 17행과 그래프 `video.script`, 같은 목소리 규칙, 리뷰 "높음" 차단 설계(비보안), 배포, 환경변수 |
+| `03_SCREENS_UX.md` | 화면 목록, 플로우(AI 채팅, 음성, 엔진 선택, 대본 기획, 위키 포함), 화면 명세, 디자인 시스템(Primer 주, Atlassian 보조), 랜딩 디자인 방향과 3D 히어로, 상태 화면 |
+| `04_API.md` | Route Handler(AI·음성 2.1절), RPC, 잡 페이로드, 웹훅, 외부 어댑터와 FastAPI·Dify 계약(6.1, 6.2절), 오류 코드 |
+| `05_DATA_MODEL.md` | 테이블 22개(AI 전용 테이블 없음, 코어 AI·음성 객체 참조), 상태 전이, RLS, 리뷰 "높음" 차단 설계(보안·데이터) |
+| `06_AGENT_PLAN.md` | 작업 56개(AI·음성·3D·디자인 시스템 16개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청(R-V1~R-V10) |
 | `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기, 복사 금지 결함, 아카이브 절차 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | `0001_core_lite.sql`(코어 복사본), `0002_video_domain.sql`(모듈러 조각 변환본), `seed.sql` |
-| 모듈러 조각 | `docs/products/_supabase-modular/migrations/1200_video.sql` |
+| 모듈러 조각 | `docs/products/_supabase-modular/migrations/1200_video.sql`(11절 AI·음성 기본값 포함) |
 
 ## 5. DB 구조 선택
 

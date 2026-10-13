@@ -895,3 +895,66 @@ insert into core.credit_packs (app_id, code, name, credits, price_krw, is_active
   ('notes', 'pack_100', '100 크레딧', 100, 2900, false, 1),
   ('notes', 'pack_300', '300 크레딧', 300, 7900, false, 2)
 on conflict (app_id, code) do nothing;
+
+-- ---------------------------------------------------------------------
+-- 14. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/study-note/02_ARCHITECTURE.md 5.3절, 01_PRD.md 4.6절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 이 조각과 모놀리스 seed.sql 에서만 바꾼다(제품 화면에서 set_ai_routing 을 쓰지 않는다).
+--   14.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'notes'. 기능 키는 소문자.
+--        체인 제공자는 seed.sql 의 core.ai_providers 행이어야 하고 kind 가 맞아야 한다(14.3 검사).
+--        - notes.organize : 노트 정리 그래프의 요약 노드. 문서 1건이 수천~수만 토큰이라 비용이 크므로 오픈소스 먼저.
+--        - notes.quiz     : 퀴즈 생성 노드와 서술형 채점. 오픈소스 먼저.
+--        - chat           : 학습 Q&A(/tools/answer). 오픈소스 먼저, 실패하면 상용(국외 이전 동의가 있을 때만).
+--        - wiki.*         : 과목별 개념 위키 ingest/query/lint. 대량 처리라 오픈소스 먼저.
+--        - dify.aux       : Dify 보조 LLM 노드(질문 분류). 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - notes.knowledge(embedding): 사용자 노트·교재 컬렉션. 국외 이전 동의를 켜고 끄는 사용자의 질의도 같은 모델로
+--                          임베딩해야 하고(컬렉션 임베딩 모델 고정), 교재는 저작물일 수 있어 국내 오픈소스 임베딩으로 고정한다.
+--        - lecture_note   : 강의 녹음 STT. 강의자·참석자 같은 제3자 목소리가 담기므로 국외(ElevenLabs)로 보내지 않는다.
+--                          오픈소스 강제(상용 허용 여부는 01_PRD.md D-13).
+--        - voice_chat     : 음성 질문 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - quiz_voice     : 퀴즈 음성 답안 STT 는 오픈소스 먼저, 문제 읽어 주기 TTS 는 ElevenLabs 먼저.
+--   14.2 플랜 features 의 AI 키(free, pro). 모듈러 seed.sql 에 같은 키를 넣어 달라고 코어에 요청했다(06_AGENT_PLAN.md 6절 C-6).
+--        seed 가 이 조각보다 나중에 실행되면 덮어써질 수 있으므로 서버는 누락 키를 기본값으로 읽는다(01_PRD.md 4.2절).
+-- ---------------------------------------------------------------------
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'notes', 'notes.organize', 'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"},{"provider":"google","model":"*"}]', false),
+  (null, 'notes', 'notes.quiz',     'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"},{"provider":"google","model":"*"}]', false),
+  (null, 'notes', 'chat',           'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"}]', false),
+  (null, 'notes', 'wiki.query',     'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'notes', 'wiki.ingest',    'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'notes', 'wiki.lint',      'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'notes', 'dify.aux',       'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'notes', 'notes.knowledge','embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'notes', 'lecture_note',   'stt',       'open_source', '[{"provider":"oss-voice","model":"*"}]', true),
+  (null, 'notes', 'voice_chat',     'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'notes', 'voice_chat',     'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'notes', 'quiz_voice',     'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'notes', 'quiz_voice',     'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 14.2 free/pro 플랜 AI 키(있으면 병합, 없으면 아무 일도 하지 않음). 기존 키는 유지하고 AI 키만 덮어쓴다(반복 실행 가능).
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 30, "ai_subjects_max": 5, "ai_docs_max": 20, "ai_doc_max_chars": 20000, "lecture_note": true, "lecture_max_minutes": 20, "voice_chat": true, "quiz_voice": true}'::jsonb
+ where app_id = 'notes' and code = 'free';
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "ai_subjects_max": 30, "ai_docs_max": 300, "ai_doc_max_chars": 100000, "lecture_note": true, "lecture_max_minutes": 120, "voice_chat": true, "quiz_voice": true}'::jsonb
+ where app_id = 'notes' and code = 'pro';
+
+-- 14.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'notes'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'notes routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;

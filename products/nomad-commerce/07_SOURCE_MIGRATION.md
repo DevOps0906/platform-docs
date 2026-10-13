@@ -1,5 +1,7 @@
 # 07 원본 이식과 폐기: NOMAD Commerce
 
+AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 OpenRouter 모델 맵과 프롬프트(`sellingstudio/lib/llm/openrouter.ts:3-8`, `nomad-ai-factory/frontend/lib/ai/index.ts:57-88`), V.2 문서의 상세페이지 프롬프트·금지어 목록(`Nomad-AI-Factory_V.2/DETAIL_PAGE_SYSTEM.md:497-511`), fal 이미지·fal whisper STT(`sellingstudio/lib/image/fal.ts:13-51`, `sellingstudio/PRD.md:58`)뿐이다. 이 자산들은 아래 표의 AI 행으로 새 구조(FastAPI 라우터, 그래프 프롬프트, core-voice)에 대응한다. RAG, 마켓 규칙 위키, Dify 채팅, 음성 대화, 쇼츠 내레이션, 3D 히어로는 원본에 없어 모두 신규다.
+
 ## 1. 원본별 자산 분류
 
 ### 1.1 sellingstudio (코드 베이스)
@@ -8,7 +10,8 @@
 |---|---|---|---|---|
 | `proxy.ts`, `lib/proxy.ts` | 동작 | 이식 | `apps/nomad-commerce/proxy.ts` | `docs/reviews/sellingstudio.md:34` |
 | `lib/supabase/{client,server,admin}.ts` | 동작 | 이식(core-db 패키지가 대체하면 참고) | `packages/core-db`(소비) | `:41`, SHARED_MODULES 2장 |
-| `lib/llm/openrouter.ts`, `prompts.ts`, `analyze.ts` | 동작 | 참고(모델 맵·프롬프트) → core llm gateway + 제품 프롬프트 | `services/commerce-worker/src/detail/prompts/` | `sellingstudio/lib/llm/openrouter.ts:3-8` |
+| `lib/llm/openrouter.ts`, `prompts.ts`, `analyze.ts` | 동작 | 참고(모델 맵·프롬프트) → FastAPI 라우터 설정(`core.ai_model_prices` 모델 행)과 그래프 프롬프트 파일. OpenRouter 직접 호출 코드는 이식하지 않는다 | `apps/api/app/ai/graphs/prompts/commerce/` | `sellingstudio/lib/llm/openrouter.ts:3-8` |
+| 음성 STT(fal whisper) 입력 기능 | 동작 | 폐기 → `packages/core-voice`(오픈소스 우선, ElevenLabs 대체)와 `commerce.assist` 작업 `voice_structure`로 대체 | `apps/nomad-commerce/app/api/voice/`, `app/api/ai/voice-structure/` | `sellingstudio/PRD.md:58`, 확정 결정 16 |
 | `lib/image/fal.ts` | 동작 | 참고 → core fal client | `services/commerce-worker/src/images/` | `sellingstudio/lib/image/fal.ts:13-51` |
 | `app/api/generate/*`(6개) | 부분 | 이식(재작성) | `apps/nomad-commerce/app/api/ai/`, `app/api/detail-pages/` | `docs/reviews/sellingstudio.md:37` |
 | `app/api/webhook/fal` | 부분 | 재작성 | `apps/nomad-commerce/app/api/webhooks/fal/` | `:38` |
@@ -29,7 +32,8 @@
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
 | `MARKET_IMAGE_SPEC.md` 규격·슬롯·변환·검증 코드 | 기획만 | 이식 | `packages/commerce-domain/`, `services/commerce-worker/src/convert/` | `docs/reviews/Nomad-AI-Factory_V.2.md:30` |
-| `DETAIL_PAGE_SYSTEM.md` 유형·추천·스토리라인 프롬프트·파이프라인·금지어 | 기획만 | 이식(리뷰형 후기·`brand` 하드코딩 제외) | `services/commerce-worker/src/detail/`, `banned_words` | `:29` |
+| `DETAIL_PAGE_SYSTEM.md` 유형·추천·스토리라인 프롬프트·파이프라인·금지어 | 기획만 | 이식(리뷰형 후기·`brand` 하드코딩 제외). 프롬프트는 그래프 프롬프트 파일로, 파이프라인 8단계는 워커 `detail/`로, 금지어는 `banned_words` | `apps/api/app/ai/graphs/prompts/commerce/`, `services/commerce-worker/src/detail/`, `banned_words` | `:29` |
+| `MARKET_IMAGE_SPEC.md`, `MARKET_REGISTER_FORM.md`의 마켓별 규칙 서술(상품명·이미지·고시) | 기획만 | 참고 → 마켓 규칙 원고의 출처 후보(공식 가이드로 기준일·출처를 확인한 항목만 원고화. 확인 못 하면 "출처 확인 필요") | `content/knowledge/` | `docs/reviews/Nomad-AI-Factory_V.2.md:30-31` |
 | `MARKET_REGISTER_FORM.md` 필드·완성도·템플릿 | 기획만 | 이식(반품 불가·건기식 부정 문구 제외) | `packages/commerce-domain/forms/`, `listing_drafts` | `:31` |
 | `PRD.md` IA·가격표 | 기획만 | 이식(01장) | 01장 | `Nomad-AI-Factory_V.2/PRD.md:296-301` |
 | `CLAUDE.md` 엑셀 필드맵, 이벤트 이름 | 기획만 | 이식 | `packages/commerce-sourcing/excel/` | `Nomad-AI-Factory_V.2/CLAUDE.md:553-575`, `:601-633` |
@@ -79,7 +83,7 @@
 | # | 대상 | 사유 | 근거 |
 |---|---|---|---|
 | 1 | eBay/Walmart 소싱 | MVP 범위 축소 | 분석:776 |
-| 2 | Vector DB 임베딩 | V2 MVP 보류 목록 | 분석:802 |
+| 2 | 별도 Vector DB 서비스 설계 | V2 MVP 보류 목록. 2026-10-13 확정 결정 13으로 Supabase pgvector RAG가 MVP에 들어왔고(01장 CM-F-040, 041), 별도 벡터 DB 서비스는 쓰지 않는다 | 분석:802 |
 | 3 | 제휴 링크 매칭(MonetizeNode) | 크리에이터 수익화. core affiliate + video/blog 소관 | 분석:814, 957, 확정 결정 12 |
 | 4 | Cron/고마진 상품 알림 | 엔진·스케줄러가 빈 함수, MVP 제외 | 분석:836 |
 | 5 | 사용자 API 키 localStorage(BYOK) | XSS 한 번이면 전부 유출 | 분석:839 |
@@ -101,6 +105,14 @@
 | 21 | V2 랜딩 허위 수치·후기, 리뷰형 AI 후기·평점, 반품 불가·건기식 부정 문구 자동 삽입 | 표시광고법·전자상거래법 위반 소지 | 분석:872 |
 | 22 | DALL-E 3 | fal Flux로 교체 | 분석:873 |
 | 23 | 블로그 원고·발행(CM 지역뉴스, v1 GEO 블로그) | commerce 범위 밖, nomad-blog 소유 | 확정 결정 1(분석:9), 분석:813 |
+
+AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 목록 밖이라 따로 번호를 붙인다.
+
+| ID | 폐기 항목 | 출처 | 사유 |
+|---|---|---|---|
+| P-24 | 워커·Route Handler의 OpenRouter 직접 호출과 제품별 모델 맵 하드코딩 | `sellingstudio/lib/llm/openrouter.ts:3-8`, 02장 5절(2026-10-12판) | LLM 키는 FastAPI 전용이고 제공자·모델은 `resolve_ai_route` 결과만 쓴다(확정 결정 17) |
+| P-25 | fal whisper STT 경로 | `sellingstudio/PRD.md:58` | 음성은 core-voice로 이원화(확정 결정 16) |
+| P-26 | 03장 4.3절의 "스크롤에 따라 롱이미지 띠가 갈라지는" 히어로 연출 | 03장 4.3절(2026-10-12판) | 사용자 결정 2026-10-13, 3D 히어로 표준으로 대체(03장 4.5절) |
 
 ## 4. 복사 금지 결함
 
@@ -129,6 +141,15 @@
 | Capacitor dev 서버 로드, cleartext | `sellingstudio/capacitor.config.ts:5-15` | 배포 불가·평문 | 원격 셸(Phase 2) |
 | 콜백 `next` 미검증, Host 헤더 origin | `docs/reviews/sellingstudio.md:64` | 오픈 리다이렉트 | 화이트리스트 + env origin |
 | 실키 `.env` 커밋, 0키 폴백, 빈 JWT secret | SECURITY_BASELINE 14장 | 키 유출 | env 검증 기동 실패 |
+| LLM·음성 키를 브라우저·Vercel·워커에 두기 | `docs/products/_platform-core/SECURITY_BASELINE.md:284`, 02장 머리 표 | 키 유출, 비용 남용 | LLM 키는 FastAPI 전용, ElevenLabs 키와 토큰 개인키는 Next.js 서버 전용 |
+| 브라우저에서 Dify·FastAPI·제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*` |
+| Dify 입력에 토큰·org·개인정보·마켓 키 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남음 | 대화 매핑(`platform_conversation_id`, `dify_user`) |
+| 셀러 연락처·반품지 주소·마켓 키·사업자번호를 AI 요청에 포함 | 01장 6.1절 | 국외 이전, 키 유출 | 그래프 입력 스키마에서 제외, 채팅 입력 마스킹 |
+| 클라이언트가 보낸 임의 텍스트를 그대로 TTS | 제안 | 음성 생성 남용, 과금 우회 | 읽어 주기는 DB의 assistant 메시지만, 내레이션은 600자 상한과 금지어 검사 통과 스크립트만 |
+| 내레이션 도중 다른 제공자로 대체 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 목소리가 바뀜 | 대체 금지, 실패 + 환불 |
+| 위키·규칙 근거 없이 마켓 규정 단정, 승인·반려 보장 문형 | 01장 6.1절 | 허위 안내, 셀러 손해 | 근거 없음 응답, 기준일 표기, compliance 후처리 |
+| 3D 재질에 토큰 밖 색, 보라/핑크 그라디언트·별 파티클·흔한 지구본 | `docs/products/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.5절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 | 마이그레이션에 개인 이메일 | `sellingstudio/supabase/migrations/002_add_admin_plan.sql:14-24` | 개인정보·권한 하드코딩 | platform_admin은 운영 스크립트로 |
 
 ## 5. 아카이브 절차

@@ -4,12 +4,13 @@
 
 ## 1. 한 줄 정의
 
-고급 주거, 갤러리, 기업 공간의 식물 설치를 의뢰하려는 사람이 작업물을 보고 문의 또는 뉴스레터 구독으로 이어지게 하는 Floria "Botanic Architecture" 브랜드 사이트와, 그 문의를 받아 처리하는 초대제 운영 콘솔이다.
+고급 주거, 갤러리, 기업 공간의 식물 설치를 의뢰하려는 사람이 작업물을 보고 문의 또는 뉴스레터 구독으로 이어지게 하는 Floria "Botanic Architecture" 브랜드 사이트와, 그 문의를 받아 처리하는 초대제 운영 콘솔이다. 2026-10-13부터 방문자 AI 상담(시공 사례·식물 정보·FAQ RAG, LangGraph `site.consult`, 문의 전환), 방문자 음성 상담, 브랜드 지식 위키(`/guide`), 3D 온실 구조물 히어로가 MVP에 들어간다(확정 결정 13~17).
 
 | 구분 | 내용 | 근거 |
 |---|---|---|
 | 대상 사용자 | (1) 방문자: 갤러리 디렉터, 이벤트 기획자, 하이엔드 개인 고객(로그인 없음) (2) 스튜디오 운영자: 문의를 받고 처리하는 초대받은 소수 | `WebSite/Botanic_Architecture/PRD.md:17-21`(타겟 오디언스 2장) |
-| 제품 성격 | 마케팅 사이트 + 문의/뉴스레터 백엔드. 요금, 크레딧, 결제가 없다 | `docs/products/_supabase-modular/ARCHITECTURE.md:42` |
+| 제품 성격 | 마케팅 사이트 + 문의/뉴스레터 백엔드 + 방문자 AI 상담. 요금, 크레딧, 결제가 없다 | `docs/products/_supabase-modular/ARCHITECTURE.md:42` |
+| AI 요약 | 비로그인 방문자 상담(운영자 조직 예산, 크레딧 없음, 강한 레이트 리밋). 지식은 운영자가 공개하는 자료뿐. 기본 꺼짐 스위치와 운영자 조직의 국외 이전 동의 전에는 국내 오픈소스 모델만 쓴다. 상담은 문의 초안만 만들고 제출은 기존 문의 폼이 처리한다 | 01_PRD.md SI-F-022~030 |
 | 앱 ID / 스키마 | `core.apps.id = site`, 모듈러 스키마 `site`, 마이그레이션 번호 2200 | `docs/products/README.md:23` |
 | 가입 정책 | `invite`. 코어가 강제하며(2026-10-13), 추가로 `provision_site`(service_role)로 사이트를 등록해야 콘솔이 열린다 | 05_DATA_MODEL.md 4장 |
 
@@ -43,16 +44,16 @@
 |---|---|
 | `README.md` | 이 문서 |
 | `01_PRD.md` | 페르소나, 범위, 기능 요구사항(SI-F-###)과 수용 기준, 요금 없음 근거, 비기능 수치, 법/개인정보/금지 문구, KPI |
-| `02_ARCHITECTURE.md` | 스택, 모듈 경계, 공용 모듈 사용표, 잡 없음 근거, 리뷰 "높음" 8건의 차단 설계, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 사용자 플로우, 화면별 명세, 메인페이지 디자인 방향(레퍼런스, 토큰, 와이어프레임) |
-| `04_API.md` | Route Handler 4개, `site` 스키마 RPC 10개, 토큰 규격, 오류 코드 |
-| `05_DATA_MODEL.md` | 테이블 3개, 상태 전이, RLS, 인덱스, 모놀리스/모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 32개, 웨이브, 모델 비율, 리뷰 작업 흡수표 |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용표, 잡 없음 근거, AI 라우팅 기본값 8행과 그래프 `site.consult`, 리뷰 "높음" 8건의 차단 설계, 배포, 환경변수 |
+| `03_SCREENS_UX.md` | 화면 목록, 사용자 플로우, 화면별 명세(상담·음성·위키·콘솔 AI), 디자인 시스템 항목, 메인페이지 디자인 방향(레퍼런스, 토큰, 와이어프레임, 3D 히어로) |
+| `04_API.md` | Route Handler(공개 4개 + AI·음성·관리), `site` 스키마 RPC 11개, 토큰 규격, FastAPI·Dify 계약, 오류 코드 |
+| `05_DATA_MODEL.md` | 테이블 3개(제품 AI 테이블 없음, 코어 AI 테이블 참조), 상태 전이, RLS, 인덱스, 모놀리스/모듈러 차이 |
+| `06_AGENT_PLAN.md` | 작업 48개(AI·음성·3D·디자인 시스템 16개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 이식/폐기 자산, 복사 금지 결함, 아카이브 절차 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `_platform-core/MONOLITH_CORE_LITE.sql` 복사본. [선택] 7개 절만 주석과 함께 제거 |
 | `supabase/monolith/migrations/0002_website_floria_domain.sql` | 도메인 테이블과 RPC(모듈러 조각을 변환한 것) |
-| `supabase/monolith/seed.sql` | `apps` 1행, 기본 플랜 1행 |
+| `supabase/monolith/seed.sql` | `apps` 1행, 기본 플랜 1행, AI·음성 라우팅 기본값 8행 |
 | `../_supabase-modular/migrations/2200_site.sql` | 모듈러 조각(같은 도메인 모델) |
 
 ## 5. DB 구조 선택
@@ -61,5 +62,5 @@
 |---|---|
 | 1차 선택 | 모듈러(통합 DB). `_supabase-modular/ARCHITECTURE.md:42`가 "모듈러(폼 백엔드만), 문의/뉴스레터 테이블 1~2개"로 정했다. 이 기획은 테이블 3개(`sites`, `inquiries`, `newsletter_subscribers`)로 늘렸다. 늘린 이유는 05_DATA_MODEL.md 1장에 적었다 |
 | 모놀리스 제공 | 제공한다. 마케팅 사이트만 따로 배포하는 고객사(예: 스튜디오가 자기 Supabase를 쓰는 경우)를 위한 대안이다. 스키마는 `public`이며 사용자 최종 확인 전 가정이다(05_DATA_MODEL.md 8장) |
-| 코어에서 쓰는 것 | 인증/조직/멤버십, `app_entitlements`, 감사 로그, 레이트 리밋. 크레딧, 결제, 잡, Storage, OAuth, 제휴는 쓰지 않는다 |
+| 코어에서 쓰는 것 | 인증/조직/멤버십, `app_entitlements`, 감사 로그, 레이트 리밋, AI·음성 코어 테이블(`ai_*`, `wiki_*`, `voice_*`). 크레딧, 결제, 잡, Storage, OAuth, 제휴는 쓰지 않는다 |
 | 알려진 코어 이슈 | (1) `confirm_payment_order`는 금액 불일치 시 failed 주문을 남기지 못한다. 이 제품은 결제가 없어 의존하지 않는다 (2) 모듈러 코어에서 서비스 전용 함수에 PUBLIC EXECUTE가 남는 점검 결과를 05_DATA_MODEL.md 6장과 06_AGENT_PLAN.md 6장에 적었다. 코어는 수정하지 않았다 |

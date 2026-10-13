@@ -5,7 +5,7 @@
 | 구조 | 정의 | 코어 SQL | 위치 |
 |---|---|---|---|
 | 모놀리스 | 제품마다 Supabase 프로젝트 1개. 공통 테이블을 `public`에 "core-lite"로 축소해 포함 | `_platform-core/MONOLITH_CORE_LITE.sql` | `<제품>/supabase/monolith/` |
-| 모듈러(통합) | Supabase 프로젝트 1개에 `core` + 제품 스키마들 | `_supabase-modular/migrations/0000~0007` | `_supabase-modular/` |
+| 모듈러(통합) | Supabase 프로젝트 1개에 `core` + 제품 스키마들 | `_supabase-modular/migrations/0000~0009`(0008 AI, 0009 음성. 0008 이후는 pgvector 필요) | `_supabase-modular/` |
 
 두 구조는 같은 함수 이름과 같은 시그니처를 쓴다(`consume_credits`, `grant_credits`, `refund_credits`, `is_org_member`, `has_org_role`, `has_entitlement`, `current_org_ids`, `session_context`, `confirm_payment_order`). 차이는 스키마 접두사(`core.` 대 `public.`)뿐이며 앱 코드는 `SUPABASE_DB_SCHEMA` 환경변수 하나로 전환한다.
 

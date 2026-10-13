@@ -1002,6 +1002,73 @@ insert into commerce.banned_words (org_id, word, category, match_mode, severity,
 on conflict (category, word) where org_id is null do nothing;
 
 -- =====================================================================
+-- 20. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/nomad-commerce/02_ARCHITECTURE.md 5절, 01_PRD.md 4.6절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 운영 화면이 아니라 이 조각과 모놀리스 seed 에서만 바꾼다.
+--   20.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'commerce'. 기능 키는 소문자. 체인 제공자는 seed.sql 의
+--        core.ai_providers 행이어야 하고 kind 가 맞아야 한다(20.3 검사).
+--        - commerce.detail_page : 그래프 commerce.detail_page 의 정보 추출·카피·마켓 변환 노드. 상품 정보에는 개인정보가 없어
+--                                 오픈소스 강제는 두지 않는다. 국외 이전 동의가 없는 조직은 resolve_ai_route 가 상용을 걸러 낸다.
+--        - commerce.compliance  : 그래프의 마지막 compliance 노드와 편집 후 재판정. 짧은 판정이라 저비용 모델 먼저.
+--        - commerce.assist      : 상품명·키워드, 고시·카테고리 자동완성, URL 벤치마킹 요약, 음성 구조화, 쇼츠 스크립트(그래프 commerce.assist).
+--        - commerce.vision      : 상품 이미지 속성 분석. 멀티모달 모델이 필요해 oss-llm 은 마지막(오픈소스 멀티모달 서빙 여부는 구현 시 확인).
+--        - chat                 : 셀러 어시스턴트(/tools/answer). 비용·속도 우선.
+--        - wiki.*               : 운영자 조직의 마켓 규칙 위키(개인정보 없음). 대량 처리라 오픈소스 먼저.
+--        - dify.aux             : Dify 보조 LLM 노드(질문 분류). 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - commerce.knowledge(embedding): 마켓 규칙 컬렉션과 셀러 상품 컬렉션 모두 국내 오픈소스 임베딩으로 고정(대체 없음).
+--                                 동의 여부와 무관하게 질의·문서 임베딩이 같은 모델이어야 하고, 모델을 바꾸면 컬렉션 재색인.
+--        - voice_chat           : 음성 질문 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - product_voice        : 상품 설명 음성 입력 STT. 대량·저비용이라 오픈소스 먼저.
+--        - shorts_narration     : 쇼츠 내레이션 TTS. ElevenLabs 먼저. 한 작업을 같은 목소리로 만들어야 하므로 작업 도중 다른 제공자로
+--                                 대체하지 않는다. 이 금지는 체인이 아니라 음성 어댑터(packages/core-voice, feature=shorts_narration)가 강제한다.
+--   20.2 플랜 features 의 AI 키. seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로 _supabase-modular/seed.sql 반영을
+--        코어에 요청했다(06_AGENT_PLAN.md 6.1절 R-1). 서버는 누락 키를 기본값으로 읽는다(01_PRD.md 4.4절).
+-- =====================================================================
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'commerce', 'commerce.detail_page', 'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'commerce', 'commerce.compliance',  'llm',       'auto',        '[{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'commerce', 'commerce.assist',      'llm',       'auto',        '[{"provider":"google","model":"*"},{"provider":"openai","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'commerce', 'commerce.vision',      'llm',       'auto',        '[{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'commerce', 'chat',                 'llm',       'auto',        '[{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"anthropic","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'commerce', 'wiki.query',           'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'commerce', 'wiki.ingest',          'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'commerce', 'wiki.lint',            'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'commerce', 'dify.aux',             'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'commerce', 'commerce.knowledge',   'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'commerce', 'voice_chat',           'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'commerce', 'voice_chat',           'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'commerce', 'product_voice',        'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'commerce', 'shorts_narration',     'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 20.2 플랜 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+update core.plans set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 20, "voice_chat": false, "shorts_narration": false}'::jsonb
+ where app_id = 'commerce' and code = 'free';
+update core.plans set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "shorts_narration": true}'::jsonb
+ where app_id = 'commerce' and code in ('starter', 'pro');
+update core.plans set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 500, "voice_chat": true, "shorts_narration": true}'::jsonb
+ where app_id = 'commerce' and code = 'enterprise';
+
+-- 20.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'commerce'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'commerce routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;
+
+-- =====================================================================
 -- 끝. 스케줄(워커 크론, service_role): 디스패처 5초(waiting → enqueue_job), 업로드 상태 폴링 10분,
 -- 환율 갱신 평일 11:30 KST, 만료 내보내기 정리 매일. 04_API.md 4장, 02_ARCHITECTURE.md 4장.
 -- =====================================================================

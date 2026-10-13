@@ -4,6 +4,8 @@
 
 원본 `구현해야 할 프로젝트/Slido_Project/`에는 코드가 없고 문서 2개뿐이다(`docs/reviews/Slido_Project.md:3`).
 
+AI 관련 원본 자산(2026-10-13 점검): 없다. 리뷰 1장 표가 AI 항목을 "없음"으로 적었고(`docs/reviews/Slido_Project.md:17`), 원본 PRD와 CLAUDE에는 LLM·음성·요약 기능이 없다. 원본 CLAUDE:7의 "GEO(Generative Engine Optimization)"는 AI 검색 엔진용 마크업 원칙이지 AI 기능이 아니다. 그래서 AI 계층(행사 자료 RAG, `poll.qna_assist`, 행사 위키, 어시스턴트, 음성)은 이식이 아니라 **전부 신규**이고 설계 정본은 `_platform-core`의 AI·음성 문서다. 아래 표는 AI 도입과 닿는 원본 자산만 적는다.
+
 | 자산(파일/디렉토리) | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
 | `PRD.md` 3절 유저 플로우(호스트/참가자) | 기획만 | 이식(디벨롭) | 01장 1, 3절, 03장 2절 | 원본 PRD:12-13 |
@@ -22,6 +24,9 @@
 | `CLAUDE.md` 3절 IP 해시 검증 미들웨어 | 기획만 | 디벨롭(HMAC, 저장 안 함) | 05장 7절 | 리뷰:42 |
 | `CLAUDE.md` 5절 재연결 로직 명시 | 기획만 | 이식(디벨롭: 스냅샷 복구, seq) | LP-F-010 | 원본 CLAUDE:21 |
 | 리뷰가 지목한 재사용 자산(basic-master-module, Nomad-BlogStudio supabase 클라이언트/shadcn, Hospital 실시간 훅 구조, recharts) | 동작/부분 | 참고 | LP-06-001, 013, 015 | 리뷰:72-81 |
+| `PRD.md` 5절 `Frontend: Next.js, Tailwind CSS, Shadcn UI`, `CLAUDE.md` 1절 "Tailwind CSS, Shadcn UI" | 기획만 | 디벨롭(버전 명시) | 02장 1절(Tailwind CSS v4, 4.x 고정), LP-06-001, 023 | 원본 PRD:32, 원본 CLAUDE:4, `docs/products/_design-guide/DESIGN_SYSTEM.md:23` |
+| `CLAUDE.md` 2절 GEO 시맨틱 마크업(`main`, `section`, `article`, `header`) | 기획만 | 이식(랜딩만) | LP-F-024, 03장 4절 | 원본 CLAUDE:7. AI 검색 엔진이 읽는 구조일 뿐 AI 기능이 아니다 |
+| AI 어시스턴트, Q&A AI 정리, 자료 RAG, 행사 위키, 음성(진행자·청중), 3D 히어로 | 원본에 없음 | 신규 | 01장 LP-F-025~037, 02장 5절, LP-06-033~048 | 확정 결정 13~17 |
 
 ## 2. 이식 자산 상세
 
@@ -33,6 +38,8 @@
 | OBS 모드 | 로그인 없는 오버레이 키 URL. 키는 해시만 저장, 재발급 가능 |
 | 재연결 | 백오프 + 재구독 직후 스냅샷 1회. 15초 무수신 감지(hb) |
 | 재사용 자산 | Supabase 클라이언트 3종은 `packages/core-db`를 쓴다(직접 복사하지 않음). Hospital 훅은 구조만 참고하고 아래 4절 결함을 피한다. 차트는 진행자 콘솔만 recharts, 청중/발표/오버레이는 CSS 막대 |
+| 스택 표기 | 원본의 "Tailwind CSS"는 "Tailwind CSS v4"로 고친다. 지시·문서·ADR에 버전을 항상 적고 `tailwind.config.js`·v3 문법을 만들지 않는다 |
+| AI 계층 | 이식할 원본이 없다. 투표·실시간 경로(5-1절)와 분리된 별도 프로세스·라우트로 새로 만든다(02장 6절 마지막 문단). 원본의 "폴링 금지"·"경량 렌더링" 원칙은 AI 결과 전달에도 적용한다(SSE, 주기 조회 금지) |
 
 ## 3. 폐기 목록과 사유
 
@@ -53,6 +60,8 @@
 | Supabase 익명 로그인 | 코어 가입 트리거가 익명 사용자마다 조직을 만든다(05장 7절) |
 | `postgres_changes` 구독 | 구독자마다 권한 검사가 일어나 대규모에 부적합(리뷰:65) |
 | `poll_counts` 원자적 증분 테이블(리뷰 권장안) | 같은 카운터 행에 300건/초가 몰리는 핫 로우 경합. 집계는 워커 시점 계산으로 대체(02장 5-1절) |
+| 원본 PRD:32, CLAUDE:4의 버전 없는 "Tailwind CSS" 지시 | 버전을 적지 않으면 AI가 가장 흔한 v3로 만든다(`docs/products/_design-guide/DESIGN_SYSTEM.md:23`). Tailwind CSS v4로 명시 |
+| AI 도입 시 후보였다가 버린 것: 투표마다 AI 호출, 청중용 AI 채팅(MVP), AI 자동 질문 삭제, 청중 원문의 상용 모델 전송 | 비용 폭증·투표 경로 지연, 청중이 국외 이전 동의를 줄 수 없음, 자동 삭제는 오탐 책임이 진행자에게 있음. 대신 진행자가 누르는 Q&A 정리와 제안 적용(LP-F-029, 030), 청중 원문 오픈소스 강제(01장 D9) |
 
 ## 4. 복사 금지 결함
 
@@ -68,6 +77,15 @@
 | `FOR ALL` 플랜/크레딧 정책 | `SECURITY_BASELINE.md` 14장 | 셀프 업그레이드 | 플랜은 코어 엔타이틀먼트만 읽는다 |
 | 한글에 `\b` 경계 금지어 | `SECURITY_BASELINE.md` 14장 | 필터 무효 | `normalize_text` 부분 일치(조각:44) |
 | 공개 Broadcast 채널에서 서버 메시지와 클라이언트 메시지를 구분 없이 신뢰 | 이 기획(02장 5-1절) | 토픽을 아는 청중이 가짜 결과를 보낼 수 있다 | private 채널, 송신 정책 없음 |
+| 브라우저에서 Dify·FastAPI·LLM·음성 제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금·조직 격리 우회 | `/api/ai/*`, `/api/voice/*`, `/api/p/voice-question`만 |
+| Dify 입력에 서명 토큰·org·청중 정보 넣기 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남고 갱신도 어렵다 | 대화 매핑(`platform_conversation_id`, `dify_user`) |
+| LLM·음성 키를 브라우저·Vercel·브로드캐스터에 두기 | 이 기획(02장 8절) | 키 유출, 비용 남용 | LLM 키는 FastAPI 전용, ElevenLabs 키와 토큰 개인키는 Next.js 서버 전용 |
+| 청중 원문(질문, 닉네임, 음성)을 상용 모델로 보내기 | 이 기획(01장 6.1절, D9) | 청중에게 국외 이전 동의를 받을 수 없다 | `force_open_source` 행 4개 + 서버 검사 |
+| AI 결과만으로 질문 숨김·삭제 | 이 기획(LP-F-030) | 오탐이 청중 발언권을 침해, 책임 소재 불명 | AI는 제안, 진행자가 `moderate_question`으로 적용 |
+| 클라이언트가 보낸 임의 텍스트를 TTS | 이 기획(04장 2.1절) | 음성 생성 남용, 과금 우회 | DB의 assistant 메시지와 `ai_runs.output.summary`만 낭독 |
+| 음성 오디오·변환 텍스트를 로그·DB에 저장 | `docs/products/_platform-core/SECURITY_BASELINE.md:304`, `VOICE_ARCHITECTURE.md:90` | 청중 음성은 개인 식별 정보 | 메모리 처리, `store_audio=false`, 응답으로만 반환 |
+| 청중 음성 경로에 사용자·IP·행사 한도 없이 STT 연결 | 이 기획(02장 5-4절) | 익명 입력으로 진행자 지갑 소진 | 참가자·행사·IP 5중 한도 + 묶음 선차감 |
+| 투표·브로드캐스트 경로에서 AI 서비스 동기 호출 | 이 기획(02장 6절) | AI 장애·지연이 투표에 전파 | 별도 라우트·프로세스, 투표 경로 수정 금지(06장 1절) |
 | 레이트 리밋 히트 뒤 raise | 이 기획(조각 머리 주석 5) | 히트가 롤백되어 대입 공격이 세어지지 않는다(코어 `confirm_payment_order`의 PM001도 같은 원리라 `fail_payment_order`를 별도 호출로 분리했다) | 청중 RPC는 jsonb `{ok:false, code}` 반환 |
 
 ## 5. 아카이브 절차

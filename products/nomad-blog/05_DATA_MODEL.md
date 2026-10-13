@@ -2,6 +2,8 @@
 
 작성일 2026-10-12. 정본 SQL: 모듈러 `docs/products/_supabase-modular/migrations/1300_blog.sql`(아래 `1300:줄`), 모놀리스 `supabase/monolith/migrations/0002_blog_domain.sql`. 확정 결정 12에 따라 제휴 테이블은 core에 두고 blog 스키마에는 원고, 원고-제휴 링크 매핑, 그리고 원고를 발행하는 데 필요한 채널 계정·발행 기록만 둔다.
 
+2026-10-13 개정: 확정 결정 13~17에 따른 AI·음성 코어 객체의 참조와 라우팅 기본값 행(9절 `1300_blog.sql` 9절)을 더했다. 제품 전용 AI 테이블은 만들지 않았다(6절 표).
+
 ## 1. 개요와 ERD
 
 ```
@@ -176,7 +178,34 @@ anon에는 아무 권한이 없다(`1300:750`). `posts`에 쓰기 정책을 준 
 | `consume/grant/refund_credits`, `wallets`, `credit_ledger` | AI 과금 | 서버만 |
 | `payment_orders`, `confirm_payment_order` | 결제 | `confirm_payment_order`는 금액 불일치 시 `PM001`을 올린다. 주문 failed 기록은 별도 호출 `fail_payment_order`(2026-10-13 코어 반영)로 한다 |
 
-`core.*`를 ALTER하는 문장이 조각에 없음을 확인했다.
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| core 객체 | blog 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 도우미 채팅 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `blog.post_draft` 실행 기록(`job_id` = `posts.ai_job_id`), 승인 대기 상태, 위키 lint 결과 | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, Next.js 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 12행(9절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 조직 자료 컬렉션 `blog-materials`, 위키 컬렉션 `blog-wiki` | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 조직 토픽·키워드 위키 | FastAPI(쓰기), Next.js(조직 멤버 읽기) |
+| `voice_sessions`, `voice_jobs` | 받아쓰기·음성 대화 STT·TTS 작업(`store_audio=false`) | Next.js |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 원고-자료 연결 표 | 어느 자료가 원고의 근거였는지 | 그래프 출력 `sources`를 `core.ai_run_steps.detail`(retrieve 스텝)에 기록하고, 승인 화면은 `posts.ai_job_id` → `ai_runs.job_id`로 읽는다. 채팅 출처는 `ai_messages.citations` |
+| 승인 기록 표 | 발행 전 사람 승인 증빙 | `core.ai_runs`(run `succeeded`, `approve` 스텝 `succeeded`)와 감사 로그 `blog.ai.draft_approved`(행위자, 원고, run id) |
+| 키워드 리서치 결과 표 | 추천 키워드·의도 보관 | `ai_run_steps.detail`(keyword 스텝)과 위키 `topic` 페이지 |
+| 자료·위키 문서 표 | 브랜드·캠페인 자료 관리 | `core.ai_documents`, 파일은 Storage `org-files/<org>/blog/materials/<uuid>` |
+| 음성 고지 동의 표 | 음성 처리 고지 증빙 | 감사 로그 `blog.voice.notice_ack {notice_version}`. 녹음 원본을 저장하지 않으므로 `voice_jobs` 동의 컬럼은 쓰지 않는다 |
+| 국외 이전 동의 사본 | 동의 증빙 | `core.ai_org_settings.cross_border_ack_at/notice` + 감사 `blog.ai.cross_border_ack` |
+
+승인 상태를 새 컬럼으로 두지 않는 대신 발행 라우트가 서버에서 `core.ai_runs`를 읽어 확인한다(04장 2절 publish 행). 이 확인은 DB 불변식이 아니라 서버 규칙이다. 그래서 06장 BL-06-056 회귀 테스트가 승인 없는 발행 요청 409를 검증한다. DB가 지키는 대가성 문구·컴플라이언스 게이트(BL003, 23514)는 그대로다.
+
+`core.*`를 ALTER하는 문장이 조각에 없음을 확인했다. 9절의 `core.plans` UPDATE(9.2)는 blog 자신의 플랜 행 `features`에 AI 키를 병합하는 데이터 변경이며 표 구조는 바꾸지 않는다.
 
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
@@ -200,16 +229,31 @@ anon에는 아무 권한이 없다(`1300:750`). `posts`에 쓰기 정책을 준 
 | 앱·플랜·팩 행 | 조각 머리 `on conflict do nothing` + 공용 seed | `seed.sql`(upsert) |
 | 권한 | 조각이 명시 GRANT | 코어 SECTION 0이 기본 권한 회수, 0002가 `revoke all ... from public, anon, authenticated` 후 GRANT |
 | 코어 [선택] 절 | 해당 없음 | 하나도 지우지 않음(Toss, 크레딧, OAuth/자격증명/레이트리밋, 잡, Storage, affiliate 모두 사용) |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| AI 라우팅 기본값 | `1300_blog.sql` 9.1절 | `seed.sql`(같은 12행) |
+| 플랜 AI 키 | `1300_blog.sql` 9.2절 병합 UPDATE(모듈러 `seed.sql` 반영 요청 AI-R2) | `seed.sql` 플랜 3행 `features`에 직접 |
+| 체인 검사 | 9.3절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 | 변환 | 정본 | 정본 조각을 `DB_CONVENTIONS.md` 12장 규칙으로 기계 변환(BL-06-002) |
 
 ## 9. 마이그레이션 파일
 
 | 파일 | 내용 |
 |---|---|
-| `docs/products/_supabase-modular/migrations/1300_blog.sql` | 스키마, 앱·플랜 3·팩 3, 4테이블, 트리거 6, 사용자 RPC 7, 워커 RPC 2, 정책, Realtime, PUBLIC EXECUTE 최종 회수(선행 0000~0007) |
+| `docs/products/_supabase-modular/migrations/1300_blog.sql` | 스키마, 앱·플랜 3·팩 3, 4테이블, 트리거 6, 사용자 RPC 7, 워커 RPC 2, 정책, Realtime, PUBLIC EXECUTE 최종 회수(8절), 9절 AI·음성 기본값(라우팅 12행, 플랜 AI 키, 체인 검사). 선행 0000~0009 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | 코어 원본 그대로(머리 주석만 추가) |
 | `supabase/monolith/migrations/0002_blog_domain.sql` | 위 조각의 public 변환본 |
-| `supabase/monolith/seed.sql` | apps 1, plans 3, credit_packs 3, 대가성 문구 blog_top 4 |
+| `supabase/monolith/seed.sql` | apps 1, plans 3(AI 키 포함), credit_packs 3, 대가성 문구 blog_top 4, AI 라우팅 기본값 12행 + 체인 검사 |
+
+2026-10-13 재검증(PGlite `--vector`, `docs/products/_tools-sqlcheck/check.mjs`):
+
+| 검사 | 결과 |
+|---|---|
+| `check.mjs --vector mod` 0000~0009 + `seed.sql` + `1300_blog.sql` | 전부 OK |
+| `check.mjs --vector mono` 0001 + 0002 + `seed.sql` | 전부 OK |
+| 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app blog) | 12행(모듈러·모놀리스) |
+| 플랜 3행 `features` | 기존 키 + `ai_chat`, `ai_chat_turns_per_day`(50/200/500), `voice_chat`, `dictation`, `rag_documents`(10/100/1000), `product_wiki`(false/true/true) |
+| 미동의 조직 `resolve_ai_route` | `blog.post_draft` = oss-llm, `dictation` stt = oss-voice, `blog.knowledge` = oss-embed |
+| 동의 후 | `blog.post_draft` = anthropic → openai → google → oss-llm, `voice_chat` tts = elevenlabs 먼저, `dify.aux`는 계속 oss-llm(강제), ` Wiki.Lint `(대소문자·공백)도 `wiki.lint` 행으로 해석 |
 
 검증(2026-10-12, PGlite, `docs/products/_tools-sqlcheck`):
 

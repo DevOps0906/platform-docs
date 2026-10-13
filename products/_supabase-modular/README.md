@@ -27,8 +27,10 @@ Supabase 프로젝트 1개에 `core` 스키마와 제품별 스키마를 함께 
 | 6 | `migrations/0005_core_jobs_storage.sql` | `jobs` + `enqueue_job` / `claim_jobs`(SKIP LOCKED) / `heartbeat_job` / `complete_job` / `fail_job`(자동 환불) / `cancel_job` / `reap_stale_jobs`, Realtime 발행, Storage 버킷 3개와 "폴더 = org_id" 정책 |
 | 7 | `migrations/0006_core_affiliate.sql` | 제휴마케팅 공용 모듈(확정 결정 12): `affiliate_accounts`, `affiliate_links`(단축 코드), `affiliate_clicks`, `affiliate_disclosures`(끌 수 없는 대가성 문구), `brandconnect_applications`(상태 전이 트리거, 위험 동의 필수), `record_affiliate_click` / `effective_disclosure` / `upsert_affiliate_disclosure` / `consent_brandconnect_risk` / `create_brandconnect_application` |
 | 7-1 | `migrations/0007_core_function_privileges.sql` | core 전 함수의 PUBLIC EXECUTE 회수(스키마 기본 권한으로는 회수되지 않음). 명시적으로 부여한 권한은 유지 |
+| 7-2 | `migrations/0008_core_ai.sql` | AI 계층(확정 결정 13, 14, 17): 확장 `vector`, `ai_providers`, `ai_model_prices`, `ai_routing_settings`, RAG(`ai_collections`, `ai_documents`, `ai_chunks` HNSW), 위키(`wiki_pages`, `wiki_links`, `wiki_revisions`), 대화(`ai_conversations`, `ai_messages`), 그래프 실행(`ai_runs`, `ai_run_steps`), 스키마 `ai_runtime`, 함수 `match_ai_chunks` / `resolve_ai_route` / `set_ai_routing`(`AI001`). pgvector가 필요하므로 체커는 `--vector` |
+| 7-3 | `migrations/0009_core_voice.sql` | 음성(확정 결정 16): `voice_sessions`, `voice_jobs`, 버킷 `voice-audio`, `expire_voice_audio` |
 | 8 | `migrations/1000_publishing.sql` 이후 | 제품 조각. 번호 범위는 아래 표 |
-| 9 | `seed.sql` | `core.apps` 전 제품 행, 샘플 플랜/크레딧팩, 제공자별 기본 대가성 문구 |
+| 9 | `seed.sql` | `core.apps` 전 제품 행, 샘플 플랜/크레딧팩, 제공자별 기본 대가성 문구, AI 제공자·단가·기본 라우팅 행(파일 끝) |
 
 정책이 테이블 파일(0001~0003)이 아니라 0004에 모여 있는 이유: 정책은 헬퍼 함수를 쓰고 헬퍼는 `org_members`와 `app_entitlements`에 의존한다. 테이블 파일에서는 RLS를 켜기만 하므로 0004 전까지는 "전부 거부" 상태이며, 이는 안전한 기본값이다.
 

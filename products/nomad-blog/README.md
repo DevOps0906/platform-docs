@@ -13,6 +13,8 @@
 | 브랜드 | NOMAD Blog (`docs/products/_supabase-modular/seed.sql:16`의 앱 이름) |
 | 모듈러 스키마 / 앱 id | `blog` (`docs/products/README.md:16`) |
 
+2026-10-13부터 AI 계층이 MVP에 들어간다(확정 결정 13~17). 사용자의 브랜드·상품·캠페인 자료를 RAG로 색인하고, 토픽·키워드 위키로 정리하며, LangGraph `blog.post_draft`(키워드 리서치 → 자료 검색 → 초안 → 제휴 링크·대가성 점검 → SEO 점검 → 규정 검사 → 사람 승인)가 원고를 만든다. 글쓰기 도우미 채팅(공용 Dify 앱 `blog-chat`)과 음성 받아쓰기·음성 대화, 상용/오픈소스 LLM 이원화와 온보딩 국외 이전 동의, 3D 히어로(원고 시트가 접혀 채널 카드로 발행됨)가 함께 들어간다. 네이버 브랜드커넥트 완전 자동 지원과 위험 동의, 제휴 대가성 문구 규칙은 확정 결정 12 그대로이며 AI가 바꾸지 않는다.
+
 ## 2. 통합 근거
 
 | 근거 | 내용 | 출처 |
@@ -38,15 +40,15 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase, 기능 요구사항과 수용 기준, 요금과 크레딧, 비기능 수치, 법·약관·브랜드커넥트 위험 고지, KPI, 열린 결정 |
-| `02_ARCHITECTURE.md` | 스택, 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅, 리뷰 "높음" 결함 중 구조 결함 차단 설계, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우, 화면별 명세, 랜딩 디자인 방향(레퍼런스·브리프·토큰), 상태와 오류 |
-| `04_API.md` | Route Handler, 제품 RPC, 잡 페이로드, 웹훅, 외부 어댑터, 오류 코드 |
+| `01_PRD.md` | 페르소나, MVP/Phase, 기능 요구사항과 수용 기준(AI·음성·3D 포함), 요금과 크레딧(AI 단가 4.6절), 비기능 수치, 법·약관·브랜드커넥트 위험 고지·AI 개인정보 규칙, KPI, 열린 결정(D-1~D-20) |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅 기본값 12행과 그래프 `blog.post_draft`, 리뷰 "높음" 결함 중 구조 결함 차단 설계, 배포, 환경변수 |
+| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우, 화면별 명세(AI 채팅·음성·자료·위키·승인 화면, 디자인 시스템), 랜딩 디자인 방향(레퍼런스·브리프·토큰·3D 히어로), 상태와 오류 |
+| `04_API.md` | Route Handler(`/api/ai/*`, `/api/voice/*` 포함), 제품 RPC, 잡 페이로드, 웹훅, 외부 어댑터(FastAPI 엔드포인트, Dify 계약), 오류 코드 |
 | `05_DATA_MODEL.md` | `blog` 스키마 4테이블, 상태 전이, RLS, 보안·데이터 결함 차단 설계, 모놀리스 차이, 검증 결과 |
-| `06_AGENT_PLAN.md` | 멀티에이전트 작업 36개, 웨이브, 모델 비율, 리뷰 작업 흡수표 |
+| `06_AGENT_PLAN.md` | 멀티에이전트 작업 56개(AI·음성·3D·디자인 시스템 16개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청(AI-R1~R7) |
 | `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기 자산, 분석 "폐기" 전 항목, 복사 금지 결함, 아카이브 절차 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
-| `supabase/monolith/` | 단독 Supabase 프로젝트용 `0001_core_lite.sql`(코어 원본 그대로), `0002_blog_domain.sql`, `seed.sql` |
+| `supabase/monolith/` | 단독 Supabase 프로젝트용 `0001_core_lite.sql`(코어 원본 그대로), `0002_blog_domain.sql`, `seed.sql`(AI 라우팅 기본값 12행 포함) |
 | `../_supabase-modular/migrations/1300_blog.sql` | 통합 DB용 `blog` 스키마 조각 |
 
 ## 5. DB 구조 선택

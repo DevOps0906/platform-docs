@@ -10,6 +10,10 @@
 | ui-ux-pro-max-skill (UUPM) | https://github.com/nextlevelbuilder/ui-ux-pro-max-skill | `search.py --design-system` 초안 생성, `--persist` MASTER.md와 페이지 오버라이드, 출시 전 체크리스트 |
 | Awwwards | https://www.awwwards.com/websites/ | 랜딩/메인페이지 레퍼런스 |
 | Dribbble | https://dribbble.com/ | 대시보드/앱 화면 레퍼런스 |
+| `DESIGN_SYSTEM.md` | `docs/products/_design-guide/DESIGN_SYSTEM.md` | 디자인 시스템 구축 4단계, 정답 소스(Tailwind v4 CSS + 코드 컴포넌트), 작업 지시 템플릿 |
+| `HERO_3D.md` | `docs/products/_design-guide/HERO_3D.md` | 랜딩 3D 히어로 기기별 구성, 저사양 판정, 성능 예산, 공용 3D 키트 |
+
+규칙: Tailwind CSS는 v4만 사용한다(v3 문법과 `tailwind.config.js` 금지).
 
 ## 우선순위 규칙
 
@@ -26,7 +30,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 랜딩/메인페이지 | Awwwards 사이트 페이지(SOTD, Honorable Mention, Developer Award 수상작)를 우선한다. |
+| 랜딩/메인페이지 | Awwwards 사이트 페이지(SOTD, Honorable Mention, Developer Award 수상작)를 우선한다. 히어로는 전 제품 3D 표준(PC·태블릿 풀 3D, 모바일 절충안, 정지 이미지 대체)을 따른다: `HERO_3D.md`(확정 결정 15). |
 | 대시보드/앱 화면 | Dribbble 샷 또는 Dribbble 검색 결과를 우선한다. |
 | 수량 | 제품당 3~5개. `REFERENCES.md`의 제품 표에서 시작하고, 부족하면 같은 카테고리에서 추가한다. |
 | 기록 방식 | `REFERENCES.md`와 같은 열(출처, URL, 참고 포인트, 적용 화면)로 제품 폴더의 `03_SCREENS_UX.md`에 남긴다. |

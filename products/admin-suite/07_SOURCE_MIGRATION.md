@@ -2,6 +2,8 @@
 
 원본 폴더는 수정하지 않는다. 읽기는 파일 열람과 `git show <커밋>:<경로>`만 쓴다.
 
+AI 관련 원본 자산(2026-10-13 점검): 세 원본 모두 AI 기능이 없다(`docs/reviews/ERP-Wesite.md:20`, `docs/reviews/Hospital.md:14`, `docs/reviews/School_Management_System.md:14`가 "AI 없음"). RAG, 위키, Dify, 음성, LangGraph는 원본에 없어 모두 신규이며 이식 대상이 없다. 아래 1절 끝의 "AI 관련" 표가 그 대응이다. 원본 CLAUDE.md·PRD의 AI 언급은 없어 폐기 항목도 없다.
+
 ## 1. 원본별 자산 분류
 
 ### 1.1 ERP-Wesite
@@ -55,6 +57,14 @@
 | `CLAUDE.md` RLS 예시 | 결함 | 폐기 | - | `:49` |
 | `PRD.md`, `Design_UI.md`, `.pen` | 기획 | 참고 | 01장, 03장 | - |
 
+### 1.4 AI 관련 (2026-10-13)
+
+| 자산 | 상태 | 처리 | 대상 위치 | 근거 |
+|---|---|---|---|---|
+| 원본 3개의 AI 코드·설정·프롬프트 | 없음 | 해당 없음(전부 신규) | `packages/admin-kit/src/ai/`, `apps/api/` | 위 세 리뷰의 "AI 없음" |
+| Hospital `src/lib/permissions.ts` 역할 → 페이지 매트릭스 형태 | 동작 | 이식(형태만): AI 컬렉션 접근도 같은 방식(역할 → 컬렉션 매핑 `collections.json`)으로 선언하되 판정은 서버가 DB 역할로 한다 | `packages/admin-kit/src/ai/collections.json` | `analysis:1131`, 01장 3.7절 |
+| 원본 기획 문서(PRD, 업무 매뉴얼류)의 업무 규칙 문장 | 기획만 | 참고: 고객사 규정·매뉴얼 샘플 문서로 쓰지 않는다(실데이터 금지). 평가셋 샘플은 개인정보 없는 공개 지침·가상 규정으로 새로 쓴다 | `apps/api/tests/admin/eval/` | ADM-06-056 |
+
 ## 2. 이식 자산 상세
 
 | 자산 | 수정할 점 |
@@ -69,6 +79,8 @@
 | School 출석 보드 | upsert를 `mark_attendance_bulk`로, 상태 리터럴을 한글에서 코드(present/late/early_leave/absent)로, 채널명 `sms:<org>:attendance` |
 | School 학생 대시보드 | 이번 달 통계를 `sms.student_summary`로, `RealtimeStudentNotif` 연결 |
 | lab-ranges | 정상 범위 수치는 원본 그대로 seed로 옮겼다. 임상 검증 전 "참고 범위"로 표기 |
+| 원본 Tailwind 설정 (2026-10-13) | 원본 세 앱의 `tailwind.config.*`와 v3 문법(`@tailwind base` 등)은 이식하지 않는다. 토큰은 Tailwind CSS v4 `@theme`로 새로 쓴다(`apps/<app>/src/theme/tokens.css`, ADM-06-042) |
+| 원본 UI 컴포넌트 (2026-10-13) | 앱 코드 안 hex 색을 `tokens.css` 의미 기반 변수로 바꾼다. 기본 컴포넌트는 admin-kit `ui/`에서 한 번만 만든다(4단계 완료 뒤 화면 이식, ADM-06-044) |
 
 ## 3. 폐기 목록과 사유
 
@@ -90,6 +102,12 @@
 | 12 | 각 앱의 자체 Supabase 클라이언트, 가드, 날짜 코드 | admin-kit로 흡수(편차 재발 방지) | `analysis:1223` |
 | 13 | ERP `ERP_Website` gitlink, Hospital/School nested git 이중 추적 | 모노레포로 정리 | `analysis:1224` |
 
+AI 계층·디자인 시스템 도입(2026-10-13)으로 생긴 추가 폐기. 분석 목록 밖이라 따로 번호를 붙인다(위 13개는 그대로).
+
+| # | 폐기 항목 | 사유 | 근거 |
+|---|---|---|---|
+| A-1 | 원본의 Tailwind v3식 설정 파일과 문법 | 모든 앱을 Tailwind CSS v4로 통일한다. 설정이 둘이면 AI가 v3로 만든다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23`, `:67` |
+
 ## 4. 복사 금지 결함
 
 `SECURITY_BASELINE.md` 14장 중 해당 항목 + 리뷰에서 찾은 제품 고유 결함.
@@ -109,6 +127,18 @@
 | 실 URL·키 화면 노출 | `ERP-Wesite/components/settings/SettingsClient.tsx:232-241` | 정보 노출 | 표시 금지 |
 | 실키가 든 `.env` 커밋 위험, `.gitignore` 삭제 | `docs/reviews/School_Management_System.md:50` | 키 유출 | 루트 `.gitignore`, `.env.example`, 키 재발급 |
 | `as any` 캐스팅 | `docs/reviews/Hospital.md:67` | 타입 우회 | 생성 타입 |
+| LLM·음성 키를 브라우저·Vercel(hms는 어디에도)에 두기 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 키 유출, 비용 남용 | LLM 키는 `api-shared` 전용, ElevenLabs 키와 토큰 개인키는 erp·sms Next.js 서버 전용, hms는 상용 키 자체가 없다 |
+| 브라우저에서 Dify·FastAPI·AI 제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·한도 우회 | `/api/ai/*`, `/api/voice/*` |
+| Dify 입력에 토큰·org·역할·개인정보 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남음 | 대화 매핑(`platform_conversation_id`, `dify_user`)만 |
+| 요청 본문·토큰 클레임의 역할을 믿고 문서 접근 판정 | 제안 | 클라이언트가 역할을 위조해 제한 문서 열람 | FastAPI가 DB에서 역할을 직접 확인(02장 5.3절) |
+| 전체 컬렉션 검색 후 결과 필터링 | 제안 | 허용 밖 청크가 서버 메모리·로그에 올라옴 | 허용 컬렉션마다 `match_ai_chunks`(컬렉션 id 지정) |
+| `ai_runs`·`ai_run_steps`에 질문·답변·청크 본문 저장 | `docs/products/_supabase-modular/migrations/0008_core_ai.sql:623-633` | 코어 RLS가 구성원 전원에게 SELECT를 열어 둠 | id, 개수, 상태만(02장 5.3절 8항) |
+| 제한 컬렉션 문서로 위키 생성 | 같은 정책 | 위키 본문이 구성원 전원에게 보임 | "위키 대상" 컬렉션만(01장 3.7절), 코어 개정 R-14 |
+| hms에서 상용 API·공용 AI 서버·공용 Dify 사용, 장애 시 대체 | 사용자 결정 2026-10-13 | 진료 관련 정보의 외부 반출 | 전용 서버만, 대체 없이 실패, 금지 변수 기동 검사 |
+| 환자 식별정보를 질문·문서로 AI에 보내기 | 01장 6.6절 | 의료정보 유출 | 입력 차단(`AI_PHI_BLOCKED`), 문서 반입 탐지, 환자 테이블 비접근 |
+| 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용 | DB의 assistant 메시지만 낭독 |
+| 설정 파일 없이 "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지(린트) |
+| 3D 라이브러리를 업무 앱에 추가 | `docs/products/_design-guide/HERO_3D.md:92` | 번들 증가, 업무 효율 저해 | 적용 제외(03장 4.5절), import 금지 린트 |
 
 ## 5. 아카이브 절차
 

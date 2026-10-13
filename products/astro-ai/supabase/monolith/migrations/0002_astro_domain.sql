@@ -11,7 +11,7 @@
 --   public.readings        리딩(사주/타로/통합) 1건 = 크레딧 차감 1건 = 잡 1건. 상태 전이 트리거
 --   public.reading_renders PDF 렌더 이력(최초 렌더 + 테마 변경 재생성 5cr). 상태 전이 트리거
 --   public.deliveries      발송 outbox(이메일). 재시도 5분 x 3회
---   public.consents        동의 기록(개인정보, 제3자 생년월일시, 국외 이전, 마케팅). 증빙용
+--   public.consents        동의 기록(개인정보, 제3자 생년월일시, 국외 이전, 마케팅, 음성 처리 고지). 증빙용
 --   public.preferences     조직별 기본 테마, 이메일 발송 on/off. 멤버가 직접 쓰는 유일한 테이블
 --
 -- 보안 원칙 (SECURITY_BASELINE.md)
@@ -358,13 +358,19 @@ create table if not exists public.consents (
   user_id     uuid not null,
   subject_id  uuid references public.subjects(id) on delete set null,
   kind        text not null constraint consents_kind_check check (kind in (
-                'terms_required', 'privacy_required', 'third_party_birth', 'overseas_transfer', 'marketing_email')),
+                'terms_required', 'privacy_required', 'third_party_birth', 'overseas_transfer', 'marketing_email',
+                'voice_processing')),
   version     text not null,
   granted     boolean not null,
   ip_hash     text,
   created_at  timestamptz not null default now()
 );
 create index if not exists consents_org_user_idx on public.consents (org_id, user_id, kind, created_at desc);
+-- 2026-10-13: 음성 처리 고지 확인(voice_processing) 추가. 이미 만들어진 표에도 반영되도록 CHECK 를 다시 건다(반복 실행 안전).
+--   overseas_transfer 는 상용 AI·음성 제공자(국외) 이전 동의로 쓴다(선택 동의, core.set_ai_cross_border_ack 와 함께 기록).
+alter table public.consents drop constraint if exists consents_kind_check;
+alter table public.consents add constraint consents_kind_check check (kind in (
+  'terms_required', 'privacy_required', 'third_party_birth', 'overseas_transfer', 'marketing_email', 'voice_processing'));
 
 drop trigger if exists consents_guard_write on public.consents;
 create trigger consents_guard_write before insert or update or delete on public.consents

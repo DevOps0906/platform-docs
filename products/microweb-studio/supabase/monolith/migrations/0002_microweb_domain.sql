@@ -1526,3 +1526,91 @@ values
   ('online_gallery', 'gallery', '온라인 전시/갤러리', '작품 소개와 도슨트', 'planned', 'backlog',
    300000, 1000000, '기본 400,000원', null, '{}', '{}', 11)
 on conflict (code) do nothing;
+
+
+-- ---------------------------------------------------------------------
+-- 20. AI·음성 기본값과 음성 연결 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/microweb-studio/02_ARCHITECTURE.md 5절, 01_PRD.md 4.1절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3·6장. 모든 값은 제안이며 이 조각과 모놀리스 seed 에서만 바꾼다(운영 화면에서 바꾸지 않는다).
+--   20.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'microweb'. 기능 키는 소문자.
+--        체인 제공자는 seed.sql 의 public.ai_providers 행이어야 하고 kind 가 맞아야 한다(20.3 검사).
+--        - microweb_copy          : 청첩 문구·사이트 구성 제안 그래프(draft_copy, propose_composition). 문체 품질 우선 Claude 먼저.
+--                                   실명·전화·계좌는 보내지 않는다(호칭 토큰만). 국외 이전 동의가 없는 조직은 resolve_ai_route 가 상용을 걸러 낸다.
+--        - microweb_greeting      : 하객 AI 축하말(익명). 하객 이름은 프롬프트에 넣지 않는다(관계·길이만). 비용이 사이트 소유 조직에 쌓이므로 오픈소스 먼저.
+--        - chat                   : 제작 상담(/tools/answer). 템플릿·가격 범위·절차 근거 대화.
+--        - wiki.*                 : 운영자 조직의 문구 위키(개인정보 없음). 대량 처리라 오픈소스 먼저.
+--        - dify.aux               : Dify 보조 LLM 노드. 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - microweb_knowledge     : 제품 공통 지식(템플릿 설명, 문구 예시) 임베딩. 질의 임베딩이 컬렉션 모델과 같아야 하므로 오픈소스 고정.
+--        - voice_chat             : 제작 상담 음성 질문 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - microweb_voice_greeting: 청첩장 인사말 음성(TTS). 품질 우선 ElevenLabs 먼저(결과 mp3 는 사이트 자산으로 저장).
+--        - microweb_guestbook_voice: 하객 음성 방명록 STT. 하객은 국외 이전에 동의한 적이 없으므로(조직 동의는 하객을 대신하지 못한다)
+--                                   오픈소스 강제(force_open_source). 조직이 해제할 수 없다.
+--   20.2 free 플랜 features 의 AI 키. 모듈러 seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로 코어 seed 반영을 요청했다(06_AGENT_PLAN.md 6절).
+--        서버는 누락 키를 01_PRD.md 4장 features 표의 기본값으로 읽는다.
+--   20.3 체인 검사: 제공자 행이 있을 때만 존재·종류·오픈소스 모드를 확인한다(seed 전에 적용되는 배포 순서에서도 실패하지 않게).
+--   20.4 음성 연결: 방명록 항목에 음성 작업을 붙이는 컬럼 1개와 service 전용 함수 1개. 제품 AI 표는 만들지 않는다(05_DATA_MODEL.md 6절).
+--   20.5 site_assets.kind 'voice': 청첩장 인사말 음성 mp3(TTS 결과 또는 변환된 호스트 녹음). EXIF 규칙에서 bgm 처럼 제외한다.
+-- ---------------------------------------------------------------------
+
+-- 20.4 방명록 음성 연결. voice_job_id 는 사용자에게 열지 않고(GRANT 없음) has_voice 만 공개한다.
+--      음성 원본은 public.voice_jobs(store_audio, consent_kind='third_party_notice') 와 voice-audio 버킷이 가진다.
+alter table public.guestbook_entries
+  add column if not exists voice_job_id uuid references public.voice_jobs(id) on delete set null;
+alter table public.guestbook_entries
+  add column if not exists has_voice boolean generated always as (voice_job_id is not null) stored;
+create unique index if not exists guestbook_entries_voice_job_idx
+  on public.guestbook_entries (voice_job_id) where voice_job_id is not null;
+grant select (has_voice) on public.guestbook_entries to anon, authenticated;
+
+-- service 전용. 같은 조직·같은 앱·기능 microweb_guestbook_voice·STT·성공·보관·하객 고지 확인(third_party_notice) 작업만 붙인다.
+-- result: ok | not_found | invalid | already
+create or replace function public.attach_guestbook_voice(p_entry_id uuid, p_voice_job_id uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_entry public.guestbook_entries;
+  v_job   public.voice_jobs;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'attach_guestbook_voice: service_role only' using errcode = '42501';
+  end if;
+  select * into v_entry from public.guestbook_entries where id = p_entry_id for update;
+  if not found then
+    return 'not_found';
+  end if;
+  select * into v_job from public.voice_jobs where id = p_voice_job_id;
+  if not found then
+    return 'not_found';
+  end if;
+  if v_job.org_id <> v_entry.org_id or v_job.app_id <> 'microweb' or v_job.feature <> 'microweb_guestbook_voice'
+     or v_job.kind <> 'stt' or not v_job.store_audio or v_job.consent_kind is distinct from 'third_party_notice'
+     or v_job.status <> 'succeeded' then
+    return 'invalid';
+  end if;
+  if v_entry.voice_job_id is not null
+     or exists (select 1 from public.guestbook_entries g where g.voice_job_id = p_voice_job_id) then
+    return 'already';
+  end if;
+  update public.guestbook_entries set voice_job_id = p_voice_job_id where id = p_entry_id;
+  perform public.write_audit(v_entry.org_id, 'guestbook.voice_attach', 'guestbook_entry', p_entry_id::text,
+                           null, jsonb_build_object('voice_job_id', p_voice_job_id));
+  return 'ok';
+end;
+$$;
+
+revoke all on function public.attach_guestbook_voice(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.attach_guestbook_voice(uuid, uuid) to service_role;
+
+-- 20.5 site_assets.kind 'voice'(인사말 음성 mp3). 기존 제약을 새 제약으로 바꾼다(반복 실행 가능).
+alter table public.site_assets drop constraint if exists site_assets_kind_check;
+alter table public.site_assets add constraint site_assets_kind_check
+  check (kind in ('hero', 'gallery', 'og', 'bgm', 'voice', 'other'));
+alter table public.site_assets drop constraint if exists site_assets_kind_mime_check;
+alter table public.site_assets add constraint site_assets_kind_mime_check
+  check ((kind in ('bgm', 'voice')) = (mime = 'audio/mpeg'));
+alter table public.site_assets drop constraint if exists site_assets_ready_check;
+alter table public.site_assets add constraint site_assets_ready_check
+  check (status <> 'ready' or exif_stripped or kind in ('bgm', 'voice'));

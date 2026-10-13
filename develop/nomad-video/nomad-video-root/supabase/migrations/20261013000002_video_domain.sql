@@ -1,0 +1,1495 @@
+-- =====================================================================
+-- 0002_video_domain.sql (모놀리스, public 스키마)
+-- 생성 방법: docs/products/_supabase-modular/migrations/1200_video.sql 을 DB_CONVENTIONS.md 12장 규칙으로 변환
+--   (a) create schema / 스키마 권한 블록 제거  (b) core. -> public.  (c) video.<tbl> -> public.<tbl>
+--   (d) 도메인 테이블 기본 권한 회수 후 필요한 GRANT만
+-- 본문을 직접 고치지 말고 모듈러 조각을 고친 뒤 다시 변환한다(06_AGENT_PLAN VID-06-001).
+-- 선행: 0001_core_lite.sql
+-- 모놀리스 스키마 public 은 사용자 최종 확인 대기(05_DATA_MODEL.md 8장).
+-- =====================================================================
+-- (원본 머리말)
+-- nomad-video (NOMAD AI Factory) 도메인. 선행: core 0000~0006 (+ seed.sql 권장)
+-- 기획: docs/products/nomad-video/05_DATA_MODEL.md
+--
+-- 원칙 (SECURITY_BASELINE.md, DB_CONVENTIONS.md)
+--   - 모든 테이블 RLS ON. 읽기는 public.is_org_member(org_id) and public.has_entitlement(org_id, 'video').
+--   - 돈/권한/한도/상태 전이/외부 발행 결과가 있는 테이블은 사용자 쓰기 정책 없음 + guard_privileged_write.
+--   - 순수 콘텐츠 테이블만 컬럼 단위 GRANT + with check 정책으로 사용자 쓰기를 연다.
+--   - 상태 컬럼은 전이 트리거(public.enforce_status_transition)로만 바뀐다(service_role 쓰기에도 적용).
+--   - authenticated에 EXECUTE를 준 SECURITY DEFINER 함수는 public.is_service_caller()와
+--     public.has_org_role()(NULL-safe)로 호출자를 판정한다. is_privileged_session()은 쓰지 않는다.
+--   - 크레딧 차감/환불은 이 파일의 함수에서 하지 않는다(Route Handler/워커가 service_role로 core RPC 호출).
+--   - 플랜/구독/크레딧/결제/잡/자격증명/제휴 테이블을 다시 만들지 않는다. public.* 를 ALTER하지 않는다.
+-- 사용자 정의 SQLSTATE: VD001~VD012 (05_DATA_MODEL.md, 04_API.md 7장)
+-- 반복 실행 가능.
+-- =====================================================================
+
+
+insert into public.apps (id, name, schema_name, signup_policy) values ('video', 'NOMAD AI Factory', 'video', 'open')
+on conflict (id) do nothing;
+
+-- =====================================================================
+-- 1. 플랜 기능 헬퍼
+-- =====================================================================
+
+-- 조직의 현재 video 엔타이틀먼트 플랜 features(jsonb). 엔타이틀먼트가 없으면 null.
+-- service_role 전용(트리거와 다른 DEFINER 함수 안에서 소유자 권한으로 호출된다).
+create or replace function public.plan_features(p_org uuid)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select p.features
+  from public.app_entitlements e
+  join public.plans p on p.id = e.plan_id
+  where e.org_id = p_org and e.app_id = 'video' and e.status = 'active'
+    and (e.expires_at is null or e.expires_at > now())
+  limit 1;
+$$;
+revoke execute on function public.plan_features(uuid) from public, anon, authenticated;
+grant execute on function public.plan_features(uuid) to service_role;
+
+-- 기능 플래그 판정(RLS 정책과 서버에서 사용).
+--   p_value 가 null : 값이 true / 비어 있지 않은 배열 / 0이 아닌 숫자 면 true
+--   p_value 가 있음 : 배열 값에 p_value 가 포함되면 true (예: tracks 에 'D')
+-- 멤버가 아닌 조직은 항상 false(타 조직 플랜 정보 노출 방지).
+create or replace function public.org_has_feature(p_org uuid, p_key text, p_value text default null)
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_f jsonb;
+  v_v jsonb;
+begin
+  if p_org is null or p_key is null then
+    return false;
+  end if;
+  if not (public.is_service_caller() or public.is_org_member(p_org)) then
+    return false;
+  end if;
+  v_f := public.plan_features(p_org);
+  if v_f is null then
+    return false;
+  end if;
+  v_v := v_f -> p_key;
+  if v_v is null then
+    return false;
+  end if;
+  if p_value is not null then
+    return jsonb_typeof(v_v) = 'array' and v_v ? p_value;
+  end if;
+  return case jsonb_typeof(v_v)
+    when 'boolean' then (v_v #>> '{}')::boolean
+    when 'array'   then jsonb_array_length(v_v) > 0
+    when 'number'  then (v_v #>> '{}')::numeric <> 0
+    when 'string'  then length(v_v #>> '{}') > 0
+    else false
+  end;
+end;
+$$;
+revoke execute on function public.org_has_feature(uuid, text, text) from public, anon;
+grant execute on function public.org_has_feature(uuid, text, text) to authenticated, service_role;
+
+-- =====================================================================
+-- 2. 공용 트리거 함수
+-- =====================================================================
+
+-- 상태 전이 강제. 허용 (old, new) 쌍 외에는 22023. service_role 쓰기에도 적용된다.
+-- 트리거 인자 0 = 검사할 컬럼 이름(기본 status). 키는 '<table>.<column>'.
+create or replace function public.enforce_status_transition()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_col  text := coalesce(tg_argv[0], 'status');
+  v_old  text := to_jsonb(old) ->> v_col;
+  v_new  text := to_jsonb(new) ->> v_col;
+  v_map  constant jsonb := '{
+    "channels.status":            {"active":["paused","error","revoked"], "paused":["active","error","revoked"], "error":["active","revoked"]},
+    "sources.status":             {"requested":["downloading","failed"], "downloading":["ready","failed"], "failed":["requested"], "ready":["purged"]},
+    "productions.status":         {"queued":["processing","failed","canceled"], "processing":["ready","partial","failed","canceled"]},
+    "outputs.status":             {"pending":["ready","failed"], "failed":["pending"], "ready":["purged"]},
+    "longform_projects.status":   {"draft":["storyboard","canceled"], "storyboard":["draft","generating","canceled"], "generating":["review","failed","canceled"], "review":["storyboard","encoding"], "encoding":["ready","failed"], "failed":["storyboard"]},
+    "longform_sections.status":   {"draft":["image_pending"], "image_pending":["image_ready","failed"], "image_ready":["image_pending"], "failed":["image_pending"]},
+    "longform_highlights.status": {"proposed":["rendering"], "rendering":["ready","failed"], "failed":["rendering"]},
+    "music_tracks.status":        {"requested":["generating","failed"], "generating":["ready","failed"], "failed":["requested"], "ready":["archived"]},
+    "music_tracks.distribution_status": {"none":["packaged"], "packaged":["submitted","none"], "submitted":["live","rejected"], "rejected":["packaged"], "live":["takedown"]},
+    "music_library.status":       {"active":["expired","revoked"], "expired":["active","revoked"]},
+    "playlists.status":           {"draft":["rendering","canceled"], "rendering":["ready","failed","draft"], "failed":["draft"], "ready":["draft"]},
+    "landing_pages.status":       {"draft":["published"], "published":["unpublished"], "unpublished":["published","draft"]},
+    "uploads.status":             {"draft":["checking","canceled"], "checking":["blocked","awaiting_confirm","approved","draft"], "blocked":["draft","canceled"], "awaiting_confirm":["approved","draft","canceled"], "approved":["scheduled","canceled"], "scheduled":["uploading","canceled"], "uploading":["published","failed","scheduled"], "failed":["scheduled","canceled"]}
+  }'::jsonb;
+begin
+  if v_old is distinct from v_new then
+    if not coalesce((v_map -> (tg_table_name || '.' || v_col) -> v_old) ? v_new, false) then
+      raise exception 'video: invalid %.% transition % -> %', tg_table_name, v_col, v_old, v_new
+        using errcode = '22023';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- 사용자 세션의 콘텐츠 편집을 부모/자기 상태로 잠근다(VD005). service 호출은 통과.
+-- DEFINER 트리거이므로 호출자 판정은 is_service_caller()를 쓴다(규칙 1).
+create or replace function public.guard_user_edit()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_status text;
+  v_row    jsonb := case when tg_op = 'DELETE' then to_jsonb(old) else to_jsonb(new) end;
+begin
+  if public.is_service_caller() then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+  if tg_table_name = 'longform_projects' then
+    if tg_op = 'UPDATE' and old.status not in ('draft', 'storyboard', 'review') then
+      raise exception 'video: longform project is locked in status %', old.status using errcode = 'VD005';
+    end if;
+  elsif tg_table_name = 'longform_sections' then
+    select p.status into v_status from public.longform_projects p where p.id = (v_row ->> 'longform_id')::uuid;
+    if coalesce(v_status, '') not in ('draft', 'storyboard', 'review') then
+      raise exception 'video: longform sections are locked (project status %)', v_status using errcode = 'VD005';
+    end if;
+  elsif tg_table_name = 'playlists' then
+    if tg_op = 'UPDATE' and old.status <> 'draft' then
+      raise exception 'video: playlist is locked in status %', old.status using errcode = 'VD005';
+    end if;
+  elsif tg_table_name = 'playlist_items' then
+    select p.status into v_status from public.playlists p where p.id = (v_row ->> 'playlist_id')::uuid;
+    if coalesce(v_status, '') <> 'draft' then
+      raise exception 'video: playlist items are locked (playlist status %)', v_status using errcode = 'VD005';
+    end if;
+  end if;
+  return case when tg_op = 'DELETE' then old else new end;
+end;
+$$;
+
+-- 참조 무결성: 자식 행과 참조 대상의 org_id 일치(VD002), 업로드 게이트(VD007, VD011), 플리 곡 출처(VD006).
+-- 모든 호출자(service 포함)에 적용한다. DEFINER라서 public.affiliate_links 등 RLS 밖의 행도 대조할 수 있다.
+create or replace function public.check_refs()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_org     uuid;
+  v_status  text;
+  v_cnt     integer;
+  v_lib     record;
+  v_ch      record;
+  v_verdict text;
+begin
+  if tg_table_name = 'productions' then
+    if new.source_id is not null then
+      select org_id into v_org from public.sources where id = new.source_id;
+      if v_org is distinct from new.org_id then raise exception 'video: source org mismatch' using errcode = 'VD002'; end if;
+    end if;
+
+  elsif tg_table_name = 'outputs' then
+    select org_id into v_org from (
+      select org_id from public.productions         where id = new.production_id
+      union all select org_id from public.longform_projects  where id = new.longform_id
+      union all select org_id from public.longform_highlights where id = new.highlight_id
+      union all select org_id from public.music_tracks       where id = new.music_track_id
+      union all select org_id from public.playlists          where id = new.playlist_id
+    ) s limit 1;
+    if v_org is distinct from new.org_id then raise exception 'video: output owner org mismatch' using errcode = 'VD002'; end if;
+
+  elsif tg_table_name in ('longform_sections', 'longform_highlights') then
+    select org_id into v_org from public.longform_projects where id = new.longform_id;
+    if v_org is distinct from new.org_id then raise exception 'video: longform org mismatch' using errcode = 'VD002'; end if;
+
+  elsif tg_table_name = 'playlist_items' then
+    select org_id into v_org from public.playlists where id = new.playlist_id;
+    if v_org is distinct from new.org_id then raise exception 'video: playlist org mismatch' using errcode = 'VD002'; end if;
+    if new.music_track_id is not null then
+      select org_id, status into v_org, v_status from public.music_tracks where id = new.music_track_id;
+      if v_org is distinct from new.org_id then raise exception 'video: music track org mismatch' using errcode = 'VD002'; end if;
+      if v_status <> 'ready' then raise exception 'video: music track is not ready (%)', v_status using errcode = 'VD006'; end if;
+    end if;
+    if new.library_track_id is not null then
+      select org_id, status, license_expires_at, youtube_monetization_allowed into v_lib
+      from public.music_library where id = new.library_track_id;
+      if v_lib.org_id is distinct from new.org_id then raise exception 'video: library track org mismatch' using errcode = 'VD002'; end if;
+      if v_lib.status <> 'active'
+         or (v_lib.license_expires_at is not null and v_lib.license_expires_at <= now())
+         or not v_lib.youtube_monetization_allowed then
+        raise exception 'video: library track license is not usable' using errcode = 'VD006';
+      end if;
+    end if;
+
+  elsif tg_table_name = 'landing_pages' then
+    if new.production_id is not null then
+      select org_id into v_org from public.productions where id = new.production_id;
+      if v_org is distinct from new.org_id then raise exception 'video: production org mismatch' using errcode = 'VD002'; end if;
+    end if;
+    if new.primary_link_id is not null then
+      select org_id into v_org from public.affiliate_links where id = new.primary_link_id;
+      if v_org is distinct from new.org_id then raise exception 'video: affiliate link org mismatch' using errcode = 'VD002'; end if;
+    end if;
+    if cardinality(new.related_link_ids) > 0 then
+      select count(*) into v_cnt from public.affiliate_links where id = any (new.related_link_ids) and org_id = new.org_id;
+      if v_cnt <> cardinality(new.related_link_ids) then raise exception 'video: related link org mismatch' using errcode = 'VD002'; end if;
+    end if;
+
+  elsif tg_table_name = 'linkinbio_items' then
+    select org_id into v_org from public.linkinbio_profiles where id = new.profile_id;
+    if v_org is distinct from new.org_id then raise exception 'video: link-in-bio profile org mismatch' using errcode = 'VD002'; end if;
+    if new.landing_page_id is not null then
+      select org_id into v_org from public.landing_pages where id = new.landing_page_id;
+      if v_org is distinct from new.org_id then raise exception 'video: landing org mismatch' using errcode = 'VD002'; end if;
+    end if;
+    if new.affiliate_link_id is not null then
+      select org_id into v_org from public.affiliate_links where id = new.affiliate_link_id;
+      if v_org is distinct from new.org_id then raise exception 'video: affiliate link org mismatch' using errcode = 'VD002'; end if;
+    end if;
+
+  elsif tg_table_name = 'uploads' then
+    if tg_op = 'INSERT' then
+      select org_id, status into v_org, v_status from public.outputs where id = new.output_id;
+      if v_org is distinct from new.org_id then raise exception 'video: output org mismatch' using errcode = 'VD002'; end if;
+      if v_status <> 'ready' then raise exception 'video: output is not ready (%)', v_status using errcode = 'VD008'; end if;
+      select org_id, platform, status into v_ch from public.channels where id = new.channel_id;
+      if v_ch.org_id is distinct from new.org_id then raise exception 'video: channel org mismatch' using errcode = 'VD002'; end if;
+      if v_ch.platform <> new.platform or v_ch.status <> 'active' then
+        raise exception 'video: channel is not an active % channel', new.platform using errcode = 'VD008';
+      end if;
+    else
+      if old.has_affiliate and not new.has_affiliate
+         and exists (select 1 from public.upload_links l where l.upload_id = new.id) then
+        raise exception 'video: affiliate links exist; disclosure cannot be removed' using errcode = 'VD007';
+      end if;
+      -- compliance 게이트: approved 로 가려면 최신 검사가 PASS 이거나, WARN + 사용자 확인
+      if new.status = 'approved' and old.status is distinct from 'approved' then
+        if new.compliance_check_id is null then
+          raise exception 'video: compliance check required' using errcode = 'VD011';
+        end if;
+        select verdict into v_verdict from public.compliance_checks
+        where id = new.compliance_check_id and upload_id = new.id;
+        if v_verdict is null or v_verdict = 'fail' or (v_verdict = 'warn' and new.compliance_ack_at is null) then
+          raise exception 'video: compliance gate not satisfied (%)', coalesce(v_verdict, 'none') using errcode = 'VD011';
+        end if;
+      end if;
+    end if;
+
+  elsif tg_table_name = 'upload_links' then
+    select org_id into v_org from public.uploads where id = new.upload_id;
+    if v_org is distinct from new.org_id then raise exception 'video: upload org mismatch' using errcode = 'VD002'; end if;
+    if not exists (select 1 from public.uploads u where u.id = new.upload_id and u.has_affiliate) then
+      raise exception 'video: upload must carry affiliate disclosure before links are attached' using errcode = 'VD007';
+    end if;
+    select org_id into v_org from public.affiliate_links where id = new.link_id;
+    if v_org is distinct from new.org_id then raise exception 'video: affiliate link org mismatch' using errcode = 'VD002'; end if;
+
+  elsif tg_table_name in ('compliance_checks', 'analytics_snapshots') then
+    select org_id into v_org from public.uploads where id = new.upload_id;
+    if v_org is distinct from new.org_id then raise exception 'video: upload org mismatch' using errcode = 'VD002'; end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- 채널 한도: YouTube 활성 채널 수 <= features.max_channels, 그 외 플랫폼은 features.platforms 포함(VD003, VD004)
+create or replace function public.enforce_channel_limit()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_f   jsonb;
+  v_max integer;
+  v_cnt integer;
+begin
+  if new.status <> 'active' or (tg_op = 'UPDATE' and old.status = 'active') then
+    return new;
+  end if;
+  v_f := public.plan_features(new.org_id);
+  if v_f is null then
+    raise exception 'video: organization has no video entitlement' using errcode = 'VD003';
+  end if;
+  if not coalesce((v_f -> 'platforms') ? new.platform, false) then
+    raise exception 'video: platform % is not in the plan', new.platform using errcode = 'VD004';
+  end if;
+  if new.platform = 'youtube' then
+    v_max := coalesce((v_f ->> 'max_channels')::integer, 0);
+    select count(*) into v_cnt from public.channels c
+    where c.org_id = new.org_id and c.platform = 'youtube' and c.status = 'active' and c.id <> new.id;
+    if v_cnt >= v_max then
+      raise exception 'video: youtube channel limit % reached', v_max using errcode = 'VD003';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- =====================================================================
+-- 3. 테이블
+-- =====================================================================
+
+-- 3.1 channels: 연결된 플랫폼 채널. 토큰은 public.encrypted_credentials 에만(credential_id).
+create table if not exists public.channels (
+  id                  uuid primary key default gen_random_uuid(),
+  org_id              uuid not null references public.organizations(id) on delete cascade,
+  platform            text not null constraint channels_platform_check check (platform in ('youtube', 'instagram', 'tiktok', 'threads')),
+  credential_id       uuid references public.encrypted_credentials(id) on delete set null,
+  external_channel_id text not null,
+  name                text,
+  handle              text,
+  role                text not null default 'main'
+                      constraint channels_role_check check (role in ('main', 'commerce', 'trend', 'longform', 'lofi', 'playlist', 'insurance')),
+  target_language     text not null default 'KO' constraint channels_target_language_check check (target_language in ('KO', 'JA', 'EN')),
+  target_country      text not null default 'KR' constraint channels_target_country_check check (target_country in ('KR', 'JP', 'US')),
+  daily_quota_units   integer not null default 10000 constraint channels_daily_quota_check check (daily_quota_units >= 0),
+  quota_used_today    integer not null default 0 constraint channels_quota_used_check check (quota_used_today >= 0),
+  quota_reset_at      timestamptz,
+  status              text not null default 'active'
+                      constraint channels_status_check check (status in ('active', 'paused', 'error', 'revoked')),
+  last_error          text,
+  created_by          uuid,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now(),
+  unique (org_id, platform, external_channel_id)
+);
+create index if not exists channels_pick_idx on public.channels (org_id, platform, target_language, role) where status = 'active';
+
+-- 3.2 trend_videos: 플레이보드/서프API 수집(플랫폼 공용 데이터, org 없음). 난수 지표 금지(growth_rate null = 미산출).
+create table if not exists public.trend_videos (
+  id                  bigint generated always as identity primary key,
+  source              text not null constraint trend_videos_source_check check (source in ('playboard', 'serpapi', 'tiktok', 'google_trends', 'youtube_api')),
+  country             text not null constraint trend_videos_country_check check (country in ('KR', 'US', 'JP')),
+  category            text,
+  period              text not null constraint trend_videos_period_check check (period in ('realtime', 'daily', 'weekly')),
+  rank                integer,
+  external_video_id   text not null,
+  title               text,
+  channel_external_id text,
+  views               bigint,
+  views_24h           bigint,
+  growth_rate         numeric,
+  weighted_score      numeric,
+  is_estimated        boolean not null default false,
+  collected_at        timestamptz not null default now(),
+  unique (source, country, period, external_video_id, collected_at)
+);
+create index if not exists trend_videos_lookup_idx on public.trend_videos (country, period, collected_at desc, weighted_score desc);
+
+-- 3.3 radar_reports: 채널파인더/블링/주제 점수 결과(조직별). 블링은 근거 출처 1개 이상 필수.
+create table if not exists public.radar_reports (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  kind             text not null constraint radar_reports_kind_check check (kind in ('channel_finder', 'bling', 'topic_score')),
+  params           jsonb not null default '{}'::jsonb,
+  result           jsonb not null default '{}'::jsonb,
+  citations        jsonb not null default '[]'::jsonb,
+  trend_score      integer constraint radar_reports_score_check check (trend_score between 0 and 100),
+  credit_ledger_id bigint references public.credit_ledger(id),
+  created_by       uuid,
+  created_at       timestamptz not null default now(),
+  constraint radar_reports_citations_check check (jsonb_typeof(citations) = 'array' and (kind <> 'bling' or jsonb_array_length(citations) >= 1))
+);
+create index if not exists radar_reports_org_idx on public.radar_reports (org_id, kind, created_at desc);
+
+-- 3.4 sources: 소싱 원본(Track A/B/C Mode2). 원본 파일은 ready 후 24시간 내 삭제(purge_after).
+create table if not exists public.sources (
+  id                uuid primary key default gen_random_uuid(),
+  org_id            uuid not null references public.organizations(id) on delete cascade,
+  track             text not null constraint sources_track_check check (track in ('A', 'B', 'C')),
+  platform          text not null constraint sources_platform_check check (platform in ('douyin', 'xiaohongshu', 'youtube', 'tiktok')),
+  source_url        text not null constraint sources_url_check check (source_url ~* '^https://'),
+  external_video_id text,
+  title_original    text,
+  thumbnail_url     text,
+  likes_count       integer,
+  duration_sec      numeric,
+  rights_basis      text not null constraint sources_rights_check check (rights_basis in ('public_free', 'creative_commons', 'licensed', 'own')),
+  rights_note       text,
+  phash             text,
+  storage_path      text,
+  status            text not null default 'requested'
+                    constraint sources_status_check check (status in ('requested', 'downloading', 'ready', 'failed', 'purged')),
+  trend_video_id    bigint references public.trend_videos(id) on delete set null,
+  job_id            uuid references public.jobs(id) on delete set null,
+  downloaded_at     timestamptz,
+  purge_after       timestamptz,
+  purged_at         timestamptz,
+  last_error        text,
+  created_by        uuid,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+create unique index if not exists sources_dedup_uniq on public.sources (org_id, platform, external_video_id) where external_video_id is not null;
+create index if not exists sources_phash_idx on public.sources (org_id, phash) where phash is not null;
+create index if not exists sources_purge_idx on public.sources (purge_after) where status = 'ready';
+
+-- 3.5 productions: 숏폼 생산 요청 1건(Track A/B/C). request_id 로 멱등.
+create table if not exists public.productions (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  track            text not null constraint productions_track_check check (track in ('A', 'B', 'C')),
+  mode             text constraint productions_mode_check check (mode in ('ai_generate', 're_edit')),
+  source_id        uuid references public.sources(id) on delete set null,
+  topic            text,
+  topic_score      integer constraint productions_topic_score_check check (topic_score between 0 and 100),
+  languages        text[] not null default array['KO']::text[],
+  options          jsonb not null default '{}'::jsonb,
+  watermark        boolean not null default false,
+  status           text not null default 'queued'
+                   constraint productions_status_check check (status in ('queued', 'processing', 'partial', 'ready', 'failed', 'canceled')),
+  root_job_id      uuid references public.jobs(id) on delete set null,
+  credit_ledger_id bigint references public.credit_ledger(id),
+  credits_charged  integer not null default 0 constraint productions_credits_check check (credits_charged >= 0),
+  credits_refunded integer not null default 0 constraint productions_refund_check check (credits_refunded >= 0 and credits_refunded <= credits_charged),
+  request_id       uuid not null unique,
+  last_error       text,
+  created_by       uuid,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  started_at       timestamptz,
+  finished_at      timestamptz,
+  constraint productions_mode_track_check check ((track = 'C') = (mode is not null)),
+  constraint productions_languages_check check (cardinality(languages) between 1 and 3 and languages <@ array['KO', 'JA', 'EN']::text[])
+);
+create index if not exists productions_org_idx on public.productions (org_id, created_at desc);
+create index if not exists productions_status_idx on public.productions (org_id, status);
+
+-- 3.6 longform_projects: Track D 롱폼(10섹션 스토리보드). 콘텐츠 컬럼만 사용자 편집.
+create table if not exists public.longform_projects (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  title            text not null constraint longform_title_check check (length(btrim(title)) between 1 and 200),
+  category         text not null default 'knowledge' constraint longform_category_check check (category in ('knowledge', 'radio', 'viral_remake')),
+  topic            text,
+  topic_score      integer constraint longform_topic_score_check check (topic_score between 0 and 100),
+  languages        text[] not null default array['KO']::text[],
+  storyline        text,
+  target_minutes   integer not null default 10 constraint longform_minutes_check check (target_minutes between 3 and 60),
+  status           text not null default 'draft'
+                   constraint longform_status_check check (status in ('draft', 'storyboard', 'generating', 'review', 'encoding', 'ready', 'failed', 'canceled')),
+  root_job_id      uuid references public.jobs(id) on delete set null,
+  credit_ledger_id bigint references public.credit_ledger(id),
+  last_error       text,
+  created_by       uuid default auth.uid(),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  constraint longform_languages_check check (cardinality(languages) between 1 and 3 and languages <@ array['KO', 'JA', 'EN']::text[])
+);
+create index if not exists longform_projects_org_idx on public.longform_projects (org_id, created_at desc);
+
+-- 3.7 longform_sections: 10섹션 정규화(jsonb 통째 갱신 경쟁 제거, BS 리뷰 #20).
+create table if not exists public.longform_sections (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  longform_id      uuid not null references public.longform_projects(id) on delete cascade,
+  position         integer not null constraint longform_sections_position_check check (position between 1 and 10),
+  heading          text,
+  script           jsonb not null default '{}'::jsonb,
+  image_prompt     text,
+  image_path       text,
+  clip_path        text,
+  narration_paths  jsonb not null default '{}'::jsonb,
+  duration_sec     numeric,
+  status           text not null default 'draft'
+                   constraint longform_sections_status_check check (status in ('draft', 'image_pending', 'image_ready', 'failed')),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  unique (longform_id, position)
+);
+
+-- 3.8 longform_highlights: OSMU 핵심 구간(최대 3개, 각 60초 이하) → 9:16 쇼츠
+create table if not exists public.longform_highlights (
+  id           uuid primary key default gen_random_uuid(),
+  org_id       uuid not null references public.organizations(id) on delete cascade,
+  longform_id  uuid not null references public.longform_projects(id) on delete cascade,
+  rank         integer not null constraint longform_highlights_rank_check check (rank between 1 and 3),
+  start_sec    numeric not null constraint longform_highlights_start_check check (start_sec >= 0),
+  end_sec      numeric not null,
+  reason       text,
+  status       text not null default 'proposed'
+               constraint longform_highlights_status_check check (status in ('proposed', 'rendering', 'ready', 'failed')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  unique (longform_id, rank),
+  constraint longform_highlights_range_check check (end_sec > start_sec and end_sec - start_sec <= 60)
+);
+
+-- 3.9 music_tracks: Track E 단일 곡(관리 단위 = 곡). Suno 생성곡만. DSP 유통 상태는 별도 컬럼.
+create table if not exists public.music_tracks (
+  id                  uuid primary key default gen_random_uuid(),
+  org_id              uuid not null references public.organizations(id) on delete cascade,
+  title               text not null constraint music_tracks_title_check check (length(btrim(title)) between 1 and 200),
+  genre               text not null constraint music_tracks_genre_check check (genre in ('lofi', 'chill', 'ambient', 'white_noise')),
+  prompt              text,
+  mood                text,
+  bpm                 integer constraint music_tracks_bpm_check check (bpm between 40 and 200),
+  rights_basis        text not null default 'suno_generated' constraint music_tracks_rights_check check (rights_basis in ('suno_generated')),
+  provider_task_id    text,
+  audio_path          text,
+  cover_path          text,
+  duration_sec        numeric,
+  status              text not null default 'requested'
+                      constraint music_tracks_status_check check (status in ('requested', 'generating', 'ready', 'failed', 'archived')),
+  distribution_status text not null default 'none'
+                      constraint music_tracks_distribution_check check (distribution_status in ('none', 'packaged', 'submitted', 'live', 'rejected', 'takedown')),
+  distribution_note   text,
+  isrc                text constraint music_tracks_isrc_check check (isrc is null or isrc ~ '^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$'),
+  package_path        text,
+  distributed_at      timestamptz,
+  job_id              uuid references public.jobs(id) on delete set null,
+  credit_ledger_id    bigint references public.credit_ledger(id),
+  request_id          uuid unique,
+  created_by          uuid,
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
+);
+create index if not exists music_tracks_org_idx on public.music_tracks (org_id, created_at desc);
+
+-- 3.10 music_library: Track F 에 쓰는 라이선스 확보 곡(사용자 등록, 증빙 필수)
+create table if not exists public.music_library (
+  id                           uuid primary key default gen_random_uuid(),
+  org_id                       uuid not null references public.organizations(id) on delete cascade,
+  title                        text not null,
+  artist                       text,
+  license_type                 text not null constraint music_library_license_check check (license_type in ('purchased', 'royalty_free', 'commissioned', 'cc_by')),
+  license_source               text,
+  license_proof_path           text not null,
+  license_expires_at           timestamptz,
+  youtube_monetization_allowed boolean not null,
+  attribution_text             text,
+  audio_path                   text not null,
+  duration_sec                 numeric constraint music_library_duration_check check (duration_sec > 0),
+  status                       text not null default 'active'
+                               constraint music_library_status_check check (status in ('active', 'expired', 'revoked')),
+  created_by                   uuid default auth.uid(),
+  created_at                   timestamptz not null default now(),
+  updated_at                   timestamptz not null default now(),
+  constraint music_library_attribution_check check (license_type <> 'cc_by' or attribution_text is not null)
+);
+create index if not exists music_library_org_idx on public.music_library (org_id, status);
+
+-- 3.11 playlists: Track F 상황/무드 큐레이션(관리 단위 = 플레이리스트 프로젝트)
+create table if not exists public.playlists (
+  id                   uuid primary key default gen_random_uuid(),
+  org_id               uuid not null references public.organizations(id) on delete cascade,
+  title                text not null constraint playlists_title_check check (length(btrim(title)) between 1 and 200),
+  mood                 text not null constraint playlists_mood_check check (mood in ('cafe', 'drive', 'study', 'sleep', 'work', 'rain', 'healing', 'workout', 'other')),
+  target_duration_min  integer not null constraint playlists_duration_check check (target_duration_min in (30, 60, 180)),
+  language             text not null default 'KO' constraint playlists_language_check check (language in ('KO', 'JA', 'EN')),
+  visual_style         text,
+  cover_prompt         text,
+  description_body     text,
+  pinned_comment_body  text,
+  tracklist            jsonb not null default '[]'::jsonb,
+  thumbnail_path       text,
+  status               text not null default 'draft'
+                       constraint playlists_status_check check (status in ('draft', 'rendering', 'ready', 'failed', 'canceled')),
+  root_job_id          uuid references public.jobs(id) on delete set null,
+  credit_ledger_id     bigint references public.credit_ledger(id),
+  last_error           text,
+  created_by           uuid default auth.uid(),
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+create index if not exists playlists_org_idx on public.playlists (org_id, created_at desc);
+
+-- 3.12 playlist_items: 곡 N개. Suno 자체 생성곡 또는 라이선스 곡 중 정확히 하나.
+create table if not exists public.playlist_items (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  playlist_id      uuid not null references public.playlists(id) on delete cascade,
+  position         integer not null constraint playlist_items_position_check check (position >= 1),
+  music_track_id   uuid references public.music_tracks(id),
+  library_track_id uuid references public.music_library(id),
+  start_sec        numeric,
+  duration_sec     numeric,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  constraint playlist_items_position_uniq unique (playlist_id, position) deferrable initially deferred,
+  constraint playlist_items_source_check check (num_nonnulls(music_track_id, library_track_id) = 1)
+);
+
+-- 3.13 outputs: 렌더 결과물(숏폼 언어판, 롱폼, OSMU 하이라이트, 단일 곡 루프 영상, 플리 영상). 소유 엔티티 정확히 1개.
+create table if not exists public.outputs (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  kind             text not null constraint outputs_kind_check check (kind in ('short', 'longform', 'highlight', 'music_loop', 'playlist')),
+  production_id    uuid references public.productions(id) on delete cascade,
+  longform_id      uuid references public.longform_projects(id) on delete cascade,
+  highlight_id     uuid references public.longform_highlights(id) on delete cascade,
+  music_track_id   uuid references public.music_tracks(id) on delete cascade,
+  playlist_id      uuid references public.playlists(id) on delete cascade,
+  language         text constraint outputs_language_check check (language in ('KO', 'JA', 'EN')),
+  aspect           text not null default '9:16' constraint outputs_aspect_check check (aspect in ('9:16', '16:9')),
+  video_path       text,
+  thumbnail_path   text,
+  duration_sec     numeric,
+  title            text,
+  description_body text,
+  tags             text[] not null default '{}'::text[],
+  watermark        boolean not null default false,
+  status           text not null default 'pending'
+                   constraint outputs_status_check check (status in ('pending', 'ready', 'failed', 'purged')),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  constraint outputs_owner_check check (num_nonnulls(production_id, longform_id, highlight_id, music_track_id, playlist_id) = 1),
+  constraint outputs_kind_owner_check check (
+       (kind = 'short'      and production_id  is not null)
+    or (kind = 'longform'   and longform_id    is not null)
+    or (kind = 'highlight'  and highlight_id   is not null)
+    or (kind = 'music_loop' and music_track_id is not null)
+    or (kind = 'playlist'   and playlist_id    is not null))
+);
+create unique index if not exists outputs_short_lang_uniq on public.outputs (production_id, language) where production_id is not null;
+create index if not exists outputs_org_idx on public.outputs (org_id, created_at desc);
+
+-- 3.14 landing_pages: Track B 공개 랜딩 /landing/[slug]. 제휴 링크는 public.affiliate_links 참조만.
+create table if not exists public.landing_pages (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  production_id    uuid references public.productions(id) on delete set null,
+  slug             text not null unique constraint landing_pages_slug_check check (slug ~ '^[a-z0-9][a-z0-9-]{2,63}$'),
+  product_name     text not null,
+  headline         text,
+  features         jsonb not null default '[]'::jsonb,
+  youtube_video_id text,
+  primary_link_id  uuid references public.affiliate_links(id) on delete set null,
+  related_link_ids uuid[] not null default '{}'::uuid[],
+  status           text not null default 'draft'
+                   constraint landing_pages_status_check check (status in ('draft', 'published', 'unpublished')),
+  view_count       bigint not null default 0,
+  published_at     timestamptz,
+  created_by       uuid,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  constraint landing_pages_features_check check (jsonb_typeof(features) = 'array' and jsonb_array_length(features) <= 3),
+  constraint landing_pages_related_check check (cardinality(related_link_ids) <= 3)
+);
+create index if not exists landing_pages_org_idx on public.landing_pages (org_id, created_at desc);
+
+-- 3.15 linkinbio_profiles / linkinbio_items: 공개 /lb/[handle] (Track B 랜딩 허브)
+create table if not exists public.linkinbio_profiles (
+  id           uuid primary key default gen_random_uuid(),
+  org_id       uuid not null unique references public.organizations(id) on delete cascade,
+  handle       text not null unique
+               constraint linkinbio_handle_check check (handle ~ '^[a-z0-9_]{3,30}$'
+                 and handle not in ('admin', 'api', 'app', 'dashboard', 'login', 'signup', 'landing', 'lb', 'r', 'pricing', 'legal', 'support')),
+  display_name text,
+  bio          text constraint linkinbio_bio_check check (bio is null or length(bio) <= 300),
+  avatar_path  text,
+  is_published boolean not null default false,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create table if not exists public.linkinbio_items (
+  id                uuid primary key default gen_random_uuid(),
+  org_id            uuid not null references public.organizations(id) on delete cascade,
+  profile_id        uuid not null references public.linkinbio_profiles(id) on delete cascade,
+  kind              text not null constraint linkinbio_items_kind_check check (kind in ('link', 'landing', 'affiliate', 'video')),
+  title             text not null constraint linkinbio_items_title_check check (length(btrim(title)) between 1 and 120),
+  url               text constraint linkinbio_items_url_check check (url is null or url ~* '^https://'),
+  landing_page_id   uuid references public.landing_pages(id) on delete cascade,
+  affiliate_link_id uuid references public.affiliate_links(id) on delete cascade,
+  position          integer not null default 0,
+  is_active         boolean not null default true,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  constraint linkinbio_items_target_check check (
+       (kind in ('link', 'video') and url is not null and landing_page_id is null and affiliate_link_id is null)
+    or (kind = 'landing'   and landing_page_id   is not null and affiliate_link_id is null)
+    or (kind = 'affiliate' and affiliate_link_id is not null and landing_page_id is null))
+);
+create index if not exists linkinbio_items_profile_idx on public.linkinbio_items (profile_id, position);
+
+-- 3.16 uploads: 플랫폼 게시 1건. 제휴 링크가 있으면 설명란 첫 줄과 고정 댓글 첫 줄에 대가성 문구가 반드시 있어야 한다.
+create table if not exists public.uploads (
+  id                     uuid primary key default gen_random_uuid(),
+  org_id                 uuid not null references public.organizations(id) on delete cascade,
+  output_id              uuid not null references public.outputs(id),
+  channel_id             uuid not null references public.channels(id),
+  platform               text not null constraint uploads_platform_check check (platform in ('youtube', 'instagram', 'tiktok', 'threads')),
+  language               text constraint uploads_language_check check (language in ('KO', 'JA', 'EN')),
+  title                  text not null constraint uploads_title_check check (length(btrim(title)) between 1 and 100),
+  description            text not null default '',
+  pinned_comment         text,
+  tags                   text[] not null default '{}'::text[],
+  visibility             text not null default 'public' constraint uploads_visibility_check check (visibility in ('public', 'unlisted', 'private')),
+  scheduled_at           timestamptz,
+  paid_promotion         boolean not null default false,
+  has_affiliate          boolean not null default false,
+  disclosure_description text,
+  disclosure_pinned      text,
+  status                 text not null default 'draft'
+                         constraint uploads_status_check check (status in ('draft', 'checking', 'blocked', 'awaiting_confirm', 'approved', 'scheduled', 'uploading', 'published', 'failed', 'canceled')),
+  compliance_check_id    uuid,
+  compliance_ack_by      uuid,
+  compliance_ack_at      timestamptz,
+  job_id                 uuid references public.jobs(id) on delete set null,
+  credit_ledger_id       bigint references public.credit_ledger(id),
+  platform_post_id       text,
+  post_url               text,
+  published_at           timestamptz,
+  attempts               integer not null default 0,
+  last_error             text,
+  request_id             uuid unique,
+  created_by             uuid,
+  created_at             timestamptz not null default now(),
+  updated_at             timestamptz not null default now(),
+  unique (channel_id, platform_post_id),
+  constraint uploads_disclosure_check check (
+    not has_affiliate or (
+          disclosure_description is not null and length(btrim(disclosure_description)) >= 10
+      and starts_with(description, disclosure_description)
+      and disclosure_pinned is not null and length(btrim(disclosure_pinned)) >= 10
+      and pinned_comment is not null and starts_with(pinned_comment, disclosure_pinned)))
+);
+create index if not exists uploads_org_idx on public.uploads (org_id, created_at desc);
+create index if not exists uploads_due_idx on public.uploads (scheduled_at) where status = 'scheduled';
+create index if not exists uploads_output_idx on public.uploads (output_id);
+
+-- 3.17 upload_links: 업로드에 삽입된 제휴 링크(public.affiliate_links) 배치 기록
+create table if not exists public.upload_links (
+  id         uuid primary key default gen_random_uuid(),
+  org_id     uuid not null references public.organizations(id) on delete cascade,
+  upload_id  uuid not null references public.uploads(id) on delete cascade,
+  link_id    uuid not null references public.affiliate_links(id),
+  placement  text not null constraint upload_links_placement_check check (placement in ('video_description', 'video_pinned_comment')),
+  position   integer not null default 1,
+  created_at timestamptz not null default now(),
+  unique (upload_id, link_id, placement)
+);
+
+-- 3.18 compliance_checks: 업로드 전 검사(규칙 + LLM) 결과. append-only.
+create table if not exists public.compliance_checks (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  upload_id        uuid not null references public.uploads(id) on delete cascade,
+  verdict          text not null constraint compliance_checks_verdict_check check (verdict in ('pass', 'warn', 'fail')),
+  stages           text[] not null default array['rules']::text[],
+  issues           jsonb not null default '[]'::jsonb,
+  suggestions      jsonb not null default '[]'::jsonb,
+  llm_failed       boolean not null default false,
+  usage_id         bigint,
+  credit_ledger_id bigint references public.credit_ledger(id),
+  created_at       timestamptz not null default now()
+);
+create index if not exists compliance_checks_upload_idx on public.compliance_checks (upload_id, created_at desc);
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'uploads_compliance_fk') then
+    alter table public.uploads add constraint uploads_compliance_fk
+      foreign key (compliance_check_id) references public.compliance_checks(id) on delete set null;
+  end if;
+end $$;
+
+-- 3.19 analytics_snapshots: 게시물 성과 수집(YouTube Analytics 등)
+create table if not exists public.analytics_snapshots (
+  id             bigint generated always as identity primary key,
+  org_id         uuid not null references public.organizations(id) on delete cascade,
+  upload_id      uuid not null references public.uploads(id) on delete cascade,
+  captured_at    timestamptz not null default now(),
+  views          bigint,
+  likes          bigint,
+  comments       bigint,
+  watch_time_sec bigint,
+  unique (upload_id, captured_at)
+);
+create index if not exists analytics_snapshots_org_idx on public.analytics_snapshots (org_id, captured_at desc);
+
+-- 3.20 workflows: automation-core 캔버스 저장(실행 엔진은 _platform-core automation-core). Phase 2 기능.
+create table if not exists public.workflows (
+  id         uuid primary key default gen_random_uuid(),
+  org_id     uuid not null references public.organizations(id) on delete cascade,
+  name       text not null constraint workflows_name_check check (length(btrim(name)) between 1 and 120),
+  graph      jsonb not null default '{"nodes": [], "edges": []}'::jsonb,
+  is_active  boolean not null default false,
+  created_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint workflows_graph_check check (jsonb_typeof(graph -> 'nodes') = 'array' and jsonb_typeof(graph -> 'edges') = 'array')
+);
+
+-- 3.21 banned_words: compliance 규칙 사전의 조직 추가분(플랫폼 공통 사전은 패키지 JSON)
+create table if not exists public.banned_words (
+  id         uuid primary key default gen_random_uuid(),
+  org_id     uuid not null references public.organizations(id) on delete cascade,
+  word       text not null constraint banned_words_word_check check (length(btrim(word)) between 1 and 60),
+  severity   text not null default 'warn' constraint banned_words_severity_check check (severity in ('warn', 'fail')),
+  created_by uuid default auth.uid(),
+  created_at timestamptz not null default now(),
+  unique (org_id, word)
+);
+
+-- =====================================================================
+-- 4. 트리거 연결
+-- =====================================================================
+do $$
+declare t text;
+begin
+  -- updated_at
+  foreach t in array array['channels', 'sources', 'productions', 'longform_projects', 'longform_sections', 'longform_highlights',
+                           'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs', 'landing_pages',
+                           'linkinbio_profiles', 'linkinbio_items', 'uploads', 'workflows'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_set_updated_at', t);
+    execute format('create trigger %I before update on public.%I for each row execute function public.set_updated_at()', t || '_set_updated_at', t);
+  end loop;
+  -- 사용자 쓰기 정책이 없는 테이블: 이중 잠금
+  foreach t in array array['channels', 'trend_videos', 'radar_reports', 'sources', 'productions', 'longform_highlights',
+                           'outputs', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_guard_write', t);
+    execute format('create trigger %I before insert or update or delete on public.%I for each row execute function public.guard_privileged_write()', t || '_guard_write', t);
+  end loop;
+  -- 상태 전이
+  foreach t in array array['channels', 'sources', 'productions', 'outputs', 'longform_projects', 'longform_sections',
+                           'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'landing_pages', 'uploads'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_status_transition', t);
+    execute format('create trigger %I before update of status on public.%I for each row execute function public.enforce_status_transition(''status'')', t || '_status_transition', t);
+  end loop;
+  -- 참조 무결성
+  foreach t in array array['productions', 'outputs', 'longform_sections', 'longform_highlights', 'playlist_items', 'landing_pages',
+                           'linkinbio_items', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_check_refs', t);
+    execute format('create trigger %I before insert or update on public.%I for each row execute function public.check_refs()', t || '_check_refs', t);
+  end loop;
+  -- 사용자 편집 잠금
+  foreach t in array array['longform_projects', 'longform_sections', 'playlists', 'playlist_items'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_guard_user_edit', t);
+    execute format('create trigger %I before insert or update or delete on public.%I for each row execute function public.guard_user_edit()', t || '_guard_user_edit', t);
+  end loop;
+end $$;
+
+drop trigger if exists music_tracks_distribution_transition on public.music_tracks;
+create trigger music_tracks_distribution_transition before update of distribution_status on public.music_tracks
+  for each row execute function public.enforce_status_transition('distribution_status');
+
+drop trigger if exists channels_limit on public.channels;
+create trigger channels_limit before insert or update of status on public.channels
+  for each row execute function public.enforce_channel_limit();
+
+-- compliance_checks, analytics_snapshots, trend_videos, radar_reports, upload_links 는 UPDATE 를 쓰지 않는다(append-only 운용)
+
+-- [모놀리스] 도메인 테이블 기본 권한 회수 후 필요한 GRANT만 다시 준다(DB_CONVENTIONS.md 12장 (d))
+do $$
+declare t text;
+begin
+  foreach t in array array['channels', 'trend_videos', 'radar_reports', 'sources', 'productions', 'longform_projects', 'longform_sections', 'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs', 'landing_pages', 'linkinbio_profiles', 'linkinbio_items', 'uploads', 'upload_links', 'compliance_checks', 'analytics_snapshots', 'workflows', 'banned_words'] loop
+    execute format('revoke all on table public.%I from public, anon, authenticated', t);
+    execute format('grant all on table public.%I to service_role', t);
+  end loop;
+end $$;
+grant usage, select on all sequences in schema public to service_role;
+
+-- =====================================================================
+-- 5. RLS 와 GRANT
+-- =====================================================================
+alter table public.channels            enable row level security;
+alter table public.trend_videos        enable row level security;
+alter table public.radar_reports       enable row level security;
+alter table public.sources             enable row level security;
+alter table public.productions         enable row level security;
+alter table public.longform_projects   enable row level security;
+alter table public.longform_sections   enable row level security;
+alter table public.longform_highlights enable row level security;
+alter table public.music_tracks        enable row level security;
+alter table public.music_library       enable row level security;
+alter table public.playlists           enable row level security;
+alter table public.playlist_items      enable row level security;
+alter table public.outputs             enable row level security;
+alter table public.landing_pages       enable row level security;
+alter table public.linkinbio_profiles  enable row level security;
+alter table public.linkinbio_items     enable row level security;
+alter table public.uploads             enable row level security;
+alter table public.upload_links        enable row level security;
+alter table public.compliance_checks   enable row level security;
+alter table public.analytics_snapshots enable row level security;
+alter table public.workflows           enable row level security;
+alter table public.banned_words        enable row level security;
+
+-- SELECT: 같은 조직 멤버 + video 엔타이틀먼트 (org 테이블 전부)
+do $$
+declare t text;
+begin
+  foreach t in array array['channels', 'radar_reports', 'sources', 'productions', 'longform_projects', 'longform_sections',
+                           'longform_highlights', 'music_tracks', 'music_library', 'playlists', 'playlist_items', 'outputs',
+                           'landing_pages', 'linkinbio_profiles', 'linkinbio_items', 'uploads', 'upload_links',
+                           'compliance_checks', 'analytics_snapshots', 'workflows', 'banned_words'] loop
+    execute format('grant select on public.%I to authenticated', t);
+    execute format('drop policy if exists %I on public.%I', t || '_select', t);
+    execute format('create policy %I on public.%I for select to authenticated using (public.is_org_member(org_id) and public.has_entitlement(org_id, ''video''))', t || '_select', t);
+  end loop;
+end $$;
+
+-- trend_videos: 공용 데이터. 플랜에 radar.playboard 가 있는 조직의 멤버만 읽는다.
+grant select on public.trend_videos to authenticated;
+drop policy if exists trend_videos_select on public.trend_videos;
+create policy trend_videos_select on public.trend_videos for select to authenticated
+  using (exists (select 1 from public.current_org_ids() as o(id) where public.org_has_feature(o.id, 'radar', 'playboard')));
+
+-- ---------------------------------------------------------------------
+-- 사용자 쓰기를 여는 콘텐츠 테이블 (컬럼 단위 GRANT + with check). 삭제는 owner/admin.
+-- 쓰기 역할: owner/admin/member (viewer 제외)
+-- ---------------------------------------------------------------------
+
+-- longform_projects (Track D 기능 필요)
+grant insert (org_id, title, category, topic, languages, storyline, target_minutes) on public.longform_projects to authenticated;
+grant update (title, category, topic, languages, storyline, target_minutes) on public.longform_projects to authenticated;
+grant delete on public.longform_projects to authenticated;
+drop policy if exists longform_projects_insert on public.longform_projects;
+create policy longform_projects_insert on public.longform_projects for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video')
+              and public.org_has_feature(org_id, 'tracks', 'D'));
+drop policy if exists longform_projects_update on public.longform_projects;
+create policy longform_projects_update on public.longform_projects for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists longform_projects_delete on public.longform_projects;
+create policy longform_projects_delete on public.longform_projects for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- longform_sections
+grant insert (org_id, longform_id, position, heading, script, image_prompt) on public.longform_sections to authenticated;
+grant update (heading, script, image_prompt) on public.longform_sections to authenticated;
+grant delete on public.longform_sections to authenticated;
+drop policy if exists longform_sections_insert on public.longform_sections;
+create policy longform_sections_insert on public.longform_sections for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.org_has_feature(org_id, 'tracks', 'D'));
+drop policy if exists longform_sections_update on public.longform_sections;
+create policy longform_sections_update on public.longform_sections for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists longform_sections_delete on public.longform_sections;
+create policy longform_sections_delete on public.longform_sections for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- music_tracks: 제목만 사용자 편집
+grant update (title) on public.music_tracks to authenticated;
+drop policy if exists music_tracks_update on public.music_tracks;
+create policy music_tracks_update on public.music_tracks for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+
+-- music_library (Track F 기능 필요)
+grant insert (org_id, title, artist, license_type, license_source, license_proof_path, license_expires_at,
+              youtube_monetization_allowed, attribution_text, audio_path, duration_sec) on public.music_library to authenticated;
+grant update (title, artist, license_source, license_proof_path, license_expires_at, attribution_text) on public.music_library to authenticated;
+grant delete on public.music_library to authenticated;
+drop policy if exists music_library_insert on public.music_library;
+create policy music_library_insert on public.music_library for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.org_has_feature(org_id, 'tracks', 'F'));
+drop policy if exists music_library_update on public.music_library;
+create policy music_library_update on public.music_library for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists music_library_delete on public.music_library;
+create policy music_library_delete on public.music_library for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- playlists (Track F 기능 필요)
+grant insert (org_id, title, mood, target_duration_min, language, visual_style, cover_prompt, description_body) on public.playlists to authenticated;
+grant update (title, mood, target_duration_min, language, visual_style, cover_prompt, description_body) on public.playlists to authenticated;
+grant delete on public.playlists to authenticated;
+drop policy if exists playlists_insert on public.playlists;
+create policy playlists_insert on public.playlists for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.org_has_feature(org_id, 'tracks', 'F'));
+drop policy if exists playlists_update on public.playlists;
+create policy playlists_update on public.playlists for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists playlists_delete on public.playlists;
+create policy playlists_delete on public.playlists for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- playlist_items
+grant insert (org_id, playlist_id, position, music_track_id, library_track_id) on public.playlist_items to authenticated;
+grant update (position) on public.playlist_items to authenticated;
+grant delete on public.playlist_items to authenticated;
+drop policy if exists playlist_items_insert on public.playlist_items;
+create policy playlist_items_insert on public.playlist_items for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.org_has_feature(org_id, 'tracks', 'F'));
+drop policy if exists playlist_items_update on public.playlist_items;
+create policy playlist_items_update on public.playlist_items for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists playlist_items_delete on public.playlist_items;
+create policy playlist_items_delete on public.playlist_items for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- landing_pages: 생성/상태는 서버와 RPC, 문구만 사용자 편집
+grant update (product_name, headline, features) on public.landing_pages to authenticated;
+drop policy if exists landing_pages_update on public.landing_pages;
+create policy landing_pages_update on public.landing_pages for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+
+-- linkinbio_profiles: owner/admin
+grant insert (org_id, handle, display_name, bio, avatar_path, is_published) on public.linkinbio_profiles to authenticated;
+grant update (handle, display_name, bio, avatar_path, is_published) on public.linkinbio_profiles to authenticated;
+grant delete on public.linkinbio_profiles to authenticated;
+drop policy if exists linkinbio_profiles_insert on public.linkinbio_profiles;
+create policy linkinbio_profiles_insert on public.linkinbio_profiles for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists linkinbio_profiles_update on public.linkinbio_profiles;
+create policy linkinbio_profiles_update on public.linkinbio_profiles for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists linkinbio_profiles_delete on public.linkinbio_profiles;
+create policy linkinbio_profiles_delete on public.linkinbio_profiles for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- linkinbio_items
+grant insert (org_id, profile_id, kind, title, url, landing_page_id, affiliate_link_id, position, is_active) on public.linkinbio_items to authenticated;
+grant update (kind, title, url, landing_page_id, affiliate_link_id, position, is_active) on public.linkinbio_items to authenticated;
+grant delete on public.linkinbio_items to authenticated;
+drop policy if exists linkinbio_items_insert on public.linkinbio_items;
+create policy linkinbio_items_insert on public.linkinbio_items for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists linkinbio_items_update on public.linkinbio_items;
+create policy linkinbio_items_update on public.linkinbio_items for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists linkinbio_items_delete on public.linkinbio_items;
+create policy linkinbio_items_delete on public.linkinbio_items for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- workflows
+grant insert (org_id, name, graph) on public.workflows to authenticated;
+grant update (name, graph) on public.workflows to authenticated;
+grant delete on public.workflows to authenticated;
+drop policy if exists workflows_insert on public.workflows;
+create policy workflows_insert on public.workflows for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists workflows_update on public.workflows;
+create policy workflows_update on public.workflows for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists workflows_delete on public.workflows;
+create policy workflows_delete on public.workflows for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- banned_words
+grant insert (org_id, word, severity) on public.banned_words to authenticated;
+grant delete on public.banned_words to authenticated;
+drop policy if exists banned_words_insert on public.banned_words;
+create policy banned_words_insert on public.banned_words for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists banned_words_delete on public.banned_words;
+create policy banned_words_delete on public.banned_words for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- =====================================================================
+-- 6. 사용자용 RPC (SECURITY DEFINER, authenticated). 호출자 판정 = is_service_caller + has_org_role
+-- =====================================================================
+
+-- 채널 역할/언어/국가/일시정지 변경 (owner/admin)
+create or replace function public.update_channel_settings(
+  p_channel_id      uuid,
+  p_role            text default null,
+  p_target_language text default null,
+  p_target_country  text default null,
+  p_status          text default null
+)
+returns public.channels
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_row    public.channels;
+  v_before jsonb;
+begin
+  select * into v_row from public.channels where id = p_channel_id for update;
+  if not found then
+    raise exception 'update_channel_settings: channel not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'update_channel_settings: owner/admin only' using errcode = '42501';
+  end if;
+  if not public.has_entitlement(v_row.org_id, 'video') then
+    raise exception 'update_channel_settings: no video entitlement' using errcode = '42501';
+  end if;
+  if p_status is not null and p_status not in ('active', 'paused') then
+    raise exception 'update_channel_settings: status must be active or paused' using errcode = '22023';
+  end if;
+  v_before := to_jsonb(v_row);
+  update public.channels
+     set role            = coalesce(p_role, role),
+         target_language = coalesce(p_target_language, target_language),
+         target_country  = coalesce(p_target_country, target_country),
+         status          = coalesce(p_status, status)
+   where id = p_channel_id
+  returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'channel.update', 'channel', p_channel_id::text, v_before, to_jsonb(v_row));
+  return v_row;
+end;
+$$;
+revoke execute on function public.update_channel_settings(uuid, text, text, text, text) from public, anon;
+grant execute on function public.update_channel_settings(uuid, text, text, text, text) to authenticated;
+
+-- 채널 연결 해제 (owner/admin): 채널 revoked + 자격증명 revoke
+create or replace function public.disconnect_channel(p_channel_id uuid)
+returns public.channels
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.channels;
+begin
+  select * into v_row from public.channels where id = p_channel_id for update;
+  if not found then
+    raise exception 'disconnect_channel: channel not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'disconnect_channel: owner/admin only' using errcode = '42501';
+  end if;
+  if v_row.status = 'revoked' then
+    return v_row;
+  end if;
+  if v_row.credential_id is not null then
+    perform public.revoke_credential(v_row.credential_id);
+  end if;
+  update public.channels set status = 'revoked' where id = p_channel_id returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'channel.disconnect', 'channel', p_channel_id::text);
+  return v_row;
+end;
+$$;
+revoke execute on function public.disconnect_channel(uuid) from public, anon;
+grant execute on function public.disconnect_channel(uuid) to authenticated;
+
+-- compliance WARN 수동 확인 (owner/admin/member). awaiting_confirm → approved, 감사 기록.
+create or replace function public.acknowledge_compliance_warning(p_upload_id uuid, p_note text default null)
+returns public.uploads
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_row     public.uploads;
+  v_verdict text;
+begin
+  select * into v_row from public.uploads where id = p_upload_id for update;
+  if not found then
+    raise exception 'acknowledge_compliance_warning: upload not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin', 'member']) then
+    raise exception 'acknowledge_compliance_warning: not a member' using errcode = '42501';
+  end if;
+  if v_row.status <> 'awaiting_confirm' then
+    raise exception 'acknowledge_compliance_warning: invalid state %', v_row.status using errcode = 'VD008';
+  end if;
+  select verdict into v_verdict from public.compliance_checks where id = v_row.compliance_check_id;
+  if coalesce(v_verdict, '') <> 'warn' then
+    raise exception 'acknowledge_compliance_warning: latest verdict is %', coalesce(v_verdict, 'none') using errcode = 'VD011';
+  end if;
+  update public.uploads
+     set compliance_ack_by = auth.uid(), compliance_ack_at = now(), status = 'approved'
+   where id = p_upload_id
+  returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'upload.compliance_ack', 'upload', p_upload_id::text, null, null,
+                           jsonb_build_object('compliance_check_id', v_row.compliance_check_id, 'note', p_note));
+  return v_row;
+end;
+$$;
+revoke execute on function public.acknowledge_compliance_warning(uuid, text) from public, anon;
+grant execute on function public.acknowledge_compliance_warning(uuid, text) to authenticated;
+
+-- 업로드 취소 (owner/admin/member). 대기 중인 업로드 잡이면 public.cancel_job 으로 함께 취소(환불 포함).
+create or replace function public.cancel_upload(p_upload_id uuid)
+returns public.uploads
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_row        public.uploads;
+  v_job_status text;
+begin
+  select * into v_row from public.uploads where id = p_upload_id for update;
+  if not found then
+    raise exception 'cancel_upload: upload not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin', 'member']) then
+    raise exception 'cancel_upload: not a member' using errcode = '42501';
+  end if;
+  if v_row.status not in ('draft', 'blocked', 'awaiting_confirm', 'approved', 'scheduled', 'failed') then
+    raise exception 'cancel_upload: invalid state %', v_row.status using errcode = 'VD008';
+  end if;
+  if v_row.job_id is not null then
+    select status into v_job_status from public.jobs where id = v_row.job_id;
+    if v_job_status = 'running' then
+      raise exception 'cancel_upload: upload is in progress' using errcode = 'VD008';
+    elsif v_job_status = 'queued' then
+      perform public.cancel_job(v_row.job_id);
+    end if;
+  end if;
+  update public.uploads set status = 'canceled' where id = p_upload_id returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'upload.cancel', 'upload', p_upload_id::text);
+  return v_row;
+end;
+$$;
+revoke execute on function public.cancel_upload(uuid) from public, anon;
+grant execute on function public.cancel_upload(uuid) to authenticated;
+
+-- 랜딩 공개/비공개 (owner/admin/member). 공개하려면 제휴 링크와 coupang_landing 기능 필요.
+create or replace function public.set_landing_status(p_landing_id uuid, p_status text)
+returns public.landing_pages
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.landing_pages;
+begin
+  select * into v_row from public.landing_pages where id = p_landing_id for update;
+  if not found then
+    raise exception 'set_landing_status: landing not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin', 'member']) then
+    raise exception 'set_landing_status: not a member' using errcode = '42501';
+  end if;
+  if p_status not in ('draft', 'published', 'unpublished') then
+    raise exception 'set_landing_status: invalid status' using errcode = '22023';
+  end if;
+  if p_status = 'published' then
+    if not public.org_has_feature(v_row.org_id, 'coupang_landing') then
+      raise exception 'set_landing_status: plan does not include landing pages' using errcode = 'VD009';
+    end if;
+    if v_row.primary_link_id is null then
+      raise exception 'set_landing_status: affiliate link required' using errcode = 'VD001';
+    end if;
+  end if;
+  update public.landing_pages
+     set status = p_status,
+         published_at = case when p_status = 'published' then now() else published_at end
+   where id = p_landing_id
+  returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'landing.' || p_status, 'landing_page', p_landing_id::text);
+  return v_row;
+end;
+$$;
+revoke execute on function public.set_landing_status(uuid, text) from public, anon;
+grant execute on function public.set_landing_status(uuid, text) to authenticated;
+
+-- 음원 DSP 유통 상태 수동 기록 (MVP: Distrokid 자동 배포는 Phase 2)
+create or replace function public.set_music_distribution_status(
+  p_track_id uuid,
+  p_status   text,
+  p_note     text default null,
+  p_isrc     text default null
+)
+returns public.music_tracks
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.music_tracks;
+begin
+  select * into v_row from public.music_tracks where id = p_track_id for update;
+  if not found then
+    raise exception 'set_music_distribution_status: track not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_row.org_id, array['owner', 'admin', 'member']) then
+    raise exception 'set_music_distribution_status: not a member' using errcode = '42501';
+  end if;
+  if p_status not in ('submitted', 'live', 'rejected', 'takedown') then
+    raise exception 'set_music_distribution_status: status % is server-managed or invalid', p_status using errcode = '22023';
+  end if;
+  update public.music_tracks
+     set distribution_status = p_status,
+         distribution_note   = coalesce(p_note, distribution_note),
+         isrc                = coalesce(p_isrc, isrc),
+         distributed_at      = case when p_status = 'live' then now() else distributed_at end
+   where id = p_track_id
+  returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'music.distribution_' || p_status, 'music_track', p_track_id::text);
+  return v_row;
+end;
+$$;
+revoke execute on function public.set_music_distribution_status(uuid, text, text, text) from public, anon;
+grant execute on function public.set_music_distribution_status(uuid, text, text, text) to authenticated;
+
+-- =====================================================================
+-- 7. 공개 읽기 RPC (anon). 공개 상태 행의 공개 컬럼만 jsonb 로 반환한다.
+--    대가성 문구는 org 문구 우선, 없으면 플랫폼 기본값. 랜딩/링크인바이오는 video_description 배치 문구를 재사용(제안).
+-- =====================================================================
+create or replace function public.get_public_landing(p_slug text)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'slug', l.slug,
+    'product_name', l.product_name,
+    'headline', l.headline,
+    'features', l.features,
+    'youtube_video_id', l.youtube_video_id,
+    'primary', (select jsonb_build_object('short_code', a.short_code, 'product_name', a.product_name, 'provider', a.provider)
+                from public.affiliate_links a where a.id = l.primary_link_id and a.is_active),
+    'related', coalesce((select jsonb_agg(jsonb_build_object('short_code', a.short_code, 'product_name', a.product_name, 'provider', a.provider)
+                                          order by array_position(l.related_link_ids, a.id))
+                         from public.affiliate_links a where a.id = any (l.related_link_ids) and a.is_active), '[]'::jsonb),
+    'disclosure', (select d.body from public.affiliate_disclosures d
+                   join public.affiliate_links a on a.id = l.primary_link_id
+                   where d.provider = a.provider and d.placement = 'video_description'
+                     and (d.org_id = l.org_id or d.org_id is null)
+                   order by d.org_id nulls last limit 1)
+  )
+  from public.landing_pages l
+  where l.slug = p_slug and l.status = 'published' and public.has_entitlement(l.org_id, 'video');
+$$;
+revoke execute on function public.get_public_landing(text) from public;
+grant execute on function public.get_public_landing(text) to anon, authenticated, service_role;
+
+create or replace function public.get_public_linkinbio(p_handle text)
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object(
+    'handle', p.handle,
+    'display_name', p.display_name,
+    'bio', p.bio,
+    'avatar_path', p.avatar_path,
+    'items', coalesce((
+      select jsonb_agg(x.item order by x.position, x.created_at)
+      from (
+        select i.position, i.created_at,
+               jsonb_build_object(
+                 'kind', i.kind, 'title', i.title, 'url', i.url,
+                 'landing_slug', lp.slug,
+                 'short_code', a.short_code,
+                 'disclosure', case when a.id is not null then (
+                    select d.body from public.affiliate_disclosures d
+                    where d.provider = a.provider and d.placement = 'video_description'
+                      and (d.org_id = p.org_id or d.org_id is null)
+                    order by d.org_id nulls last limit 1) end
+               ) as item
+        from public.linkinbio_items i
+        left join public.landing_pages lp on lp.id = i.landing_page_id and lp.status = 'published'
+        left join public.affiliate_links a on a.id = i.affiliate_link_id and a.is_active
+        where i.profile_id = p.id and i.is_active
+          and (i.kind in ('link', 'video') or lp.id is not null or a.id is not null)
+      ) x), '[]'::jsonb)
+  )
+  from public.linkinbio_profiles p
+  where p.handle = p_handle and p.is_published and public.has_entitlement(p.org_id, 'video');
+$$;
+revoke execute on function public.get_public_linkinbio(text) from public;
+grant execute on function public.get_public_linkinbio(text) to anon, authenticated, service_role;
+
+-- =====================================================================
+-- 8. service_role 전용 운영 함수
+-- =====================================================================
+
+-- 원본 24시간 보존 정책: ready 원본 중 purge_after 지난 행을 purged 로 바꾸고 Storage 경로를 돌려준다(워커가 객체 삭제).
+create or replace function public.purge_expired_sources(p_limit integer default 500)
+returns table (source_id uuid, org_id uuid, storage_path text)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_privileged_session() then
+    raise exception 'purge_expired_sources: service_role only' using errcode = '42501';
+  end if;
+  return query
+  with c as (
+    select s.id from public.sources s
+    where s.status = 'ready' and s.purge_after <= now()
+    order by s.purge_after
+    limit greatest(p_limit, 1)
+    for update skip locked
+  )
+  update public.sources s
+     set status = 'purged', purged_at = now()
+    from c
+   where s.id = c.id
+  returning s.id, s.org_id, s.storage_path;
+end;
+$$;
+revoke execute on function public.purge_expired_sources(integer) from public, anon, authenticated;
+grant execute on function public.purge_expired_sources(integer) to service_role;
+
+-- YouTube 일일 쿼터 리셋(스케줄러가 쿼터 리셋 시각에 호출)
+create or replace function public.reset_channel_quotas()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_cnt integer;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'reset_channel_quotas: service_role only' using errcode = '42501';
+  end if;
+  update public.channels set quota_used_today = 0, quota_reset_at = now() where platform = 'youtube' and quota_used_today > 0;
+  get diagnostics v_cnt = row_count;
+  return v_cnt;
+end;
+$$;
+revoke execute on function public.reset_channel_quotas() from public, anon, authenticated;
+grant execute on function public.reset_channel_quotas() to service_role;
+
+-- 랜딩 조회수 증가(공개 라우트가 레이트 리밋 뒤 service_role 로 호출)
+create or replace function public.record_landing_view(p_slug text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_privileged_session() then
+    raise exception 'record_landing_view: service_role only' using errcode = '42501';
+  end if;
+  update public.landing_pages set view_count = view_count + 1 where slug = p_slug and status = 'published';
+end;
+$$;
+revoke execute on function public.record_landing_view(text) from public, anon, authenticated;
+grant execute on function public.record_landing_view(text) to service_role;
+
+-- =====================================================================
+-- 9. Storage: 대용량 미디어 버킷(제품 소유, core 경로 규칙 <org_id>/video/<entity>/<uuid>.<ext> 사용)
+--    org-files(50MB)/exports(200MB)로는 롱폼과 3시간 플리 영상을 담을 수 없다. 쓰기는 서버(service_role)만.
+--    5GB 상한은 제안(01_PRD 5장). 사용자 업로드(라이선스 증빙, 라이브러리 음원)는 core org-files 버킷을 쓴다.
+-- =====================================================================
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('video-media', 'video-media', false, 5368709120,
+        array['video/mp4', 'video/webm', 'video/quicktime', 'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/mp4',
+              'image/png', 'image/jpeg', 'image/webp', 'text/vtt', 'text/plain', 'application/zip'])
+on conflict (id) do nothing;
+
+drop policy if exists video_media_select on storage.objects;
+create policy video_media_select on storage.objects for select to authenticated
+  using (bucket_id = 'video-media'
+         and public.is_org_member(public.storage_org_id(name))
+         and public.has_entitlement(public.storage_org_id(name), 'video'));
+
+-- =====================================================================
+-- 끝. 스케줄(워커 크론, service_role):
+--   매 10분  public.purge_expired_sources()  → Storage 객체 삭제
+--   매일 PT 00:00(쿼터 리셋 시각, 미확인)  public.reset_channel_quotas()
+-- =====================================================================
+
+-- =====================================================================
+-- 10. 함수 EXECUTE 정리 (0007_core_function_privileges.sql 와 같은 규칙)
+--     alter default privileges ... revoke 는 PostgreSQL 전역 기본 PUBLIC EXECUTE 를 지우지 못한다.
+--     스키마 전체에서 PUBLIC EXECUTE 를 회수하고, 위에서 역할별로 준 GRANT 만 남긴다.
+--     트리거 함수(enforce_status_transition, guard_user_edit, check_refs, enforce_channel_limit)는 사용자 EXECUTE 가 필요 없다.
+-- =====================================================================
+revoke execute on all functions in schema public from public;
+grant execute on function public.org_has_feature(uuid, text, text) to authenticated, service_role;
+grant execute on function public.get_public_landing(text) to anon, authenticated, service_role;
+grant execute on function public.get_public_linkinbio(text) to anon, authenticated, service_role;
+grant execute on all functions in schema public to service_role;

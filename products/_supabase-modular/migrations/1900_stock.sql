@@ -1,6 +1,6 @@
 -- =====================================================================
 -- 1900_stock.sql
--- stock-dashboard 도메인 (모듈러 통합 DB 조각). 선행: core 0000~0006 (+ seed.sql)
+-- stock-dashboard 도메인 (모듈러 통합 DB 조각). 선행: core 0000~0009 + seed.sql (0008, 0009: AI·음성)
 -- 기획서: docs/products/stock-dashboard/05_DATA_MODEL.md
 --
 -- 원칙
@@ -298,7 +298,7 @@ create table if not exists stock.trade_notes (
 create table if not exists stock.ai_reports (
   id                  uuid primary key default gen_random_uuid(),
   org_id              uuid not null references core.organizations(id) on delete cascade,
-  kind                text not null default 'diagnosis' constraint ai_reports_kind_check check (kind in ('diagnosis', 'idea')),
+  kind                text not null default 'diagnosis' constraint ai_reports_kind_check check (kind in ('diagnosis', 'idea', 'research', 'briefing')),
   scope_connection_id uuid,
   status              text not null default 'queued'
                       constraint ai_reports_status_check check (status in ('queued', 'running', 'succeeded', 'failed', 'canceled')),
@@ -564,7 +564,7 @@ create table if not exists stock.consents (
   id          bigint generated always as identity primary key,
   org_id      uuid not null references core.organizations(id) on delete cascade,
   user_id     uuid not null,
-  kind        text not null constraint consents_kind_check check (kind in ('investment_disclaimer', 'ai_overseas_transfer', 'paper_order_risk')),
+  kind        text not null constraint consents_kind_check check (kind in ('investment_disclaimer', 'ai_overseas_transfer', 'paper_order_risk', 'voice_processing')),
   version     text not null constraint consents_version_check check (version ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}(\.[0-9]+)?$'),
   accepted_at timestamptz not null default now(),
   unique (org_id, user_id, kind, version)
@@ -1235,3 +1235,87 @@ grant execute on function stock.expire_pending_orders() to service_role;
 -- (모놀리스는 함수별 revoke 가 같은 역할을 한다.)
 revoke execute on all functions in schema stock from public;
 -- @@modular-only-end
+
+-- =====================================================================
+-- 14. AI·음성 보강 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/stock-dashboard/01_PRD.md 3.1(ST-F-022~), 4.7절 / 02_ARCHITECTURE.md 5절 / 05_DATA_MODEL.md 6절
+--   새 AI 표는 만들지 않는다. 공용 core.ai_*, core.wiki_*, core.voice_* 를 쓴다(AI_ARCHITECTURE.md 9장).
+--   모놀리스 대응: 14.1 은 0002_stock_domain.sql 끝, 14.2~14.4 는 seed.sql (public. 접두사).
+-- =====================================================================
+
+-- 14.1 구조 보강
+--   - ai_reports.kind 에 research(리서치 요약), briefing(브리핑)을 추가했다(위 표 정의에 반영됨. 아래는 옛 DB 용 업그레이드).
+--   - consents.kind 에 voice_processing(음성 처리 고지)을 추가했다(위 표 정의에 반영됨).
+--   - 성공으로 저장되는 모든 AI 결과는 output.advice_check.passed = true 를 가져야 한다. 검사 자체는 FastAPI compliance 노드가 하고,
+--     이 CHECK 는 "검사 기록 없는 결과는 저장되지 않는다"는 마지막 방어선이다. 가격 키 CHECK(ai_reports_no_price_targets_check)는 그대로다.
+--     NOT VALID: 기존 행은 검사하지 않고 새 쓰기만 검사한다(출시 전이라 기존 행 없음).
+do $$
+begin
+  if exists (select 1 from pg_constraint where conname = 'ai_reports_kind_check' and conrelid = 'stock.ai_reports'::regclass
+             and pg_get_constraintdef(oid) not like '%briefing%') then
+    alter table stock.ai_reports drop constraint ai_reports_kind_check;
+    alter table stock.ai_reports add constraint ai_reports_kind_check
+      check (kind in ('diagnosis', 'idea', 'research', 'briefing'));
+  end if;
+  if exists (select 1 from pg_constraint where conname = 'consents_kind_check' and conrelid = 'stock.consents'::regclass
+             and pg_get_constraintdef(oid) not like '%voice_processing%') then
+    alter table stock.consents drop constraint consents_kind_check;
+    alter table stock.consents add constraint consents_kind_check
+      check (kind in ('investment_disclaimer', 'ai_overseas_transfer', 'paper_order_risk', 'voice_processing'));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'ai_reports_advice_check_passed_check' and conrelid = 'stock.ai_reports'::regclass) then
+    alter table stock.ai_reports add constraint ai_reports_advice_check_passed_check
+      check (status <> 'succeeded' or coalesce(output #>> '{advice_check,passed}', 'false') = 'true') not valid;
+  end if;
+end $$;
+
+-- 14.2 --      기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'stock'. 기능 키는 소문자. 값은 모두 제안이다.
+--        체인 제공자는 core.ai_providers 행이어야 하고 kind 가 맞아야 한다(아래 체인 검사). 정본 표는 02_ARCHITECTURE.md 5.1절.
+--        - stock.research / chat : 공개 자료(공시·위키) 요약과 채팅. 품질 우선 Claude 먼저. 국외 이전 동의가 없는 조직은 resolve_ai_route 가 상용을 걸러 낸다.
+--        - stock.diagnosis       : 포트폴리오 진단 설명(입력은 종목코드·비중%·손익률%·업종·재무지표만, 금액 원값·계좌번호·이름 없음). 오픈소스 강제 여부는 01_PRD 열린 결정 D-13.
+--        - stock.advice_check    : 투자 권유 금지 검사의 LLM 판정 단계. 규칙 사전 단계는 LLM 이 아니다. 판정할 수 없으면 출력하지 않는다(fail-closed).
+--        - wiki.*                : 운영자 조직의 용어 위키(개인정보 없음). 대량 처리라 오픈소스 먼저.
+--        - dify.aux              : Dify 분류 노드. 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - stock.knowledge       : 공시·위키 컬렉션 임베딩. 동의 없는 사용자의 질의도 같은 모델로 임베딩해야 하므로 오픈소스 임베딩으로 고정(모델을 바꾸면 재색인).
+--        - voice_chat            : 음성 질의 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - briefing              : 브리핑 낭독 TTS. 한 브리핑은 한 제공자로만 만든다(작업 도중 대체 금지는 음성 어댑터가 강제한다).
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'stock', 'stock.research',     'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'stock', 'chat',               'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'stock', 'stock.diagnosis',    'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'stock', 'stock.advice_check', 'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'stock', 'wiki.query',         'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'stock', 'wiki.ingest',        'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'stock', 'wiki.lint',          'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'stock', 'dify.aux',           'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'stock', 'stock.knowledge',    'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'stock', 'voice_chat',         'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'stock', 'voice_chat',         'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'stock', 'briefing',           'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 14.3 플랜 features 의 AI 키(beta, pro). seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로 코어 seed 반영을 요청했다(06_AGENT_PLAN.md 6절).
+--      서버는 누락 키를 기본값으로 읽는다(01_PRD 4.3절). default 플랜은 베타 게이트에 막혀 있으므로 AI 키를 두지 않는다.
+update core.plans set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 100, "ai_research_per_day": 20, "voice_chat": true, "briefing": true}'::jsonb
+ where app_id = 'stock' and code = 'beta';
+update core.plans set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "ai_research_per_day": 40, "voice_chat": true, "briefing": true}'::jsonb
+ where app_id = 'stock' and code = 'pro';
+
+-- 14.4 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'stock'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'stock routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;

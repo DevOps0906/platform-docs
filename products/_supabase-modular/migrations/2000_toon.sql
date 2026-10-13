@@ -716,6 +716,72 @@ revoke execute on function toon.bump_cut_revision() from authenticated;
 revoke execute on function toon.enforce_run_status_transition() from authenticated;
 
 -- =====================================================================
+-- 10. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/toon-factory/02_ARCHITECTURE.md 5절, 01_PRD.md 4.6절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 이 조각과 모놀리스 seed 에서만 바꾼다(제품 화면은 set_ai_routing 을 부르지 않는다).
+--   10.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'toon'. 기능 키는 소문자.
+--        체인 제공자는 seed.sql 의 core.ai_providers 행이어야 하고 kind 가 맞아야 한다(10.3 검사).
+--        - toon.storyboard  : 콘티 그래프의 plot·panel_split 노드. 이야기 품질이 제품 핵심이라 Claude 먼저.
+--        - toon.consistency : 캐릭터 일관성 검사(설정 위키 대비 비교·판정). 비교 작업이라 오픈소스 먼저.
+--        - toon.dialogue    : 대사 다듬기 3안. 말맛이 중요해 Claude 먼저.
+--        - toon.prompt_en   : 배경 장면 설명 -> 영어 이미지 프롬프트(번역·정리). 오픈소스 먼저.
+--        - chat             : 창작 어시스턴트 채팅(/tools/answer). 한국어 창작 품질 때문에 Claude 먼저.
+--        - wiki.*           : 작품 설정 위키(캐릭터 바이블) 갱신·점검·질의. 대량 처리라 오픈소스 먼저.
+--        - dify.aux         : Dify 보조 LLM 노드. 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - toon.knowledge(embedding): 작품 설정 컬렉션. 컬렉션마다 임베딩 모델이 하나여야 하고, 동의 여부와 무관하게
+--                          같은 모델로 질의해야 하므로 국내 오픈소스 임베딩으로 고정(모델을 바꾸면 재색인).
+--        - voice_chat       : 음성 질문 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - dialogue_voice   : 대사 음성 미리듣기 TTS. ElevenLabs 먼저(대체 허용: 미리듣기는 참고용).
+--        - video_voice      : MP4 음성 입히기 TTS. 한 회차의 목소리가 같아야 하므로 작업 도중 다른 제공자로 대체하지 않는다.
+--                          이 금지는 체인이 아니라 음성 어댑터(packages/core-voice, feature=video_voice)가 강제한다.
+--   10.2 플랜 features 의 AI 키(있으면 병합). _supabase-modular/seed.sql 반영은 코어 요청(06_AGENT_PLAN.md 6절 요청 7).
+--        서버는 누락 키를 기본값(false/0)으로 읽는다.
+-- ---------------------------------------------------------------------
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'toon', 'toon.storyboard',  'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'toon', 'toon.consistency', 'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'toon', 'toon.dialogue',    'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'toon', 'toon.prompt_en',   'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'toon', 'chat',             'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'toon', 'wiki.query',       'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'toon', 'wiki.ingest',      'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'toon', 'wiki.lint',        'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'toon', 'dify.aux',         'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'toon', 'toon.knowledge',   'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'toon', 'voice_chat',       'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'toon', 'voice_chat',       'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'toon', 'dialogue_voice',   'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'toon', 'video_voice',      'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 10.2 플랜 AI 키 병합(free: 하루 20턴, 영상 음성 없음 / pro: 하루 200턴, 영상 음성 있음). 행이 없으면 아무 일도 하지 않는다.
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 20, "voice_chat": true, "dialogue_voice": true, "video_voice": false}'::jsonb
+ where app_id = 'toon' and code = 'free';
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dialogue_voice": true, "video_voice": true}'::jsonb
+ where app_id = 'toon' and code = 'pro';
+
+-- 10.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'toon'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'toon routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;
+
+-- =====================================================================
 -- 끝. PostgREST 노출: config.toml [api].schemas 에 toon 추가.
 -- 타입: supabase gen types typescript --local --schema core,toon
 -- =====================================================================

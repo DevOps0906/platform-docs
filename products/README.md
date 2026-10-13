@@ -65,6 +65,7 @@
 | 2 | 제품 12개 기획과 DB | 완료 | 제품 폴더마다 문서 9개와 `supabase/`, 모듈러 조각 13개 |
 | 3 | SQL 통합 검증, 구조 점검 | 완료 | `_supabase-modular/VERIFICATION.md`, `_STRUCTURE_CHECK.md` |
 | 4 | 인덱스 마무리, 최종 보고 | 완료 | 이 절 |
+| 5 | AI 계층·음성·3D 히어로·디자인 시스템 반영, 개발 방법 문서 12개 | 완료 | 아래 "2026-10-13 AI 계층 추가", `../develop/<제품>/` |
 
 ## 제품별 결과
 
@@ -123,3 +124,83 @@
 | 감사 로그 INSERT의 무의미한 `on conflict` | 제거 |
 
 같은 수정을 모듈러 core(0001~0005), `MONOLITH_CORE_LITE.sql`, 제품별 `0001_core_lite.sql` 14개에 적용했다. 통합 적용, 모놀리스 14세트, 권한 감사, 교차 조직 스모크, 새 동작 13항목(모듈러·라이트 각각)을 다시 통과했다.
+
+## 2026-10-13 AI 계층 추가
+
+확정 결정 13~17(`00_MERGE_ANALYSIS.md` 상단 표)을 추가했다. 12개 제품 모두 MVP에 AI 기능과 음성 대화를 넣는다. 제품 문서(01~06)는 이 문서들을 인용만 하고 재정의하지 않는다.
+
+| 결정 | 내용 |
+|---|---|
+| 13 | AI 계층: FastAPI LangChain/LangGraph, pgvector, Voyage 임베딩. LLM Wiki(제품 위키 + 개발 위키) 포함 |
+| 14 | Dify: 채팅·운영용 공용 자체 호스팅 1개. 지식·도구는 FastAPI |
+| 15 | 3D 히어로 표준: PC·태블릿 풀 3D, 모바일 절충안(가벼운 3D 자동 로드 유지, 로딩 전 저사양 판정, 공용 3D 키트) |
+| 16 | 음성: 음성 대화 + 제품 음성 기능. ElevenLabs(TS)와 오픈소스 GPU 음성 서버 이원화 |
+| 17 | LLM 이원화: 상용(ChatGPT, Claude, Gemini 등) + 오픈소스 vLLM 병행, 라우팅·대체 |
+
+| 문서 | 내용 |
+|---|---|
+| `_platform-core/AI_ARCHITECTURE.md` | AI 계층 구조, 서명 토큰, Dify 연동, 모델 라우팅, RAG, 그래프 |
+| `_platform-core/LLM_WIKI.md` | 제품 지식 위키와 개발용 프로젝트 위키 |
+| `_platform-core/VOICE_ARCHITECTURE.md` | 음성 이원화, 대화 흐름, 개인정보 |
+| `_design-guide/HERO_3D.md` | 3D 히어로 표준, 저사양 판정, 공용 3D 키트, 제품별 소재 |
+| `_design-guide/DESIGN_SYSTEM.md` | 디자인 시스템 규칙(Primer·Atlassian·Astryx 참고), 정답 소스는 Tailwind CSS v4 CSS + 코드 컴포넌트, 4단계 구축 워크플로, 작업 지시 템플릿 |
+| `_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql` | AI·음성 코어 SQL (검사는 `check.mjs --vector`) |
+| `../develop/_shared/{dify,voice,llm,llm-wiki}/` | 공용 설치·운영 가이드, 개발 위키 스킬 원본 |
+
+고문 검토 반영 결정(2026-10-13)
+
+| 번호 | 결정 |
+|---|---|
+| 1 | Dify에 토큰을 넘기지 않고 대화 매핑(대화 id + 서버 생성 `dify_user`)을 쓴다 |
+| 2 | 서명 토큰은 EdDSA(Ed25519) 공개키 방식, 제품별 `iss`/`aud`, JWKS 검증 |
+| 3 | hms는 전용 서버(LLM, 음성, 임베딩)만 쓴다. 공용 GPU 서버, 상용 API, 공용 Dify 미사용 |
+| 4 | 상용(국외) 대체 경로는 조직이 국외 이전에 동의한 경우에만(`set_ai_cross_border_ack`, `AI002`) |
+| 5 | 크레딧은 선차감 + 정산 |
+| 6 | 위키 삭제는 보관(archive), 개인정보 삭제 요청은 `purge_wiki_page`로 개정 이력까지 실제 삭제 |
+| 7 | 모바일 히어로는 가벼운 3D 자동 로드를 유지하되 로딩 전 저사양 판정, 공용 3D 장면 키트 |
+
+기술 스택 고정: **Tailwind CSS v4** (v3 문법과 `tailwind.config.js` 금지).
+
+갱신한 기존 문서: `SHARED_MODULES.md`(19장), `CORE_SPEC.md`(17장), `SECURITY_BASELINE.md`(16장), `DB_CONVENTIONS.md`(14장), `DOC_TEMPLATE.md`, `DESIGN_PRINCIPLES.md`, `_supabase-modular/`(README, ARCHITECTURE, VERIFICATION 10장), `_PRODUCT_AGENT_BRIEF.md`. 위 "제품별 결과" 표는 AI 계층 반영 전 상태이고, 반영 후 수치는 아래 표를 따른다.
+
+### AI 계층 반영 결과 (2026-10-13)
+
+| 제품 | 06장 작업 | 개발 문서 | 문서 경로 검사(참조 / 누락) |
+|---|---|---|---|
+| flora-publishing | 55 | `../develop/flora-publishing/` | 443 / 0 |
+| astro-ai (기준 예시) | 54 | `../develop/astro-ai/` | 531 / 0 |
+| nomad-video | 56 | `../develop/nomad-video/` | 341 / 0 |
+| nomad-blog | 56 | `../develop/nomad-blog/` | 383 / 0 |
+| nomad-commerce | 57 | `../develop/nomad-commerce/` | 434 / 0 |
+| microweb-studio | 53 | `../develop/microweb-studio/` | 340 / 0 |
+| admin-suite | 57 | `../develop/admin-suite/` | 387 / 0 |
+| live-poll | 48 | `../develop/live-poll/` | 338 / 0 |
+| stock-dashboard | 51 | `../develop/stock-dashboard/` | 455 / 0 |
+| toon-factory | 59 | `../develop/toon-factory/` | 384 / 0 |
+| study-note | 52 | `../develop/study-note/` | 290 / 0 |
+| website-floria | 48 | `../develop/website-floria/` | 360 / 0 |
+| 합계 | 646 | | |
+
+06장 작업의 모델 배분(646개)은 Fable 116(18.0%), Opus 304(47.1%), Sonnet 174(26.9%), Haiku 40(6.2%), 사람 12(1.9%, 디자인 시스템 3단계 비주얼 검토)이다.
+
+검증(PGlite 기준, 실제 Supabase 재검증은 남은 코어 과제)
+- 통합 DB(0000~0009 + seed + 조각 13개)를 정순·역순으로 적용했고 모두 OK다(`check.mjs --vector`).
+- 모놀리스 14세트(admin-suite erp·hms·sms 포함)가 모두 OK다.
+- AI 보안 테스트 25/25(모듈러, 라이트 각각): 교차 조직 차단, `match_ai_chunks` 조직 필터, 국외 이전 미동의 시 상용 제외, AI001·AI002, 음성 녹음 만료, `purge_wiki_page`.
+- setup 스크립트 24개: `bash -n`과 PowerShell 구문 분석 오류 0, 드라이런 24회 모두 정상, 대상 폴더를 만들지 않음.
+- 고문(Fable) 교차 검토: 조건부 통과. 지적 12건 중 9건 반영, 1건 유지(microweb 기능 키 밑줄 표기는 모놀리스 변환 때문에 의도된 것, `microweb-studio/02_ARCHITECTURE.md:11`), 2건은 사용자 결정 대기(아래).
+
+교차 검토 반영 내역
+- nomad-video `video.script` 그래프 순서를 `… → metadata → compliance`로 바꿨다(02·01·03·06장, 개발 문서).
+- `AI_ARCHITECTURE.md` 2.1절에 잡 토큰 규격을, 6절에 "compliance 뒤에는 비생성 노드만" 규칙을 추가했다.
+- `VOICE_ARCHITECTURE.md`에 업무용 앱 TTS 오픈소스 우선 예외를, `HERO_3D.md`에 킬 스위치 `NEXT_PUBLIC_HERO3D_ENABLED`를 추가했다. 줄 번호 인용이 깨지지 않도록 기존 줄 안에서 고쳤다.
+- nomad-video 01장 8절 번호를 D-1~D-12로 통일, stock-dashboard 모바일 3D 문구 정리, 낡은 `AI_TOKEN_SECRET` 참조 문구 정리, nomad-commerce 개발 문서의 작업 ID 오기(CM-06-001) 수정.
+
+사용자 결정(2026-10-13 확정, 모두 권장안)
+| 번호 | 결정 | 반영 위치 |
+|---|---|---|
+| A | 임베딩: 플랫폼 기본 Voyage, 제품 지식 컬렉션 기본 오픈소스(oss-embed). 임베딩 체인은 새 컬렉션의 제공자를 고를 때만 쓰고, 기존 컬렉션은 기록된 제공자·모델로만 색인·검색하며 대체하지 않는다 | `_platform-core/AI_ARCHITECTURE.md` 5절 임베딩 행, `00_MERGE_ANALYSIS.md` 결정 13 (SQL 변경 없음: 제품 seed가 이미 oss-embed, 컬렉션 모델 열은 `ai_collections`에 있음) |
+| B | admin-suite AI 과금 예외 승인: 선차감·정산 없이 플랜 포함 한도 + `ai_usage` 원가 기록(D-10 A 확정) | `AI_ARCHITECTURE.md` 7절, `00_MERGE_ANALYSIS.md` 결정 13, `admin-suite/01_PRD.md` 4.1절·8절, admin-suite 개발 문서 |
+| C | 낭독류 TTS 기본 모드를 `auto` + ElevenLabs 우선으로 통일(같은 목소리 기능의 작업 도중 대체 금지는 유지) | 조각 1000·1100·1400·1900·2000과 해당 모놀리스 seed 5개, 5개 제품 02·05장, `VOICE_ARCHITECTURE.md` 3절 |
+
+반영 후 재검증: 통합 DB 정순·역순 OK, 모놀리스 14세트 OK, AI 보안 테스트 25/25(모듈러·라이트), root 12개 재생성 후 경로 누락 0.

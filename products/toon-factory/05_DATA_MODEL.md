@@ -2,6 +2,8 @@
 
 작성일 2026-10-12. 정본 SQL: `docs/products/_supabase-modular/migrations/2000_toon.sql`(아래 `2000:줄`). 모놀리스는 같은 본문을 변환한 `supabase/monolith/migrations/0002_toon_domain.sql`.
 
+2026-10-13 개정: AI·음성은 코어 표만 참조하고 제품 AI 표를 만들지 않았다(6절에 이유). 제품 스키마 표·컬럼·RLS는 바뀌지 않았다. 바뀐 것은 라우팅 기본값 14행과 플랜 AI 키 병합(8·9절), 컷 문서 선택 필드(02장 2.2절, DB 변경 없음)뿐이다.
+
 ## 1. 개요와 ERD
 
 ```
@@ -18,6 +20,21 @@ toon.asset_packs ─┬─ toon.characters ── toon.assets(kind pose|expressi
 toon.catalog_assets (security_invoker 뷰, 경로 컬럼 제외)
 
 Storage: toon-catalog(비공개, 정책 없음) / toon-previews(공개 읽기) / toon-user-assets(멤버 읽기, 서버 쓰기) / core exports
+```
+
+AI·음성(2026-10-13)은 코어 표만 참조한다:
+
+```
+core AI·음성 (참조만)
+ ├─ core.ai_org_settings    (국외 이전 동의: cross_border_ack_at, cross_border_notice 고지문 버전, ack_by)
+ ├─ core.ai_conversations   (사용자 본인, dify_user, channel text/voice)  -- 작품 연결은 Dify 입력 series_id + 서버 대조
+ │    ├─ core.ai_messages   (citations, provider, credits)
+ │    └─ core.voice_sessions ─ core.voice_jobs (feature voice_chat / dialogue_voice / video_voice, store_audio=false)
+ ├─ core.ai_collections     (settings-<series_id> kind rag, wiki-<series_id> kind wiki, oss-embed)
+ │    ├─ core.ai_documents  (설정 노트 source_type text, 위키 source_type wiki)
+ │    └─ core.ai_chunks     (사용자 SELECT 없음, match_ai_chunks만)
+ ├─ core.wiki_pages / wiki_links / wiki_revisions  (작품 설정 위키, slug 접두사 s-<작품 id 앞 8자>/)
+ └─ core.ai_runs ─ core.ai_run_steps  (graph toon.storyboard / toon.dialogue / toon.image_prompt / wiki.lint)
 ```
 
 리뷰가 요구한 `project → cuts → layers`(`docs/reviews/Toon-Factory.md:67`)를 작품(series) → 회차(episodes) → 컷(cuts) → 레이어(`cuts.doc.layers`)로 구현했다. 회차를 둔 이유는 연재(주 2회) 페르소나와 회차 단위 콘티·내보내기 때문이다.
@@ -92,7 +109,7 @@ DB CHECK는 문서의 겉모양만 막고, 레이어 판별 유니온의 세부�
 
 ### 2.4 쓰지 않는 것
 
-플랜, 구독, 크레딧, 결제, 잡 테이블은 제품 스키마에 만들지 않는다(`DB_CONVENTIONS.md:237`). 월 내보내기 한도는 별도 쿼터 테이블 없이 `toon.exports` 카운트로 판정한다(`CORE_SPEC.md:138`).
+플랜, 구독, 크레딧, 결제, 잡 테이블은 제품 스키마에 만들지 않는다(`DB_CONVENTIONS.md:237`). 월 내보내기 한도는 별도 쿼터 테이블 없이 `toon.exports` 카운트로 판정한다(`CORE_SPEC.md:138`). AI·음성 전용 제품 표도 만들지 않는다(6절).
 
 ### 2.5 Storage
 
@@ -182,6 +199,37 @@ DB CHECK는 문서의 겉모양만 막고, 레이어 판별 유니온의 세부�
 | `core.is_org_member`, `has_org_role`, `has_entitlement`, `is_platform_admin`, `is_service_caller`, `storage_org_id`, `write_audit`, `set_updated_at`, `guard_privileged_write` | 정책, 함수, 트리거 |
 | `consume/refund_credits`, `enqueue_job` 등 | 서버 코드에서만(SQL에서 호출하지 않음) |
 
+
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| core 객체 | toon 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 채팅 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 3개와 위키 lint 실행 기록 | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, Next.js 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 14행(9절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의(AI 배경 fal 호출 전 확인 포함) | 온보딩·설정(사용자 세션), Route Handler(읽기) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 작품별 설정 노트·위키 컬렉션 | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 작품 설정 위키(캐릭터 바이블) | FastAPI(쓰기), Next.js 서버(조직·작품 확인 후 읽기) |
+| `voice_sessions`, `voice_jobs` | 음성 대화, STT·TTS·미리듣기·영상 음성 작업 | Next.js |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+| `write_audit` | 음성 처리 고지 확인(`voice.notice_ack`), 위키 편집·확정, 노트 삭제 | Route Handler |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 대화-작품 연결 표 | 채팅이 어느 작품 설정을 근거로 하는지 | Dify 입력 `series_id`(대화 시작 때) + FastAPI가 매핑 org와 `toon.series`의 org를 매번 대조. 대체 경로는 Next.js가 요청마다 `series_id`를 받아 같은 확인 |
+| 작품-컬렉션 연결 컬럼 | 작품 설정 컬렉션 위치 | 결정적 이름 `settings-<series_id>`, `wiki-<series_id>`(`core.ai_collections` `unique (org_id, app_id, name)`). 작품이 삭제되면 일일 정리 스케줄이 이름의 `series_id`가 `toon.series`에 없는 컬렉션과 문서·청크·위키 페이지를 지운다(02장 4절, 계정 삭제는 `purge_organization` 연쇄) |
+| 캐릭터별 목소리 표 | 말풍선 화자 → 보이스 | 컷 문서 `BubbleLayer.voiceKey`(02장 2.2절) + 위키 캐릭터 페이지의 `voice_key`. DB 변경 없음 |
+| 음성 처리 동의 표 | 고지 확인 증빙 | `core.audit_logs`(`voice.notice_ack`, 고지문 버전). 녹음 원본을 저장하지 않으므로 녹음 보관 동의(`voice_jobs.consent_*`)는 해당 없음 |
+| 국외 이전 동의 표 | 동의 증빙 | `core.ai_org_settings`(시각, 고지문 버전, 동의한 사용자) |
+| 영상 음성 클립 표 | 클립 위치·재사용 | `exports.options.voice.clips` + 결정적 Storage 경로 `exports/<org_id>/toon/voice/<export_id>/` + `voice_jobs`(feature `video_voice`) |
+| 설정 노트 문서 표 | 노트 관리 | `core.ai_documents`(source_type `text`, 작품 컬렉션) |
+| 일관성 검사 결과 표 | 위반 목록 보관 | 콘티 JSON(`episodes.script`)의 `consistency`와 `ai_run_steps` |
+
+플랜 AI 키(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `dialogue_voice`, `video_voice`)는 `core.plans.features` jsonb에 병합하는 데이터 변경이다(9절). 표 구조는 바뀌지 않는다.
+
 `core.*`를 ALTER하지 않는다. 모듈러 seed 수정도 하지 않는다(features 확장은 2026-10-13 코어 반영 완료, 06장 6절).
 
 PM001 처리: `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 올리며 같은 호출의 UPDATE는 롤백된다(계약 불변). 주문 failed 기록은 service_role 전용 `fail_payment_order`(2026-10-13 코어 반영)가 맡는다. `PM001`을 받으면 Route Handler가 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`를 부르고, 서버 로그·운영 알림과 함께 Toss 취소 API를 호출한다. 코어 수정은 하지 않는다.
@@ -210,12 +258,28 @@ PM001 처리: `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 �
 | features | 모듈러 seed가 2026-10-13부터 모놀리스 seed와 같은 전체 키를 담는다(이전에는 `watermark`, `export`만 있어 Pro도 무료 한도가 걸렸다) | `seed.sql`에 01장 4.1절 전체 키 |
 | 크레딧팩 | 모듈러 seed에 2종(2026-10-13 반영) | `seed.sql`에 2종 |
 | PostgREST | `[api].schemas`에 `toon` 추가 | 설정 불필요 |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| AI 라우팅 기본값 | `2000_toon.sql` 10.1절 | `seed.sql`(같은 14행) |
+| 플랜 AI 키 | `2000_toon.sql` 10.2절 병합 UPDATE(모듈러 `seed.sql` 반영은 코어 요청, 06장 6절 요청 7) | `seed.sql` free·pro `features`에 직접 |
+| 체인 검사 | 10.3절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 
 ## 9. 마이그레이션 파일
 
 | 파일 | 내용 |
 |---|---|
-| `docs/products/_supabase-modular/migrations/2000_toon.sql` | 모듈러 조각(번호 2000, 범위 2000~2099). Phase 2(캐릭터 시트, 업로드)는 `2010_toon_character_sheet.sql`로 추가 예정 |
+| `docs/products/_supabase-modular/migrations/2000_toon.sql` | 모듈러 조각(번호 2000, 범위 2000~2099). 10절 AI·음성 기본값(라우팅 14행, free·pro AI 키, 체인 검사). Phase 2(캐릭터 시트, 업로드)는 `2010_toon_character_sheet.sql`로 추가 예정 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | 코어 lite 복사본(3개 절 제거, 주석) |
 | `supabase/monolith/migrations/0002_toon_domain.sql` | 조각 변환본(TN-06-003 스크립트로 재생성) |
-| `supabase/monolith/seed.sql` | apps 1행, free(기본)·pro 플랜, 크레딧팩 2종, 카탈로그 샘플 팩 1개(draft, 증빙 대기) |
+| `supabase/monolith/seed.sql` | apps 1행, free(기본)·pro 플랜(AI 키 포함), 크레딧팩 2종, 카탈로그 샘플 팩 1개(draft, 증빙 대기), AI 라우팅 기본값 14행 + 체인 검사 |
+
+2026-10-13 재검증(PGlite `--vector`, `docs/products/_tools-sqlcheck/check.mjs`):
+
+| 검사 | 결과 |
+|---|---|
+| `check.mjs --vector mod` 0000~0009 + `seed.sql` + `2000_toon.sql` | 전부 OK |
+| `check.mjs --vector mono` 0001 + 0002 + `seed.sql` | 전부 OK |
+| 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app toon) | 14행(모듈러·모놀리스) |
+| free·pro `features` | 기존 키 + `ai_chat`, `ai_chat_turns_per_day`(20 / 200), `voice_chat`, `dialogue_voice`, `video_voice`(false / true) |
+| 기존 RLS 스모크 68항목 | 제품 표·정책 변경이 없어 그대로 유효. 라우팅 행 증가는 `resolve_ai_route` 스냅샷 테스트(TN-06-057)에서 확인 |
+
+AI 기능별 기본값 행(정본 02장 5.1절): `toon.storyboard`, `toon.dialogue`, `chat`(llm, auto, anthropic → openai → google → oss-llm), `toon.consistency`, `toon.prompt_en`, `wiki.query`, `wiki.ingest`, `wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `toon.knowledge`(embedding, open_source, oss-embed), `voice_chat` stt(auto, oss-voice → elevenlabs), `voice_chat` tts·`dialogue_voice` tts(auto, elevenlabs → oss-voice), `video_voice` tts(auto, elevenlabs → oss-voice, 작업 중 대체 금지는 음성 어댑터가 강제).

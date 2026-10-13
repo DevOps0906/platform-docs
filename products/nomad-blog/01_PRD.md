@@ -2,6 +2,8 @@
 
 작성일 2026-10-12. 근거 표기는 `상대경로:줄번호`다. YSM 스냅샷 파일은 `[5f6d262] Youtube_shots_Maker/<경로>:줄`로 적는다(`git show 5f6d262:Youtube_shots_Maker/<경로>`). "제안"은 원본 문서·리뷰에 근거가 없어 이 문서가 정한 값이고, "미확인"은 외부 사실을 확인하지 않은 것이다.
 
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(브랜드·상품·제휴 캠페인 자료 RAG, 토픽·키워드 위키, LangGraph `blog.post_draft`, Dify 글쓰기 도우미 채팅), 음성(받아쓰기 초안, 음성 대화), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 네이버 브랜드커넥트 완전 자동 지원과 위험 동의(BL-F-030~035, 6.4절), 제휴 대가성 문구 규칙(BL-F-024, 6.3절)은 확정 결정 12 그대로이며 AI 계층이 약화하거나 우회하지 않는다. 새 기능 ID는 BL-F-051~061, 새 열린 결정은 D-13~D-20이다(기존 8절 #1~#12는 D-1~D-12와 같다).
+
 ## 1. 페르소나와 핵심 과제
 
 | 페르소나 | 상황 | 목표 | 좌절 |
@@ -38,6 +40,17 @@
 | n8n/Make 브릿지, 발신 웹훅 | Phase 2 (Business) | `NOMAD Shorts Maker/src/lib/plans.ts:65`, `SHARED_MODULES.md` 12장 |
 | AI 대표 이미지 생성(fal) | Phase 2 | 제안 |
 | 외부 API 키 발급 | Phase 3 | `NOMAD Shorts Maker/src/lib/plans.ts:67` |
+| 브랜드·상품·제휴 캠페인 자료 RAG(조직 컬렉션 `blog-materials`) | MVP | 확정 결정 13(`docs/products/00_MERGE_ANALYSIS.md:21`) |
+| 토픽·키워드 위키(조직 제품 지식 위키) | MVP | 확정 결정 13, `docs/products/_platform-core/LLM_WIKI.md:37-47` |
+| 리서치→초안→점검 LangGraph `blog.post_draft` + 발행 전 사람 승인 | MVP | 확정 결정 13, `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119` |
+| AI 글쓰기 도우미 채팅(제품별 Dify 앱 `blog-chat`) | MVP | 확정 결정 13, 14(`docs/products/00_MERGE_ANALYSIS.md:21-22`) |
+| 음성 받아쓰기 초안, 채팅 음성 대화(STT, 답변 읽어 주기 TTS) | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
+| 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
+| 랜딩 3D 히어로(원고 시트가 접혀 블로그 채널 카드로 발행) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:84` |
+| 운영자 규정 해설집(표시광고·채널 가이드) 컬렉션과 공개 위키 | Phase 2 | 제안(D-18) |
+| 비회원 랜딩 AI 상담 | Phase 2 | `docs/products/_platform-core/AI_ARCHITECTURE.md:130`(운영자 예산과 강한 레이트 리밋 필요) |
+| 반복 시리즈(BL-F-050)의 무인 AI 초안 | Phase 2 | 사람 승인 면제는 D-20에서 결정 |
+| 사용자 보이스 선택, 보이스 클로닝 | Phase 2 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80` |
 
 ## 3. 기능 요구사항과 수용 기준
 
@@ -58,7 +71,7 @@
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
 | BL-F-010 | 키워드 추천 | 유지 | 주제와 채널(네이버/티스토리/워드프레스)을 받아 키워드 10개(검색량·경쟁도·의도·이유)를 돌려준다. 검색량과 경쟁도는 LLM 추정이며 화면에 "AI 추정"으로 표시한다. 실패 시 단어 쪼개기 폴백을 하지 않고 오류와 환불을 보여 준다 | 추천 결과 각 행에 "AI 추정" 표시가 있다. LLM 오류 시 "키워드 추천에 실패했습니다. 크레딧 1을 돌려드렸습니다"가 보인다 | `NOMAD Shorts Maker/src/skill/ai-engine/keyword-recommender.ts:37-71`(폴백 `:60-70`은 폐기) |
-| BL-F-011 | AI 원고 생성 | 통합 | 입력: 키워드, 템플릿(info 정보형 / compare 비교형 / guide 가이드형 / essay 감성형 / experience 체험형), 분량(짧게 1,000자 / 보통 2,000자 / 길게 3,500자), 어조, 모드(빠름/고품질), 제휴 자동 삽입 여부. 출력: 제목, 본문(TipTap JSON), 요약, 태그 10개 이하. 잡 `blog.generate`로 실행하고 진행률을 보여 준다 | 보통 분량 빠름 모드가 p95 60초 안에 끝난다(제안). 결과가 zod 스키마를 통과하지 못하면 1회 재시도 후 실패·환불한다 | `NOMAD Shorts Maker/src/skill/ai-engine/content-generator.ts:10-47`, `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:31-59`, `nomad-ai-factory/CLAUDE.md:242` |
+| BL-F-011 | AI 원고 생성 | 통합 | 입력: 키워드, 템플릿(info 정보형 / compare 비교형 / guide 가이드형 / essay 감성형 / experience 체험형), 분량(짧게 1,000자 / 보통 2,000자 / 길게 3,500자), 어조, 모드(빠름/고품질), 제휴 자동 삽입 여부. 출력: 제목, 본문(TipTap JSON), 요약, 태그 10개 이하. 잡 `blog.generate`로 실행하고 진행률을 보여 준다(2026-10-13: 잡 안에서 BL-F-051 그래프 `blog.post_draft`를 호출한다) | 보통 분량 빠름 모드가 p95 60초 안에 끝난다(제안). 결과가 zod 스키마를 통과하지 못하면 1회 재시도 후 실패·환불한다 | `NOMAD Shorts Maker/src/skill/ai-engine/content-generator.ts:10-47`, `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:31-59`, `nomad-ai-factory/CLAUDE.md:242` |
 | BL-F-012 | 체험형 템플릿 제한 | 신규 | experience 템플릿은 사용자가 쓴 실제 사용 메모(50자 이상)가 있어야 열린다. AI는 메모에 없는 경험·수치·만족도를 만들지 않는다. 다른 템플릿은 1인칭 구매·사용 경험 서술을 금지한다 | 메모 49자로 체험형을 고르면 생성 버튼이 비활성이고 "직접 사용해 본 내용을 50자 이상 적어 주세요"가 보인다. DB도 `posts_experience_check`로 거부한다 | 6.5절, `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:41`(가상 후기 요구 프롬프트, 폐기) |
 | BL-F-013 | 제목 3안과 개요 | 유지 | 키워드로 제목 3안과 H2 개요를 만든다. 사용자가 고른 제목·개요로 원고를 생성한다 | 제목 3안이 각각 20~60자이고 키워드를 포함한다 | `NOMAD Shorts Maker/src/components/posts/AiGeneratePanel.tsx` |
 | BL-F-014 | 구간 다시쓰기 | 신규 | 에디터에서 선택한 구간(최대 1,500자)을 지시문("더 짧게", "표로")에 따라 다시 쓴다. 원문은 실행 취소로 되돌린다 | 선택 없이 실행하면 버튼이 비활성이다. 다시쓰기 결과가 선택 구간만 바꾼다 | 제안(`docs/products/_design-guide/REFERENCES.md:117` 편집기 옆 보조 패널) |
@@ -122,6 +135,26 @@
 | 9 YouTube 업로드 | 해당 없음(video 소관) |
 | 10 테스트/CI | 06장 7절 |
 
+### 3.7 AI·음성·3D (2026-10-13, 확정 결정 13~17)
+
+MVP 필수다. 정본 설계는 `docs/products/_platform-core/AI_ARCHITECTURE.md`(구조 `:5-23`, 대화 매핑 `:44-56`, 라우팅 `:73-92`, RAG `:94-107`, 그래프 `:109-119`, 크레딧 `:121-130`), `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`다. 제품 그래프와 기능별 라우팅 기본값은 02장 5절, 호출 계약은 04장 2.1·6절이다. 모든 AI·음성 기능은 텍스트·수동 입력만으로도 쓸 수 있어야 한다(음성은 대안, `VOICE_ARCHITECTURE.md:110`).
+
+| ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
+|---|---|---|---|---|---|
+| BL-F-051 | AI 초안 그래프 `blog.post_draft` | 디벨롭(BL-F-011 흡수) | FastAPI(`apps/api`)의 LangGraph 그래프 7노드. `keyword`(키워드 리서치: 주제와 선택 키워드에서 연관·롱테일 후보와 검색 의도를 추정, "AI 추정" 표시, 위키 토픽 페이지가 있으면 근거로 사용) → `retrieve`(조직 자료 컬렉션과 위키 검색, 출처 목록) → `draft`(템플릿 5종·분량·어조, 제목 3안과 개요, TipTap JSON, 체험형 제한 BL-F-012 유지) → `affiliate_check`(제휴 링크·대가성 점검: 매핑 없는 제휴 도메인 링크, 카드 수, `requires_disclosure` 계산, 자동 삽입 옵션이면 상품 키워드 추출까지만 하고 카드 삽입은 제품 서버가 BL-F-023 경로로 수행) → `seo_check`(BL-F-015 규칙, LLM 없음, 미충족 항목만 `draft` 1회 보강) → `compliance`(규칙 사전 + LLM 판정, 걸린 구간만 1회 재작성 후 재검사) → `approve`(사람 승인 interrupt, BL-F-052). 워커 `blog.generate` 잡이 잡 토큰으로 실행을 요청하고 결과 저장은 워커가 한다. 대가성 문구는 LLM이 쓰거나 지우지 않고 렌더러만 삽입한다(BL-F-024) | 생성 1건 = `core.ai_runs` 1행(graph `blog.post_draft`, `job_id`, `credit_ledger_id`)과 노드별 `ai_run_steps` 7행. 체험 메모 없는 원고에 1인칭 사용 경험 문장 0(평가셋 20건). 매핑 없는 제휴 도메인 링크가 본문에 있으면 `affiliate_check`가 경고를 남기고 `requires_disclosure=true`로 계산한다. `approve` 도달까지 p95 90초(빠름, 고품질 150초, 제안). 최종 실패(`approve` 도달 전) 시 원고 `failed` + 환불 원장 1행 | `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119`, BL-F-011, BL-F-015, BL-F-024 |
+| BL-F-052 | 발행 전 사람 승인 | 신규 | 그래프는 `approve` 노드에서 멈춘다(interrupt). 사용자는 "발행 전 확인" 화면에서 원고, 검사 결과(PASS/WARN/FAIL), 자료 출처, 제휴 카드, 대가성 문구 미리보기를 보고 승인한다(`POST /api/posts/:id/ai-approve`). 그래프로 만든 원고는 승인 없이 발행·예약할 수 없다. 승인 뒤 원고를 고치면 검사가 무효가 되고(BL-F-048) 다시 검사해야 발행된다. 승인은 감사 기록이다. 반복 시리즈(BL-F-050)의 무인 발행은 Phase 2 결정(D-20)이다 | 승인 전 `POST /api/posts/:id/publish`는 409 `AI_APPROVAL_REQUIRED`(예약 포함). 컴플라이언스 FAIL 원고의 승인 요청은 409 `BL003`. 감사 `blog.ai.draft_approved` 1행(행위자, 원고, run id). 사용자가 반려하면 run `canceled`, 원고는 보존 | `docs/products/_platform-core/AI_ARCHITECTURE.md:118`, BL-F-048 |
+| BL-F-053 | 브랜드·상품·제휴 캠페인 자료 RAG | 신규 | 사용자가 브랜드 소개, 상품 설명서, 가격표, 캠페인 요강, 제휴 상품 정보, 과거 원고를 올린다(txt, md, pdf, 파일당 10MB 이하, 조직당 `features.rag_documents`개). 조직 컬렉션 `blog-materials`(kind rag, 임베딩 `oss-embed`)에 색인하고 그래프 `retrieve`와 채팅이 검색한다. 업로드 화면에 "개인정보·계약상 비공개 정보는 올리지 마세요" 안내와 "개인정보 포함" 체크(체크하면 `contains_pii=true`, 위키 ingest 대상에서 제외, 제안)를 둔다. 자료는 원고 본문에 그대로 복사하지 않고 사실 확인용 근거로만 쓴다. 자료 안의 지시는 따르지 않는다 | 문서 1건(10MB 이하) 색인 p95 120초(제안). 평가셋 30문항(제안)에서 상위 8개 안 정답 청크 재현율 0.8 이상. 다른 조직 컬렉션 검색 요청은 거부(42501). 한도 초과 업로드는 403 `PLAN_LIMIT`. 자료가 없어도 그래프는 동작하고 출처 없음을 표시한다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107` |
+| BL-F-054 | 토픽·키워드 위키 | 신규 | 조직의 자료, 과거 원고, 키워드 리서치 결과를 위키 ingest가 `topic`(주제·키워드 클러스터: 검색 의도, 관련 키워드, 메모), `entity`(브랜드·상품), `concept`(SEO·표시광고 용어) 페이지로 정리한다. 새 페이지는 `draft`로 만들고 사용자가 검수해 `published`로 바꾼다. 사용자가 고친 블록은 사람 소유로 표시되어 ingest가 덮어쓰지 않고, 저장은 `expected_version` 낙관적 잠금, 문서 1건당 갱신 페이지는 5개까지, 주 1회 lint. 그래프 `keyword`·`retrieve`와 채팅이 근거로 쓰며 `draft` 페이지는 출처 칩에 "검수 전"을 표시한다. 조직 내부용이며 공개하지 않는다. Pro 이상(`features.product_wiki`) | 위키 화면에 draft/published/archived 구분. 사람 소유 블록은 ingest 뒤에도 그대로. 버전 충돌 409. 출처 없는 주장을 lint가 검출. 다른 조직 위키 0행. Free 조직의 ingest 요청은 403 `PLAN_REQUIRED`. 개인정보 포함 자료에서 만든 페이지 0 | `docs/products/_platform-core/LLM_WIKI.md:12-47` |
+| BL-F-055 | AI 글쓰기 도우미 채팅 | 신규 | 에디터 보조 패널 "도우미" 탭과 `/assistant` 전체 화면. 작성 중 원고(`post_id`, 본문 앞 6,000자)와 자료·위키를 근거로 제목, 구성, 표현, SEO, 제휴 배치 질문에 답한다. 스트리밍, 답변마다 출처, "AI가 생성한 답변" 표시. 원고를 직접 바꾸지 않고 제안 문단을 사용자가 "에디터에 넣기"로 적용한다(실행 취소 가능, BL-F-014와 같음). 메시지 2,000자, 대화당 50턴(제안). 크레딧은 턴 선차감 후 정산(4.6절). 로그인 사용자 전용 | 답변에 출처 1개 이상 또는 "근거 자료를 찾지 못했습니다". 응답이 전달되지 않은 턴은 선차감 전액 환불. 잔액 부족 402 `CR001`. Dify 장애 시 `/tools/answer-direct`로 답한다. 다른 사용자의 대화 id로 이어 쓰면 404, 다른 조직 `post_id`는 403. 대화 평가셋 30문항(제안)에서 금지 응답(6.7절) 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:44-56`, `:121-130` |
+| BL-F-056 | 음성 받아쓰기 초안 | 신규 | 에디터 마이크 버튼(누르고 말하기 / 토글)으로 말한 내용을 STT(기능 `dictation`, 오픈소스 우선)로 받아 변환 텍스트를 확인·수정한 뒤 커서 위치에 넣거나 "초안 메모"(생성 입력, 체험 메모 포함)로 쓴다. 한 번에 최대 5분·20MB(제안). 녹음 원본은 저장하지 않는다. 첫 사용 전 음성 처리 고지를 확인받는다(6.7절) | 5분에 도달하면 자동 중지. 이 제품의 `voice_jobs.store_audio=false` 100%. 고지 확인 없이 STT 호출 시 403 `VOICE_CONSENT_REQUIRED`. 마이크 권한을 거부해도 키보드 입력 정상. 받아쓴 텍스트를 체험 메모로 쓸 때도 BL-F-012의 50자 규칙을 적용. STT 실패 시 환불 1행 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:40-48`, `:85-95` |
+| BL-F-057 | 음성 대화(채팅) | 신규 | 도우미 채팅의 마이크 버튼(기능 `voice_chat`): STT → 변환 텍스트 미리보기·수정 → 전송 → 답변 → "읽어 주기"(TTS, ElevenLabs 우선, 자동 재생 기본 꺼짐). 질문 발화 최대 60초(제안). TTS 입력은 DB의 assistant 메시지만 쓰고 임의 텍스트는 받지 않는다 | 60초에 도달하면 자동 중지, 초과 요청 413. 마이크 거부·미지원 브라우저에서 텍스트 채팅 정상. STT·TTS 실패 시 환불 1행. TTS 요청에 메시지 id 외 텍스트를 넣으면 400 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110` |
+| BL-F-058 | AI 라우팅과 국외 이전 동의 | 신규 | 이메일 인증 직후 온보딩 `/onboarding/ai`(기존 사용자는 AI 기능 첫 사용 직전)에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`과 감사 `blog.ai.cross_border_ack`를 함께 남기고 설정에서 철회한다. 동의 전에는 모든 AI·음성이 오픈소스 제공자만 쓴다. AI 기능만 선택 전 잠기고 발행 기능은 영향이 없다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 감사 메타에 같게 남는다. member가 동의를 바꾸면 403 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
+| BL-F-059 | AI 크레딧 선차감·정산 | 신규 | 그래프 실행, 채팅 턴, STT, TTS, 자료 색인, 위키 작업은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 정산한다(차액 추가 차감 또는 `refund_credits`). 그래프는 정액 선차감에 묶는다. 단가는 4.6절 | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0. 사용자에게 결과가 전달되지 않은 실패는 전액 환불 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
+| BL-F-060 | AI 출력 규칙 | 신규 | 6.5절 금지 문구와 6.7절 대화 규칙을 그래프 `compliance` 노드, `/tools/answer` 후처리, 위키 ingest·query에 같은 규칙 파일(`packages/blog-rules/banned.json`)로 적용한다. 대가성 표기 회피, 가상 후기, 수익·순위 보장 요청은 정중히 거절하고 설정 화면이나 올바른 방법을 안내한다 | 규칙 평가셋 30문항(제안) 위반 0. 한글 경계 규칙 테스트 통과(`\b` 금지). 같은 규칙을 TS 컴플라이언스(BL-F-048)와 FastAPI가 읽는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 6.5절 |
+| BL-F-061 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원고 시트가 접혀 네이버·티스토리·워드프레스 채널 카드 3장으로 발행되는 풀 3D, 모바일은 시트 1장이 접히는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.6절) | `HERO_3D.md` 4절 수용 기준 전부: 기기 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보임·키보드 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:84` |
+
+BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, `blog.voice.notice_ack`, `blog.ai.document_delete`, `blog.wiki.publish`, `blog.wiki.edit`를 더한다. BL-F-043 서버 순서는 "컴플라이언스 상태" 다음에 "AI 승인 상태(그래프로 만든 원고)" 확인이 들어간다.
+
 ## 4. 요금과 크레딧
 
 ### 4.1 플랜
@@ -168,8 +201,14 @@
 | `schedule` | boolean | 예약 발행 | 발행 요청 라우트 |
 | `automation` | boolean | n8n/Make, 발신 웹훅(Phase 2) | 자동화 라우트 |
 | `team_members` | integer | 조직 멤버 수 상한 | 초대 라우트 |
+| `ai_chat` | boolean | AI 글쓰기 도우미 채팅 허용. 키가 없으면 true로 읽는다 | `/api/ai/chat` |
+| `ai_chat_turns_per_day` | integer | 사용자당 하루 채팅 턴 상한(공정 사용). 키가 없으면 50. Free 50 / Pro 200 / Business 500(제안, D-19) | `/api/ai/chat` |
+| `voice_chat` | boolean | 채팅 음성 대화 허용. 키가 없으면 true | `/api/voice/*` |
+| `dictation` | boolean | 에디터 음성 받아쓰기 허용. 키가 없으면 true | `/api/voice/stt` |
+| `rag_documents` | integer | 조직당 자료 문서 수 상한. 키가 없으면 10. Free 10 / Pro 100 / Business 1,000(제안) | 자료 업로드 라우트 |
+| `product_wiki` | boolean | 토픽·키워드 위키 허용. 키가 없으면 false. Free false / Pro·Business true(제안) | 위키 라우트 |
 
-모듈러 `seed.sql`은 2026-10-13에 모놀리스 seed와 같은 값(위 표)으로 맞춰졌다. 서버는 안전을 위해 `max_channel_accounts`가 없으면 `channels`를 읽고 `channel_types`가 없으면 MVP 3채널을 허용한다(호환).
+모듈러 `seed.sql`은 2026-10-13에 모놀리스 seed와 같은 값(위 표)으로 맞춰졌다. AI 키 6개는 같은 날 추가했다: 모놀리스는 `supabase/monolith/seed.sql`의 플랜 3행에, 모듈러는 `docs/products/_supabase-modular/migrations/1300_blog.sql` 9.2절의 병합 UPDATE에 있다(모듈러 `seed.sql` 반영은 06장 6절 AI-R2). 서버는 안전을 위해 `max_channel_accounts`가 없으면 `channels`를 읽고 `channel_types`가 없으면 MVP 3채널을 허용한다(호환).
 
 ### 4.4 크레딧팩
 
@@ -190,6 +229,34 @@
 | 크레딧팩 | 구매 후 7일 이내 미사용 팩만 전액 환불. 일부 사용 팩은 환불하지 않음 |
 | 처리 | Toss 취소 API → `payments` 갱신 → 크레딧 조정(`CORE_SPEC.md` 5.4절, 코어에 `adjust_credits` 요청) → 감사 기록 |
 
+### 4.6 AI·음성 크레딧 단가 (2026-10-13, 제안)
+
+4.2절 단가와 4.4절 크레딧팩은 바꾸지 않는다. 4.2절의 LLM 작업은 FastAPI 라우터의 기능 키(`blog.assist`, `blog.post_draft`, `blog.compliance`)로 실행되며 크레딧 값은 그대로다. 제공자 단가는 코어 seed `core.ai_model_prices`(`docs/products/_supabase-modular/seed.sql:228-246`, 모두 제안값)이고 이 표는 그 값을 blog 기능에 적용한 것이다. 계산 상수는 `src/server/ai/pricing.ts`(4.2절과 같은 이유로 코드 상수). 선차감과 정산 규칙은 `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:97-104`를 따른다.
+
+| 작업 | 선차감(예상) | 정산 | 상용 경로 예 | 오픈소스 경로 예 | 멱등 키 |
+|---|---|---|---|---|---|
+| AI 초안 그래프 빠름(`blog.post_draft`) | 5(= 키워드 1 + 초안 3 + 컴플라이언스 1). 제휴 자동 삽입 시 +1 | 정액, 차액 없음. `ai_usage`에 원가만 기록하고 `approve` 도달 때 `settled_at`을 채운다 | Claude 우선 | `oss-llm` | `consume:blog:<request_id>` |
+| AI 초안 그래프 고품질 | 8(= 1 + 6 + 1). 제휴 자동 삽입 시 +1 | 같음 | 같음 | 같음 | 같음 |
+| 글쓰기 도우미 채팅 1턴 | 3 | 실제 토큰 × 단가 + Dify 보조 노드 오버헤드 0.5, 올림. 최소 1, 상한 5(초과분은 운영사 부담) | 약 3~5 | 약 1~2 | `conv:<id>:turn:<n>` |
+| 음성 받아쓰기 STT(5분 이하) | 녹음 길이 분 단위 올림 후 오픈소스 0.5cr/분, ElevenLabs 3cr/분(올림, 최소 1) | 실제 `audio_seconds` | 5분 15 | 5분 3 | `voice:<voice_job_id>` |
+| 채팅 음성 질문 STT(60초 이하) | 오픈소스 1, ElevenLabs 3 | 실제 `audio_seconds` | 3 | 1 | `voice:<voice_job_id>` |
+| 답변 읽어 주기 TTS | 답변 글자 수 × 단가, 천 자 단위 올림 | 실제 `characters` | 600자 답변 5 | 600자 답변 1 | `voice:<voice_job_id>` |
+| 자료 색인(문서 1건) | 2(청크 200개 이하 기준, 초과 100청크마다 +1) | 정액 | 임베딩은 `oss-embed` 고정이라 경로 차이 없음 | 같음 | `run:<id>` |
+| 위키 ingest(문서 1건, 갱신 페이지 최대 5) | 3 | 실제 사용량 | `wiki.ingest` oss 우선 | 약 1~3 | `run:<id>` |
+| 위키 lint 수동 실행 | 2 | 실제 사용량 | - | - | `run:<id>` |
+| 위키 주 1회 자동 lint | 사용자 과금 없음(Pro 이상 조직, 운영사 부담) | 사용량 | - | - | `run:<id>` |
+| 단건 호출(키워드 단독, 제목·개요, 다시쓰기, 태그, 상품 키워드, 메시지 다듬기, 컴플라이언스 재검사) | 4.2절 그대로(각 1) | 정액 | - | - | `consume:blog:<request_id>` |
+| 자료·위키 열람, 검색, SEO 점수 | 0 | - | - | - | - |
+
+| 규칙 | 내용 | 근거 |
+|---|---|---|
+| 경로별 단가 | 국외 이전에 동의하지 않은 조직은 체인에 오픈소스만 남으므로 오픈소스 단가가 자동 적용된다. 화면은 실제로 고른 경로의 예상치를 보여 준다 | `docs/products/_supabase-modular/migrations/0008_core_ai.sql:452-460` |
+| 그래프 정액과 중복 방지 | 그래프 안의 키워드·초안·컴플라이언스 호출은 정액에 포함되어 따로 차감하지 않는다. 사용자가 원고를 고친 뒤 다시 검사하면 4.2절 컴플라이언스 1을 낸다 | 제안 |
+| 실패 환불 | `approve` 도달 전 최종 실패(모든 제공자 실패, 스키마 불일치 재시도 소진)는 정액 전액 환불. 도달 뒤 반려는 환불하지 않는다(원고가 전달됨) | `docs/products/_platform-core/AI_ARCHITECTURE.md:129`, 제안 |
+| 정산 시점 | 응답·작업 종료 직후. 스트림이 끊기면 선차감을 남기고 정산 잡이 `settled_at is null` 행을 5분 주기로 처리(제안) | `docs/products/_platform-core/AI_ARCHITECTURE.md:128` |
+| 표시 | 보내기 전 "약 3크레딧(정산 후 1~5)", AI 버튼마다 예상 크레딧, 정산 결과는 메시지 아래와 원장 표에 | 제안 |
+| 월 크레딧 영향 | 4.1절 근거(발행 1건 = 4크레딧)가 그래프 5크레딧으로 바뀐다. Free 20크레딧은 AI 원고 약 4편, Pro 300은 약 60편이다. 4.1절 숫자는 D-19 결정 전까지 유지한다 | 제안 |
+
 ## 5. 비기능 요구사항
 
 | 항목 | 값 | 근거 |
@@ -207,6 +274,15 @@
 | 보존 | 원고: 삭제 시까지. 조직 삭제: 30일 유예 후 purge. 자격증명: 연결 해제 즉시 암호문 삭제. 클릭 로그 13개월(제안). 잡 결과(스캔 목록 등) 7일 뒤 결과 비움(제안). Playwright 실패 스크린샷 7일(제안) | `SECURITY_BASELINE.md` 12장 |
 | 가용성 | 웹 99.5%/월, 예약 발행 성공률은 KPI로 관리 | 제안 |
 | 감사 로그 보존 | 2년 | `CORE_SPEC.md` 11장(제안 값) |
+| 채팅 첫 토큰 표시 | p95 3초 이하(Dify 경로는 HTTP 노드가 전체 답을 돌려준 뒤 표시되므로 "근거를 찾는 중" 상태를 보인다, 제안) | 제안 |
+| AI 초안 그래프 | `approve` 도달 p95 90초(빠름) / 150초(고품질), 잡 타임아웃 240초(기존 `blog.generate` 180초에서 연장, 제안). 조직당 동시 그래프 2개 | 제안 |
+| 자료 색인 | 문서 1건(10MB 이하) p95 120초 | 제안 |
+| STT 지연 | 받아쓰기 1분 분량 p95 10초 이하, 채팅 음성 질문 60초 분량 p95 8초 이하 | 제안 |
+| TTS 첫 오디오 | p95 2초 이하 | 제안 |
+| AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 `features.ai_chat_turns_per_day`, STT 사용자당 10회/분, 그래프 시작 조직당 10회/분(기존 생성 60회/분 안에서), 잡 토큰 발급 120회/분 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 기준 |
+| AI 입력 상한 | 채팅 메시지 2,000자, 대화당 50턴, 받아쓰기 5분·20MB, 채팅 음성 질문 60초·5MB, 자료 파일 10MB·청크 1,000개 | 제안 |
+| AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 조직 삭제 후 30일, 자료 문서는 삭제 즉시 청크 포함 삭제 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/products/_design-guide/HERO_3D.md:32-41` |
 
 ## 6. 법, 개인정보, 금지 문구
 
@@ -218,7 +294,7 @@
 | 목적 | 원고 생성, 채널 발행, 제휴 링크 생성·통계, 브랜드커넥트 지원 대행, 결제와 고객 지원 |
 | 암호화 대상 | `core.encrypted_credentials.ciphertext`(채널 계정 비밀번호, 세션 쿠키, 워드프레스 애플리케이션 비밀번호, 제휴 키), `core.billing_keys`. AES-256-GCM, 키는 환경변수 버전별(`SECURITY_BASELINE.md` 5장) |
 | 보존과 삭제 | 연결 해제 → `revoke_credential`이 암호문을 즉시 비운다. 원고 삭제는 즉시 삭제, 조직 삭제는 soft delete 후 30일 뒤 purge. 결제 기록은 전자상거래법상 보존 기간(대금결제 5년)을 따른다 |
-| 제3자 제공·처리 위탁 | LLM 제공자(OpenRouter 경유 Anthropic 등): 키워드, 원고 본문, 체험 메모, 지원 메시지. 국외 이전(미국 등) 고지 필요. 쿠팡파트너스 API: 검색어와 상품 URL. 네이버·티스토리·워드프레스: 발행 원고. Toss: 결제 정보. 체험 메모에 다른 사람의 개인정보를 쓰지 말라는 안내를 입력란에 둔다 |
+| 제3자 제공·처리 위탁 | LLM 제공자(2026-10-13 변경: Anthropic, OpenAI, Google, OpenRouter와 자체 운영 오픈소스 모델, 정본은 6.7절): 키워드, 원고 본문, 체험 메모, 지원 메시지, 자료 발췌. 국외 이전(미국 등) 고지 필요. 쿠팡파트너스 API: 검색어와 상품 URL. 네이버·티스토리·워드프레스: 발행 원고. Toss: 결제 정보. 체험 메모에 다른 사람의 개인정보를 쓰지 말라는 안내를 입력란에 둔다 |
 | 로그 | 애플리케이션 로그에 비밀번호, 쿠키, 원고 전문을 남기지 않는다. Playwright 실패 스크린샷은 로그인 화면을 찍지 않고(입력 전 단계는 촬영 금지) 7일 뒤 삭제한다(제안) |
 
 ### 6.2 약관과 고지
@@ -293,6 +369,36 @@
 | 미성년자 | 만 14세 미만 가입 불가(제안). 제휴 수익 활동은 성인 대상 |
 | 금융 상품 | 투자 수익 표현은 FAIL |
 
+### 6.7 AI·음성 개인정보 판단과 대화 규칙 (2026-10-13)
+
+| 항목 | 판단 | 이유와 처리 |
+|---|---|---|
+| 업로드 자료(브랜드·상품·캠페인) | 개인정보나 계약상 비공개 정보가 들어 있을 수 있다 | 업로드 화면에 "개인정보·비공개 계약 정보는 올리지 마세요" 안내와 "개인정보 포함" 체크(`contains_pii`). 임베딩은 어차피 `oss-embed`(02장 5.1절). 비공개 자료를 상용 AI로 보내도 되는지는 국외 이전 동의와 D-13으로 통제 |
+| 체험 메모 | 사용자의 실제 경험이며 타인 정보가 들어갈 수 있다 | 입력란 안내 유지("다른 사람의 개인정보를 쓰지 마세요", 6.1절). 서버가 주민등록번호·전화번호·이메일·계좌번호 형식을 마스킹한 뒤 AI에 보낸다(제안) |
+| 채널 비밀번호, 세션 쿠키, 워드프레스 애플리케이션 비밀번호, 제휴 키, 결제 정보 | 어떤 AI 입력에도 넣지 않는다 | 그래프 입력 스키마와 프롬프트 빌더에 비밀 필드가 없다(`credential_id`도 금지). 채팅에 비밀번호를 쓰면 안내 문구로 되돌리고 저장 전에 마스킹한다 |
+| 오픈소스 강제 여부 | 기능에는 강제하지 않는다(`force_open_source=false`). 국외 이전 동의로 통제한다 | 글 품질이 제품 핵심이라 상용 우선. 동의가 없는 조직은 `resolve_ai_route`가 상용을 자동으로 걸러 낸다(`docs/products/_supabase-modular/migrations/0008_core_ai.sql:452-456`) |
+| Dify 보조 노드 | 조직을 알 수 없어 동의를 확인할 수 없다 | `dify.aux`는 오픈소스 강제(`force_open_source=true`, 02장 5.1절) |
+| 위키 | 개인 식별 정보를 정리해 넣지 않는다 | `contains_pii` 자료는 위키 ingest에서 제외. 개인정보 삭제 요청은 `core.purge_wiki_page`(`docs/products/_platform-core/LLM_WIKI.md:35`) |
+
+| 고지·동의 | 시점 | 기록 |
+|---|---|---|
+| 상용 AI 국외 이전 | 이메일 인증 직후 온보딩, 설정에서 변경(기존 사용자는 AI 기능 첫 사용 직전) | `core.ai_org_settings`(`set_ai_cross_border_ack`, 고지문 버전) + 감사 `blog.ai.cross_border_ack` |
+| 음성 처리 고지(녹음) | 첫 마이크 사용 직전(받아쓰기·음성 대화 공통). 녹음 목적, 원본 미저장, 상용 제공자 사용 시 국외 이전, "인터뷰·통화처럼 다른 사람의 목소리가 들어가는 내용은 상대에게 알리고 동의를 받으세요" 문구 | 감사 `blog.voice.notice_ack {notice_version}`. blog에는 동의 표가 없다. 녹음 원본을 저장하지 않으므로 `voice_jobs.store_audio=false`이고 녹음 보관 동의는 받지 않는다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:85-95`) |
+| AI 생성 표시 | 원고 하단 "AI 도구를 활용해 작성한 글입니다"(6.2절, D-5), 채팅 답변마다 "AI가 생성한 답변", 읽어 주기 플레이어 "AI가 생성한 음성입니다", 위키 페이지 "AI가 정리한 문서(검수 전/검수됨)". 다른 모델로 대체된 답변은 "다른 AI 모델로 답했습니다" 표시 | 제안 |
+| 제공자 목록 | 처리방침에 LLM(Anthropic, OpenAI, Google, OpenRouter), 음성(ElevenLabs)을 적고 오픈소스 LLM·임베딩·음성 서버와 Dify는 운영사가 자체 운영함을 적는다(서버 위치·위탁 여부는 구현 시 확인) | 6.1절 |
+
+AI 대화·생성 추가 규칙(6.5절에 더해 채팅, 위키, 그래프에 적용):
+
+| 분류 | 금지 | 대신 |
+|---|---|---|
+| 가상 후기·경험 | 사용자 메모 없는 1인칭 사용 경험, "후기 써 줘"식 가상 후기·별점 | 정보형·비교형 서술, 체험형은 사용자 메모 범위 안에서만 |
+| 대가성 표기 회피 | "광고 표시 빼 주세요", 문구를 본문 아래로 옮기거나 이미지·흰 글씨·접기로 숨기기, 제휴 링크를 일반 링크처럼 위장 | 거절하고 대가성 문구는 자동으로 들어가며 끌 수 없다고 안내(설정 > 대가성 문구). 문구는 AI가 쓰거나 지우지 않는다 |
+| 순위·수익 보장 | "상위 노출 보장", "월 OO만원 수익", "저품질 걱정 없음" | 일반적인 SEO 원칙 설명, 보장 표현 거절 |
+| 타사 비방·사칭 | 경쟁사 비방, "네이버 공식", "쿠팡 공식 파트너" | 사실 기반 비교 |
+| 의료·금융 단정 | 건강기능식품 효능 단정, 투자 수익 보장 | 단정 거절, 6.6절 규제 특례 안내 |
+| 플랫폼 보안 우회 | CAPTCHA 풀이, 봇 감지 우회, 프록시 순환 요청 | 제공하지 않음. 채널 재인증 화면 안내(6.4절 운영 원칙) |
+| 비밀 요구 | 비밀번호·쿠키·키를 채팅에서 묻거나 받기 | 묻지 않는다. 채널 연결 화면으로 안내 |
+
 ## 7. KPI
 
 | 지표 | 목표 | 측정 방법 | 기간 |
@@ -306,6 +412,12 @@
 | 컴플라이언스 FAIL 후 수정 발행 비율 | 60%(제안) | FAIL 원고 중 이후 pass로 발행된 비율 | 월 |
 | 유료 전환 | 가입 30일 내 5%(제안) | 엔타이틀먼트 plan pro/business | 월 |
 | 계정 제한 신고 | 0건 목표, 1건이라도 생기면 자동화 상한 재검토 | 고객 지원 태그 | 월 |
+| AI 도우미 사용률 | 첫 발행 사용자의 30%(제안) | `core.ai_conversations` 1개 이상 사용자 / 첫 발행 사용자 | 출시 후 3개월 |
+| 그래프 승인율 | `approve` 도달 원고의 80%가 승인 후 발행(제안) | 승인 감사 행 / `approve` 도달 run | 월 |
+| 컴플라이언스 첫 통과율 | 그래프 첫 결과의 PASS·WARN 비율 85% 이상(제안) | `ai_run_steps` compliance 결과 | 월 |
+| 자료 근거 사용률 | 자료를 올린 조직의 그래프 결과 중 출처 1개 이상 비율 70%(제안) | `ai_run_steps` retrieve 결과 | 월 |
+| 음성 받아쓰기 사용률 | 발행 사용자의 15%(제안) | `voice_jobs` feature `dictation` | 월 |
+| AI 환불률 | AI 선차감 대비 환불 5% 이하(제안) | 원장 refund / AI consume | 주 |
 
 ## 8. 열린 결정
 
@@ -323,3 +435,11 @@
 | 10 | 인스타그램 | Phase 2 포함 vs 제외 | sns-uploader(video 소유) 일정에 맞춰 Phase 2 |
 | 11 | 환불 정책 | 4.5절 | 법률 검토 후 확정 |
 | 12 | 네이버 소셜 로그인 | 도입 여부. 도입 시 같은 이메일 자동 병합 금지, `naver_id` 매핑 + 로그인 상태에서 명시적 연결만 | MVP 미도입(이메일·Google·Kakao는 코어 auth 기본값을 따름) |
+| D-13 | 비공개 브랜드 자료와 상용 AI | (a) 국외 이전 동의로 통제 + 업로드 안내(MVP 가정) (b) 자료별 "비공개" 표시 시 그 실행을 오픈소스로 강제(라우터에 호출 단위 강제 필요, 코어 요청) (c) 비공개 자료는 업로드 금지 | (a). 비공개 자료가 많은 사용자는 온보딩에서 "국내 오픈소스만"을 고르게 안내. (b)는 코어가 호출 단위 강제를 지원하면 재검토 |
+| D-14 | 캠페인 요강·브랜드 소재의 AI 색인 허용 범위 | (a) 사용자가 정당하게 받은 자료만 올리게 하고 책임은 사용자에게(약관) (b) 브랜드커넥트 요강 자동 수집·색인 금지 (c) 허용 | (a)+(b). 네이버·브랜드의 이용 조건은 미확인. BL-F-032 스캔 결과를 자료 컬렉션에 자동 저장하지 않는다 |
+| D-15 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트 `/api/internal/ai-token`(워커 키 + running 잡 확인, org·사용자는 잡 행에서) (b) FastAPI가 잡을 직접 소비 (c) 워커에 개인키 배포 | (a). 개인키는 Next.js에만 둔다는 공용 규칙을 지키고 TS 워커를 유지한다(astro D-18과 같은 문제, 06장 AI-R3) |
+| D-16 | 받아쓰기·읽어 주기 제공자와 ElevenLabs 데이터 보관 | (a) 받아쓰기 오픈소스 우선, 읽어 주기 ElevenLabs 우선, 보이스 1종 고정 (b) 사용자 선택. ElevenLabs 입력 보관·학습 사용·제로 리텐션은 계약 확인 후 처리방침 반영 | (a). 데이터 보관 조건은 미확인(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:83`) |
+| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). blog의 주 레퍼런스는 Primer라 영향이 작다 |
+| D-18 | 운영자 규정 해설집(표시광고법, 채널 가이드, SEO 원칙) 컬렉션 | (a) MVP는 규칙 사전만, Phase 2에 운영자 컬렉션 + 공개 위키 (b) MVP부터 운영자 컬렉션 | (a). 규정 해설은 법률 검토가 필요하고, MVP에서 AI가 법 해석을 답하지 않도록 한다(6.7절) |
+| D-19 | 공정 사용 한도와 월 크레딧 재산정 | (a) 하루 채팅 턴 50/200/500, 문서 10/100/1,000, 4.1절 월 크레딧 유지 (b) 그래프 단가 5를 반영해 월 크레딧 상향(Free 25, Pro 375 등) | (a)로 출시, 실사용 원가(`core.ai_usage`)로 재산정 |
+| D-20 | 반복 시리즈(BL-F-050) 무인 AI 초안의 사람 승인 | (a) 승인 면제 없음: 초안은 만들되 승인 전에는 발행 안 함 (b) 규칙 통과 시 면제(브랜드커넥트 무인 규칙과 함께) | (a). BL-F-052 원칙(되돌리기 어려운 발행 앞에는 사람 승인)을 유지, 면제는 Phase 2에서 법률 검토 후 |

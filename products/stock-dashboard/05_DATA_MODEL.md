@@ -2,6 +2,8 @@
 
 작성일 2026-10-12. 정본 SQL은 모듈러 조각 `docs/products/_supabase-modular/migrations/1900_stock.sql`(이하 `1900:줄`)이다. 모놀리스 `supabase/monolith/migrations/0002_stock_domain.sql`, `0003_stock_orders_paper.sql`은 같은 본문을 `DB_CONVENTIONS.md` 12장 규칙으로 변환한 것이다. 리뷰가 제안한 6개 테이블 초안(`broker_connections`, `holdings_snapshots`, `trades`, `ai_recommendations`, `recommendation_results`, `audit_logs`, `docs/reviews/Stock_Trader_nomad.md:69`)을 확장했다. 감사는 코어 `audit_log`를 쓰고 제품 테이블로 다시 만들지 않는다.
 
+2026-10-13 개정(확정 결정 13~17): **제품 AI 전용 테이블은 새로 만들지 않았다.** AI 대화·실행·위키·음성은 코어 `core.ai_*`, `core.wiki_*`, `core.voice_*`를 쓰고(6절), 기존 `stock.ai_reports`의 `kind`를 `research`(리서치 요약), `briefing`(브리핑)으로 넓히고 `consents.kind`에 `voice_processing`을 더했으며, 성공 저장되는 모든 AI 결과에 `output.advice_check.passed = true`를 요구하는 CHECK를 더했다(`1900_stock.sql` 14.1절, 아래 2.7절). 기능별 라우팅 기본값 12행과 플랜 AI 키는 14.2~14.3절(모놀리스는 `seed.sql`)에 있다.
+
 ## 1. 개요와 ERD
 
 ```
@@ -57,7 +59,7 @@ core.organizations (참조만)
 |---|---|---|---|---|
 | id | bigint identity | N | - | PK |
 | org_id, user_id | uuid | N | - | 동의한 사람 |
-| kind | text | N | - | investment_disclaimer / ai_overseas_transfer / paper_order_risk |
+| kind | text | N | - | investment_disclaimer / ai_overseas_transfer / paper_order_risk / voice_processing(2026-10-13) |
 | version | text | N | - | `YYYY-MM-DD(.n)` CHECK |
 | accepted_at | timestamptz | N | now() | - |
 
@@ -102,11 +104,13 @@ core.organizations (참조만)
 
 | 테이블 | 핵심 컬럼 | 제약 |
 |---|---|---|
-| `ai_reports` (`1900:298`) | kind(diagnosis/idea), scope_connection_id, status, mode, provider, model, prompt_version, input_hash(sha256), input_summary(jsonb, 계좌번호·금액 없음), output(jsonb), disclaimer_version, credits_charged, credit_ledger_id(→core.credit_ledger), request_id(unique, 멱등), error_code, started_at, finished_at | `ai_reports_no_price_targets_check`(`1900:325`): output에 `buy_price`, `entry_price`, `target_price`, `stop_price`, `stop_loss` 키 금지. succeeded면 output 필수 |
+| `ai_reports` (`1900:298`) | kind(diagnosis/idea/research/briefing, 2026-10-13), scope_connection_id, status, mode, provider, model, prompt_version, input_hash(sha256), input_summary(jsonb, 계좌번호·금액 없음), output(jsonb), disclaimer_version, credits_charged, credit_ledger_id(→core.credit_ledger), request_id(unique, 멱등), error_code, started_at, finished_at | `ai_reports_no_price_targets_check`(`1900:325`): output에 `buy_price`, `entry_price`, `target_price`, `stop_price`, `stop_loss` 키 금지. succeeded면 output 필수. **`ai_reports_advice_check_passed_check`(14.1절, 2026-10-13)**: succeeded면 `output.advice_check.passed = true` 필수(없으면 `23514`). kind `research`·`briefing`의 `output`은 04장 4절 그래프 계약(요약 문장, 출처, 브리핑 대본 `script`, `advice_check`)을 jsonb로 담는다 |
 | `ai_report_items` (`1900:331`) | report_id, symbol, risk_level(low/medium/high), weight_pct, factors(jsonb 배열), rationale(1000자), reference_price, reference_at | `(report_id, symbol)` unique |
 | `idea_evaluations` (`1900:349`, P2) | item_id, horizon_days(5/20/60), entry_date, entry_price, eval_date, eval_price, return_pct, benchmark_return_pct, excess_pct(생성 컬럼), rule_version | `(item_id, horizon_days)` unique, eval_date > entry_date |
 
 `reference_price`는 아이디어 생성 시점 기록용이며 매수가가 아니다. 성과 진입가는 규칙상 다음 개장일 시가(01_PRD 3.4)로 `idea_evaluations.entry_price`에 따로 둔다.
+
+`research`, `briefing` 리포트는 `scope_connection_id`가 null이고 `input_summary`에 종목코드와 기간만 남긴다(보유 수량·금액 없음). 같은 표를 쓰는 이유는 6절 "제품 AI 표를 만들지 않은 이유"에 있다.
 
 ### 2.8 모의주문(P3, `0003_stock_orders_paper.sql`)
 
@@ -165,6 +169,8 @@ core.organizations (참조만)
 이중 잠금: `trade_notes`를 제외한 전 테이블에 `core.guard_privileged_write` 트리거(`1900` 6절). append-only: `order_events`, `consents`에 `stock.reject_log_mutation`(`ST000`, 조직 purge GUC만 예외).
 
 ### 4.1 RLS 스모크 테스트 결과 (2026-10-12, PGlite)
+
+2026-10-13 변경 후 재검증 필요: 아래 75항목은 AI 보강(14.1절) 이전 결과다. ST-06-003이 자동화할 때 다음 항목을 추가한다: ① `ai_reports` kind `research`·`briefing` 성공 저장(advice_check 있음) 허용, ② `output.advice_check` 없는 성공 저장 `23514`, ③ `passed=false` 성공 저장 `23514`, ④ 가격 키 `23514`(기존), ⑤ `consents` kind `voice_processing` 기록 허용·미지 kind 거부. 이 5개는 PGlite 임시 스크립트로 모듈러·모놀리스 모두 통과를 확인했다(2026-10-13, 아래 9절).
 
 스크립트는 저장소 밖 임시 디렉토리에서 실행했다(ST-06-003이 `supabase/tests/`로 옮긴다). 사용자 A(베타), B(다른 조직, 베타), C(초대 없음, default 엔타이틀먼트).
 
@@ -229,6 +235,33 @@ core.organizations (참조만)
 
 `core.*` ALTER 없음을 확인했다(조각에 `alter table core` 0건).
 
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| core 객체 | stock 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 채팅 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`). 저장되는 assistant 메시지는 모두 투자 권유 금지 검사 통과분 | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `stock.research_summary`·`stock.diagnosis` 실행 기록, 위키 lint 결과. `ai_run_steps.detail`에는 위반 유형만 남기고 위반 원문은 남기지 않는다 | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, Next.js 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 12행(`1900_stock.sql` 14.2절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 공시(`stock-disclosures`)·위키(`stock-wiki`) 컬렉션(운영자 지식 조직만). 문서 `source_type`은 공시 `url`(원문 URL), 해설집 `upload` | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 주식 용어·공시 해설 위키(운영자 지식 조직만) | FastAPI(쓰기), Next.js 서버(읽기) |
+| `voice_sessions`, `voice_jobs` | 음성 질의, STT·TTS·브리핑 낭독 작업(`store_audio=false`) | Next.js |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 리서치·브리핑 결과 표 | 대본을 저장하고, 가격 키와 검사 기록을 DB 수준에서 막기 | 기존 `stock.ai_reports`의 kind 확장 + advice_check CHECK. 진단과 같은 멱등 키(`request_id`), 크레딧 연결, 상태 머신, RLS, 일 상한 인덱스, Realtime을 그대로 쓴다 |
+| 대화-종목 연결 표 | 채팅이 어느 종목을 다루는지 | 연결하지 않는다. 채팅은 공개 자료 질의이고 보유 내역을 넣지 않는다(01_PRD 6.7절) |
+| 브리핑 음성 파일 표 | mp3 위치와 재사용 | 결정적 Storage 경로 `exports/<org_id>/stock/briefing/<report_id>.mp3` + `voice_jobs`(feature `briefing`, `characters`, `provider_id`) |
+| 녹음 동의 표 | 음성 처리 고지 증빙 | `stock.consents` kind `voice_processing` |
+| 공시 소스 허용 표 | 소스별 이용 조건 확인 기록 | 환경변수 `STOCK_RAG_SOURCES`(`disclosure:<확인 기록 id>`) + `docs/legal/data-sources.md`. 청크 `metadata.terms_ref`에 기록 id를 남긴다 |
+| 해설집 문서 표 | 원고 관리 | `core.ai_documents`(운영자 지식 조직) + 원고 파일 `content/knowledge/` |
+
+조각은 `core.*`를 ALTER하지 않는다. 14.3절의 `core.plans` UPDATE는 stock 자신의 beta·pro 행 `features`에 AI 키를 병합하는 데이터 변경이며 표 구조는 바꾸지 않는다.
+
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
 리뷰 "높음" 6개 중 #1~#4를 여기에, #5~#6을 `02_ARCHITECTURE.md` 6장에 둔다(합계 6 = 6).
@@ -246,7 +279,7 @@ core.organizations (참조만)
 
 | 항목 | 모듈러(`1900_stock.sql`) | 모놀리스(`supabase/monolith/`) |
 |---|---|---|
-| 스키마 | `stock` | `public`(사용자 최종 확인 대기, 01_PRD 8장 #1) |
+| 스키마 | `stock` | `public`(사용자 최종 확인 대기, 01_PRD D-1) |
 | 코어 | `core.*` 0000~0006 전부 | `0001_core_lite.sql`. [선택] 절 6-A(oauth_states), 8(Storage), 9(affiliate) 제거, 3(Toss), 4(크레딧), 6-B, 6-C, 7 유지 |
 | 파일 | 1개(`@@split` 표시로 1부/2부 구분) | `0002_stock_domain.sql`(1부), `0003_stock_orders_paper.sql`(2부, Phase 3에 적용 가능) |
 | apps/plans | 조각 머리의 `@@modular-only` 블록이 등록·보충 | `seed.sql`(default, beta, pro, 종목 샘플) |
@@ -255,15 +288,34 @@ core.organizations (참조만)
 | Realtime | `schemaname='stock'` | `schemaname='public'` |
 | purge GUC | `core.allow_purge` | 같은 GUC 이름(core-lite와 동일) |
 | 변환 | 정본 | 조각을 sed 규칙(`core.`/`stock.` → `public.`, `@@modular-only` 삭제, `@@split` 분할)으로 생성. 손으로 고치지 않는다(ST-06-002) |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| 구조 보강(14.1) | 조각 끝 14.1절(kind·동의 kind 확장, advice_check CHECK). 정의 자체는 표 정의에도 반영 | `0002_stock_domain.sql` 끝의 같은 블록(`public.`). 변환 스크립트(ST-06-002)는 14.1을 0002 끝으로, 14.2~14.4를 `seed.sql`로 보낸다 |
+| AI 라우팅 기본값 | `1900_stock.sql` 14.2절 | `seed.sql`(같은 12행) |
+| 플랜 AI 키 | 14.3절 병합 UPDATE(모듈러 `seed.sql` 반영 요청 06장 6절 R-6) | `seed.sql` beta·pro `features`에 직접 |
+| 체인 검사 | 14.4절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 
 ## 9. 마이그레이션 파일
 
 | 구분 | 파일 | 내용 |
 |---|---|---|
-| 모듈러 | `docs/products/_supabase-modular/migrations/1900_stock.sql` | 스키마 `stock`, apps/plans 보충, 테이블 19개, 함수 14개, RLS, 인덱스, Realtime, GRANT |
+| 모듈러 | `docs/products/_supabase-modular/migrations/1900_stock.sql` | 스키마 `stock`, apps/plans 보충, 테이블 19개, 함수 14개, RLS, 인덱스, Realtime, GRANT, 14절 AI·음성 보강(kind 확장, advice_check CHECK, 라우팅 기본값 12행, 플랜 AI 키, 체인 검사) |
 | 모놀리스 | `supabase/monolith/migrations/0001_core_lite.sql` | 코어 축소판 복사본(선택 절 3개 제거, 이유 주석) |
-| 모놀리스 | `supabase/monolith/migrations/0002_stock_domain.sql` | 1부: 베타, 동의, 참조, 연결, 동기화, AI |
+| 모놀리스 | `supabase/monolith/migrations/0002_stock_domain.sql` | 1부: 베타, 동의, 참조, 연결, 동기화, AI, 끝에 14.1 구조 보강 |
 | 모놀리스 | `supabase/monolith/migrations/0003_stock_orders_paper.sql` | 2부: 한도, 킬 스위치, 주문, 이벤트, 주문 RPC |
-| 모놀리스 | `supabase/monolith/seed.sql` | apps 1행(invite, beta), 플랜 default/beta/pro(pro 비활성), 종목 샘플 6개(시세 값 없음) |
+| 모놀리스 | `supabase/monolith/seed.sql` | apps 1행(invite, beta), 플랜 default/beta/pro(pro 비활성, AI 키 포함), 종목 샘플 6개(시세 값 없음), AI 라우팅 기본값 12행 + 체인 검사 |
 
 검증(2026-10-12): `node check.mjs mono 0001 0002 0003 seed` OK, `node check.mjs mod 0000~0007 seed 1900` OK, 두 번 연속 적용(멱등) OK, RLS 스모크 75/75(양쪽).
+
+2026-10-13 재검증(PGlite `--vector`, `docs/products/_tools-sqlcheck/check.mjs`):
+
+| 검사 | 결과 |
+|---|---|
+| `check.mjs --vector mod` 0000~0009 + `seed.sql` + `1900_stock.sql` | 전부 OK |
+| `check.mjs --vector mono` 0001 + 0002 + 0003 + `seed.sql` | 전부 OK |
+| 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app stock) | 12행(모듈러·모놀리스) |
+| beta·pro `features` | 기존 키 + `ai_chat`, `ai_chat_turns_per_day`(100/200), `ai_research_per_day`(20/40), `voice_chat`, `briefing` |
+| 미동의 조직 `resolve_ai_route` | `stock.research` = oss-llm, `stock.advice_check` = oss-llm, `briefing` tts = oss-voice |
+| 동의 후 | `stock.research` = anthropic → openai → google → oss-llm, `briefing` = elevenlabs → oss-voice, `dify.aux`는 oss-llm 하나(강제) |
+| `ai_reports` research·briefing 성공 저장(advice_check.passed=true) | 허용 |
+| `output.advice_check` 없는 성공 저장, `passed=false`, 가격 키(`target_price`) | `23514` |
+| `consents` kind `voice_processing` | 허용, 미지 kind `23514` |

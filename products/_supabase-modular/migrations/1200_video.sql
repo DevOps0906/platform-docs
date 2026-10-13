@@ -1481,3 +1481,69 @@ grant execute on function video.org_has_feature(uuid, text, text) to authenticat
 grant execute on function video.get_public_landing(text) to anon, authenticated, service_role;
 grant execute on function video.get_public_linkinbio(text) to anon, authenticated, service_role;
 grant execute on all functions in schema video to service_role;
+
+-- =====================================================================
+-- 11. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/nomad-video/02_ARCHITECTURE.md 5절, 01_PRD.md 4.1절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 운영 화면이 아니라 이 조각과 모놀리스 seed 에서만 바꾼다.
+--   제품 전용 AI 테이블은 만들지 않았다(05_DATA_MODEL.md 6절). 이 절은 core.* 를 ALTER 하지 않고 데이터 행만 넣는다.
+--   11.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'video'. 기능 키는 소문자(core 체크 제약).
+--        체인 제공자는 seed.sql 의 core.ai_providers 행이어야 하고 kind 가 맞아야 한다(11.3 검사).
+--        - video.script/translate/bling, chat : 품질 우선 Claude 먼저. 채널 토큰·이메일·원본 영상/오디오는 보내지 않는다.
+--                          국외 이전 동의가 없는 조직은 resolve_ai_route 가 상용을 걸러 낸다.
+--        - video.analyze/compliance, wiki.*  : 단순 분류·요약·대량 처리라 오픈소스 먼저.
+--        - dify.aux      : Dify 보조 LLM 노드. 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - video.knowledge/rag (embedding) : 운영자·조직 컬렉션 공통. 동의 변경에 임베딩 모델이 흔들리지 않게 오픈소스 고정(대체 없음).
+--        - video.stt     : 파이프라인 STT(미디어 워커 Whisper). 원본은 제3자 저작물·목소리라 국외 제공자로 보내지 않는다 → 오픈소스 강제.
+--        - voice_chat/dictation : 대화형 STT 는 오픈소스 먼저, 응답·대본 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - narration     : 내레이션·샘플 TTS. 사용자가 생산 요청에서 엔진을 고른다. 작업 도중 다른 제공자로 대체하지 않는다.
+--                          이 금지는 체인이 아니라 음성 어댑터(packages/core-voice, feature=narration)와 오케스트레이터가 강제한다.
+--   11.2 플랜 features 의 AI 키. seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로 _supabase-modular/seed.sql 반영을
+--        코어에 요청했다(06_AGENT_PLAN.md 6절 R-V1). 서버는 누락 키를 기본값으로 읽는다.
+-- =====================================================================
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'video', 'video.script',     'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'video.translate',  'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'video.analyze',    'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'video.bling',      'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'video.compliance', 'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'chat',             'llm',        'auto',         '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'video', 'wiki.query',       'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'wiki.ingest',      'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'wiki.lint',        'llm',        'auto',         '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'video', 'dify.aux',         'llm',        'open_source',  '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'video', 'video.knowledge',  'embedding',  'open_source',  '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'video', 'video.rag',        'embedding',  'open_source',  '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'video', 'video.stt',        'stt',        'open_source',  '[{"provider":"oss-voice","model":"*"}]', true),
+  (null, 'video', 'voice_chat',       'stt',        'auto',         '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'video', 'dictation',        'stt',        'auto',         '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'video', 'voice_chat',       'tts',        'auto',         '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'video', 'narration',        'tts',        'auto',         '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 11.2 플랜 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": false}'::jsonb
+ where app_id = 'video' and code = 'starter';
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}'::jsonb
+ where app_id = 'video' and code in ('basic', 'pro', 'advanced');
+
+-- 11.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'video'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'video routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;

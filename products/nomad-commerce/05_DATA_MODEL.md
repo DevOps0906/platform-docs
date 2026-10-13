@@ -18,6 +18,26 @@ core.organizations (참조만)
 코어 FK: detail_pages.credit_ledger_id → core.credit_ledger, *.job_id → core.jobs
 ```
 
+AI·음성(2026-10-13)은 코어 표만 참조하고 제품 AI 표를 만들지 않는다(이유는 6절):
+
+```
+core AI·음성 (참조만)
+ ├─ core.ai_conversations   (사용자 본인, dify_user, channel text/voice, 대화 시작 때 바인딩한 상품·상세페이지·업로드는 Dify 입력 변수와 FastAPI 대조로만)
+ │    ├─ core.ai_messages   (citations, provider, credits)
+ │    └─ core.voice_sessions ─ core.voice_jobs (feature voice_chat / product_voice / shorts_narration, store_audio=false)
+ ├─ core.ai_runs            (graph commerce.detail_page: job_id = detail_pages.job_id, credit_ledger_id = detail_pages.credit_ledger_id / graph commerce.assist)
+ │    └─ core.ai_run_steps  (노드 extract, retrieve, copy, banned_check, convert, compliance / input_check, generate, validate, compliance)
+ ├─ core.ai_usage           (run_id, conversation_id, feature, settled_at)
+ ├─ core.ai_org_settings    (국외 이전 동의, 증빙은 감사 ai.cross_border.ack/revoke)
+ ├─ 셀러 조직: core.ai_collections commerce-products(kind rag, oss-embed) ─ core.ai_documents ─ core.ai_chunks (vector(1024), HNSW)
+ ├─ 운영자 지식 조직(COMMERCE_KNOWLEDGE_ORG_ID)만
+ │    ├─ core.ai_collections commerce-rules(kind rag), commerce-wiki(kind wiki), 임베딩 oss-embed
+ │    │    └─ core.ai_documents ─ core.ai_chunks
+ │    └─ core.wiki_pages ─ core.wiki_links, core.wiki_revisions
+ └─ core.ai_routing_settings (org null, app commerce, 14행: 9절)
+Storage exports/<org_id>/commerce/narration/<product_id>/<hash16>.mp3 (쇼츠 내레이션, 상품 purge 때 함께 삭제)
+```
+
 조직 간 참조 오염을 막기 위해 자식 테이블은 `(org_id, <parent>_id)` 복합 FK로 부모 `unique (org_id, id)`를 참조한다. 선택 참조는 PG15 `on delete set null (<col>)`로 org_id를 지우지 않는다.
 
 ## 2. 테이블
@@ -118,7 +138,34 @@ core.organizations (참조만)
 | `core.apps` | 'commerce' 등록(`:31-32`) |
 | Storage `org-files`, `exports` | 경로 `<org_id>/commerce/<entity>/<uuid>.<ext>` |
 
-`core.*` ALTER 없음. 플랜·크레딧·구독·결제·잡 테이블을 commerce 스키마에 다시 만들지 않았다.
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| core 객체 | commerce 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 셀러 어시스턴트 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `commerce.detail_page`·`commerce.assist` 실행 기록, 위키 lint 결과 | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, Next.js 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 14행(9절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의와 고지문 버전, 감사 행 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 마켓 규칙 컬렉션(운영자 조직), 상품 스펙 컬렉션(셀러 조직) | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 마켓 규칙 위키(운영자 조직만) | FastAPI(쓰기), Next.js 서버(공개 읽기) |
+| `voice_sessions`, `voice_jobs` | 음성 대화, 상품 설명 STT, 쇼츠 내레이션 TTS | Next.js |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+| `write_audit` | 음성 처리 고지 확인(`ai.voice_notice.ack`) 증빙 | Next.js(service_role) |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 대화-대상 연결 표 | 채팅이 어느 상품·상세페이지·업로드를 근거로 하는지 | Dify 입력(대화 시작 때 `product_id`/`detail_page_id`/`upload_id`) + FastAPI가 매핑 org와 대상 org를 매번 대조. 대체 경로는 Next.js가 요청마다 바인딩 id를 받아 같은 확인 |
+| 내레이션 파일 표 | 쇼츠 음성 파일 위치와 재사용 | 결정적 Storage 경로 `exports/<org_id>/commerce/narration/<product_id>/<hash16>.mp3`(`hash16` = 스크립트·보이스·제공자 해시 앞 16자) + `voice_jobs`(feature `shorts_narration`, `characters`, `provider_id`, `storage_path`). 목록은 `voice_jobs` 본인 행 |
+| 상세페이지-그래프 연결 컬럼 | 상세페이지의 AI 실행 추적 | `ai_runs.job_id = detail_pages.job_id`, `ai_runs.credit_ledger_id = detail_pages.credit_ledger_id` |
+| 동의 표(`consents`) | 국외 이전·음성 처리 고지 증빙 | 국외 이전은 `core.ai_org_settings`(고지문 버전) + 감사 `ai.cross_border.ack/revoke`, 음성 처리 고지는 감사 `ai.voice_notice.ack`. 녹음을 저장하지 않으므로 `voice_jobs.consent_*`는 비워 둔다 |
+| 상품 스펙 문서 표 | 상품별 색인 상태 | `core.ai_documents`(셀러 조직 컬렉션 `commerce-products`, 문서 메타데이터에 `product_id`). 상품 삭제 purge가 이 문서를 함께 지운다(CM-06-048) |
+| 규칙 원고 표 | 원고 관리 | `core.ai_documents`(운영자 지식 조직) + 원고 파일 `content/knowledge/` |
+| 챗 바인딩 대상 FK | 다른 조직 대상 참조 차단 | 표가 없으므로 FK 대신 FastAPI의 org 대조와 테스트(CM-06-057) |
+
+조각은 `core.*`를 ALTER하지 않는다. 플랜·크레딧·결제·잡 테이블을 `commerce`에 다시 만들지 않는다. 조각 20.2절의 `core.plans` UPDATE는 commerce 자신의 플랜 행 `features`에 AI 키를 병합하는 데이터 변경이며 표 구조는 바꾸지 않는다.
 
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
@@ -133,7 +180,7 @@ core.organizations (참조만)
 | `docs/reviews/Nomad-AI-Factory_V.2.md` 3장 #4 | `docs/reviews/Nomad-AI-Factory_V.2.md:47` | `user_id = auth.uid()` 공통 정책 불성립, WITH CHECK·역할 보호 없음 | org 기준 정책 + 모든 쓰기 정책 with check, 전역 테이블 읽기 전용, 역할·플랜은 core 컬럼 보호(`migrations/0004_core_security.sql:187-231`). 4절 표. 스모크: 자기 플랜/역할/지갑 변경 42501 | 4절, CM-06-003 |
 | `docs/reviews/Nomad-AI-Factory_V.2.md` 3장 #5 | `docs/reviews/Nomad-AI-Factory_V.2.md:48` | 리뷰형 AI 후기·평점, 랜딩 허위 수치 | `page_type` MVP 3종만 서버 허용, 리뷰형은 실제 리뷰 입력 테이블이 생길 때까지 생성 불가. 프롬프트·템플릿에 후기 생성 없음. 랜딩 카피는 01장 6절 금지 목록 통과(CM-06-032 수용 기준) | 01장 CM-F-027, CM-06-013, CM-06-032 |
 | `docs/reviews/Nomad-AI-Factory_V.2.md` 3장 #6 | `docs/reviews/Nomad-AI-Factory_V.2.md:49` | 반품 불가 자동 삽입, 건기식 부정 문구 자동 삽입 | `shipping_templates` CHECK: 청약철회 7일 이상, 제한 사유 4개 법정 코드만(`:426-447`, 자유 문구 불가). L-1 슬롯은 `products.health_food_status`가 unknown이면 skipped, "건강기능식품이 아닙니다" 자동 문구 없음. 문안은 법률 검토 | CM-06-033, CM-06-015 |
-| `docs/reviews/nomad-ai-factory.md` 3장 #1 | `docs/reviews/nomad-ai-factory.md:57` | 인증 없는 공개 AI 프록시, CORS `*` | Express 프록시 폐기. LLM은 Route Handler(`requireSession`)와 워커에서만 core llm gateway로 호출. 레이트 리밋 조직당 60회/분 | 04장 1절, CM-06-011 |
+| `docs/reviews/nomad-ai-factory.md` 3장 #1 | `docs/reviews/nomad-ai-factory.md:57` | 인증 없는 공개 AI 프록시, CORS `*` | Express 프록시 폐기. LLM 호출은 FastAPI 라우터에서만 하고(서명 토큰 필수, 키는 FastAPI 전용), Route Handler(`requireSession`)가 토큰을 발급하며 워커는 잡 토큰만 받는다. 레이트 리밋 조직당 60회/분 | 04장 1절, CM-06-011 |
 | `docs/reviews/nomad-ai-factory.md` 3장 #2 | `docs/reviews/nomad-ai-factory.md:58` | 한도·사용량 기록이 클라이언트 | 사용량 원장은 core `credit_ledger`(append-only), 브라우저 INSERT 42501(스모크 확인). 한도는 트리거 | CM-06-010 |
 | `docs/reviews/nomad-ai-factory.md` 3장 #3 | `docs/reviews/nomad-ai-factory.md:59` | 14개 서비스 키 localStorage 평문 | BYOK 기능 없음(07장 폐기). 외부 키는 플랫폼 env(AI) 또는 `encrypted_credentials`(마켓)만. 브라우저에 키 미전달 | CM-06-009 |
 | `docs/reviews/nomad-ai-factory.md` 3장 #4 | `docs/reviews/nomad-ai-factory.md:60` | 스키마·RLS가 저장소에 없어 재현 불가 | 조각 1개 + 모놀리스 변환본 + seed, PGlite 체커 OK, RLS 스모크 60/59항목 통과(9절) | 9절, CM-06-001 |
@@ -157,16 +204,20 @@ core.organizations (참조만)
 | 플랜 | 모듈러 `seed.sql`(2026-10-13 모놀리스 seed와 일치) | `seed.sql`이 01장 4.1과 동일 |
 | 크레딧팩 | 모듈러 seed에 commerce 팩 3개(2026-10-13 반영) | `seed.sql` 3개 |
 | 변환 | - | HEADER 블록 제거, `core.`/`commerce.` → `public.`, Realtime `schemaname` 치환(CM-06-002 스크립트) |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| AI 라우팅 기본값 | `1400_commerce.sql` 20.1절(`:1027-1043`) | `seed.sql`(같은 14행) |
+| 플랜 AI 키 | `1400_commerce.sql` 20.2절 병합 UPDATE(`:1045-1051`, 모듈러 `seed.sql` 반영 요청 R-1) | `seed.sql` 플랜 행 `features`에 직접 |
+| 체인 검사 | 20.3절 DO 블록(`:1053-1069`, 제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 | PostgREST | `config.toml [api].schemas`에 `commerce` 추가, 타입 `--schema core,commerce` | 기본 |
 
 ## 9. 마이그레이션 파일
 
 | 파일 | 줄 수 | 내용 |
 |---|---|---|
-| `_supabase-modular/migrations/1400_commerce.sql` | 1007 | 헬퍼 5개, 테이블 13개, 트리거, RPC 1개, RLS, Realtime, 기본 금지어 21행 |
+| `_supabase-modular/migrations/1400_commerce.sql` | 1074 | 헬퍼 5개, 테이블 13개, 트리거, RPC 1개, RLS, Realtime, 기본 금지어 21행, 20절 AI·음성 기본값(라우팅 14행, 플랜 AI 키 병합, 체인 검사) |
 | `supabase/monolith/migrations/0001_core_lite.sql` | 2476 | 코어 lite(affiliate 절 제거) |
 | `supabase/monolith/migrations/0002_commerce_domain.sql` | 985 | 조각 변환본. 스키마 전체 함수 회수 줄은 제거(public 전체에 적용되면 코어 권한이 사라짐), 함수별 회수와 0001 SECTION 10으로 대체 |
-| `supabase/monolith/seed.sql` | 39 | apps 1행, 플랜 4개, 크레딧팩 3개 |
+| `supabase/monolith/seed.sql` | 79 | apps 1행, 플랜 4개(AI 키 포함), 크레딧팩 3개, AI 라우팅 기본값 14행 + 체인 검사 |
 
 검증(2026-10-12, PGlite `_tools-sqlcheck`):
 
@@ -176,5 +227,20 @@ core.organizations (참조만)
 | `node check.mjs mono` 0001 + 0002 + seed | 전부 OK |
 | RLS 스모크 모듈러 | 60/60 통과 |
 | RLS 스모크 모놀리스 | 59/59 통과 |
+
+2026-10-13 재검증(PGlite `--vector`, `docs/products/_tools-sqlcheck/check.mjs`):
+
+| 검사 | 결과 |
+|---|---|
+| `check.mjs --vector mod` 0000~0009 + `seed.sql` + `1400_commerce.sql` | 전부 OK (조각 2회 연속 적용도 OK) |
+| `check.mjs --vector mono` 0001 + 0002 + `seed.sql` | 전부 OK (seed 2회 연속 적용도 OK) |
+| 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app commerce) | 14행(모듈러·모놀리스) |
+| 플랜 `features` | free(`ai_chat` true, 20턴, `voice_chat` false, `shorts_narration` false), starter·pro(true, 200, true, true), enterprise(true, 500, true, true). 기존 `voice_input` 유지 |
+| 미동의 조직 `resolve_ai_route` | `commerce.detail_page`·`commerce.compliance`·`commerce.assist`·`commerce.vision`·`chat` = oss-llm, `commerce.knowledge` = oss-embed, `voice_chat`·`product_voice` stt·tts = oss-voice, `shorts_narration` = oss-voice |
+| 동의 후 | `commerce.detail_page` = anthropic → openai → google → oss-llm, `commerce.assist` = google → openai → oss-llm, `chat` = openai → google → anthropic → oss-llm, `shorts_narration` = elevenlabs → oss-voice, `dify.aux`는 계속 oss-llm(강제), `Wiki.Lint`(대소문자·공백)도 `wiki.lint` 행으로 해석 |
+| 잘못된 체인 행(tts 기능에 anthropic) 뒤 20절 재적용 | `commerce routing defaults: invalid chain providers` 예외 |
+| RLS 스모크 | 테이블 변경이 없어 재실행하지 않았다(2026-10-12 결과 유지) |
+
+AI 기능별 기본값 행(정본 02장 5.1절): `commerce.detail_page`(llm, auto, anthropic → openai → google → oss-llm), `commerce.compliance`(llm, auto, openai → google → oss-llm), `commerce.assist`(llm, auto, google → openai → oss-llm), `commerce.vision`(llm, auto, openai → google → oss-llm), `chat`(llm, auto, openai → google → anthropic → oss-llm), `wiki.query`·`wiki.ingest`·`wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `commerce.knowledge`(embedding, open_source, oss-embed), `voice_chat` stt(auto, oss-voice → elevenlabs), `voice_chat` tts(auto, elevenlabs → oss-voice), `product_voice` stt(auto, oss-voice → elevenlabs), `shorts_narration` tts(auto, elevenlabs → oss-voice, 작업 중 대체 금지는 음성 어댑터).
 
 스모크 항목: 비멤버 B가 A 조직 commerce 테이블 10개 + 조직 금지어 SELECT 0행, A 조직으로 INSERT 42501, A 행 UPDATE/DELETE 0행, 서버 전용 테이블 INSERT 42501(자기 조직 포함), 기본 금지어·환율 쓰기 거부, A 페이지 WARN 확인 RPC 42501, `commerce_features` 42501, 자기 지갑·원장·`grant_credits`·엔타이틀먼트 plan·`platform_role`·org_members role 변경 42501, `encrypted_credentials` SELECT 42501, 서버 컬럼(banned_words_found, listing status/completeness) UPDATE 42501, org_id 이동 42501, 다른 조직 상품 참조 23503, 반품 7일 미만·자유 제한 사유 23514, Free 31번째 상품 CM002, 엔타이틀먼트 없는 조직 INSERT 42501, 서버 경로 CM001/CM003/CM004/CM005/CM006/CM007/CM009와 필수 슬롯 23514, WARN 확인 후 업로드 성공과 감사 행. 모듈러 seed 샘플 free 플랜은 `market_api`가 없어 업로드가 CM007로 막힘을 확인한 뒤, 01장 정본 features로 갱신(요청 반영 가정)하고 나머지를 실행했다.

@@ -192,3 +192,15 @@ core 권한 상승 시도(B 세션).
 | 4 | 금액/크레딧 상당수가 "제안"(blog, commerce 일부, publishing, toon 팩, stock, poll, notes, microweb, erp/sms) | 확정 시 모놀리스 seed와 통합 seed를 함께 갱신 | 가격 확정 |
 | 5 | 알려진 core 기능 요청(이번에 구현하지 않음): `adjust_credits`(운영자 수동 조정), `confirm_payment_order` 실패 상태 영속화, 초대제(`signup_policy='invite'`) 가입 강제 | 각 제품 문서에 우회 방법 기재됨 | core 담당 일정 |
 | 6 | PGlite 검증 한계: 실제 Supabase의 `authenticator`/PostgREST 경로, pg_cron/pg_net/vault 실동작, Storage API 서명 URL은 흉내만 냄 | 로컬 Supabase(`supabase db reset`)에서 한 번 더 확인 권장 | 없음 |
+
+## 10. 추가 검증: 0008 AI, 0009 음성 (2026-10-13)
+
+| 항목 | 내용 |
+|---|---|
+| 추가된 파일 | `migrations/0008_core_ai.sql`, `migrations/0009_core_voice.sql`, `seed.sql` 끝의 AI 행, `MONOLITH_CORE_LITE.sql` SECTION 11(AI), 12(음성) |
+| 검사 방식 | pgvector가 필요하므로 `node check.mjs --vector <label> <files...>`로 실행한다. 이 모드는 PGlite 0.3.15(별칭 `pglite-vec`)를 쓴다(PGlite 0.5.x에는 pgvector가 없음). 기존 `000*.sql`만 있는 검사는 `--vector` 없이 그대로 쓴다 |
+| 보안 스모크 | AI·음성 보안 스모크 15/15 통과(모듈러, `MONOLITH_CORE_LITE.sql` 각각). 항목은 `_platform-core/SECURITY_BASELINE.md` 15장 추가 행과 같은 계열: 사용자의 `match_ai_chunks`/`resolve_ai_route` 거부, 교차 조직 청크 검색 거부, 대화는 소유 사용자만, 조직 관리자의 플랫폼 강제 해제 시 `AI001` |
+| 모놀리스 | 14개 모놀리스 세트 전부 SECTION 11/12 포함 상태에서 통과 |
+| 재현 | `cd docs/products/_tools-sqlcheck && node check.mjs --vector A ../_supabase-modular/migrations/000*.sql ../_supabase-modular/seed.sql ../_supabase-modular/migrations/1*.sql ../_supabase-modular/migrations/2*.sql` (`pglite-vec`는 `_tools-sqlcheck/package.json`에 설치되어 있음) |
+| 한계 | PGlite의 pgvector는 인덱스 성능(HNSW 실측)과 대용량 검색을 검증하지 못한다. 로컬 Supabase에서 한 번 더 확인 권장(9장 6번과 같은 한계) |
+

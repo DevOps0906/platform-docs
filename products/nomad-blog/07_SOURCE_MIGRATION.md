@@ -2,14 +2,16 @@
 
 작성일 2026-10-12. CA 경로는 `NOMAD Shorts Maker/` 기준, YSM은 `[5f6d262] Youtube_shots_Maker/`(git 스냅샷, `git show`로만 읽음) 기준이다.
 
+AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 CA의 Anthropic 직접 `fetch`(키워드 추천), OpenAI SDK + OpenRouter(원고 생성), 해시태그 생성, YSM의 `blog_writer.py` 프롬프트(가상 후기 요구)뿐이다. RAG, 위키, Dify, LangGraph, 음성(받아쓰기·읽어 주기), 3D, 사람 승인 단계는 원본에 없어 모두 신규다. 원본의 프롬프트 구조와 SEO 규칙은 FastAPI 그래프(`blog.post_draft`)와 TS 규칙(`packages/blog-render`)으로 옮기고, 직접 호출 경로는 모두 FastAPI 라우터로 대체한다(아래 2절 갱신 행, 3.3절 추가 폐기). 원본 랜딩의 `128,470+` 같은 미검증 카운터는 3D 히어로로 바뀐 뒤에도 쓰지 않는다(01장 6.5절).
+
 ## 1. 원본별 자산 분류
 
 ### 1.1 NOMAD Shorts Maker 안의 Content Automator
 
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
-| `src/skill/ai-engine/content-generator.ts` | 동작 | 이식(프롬프트 구조만) | `src/server/ai/prompts/` | `:10-47` |
-| `src/skill/ai-engine/keyword-recommender.ts` | 동작 | 이식(추천 프롬프트, SEO 규칙) | `src/server/ai/prompts/`, `packages/blog-render`(SEO 규칙) | `:37-103` |
+| `src/skill/ai-engine/content-generator.ts` | 동작 | 이식(프롬프트 구조만) | `apps/api/app/ai/products/blog/prompts/`(그래프 `draft` 노드, 2026-10-13 변경) | `:10-47` |
+| `src/skill/ai-engine/keyword-recommender.ts` | 동작 | 이식(추천 프롬프트, SEO 규칙) | `apps/api/app/ai/products/blog/prompts/`(그래프 `keyword` 노드·단건 `assist`), `packages/blog-render`(SEO 규칙, 그래프 `seo_check`가 같은 규칙을 읽음) | `:37-103` |
 | `src/skill/ai-engine/hashtag-generator.ts` | 동작 | 참고(태그 추천으로 축소) | `src/server/ai/prompts/` | `:32-56` |
 | `src/skill/channel-api/wordpress-client.ts` | 부분 | 이식 | `workers/blog-worker/src/channels/wordpress/` | `:17-70` |
 | `src/skill/channel-api/coupang-client.ts` | 부분 | 참고(core-affiliate 쿠팡 어댑터 구현자에게 전달) | `packages/core-affiliate`(코어 소관) | `:5-41` |
@@ -64,8 +66,8 @@
 | `tistory-poster.ts` | 카카오 아이디·비밀번호 평문 인자 → vault. 위와 같은 실패 처리. 공식 API 확인 시 어댑터 교체(미확인) |
 | `wordpress-client.ts` | 사이트 URL SSRF 검사(https, 공인 IP, 리다이렉트 2회), 태그 생성 실패를 무시하지 않음, `status` 기본값 publish 유지, 타임아웃 30초, 401 → 채널 error |
 | `brand-connect.ts` | `bc_${Date.now()}` 가짜 id 대신 실제 지원 번호 또는 null, 성공 판정 실패를 성공으로 반환하지 않음, `.catch(() => null)` 제거, 지원 메시지 기본 문구는 사용자 확인 후, 레이트 리밋, 위험 동의 확인 |
-| `keyword-recommender.ts` | 직접 `fetch` Anthropic 호출 → llm gateway, 폴백 제거, 이모지 피드백(`:82-100`) 제거 |
-| `content-generator.ts` | OpenAI SDK + OpenRouter → gateway, 마크다운 출력 → TipTap JSON 스키마, 금지 지시 추가 |
+| `keyword-recommender.ts` | 직접 `fetch` Anthropic 호출 → FastAPI 라우터(그래프 `keyword` 노드, 단건은 `/tools/blog/assist`), 폴백 제거, 이모지 피드백(`:82-100`) 제거. 검색량·경쟁도는 "AI 추정" 표시 |
+| `content-generator.ts` | OpenAI SDK + OpenRouter → FastAPI 라우터(그래프 `draft` 노드), 마크다운 출력 → TipTap JSON 스키마(pydantic + zod 재검증), 금지 지시 추가, 자료·위키 근거 주입, 대가성 문구는 프롬프트에서 다루지 않음 |
 | `001_initial.sql` 매핑 | `channel_accounts` → `blog.channel_accounts` + `core.encrypted_credentials`. `blog_posts` → `blog.posts`. `post_channels` + `schedules` → `blog.post_publications` + `core.jobs`. `coupang_links` → `core.affiliate_links` + `blog.post_affiliate_links`. `brand_connect_items` → `core.brandconnect_applications`. `automation_configs` → Phase 2(automation-core). `linkinbio_items`, `user_profiles` → video 소관(링크인바이오는 video 소유, 확정 결정 1). 데이터 이관은 원본에 실사용자가 없으므로 하지 않는다(제안) |
 
 ## 3. 폐기 목록과 사유
@@ -109,6 +111,17 @@
 | YSM 프록시 풀 | 자동화 탐지 회피 목적 사용 금지(01장 6.4절) |
 | CA 인스타그램 클라이언트, Meta 토큰 갱신 | sns-uploader(video 소유)로 일원화 |
 
+### 3.3 AI 계층 도입으로 생긴 추가 폐기 (2026-10-13)
+
+분석 폐기 목록 밖이라 번호를 붙이지 않는다.
+
+| 대상 | 사유 |
+|---|---|
+| 웹·워커에서 LLM을 직접 호출하는 경로(OpenRouter 키를 Next.js·워커 env에 두는 구조) | LLM 키는 FastAPI에만 둔다(02장 5절, 확정 결정 17) |
+| 원고를 쓴 즉시 발행 가능한 경로(생성 → 바로 발행) | 그래프로 만든 원고는 사람 승인 뒤에만 발행(01장 BL-F-052) |
+| 사용자가 모델명을 고르는 UI·바디 필드 | 라우터가 기능 키·동의 상태로 결정(02장 5.1절) |
+| 랜딩 히어로의 "실제 에디터 화면 + 로드 시퀀스" 초안 | 3D 히어로(03장 4.6절)로 대체. 에디터 캡처는 히어로 아래 섹션으로 이동 |
+
 ## 4. 복사 금지 결함
 
 | 패턴 | 출처 | 왜 금지 | 대체 |
@@ -135,7 +148,18 @@
 | 예외 원문을 응답·URL로 노출 | `:88` | 내부 정보 누출 | 응답 봉투 사용자 문구 |
 | 실키 `.env` 방치 | `:89` | 키 유출 | BL-06-035 |
 | `user_plans FOR ALL`, 클라이언트 플랜 판정 | `SECURITY_BASELINE.md` 14장 | 셀프 업그레이드 | 엔타이틀먼트 서버 판정 |
-| 한글에 `\b` 금지어 매칭 | `SECURITY_BASELINE.md` 14장 | 필터 무효 | compliance 공용 규칙 |
+| 한글에 `\b` 금지어 매칭 | `SECURITY_BASELINE.md` 14장 | 필터 무효 | compliance 공용 규칙(`packages/blog-rules`) |
+| LLM·음성 키를 브라우저·Vercel·워커에 두기 | `docs/products/_platform-core/SECURITY_BASELINE.md` 16장, 원본 CA의 OpenRouter 키 env | 키 유출, 비용 남용 | LLM 키는 FastAPI 전용, ElevenLabs 키와 토큰 개인키는 Next.js 서버 전용 |
+| 브라우저에서 Dify·FastAPI·AI 제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*` |
+| Dify 입력에 토큰·org·채널 정보·자격증명 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남음 | 대화 매핑(`platform_conversation_id`, `dify_user`) |
+| 채널 비밀번호·세션 쿠키·제휴 키를 프롬프트·그래프 입력·채팅에 넣기 | 01장 6.7절 | AI 제공자·Dify 로그로 유출 | 입력 스키마에 필드 없음, 채팅 입력 마스킹, BL-06-056 검사 |
+| 사람 승인 없이 AI 원고를 바로 발행 | `docs/products/_platform-core/AI_ARCHITECTURE.md:118` | 되돌리기 어려운 발행, 대가성 문구·허위 표현 누락 | `approve` 노드와 발행 라우트 승인 확인 |
+| AI가 대가성 문구를 쓰거나 지우기, 문구를 빼 달라는 요청 수용 | 확정 결정 12, 01장 6.3·6.7절 | 표시광고법 위험 | 렌더러만 문구 삽입, 규칙 파일로 거절 |
+| 사용자 메모 없는 1인칭 체험·가상 후기 생성 | `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:41`, `:56` | 허위 후기 | BL-F-012, 규칙 파일, 평가셋 |
+| 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | DB의 assistant 메시지만 낭독 |
+| 녹음 원본 저장 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:85-95` | 보관·동의 부담 | `store_audio=false`, 변환 후 폐기 |
+| 3D 재질에 토큰 밖 색, 종이비행기·파티클·보라/핑크 그라디언트 | `docs/products/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.6절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지, CI 문자열 검사(BL-06-032) |
 
 ## 5. 아카이브 절차
 

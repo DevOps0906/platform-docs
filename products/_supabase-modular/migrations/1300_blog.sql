@@ -799,3 +799,69 @@ end $$;
 --    위 7절에서 authenticated/service_role 에 준 명시 GRANT 는 그대로 남는다.
 -- ---------------------------------------------------------------------
 revoke execute on all functions in schema blog from public;
+
+-- ---------------------------------------------------------------------
+-- 9. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/nomad-blog/02_ARCHITECTURE.md 5절, 01_PRD.md 4.7절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 운영 화면이 아니라 이 조각과 모놀리스 seed 에서만 바꾼다.
+--   9.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'blog'. 기능 키는 소문자.
+--       체인 제공자는 seed.sql 의 core.ai_providers 행이어야 하고 kind 가 맞아야 한다(9.3 검사).
+--       - blog.post_draft : 그래프 blog.post_draft 의 키워드·초안·제휴 점검 노드. 원고 품질이 핵심이라 Claude 먼저.
+--                           사용자의 체험 메모와 브랜드 자료는 국외 이전 동의가 있어야 상용으로 간다(동의 없으면 resolve_ai_route 가 걸러 낸다).
+--                           채널 비밀번호·세션 쿠키·제휴 키는 어떤 AI 입력에도 넣지 않는다(코드 규칙).
+--       - blog.assist     : 구간 다시쓰기·태그·상품 키워드 추출·키워드/개요·브랜드커넥트 메시지 다듬기 단건 호출.
+--       - chat            : 글쓰기 도우미 채팅(/tools/answer 모드 write).
+--       - blog.compliance : 그래프 compliance 노드의 LLM 판정(규칙 사전은 LLM 없이 먼저). 후보를 3개로 줄여 판정 편차를 줄인다.
+--       - wiki.*          : 조직의 토픽·키워드 위키. 대량 처리라 오픈소스 먼저.
+--       - dify.aux        : Dify 보조 LLM 노드(질문 분류). 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--       - blog.knowledge(embedding): 브랜드·상품·제휴 캠페인 자료 컬렉션. 동의 없는 조직의 검색 질의도 같은 모델로
+--                           임베딩해야 하므로 국내 오픈소스 임베딩으로 고정(대체 없음, 모델을 바꾸면 컬렉션 재색인).
+--       - voice_chat      : 채팅 음성 질문 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--       - dictation       : 에디터 음성 받아쓰기 STT. 대량·저비용이라 오픈소스 먼저. 녹음 원본은 저장하지 않는다(store_audio=false).
+--   9.2 플랜 features 의 AI 키. seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로
+--       _supabase-modular/seed.sql 반영을 코어에 요청했다(06_AGENT_PLAN.md 6절 AI-R2). 서버는 누락 키를 기본값으로 읽는다.
+-- ---------------------------------------------------------------------
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'blog', 'blog.post_draft',  'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'blog', 'blog.assist',      'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'blog', 'chat',             'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'blog', 'blog.compliance',  'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'blog', 'wiki.query',       'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'blog', 'wiki.ingest',      'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'blog', 'wiki.lint',        'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'blog', 'dify.aux',         'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'blog', 'blog.knowledge',   'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'blog', 'voice_chat',       'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'blog', 'voice_chat',       'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'blog', 'dictation',        'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 9.2 플랜 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 50, "voice_chat": true, "dictation": true, "rag_documents": 10, "product_wiki": false}'::jsonb
+ where app_id = 'blog' and code = 'free';
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dictation": true, "rag_documents": 100, "product_wiki": true}'::jsonb
+ where app_id = 'blog' and code = 'pro';
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 500, "voice_chat": true, "dictation": true, "rag_documents": 1000, "product_wiki": true}'::jsonb
+ where app_id = 'blog' and code = 'business';
+
+-- 9.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'blog'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'blog routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;

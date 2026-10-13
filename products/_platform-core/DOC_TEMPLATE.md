@@ -79,6 +79,14 @@
 | 7 | 표: 지표 \| 목표 \| 측정 방법 \| 기간 |
 | 8 | 사용자 결정 필요 항목(분석 X-5 절에서 미결 항목). 선택지와 권고 |
 
+#### AI·음성 필수 내용 (2026-10-13 추가, 확정 결정 13~17)
+
+| 위치 | 내용 |
+|---|---|
+| 3장 | AI 채팅·RAG·위키·그래프 기능과 제품 음성 기능(음성 대화 포함)을 기능 ID로 넣는다. MVP 필수(12개 제품 모두). 수용 기준에 출처 표시, 실패 시 환불, 음성 없이도 동작을 포함 |
+| 4장 | AI 크레딧 단가 표(채팅 1회, 색인, 그래프 실행, STT 분당, TTS 천 자당)와 오픈소스/상용 경로별 차이. 기본값은 `AI_ARCHITECTURE.md` 7장, `VOICE_ARCHITECTURE.md` 7장 인용 |
+| 6장 | 녹음 동의와 보관(`VOICE_ARCHITECTURE.md` 6장), 상용 AI·음성 제공자로의 국외 이전 고지, AI 생성물 표시(챗봇 응답, 음성, 이미지), 개인정보·민감정보의 오픈소스 강제 범위, 제품 규제(의료·금융·미성년자) |
+
 #### 01장 6절 "법, 개인정보, 금지 문구" 필수 항목
 
 | 항목 | 내용 |
@@ -108,12 +116,22 @@
 |---|---|
 | 1 | 표: 레이어 \| 기술 \| 버전 \| 근거. 확정 결정(3, 6)과 일치 |
 | 2 | 제품 안 모듈과 디렉토리 경계. 06장 소유 파일 경계의 기준이 된다 |
-| 3 | 표: 공용 모듈(`SHARED_MODULES.md` 16개 중 사용하는 것) \| 용도 \| 호출 위치 \| 비고. 재정의하지 않는다 |
+| 3 | 표: 공용 모듈(`SHARED_MODULES.md` 1장 표 중 사용하는 것) \| 용도 \| 호출 위치 \| 비고. 재정의하지 않는다 |
 | 4 | 잡 타입 표: `job_type` \| 큐 \| 런타임(TS/Python) \| 크레딧 선차감 \| 재시도 \| 환불 조건. 페이로드 스키마는 04장 |
 | 5 | LLM purpose 표: purpose \| 모델(fast/quality) \| 크레딧 \| 폴백. 이미지/음성/영상 제공자 표 |
 | 6 | 아래 "리뷰 #n → 차단 설계" 표 |
 | 7 | Vercel/Railway/Supabase 배치, 네트워크 경계, 렌더 서비스 호출 경로 |
 | 8 | 표: 변수 \| 용도 \| 공개 여부(NEXT_PUBLIC) \| 누락 시 동작(기동 실패) |
+
+#### AI·음성·3D 필수 내용 (2026-10-13 추가)
+
+| 위치 | 내용 |
+|---|---|
+| 2장 | AI 모듈 경계: Next.js `/api/ai/*`·`/api/voice/*`, FastAPI `apps/api`(`app/ai/`), Dify 앱 1개, 3D 히어로 컴포넌트 위치. 구현은 `AI_ARCHITECTURE.md`를 인용하고 재정의하지 않는다 |
+| 3장 | 사용하는 공용 모듈에 ai-gateway, ai-service, dify, core-voice, llm-wiki 중 쓰는 것을 넣는다(`SHARED_MODULES.md` 19장) |
+| 5장 | 기능별 라우팅 기본값 표: feature \| kind \| 모드(commercial/open_source/auto) \| 대체 체인 \| 강제 오픈소스 여부. seed `ai_routing_settings`(org null, app=제품)와 일치. 제품 LangGraph 그래프 목록(`<app>.<graph>`, 노드, 사람 승인 지점, compliance 노드) |
+| 1장 | 3D 스택(three.js + React Three Fiber + drei, `HERO_3D.md` 3장)과 Python 런타임(FastAPI, LangChain/LangGraph)을 스택 표에 추가. 스택을 언급할 때는 항상 "Tailwind CSS v4"로 쓴다("Tailwind"만 쓰지 않는다. `_design-guide/DESIGN_SYSTEM.md` 6장) |
+| 8장 | `AI_TOKEN_PRIVATE_KEY`(Next.js만), `AI_TOKEN_JWKS_URL`(FastAPI·음성 서버), `DIFY_*`, LLM·음성 제공자 키 등 AI 관련 변수. 모두 서버 전용 |
 
 #### "리뷰 #n → 차단 설계" 표 (02장 6절 또는 05장 7절)
 
@@ -144,6 +162,20 @@
 | 5 | 잡 진행률(Realtime), 크레딧 부족(402), 플랜 부족(권한), compliance WARN/FAIL, 네트워크 오류, 빈 상태 |
 | 6 | 키보드, 대비, 모바일 폭. 간단히 |
 
+#### AI·음성·3D 필수 내용 (2026-10-13 추가)
+
+| 위치 | 내용 |
+|---|---|
+| 3장 | 채팅 위젯(스트리밍, 출처 표시, 크레딧 안내), 음성 UI(마이크 버튼, 녹음 중 표시, 변환 텍스트 수정 후 전송, 읽어 주기; `VOICE_ARCHITECTURE.md` 8장), 위키 화면(목록, 페이지, 이력, 점검 결과; `LLM_WIKI.md` 3장) |
+| 4장 | 3D 히어로: 기기별 구성(PC·태블릿 풀 3D, 모바일 절충안, 정지 이미지 대체), 성능 예산, 3D 소재와 장면 연출은 `_design-guide/HERO_3D.md`를 인용하고 제품 소재만 정한다 |
+| 5장 | AI 실패(제공자 장애·대체 발생 안내), 마이크 권한 거부, 근거 없음 답변 |
+
+#### 디자인 시스템 필수 내용 (2026-10-13 추가)
+
+| 위치 | 내용 |
+|---|---|
+| 3장 | "디자인 시스템" 항목: 주 레퍼런스(`DESIGN_SYSTEM.md` 5장), 토큰 파일 위치(Tailwind CSS v4 `@theme`), 기본 컴포넌트·배리언트 목록, 정답 소스 위치(`DESIGN_SYSTEM.md` 9장) |
+
 ### 2.5 `04_API.md`
 
 ```
@@ -167,6 +199,14 @@
 | 6 | 외부 API(YouTube, Toss, fal 등) 호출 위치와 실패 처리. 쿼터 |
 | 7 | 제품 SQLSTATE(접두사 규칙) + HTTP 매핑 |
 
+#### AI·음성 필수 내용 (2026-10-13 추가)
+
+| 위치 | 내용 |
+|---|---|
+| 2장 | `/api/ai/*`, `/api/voice/*` Route Handler 표(경로 \| 입력 \| 출력 \| 크레딧 \| 서명 토큰 scope). 브라우저는 Dify·FastAPI를 직접 호출하지 않는다 |
+| 6장 | FastAPI 엔드포인트(`AI_ARCHITECTURE.md` 8장 중 제품이 쓰는 것과 제품 전용 그래프 `POST /graphs/{name}/runs`), Dify Chatflow 계약(입력 변수 `platform_conversation_id`와 `dify_user` 매핑, HTTP 노드 대상, 응답 형식) |
+| 7장 | `CR001`(402), `AI001`(403) 매핑과 제품 AI 오류 |
+
 ### 2.6 `05_DATA_MODEL.md`
 
 ```
@@ -189,7 +229,7 @@
 | 3 | 상태 컬럼마다: 현재 \| 허용 전이 \| 누가 \| 부수 효과. 트리거/RPC 선택 |
 | 4 | 테이블마다: SELECT/INSERT/UPDATE/DELETE 정책 식과 GRANT. 쓰기 정책을 주는 테이블은 8장 조건 충족 근거 |
 | 5 | 인덱스 표와 예상 조회 패턴 |
-| 6 | 사용하는 `core.*` 객체 목록과 용도. ALTER 금지 확인 |
+| 6 | 사용하는 `core.*` 객체 목록과 용도. ALTER 금지 확인. AI 테이블(`core.ai_*`, `core.wiki_*`, `core.voice_*`)은 여기서 참조만 하고 제품 전용 AI 테이블은 꼭 필요할 때만 제품 스키마에 둔다(`AI_ARCHITECTURE.md` 9장) |
 | 7 | 2.3절 표 형식 |
 | 8 | `DB_CONVENTIONS.md` 12장 기준으로 이 제품에서 달라지는 것 |
 | 9 | 모듈러 조각 파일명·번호, 모놀리스 파일 목록, seed 내용 |
@@ -210,8 +250,8 @@
 | 장 | 필수 내용 |
 |---|---|
 | 1 | 소유 파일/디렉토리 분할 원칙. 병렬 에이전트가 같은 파일을 만지지 않도록 디렉토리 단위로 나눈다(`_PRODUCT_AGENT_BRIEF.md:56`) |
-| 2 | 아래 작업 표 |
-| 3 | 웨이브 표 |
+| 2 | 아래 작업 표. AI·음성·3D 작업(RAG 색인·평가셋, 그래프 구현, 채팅 위젯, 음성 UI, 위키 화면, 3D 히어로 컴포넌트, 라우팅 seed)을 작업으로 넣고 권장 모델을 정한다(그래프·라우팅·서명 토큰 연동은 Fable/Opus, 위젯·3D 히어로 UI는 Sonnet) |
+| 3 | 웨이브 표. W0~W1에 `_design-guide/DESIGN_SYSTEM.md` 4장 1~4단계 작업을 둔다. 3단계(비주얼 검토)는 사람이 수행하는 작업으로 명시한다 |
 | 4 | 비율 표 |
 | 5 | 리뷰 5장 작업 목록 각 항목 → 흡수한 작업 ID(`_PRODUCT_AGENT_BRIEF.md:52`) |
 | 6 | `_platform-core`에 요청할 기능(코어 변경은 제품이 하지 않음) |
@@ -306,5 +346,6 @@
 | SQL | 체커 OK, 모든 테이블 RLS, 사용자 역할/플랜/크레딧 변경 불가, DEFINER 함수 `set search_path` + EXECUTE 정리 |
 | 수치 | 근거 없는 수치는 "제안" 표시 |
 | 법/문구 | 01장 6절 6항목 전부 |
-| 랜딩 | 레퍼런스 URL은 `_design-guide/REFERENCES.md`에 있는 것만 |
+| 랜딩 | 레퍼런스 URL은 `_design-guide/REFERENCES.md`에 있는 것만. 3D 히어로는 `HERO_3D.md` 수용 기준(4절) 충족 |
+| AI·음성 | MVP에 AI 기능과 음성 대화가 있고, 01장 4·6절에 AI 단가·녹음 동의·국외 이전·생성물 표시가 있으며, 02장 5절 라우팅 기본값이 seed와 일치 |
 | 보고 | 40줄 이내: 파일과 줄 수, 높음/차단 수, 06장 작업 수와 모델 비율, 사용자 결정 필요 사항(`_PRODUCT_AGENT_BRIEF.md:74-78`) |

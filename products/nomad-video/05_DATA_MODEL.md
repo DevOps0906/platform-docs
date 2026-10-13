@@ -1,5 +1,7 @@
 # 05 데이터 모델: NOMAD AI Factory (nomad-video)
 
+2026-10-13 개정: AI·음성은 코어 `core.ai_*`, `core.wiki_*`, `core.voice_*`를 그대로 쓰고 제품 전용 AI 테이블을 만들지 않았다(6절). 1200 조각에는 11절(AI·음성 기본값: 라우팅 17행, 플랜 AI 키, 체인 검사)만 추가했고 `video` 테이블 22개와 정책은 그대로다.
+
 정본 SQL: `docs/products/_supabase-modular/migrations/1200_video.sql`(아래 `1200:`으로 인용). 모놀리스 변환본: `supabase/monolith/migrations/0002_video_domain.sql`.
 
 ## 1. 개요와 ERD
@@ -78,7 +80,7 @@ track(A/B/C), platform(douyin/xiaohongshu/youtube/tiktok), source_url(https만),
 | track / mode | text | A/B/C, C만 mode(ai_generate/re_edit) 필수(CHECK) |
 | source_id / topic / topic_score | uuid/text/int | - |
 | languages | text[] | 1~3개, KO/JA/EN 부분집합 |
-| options | jsonb | silence_cut, layer_composite, voice |
+| options | jsonb | silence_cut, layer_composite, voice(`{provider, voice_id_by_lang}`: 작업 시작 때 고정된 제공자·보이스, 02장 5.3절 같은 목소리 규칙), script(`{mode, script_run_id?}`) |
 | watermark | boolean | 렌더 워커가 플랜으로 설정 |
 | status | text | queued/processing/partial/ready/failed/canceled |
 | root_job_id / credit_ledger_id | uuid/bigint | `core.jobs`, `core.credit_ledger` |
@@ -92,7 +94,7 @@ title(1~200자), category(knowledge/radio/viral_remake), topic, topic_score, lan
 
 ### 2.7 longform_sections (1200:490)
 
-longform_id, position(1~10, `unique(longform_id, position)`), heading, script(jsonb 언어별), image_prompt, image_path, clip_path, narration_paths, duration_sec, status(draft/image_pending/image_ready/failed). 원본의 sections jsonb 통째 갱신(BS #20)을 정규화로 대체.
+longform_id, position(1~10, `unique(longform_id, position)`), heading, script(jsonb 언어별), image_prompt, image_path, clip_path, narration_paths, duration_sec, status(draft/image_pending/image_ready/failed). `narration_paths` jsonb 규약(2026-10-13, 서버 쓰기 전용 컬럼이며 사용자 GRANT에 없음, `1200_video.sql:948-949`): `{"KO": {"path": "...", "provider": "oss-voice", "voice_id": "...", "voice_job_id": "..."}}`. 첫 섹션의 provider·voice_id가 그 언어의 같은 목소리 기준이다(DB 제약 없음, 앱 규칙과 테스트로 보장). 원본의 sections jsonb 통째 갱신(BS #20)을 정규화로 대체.
 
 ### 2.8 longform_highlights (1200:510)
 
@@ -213,6 +215,33 @@ workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없
 | `affiliate_links`, `affiliate_disclosures` | 업로드·랜딩·링크인바이오 | 안 함 |
 | `is_org_member`, `has_org_role`, `has_entitlement`, `current_org_ids`, `is_service_caller`, `is_privileged_session`(service 전용 함수만), `write_audit`, `set_updated_at`, `guard_privileged_write`, `cancel_job`, `storage_org_id` | 정책·함수·트리거 | 안 함 |
 
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`). 모두 참조만 하고 ALTER하지 않는다.
+
+| core 객체 | video 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 채널 코치 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `video.script`·`video.step` 실행 기록(입력은 요약만, `input` jsonb에 비밀 금지), 위키 lint 결과. 정밀 모드 interrupt 대기 중 run은 `running`이고 마지막 완료 노드가 `plan` | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`). 미디어 워커의 Whisper STT도 kind `stt`, provider `oss-voice`, feature `video.stt`로 직접 기록 | FastAPI, Next.js 음성, 오케스트레이터 TTS, 미디어 워커(service_role), 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 17행(9절), 경로 결정 | seed, FastAPI, Next.js 음성, 오케스트레이터 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 운영자 지식 조직(`VIDEO_KNOWLEDGE_ORG_ID`)의 `video-trends`·`video-guide`, 각 조직의 `video-performance`·`video-scripts`·`video-brand` | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 조직별 채널·브랜드 가이드 위키, 운영자 가이드 | FastAPI(쓰기), Next.js(읽기는 RLS) |
+| `voice_sessions`, `voice_jobs` | 음성 대화·받아쓰기·샘플·내레이션 작업. 내레이션은 구간마다 1행(provider, voice_id, characters) | Next.js, 오케스트레이터 |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 대화-채널/업로드 연결 표 | 채팅이 어느 채널·업로드를 맥락으로 하는지 | Dify 입력 `context_ref`(`channel:<uuid>` 등 비밀이 아닌 식별자, 대화 시작 때만) + FastAPI가 매핑 org와 대상 org를 매번 대조. 대체 경로는 Next.js가 요청마다 `context_ref`를 받아 같은 확인. `ai_conversations`에는 컨텍스트 컬럼이 없다(`0008_core_ai.sql:205-220`) |
+| 보이스 선택 저장 | 작업별 제공자·보이스 고정 | `productions.options.voice`(기존 jsonb), `longform_sections.narration_paths`(기존 jsonb), `voice_jobs.provider_id`·`voice_id` |
+| 대본 그래프 결과 | 정밀 모드 기획안·대본 보관 | `ai_runs.output`(jsonb), 확정된 대본은 기존 `longform_sections.script`·`productions` 입력으로 이어짐 |
+| 음성 처리 고지 증빙 | 마이크 고지 확인 기록 | 감사 기록(`write_audit`, action `voice.notice_ack`). 녹음 원본을 저장하지 않으므로 보관 동의 표가 필요 없음 |
+| 성과·대본 색인 목록 | 무엇을 색인했는지 | `core.ai_documents`(조직 컬렉션)와 `analytics_snapshots`·`productions`의 id를 문서 메타데이터에 기록 |
+| 위키 가이드 문서 | 브랜드 문서 관리 | `core.ai_documents` + 조직 Storage `org-files` |
+
+조각은 `core.*`를 ALTER하지 않는다. 11.2절의 `core.plans` UPDATE는 video 자신의 플랜 행 `features`에 AI 키를 병합하는 데이터 변경이며 표 구조는 바꾸지 않는다.
+
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
 19건(02장 6절 7건과 합쳐 26건).
@@ -236,7 +265,7 @@ workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없
 | BS #8 | `src/lib/billing/credits.ts:22-73` | 비원자 차감, 오류 무시 | 코어 `consume_credits` 원자 차감(FOR UPDATE), 멱등 키. 클라이언트 오류는 throw로 전파 | VID-06-005 |
 | BS #9 | `src/app/(auth)/signup/page.tsx:21-25` | 가입 시 조직 미생성 | 코어 `handle_new_user` + `signup_app='video'` 부트스트랩. 스모크: 가입 직후 조직·엔타이틀먼트 확인 | VID-06-004 |
 | `docs/reviews/Youtube_shots_Maker.md` 3장 #2 | `[5f6d262] backend/routers/oauth.py:76-92` | state 서명 없음, user_id 신뢰 | SM #5와 같은 코어 OAuth state. FastAPI 라우터 미이식 | VID-06-008 |
-| YSM #3 | `[5f6d262] app/api/auth/naver/callback/route.ts:54-86` | 네이버 이메일로 기존 계정에 자동 로그인 | MVP는 네이버 로그인 없음(이메일+Google). Phase 2에 로그인 상태에서만 명시적 연결(코어 요청), 이메일 자동 병합 금지 | 01장 8절 #5, 06장 6절 |
+| YSM #3 | `[5f6d262] app/api/auth/naver/callback/route.ts:54-86` | 네이버 이메일로 기존 계정에 자동 로그인 | MVP는 네이버 로그인 없음(이메일+Google). Phase 2에 로그인 상태에서만 명시적 연결(코어 요청), 이메일 자동 병합 금지 | 01장 8절 D-5, 06장 6절 |
 | YSM #4 | `[5f6d262] backend/routers/studio.py:306-340` | task_id 소유권 미확인 | 진행·결과 조회는 `core.jobs` RLS(조직 멤버만) + `productions` RLS. API는 세션 org와 행 org를 대조, 불일치 404. 스모크: B 제품 테이블 0행 | VID-06-002, 017 |
 
 ## 8. 모놀리스와 모듈러의 차이
@@ -249,14 +278,18 @@ workflows: name, graph(nodes·edges 배열 CHECK), is_active(사용자 GRANT 없
 | 코어 | 0000~0006 | `0001_core_lite.sql`(전 [선택] 절 유지, 머리말에 사유) |
 | apps/plans seed | 공용 `seed.sql`(video 3개 유료 플랜, 팩 4종) | 제품 `seed.sql`(apps 1행, 플랜 4개, 팩 8종 = 정가 4 + Advanced 할인 4, video 문구 8행) |
 | 가입 부트스트랩 | `signup_app` 필수 | apps 1행이면 자동 |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| AI 라우팅 기본값 | `1200_video.sql` 11.1절 | `seed.sql`(같은 17행) |
+| 플랜 AI 키 | `1200_video.sql` 11.2절 병합 UPDATE(모듈러 `seed.sql` 반영 요청 R-V1) | `seed.sql` 플랜 4행의 `features`에 직접 |
+| 체인 검사 | 11.3절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 | 함수 이름 충돌 | 없음 | `public`에 코어와 같은 이름 없음(검증 OK) |
 
 ## 9. 마이그레이션 파일
 
 | 파일 | 내용 | 검증 |
 |---|---|---|
-| `docs/products/_supabase-modular/migrations/1200_video.sql` | 스키마, 헬퍼 2, 트리거 함수 4, 테이블 22, 정책, RPC 8(사용자 6 + 공개 2), service 함수 3, `video-media` 버킷, 끝에 `revoke execute on all functions in schema video from public` 후 역할별 GRANT(코어 0007과 같은 규칙) | 체커 OK(0000~0007 + seed 뒤), 2회 연속 적용 OK |
+| `docs/products/_supabase-modular/migrations/1200_video.sql` | 스키마, 헬퍼 2, 트리거 함수 4, 테이블 22, 정책, RPC 8(사용자 6 + 공개 2), service 함수 3, `video-media` 버킷, 10절 `revoke execute on all functions in schema video from public` 후 역할별 GRANT(코어 0007과 같은 규칙), **11절 AI·음성 기본값(라우팅 17행, 플랜 AI 키, 체인 검사; 2026-10-13)** | 체커 OK(0000~0009 + seed 뒤, `--vector`), 2회 연속 적용 OK |
 | `supabase/monolith/migrations/0001_core_lite.sql` | 코어 lite 복사본 | 체커 OK |
 | `supabase/monolith/migrations/0002_video_domain.sql` | 위 조각의 public 변환본 | 체커 OK |
-| `supabase/monolith/seed.sql` | apps, 플랜 4, 팩 8, 대가성 문구 8 | 체커 OK |
+| `supabase/monolith/seed.sql` | apps, 플랜 4(AI 키 포함), 팩 8, 대가성 문구 8, AI 라우팅 기본값 17행 + 체인 검사 | 체커 OK(`--vector mono`), 반복 적용 OK |
 | RLS 스모크(06장 VID-06-002가 저장소로 옮김) | B 비멤버 21개 테이블 0행, 쓰기·RPC 42501, 자기 권한 상승 42501, 공개 RPC, 게이트(VD002/VD003/VD004/VD007/VD011/22023/23514) | 모듈러 65/65, 모놀리스 65/65 |

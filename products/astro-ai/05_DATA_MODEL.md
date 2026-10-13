@@ -19,6 +19,25 @@ astro.themes (전역 참조 데이터) ← readings.theme_key, reading_renders.t
 
 복합 FK(`(subject_id, org_id) → subjects(id, org_id)`)로 다른 조직 대상을 참조하는 리딩을 DB가 거부한다(스모크 테스트 23503 확인).
 
+AI·음성(2026-10-13)은 코어 표만 참조하고 제품 AI 표를 만들지 않는다(이유는 6절):
+
+```
+core AI·음성 (참조만)
+ ├─ core.ai_conversations   (사용자 본인, dify_user, channel text/voice)
+ │    ├─ core.ai_messages   (citations, provider, credits)
+ │    └─ core.voice_sessions ─ core.voice_jobs (feature voice_chat / narration, store_audio=false)
+ ├─ core.ai_runs            (graph astro.reading, job_id = astro.readings.job_id, credit_ledger_id = readings.credit_ledger_id)
+ │    └─ core.ai_run_steps  (노드 chart, retrieve, draft, compliance, assemble)
+ ├─ core.ai_usage           (run_id, conversation_id, feature, settled_at)
+ ├─ core.ai_org_settings    (국외 이전 동의) <-> astro.consents(kind overseas_transfer)
+ ├─ 운영자 지식 조직(ASTRO_KNOWLEDGE_ORG_ID)만
+ │    ├─ core.ai_collections astro-knowledge(kind rag), astro-wiki(kind wiki), 임베딩 oss-embed
+ │    │    └─ core.ai_documents ─ core.ai_chunks (vector(1024), HNSW)
+ │    └─ core.wiki_pages ─ core.wiki_links, core.wiki_revisions
+ └─ core.ai_routing_settings (org null, app astro, 10행: 9절)
+Storage exports/<org_id>/astro/narration/<reading_id>.mp3 (낭독, 리딩·대상 삭제 시 함께 삭제)
+```
+
 ## 2. 테이블
 
 ### 2.1 `astro.themes`
@@ -123,7 +142,14 @@ astro.themes (전역 참조 데이터) ← readings.theme_key, reading_renders.t
 
 ### 2.6 `astro.consents`
 
-목적: 동의 증빙(append). 철회는 `granted=false` 새 행. kind: terms_required, privacy_required, third_party_birth, overseas_transfer, marketing_email. 컬럼: `id`, `org_id`, `user_id`, `subject_id`(set null), `kind`, `version`, `granted`, `ip_hash`, `created_at`.
+목적: 동의 증빙(append). 철회는 `granted=false` 새 행. kind: terms_required, privacy_required, third_party_birth, overseas_transfer, marketing_email, voice_processing(2026-10-13 추가). 컬럼: `id`, `org_id`, `user_id`, `subject_id`(set null), `kind`, `version`, `granted`, `ip_hash`, `created_at`.
+
+| kind | 의미 | 함께 기록 |
+|---|---|---|
+| `overseas_transfer` | 상용 AI·음성 제공자(국외) 이전 선택 동의(01장 AS-F-035). `version` = 고지문 버전 | `core.set_ai_cross_border_ack`가 `core.ai_org_settings`에 같은 버전을 남긴다 |
+| `voice_processing` | 첫 마이크 사용 전 음성 처리 고지 확인(녹음 원본 미저장) | 없음. 녹음을 저장하지 않으므로 `voice_jobs.consent_*`는 비워 둔다 |
+
+CHECK는 표를 이미 만든 DB에도 반영되도록 `drop constraint if exists` + `add constraint`로 다시 건다(`docs/products/_supabase-modular/migrations/1100_astro.sql:374-378`).
 
 ### 2.7 `astro.preferences`
 
@@ -204,7 +230,31 @@ astro.themes (전역 참조 데이터) ← readings.theme_key, reading_renders.t
 | `is_org_member`, `has_org_role`, `has_entitlement`, `is_service_caller`, `is_privileged_session`, `write_audit`, `set_updated_at`, `guard_privileged_write`, `cancel_job` | 정책, 함수, 트리거 |
 | `consume_credits`, `grant_credits`, `refund_credits`, `enqueue_job`, `confirm_payment_order`, `rate_limit_hit` | 서버(service_role)만 호출 |
 
-조각은 `core.*`를 ALTER하지 않는다. 플랜·크레딧·결제·잡 테이블을 `astro`에 다시 만들지 않는다.
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| core 객체 | astro 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 채팅 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `astro.reading` 실행 기록, 위키 lint 결과 | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, Next.js 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 10행(9절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 해설집·위키 컬렉션(운영자 지식 조직만) | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 사주 용어·해석 위키(운영자 지식 조직만) | FastAPI(쓰기), Next.js 서버(공개 읽기) |
+| `voice_sessions`, `voice_jobs` | 음성 대화, STT·TTS·낭독 작업 | Next.js |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 대화-리딩 연결 표 | 채팅이 어느 리딩을 근거로 하는지 | Dify 입력 `reading_id`(대화 시작 때) + FastAPI가 매핑 org와 리딩 org를 매번 대조. 대체 경로는 Next.js가 요청마다 `reading_id`를 받아 같은 확인 |
+| 낭독 파일 표 | 낭독 mp3 위치와 재사용 | 결정적 Storage 경로 `exports/<org_id>/astro/narration/<reading_id>.mp3` + `voice_jobs`(feature `narration`, `characters`, `provider_id`) |
+| 리딩-그래프 연결 컬럼 | 리딩의 AI 실행 추적 | `ai_runs.job_id = readings.job_id` |
+| 녹음 동의 표 | 음성 처리 고지 증빙 | `astro.consents` kind `voice_processing` |
+| 해설집 문서 표 | 원고 관리 | `core.ai_documents`(운영자 지식 조직) + 원고 파일 `content/knowledge/` |
+
+조각은 `core.*`를 ALTER하지 않는다. 플랜·크레딧·결제·잡 테이블을 `astro`에 다시 만들지 않는다. 13.2절의 `core.plans` UPDATE는 astro 자신의 starter 행 `features`에 AI 키를 병합하는 데이터 변경이며 표 구조는 바꾸지 않는다.
 
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
@@ -214,11 +264,11 @@ astro.themes (전역 참조 데이터) ← readings.theme_key, reading_renders.t
 |---|---|---|---|---|
 | `docs/reviews/Astro_AI.md` 3장 #2 | `docs/reviews/Astro_AI.md:48` | DB 스키마/ERD 없음, 이름만 있음 | 이 장 1~6절과 `1100_astro.sql`(7개 테이블, 상태 CHECK, 복합 FK, 인덱스). 체커 OK, RLS 스모크 65/65 | AS-06-001, AS-06-002 |
 | `docs/reviews/Astro_AI.md` 3장 #4 | `docs/reviews/Astro_AI.md:50` | 실패 시 환불·재시도·상태 머신·멱등 키 없음 | `readings` 전이 트리거 + `credit_ledger_id`로 잡과 연결 → `core.fail_job` 최종 실패 자동 환불(`docs/products/_supabase-modular/migrations/0005_core_jobs_storage.sql:231-234`), 대기 취소는 `astro.cancel_reading` → `core.cancel_job` 환불(스모크: 취소 후 잔액 30 복원). 멱등: `request_id` 유일 + `consume:astro:<id>`/`job:astro:<id>`. enqueue 실패 시 Route Handler 동기 환불. 스위퍼가 잡과 리딩 상태 불일치를 정리 | 3.1절, AS-06-010, AS-06-012 |
-| `docs/reviews/Astro_AI.md` 3장 #5 | `docs/reviews/Astro_AI.md:51` | 업로드 ThemeConfig가 CSS로 렌더러에 들어가 SSRF·파일 읽기 | 사용자 테마 업로드 경로를 없앴다: `themes`는 guard 트리거로 service_role만 쓰고 사용자 정책 없음. 운영자 테마도 zod/pydantic 화이트리스트(hex 색 `^#[0-9A-F]{6}$`, 서체 열거형, 숫자 범위)를 통과한 값만 변환기가 CSS 변수로 만든다(`url(`, `@import`, `\` 문자 거부). 렌더 서비스 `url_fetcher`는 자체 Storage만(`docs/products/_platform-core/SHARED_MODULES.md:256`) | AS-06-013, AS-06-014 |
+| `docs/reviews/Astro_AI.md` 3장 #5 | `docs/reviews/Astro_AI.md:51` | 업로드 ThemeConfig가 CSS로 렌더러에 들어가 SSRF·파일 읽기 | 사용자 테마 업로드 경로를 없앴다: `themes`는 guard 트리거로 service_role만 쓰고 사용자 정책 없음. 운영자 테마도 zod/pydantic 화이트리스트(hex 색 `^#[0-9A-F]{6}$`, 서체 열거형, 숫자 범위)를 통과한 값만 변환기가 CSS 변수로 만든다(`url(`, `@import`, `\` 문자 거부). 렌더 서비스 `url_fetcher`는 자체 Storage만(`docs/products/_platform-core/SHARED_MODULES.md:269`) | AS-06-013, AS-06-014 |
 | `docs/reviews/Astro_AI.md` 3장 #6 | `docs/reviews/Astro_AI.md:52` | `approveTemplate`가 role 확인 없이 service_role로 승인 | 검수 기능은 폐기(07장). 어드민 쓰기 Route Handler는 `requireSession` 후 `platform_role='platform_admin'` 재검증을 service_role 클라이언트 생성보다 먼저 하고 감사 기록. 상태 컬럼이 있는 표는 사용자 쓰기 정책이 없고 guard 트리거로 이중 잠금(스모크: B의 `update readings` 42501) | 4절, AS-06-022 |
 | `docs/reviews/FortuneDocs.md` 3장 #3 | `docs/reviews/FortuneDocs.md:42` | 입력 모델과 DDL 불일치(윤달, 자시, 출생지, 생시 모름 컬럼 없음) | `subjects`에 `is_leap_month`(음력 CHECK), `zi_hour_mode`, `birth_time_unknown`, `birth_longitude`, `gender NOT NULL`. 생시 모름이면 엔진이 삼주 분석(시주 null)으로 계산하도록 사양 고정 | 2.2절, AS-06-004 |
 | `docs/reviews/FortuneDocs.md` 3장 #4 | `docs/reviews/FortuneDocs.md:43` | `fortune_books FOR ALL`로 사용자가 리포트 직접 INSERT, `WITH CHECK` 없음 | `readings`에 INSERT/UPDATE GRANT와 정책이 없고 guard 트리거로 42501. 생성은 차감 후 서버만. 사용자 쓰기 표(`preferences`)는 `with check` 필수, 다른 조직 대상 참조는 복합 FK로 거부(스모크: B 무료 생성 시도 42501, org_id 바꾸기 42501, 타 조직 subject 23503) | 4절, AS-06-002 |
-| `docs/reviews/FortuneDocs.md` 3장 #5 | `docs/reviews/FortuneDocs.md:44` | 원자 차감·단가·환불·크레딧 로그·가입 트리거 없음 | 코어 `wallets FOR UPDATE` 원자 차감과 append-only 원장(`docs/products/_platform-core/CORE_SPEC.md:164-170`), 가입 트리거(`:72`)를 쓰고 제품 테이블에는 잔액 컬럼을 두지 않는다. 크레딧 RPC는 service_role 전용(스모크: B `grant_credits`/`consume_credits`/`update wallets` 42501). 단가는 01장 4.2절, 환불은 3.1절 | AS-06-010, AS-06-009 |
+| `docs/reviews/FortuneDocs.md` 3장 #5 | `docs/reviews/FortuneDocs.md:44` | 원자 차감·단가·환불·크레딧 로그·가입 트리거 없음 | 코어 `wallets FOR UPDATE` 원자 차감과 append-only 원장(`docs/products/_platform-core/CORE_SPEC.md:169-175`), 가입 트리거(`:77`)를 쓰고 제품 테이블에는 잔액 컬럼을 두지 않는다. 크레딧 RPC는 service_role 전용(스모크: B `grant_credits`/`consume_credits`/`update wallets` 42501). 단가는 01장 4.2절, 환불은 3.1절 | AS-06-010, AS-06-009 |
 
 ## 8. 모놀리스와 모듈러의 차이
 
@@ -234,15 +284,34 @@ astro.themes (전역 참조 데이터) ← readings.theme_key, reading_renders.t
 | Realtime | `astro.readings`, `astro.reading_renders` 발행 | `public.` 같은 표 |
 | 앱 설정 | `SUPABASE_DB_SCHEMA=core`, `ASTRO_DB_SCHEMA=astro` | 둘 다 `public` |
 | PII 암호화 | 제품 표 암호문 컬럼(앱 계층). `core.encrypted_credentials`는 쓰지 않는다 | 같음(그래서 6-B 제거) |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| AI 라우팅 기본값 | `1100_astro.sql` 13.1절 | `seed.sql`(같은 10행) |
+| starter AI 키 | `1100_astro.sql` 13.2절 병합 UPDATE(모듈러 `seed.sql` 반영 요청 R-9) | `seed.sql` starter `features`에 직접 |
+| 체인 검사 | 13.3절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 
 ## 9. 마이그레이션 파일
 
 | 파일 | 내용 | 검증(2026-10-12, PGlite) |
 |---|---|---|
-| `docs/products/_supabase-modular/migrations/1100_astro.sql` | 스키마, 7개 표, 전이 트리거 3개, RLS, 함수 3개, Realtime, 테마 2행 | `check.mjs mod` 0000~0007 + seed + 1100 OK, 2회 반복 적용 OK. 파일 끝 12절에서 `astro` 함수의 PUBLIC EXECUTE를 회수(0007과 같은 규칙), 모놀리스는 제품 함수만 하나씩 회수 |
-| `supabase/monolith/migrations/0001_core_lite.sql` | 코어 축소판 복사본(제거 절은 주석) | `check.mjs mono` OK |
-| `supabase/monolith/migrations/0002_astro_domain.sql` | 1100 조각을 변환 | OK |
-| `supabase/monolith/seed.sql` | apps 1행, starter 플랜, 크레딧팩 4종 | OK, 반복 적용 OK |
+| `docs/products/_supabase-modular/migrations/1100_astro.sql` | 스키마, 7개 표, 전이 트리거 3개, RLS, 함수 3개, Realtime, 테마 2행, 13절 AI·음성 기본값(라우팅 10행, starter AI 키, 체인 검사) | `check.mjs mod` 0000~0007 + seed + 1100 OK, 2회 반복 적용 OK. 파일 끝 12절에서 `astro` 함수의 PUBLIC EXECUTE를 회수(0007과 같은 규칙), 모놀리스는 제품 함수만 하나씩 회수 |
+| `supabase/monolith/migrations/0001_core_lite.sql` | 코어 축소판 복사본(제거 절은 주석, SECTION 11·12 AI·음성 포함) | `check.mjs mono` OK |
+| `supabase/monolith/migrations/0002_astro_domain.sql` | 1100 조각을 변환(consents `voice_processing` 포함) | OK |
+| `supabase/monolith/seed.sql` | apps 1행, starter 플랜(AI 키 포함), 크레딧팩 4종, AI 라우팅 기본값 10행 + 체인 검사 | OK, 반복 적용 OK |
+
+2026-10-13 재검증(PGlite `--vector`, `docs/products/_tools-sqlcheck/check.mjs`):
+
+| 검사 | 결과 |
+|---|---|
+| `check.mjs --vector mod` 0000~0009 + `seed.sql` + `1100_astro.sql` | 전부 OK |
+| `check.mjs --vector mono` 0001 + 0002 + `seed.sql` | 전부 OK |
+| 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app astro) | 10행(모듈러·모놀리스) |
+| starter `features` | 기존 키 + `ai_chat`, `ai_chat_turns_per_day`(200), `voice_chat`, `narration` |
+| 미동의 조직 `resolve_ai_route` | `astro.reading` = oss-llm, `narration` = oss-voice, `voice_chat` stt = oss-voice, `astro.knowledge` = oss-embed |
+| 동의 후 | `astro.reading` = anthropic → openai → google → oss-llm, `narration` = elevenlabs → oss-voice, `dify.aux`는 계속 oss-llm(강제), `WIKI.Lint `(대소문자·공백)도 `wiki.lint` 행으로 해석 |
+| `consents` kind `voice_processing` INSERT | 성공 |
+| 잘못된 체인 행(tts 기능에 anthropic) 뒤 13절 재적용 | `astro routing defaults: invalid chain providers` 예외 |
+
+AI 기능별 기본값 행(정본 02장 5.1절): `astro.reading`, `chat`(llm, auto, anthropic → openai → google → oss-llm), `wiki.query`, `wiki.ingest`, `wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `astro.knowledge`(embedding, open_source, oss-embed), `voice_chat` stt(auto, oss-voice → elevenlabs), `voice_chat` tts(auto, elevenlabs → oss-voice), `narration` tts(auto, elevenlabs → oss-voice, 작업 중 대체 금지는 음성 어댑터).
 
 RLS 스모크 결과(사용자 A·B 서로 다른 조직, X는 엔타이틀먼트 없음): 모듈러 65/65, 모놀리스 64/64(엔타이틀먼트 없는 조직 항목은 모놀리스 자동 부트스트랩이라 제외) 통과.
 

@@ -1,5 +1,7 @@
 # 07 원본 이식과 폐기: NOMAD AI Factory (nomad-video)
 
+AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 LLM 클라이언트 3종과 Anthropic 직접 호출(`NOMAD Shorts Maker/src/lib/ai/`, YSM `script_adapter.py`, `geo_metadata.py`), DeepL·ElevenLabs·OpenAI TTS 어댑터, Whisper STT, 컴플라이언스 필터, 자유 문자열 모델명(YSM `backend/models/script.py:87`)이다. RAG, 제품 지식 위키, Dify, LangGraph, 음성 대화, 오픈소스 TTS, 3D 히어로는 원본에 없어 모두 신규다(원본 랜딩의 타임라인 히어로는 4.3절 디자인 방향으로 이미 대체됐고 3D가 아니다). 아래 표의 AI 행이 이 자산들의 대응이다. 미디어 워커(Whisper, demucs, FFmpeg)는 FastAPI AI 서비스와 합치지 않는다(02장 2절 경계 표).
+
 경로: SMK=`NOMAD Shorts Maker/`, BSD=`Nomad-BlogStudio/`, YSM=`git show 5f6d262:Youtube_shots_Maker/`(작업 트리에서는 삭제됨, 읽기 전용).
 
 ## 1. 원본별 자산 분류
@@ -13,7 +15,7 @@
 | `src/lib/platforms/{youtube,instagram,threads,tiktok}.ts`, `src/lib/channels/{oauth-manager,quota-monitor}.ts` | 부분 | 이식 | `packages/sns-uploader/` | SHARED_MODULES 11장 |
 | `src/lib/platforms/{coupang,suno,distrokid,serpapi,google-trends,youtube-analytics}.ts` | 부분 | 이식(coupang은 공용 affiliate 어댑터가 소유, 참고만) | orchestrator steps/radar | MA:618 |
 | `src/lib/radar/{playboard,channel-finder,bling,scorer}.ts` | 부분 | 이식(난수 제거) | `workers/video-orchestrator/src/radar/` | SM #17 |
-| `src/lib/ai/{deepl,elevenlabs,openai-tts,whisper}.ts` | 부분 | 이식(deepl, elevenlabs, openai-tts), whisper.ts 폐기(Python) | orchestrator steps | MA:572 |
+| `src/lib/ai/{deepl,elevenlabs,openai-tts,whisper}.ts` | 부분 | 이식(deepl, elevenlabs는 `core-voice` 어댑터 규약으로 감싸 이식), openai-tts 폐기(01장 D-14), whisper.ts 폐기(Python 미디어 워커로) | orchestrator `steps/{translate,tts}` | MA:572 |
 | `src/lib/compliance/filter.ts` | 부분 | 참고(공용 compliance 모듈이 소유) | - | MA:963 |
 | `src/lib/queue/pipeline-track-*.ts`, `workers/*.worker.ts` | 부분 | 참고(단계 목록만), 코드 폐기 | orchestrator flows | SM #9 |
 | `src/app/page.tsx`, `src/app/pricing` | 동작 | 참고(구조만, 카피·수치 교체) | `src/app/(marketing)` | 03장 4절 |
@@ -41,7 +43,7 @@
 | `backend/services/downloader.py`(798줄) | 부분 | 이식 | `services/media-worker/handlers/download.py` | YSM:122 |
 | `backend/services/audio_separator.py` | 부분 | 이식(타임아웃 추가) | `handlers/separate.py` | YSM #14 |
 | `backend/services/proxy_manager.py` | 부분 | 이식(소싱 전용) | `media-worker/core/proxy.py` | MA:566 |
-| `backend/services/stt.py` | 부분 | 이식(전역 Lock 제거) | `handlers/stt.py` | YSM #10 |
+| `backend/services/stt.py` | 부분 | 이식(전역 Lock 제거, 라우팅 `video.stt` 편입과 사용량 기록 추가, faster-whisper 정렬은 01장 D-13) | `handlers/stt.py` | YSM #10 |
 | `backend/services/geo_metadata.py` | 부분 | 참고(프롬프트) | orchestrator steps | MA:610 |
 | `backend/services/account_manager.py`의 AES-GCM | 동작 | 참고(방식만, 저장은 코어 vault) | - | YSM:165 |
 | `backend/services/video_editor.py`, `tts.py`, `script_adapter.py` | 부분 | 참고(Edge-TTS/CLOVA 제외) | - | MA:576 |
@@ -55,7 +57,7 @@
 |---|---|
 | downloader | URL 도메인 허용 목록, yt-dlp 인자 앞 `--`, 300초 타임아웃·kill, `except: pass` 제거(YSM #16), 결과를 `video-media`에 업로드, pHash 계산 |
 | audio_separator | 900초 타임아웃, 출력 경로는 서버 생성 uuid |
-| stt | 프로세스 시작 시 모델 1회 로드, 동기 처리(이벤트 루프 재생성 제거), GPU OOM 시 CPU 폴백 유지 |
+| stt | 호출마다 `core.ai_usage` stt 행 기록(VID-06-052 `handlers/usage/`), 공용 음성 서버와 같은 세그먼트 형식, 프로세스 시작 시 모델 1회 로드, 동기 처리(이벤트 루프 재생성 제거), GPU OOM 시 CPU 폴백 유지 |
 | ffmpeg 계열(SMK workers) | 입력 계약 `input_path` 단일화(SM #10의 `videoPath`/`audioUrl` 불일치 해소), `execFile` 인자 배열, 레이어 순서 상수 |
 | sns 업로더 | `readFileSync` → 스트림 resumable(SM #18), 반환 타입 정리(`uploadVideo().videoId`), 토큰은 vault에서 복호화, 쿼터 사용량 갱신 |
 | oauth-manager | state는 코어 `create/consume_oauth_state`, 콜백에서 쿠키 세션에 의존하지 않음 |
@@ -92,6 +94,15 @@
 | 20 | BS `lib/ai/fal-image.ts` placeholder URL 반환 | 오류를 숨겨 과금(BS #17). 공용 fal client | BS:71 |
 | 21 | SM Content Automator 블로그 기능, YSM Track D 블로그 | 폐기가 아니라 nomad-blog로 이관(결정 1) | MA:628-633 |
 
+AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 C-3 목록 밖이라 번호 앞에 N-을 붙인다(위 21개와 합산하지 않는다).
+
+| # | 대상 | 사유 | 근거 |
+|---|---|---|---|
+| N-22 | OpenAI TTS-1-HD 백업 호출(SM `src/lib/ai/openai-tts.ts`, PRD 14장 TTS 백업) | 코어 제공자 레지스트리에서 `openai`는 `llm`만이다. 체인 `elevenlabs → oss-voice`로 대체(01장 D-14, 코어 요청 R-V2) | `docs/products/_supabase-modular/seed.sql:216` |
+| N-23 | orchestrator의 TS LLM 직접 호출 경로(번역·대본·블링·메타·compliance 단계가 LLM 클라이언트를 직접 부르던 코드) | 라우터가 FastAPI로 옮겨졌다. 단계는 그래프 `video.script`·`video.step` 호출로 바뀐다(02장 5.2절). 폐기 #11(LLM 클라이언트 3종)과 같은 뿌리 | `docs/products/_platform-core/SHARED_MODULES.md:42` |
+| N-24 | 원본 랜딩 연출 "플레이헤드 1회 스윕"(4.3절 초기안) | 3D 히어로가 대체(사용자 결정 2026-10-13, 03장 4.5절). 하단 구성은 유지 | 확정 결정 15 |
+| N-25 | YSM의 FastAPI 라우터를 AI 서비스로 재사용하는 안 | `apps/api`는 AI 전용 신규 서비스다. 미디어·소싱·OAuth 라우터를 섞으면 LLM 키와 미디어 바이너리 경계가 무너진다(폐기 #1, YSM #8과 같은 결론) | 02장 2절 경계 표 |
+
 ## 4. 복사 금지 결함
 
 SECURITY_BASELINE 14장 중 해당 항목 + 제품 고유 결함.
@@ -120,6 +131,18 @@ SECURITY_BASELINE 14장 중 해당 항목 + 제품 고유 결함.
 | 랜딩 미검증 수치 "128,470+" | SM `src/app/page.tsx:164` | 허위 표시 | 검증 수치만 |
 | 운영자 이메일 하드코딩 admin 부여 | YSM `backend/migrations/003_user_roles.sql:58` | 개인정보, 환경 분리 불가 | `approve_profile`/platform_admin 수동 부여 |
 | 실키 `.env` 잔존 | YSM `backend/.env`, BS `.env` | 키 유출 | 재발급 후 삭제 |
+| LLM·음성 키를 브라우저, Vercel 클라이언트 번들, 미디어 워커에 두기 | SM `.env.local`의 LLM 키 다수(원본은 Next.js 서버에 직접 둠) | 키 유출, 비용 남용, 미디어 워커 침해 시 확산 | LLM 키는 FastAPI 전용, ElevenLabs 키는 서버 전용 프로세스(Next.js, 오케스트레이터), 서명 개인키는 Next.js만(02장 8절) |
+| 브라우저에서 Dify·FastAPI·AI 제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*` |
+| Dify 입력에 토큰·org·채널 토큰·개인정보 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남음 | 대화 매핑(`platform_conversation_id`, `context_ref`, `dify_user`) |
+| 내레이션·샘플 도중 다른 제공자로 대체 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 한 영상 안에서 목소리가 바뀜 | 작업 시작 때 고정, 대체 금지, 실패 + 환불(02장 5.3절) |
+| 원본 영상·오디오를 국외 STT로 전송 | 신규 위험(제3자 저작물·음성) | 권리·개인정보, 국외 이전 | `video.stt`는 `oss-voice` 고정(01장 6.1절) |
+| LLM이 대가성 문구를 쓰거나 지우거나 우회 표현으로 대체 | 확정 결정 12 | 표시·광고법 위반 | 문구는 서버가 삽입(`effective_disclosure`), 그래프는 자리만 비움, DB CHECK |
+| 근거 없는 조회수·수익 수치와 가상 후기를 LLM이 생성 | `NOMAD Shorts Maker/src/app/page.tsx:164`(미검증 수치 전례), 01장 6절 | 허위 표시 | 근거 id가 있는 수치만 인용, compliance 노드 규칙 |
+| 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | DB의 메시지·대본만 낭독. 샘플만 100자 이하 + 선차감 + 레이트 리밋 |
+| 타인(원본 배우·크리에이터) 목소리 복제 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80` | 음성·초상 권리 침해 | 미제공, Phase 2도 본인 한정 |
+| 미디어 처리(FFmpeg·Whisper)를 FastAPI AI 서비스에 넣기 | 02장 2절 | LLM 키와 미디어 바이너리 경계 붕괴 | 미디어 워커(`core.claim_jobs`)에만 |
+| 3D 재질에 토큰 밖 색, 3D 안 숫자·글자, 보라 글로우·네온 그리드 | `docs/products/_design-guide/HERO_3D.md:52-53`, REFERENCES nomad-video 피할 인상 | 피할 인상, 검증 불가 수치 | 03장 4.5절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 
@@ -133,3 +156,4 @@ git 쓰기 명령은 사용자 승인 후 개발 단계에서 수행한다(이 �
 | 4 | Nomad-BlogStudio, NOMAD Shorts Maker를 `archive/` 이동 또는 태그 `archive/nomad-blogstudio-v0.3`, `archive/nomad-shorts-maker-v0.4` | VID-06-040 |
 | 5 | SM `files.zip`, `taste-skill-shorts-factory*.ts` 3종, `_add`/`_pricing`/`_complete` 문서는 아카이브에만 남김 | VID-06-040 |
 | 6 | 정리 커밋과 기능 커밋 분리 규칙을 CLAUDE.md에 둔다(YSM #1 재발 방지) | 이 폴더 CLAUDE.md 2장 |
+| 7 | AI 인프라 연결: 공용 Dify에 `video-chat` 앱 등록과 내부 키 발급, 운영자 지식 조직 생성(`VIDEO_KNOWLEDGE_ORG_ID`), 공용 음성 서버 보이스 목록 확정 | VID-06-050, 사용자(R-V7, R-V10) |

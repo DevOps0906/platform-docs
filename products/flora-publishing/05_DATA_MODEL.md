@@ -1,5 +1,7 @@
 # 05 데이터 모델: FLORA Publishing
 
+2026-10-13 개정: AI·음성(확정 결정 13~17)은 코어 표(`core.ai_*`, `core.wiki_*`, `core.voice_*`)만 참조하고 제품 AI 표를 만들지 않는다(이유는 6절). 이번 개정의 DB 변경은 `1000_publishing.sql` 15절(AI·음성 라우팅 기본값 12행, free·basic 플랜 AI 키 6개, 체인 검사)뿐이며 표 구조는 바꾸지 않았다.
+
 작성일 2026-10-12. 정본 SQL은 `docs/products/_supabase-modular/migrations/1000_publishing.sql`(아래 "조각:줄"). 모놀리스 `supabase/monolith/migrations/0002_publishing_domain.sql`은 조각을 변환한 것이다. 규칙은 `docs/products/_platform-core/DB_CONVENTIONS.md`(아래 DBC).
 
 ## 1. 개요와 ERD
@@ -17,6 +19,14 @@ core.organizations (참조만)
  └── publishing.webhook_endpoints ──> core.encrypted_credentials
        └── publishing.webhook_deliveries
 publishing.waitlist (테넌트 아님)
+core AI·음성 (참조만, 6절)
+ ├─ core.ai_conversations / ai_messages   (글쓰기 도우미 대화, 본인만 SELECT, books와 DB 연결 없음: book_id는 Dify 입력과 서버 확인)
+ ├─ core.ai_collections book-<book_id>(rag), book-<book_id>-wiki(wiki), 임베딩 oss-embed
+ │    └─ core.ai_documents ─ core.ai_chunks (vector(1024), HNSW)       <- 참고 파일, 원고 스냅샷(source_type product)
+ ├─ core.wiki_pages / wiki_links / wiki_revisions   (slug books/<book_id>/..., 책 설정집)
+ ├─ core.ai_runs / ai_run_steps   (graph publishing.draft·publishing.assist, job_id = core.jobs.id, credit_ledger_id)
+ ├─ core.ai_usage, ai_org_settings(국외 이전 동의), voice_sessions, voice_jobs
+ └─ core.ai_routing_settings (org null, app publishing, 12행: 9절)
 코어 사용: core.plans/app_entitlements(플랜 해석), core.wallets/credit_ledger(크레딧), core.jobs, Storage 버킷 3개, core.audit_log
 ```
 
@@ -44,7 +54,7 @@ publishing.waitlist (테넌트 아님)
 | `tone` | jsonb | N | '{}' | 어조 슬라이더 3축 |
 | `layout_settings` | jsonb | N | '{}' | Auto-Fit 미세조정(본문 pt, 행간, 여백 4방향) |
 | `plan_brief` | jsonb | Y | - | 선택한 기획안 + 타겟 독자, 강조 톤 |
-| `book_info` | jsonb | N | '{}' | 부제, 키워드 5, 소개 200자, 출판사, `isbn_reference` |
+| `book_info` | jsonb | N | '{}' | 부제, 키워드 5, 소개 200자, 출판사, `isbn_reference`, `ai_open_source_only`(boolean, 기본 없음 = false. 책 단위 오픈소스 전용 AI 스위치, 01장 PB-F-056·D12. 서버가 책 정보 생성 결과를 병합할 때 이 키를 덮어쓰지 않는다. D12에서 전용 컬럼으로 승격하면 PB-06-001 후속 마이그레이션) |
 | `step_state` | jsonb | N | '{}' | 위저드 UI 상태(후보 캐시, 완료 단계) |
 | `current_step` | smallint | N | 1 | 1~10 |
 | `source` | text | N | 'wizard' | wizard, upload, seed |
@@ -154,6 +164,45 @@ publishing.waitlist (테넌트 아님)
 | Storage `org-files`, `exports`, `public-assets` | 업로드·표지, 내보내기, 공개 표지(Phase 2) | 안 함. 경로 첫 폴더 = org_id를 CHECK로 한 번 더 확인 |
 | Realtime `supabase_realtime` | `publishing.sections`, `publishing.generation_runs` 추가 | 발행 목록에 제품 테이블만 추가 |
 
+### 6.1 AI·음성 코어 객체와 제품 규칙 (2026-10-13)
+
+AI·음성 코어 객체(`docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| 코어 객체 | 용도 | 쓰는 쪽 |
+|---|---|---|
+| `ai_conversations`, `ai_messages` | 글쓰기 도우미 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | web(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `publishing.draft`·`publishing.assist` 실행 기록, 위키 lint 결과. 조직 구성원이 SELECT(진행 칩 표시) | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, web 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 12행(9절), 경로 결정 | seed, FastAPI, web 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의와 고지문 버전 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 책별 자료·원고 컬렉션(이용자 조직). `ai_chunks`는 사용자 SELECT 없음 | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions`, `purge_wiki_page` | 책 설정집. 조직 구성원이 SELECT, 쓰기는 FastAPI만 | FastAPI |
+| `voice_sessions`, `voice_jobs` | 받아쓰기·채팅 음성·낭독 작업 기록(`store_audio=false`) | web 음성 |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, web |
+
+이름·경로 규칙(제품이 정하는 값, 코어 표를 바꾸지 않는다):
+
+| 대상 | 규칙 |
+|---|---|
+| RAG 컬렉션 | 책마다 `book-<book_id>`(kind `rag`)와 `book-<book_id>-wiki`(kind `wiki`). 둘 다 `embedding_provider='oss-embed'`. `match_ai_chunks`는 책 컬렉션 id를 넘겨 호출하므로 책 사이 검색이 섞이지 않는다. 책 생성 시가 아니라 첫 색인·설정집 만들기 때 만든다 |
+| 문서 `source_type` | 참고 파일 `upload`, 원고 스냅샷 `product`(소제목별 1문서, `content_hash`로 변경 감지), 설정집 임베딩 `wiki` |
+| 설정집 slug | `books/<book_id>/index`, `books/<book_id>/characters/<name>`(`page_type='entity'`), `books/<book_id>/terms/<term>`(`concept`), `books/<book_id>/style/<name>`·`books/<book_id>/timeline`(`topic`). `book_id`의 uuid 문자(소문자 16진수와 하이픈)는 slug CHECK(`^[a-z0-9]+(-[a-z0-9]+)*(/...)*$`)를 통과한다(PGlite로 확인, 9절) |
+| 낭독 파일 | `exports/<org_id>/publishing/narration/<book_id>/<scope_id>-<content_hash>.mp3`. `voice_jobs.storage_path`는 `store_audio=false`일 때 NULL이어야 하므로(CHECK `voice_jobs_no_store_check`) 파일 위치는 위 결정적 경로가 정본이고 DB에 컬럼을 두지 않는다 |
+| 개인정보 표시 | 업로드 때 선택하면 `ai_documents.contains_pii=true`, 그 문서에서 만든 위키 페이지 `derived_from_pii=true`. 책 단위 스위치는 `books.book_info.ai_open_source_only` |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 결정 | 이유 |
+|---|---|---|
+| 책-컬렉션 연결 표 | 만들지 않음 | 컬렉션 이름 규칙(`book-<book_id>`)과 `(org_id, app_id, name)` 유일 제약으로 충분 |
+| 동의 증빙 표(astro-ai의 `consents` 방식) | 만들지 않음(D16) | 국외 이전은 `ai_org_settings`(고지문 버전·시각·동의자), 음성 처리 고지는 `core.audit_log`(`voice.notice_ack`)로 증빙한다. 감사 로그 보존이 2년(제안)이라 분쟁 증빙에 부족하면 전용 표로 전환 |
+| 책 AI 개인정보 컬럼 | 만들지 않음(D12) | `book_info` 키로 시작. 승격 여부는 D12에서 결정 |
+| 일관성 메모·초안 제안 저장 | 만들지 않음 | 자식 잡 `result`(`core.jobs`)와 `ai_run_steps.output`에 남긴다. 편집기가 다시 열릴 때도 메모를 보여야 하므로 코어 잡 결과 보존 기간(`CORE_SPEC.md` 14장, 구현 시 확인)이 짧으면 `sections.ai_notes jsonb` 컬럼을 PB-06-001 후속으로 추가한다 |
+| 낭독 파일 표 | 만들지 않음 | 결정적 Storage 경로 |
+| 챕터 초안 실행 추적 | 기존 `generation_runs` + `core.ai_runs.job_id` | `generation_runs.parent_job_id`의 자식 잡 `write_section`마다 `ai_runs` 1행 |
+
+삭제 연쇄: 책 영구 삭제(`publishing.purge`)는 그 책의 컬렉션 두 개(문서·청크 cascade)와 설정집 페이지를 `purge_wiki_page`로 지우고, 낭독 파일을 Storage에서 지운다. 대화·메시지는 책과 DB로 연결되지 않으므로 이용자가 대화 삭제를 요청할 때 지운다. 조직 purge는 `core.ai_*`, `core.wiki_*`, `core.voice_*`의 `org_id ... on delete cascade`로 따라 지워진다. 인프라에 남는 사본: Dify 대화 로그(30일 보존).
+
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
 12건. 나머지 13건(비보안)은 `02_ARCHITECTURE.md` 6절. 합계 25 = 리뷰 4건의 "높음" 수(Flora-v2 9, flora 10, flora-publisher 2, SellingDocs 4).
@@ -180,6 +229,9 @@ publishing.waitlist (테넌트 아님)
 | 스키마 | `publishing` + `core` | `public` 하나 | 모놀리스 스키마 `public`은 사용자 최종 확인 대기(작업 지시, `MONOLITH_CORE_LITE.sql:5-10`) |
 | 코어 | `migrations/0000~0006` | `0001_core_lite.sql`: SECTION 6-A(OAuth state), 9(affiliate) 제거. 3, 4, 6-B, 6-C, 7, 8 유지 | 제거 사유는 파일 안 주석 |
 | 제품 SQL | `1000_publishing.sql`(정본) | `0002_publishing_domain.sql` = 정본을 DBC 12장 규칙으로 변환(create schema 제거, `core.`/`publishing.` → `public.`, Realtime schemaname) | 직접 수정 금지, 변환 스크립트 작업 PB-06-001 |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) | 같음 |
+| AI 라우팅 기본값 | `1000_publishing.sql` 15.1절 | `seed.sql`(같은 12행) | 모듈러 쪽은 제공자 행이 있을 때만 체인 검사(15.3절) |
+| 플랜 AI 키(6개) | `1000_publishing.sql` 15.2절 병합 UPDATE(모듈러 `seed.sql` 반영 요청 R7) | `seed.sql` free·basic `features`에 직접 | 서버는 누락 키를 Free 값으로 읽는다 |
 | 앱 등록 | `core.apps` + 모듈러 seed | `public.apps` 1행(`schema_name='public'`) → 가입 시 메타데이터 없이 자동 부트스트랩 | `DBC` 12장 |
 | 플랜 seed | 모듈러 seed(2026-10-13 모놀리스 seed와 일치, features 16키) | `seed.sql`에 features 16키 | 같음. 서버 기본값은 키 누락 대비로 유지 |
 | PostgREST | `[api].schemas`에 `publishing` 추가, 클라이언트 `supabase.schema('publishing')` | 기본 노출 | - |
@@ -190,18 +242,19 @@ publishing.waitlist (테넌트 아님)
 
 | 파일 | 내용 |
 |---|---|
-| `docs/products/_supabase-modular/migrations/1000_publishing.sql` | 번호 1000(범위 1000~1099). 스키마, `core.apps` 등록, 헬퍼 3, 테이블 12, 트리거 함수 9, 사용자 RPC 2, RLS·GRANT, Realtime, 14절 함수 EXECUTE 최종 회수(PUBLIC·anon, `0007_core_function_privileges.sql`과 같은 규칙) |
+| `docs/products/_supabase-modular/migrations/1000_publishing.sql` | 번호 1000(범위 1000~1099). 스키마, `core.apps` 등록, 헬퍼 3, 테이블 12, 트리거 함수 9, 사용자 RPC 2, RLS·GRANT, Realtime, 14절 함수 EXECUTE 최종 회수(PUBLIC·anon, `0007_core_function_privileges.sql`과 같은 규칙), 15절 AI·음성 기본값(라우팅 12행, free·basic AI 키 6개, 체인 검사) |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `_platform-core/MONOLITH_CORE_LITE.sql` 복사본(OAuth state, affiliate 절 제거) |
 | `supabase/monolith/migrations/0002_publishing_domain.sql` | 위 조각의 모놀리스 변환본 |
-| `supabase/monolith/seed.sql` | apps 1행, 플랜 free/basic(features 16키), 크레딧팩 2종. 제품 seed 없음(카탈로그는 코드 JSON) |
+| `supabase/monolith/seed.sql` | apps 1행, 플랜 free/basic(features 22키: 기존 16 + AI 6), 크레딧팩 2종, AI 라우팅 기본값 12행 + 체인 검사. 제품 seed 없음(카탈로그는 코드 JSON) |
 
 검증 결과(2026-10-12, `docs/products/_tools-sqlcheck`):
 
 | 검사 | 결과 |
 |---|---|
-| `node check.mjs mono 0001_core_lite.sql 0002_publishing_domain.sql seed.sql` | OK 3/3 |
-| `node check.mjs mod 0000~0007 seed.sql 1000_publishing.sql` | OK 10/10 |
+| `node check.mjs --vector mono 0001_core_lite.sql 0002_publishing_domain.sql seed.sql` | OK 3/3 (2026-10-13 재검증, AI 표가 있어 `--vector` 필수) |
+| `node check.mjs --vector mod 0000~0009 seed.sql 1000_publishing.sql` | OK 12/12 (2026-10-13 재검증) |
 | 반복 실행 | 두 구조 모두 제품 SQL 2회 적용 OK |
+| AI 기본값(2026-10-13, PGlite) | 제품 파일 2회 적용 후 `ai_routing_settings`(org null, app publishing) 12행. free·basic `features`에 AI 키 6개 병합. 미동의 조직 `resolve_ai_route`: `publishing.draft`·`publishing.assist`·`chat` = oss-llm, `wiki.ingest` = oss-llm, `narration` = oss-voice, `voice_chat` stt/tts = oss-voice, `publishing.dictation` = oss-voice, `publishing.knowledge` = oss-embed. 동의 후: `publishing.draft` = anthropic > openai > google > oss-llm, `wiki.ingest` = oss-llm > anthropic, `narration` = elevenlabs > oss-voice, `dify.aux` = oss-llm(동의 후에도). 컬렉션 `book-<uuid>`와 위키 slug `books/<uuid>/characters/seo-jin`이 CHECK를 통과 |
 | RLS 스모크(PGlite, 사용자 A·B·C + anon) | 모듈러 57/57, 모놀리스 57/57 통과 |
 
 RLS 스모크 주요 항목: B가 A 조직의 제품 테이블 11개 SELECT 0행, B의 A 조직 INSERT 42501, A 책 UPDATE/DELETE 0행, 다른 책 참조 INSERT 23503, B의 `request_generation_cancel`·`set_book_visibility`(A 행) 42501, `book_plan_limit`(A 조직) 기본값만 반환, 자기 엔타이틀먼트·지갑·profiles.platform_role·org_members.role 변경 42501, `grant_credits`·`consume_credits` 42501, 서버 전용 테이블 사용자 INSERT 42501, 컬럼 GRANT 밖 컬럼(`is_public`, `gen_status`, `org_id`) UPDATE 42501, 상태 전이 위반 22023, Free 4번째 책 `PB001`, Pro 테마 `PB008`, 엔타이틀먼트 정지 조직 INSERT 42501, anon 비공개 책 0행, anon의 제품 함수 EXECUTE 없음·트리거 함수는 authenticated도 EXECUTE 없음(PUBLIC 경유 차단). 스크립트는 PB-06-029 작업에서 `supabase/tests/`로 옮긴다.

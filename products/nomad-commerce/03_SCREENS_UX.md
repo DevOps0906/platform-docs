@@ -26,7 +26,14 @@
 | `/settings/shipping` | 배송·반품 템플릿 | owner/admin/member | 전 플랜 | P0 |
 | `/settings/banned-words` | 금지어 사전(기본 + 조직 추가) | 보기 멤버, 편집 owner/admin | 전 플랜 | P1 |
 | `/billing` | 플랜, 결제수단, 크레딧 원장, 크레딧팩 | owner/admin | 전 플랜 | P0 |
-| `/shorts`, `/automation` | 쇼츠, 자동화 | - | Phase 2 | P2 |
+| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | owner/admin | 전 플랜 | P0 |
+| 채팅 패널(모든 `(app)` 화면 오른쪽 시트), `/chat` | 셀러 어시스턴트 채팅(텍스트·음성), 대화 목록 | 멤버 | `features.ai_chat` | P0 |
+| 내레이션 패널(`/detail-pages/[id]`, `/products` 행 동작), `/narrations` | 쇼츠 내레이션 만들기·재생·받기, 내 내레이션 목록(`voice_jobs` 본인 행) | member 이상 | `features.shorts_narration` | P0 / P1 |
+| `/wiki`, `/wiki/[...slug]` | 마켓 규칙 위키(쿠팡, 스마트스토어 목록·검색, 페이지) | 공개(D-9 결정 전 기본) | - | P0 |
+| `/admin/knowledge` | 마켓 규칙 원고 업로드, 색인 상태 | `platform_admin` | - | P0 |
+| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 페이지 검수·게시, 변경 이력, 점검 결과 | `platform_admin` | - | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
+| `/shorts`(영상 렌더·결합), `/automation` | 쇼츠 영상, 자동화 | - | Phase 2 | P2 |
 
 ## 2. 사용자 플로우
 
@@ -36,7 +43,7 @@
 |---|---|---|---|---|
 | 1 | `/` | "무료로 시작" | `/login` 이동 | - |
 | 2 | `/login` | Google/Kakao 또는 이메일 | `signUp(..., data.signup_app='commerce')` → 가입 트리거가 조직·free 엔타이틀먼트·크레딧 지급 | 콜백 오류 → 로그인 화면에 원인 문구 |
-| 3 | `/dashboard` | 첫 방문 | `session_context('commerce')`. 빈 상태 카드 "첫 상품을 가져오세요" | `entitled=false`(다른 앱으로 가입한 계정) → `bootstrap_app_for_org('commerce')` 후 새로고침 |
+| 3 | `/dashboard` | 첫 방문 | `session_context('commerce')`. 빈 상태 카드 "첫 상품을 가져오세요" + AI 처리 방식 안내 띠(`/onboarding/ai`로 이동. 건너뛰면 국내 오픈소스 AI만 사용) | `entitled=false`(다른 앱으로 가입한 계정) → `bootstrap_app_for_org('commerce')` 후 새로고침 |
 | 4 | `/sourcing` | 아마존 URL 붙여넣기 | ASIN 추출 → 1크레딧 차감 → `import.amazon` 잡 | URL에서 ASIN 없음 → 입력 아래 오류. 크레딧 부족 → 402 패널 |
 | 5 | `/products` | 상품 선택 → "상세페이지 만들기" | 생성 모달(유형 자동 추천, 10슬롯 기본) → 9크레딧 차감 → `detail_pages` waiting | 플랜 밖 유형/15슬롯 → 잠금 표시 + 업그레이드 링크 |
 | 6 | `/detail-pages/[id]` | 진행 보기 | 8단계 진행률, 슬롯 카드가 하나씩 채워짐 | 슬롯 실패 → 카드에 "다시 생성(1크레딧)". 전체 실패 → 자동 환불 안내 |
@@ -75,6 +82,51 @@
 | 1 | `/detail-pages` | 선택 → "내보내기" | 형식(엑셀 쿠팡/스마트스토어, ZIP) 선택 → `export_files` 잡 | free의 엑셀 → 잠금 |
 | 2 | `/exports` | 다운로드 | 서명 URL(7일) | 만료 → "다시 만들기" |
 
+### 2.6 셀러 어시스턴트 채팅 (마켓 규칙, 내 상품, 업로드 실패 원인)
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | `/uploads` 행, `/detail-pages/[id]` | "이것에 대해 묻기" | `POST /api/ai/conversations {upload_id 또는 detail_page_id 또는 product_id}` → `core.ai_conversations` 행(`dify_user`=HMAC) | 다른 조직 대상 404, 엔타이틀먼트 없음 402, `ai_chat=false` 403 |
+| 2 | 채팅 패널 | 질문 입력(1,000자) → 보내기 | 마스킹 → `consume_credits(3, conv:<id>:turn:<n>)` → Dify Chat API(스트리밍, 입력 `platform_conversation_id`, 바인딩 id) → 질문 분류(`dify.aux`) → 분기 `product`: HTTP 노드 `/tools/answer` | 402 충전 모달, 429 재시도 시각 |
+| 3 | 같은 화면 | 스트리밍 답변 읽기, 출처 칩 열기 | `ai_messages` 2행(user, assistant + citations) → 정산(실제 1~5) → 메시지 아래 "2크레딧 사용" | Dify 장애 → FastAPI `/tools/answer-direct`로 답하고 운영 알림. 모든 제공자 실패 → 선차감 전액 환불 |
+| 4 | 같은 화면 | 규칙 질문("쿠팡 상품명 규칙이 뭐예요?") | 분류 `rules` → Dify 외부 지식 검색(`/dify/retrieval`) → `wiki.query` 모델 → 위키 링크와 기준일 포함 답변 | 근거 없음 → "근거 자료를 찾지 못했습니다" + 위키 검색 링크 |
+
+### 2.7 음성 대화
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | 채팅 패널 | 마이크 버튼을 처음 누름 | 음성 처리 고지 모달(녹음 목적, 원본 미저장, 주변 소리 인식, 상용 제공자 사용 시 국외 이전) → 확인 시 `POST /api/voice/consent` | 거부 → 텍스트 입력 유지 |
+| 2 | 같은 화면 | 누르고 말하기(최대 60초, 남은 시간 표시) | MediaRecorder → `POST /api/voice/stt`(선차감, `store_audio=false`) → 텍스트 | 마이크 권한 거부·미지원 브라우저 안내. STT 실패 시 환불 + "다시 말하기" |
+| 3 | 같은 화면 | 변환 텍스트 확인·수정 → 보내기 | 2.6절 2~3단계(대화 `channel='voice'`) | - |
+| 4 | 같은 화면 | "읽어 주기"(자동 재생은 설정에서, 기본 꺼짐) | `POST /api/voice/tts {message_id}` → 오디오 스트림 재생 | TTS 실패 → 환불, 텍스트 답변은 그대로 |
+
+### 2.8 상품 설명 음성 입력
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | `/products/new`, 생성 모달 | 마이크 버튼을 처음 누름 | 2.7절 1단계와 같은 음성 처리 고지 → `POST /api/voice/consent` | 거부 → 직접 입력 |
+| 2 | 같은 화면 | 상품 설명을 말함(최대 120초) | `POST /api/voice/stt {feature: product_voice}`(선차감, 플랜 `voice_input`) → 텍스트 | 권한 거부, 120초·10MB 초과 413, 플랜 밖 403 + 업그레이드 |
+| 3 | 같은 화면 | 변환 텍스트 수정 → "상품 정보로 정리" | `POST /api/ai/voice-structure` → 그래프 `commerce.assist` 작업 `voice_structure` → 상품명 후보·불릿·속성·용도 | 구조화 실패 → 환불 + 텍스트 유지 |
+| 4 | 상품 폼 | 채워진 필드를 확인하고 저장 | 사용자가 확인한 값만 `products`에 저장(AI 제안값은 저장 전 미리보기) | - |
+
+### 2.9 쇼츠 내레이션
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | `/detail-pages/[id]` 내레이션 패널 | 분량 선택(15/30/50초) → "스크립트 만들기(1크레딧)" | `POST /api/ai/shorts-script` → 그래프 `commerce.assist` 작업 `shorts_script`(상세페이지 카피 근거, 금지어 규칙 검사) | 402 충전 모달, 플랜 밖 403 |
+| 2 | 같은 패널 | 스크립트 수정(600자 이하), 보이스 선택(기본 2종) | 서버가 요청 시 금지어 규칙을 다시 검사 | 금지어 FAIL → 항목 표시 후 수정 요구 |
+| 3 | 같은 패널 | "음성 만들기(예상 5크레딧)" | 예상치 = 글자 수 × 경로 단가(국외 이전 미동의면 오픈소스 단가). `POST /api/voice/narrations` → 선차감 → TTS(시작 때 고른 제공자 하나로) → mp3 저장 → 정산 | 중간 실패 → 파일 없음 + 전액 환불. 다른 목소리로 대체하지 않는다 |
+| 4 | 같은 패널, `/narrations` | 재생, 속도, mp3 받기. 영상 만들기 버튼은 Phase 2 비활성 표시 | 7일 서명 URL. 같은 스크립트·보이스 재요청은 기존 파일 반환, 차감 0 | 만료 → 재생성 안내(차감 0, 같은 해시 파일이 있으면 즉시) |
+
+### 2.10 마켓 규칙 원고 → 위키 게시(운영자)
+
+| 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
+|---|---|---|---|---|
+| 1 | `/admin/knowledge` | 규칙 원고 md 업로드(마켓, 기준일, 출처 입력) | 운영자 조직 Storage → FastAPI `/rag/ingest` → `commerce.ai.rag_ingest` 잡 | 형식 오류 400, 같은 내용(`content_hash`) 409 |
+| 2 | 같은 화면 | 색인 상태 확인 | 색인 완료 → `commerce.ai.wiki_ingest` → 새 페이지 `draft` | 실패 → 문서 `failed` + 재시도 버튼 |
+| 3 | `/admin/wiki/[...slug]` | draft 검토, 문단 수정, 기준일 확인, 게시 | 수정은 FastAPI를 거쳐 저장(`editor_kind='user'`, 고친 블록에 사람 소유 표시, `expected_version` 낙관적 잠금), 게시 → `published` | 출처·기준일 없는 페이지는 게시 버튼 비활성. 버전 충돌 409 → 최신본 다시 읽기 |
+| 4 | `/admin/wiki/lint` | 주간 점검 결과 확인(모순, 낡음, 고아, 깨진 링크, 출처 없음), 수정 제안 반영 | `commerce.ai.wiki_lint` 결과(`ai_runs.output`) | - |
+
 ## 3. 화면별 명세
 
 | 화면 | 목적 | 구성 | 데이터 출처 | 행동 | 크레딧 표시 |
@@ -82,7 +134,7 @@
 | 대시보드 | 오늘 할 일 파악 | 상단 크레딧·플랜 바, KPI 4개(오늘 생성, 생성 중, 이번 달 업로드 성공/실패), USD 환율과 기준일, 최근 작업 표 | `session_context`, `detail_pages`, `market_uploads`, `exchange_rates` | 작업 행 클릭 → 상세 | 잔액, 이번 달 소비 |
 | 상품DB | 대량 관리 | 좌측 필터(소싱처, 건기식, 상태), 우측 고밀도 표(이미지, 상품명, 소싱가, 판매가, 마진, 상세페이지 상태 뱃지, 마켓별 업로드 결과), 하단 고정 일괄 작업 바 | `products` + 최신 `detail_pages` | 선택 → 생성/내보내기/보관 | 일괄 생성 시 합계 |
 | 생성 모달 | 옵션 결정 | 탭 2개(개별, 다중). 개별: 유형(추천 표시), 슬롯 세트 10/15, 슬롯 그리드 18칸(필수 잠금, 플랜 밖 잠금), 템플릿, 대상 마켓. 다중: 공통 옵션 + 행별 인라인 덮어쓰기 + 실행 순서 | `packages/commerce-domain` 기본값, features | "생성(9크레딧)" | 버튼에 합계, 잔액 대비 |
-| 결과 뷰어 | 검수와 수정 | 좌: 세로 롱이미지 미리보기(마켓 탭 쿠팡 1000px / 스마트스토어 860px, 분할선 표시). 우: 슬롯 카드 목록(상태, 재생성, 카피 편집), compliance 패널(규칙/LLM 항목, 위치 하이라이트) | `detail_page_slots`(Realtime), `market_images`, `detail_pages.compliance_*` | 카피 수정 저장, 슬롯 재생성, WARN 확인, 내보내기, 등록 폼 만들기 | 재생성 1/3 |
+| 결과 뷰어 | 검수와 수정 | 좌: 세로 롱이미지 미리보기(마켓 탭 쿠팡 1000px / 스마트스토어 860px, 분할선 표시). 우: 슬롯 카드 목록(상태, 재생성, 카피 편집), compliance 패널(규칙/LLM 항목, 위치 하이라이트, 항목마다 근거 위키 페이지 링크와 기준일, "AI가 생성한 콘텐츠" 표시) | `detail_page_slots`(Realtime), `market_images`, `detail_pages.compliance_*` | 카피 수정 저장, 슬롯 재생성, WARN 확인, 내보내기, 등록 폼 만들기 | 재생성 1/3 |
 | 등록 폼 | 마켓 필수값 완성 | 6단계 세로 내비 + 마켓 탭(쿠팡/스마트스토어) + 완성도 바 | `listing_drafts`, `shipping_templates`, `market_categories` | 자동완성, 저장, 등록 | 자동완성 1 |
 | 업로드 이력 | 실패 해결 | 상태 필터 표, 행 펼침에 요청 요약·응답 요약·오류 | `market_uploads` | 재시도, 폼으로 이동 | 없음 |
 | 마켓 계정 | 키 관리 | 슬롯 카드(사용/남은 수), 키 입력 폼(마스킹), 검증 결과 | `market_accounts`, `credential_summaries` | 추가, 재검증, 연결 해제(`revoke_credential`) | 없음 |
@@ -101,6 +153,83 @@ ASCII(상품DB):
 | [ ]만    +---+------+----------------+-------+-------+-----+------+-------+
 +----------+ 하단 바: 3개 선택  [상세페이지 만들기 27크레딧] [내보내기] [보관] |
 ```
+
+### 3.1 AI 채팅, 음성, 내레이션, 위키 화면
+
+공통 요소는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`(음성)와 `docs/products/_platform-core/LLM_WIKI.md:45`(위키)을 따른다.
+
+| 화면 | 목적 | 구성 | 데이터 출처 | 행동 | 크레딧 표시 |
+|---|---|---|---|---|---|
+| 채팅 패널 | 마켓 규칙 질문, 내 상품·업로드 실패 질문 | 머리: 제목, 연결 대상 칩(상품/상세페이지/업로드, 있으면), 닫기. 본문: 메시지 스레드(스트리밍, 출처 칩, 규칙 기준일, "AI가 생성한 답변", 대체 표시, 정산 크레딧). 바닥: 마이크 버튼, 입력(1,000자, 키·사업자번호 입력 금지 안내), 보내기, 예상 크레딧과 잔액 | `core.ai_conversations`, `core.ai_messages`(RLS 본인), `POST /api/ai/chat`(SSE) | 보내기, 중지, 출처 열기, 읽어 주기, 새 대화 | "약 3크레딧(정산 후 1~5)", 메시지별 실제 사용량 |
+| 대화 목록 `/chat` | 지난 대화 | 대화 행: 제목, 연결 대상, 마지막 시각. 삭제 | `core.ai_conversations` | 열기, 닫기(삭제 요청) | - |
+| 음성 입력(채팅) | 말로 묻기 | 누르고 말하기 버튼, 녹음 중 표시(파형 대신 경과 시간 막대), 남은 시간, 변환 텍스트 미리보기·수정 | `POST /api/voice/stt` | 녹음, 취소, 수정 후 보내기 | STT 예상치(오픈소스 1 / ElevenLabs 3) |
+| 음성 입력(상품 폼) | 상품 설명 말하기 | 같은 마이크 컴포넌트(최대 120초) + "상품 정보로 정리" 버튼 + 정리 결과 미리보기(필드별 채움/무시 선택) | `POST /api/voice/stt`, `POST /api/ai/voice-structure` | 녹음, 수정, 정리, 필드 채우기 | 예상치(오픈소스 1 / ElevenLabs 최대 6) |
+| 음성 처리 고지 모달 | 녹음 전 고지 | 목적, 원본 미저장, 주변 소리 인식, 처리 제공자(국외 여부), 확인/취소 | `POST /api/voice/consent` | 확인, 취소 | - |
+| 내레이션 패널·플레이어 | 쇼츠 음성 만들기 | 분량 선택, 스크립트 편집(글자 수 표시 600자), 보이스 선택, 재생/정지, 진행 막대, 속도(0.75~1.5), mp3 받기, "AI가 생성한 음성입니다", 영상 만들기(Phase 2 비활성) | `POST /api/ai/shorts-script`, `POST /api/voice/narrations`, `voice_jobs`(본인) | 생성, 재생, 받기 | 스크립트 1, 음성 예상치(1~5), 재요청 0 |
+| 위키 목록 `/wiki` | 규칙 찾기 | 검색, 마켓 탭(쿠팡, 스마트스토어), 분류(상품명, 이미지, 고시, 금지어, 반려 사유), 페이지 행(제목, 요약 1줄, 기준일) | 서버가 운영자 조직 `core.wiki_pages`(`published`)를 읽음(ISR 1시간, 제안) | 검색, 열기 | - |
+| 위키 페이지 `/wiki/[...slug]` | 규칙 이해 | 제목, 요약, 본문, "출처"(원고 문서), "기준일", "관련"(위키 링크), "AI가 정리하고 운영자가 검수한 문서", "마켓 정책은 바뀔 수 있으니 각 마켓 공지를 확인하세요", "이 규칙 채팅으로 묻기"(로그인 시) | 같음 | 관련 페이지 이동, 채팅 시작 | 채팅 시작 시 턴 단가 |
+| 관리자 지식 `/admin/knowledge` | 규칙 원고 관리 | 문서 표(제목, 마켓, 기준일, 상태 pending/indexing/ready/failed, 청크 수, 갱신 시각), 업로드, 재색인 | `core.ai_documents`, `/api/admin/knowledge/*` | 업로드, 재시도, 보관 | - |
+| 관리자 위키 `/admin/wiki` | 검수·게시 | 페이지 표(상태 draft/published/archived, 마지막 편집자 agent/user, 기준일, 낡음 표시), 페이지 편집기, 변경 이력(`wiki_revisions`) | `core.wiki_pages`, `core.wiki_revisions`, `/api/admin/wiki/*` | 게시, 보관, 수정 | - |
+| 위키 점검 `/admin/wiki/lint` | 주간 점검 결과 | 항목 표(모순, 낡음, 고아, 깨진 링크, 출처 없음) + 수정 제안 | `core.ai_runs`(graph `wiki.lint`) | 제안 반영, 무시 | - |
+
+채팅 패널 와이어프레임(PC 오른쪽 시트 400px, 375px에서는 전체 화면):
+
+```
++------------------------------------------+
+| 셀러 어시스턴트   [업로드: 쿠팡 #12 실패] [x] |
++------------------------------------------+
+| (AI) 상품명이 규칙 길이를 넘어 반려됐을 수  |
+|      있습니다. 출처 [위키 쿠팡 상품명] 기준일  |
+|      AI가 생성한 답변 . 2크레딧              |
+| (나) 상품명을 어떻게 줄이면 되나요?          |
++------------------------------------------+
+| 마켓 API 키, 사업자번호는 적지 마세요        |
+| [마이크] [질문을 입력하세요        ] [보내기]|
+| 약 3크레딧(정산 후 1~5) . 잔액 128          |
++------------------------------------------+
+```
+
+내레이션 패널 와이어프레임(상세페이지 뷰어 오른쪽):
+
+```
++------------------------------------------------------------+
+| 쇼츠 내레이션   분량 [15초] [30초] [50초]    스크립트 1크레딧 |
+| [스크립트 편집 영역                            ] 171 / 600자 |
+| 보이스 [기본 1] [오픈소스 1]     [음성 만들기 5크레딧]       |
+| [재생]  00:12 / 00:28  [1.0x]  [mp3 받기]                   |
+| AI가 생성한 음성입니다            영상 만들기(준비 중)        |
++------------------------------------------------------------+
+```
+
+### 3.2 디자인 시스템
+
+`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 commerce의 선택만 적는다.
+
+| 항목 | 내용 | 근거 |
+|---|---|---|
+| 주 레퍼런스 | 앱 화면(대시보드, 상품DB, 소싱, 상세페이지 뷰어, 등록 폼, 업로드 이력, 내보내기, 설정): Primer(정보 밀도, 표·목록·상태 표시). 상태 배지와 권한 표시(compliance PASS/WARN/FAIL, 잡·업로드 상태, 역할·플랜 잠금)는 Atlassian 보조. AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-13) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` nomad-commerce 절 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 가져올 것 | Primer: 컴팩트/기본 두 밀도(상품 표 행 32/40px), 상태 라벨(아이콘 + 텍스트), 숫자 열 정렬(tabular-nums), 하단 일괄 작업 바. Atlassian: 상태 배지(색 + 텍스트 + 아이콘), 태그, 잠금·권한 안내, 모달·사이드 시트 중첩 규칙. Astryx(확인 후): 메시지 스레드 구조, 스트리밍 표시, 출처 칩, 입력 영역 구성 | 같은 곳 |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Atlassian 패키지, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, V.2의 다크 + 민트 토큰(`REFERENCES.md:128`) | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16.2.7, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/nomad-commerce/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(검수지), `--color-text`(먹선), `--color-border`(분할선), `--color-accent`(송장 블루), `--color-success`(승인 그린), `--color-danger`(반려 레드), `--color-warning`(#B45309), `--radius-control`(6px), `--radius-panel`(0~4px), `--space-row-compact`(32px)/`--space-row-default`(40px), 서체 Pretendard. 전환은 `data-theme` 하나. 대시보드 기본은 라이트, 다크 값은 3단계 사람 검토에서 확정(V.2 다크 민트는 쓰지 않는다) | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
+| 컴포넌트(정답) | `apps/nomad-commerce/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | 같은 곳 |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(CM-06-041, CM-06-042, CM-06-043 사람 검토, CM-06-044). 화면 작업은 4단계 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+
+기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
+
+| 컴포넌트 | 배리언트 | 크기 | 상태 |
+|---|---|---|---|
+| Button | primary(송장 블루 바탕), secondary, ghost, danger | sm 32 / md 36 / lg 40px | 기본, 호버, 포커스, 비활성, 로딩 |
+| Input, Textarea, Select | default, error | md 36 / lg 44px(입력 폼) | 기본, 포커스, 비활성, 오류 |
+| Checkbox, Switch, SegmentedRadio | - | md | 기본, 포커스, 비활성 |
+| Dialog, Sheet(채팅 패널 400px, 모바일 전체 화면), Toast | - | Sheet 400px / 전체 | 열림, 닫힘 |
+| Table | compact(행 32px), default(행 40px) | - | 빈 상태, 로딩 스켈레톤 |
+| StatusBadge | 상세페이지(waiting, queued, generating, ready, failed, canceled, archived), 슬롯(pending, generating, completed, failed, skipped), compliance(pass, warn, fail), 업로드(queued, validating, uploading, submitted, approved, rejected, failed), 내보내기·가져오기, 문서(pending, indexing, ready, failed), 위키(draft, published, archived) | sm | 아이콘 + 텍스트(색만으로 구분하지 않음) |
+| Tabs, Tooltip, Progress, Skeleton | - | - | - |
+
+제품 고유 컴포넌트(기본 세트 뒤): ProductTable(가상 스크롤), SlotGrid(18칸), SlotCard, LongImagePreview(마켓 탭·분할선), CompliancePanel, ChatPanel, MessageBubble, CitationChip, VoiceButton, NarrationPlayer, WikiArticle, Hero3D.
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
@@ -172,7 +301,7 @@ ASCII(상품DB):
 | 검수를 숨기지 않는다 | 금지어 검수(PASS/WARN/FAIL)를 기능으로 보여 준다 |
 | 숫자는 단가만 | 크레딧 단가와 가격만 숫자로. 사용자 수·매출 통계 없음 |
 
-대담함의 위치: 히어로 롱이미지 띠가 스크롤에 따라 2,800px 분할선에서 쿠팡/스마트스토어 두 열로 나뉘는 한 번의 연출. 나머지 섹션은 정적.
+대담함의 위치: 히어로 한 곳. 2026-10-13 사용자 결정(확정 결정 15)으로 기존의 "스크롤에 따라 롱이미지 띠가 2,800px 분할선에서 쿠팡/스마트스토어 두 열로 나뉘는 연출"을 3D 히어로(4.5절)로 바꿨다. 안 A의 우측 롱이미지 띠 자리에 3D 장면이 들어가고, 토큰 플랜과 "피할 인상"은 그대로다. 나머지 섹션은 정적.
 
 ### 4.4 생성형 기본값 회피 검토
 
@@ -184,9 +313,54 @@ ASCII(상품DB):
 | 5 대문자 아이브로, 모노 라벨, '→' | 사용 안 함. 숫자는 tabular-nums |
 | 6 큰 숫자 히어로 | 사용 안 함(허위 수치 금지와도 일치) |
 | 10 장식 번호 | 실제 순서인 4단계 흐름에만 |
-| 11 섹션마다 페이드업 | 히어로 연출 1개만, `prefers-reduced-motion`이면 정지 |
+| 11 섹션마다 페이드업 | 히어로 연출 1개만(3D 장면, 4.5절), `prefers-reduced-motion`이면 정지 이미지 |
 
 카피는 01장 6절 금지 문구를 통과해야 한다. 예: "상품 링크 하나로 쿠팡·스마트스토어 규격 상세페이지를 만듭니다"(가능), "반려 0%"(금지).
+
+### 4.5 3D 히어로 (상품 상자 → 상세페이지 패널 → 마켓 진열대)
+
+정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 commerce 소재(`:85`)와 장면만 정한다. 이 히어로는 2026-10-13 사용자 결정(확정 결정 15)으로 4.3절의 "롱이미지 띠 분할 연출"을 대체했다.
+
+| 기기 | 구성(HERO_3D 1절) | commerce 장면 |
+|---|---|---|
+| PC(1280px 이상) | 풀 3D. 헤드라인·URL 입력·CTA는 HTML 오버레이 | 상자 → 패널 펼침 → 진열대 배치 전체 |
+| 태블릿(768~1279px) | 풀 3D, DPR 상한 1.5, 터치 드래그로 시점 이동 | PC와 같음 |
+| 모바일(767px 이하) | HTML 즉시 표시 + 가벼운 3D를 첫 화면 뒤 로드 | 상자 열림만(뚜껑이 열리고 패널 3장이 부채꼴로 솟음). 진열대 배치는 없고 롱이미지 띠는 CSS 정지 이미지 |
+| 대체 | WebGL 미지원, 저사양(HERO_3D 1.1절 로딩 전 판정), `prefers-reduced-motion`, 데이터 절약 모드, `NEXT_PUBLIC_HERO3D_ENABLED=false`, 로딩 뒤 30fps 미만 지속(런타임 강등) | 같은 구도의 정지 렌더 이미지(`public/hero/box-shelf.avif`, WebP 대체, 크기 지정으로 레이아웃 이동 없음) |
+
+장면 연출(PC·태블릿):
+
+| 단계 | 계기 | 3D | HTML |
+|---|---|---|---|
+| 0 첫 화면 | 페이지 로드 | 없음. 같은 구도의 정지 이미지 자리(레이아웃 이동 없음) | 헤드라인(LCP 요소), 아마존 URL/ASIN 입력, CTA, 흐름 4단계 |
+| 1 대기 | 동적 import 완료 | 닫힌 상자가 제자리에서 아주 느리게 좌우로 기움(약 12도 왕복, 제안). [움직임 멈춤] 토글 | 변화 없음 |
+| 2 열림 | 입력란에 ASIN 형식이 맞는 값이 들어옴(브라우저에서 정규식으로만 확인, 서버로 보내지 않음) | 뚜껑이 열린다 | 입력 확인 표시 |
+| 3 펼침 | 열림 직후, 1.4초(제안) | 상자에서 패널 5장이 올라와 세로로 이어지는 상세페이지 띠로 펼쳐진다. 패널에 슬롯 번호표(T-1, D-1, L-3 등, HTML 오버레이) | 슬롯 번호표 3~5개 |
+| 4 배치 | 펼침 직후, 1.2초(제안) | 띠가 2,800px 분할선에서 나뉘어 위 선반(쿠팡 1000px 폭)과 아래 선반(스마트스토어 860px 폭)에 놓인다. 패널 폭 비율 1000:860 | 선반 이름은 텍스트 라벨(로고 사용 안 함) |
+| 5 정지 | 배치 끝 | 렌더 중단(`frameloop="demand"`). 한 패널에 PASS 도장 | CTA "무료로 시작" |
+
+입력을 지우면 5단계에서 2단계로 되돌린다(0.6초, 제안). reduced-motion이면 0~5단계 없이 정지 이미지만 보인다.
+
+| 요소 | 토큰(4.3절) | 비고 |
+|---|---|---|
+| 장면 배경 | 검수지 #F5F6F8 | 그라디언트 없음 |
+| 상자 몸체·선반 판 | 분할선 #D9DDE3 | 소재는 무광(거칠기 높음, 제안) |
+| 상자 모서리 선·선반 지지대 | 먹선 #17191E | 얇은 윤곽선 |
+| 송장 라벨 | 송장 블루 #1D4ED8 | 상자 위 직사각형 한 개 |
+| 상세페이지 패널 | 검수지 + 분할선 괘선 | 글자는 HTML 오버레이 |
+| PASS 도장 | 승인 그린 #15803D | 3D에서 색을 쓰는 유일한 상태색. WARN·FAIL 색은 3D에서 쓰지 않는다 |
+
+| 항목 | commerce 결정 |
+|---|---|
+| 위치 | `apps/nomad-commerce/components/hero3d/`(`BoxScene`, `PanelUnfold`, `ShelfPlacement`, `MobileBox`, `StaticFallback`, `useHeroTier`), 정지 이미지 `public/hero/` |
+| 형상 | 코드 생성 도형(Box, Plane). 외부 glTF 없음 |
+| 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급, `deviceMemory`·`hardwareConcurrency`(4 이하 낮음). `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/products/_design-guide/HERO_3D.md:17-30`) |
+| 공용 키트 | 공용 `packages/ui-3d`(제안: 로더·토큰 재질·조명·대체 이미지·성능 모니터) 위에 commerce 소재(상자, 패널, 선반)만 얹는다. 키트가 아직 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 6.1절 R-6) |
+| 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |
+| 피할 인상 | 4.2절의 다크 + 민트, 쇼핑몰 프론트 느낌, 모노스페이스 라벨, 허위 실적 숫자에 더해 HERO_3D의 보라/핑크 그라디언트, 별 파티클, 흔한 지구본·네온 그리드. 쿠팡·네이버 로고를 선반에 붙이지 않는다 |
+| 접근성 | 캔버스 `aria-hidden`, 헤드라인·입력·CTA는 HTML, [움직임 멈춤] 키보드 조작, reduced-motion 정지 이미지 |
+| 검증 | PC·태블릿·모바일 스크린샷 3종, Lighthouse 모바일·데스크톱, 프레임 측정, 고문(Fable) 디자인 검토(HERO_3D 4절) |
 
 ## 5. 상태, 오류, 빈 화면
 
@@ -201,6 +375,21 @@ ASCII(상품DB):
 | 업로드 실패 | 마켓 오류 코드 + 우리 말 요약 + 해결 링크(폼 필드로 이동) |
 | 네트워크 오류 | 토스트 + 재시도. mock 응답으로 숨기지 않는다 |
 | 빈 상태 | 상품 없음: "아마존 링크나 엑셀로 첫 상품을 가져오세요" / 상세페이지 없음: "상품을 선택해 첫 상세페이지를 만드세요" / 계정 없음: "쿠팡 Wing에서 발급한 Open API 키를 등록하세요" |
+| AI 답변 생성 중 | 스트리밍 + 중지 버튼. 규칙 질문은 근거를 찾는 동안 "근거를 찾는 중" |
+| 대체 모델로 답함 | 답변 아래 작은 표시: "다른 AI 모델로 답했습니다" |
+| AI 실패(모든 제공자) | 오류 띠 + 환불 확인: "답변을 만들지 못해 3크레딧을 돌려드렸습니다. 잠시 뒤 다시 물어보세요" |
+| 상세페이지 그래프 실패 | 상세페이지 `failed` + 환불 안내: "텍스트 생성에 실패해 9크레딧을 돌려드렸습니다. 같은 조건으로 다시 만들 수 있습니다" |
+| 근거 없음 | 안내 + 위키 검색 링크: "근거 자료를 찾지 못했습니다. 마켓 규칙 위키에서 찾거나 마켓 공지를 확인하세요" |
+| 규칙 기준일이 오래됨(6개월 초과) | 답변·위키 페이지 상단 한 줄: "기준일이 오래된 규칙입니다. 마켓 공식 공지에서 최신 내용을 확인하세요" |
+| 국외 이전 미동의(오픈소스 사용 중) | 채팅 패널 상단 한 줄 + 설정 링크: "국내 오픈소스 AI로 답하고 있습니다. 설정에서 바꿀 수 있습니다" |
+| Vision 사용 불가(오픈소스 멀티모달 미서빙, D-16) | 이미지 분석 버튼 비활성: "이미지 분석은 상용 AI 사용 동의 후 쓸 수 있습니다. 속성은 직접 입력하세요" |
+| 하루 채팅 한도 | 입력 비활성: "오늘 질문 N개를 모두 썼습니다. 내일 다시 이용하세요" |
+| 마이크 권한 거부 | 마이크 버튼 비활성 + 안내: "마이크 권한이 꺼져 있습니다. 텍스트로 입력하세요" |
+| 음성 미지원 브라우저 | 마이크 버튼 숨김 |
+| 음성 변환 실패 | 환불 + 다시 말하기: "말씀을 알아듣지 못했습니다. 다시 말하거나 입력해 주세요" |
+| 내레이션 실패 | 오류 띠 + 환불 + 다시 시도: "음성을 만들지 못해 5크레딧을 돌려드렸습니다. 다른 목소리로 바꾸지 않았습니다" |
+| 3D 로딩 실패 | 정지 이미지로 조용히 교체 |
+| 위키 페이지 없음 | 404 + 검색: "아직 정리되지 않은 규칙입니다" |
 
 ## 6. 접근성과 반응형
 
@@ -210,4 +399,7 @@ ASCII(상품DB):
 | 대비 | 본문 4.5:1, 상태색 뱃지는 색 + 텍스트 병기 |
 | 모바일 | 375px: 상품 표는 카드 목록으로 전환, 생성 모달은 전체 화면, 롱이미지 미리보기는 세로 스크롤 |
 | 모션 | `prefers-reduced-motion` 존중 |
+| 3D 히어로 | 캔버스 `aria-hidden`, reduced-motion 정지 이미지, [움직임 멈춤] 토글, 3D 로딩 전에 헤드라인·입력·CTA 사용 가능 |
+| 채팅 | 메시지 목록 `aria-live="polite"`(스트리밍은 완료 때 한 번 읽음), 출처 칩 키보드 접근, 375px에서 전체 화면 시트 |
+| 음성 | 음성은 텍스트 입력의 대안이고 모든 기능은 음성 없이 쓸 수 있다. 녹음 중 상태를 텍스트로도 표시. 내레이션 플레이어는 스페이스(재생/정지), 좌우 화살표(10초) |
 | 출시 전 | `DESIGN_PRINCIPLES.md` 7단계 체크리스트 12항목 |

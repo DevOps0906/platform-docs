@@ -1,5 +1,7 @@
 # 04 API: FLORA Publishing
 
+2026-10-13 개정: AI·음성 Route Handler(2.1절), 그래프·AI 잡 페이로드(4절), 이 제품이 쓰는 FastAPI 엔드포인트와 Dify 계약(6.1, 6.2절), AI 오류 코드(7절)를 더했다. 브라우저는 `/api/ai/*`, `/api/voice/*`만 부르고 Dify·FastAPI·AI 제공자는 Route Handler가 부른다(`docs/products/_platform-core/SECURITY_BASELINE.md:299`).
+
 작성일 2026-10-12. 코어 RPC는 `docs/products/_platform-core/CORE_SPEC.md`(아래 CS)를 인용만 한다. 공용 모듈 인터페이스는 `SHARED_MODULES.md`(아래 SM). 코드 블록은 계약 예시다.
 
 ## 1. 원칙
@@ -13,6 +15,12 @@
 | 응답 봉투 | 성공 `{ ok: true, data }`, 실패 `{ ok: false, error: { code, message, details? } }`. 402는 `details: { required, balance }` | 제안 |
 | 레이트 리밋 | `core.rate_limit_hit('publishing:<route>:<org_id>', limit, window)`. 기본은 01장 5절 | CS 12장 |
 | 스트리밍 | 섹션 단건·보조 집필만 `text/event-stream`을 POST 응답으로. 클라이언트는 fetch + ReadableStream. EventSource 금지 | `docs/reviews/Flora-v2.md:105` |
+| AI·음성 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자는 Route Handler가 부른다. 책 소유 확인은 항상 서버가 `books.org_id = ctx.org.id`로 한다 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` |
+| 서명 토큰 | `web/src/server/ai/token.ts`가 EdDSA JWT를 발급: `iss=publishing`, `aud=platform-ai:publishing`, `org`, `app=publishing`, `sub`(사용자 id), `conv`, `feat`, `scope`, `jti`, `iat`, `exp`(10분). org는 세션 또는 잡 행에서만 가져온다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:33-42` |
+| AI 멱등 키 | 채팅 `conv:<id>:turn:<n>`(n은 서버가 센 턴 번호. 같은 `request_id` 재전송은 `publishing:ai-req:<request_id>` 버킷 1회로 막는다), 음성 `voice:<voice_job_id>`(클라이언트 `request_id`를 `voice_jobs.id`로 쓴다), 초안 `consume:publishing:<run_id>:<section_id>`, 색인 `rag:<document_id>`, 위키 `run:<ai_run_id>` | 제안 |
+| AI 선차감·정산 | 선차감은 제공자 호출 전 Route Handler(또는 enqueue 직전)에서, 정산은 응답 종료 직후 같은 Route Handler에서. 연결이 끊기면 `/api/internal/ai-settle`(워커가 5분마다 호출)이 처리 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
+| AI 레이트 리밋 | `publishing:ai-chat:<user>` 20회/60초, `publishing:ai-chat-day:<user>` `ai_chat_turns_per_day`회/86400초, `publishing:voice-stt:<user>` 10회/60초, `publishing:narration:<org>` 5회/3600초, `publishing:ai-token:worker` 120회/60초 | 01장 5절 |
+| 스트리밍(AI) | 채팅은 SSE(`text/event-stream`), 낭독 진행은 NDJSON 스트림 | 제안 |
 | sanitize | LLM 결과와 사용자 HTML은 서버에서 허용 목록 sanitize 후 저장(p, h2~h4, strong, em, u, s, blockquote, ul, ol, li, br, hr, a[href https], figure, img[src Storage 경로], figcaption, table 계열). 렌더 직전 엔진이 nh3로 한 번 더 | `docs/reviews/SellingDocs.md:55`, `SECURITY_BASELINE.md` 10장 |
 
 ## 2. Route Handler
@@ -34,7 +42,7 @@
 | `POST /api/books/[id]/sections/[sid]/generate` | member+ / F(quality는 B) | `{ request_id, mode:'fast'|'quality', overwrite?:bool }` | SSE `delta`, `done{ section }` | 1/2 | 같음 | 402, 403, 409 `PB005`, 409 `generation_active` |
 | `POST /api/books/[id]/assist` | member+ / B `writing_assist` | `{ request_id, section_id, action:'continue'|'expand'|'refine'|'custom', selection_text ≤ 2000, instruction? ≤ 500 }` | SSE, `done{ suggestion }`(저장 안 함, Diff 적용은 클라이언트가 PATCH) | 1 | 같음 | 402, 403, 422 |
 | `PATCH /api/books/[id]/sections/[sid]` | member+ / F | `{ title?, body_html?, paragraph_target?, revision }` | `{ section }` | 0 | - | 409 `stale_revision`, `PB005` |
-| `POST /api/books/[id]/write-all` | member+ / B `write_all` | `{ request_id, mode, overwrite: bool, section_ids? }` | `{ run, estimated_credits }` | 섹션별(자식 잡) | `enqueue_job` | 402(예상치 부족), 409 `generation_active` |
+| `POST /api/books/[id]/write-all` | member+ / B `write_all` | `{ request_id, mode, overwrite: bool, section_ids?, chapter_ids? }`(`overwrite`는 본문이 있는 소제목도 대상에 넣되 결과는 제안으로만 돌려준다) | `{ run, estimated_credits }` | 소제목별 2/4(그래프 초안, 01장 4.6절. 챕터 단위 자식 잡) | `enqueue_job` | 402(예상치 부족), 409 `generation_active` |
 | `POST /api/books/[id]/refine-all` | member+ / B `writing_assist` | `{ request_id, mode }` | `{ run, chunks }` | 청크별 | `enqueue_job` | 402, 409 |
 | `POST /api/generation-runs/[id]/cancel` | member+ / F | - | `{ run }` | 0(대기분 환불) | `publishing.request_generation_cancel` | 409 `PB007` |
 | `POST /api/books/[id]/covers` | member+ / F | `{ request_id, style, bg_color?, font_style? }` | `{ covers: [3], job_id }` | 6 | `consume_credits`, `enqueue_job` | 402 |
@@ -63,6 +71,39 @@
 | `POST /api/admin/credits/adjust` | platform_admin | `{ org_id, amount, reason ≥ 10자 }` | `{ ledger }` | 조정 | `grant_credits` 또는 코어 adjust(요청 중, 06장 6절) + `audit_log` | 403 |
 | `POST /api/books/[id]/visibility` (Phase 2) | owner/admin / B `public_page` | `{ is_public, slug? }` | `{ book }` | 0 | `publishing.set_book_visibility` | 409 `PB009`, 409 `slug_taken` |
 
+### 2.1 AI·음성 Route Handler (2026-10-13)
+
+서명 토큰 scope와 호출 대상은 `docs/products/_platform-core/AI_ARCHITECTURE.md:149-158`, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:22-38`을 따른다. 플랜 열의 `ai_chat` 등은 01장 4.4절 features 키다.
+
+| 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 서명 토큰 scope / 호출 대상 | 코어 RPC·테이블 | 오류 |
+|---|---|---|---|---|---|---|---|
+| `POST /api/onboarding/ai-consent` | owner | `{ granted: boolean, notice_version }`(서버 상수와 같아야 함) | 204 | 0 | 없음 | 사용자 세션 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack, p_notice_version })`, `write_audit('ai.consent.cross_border')`(service_role) | 409 `CONSENT_VERSION_MISMATCH`, 403 |
+| `PUT /api/books/[id]/ai-privacy` | member+ | `{ open_source_only: boolean }` | `{ book }` | 0 | 없음 | `books.book_info.ai_open_source_only` 병합 UPDATE(세션 클라이언트, RLS), `write_audit('book.ai_privacy')` | 404 |
+| `GET /api/books/[id]/references` | 멤버 / `book_wiki` | - | `[{ document_id, name, status, chunks, contains_pii }]` | 0 | 없음 | 책 컬렉션의 `ai_documents`(service_role, `ctx.org.id` 확인) | 404 |
+| `POST /api/books/[id]/references` | member+ / `rag_files_max` | `{ file_name, ext(txt\|md\|docx\|pdf), bytes ≤ 20MB, rights_confirmed: true, contains_pii: boolean, request_id }` | `{ upload_id, signed_upload_url, token }` | 색인 예상치 표시, 차감은 색인 잡 enqueue 때 | 없음 | `manuscript_uploads` INSERT(service_role, `book_id` 설정), 완료는 `POST /api/uploads/[id]/complete`(기존). 파싱 결과 md가 만들어지면 `publishing.ai_index` enqueue + `consume_credits('rag:<document_id>')` | 403 `plan_limit`, 413, 415 |
+| `DELETE /api/books/[id]/references/[document_id]` | member+ | - | 204 | 0 | `rag` | 문서·청크 삭제(FastAPI), 감사 `reference.delete` | 404 |
+| `POST /api/books/[id]/wiki/ingest` | member+ / `book_wiki` | `{ request_id, document_ids?: uuid[] }` | `{ run_id }` | 선차감 3, 정산 1~10 | FastAPI `/wiki/ingest`(scope `wiki`, `org`=세션 조직) | `consume_credits('run:<ai_run_id>')`, `enqueue_job('publishing.wiki_ingest')` | 402, 409 진행 중, 403 |
+| `POST /api/books/[id]/wiki/lint` | member+ / `book_wiki` | `{ request_id }` | `{ run_id }` | 2 | FastAPI `/wiki/lint`(scope `wiki`) | 같음 | 402, 409 |
+| `GET /api/books/[id]/wiki/pages?status=` | 멤버 / `book_wiki` | slug 접두사 `books/<id>/`로 고정(서버가 책 소유 확인 뒤 조회) | `[{ slug, title, status, page_type, version, last_editor, stale_since }]` | 0 | 없음. `core.wiki_pages`·`wiki_revisions` RLS SELECT(조직 구성원, `0008_core_ai.sql:604-632`)를 세션 클라이언트로 읽는다 | - | 404 |
+| `GET /api/books/[id]/wiki/pages/[...slug]` | 멤버 / `book_wiki` | - | 페이지(본문, 출처, 관련, 이력 요약) | 0 | 위와 같음 | - | 404 |
+| `PATCH /api/books/[id]/wiki/pages/[...slug]` | member+ / `book_wiki` | `{ expected_version, body_md?, status?: 'published'\|'archived', reason(5자 이상) }` | 페이지 | 0 | FastAPI 위키 저장(`editor_kind='user'`, 고친 블록에 사람 소유 표시, scope `wiki`, 코어 요청 R14) | 감사 `wiki.publish`/`wiki.edit` | 409 `WIKI_NO_SOURCE`(출처 없는 페이지 채택), 409 `WIKI_VERSION_CONFLICT`, 404 |
+| `POST /api/ai/conversations` | 로그인 / `ai_chat` | `{ book_id?: uuid, channel: 'text'\|'voice' }` | `{ conversation_id }` | 0 | 없음 | `ai_conversations` INSERT(service_role, `dify_user`=HMAC(org:user)). `book_id`는 같은 조직의 삭제되지 않은 책만 | 404 책, 403 엔타이틀먼트·플랜 |
+| `POST /api/ai/chat` | 대화 주인 | `{ conversation_id, request_id, message(1..1000), book_id? }` | SSE `delta`, `citations`, `fallback`, `usage{credits}`, `done` / `error` | 선차감 3, 정산 1~5 | Dify Chat API(`user=dify_user`, 입력 `platform_conversation_id`, `book_id`). Dify 장애 시 FastAPI `/tools/answer-direct`(scope `chat rag wiki`, `conv`=대화 id, `feat=chat`) | `rate_limit_hit` 3종, `consume_credits(conv:<id>:turn:<n>)`, 사용자 `ai_messages` INSERT, 정산 `consume_credits`/`refund_credits` + `ai_usage.settled_at` | 402 `CR001`, 404 대화, 409 `AI_CONVERSATION_CLOSED`, 429 `AI_DAILY_LIMIT`/`RATE_LIMITED`, 503 `AI_UNAVAILABLE`(환불됨) |
+| `POST /api/ai/conversations/[id]/close` | 대화 주인 | - | 204 | 0 | - | `ai_conversations.status='closed'` | 404 |
+| `DELETE /api/ai/conversations/[id]` | 대화 주인 | - | 204 | 0 | Dify 대화 삭제 API(구현 시 확인) | 대화·메시지 삭제(service_role), 감사 `ai.conversation.delete` | 404 |
+| `POST /api/voice/consent` | 로그인 | `{ notice_version }` | 204 | 0 | - | `write_audit('voice.notice_ack', { version })` | 409 `CONSENT_VERSION_MISMATCH` |
+| `POST /api/voice/sessions` | 로그인 / `voice_dictation` | `{ conversation_id?: uuid, book_id? }` | `{ session_id }` | 0 | - | `voice_sessions` INSERT(받아쓰기는 `conversation_id` 없이) | 403 `VOICE_CONSENT_REQUIRED` |
+| `POST /api/voice/stt` | 세션 주인 | multipart `{ audio(webm/ogg/mp4, 5MB 이하), session_id, request_id, purpose: 'dictation'\|'chat', book_id?, segment_seconds ≤ 120(chat은 60) }` | `{ text, duration_seconds, provider }` | 녹음 길이 기준 선차감, 실제 정산 | `resolve_ai_route(org,'publishing', purpose==='dictation' ? 'publishing.dictation' : 'voice_chat','stt')` → ElevenLabs SDK 또는 오픈소스 `/stt`(scope `voice`). `book_id`의 오픈소스 전용 스위치가 켜져 있으면 오픈소스만 | `consume_credits(voice:<request_id>)`, `voice_jobs`(`store_audio=false`), `ai_usage` | 403 `VOICE_CONSENT_REQUIRED`, 413 `VOICE_TOO_LONG`, 402, 429, 503(환불됨) |
+| `POST /api/voice/tts` | 메시지 주인 | `{ message_id, request_id }`(텍스트는 DB의 assistant 메시지에서만 읽는다. 임의 텍스트 낭독 금지) | `audio/mpeg` 스트림 | 글자 수 기준 선차감·정산 | `voice_chat`/`tts` 체인(대체 허용) | `voice_jobs`, `consume_credits(voice:<request_id>)` | 404, 402, 503(환불됨) |
+| `POST /api/voice/narrations` | member+ / `narration` | `{ book_id, scope: 'section'\|'chapter', scope_id, request_id }` | NDJSON `{ step: 'part', n, total }` ... `{ done: true, url, expires_at }`. 같은 본문 해시 파일이 있으면 200 `{ url, expires_at }` | 본문 글자 수 × 단가 선차감, 실제 정산 | `narration`/`tts` 체인에서 시작 제공자 1개 고정, 대체 금지(scope `voice`) | `voice_jobs`(feature `narration`), Storage `exports/<org_id>/publishing/narration/<book_id>/<scope_id>-<content_hash>.mp3`(경로가 DB 정본, `voice_jobs.storage_path`는 `store_audio=false`라 비운다), `consume_credits`/`refund_credits`, `rate_limit_hit('publishing:narration:<org>', 5, 3600)` | 403 `plan_required`, 409 `manuscript_empty`, 413 `NARRATION_TOO_LONG`(8,000자 초과), 402, 429, 502 `NARRATION_FAILED`(환불됨) |
+| `GET /api/voice/narrations/[scope_id]?book_id=` | 멤버 | - | `{ url, expires_at, provider }`(7일 서명 URL) | 0 | - | Storage 목록 조회 + `rate_limit_hit('publishing:download:<org>', 60, 3600)` | 404 |
+| `POST /api/internal/ai-token` | 워커(`X-Worker-Key`) | `{ job_id }` | `{ token, expires_at }` | 0 | 발급만: `core.jobs` 행의 `org_id`·`created_by`로 scope 결정 — `publishing.write_section`은 `graph:publishing.draft`, `publishing.refine_chunk`·`publishing.cover_generate`는 `graph:publishing.assist` | `core.jobs` 조회(`status='running'`, `app_id='publishing'`, 허용 `job_type` 목록) | 401 `INTERNAL_KEY_INVALID`, 409 잡 상태, 429 |
+| `POST /api/internal/ai-settle` | 워커(`X-Worker-Key`, 5분 주기) | - | `{ settled, refunded }` | 정산 | - | `ai_usage`(`settled_at is null`, 10분 경과), `consume_credits`/`refund_credits` | 401 |
+
+단건 생성 Route Handler(`titles`, `plans`, `toc`, `sections/[sid]/generate`, `assist`, `metadata`, `personas/blend`)는 위 표 2절의 계약을 그대로 두고 내부 호출만 `publishing.assist` 그래프(`POST /graphs/publishing.assist/runs`, 사용자 세션에서 발급한 서명 토큰 scope `graph:publishing.assist`)로 바꾼다. 스트리밍 응답은 그래프 SSE가 지원되면 중계하고, 아니면 `GET /graphs/runs/{id}`로 받은 완성본을 SSE로 흘려보낸다(01장 D13).
+
+읽기는 Route Handler 없이 RLS로 직접 한다: `core.ai_conversations`, `core.ai_messages`, `core.voice_jobs`(본인 행만, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:635-642`, `0009_core_voice.sql:81-87`).
+
 엔진 내부(공개 인터넷에서 호출 불가, `X-Internal-Token`):
 
 | 메서드 경로 | 호출자 | 입력 | 출력 |
@@ -83,6 +124,8 @@
 | `publishing.book_plan_flag(p_org_id uuid, p_key text, p_default boolean)` | 위와 같음 | 위와 같음 | boolean | - |
 | `publishing.book_theme_allowed(p_org_id uuid, p_theme_key text)` | 위와 같음 | 위와 같음 | boolean | - |
 
+AI·음성 코어 RPC 인용(제품 AI RPC는 새로 만들지 않는다): `set_ai_cross_border_ack`(사용자 세션, owner, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575`), `resolve_ai_route`(service_role: FastAPI, Next.js 음성, `:419-476`), `match_ai_chunks`(FastAPI만, `:369-412`), `purge_wiki_page`(책 영구 삭제·개인정보 삭제 요청, `:578-601`). `set_ai_routing`(`:483-550`)은 제품 화면에서 부르지 않는다. 녹음을 저장하지 않으므로 `expire_voice_audio`는 쓰지 않는다.
+
 모두 `set search_path = ''`, `revoke execute ... from public, anon`(`_supabase-modular/migrations/1000_publishing.sql` 0절, 12절). 사용자용 RPC 안에서 크레딧을 차감하지 않는다(`DB_CONVENTIONS.md` 11장).
 
 ## 4. 잡 페이로드 계약
@@ -91,16 +134,37 @@
 
 | job_type | payload | result | progress 메시지 |
 |---|---|---|---|
-| `publishing.write_section` | `{ book_id, section_id, run_id?, mode, overwrite, persona_ref: { id, custom_id? }, omnibus: bool }` | `{ section_id, char_count, model, usage_id }` | "1.2 설계도 속의 인간 생성 중" |
-| `publishing.write_all` | `{ run_id, book_id, section_ids: uuid[], mode, overwrite, window: 3 }` | `{ done, failed, skipped, credits_used }` | "8/15 소제목 완료" |
+| `publishing.write_section` | `{ book_id, chapter_id, section_ids: uuid[](같은 챕터, 1~10), run_id?, mode, overwrite, omnibus: bool }`(페르소나·어조는 서버가 DB에서 합성, 페이로드에 넣지 않는다) | `{ saved: uuid[], suggested: uuid[], failed: uuid[], char_count, ai_run_id: uuid, notes: [{ section_id, kind, message }] }` | "개요 만드는 중" → "초안 쓰는 중 2/5" → "설정집과 맞춰 보는 중" → "교정 중"(`ai_run_steps`에서 계산) |
+| `publishing.write_all` | `{ run_id, book_id, chapter_ids: uuid[], section_ids: uuid[], mode, overwrite, omnibus }`(챕터 순서대로 `publishing.write_section` 자식 잡 enqueue) | `{ done, failed, skipped, credits_used }` | "8/15 소제목 완료" |
 | `publishing.refine_all` | `{ run_id, book_id, chunk_chars: 2000, mode }` | `{ chunks, suggestions_saved }` | "5/15 구간 다듬는 중" |
 | `publishing.refine_chunk` | `{ run_id, book_id, section_id, offset, length, mode }` | `{ suggestion_html }`(자식 잡 `result`에만 저장, 원문 미변경. 클라이언트가 `core.jobs`를 RLS로 읽어 Diff 표시) | - |
 | `publishing.cover_generate` | `{ book_id, cover_ids: uuid[3], style, prompt_vars: { title, genre, mood } }` | `{ succeeded: uuid[], failed: uuid[] }` | "표지 2/3 완료" |
 | `publishing.parse_manuscript` | `{ upload_id, storage_path, ext }` | `{ chapters, sections, paragraphs, char_count }`(outline은 `manuscript_uploads.parsed_outline`) | "문서 구조 읽는 중" |
+| `publishing.parse_reference` | `{ upload_id, document_id, storage_path, ext }`(`book_id`가 있는 업로드의 참고 파일. 정규화 md를 `<org>/publishing/rag/<uuid>.md`에 저장하고 `publishing.ai_index`를 enqueue) | `{ md_path, char_count }` | "참고 파일 읽는 중" |
 | `render.pdf` | `{ export_id, book_id, preset: { page, width_mm, height_mm, margins_mm{top,right,bottom,left,inner_extra}, font_pt, line_height }, options: { watermark: bool, toc, running_header, ai_notice, cover_image_path? } }` | `{ storage_path, pages, bytes, duration_ms }` | "PDF 조판 중" |
 | `publishing.export_epub` | `{ export_id, book_id, options: { ai_notice, cover_image_path? } }` | `{ storage_path, bytes, epubcheck_errors: 0 }` | "ePub 만드는 중" |
 | `publishing.webhook_deliver` | `{ endpoint_id, event_id, event_type, data }` | `{ http_status, attempts }` | - |
-| `publishing.purge` | `{ kind: 'books'|'uploads'|'exports', before: timestamptz }` | `{ deleted_rows, deleted_objects }` | - |
+| `publishing.purge` | `{ kind: 'books'\|'uploads'\|'exports'\|'narrations', before: timestamptz }`(`books`는 책 컬렉션·설정집 페이지도 삭제) | `{ deleted_rows, deleted_objects }` | - |
+| `publishing.ai_index`(FastAPI) | `{ document_id: uuid, collection: 'book-<book_id>' }` | `{ chunks: int, embedding_provider, embedding_model }` | `chunking`, `embedding:<n>/<total>`, `done` |
+| `publishing.wiki_ingest`(FastAPI) | `{ book_id, document_ids?: uuid[] }` | `{ created: int, updated: int, draft_slugs: string[] }` | `page:<n>/<total>` |
+| `publishing.wiki_lint`(FastAPI) | `{ book_id }` | `{ contradictions, stale, orphans, broken_links, unsourced }`(각 slug 목록) | - |
+
+그래프 실행 계약(워커 ↔ FastAPI, 잡 토큰):
+
+```
+// POST /graphs/publishing.draft/runs  (Authorization: Bearer <잡 토큰>)
+{ "book_id": "uuid", "chapter_id": "uuid", "section_ids": ["uuid"], "mode": "fast|quality", "overwrite": false, "omnibus": false }
+// 202
+{ "run_id": "uuid", "status": "queued" }
+// GET /graphs/runs/{run_id} 완료 시
+{ "status": "succeeded",
+  "output": { "sections": [ { "section_id": "uuid", "body_html": "...", "char_count": 2310,
+                              "notes": [ { "kind": "consistency", "ref": "books/<id>/characters/seojin", "message": "..." } ] } ],
+              "citations": [ { "type": "chunk", "id": 123 }, { "type": "wiki", "slug": "books/<id>/terms/..." } ] } }
+// 실패 시 { "status": "failed", "error": "compliance_failed|provider_unavailable|book_not_found" }
+```
+
+`output.sections[].body_html`은 워커가 zod로 다시 검증하고 sanitize한 뒤 저장한다. 두 스키마는 `api/app/ai/products/publishing/schema/section.schema.json` 하나에서 생성한다(제안). 책 소유는 FastAPI가 `books.org_id = token.org`로 다시 확인한다.
 
 렌더 서비스 계약은 SM 10장 `RenderPdfRequest`/`RenderPdfResponse`를 그대로 쓴다(`app_id: 'publishing'`). 이 제품이 소유자로서 정하는 세부:
 
@@ -121,16 +185,51 @@
 | 발신 | `book.completed` | HMAC-SHA256(`timestamp.rawBody`), `X-Signature`, `X-Timestamp`, 5분 허용 | `event_id` UUID | `webhook_deliveries` 멱등(`endpoint_id, event_id`) |
 | 발신 | `export.succeeded` | 같음 | 같음 | 본문 `{ book_id, export_id, format, pages, download_url }`. 서명 URL 유효 24시간(제안: 외부 자동화가 받아 갈 시간) |
 | 발신 | `export.failed` | 같음 | 같음 | 본문 `{ book_id, export_id, format, error_code }` |
+| 수신 | AI·음성 | 해당 없음 | - | Dify, ElevenLabs, FastAPI는 웹훅을 쓰지 않는다(그래프 완료는 워커가 상태 조회, 낭독은 동기 스트림) |
 
 ## 6. 외부 API 어댑터
 
 | 외부 API | 호출 위치 | 실패 처리 | 쿼터 |
 |---|---|---|---|
-| Anthropic / OpenRouter | 공용 LLM 게이트웨이(web, TS 워커) | 폴백 1회 → 실패 시 환불 + `ai_usage.status='error'`. mock 금지 | 조직당 60회/분(제품 레이트 리밋) |
+| FastAPI AI 서비스(그래프) | web `publishing.assist` 호출, 워커 `write-section.ts` 등(잡 토큰) | 체인 대체(라우터) → 노드 재시도 → `failed` → 환불. mock 금지. 120초(assist)·300초(draft) 안에 끝나지 않으면 실패 + 환불 | 조직당 60회/분(제품 레이트 리밋). 원가는 `ai_usage`(run_id) |
+| Dify Chat API | `src/app/api/ai/chat` | 5xx·10초 무응답 → FastAPI `/tools/answer-direct` + 운영 알림 | 공용 인스턴스 |
+| ElevenLabs(TS SDK) | `src/app/api/voice/*` | 채팅·받아쓰기는 체인 다음으로 대체(`voice_jobs.fallback_from`), 낭독은 대체 없이 실패 + 환불 | 요금·상업 이용 조건 구현 시 확인 |
+| 오픈소스 음성 서버 | `src/app/api/voice/*`(서명 토큰 scope `voice`) | 같음 | 요청당 STT 10분·TTS 5,000자 상한(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:61`). publishing은 구간 120초·낭독 구간 5,000자 이하로 나눈다 |
 | fal | 공용 fal 클라이언트(TS 워커) | 제출 실패 즉시 환불, 30분 미도착 `fail_job` | 동시 3(책당 1회 생성) |
 | Toss | 공용 toss 모듈(web, 정기결제 워커) | CS 5장. `PM001`은 운영 알림 + 승인 취소 요청 | - |
 | WeasyPrint 렌더 서비스 | 엔진 | 4절 | 동시 4/컨테이너 |
 | Supabase Storage | web(서명 URL), 엔진·워커(service_role) | 업로드 완료 검증 실패 시 객체 삭제 | 버킷 상한(org-files 50MB, exports 200MB) |
+
+### 6.1 이 제품이 쓰는 FastAPI 엔드포인트
+
+`docs/products/_platform-core/AI_ARCHITECTURE.md:149-158` 중 publishing이 쓰는 것과 제품 그래프다.
+
+| 엔드포인트 | 호출자 | 인증 | publishing 사용 |
+|---|---|---|---|
+| `POST /v1/chat/completions` | Dify 질문 분류 LLM 노드 | 내부 키 | `model` 값을 기능 키(`dify.aux`)로 받아 라우팅(제안, 공용 ai-service 확인 필요, 06장 R14). 조직 데이터·원고 금지 |
+| `POST /tools/answer` | Dify HTTP 노드 | 내부 키 + 대화 매핑 | 모드 `book`: `book_id`가 매핑 org의 책인지 확인 → 원고·채택된 설정집·참고 파일 검색 → `chat` 모델. 모드 `craft`: 책 근거 없이 일반 글쓰기 상담. assistant `ai_messages` 행(본문, citations, 제공자, 토큰)을 FastAPI가 쓴다 |
+| `POST /tools/answer-direct` | web(Dify 장애) | 서명 토큰 scope `chat rag wiki` | `/tools/answer`와 같은 처리 |
+| `POST /graphs/publishing.draft/runs`, `POST /graphs/publishing.assist/runs`, `GET /graphs/runs/{id}` | 워커(draft, 잡 토큰), web(assist, 사용자 토큰) | scope `graph:<name>`, `jti` 1회 | 4절 계약 |
+| `POST /rag/ingest` | web | 서명 토큰 scope `rag` | 참고 파일·원고 색인(컬렉션 `book-<book_id>`) |
+| `POST /wiki/ingest`, `POST /wiki/lint`, 페이지 저장(사람 편집, R14) | web | 서명 토큰 scope `wiki` | 책 설정집. 읽기(목록·페이지)는 RLS로 직접 하므로 `GET /wiki/pages/{slug}`는 쓰지 않는다 |
+
+쓰지 않는 것: `POST /dify/retrieval`(외부 지식을 쓰지 않는다), `POST /tools/graph/{name}`(Dify에서 그래프를 실행하지 않는다), `POST /rag/search`(web이 직접 검색하지 않는다).
+
+### 6.2 Dify Chatflow 계약 (`publishing-chat`)
+
+| 항목 | 값 |
+|---|---|
+| 앱 | `publishing-chat`(Chatflow) 1개, 앱 키 `DIFY_APP_KEY_PUBLISHING`(web 서버 전용). 정의는 `infra/dify/publishing-chat.yml`(키 없음) |
+| 호출 | web `POST {DIFY_API_URL}/chat-messages`(스트리밍), `user`=`dify_user`, 두 번째 턴부터 `conversation_id`=`dify_conversation_id`, `query`=마스킹된 메시지 |
+| 입력 변수 | `platform_conversation_id`(필수, 플랫폼 대화 UUID), `book_id`(선택, UUID 문자열, 대화 시작 때만). 서명 토큰, org, 원고 본문, 이름은 넣지 않는다(`docs/products/_platform-core/SECURITY_BASELINE.md:285`). DOC_TEMPLATE의 `platform_token` 입력은 코어 결정(대화 매핑)으로 대체됐다 |
+| 노드 | 시작 → 질문 분류(LLM 노드, 모델 공급자 = FastAPI OpenAI 호환, model `dify.aux`) → 분기 `book`(`book_id`가 있을 때): HTTP 요청 노드 → 답변 / 분기 `craft`: HTTP 요청 노드(모드 `craft`) → 답변. 외부 지식·내장 지식베이스 노드는 없다 |
+| HTTP 요청 노드 | `POST {AI_SERVICE_URL}/tools/answer`, 헤더 `X-Internal-Key`(Dify 환경 변수의 비밀 `DIFY_INTERNAL_API_KEY`), 본문 `{ platform_conversation_id, dify_user: sys.user, query: sys.query, book_id, mode: "book"\|"craft" }`, 타임아웃 30초 |
+| HTTP 응답 | `{ answer, citations: [{ type: "chunk"\|"wiki"\|"section", id or slug, title }], no_source: boolean, fallback: boolean, usage: { provider, model, input_tokens, output_tokens } }` |
+| 출처 | FastAPI가 `ai_messages.citations`를 기록한다 |
+| 첫 표시 지연 | HTTP 노드가 전체 답을 돌려준 뒤 표시되므로 그동안 "근거를 찾는 중" 상태를 보인다(01장 5절) |
+| 대화 이력 | Dify 보관 30일, 플랫폼 정본은 `core.ai_messages` |
+| 장애 | Dify 5xx·10초 무응답 → `/tools/answer-direct`. Dify 복구 후 새 대화로 시작 |
+| 확인 | 노드 이름과 입력 변수 동작은 설치한 Dify 버전 문서로 구현 시 확인(`docs/products/_platform-core/AI_ARCHITECTURE.md:71`) |
 
 ## 7. 오류 코드
 
@@ -152,3 +251,8 @@
 | `23503` | 다른 조직·책 행 참조 | 422 | 복합 FK |
 | 코어 코드 | `42501` 403, `CR001` 402, `P0002`/`PM404` 404, `PM001`/`PM409` 409 + 알림, `JB002` 409 | - | CS 15장 매핑 |
 | 앱 코드 | `plan_required` 403, `plan_limit` 403, `llm_failed` 502, `render_failed` 502, `manuscript_empty` 409, `stale_revision` 409, `generation_active` 409, `url_not_allowed` 422, `expired` 410 | - | Route Handler |
+| AI 코어 코드 | `AI001`(플랫폼이 강제한 오픈소스 범위를 해제하려 함, 운영 도구에서만 발생) 403, `AI002`(국외 이전 동의 없이 국외 제공자를 체인에 넣으려 함, 제품 화면은 `set_ai_routing`을 부르지 않는다) 403 + "AI 처리 방식에서 국외 이전 동의가 필요합니다" | - | 코어 `set_ai_routing` |
+| AI 앱 코드 | `AI_UNAVAILABLE` 503(체인의 모든 제공자 실패, 선차감 환불 완료), `AI_CONVERSATION_CLOSED` 409(닫힌 대화 또는 대화당 50턴 초과), `AI_DAILY_LIMIT` 429, `CONSENT_VERSION_MISMATCH` 409, `INTERNAL_KEY_INVALID` 401(워커 키 또는 Dify 내부 키 불일치), `AI_OPEN_SOURCE_UNAVAILABLE` 503(오픈소스 전용 책에서 오픈소스 서버 실패, 환불 완료, 상용 대체 없음) | - | Route Handler |
+| 음성 앱 코드 | `VOICE_CONSENT_REQUIRED` 403, `VOICE_TOO_LONG` 413, `NARRATION_TOO_LONG` 413, `NARRATION_FAILED` 502(중간 실패, 대체 없음, 환불 완료) | - | Route Handler |
+| 위키 앱 코드 | `WIKI_VERSION_CONFLICT` 409(`expected_version` 불일치, `docs/products/_platform-core/LLM_WIKI.md:31`), `WIKI_NO_SOURCE` 409(출처 없는 페이지 채택) | - | Route Handler |
+| FastAPI | `AI_TOKEN_INVALID` 401(서명, `aud`, scope, 만료, `jti` 재사용) | - | `api/` |

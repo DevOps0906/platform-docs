@@ -10,6 +10,8 @@
 --     RPC 안에서 레이트 리밋(core.rate_limit_hit), 허니팟, 입력 검증, 스팸 점수를 처리한다.
 --   - 구독 신청/확인/해지는 이메일 발송이 필요하므로 service_role 전용 RPC다(Route Handler가 호출).
 --   - 문의 목록은 조직 멤버(viewer 제외)만 읽는다. 쓰기는 RPC 또는 service_role뿐이다(테이블 쓰기 정책 없음).
+--   - AI 상담(2026-10-13): 방문자 채팅·음성은 AI 게이트(Next.js Route Handler)와 FastAPI 가 core.ai_* 를 쓴다.
+--     이 스키마는 사이트별 스위치(accepts_ai_chat, accepts_voice)와 update_ai_settings 만 추가한다(제품 AI 테이블 없음).
 --
 -- 보안 규칙 (SECURITY_BASELINE.md)
 --   - SECURITY DEFINER 함수는 set search_path = '' 이고 모든 객체를 스키마 한정한다.
@@ -49,6 +51,8 @@ create table if not exists site.sites (
                          constraint sites_notify_email_check check (notify_email is null or (char_length(notify_email) <= 254 and notify_email ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$')),
   accepts_inquiries      boolean not null default true,
   accepts_newsletter     boolean not null default true,
+  accepts_ai_chat        boolean not null default false,
+  accepts_voice          boolean not null default false,
   inquiry_retention_days integer not null default 365
                          constraint sites_retention_check check (inquiry_retention_days between 30 and 1095),
   privacy_policy_version text not null default 'v1'
@@ -57,11 +61,14 @@ create table if not exists site.sites (
                          constraint sites_status_check check (status in ('active', 'paused')),
   created_by             uuid,
   created_at             timestamptz not null default now(),
-  updated_at             timestamptz not null default now()
+  updated_at             timestamptz not null default now(),
+  constraint sites_voice_needs_chat_check check (not accepts_voice or accepts_ai_chat)
 );
 create index if not exists sites_org_idx on site.sites (org_id);
 comment on column site.sites.inquiry_retention_days is '문의 보존 일수(제안 기본 365). spam 상태는 30일. purge_expired 가 삭제한다';
 comment on column site.sites.privacy_policy_version is '폼이 보여 준 개인정보 수집 동의 문구의 버전. 다르면 SI004 로 거부한다';
+comment on column site.sites.accepts_ai_chat is 'AI 상담(방문자 채팅) 스위치. 기본 false. update_ai_settings 로만 바꾼다';
+comment on column site.sites.accepts_voice is '음성 상담 스위치. 기본 false. accepts_ai_chat 이 true 일 때만 true 가 될 수 있다';
 
 drop trigger if exists sites_set_updated_at on site.sites;
 create trigger sites_set_updated_at before update on site.sites
@@ -605,6 +612,42 @@ begin
 end;
 $$;
 
+-- AI 상담(방문자 채팅)과 음성 상담의 사이트별 스위치. 기본은 꺼짐(운영자가 켠다). 상담을 끄면 음성도 함께 끈다.
+-- update_site_settings 의 시그니처를 바꾸지 않으려고 별도 함수로 둔다. AI 기능 키와 라우팅은 11절이 정한다.
+create or replace function site.update_ai_settings(
+  p_site_id          uuid,
+  p_accepts_ai_chat  boolean default null,
+  p_accepts_voice    boolean default null
+)
+returns site.sites
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row site.sites; v_before jsonb; v_chat boolean; v_voice boolean;
+begin
+  select * into v_row from site.sites where id = p_site_id for update;
+  if not found then
+    raise exception 'update_ai_settings: not found' using errcode = 'P0002';
+  end if;
+  if not core.is_service_caller()
+     and not core.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'update_ai_settings: owner/admin only' using errcode = '42501';
+  end if;
+  if not core.is_service_caller() and not core.has_entitlement(v_row.org_id, 'site') then
+    raise exception 'update_ai_settings: no entitlement' using errcode = '42501';
+  end if;
+  v_before := jsonb_build_object('accepts_ai_chat', v_row.accepts_ai_chat, 'accepts_voice', v_row.accepts_voice);
+  v_chat  := coalesce(p_accepts_ai_chat, v_row.accepts_ai_chat);
+  v_voice := coalesce(p_accepts_voice, v_row.accepts_voice) and v_chat;
+  update site.sites set accepts_ai_chat = v_chat, accepts_voice = v_voice
+   where id = p_site_id returning * into v_row;
+  perform core.write_audit(v_row.org_id, 'site.ai_settings', 'site', p_site_id::text, v_before,
+                           jsonb_build_object('accepts_ai_chat', v_row.accepts_ai_chat, 'accepts_voice', v_row.accepts_voice));
+  return v_row;
+end;
+$$;
+
 -- ---------------------------------------------------------------------
 -- 8. 운영 RPC (service_role 전용): 사이트 등록, 만료 정리
 -- ---------------------------------------------------------------------
@@ -671,7 +714,7 @@ $$;
 -- ---------------------------------------------------------------------
 -- 9. EXECUTE 정리: PUBLIC 회수 후 허용 목록만
 --    anon, authenticated, service_role : submit_inquiry (위 5절)
---    authenticated, service_role       : set_inquiry_status, delete_inquiry, erase_subscriber, update_site_settings
+--    authenticated, service_role       : set_inquiry_status, delete_inquiry, erase_subscriber, update_site_settings, update_ai_settings
 --    service_role 전용                 : subscribe/confirm/unsubscribe_newsletter, provision_site, purge_expired
 -- ---------------------------------------------------------------------
 revoke execute on function site.set_inquiry_status(uuid, text, text) from public, anon;
@@ -682,6 +725,8 @@ grant execute on function site.set_inquiry_status(uuid, text, text) to authentic
 grant execute on function site.delete_inquiry(uuid) to authenticated;
 grant execute on function site.erase_subscriber(uuid) to authenticated;
 grant execute on function site.update_site_settings(uuid, text, text, boolean, boolean, text) to authenticated;
+revoke execute on function site.update_ai_settings(uuid, boolean, boolean) from public, anon;
+grant execute on function site.update_ai_settings(uuid, boolean, boolean) to authenticated;
 
 revoke execute on function site.subscribe_newsletter(text, text, text, text, text, text, integer) from public, anon, authenticated;
 revoke execute on function site.confirm_newsletter(uuid) from public, anon, authenticated;
@@ -708,3 +753,50 @@ revoke execute on function site.newsletter_status_transition() from public, anon
 --   select id, site_id from site.inquiries where notified_at is null and status = 'new' order by created_at limit 50;
 --   (service_role) 발송 후 update site.inquiries set notified_at = now() where id = any(:ids);
 -- ---------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------
+-- 11. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/website-floria/02_ARCHITECTURE.md 5절, 01_PRD.md 4절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 이 조각과 모놀리스 seed 에서만 바꾼다.
+--   이 제품의 AI 는 비로그인 방문자 상담이다. 비용은 운영자 조직이 내고(크레딧 없음) 방문자는 레이트 리밋으로만 제한한다.
+--   지식(시공 사례, 식물 정보, FAQ)은 운영자가 공개하는 자료뿐이라 개인정보가 없고, 방문자 입력은 서버가 마스킹한다.
+--   11.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'site'. 기능 키는 소문자. 체인 제공자는 seed.sql 의
+--        core.ai_providers 행이어야 하고 kind 가 맞아야 한다(11.2 검사).
+--        - site.consult   : 그래프 answer 노드. 브랜드 톤이 중요해 Claude 먼저. 운영자 조직이 국외 이전에 동의하지 않았으면
+--                           resolve_ai_route 가 상용을 걸러 오픈소스만 쓴다.
+--        - wiki.*         : 운영자 조직의 브랜드 지식 위키(개인정보 없음). 대량 처리라 오픈소스 먼저.
+--        - dify.aux       : Dify 보조 LLM 노드(질문 분류). 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - site.knowledge(embedding): 방문자 질의도 컬렉션과 같은 모델로 임베딩해야 하므로 국내 오픈소스 임베딩으로 고정
+--                           (대체 없음, 모델을 바꾸면 컬렉션 재색인).
+--        - voice_consult  : 음성 질문 STT 는 오픈소스 먼저(받아쓰기), 답변 읽어 주기 TTS 는 ElevenLabs 먼저(브랜드 음성 품질).
+--                           방문자 한도(길이, 횟수)는 라우팅이 아니라 Route Handler 가 강제한다.
+-- ---------------------------------------------------------------------
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'site', 'site.consult',   'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'site', 'wiki.query',     'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'site', 'wiki.ingest',    'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'site', 'wiki.lint',      'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'site', 'dify.aux',       'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'site', 'site.knowledge', 'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'site', 'voice_consult',  'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'site', 'voice_consult',  'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 11.2 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'site'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'site routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;

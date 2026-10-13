@@ -1,5 +1,7 @@
 # 07 원본 이식과 폐기: FLORA Publishing
 
+AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 v1·v2의 `call_llm`/OpenRouter 폴백 호출과 Taste 14종 프롬프트(`flora/api/routers/llm.py`, `Flora-v2/api/services/llm.py`), v1 표지 제공자 7종(`cover.py`), v1 `tts.py`와 `f5-tts/`, FP의 Vertex 프록시, SD의 LLM 4사 SDK 연동이다. 이 중 프롬프트 텍스트와 Taste만 이식하고 호출 경로는 모두 ai-service 라우터(확정 결정 17)로 대체한다. RAG, 책 설정집 위키, Dify, 받아쓰기, 낭독, 3D 히어로는 원본에 없어 모두 신규다. 아래 표의 AI 행이 이 자산들의 대응이다.
+
 작성일 2026-10-12. 원본 폴더는 수정하지 않았다. 이식은 개발 단계에서 새 저장소로 "복사 후 수정"하며, 원본은 5절 절차로 아카이브한다. 분석 근거는 `docs/products/00_MERGE_ANALYSIS.md`의 줄 번호이며, 아래에서는 "분석:줄번호"로 줄여 쓴다.
 
 ## 1. 원본별 자산 분류
@@ -17,7 +19,7 @@
 | `frontend/src/lib/plan/plan-limits.ts`(119줄) | 기획만(클라이언트) | 참고(features 키 설계) | `01_PRD.md` 4.4절 | 분석:231 |
 | `frontend/src/proxy.ts`(50줄) | 부분 | 참고(코어 auth 골격으로 대체) | `web/src/proxy.ts` | 분석:75 |
 | `frontend/src/app/page.tsx`(랜딩 101줄) | 동작 | 참고 | `web/src/app/(marketing)/` | 분석:158 |
-| `api/services/llm.py`(Taste 14종), `api/routers/llm.py`(344줄) 프롬프트 | 부분 | 참고(프롬프트 텍스트만 TS로 이식) | `web/src/server/prompts/` | 01장 D1 |
+| `api/services/llm.py`(Taste 14종), `api/routers/llm.py`(344줄) 프롬프트 | 부분 | 참고(프롬프트 텍스트만 언어 중립 파일로 이식) | `api/app/ai/products/publishing/prompts/` | 01장 D1, D13 |
 | `api/routers/upload.py` 파서(txt, md, docx, pdf) | 부분 | 이식(계약·한도 수정) | `engine/app/parsers/` | 분석:116 |
 | `api/routers/upload.py` HWP 파서 | 부분(깨짐) | 폐기(결정 D4 전까지) | - | `docs/reviews/Flora-v2.md:76` |
 | `api/routers/books.py` merge | 동작 | 이식(엔진 HTML 조립에 흡수) | `engine/app/html/` | 분석:106 |
@@ -36,14 +38,14 @@
 | `frontend/src/lib/print-presets.ts`(714줄, `buildPageCss`) | 동작 | 이식(Python으로, @page 규칙) | `engine/app/presets/` | 분석:86 |
 | `frontend/src/lib/html-templates.ts`(137줄) | 동작 | 이식 | `engine/app/html/templates/` | `docs/reviews/flora.md:188` |
 | `frontend/src/app/api/books/build-html/route.ts`(250줄) | 동작 | 이식(서버 Python, 단락 escape 추가) | `engine/app/html/` | `docs/reviews/flora.md:78` |
-| `api/routers/llm.py` `call_llm`, `_call_via_openrouter` | 동작 | 참고(공용 게이트웨이가 대체) | - | SM 8장 |
-| `api/routers/llm.py` 집필·옴니버스 프롬프트(`:298`, `:472`) | 동작 | 이식(프롬프트 텍스트) | `web/src/server/prompts/` | 분석:97 |
+| `api/routers/llm.py` `call_llm`, `_call_via_openrouter` | 동작 | 참고(ai-service 라우터 체인이 대체) | - | SM 8장(2026-10-13 변경), 확정 결정 17 |
+| `api/routers/llm.py` 집필·옴니버스 프롬프트(`:298`, `:472`) | 동작 | 이식(프롬프트 텍스트) | `api/app/ai/products/publishing/prompts/` | 분석:97 |
 | `api/routers/cover.py` `build_cover_prompt`(`:81`) | 동작 | 이식(프롬프트만) | `worker/src/handlers/cover.ts` | 분석:104 |
 | `api/routers/cover.py` 제공자 7종 | 동작 | 폐기(fal 1개로) | - | 분석:104 |
 | ToneSlider 컴포넌트 | 동작 | 이식 | `web/src/features/wizard/` | 분석:92 |
 | `frontend/src/components/project/weasyprint-editor-panel.tsx`(1,067줄) | 동작 | 참고(미리보기 UX만) | `web/src/features/finish/` | 분석:113 |
 | `frontend/.../new/ebook/page.tsx`(4,095줄), `manuscript/page.tsx`(1,422줄), `chapter-wizard.tsx`(1,473줄) | 동작 | 폐기 | - | D-26 |
-| `f5-tts/` | 동작 | 폐기(아카이브) | - | D-36, D-07 |
+| `f5-tts/` | 동작 | 폐기(아카이브). TTS는 확정 결정 16(ElevenLabs + 오픈소스 음성 서버)로 대체. F5-TTS 공개 가중치는 비상업 라이선스(CC-BY-NC)라 유료 서비스에 쓰지 않는다 | - | D-36, D-07, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:57` |
 
 ### 1.3 flora-publisher
 
@@ -77,7 +79,7 @@
 | v1 `build-html` + `html-templates.ts` | Next Route Handler → 엔진. 모든 텍스트 `html.escape`, 본문은 nh3 허용 목록. 이미지 src는 Storage 경로를 서버가 서명 URL 또는 허용 호스트로 변환 |
 | v1 `build_epub` | `abs(hash(title))` → `uuid5(NAMESPACE_URL, 'flora:book:<book_id>')`. XML escape. 표지 바이너리, nav.xhtml, 폰트(OFL)만 포함. epubcheck 통과 |
 | v2 업로드 파서 | `file_id` 2단계 제거. Storage 객체를 엔진이 스트리밍으로 읽음. 20MB, 매직바이트 검사, 파싱은 워커 프로세스. `/manuscript` hex 에코 제거 |
-| 프롬프트(v1, v2) | Python f-string → TS 템플릿 함수. 출력 JSON은 zod 스키마. Taste 주입은 `web/src/server/personas`의 합성 함수 하나 |
+| 프롬프트(v1, v2) | Python f-string → 언어 중립 템플릿 파일(md·json, `api/app/ai/products/publishing/prompts/`). 출력 JSON은 JSON Schema 하나에서 zod(web)·pydantic(api)을 생성. Taste는 `web/src/data/personas.json` 단일 소스를 api가 빌드 때 복사해 읽는다(해시 일치 테스트, PB-06-048). 합성 함수는 api `compose` 노드 하나 |
 | v1 `content_disposition` | TS로 옮겨 다운로드 302 대신 서명 URL `download` 파라미터에 적용 |
 
 ## 3. 폐기 목록과 사유
@@ -125,6 +127,16 @@
 | D-37 | 실키가 든 v1 `frontend/.env`, v2 루트 `.env`·`.env.local` | 분석:198 | 키 유출. 삭제와 재발급 |
 | D-38 | SD 빈 `Claude.md`, `add.md` | 분석:199 | 내용 없음. 이 폴더 `CLAUDE.md`가 대체 |
 
+AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 A-3 목록 밖이라 따로 번호를 붙인다.
+
+| ID | 항목 | 출처 | 사유 |
+|---|---|---|---|
+| D-39 | 공용 LLM 게이트웨이(TS)의 직접 제공자 호출과 모델 맵 | `docs/products/_platform-core/SHARED_MODULES.md:215` | 라우터 본체가 ai-service로 이동. TS 게이트웨이는 `/api/ai/*` 호출용 얇은 래퍼만 |
+| D-40 | web·worker·engine에 LLM·임베딩 키를 두는 구성 | `docs/products/_platform-core/SECURITY_BASELINE.md:284` | 키는 `api/`에만(음성 키는 web 서버만) |
+| D-41 | "Anthropic + OpenRouter 폴백" 고정 2단 체인 | 분석:154 | 기능별 대체 체인(5.1절)과 국외 이전 동의 필터로 대체 |
+| D-42 | 랜딩 히어로 "판면 정지 렌더 + 판형 전환 1회" | 03장 4.3절 원칙 4(이전 판) | 2026-10-13 사용자 결정으로 3D 히어로(4.6절). 판면 렌더는 3D의 마지막 프레임으로 흡수 |
+| D-43 | 임의 텍스트를 TTS로 읽는 API(클라이언트가 텍스트를 보냄) | v1 `tts.py` 설계 | 낭독·읽어 주기는 DB 본문·메시지만 입력으로 받는다(PB-F-051, 052) |
+
 ## 4. 복사 금지 결함
 
 `SECURITY_BASELINE.md` 14장 중 해당 항목 + 원본 고유 결함.
@@ -149,6 +161,15 @@
 | Windows 폰트 경로 하드코딩 | `flora/api/routers/export.py:134-139` | 컨테이너에서 한글 깨짐 | fontconfig + Noto CJK 설치 검증 |
 | `.single()` 0행 500 | `Flora-v2/api/routers/projects.py:57`, `flora/api/db.py:46` | 404 대신 500 | `maybe_single`/RLS 결과 확인 |
 | 허위 수치(waitlist 시드 147) | `flora/api/routers/waitlist.py:8` | 허위 표시 | 실제 행 수 |
+| 브라우저에서 Dify·FastAPI·AI 제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*` |
+| Dify 입력에 토큰·org·원고 | `docs/products/_platform-core/SECURITY_BASELINE.md:285` | Dify 로그에 평문으로 남음 | 대화 매핑(`platform_conversation_id`, `dify_user`) |
+| LLM·음성 키를 브라우저·Vercel·워커에 두기 | `docs/products/_platform-core/SECURITY_BASELINE.md:284` | 키 유출, 라우팅 우회 | LLM 키는 `api/`, 음성 키는 web 서버 |
+| 개인정보 포함 원고를 상용 제공자로 대체 전송 | 01장 6.1절 | 국외 이전 동의 우회 | 오픈소스 전용 책, 실패 시 환불 |
+| 낭독 중 제공자 대체(목소리가 바뀜) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 연속 낭독 품질 | 시작 제공자 고정, 실패 시 파일 없음 + 환불 |
+| 참고 파일 문장을 그대로 이어 붙이는 생성 | 01장 PB-F-054 | 저작권 침해 위험 | compliance의 장문 일치 검사 |
+| 사람 소유 블록을 에이전트가 덮어쓰기 | `docs/products/_platform-core/LLM_WIKI.md:30` | 이용자 수정 소실 | 제안만 남기고 `expected_version` 잠금 |
+| 토큰 밖 3D 재질 색, 보라/핑크 그라디언트 | `docs/products/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.6절 토큰 표 |
+| "Tailwind로"만 적은 지시로 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 

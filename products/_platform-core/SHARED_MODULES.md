@@ -1,6 +1,6 @@
 # SHARED_MODULES: 공용 모듈 경계와 인터페이스
 
-작성일 2026-10-12. 제품이 "참조만 하고 재정의하지 않는" 공용 모듈 16개의 소유자, 소비자, 인터페이스, 뒷받침하는 코어 SQL, 실패·환불 동작을 적는다(`docs/products/_PRODUCT_AGENT_BRIEF.md:53`). TypeScript 블록은 계약 예시다. 구현 파일이 아니다. 경로 인용에서 `migrations/`는 `docs/products/_supabase-modular/migrations/`다.
+작성일 2026-10-12. 제품이 "참조만 하고 재정의하지 않는" 공용 모듈 16개(+ AI 계층 5개, 19장)의 소유자, 소비자, 인터페이스, 뒷받침하는 코어 SQL, 실패·환불 동작을 적는다(`docs/products/_PRODUCT_AGENT_BRIEF.md:53`). TypeScript 블록은 계약 예시다. 구현 파일이 아니다. 경로 인용에서 `migrations/`는 `docs/products/_supabase-modular/migrations/`다.
 
 ## 0. 패키지 배치 (제안)
 
@@ -11,7 +11,12 @@
 | `packages/core-db` | Supabase 클라이언트 3종, `session_context` 래퍼, 코어 RPC 타입, 생성 타입 | TS |
 | `packages/core-billing` | credits, toss, webhooks | TS |
 | `packages/core-auth` | auth, org, oauth, 암호화(credentials), audit, rate limit | TS |
-| `packages/core-ai` | LLM 게이트웨이, fal 클라이언트, compliance | TS |
+| `packages/core-ai` | 얇은 LLM 호출 래퍼(라우터 본체는 FastAPI로 이동, 8장), fal 클라이언트, compliance | TS |
+| `packages/core-voice` | 음성 어댑터(ElevenLabs SDK + 오픈소스 음성 서버 클라이언트), 19장 | TS |
+| `packages/ai-gateway` | Next.js `/api/ai/*`, `/api/voice/*` 공통 구현(서명 토큰 발급, 크레딧, 중계), 19장 | TS |
+| `services/ai-service` (제품별 `apps/api`) | FastAPI: llm 라우터, rag, wiki, graphs, tools, 19장 | Python/FastAPI |
+| `services/dify` (공용 1개) | 자체 호스팅 Dify, 설치 `docs/develop/_shared/dify/` | Docker |
+| `services/voice-server`, `services/llm-server` (공용 GPU) | 오픈소스 음성 서버, vLLM 서버, 설치 `docs/develop/_shared/voice/`, `llm/` | Docker/GPU |
 | `packages/core-jobs` | jobs 클라이언트와 워커 루프, storage 헬퍼 | TS |
 | `packages/core-affiliate` | affiliate 어댑터, 단축 링크, 대가성 문구 삽입 | TS |
 | `packages/automation-core` | React Flow 서버 실행 엔진, 노드 레지스트리, n8n/Make 브릿지 | TS |
@@ -19,6 +24,8 @@
 | `services/render-weasyprint` | PDF 렌더 서비스(publishing 소유, astro 소비) | Python/FastAPI 컨테이너 |
 | `services/media-worker` | Whisper, demucs, FFmpeg 워커(video 소유) | Python |
 | `packages/admin-kit` | admin-suite 전용 UI 코어(확정 결정 2). 이 문서 범위 밖 | TS |
+
+패키지 이름과 배치는 제안이다. AI 계층 상세는 `AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`가 정본이고 이 문서는 경계만 적는다.
 
 모든 TS 패키지는 `SUPABASE_DB_SCHEMA`(`core` 또는 `public`)를 읽어 RPC 스키마를 고른다(`docs/products/_supabase-modular/ARCHITECTURE.md:10`).
 
@@ -32,7 +39,7 @@
 | toss | _platform-core | 유료 플랜 있는 제품 | `payment_orders`, `payments`, `billing_keys`, `confirm_payment_order`, `apply_subscription_transition` |
 | webhooks | _platform-core | 웹훅 받는 제품 전부 | `webhook_events` |
 | oauth | _platform-core | SNS/마켓/제휴 연동 제품 | `oauth_states`, `create/consume_oauth_state`, `encrypted_credentials` |
-| llm gateway | _platform-core (sellingstudio 구현 기준) | 전 제품 | `ai_usage`, `consume_credits` |
+| llm gateway | _platform-core (sellingstudio 구현 기준). 2026-10-13부터 라우터 본체는 ai-service | 전 제품 | `ai_usage`, `consume_credits`, `resolve_ai_route` |
 | fal client | _platform-core (sellingstudio 구현 기준) | video, commerce, toon, publishing(표지), astro(테마 이미지) | `jobs`, `webhook_events`, `ai_usage` |
 | weasyprint render | flora-publishing | astro-ai | `jobs`, Storage `exports` |
 | sns uploader | nomad-video | nomad-commerce(2단계), nomad-blog(인스타 포스팅) | `encrypted_credentials`, `oauth_states`, `jobs` |
@@ -42,6 +49,11 @@
 | audit | _platform-core | 전 제품 | `audit_log`, `write_audit` |
 | jobs | _platform-core | 비동기 작업 있는 제품 전부 | `jobs` + RPC 8개 |
 | affiliate | _platform-core | nomad-video, nomad-blog | `affiliate_*`, `brandconnect_applications` + 함수 6개 |
+| ai-gateway | _platform-core | 전 제품 | `ai_conversations`(visitor_key, dify_user, status), `ai_messages`, `ai_usage`, `ai_org_settings`, `set_ai_cross_border_ack`, `consume_credits` |
+| ai-service | _platform-core | 전 제품 | `ai_*`, `wiki_*`, `match_ai_chunks`, `resolve_ai_route`, `ai_runtime` |
+| dify | _platform-core (공용 인프라) | 전 제품 | 없음(조직 데이터를 두지 않음) |
+| core-voice | _platform-core | 전 제품 | `voice_sessions`, `voice_jobs`, `expire_voice_audio`, 버킷 `voice-audio` |
+| llm-wiki | _platform-core | 전 제품(제품 위키), 개발 환경(개발 위키) | `wiki_pages`, `wiki_links`, `wiki_revisions` |
 
 ## 2. auth
 
@@ -200,6 +212,7 @@ export interface CredentialVault {
 | 항목 | 내용 |
 |---|---|
 | 소유 / 소비 | _platform-core(기준 구현 `sellingstudio/lib/llm/openrouter.ts`) / 전 제품 |
+| 2026-10-13 변경 | 이 절은 최초(2026-10-12) 설계의 이력이다. 라우터 본체는 FastAPI `ai-service`의 `llm/`로 옮겼고 상용(Claude, ChatGPT, Gemini, OpenRouter)과 오픈소스(vLLM) 이원화, `core.resolve_ai_route` 기반 대체 체인을 쓴다(`AI_ARCHITECTURE.md` 4절). `packages/core-ai/llm`의 TS 인터페이스는 `/api/ai/*` 호출용 얇은 래퍼로 남는다. 아래 "보강"의 OpenRouter 폴백은 새 대체 체인의 한 단계로 흡수된다 |
 | 기준 구현에서 가져오는 것 | 용도별 모델 맵 `MODELS`(`openrouter.ts:3-8`), OpenRouter chat completions 호출과 `response_format: json_object`(`:15-46`) |
 | 보강 | 제공자 라우팅(Anthropic 직접 + OpenRouter 폴백, `docs/products/00_MERGE_ANALYSIS.md:154`), 사용자 노출은 "빠름/고품질" 2모드(`:154`), 호출마다 `ai_usage` 기록, 크레딧 선차감, 타임아웃과 재시도, 스트리밍, 모델 화이트리스트(`:858`) |
 | 코어 SQL | `core.ai_usage`(`migrations/0003_core_credits.sql:80-98`), `consume_credits` |
@@ -470,8 +483,23 @@ export interface AffiliateApi {
 
 | 규칙 | 내용 |
 |---|---|
-| 재정의 금지 | 위 16개 모듈을 제품 폴더에서 다시 만들지 않는다. 필요 기능이 없으면 `_platform-core`에 요청 작업으로 남긴다 |
+| 재정의 금지 | 위 모듈(1장 표 전체, AI 계층 포함)을 제품 폴더에서 다시 만들지 않는다. 필요 기능이 없으면 `_platform-core`에 요청 작업으로 남긴다 |
 | 서버 경계 | service_role 키는 서버 코드에만. 크레딧 RPC, 잡 RPC, 자격증명 복호화는 Route Handler/워커에서만 |
 | 멱등 키 | 클라이언트가 요청마다 UUID `request_id`를 보내고 서버가 `consume:<app>:<request_id>`, `job:<app>:<request_id>`로 쓴다 |
 | 실패 표시 | 장애를 mock 응답으로 숨기지 않는다(`docs/products/00_MERGE_ANALYSIS.md:155`). 사용자에게 실패와 환불 여부를 보여 준다 |
 | 문서화 | 제품 `02_ARCHITECTURE.md` 모듈 경계 절에 "어느 공용 모듈을 어떤 용도로 쓰는지" 표를 적는다 |
+
+## 19. AI 계층 모듈 (2026-10-13 추가)
+
+상세 설계는 아래 정본 문서에 있다. 이 장은 소유·소비·경계·실패 동작만 요약하고 내용을 복제하지 않는다. 제품은 참조만 하고 재정의하지 않는다.
+
+| 모듈 | 소유 / 소비 | 인터페이스 요약 | 코어 SQL | 실패·환불 | 정본 |
+|---|---|---|---|---|---|
+| ai-gateway | _platform-core / 전 제품 | Next.js `/api/ai/chat`, `/api/ai/rag/*`, `/api/ai/wiki/*`, `/api/ai/graphs/*`. 인증, 엔타이틀먼트, 대화 매핑 기록, 크레딧 선차감과 정산, EdDSA 서명 토큰 발급, Dify·FastAPI 중계 | `ai_conversations`, `ai_messages`, `ai_usage`, `consume_credits`, `refund_credits` | 선차감 부족은 `CR001`. 실행 실패는 선차감 전액 `refund_credits`, 성공은 실제 사용량으로 정산(`ai_usage.settled_at`). 장애를 mock 응답으로 숨기지 않는다 | `AI_ARCHITECTURE.md` 1, 2, 7장 |
+| ai-service | _platform-core / ai-gateway, Dify | FastAPI `llm/`(라우터), `rag/`, `wiki/`, `graphs/`, `tools/`, `compliance/`. EdDSA 서명 토큰(공개키 검증) 또는 Dify 내부 키 + 대화 매핑만 신뢰 | `ai_providers`, `ai_model_prices`, `ai_routing_settings`, `ai_collections`, `ai_documents`, `ai_chunks`, `ai_runs`, `ai_run_steps`, `match_ai_chunks`, `resolve_ai_route`, `set_ai_routing`, `ai_filter_chain`, 스키마 `ai_runtime` | 제공자 오류는 체인의 다음으로 대체하고 `ai_usage.status='fallback'`. 모두 실패면 `error` + 환불. 강제 오픈소스 범위와 국외 이전 동의(`AI002`)가 없는 조직은 상용(국외)으로 대체하지 않음. hms는 전용 `hms-llm`, `hms-embed` 사용 | `AI_ARCHITECTURE.md` 4, 5, 6, 8장 |
+| dify | _platform-core(공용 자체 호스팅 1개) / ai-gateway | 제품별 Chatflow 앱. 토큰을 넘기지 않고 대화 매핑을 쓴다: Dify `user`=서버가 만든 `dify_user`, 입력 변수 `platform_conversation_id`, HTTP 요청 노드가 내부 키로 FastAPI `/tools/*` 호출 | 없음. 대화 id만 `ai_conversations.dify_conversation_id`에 연결 | Dify 장애 시 ai-gateway가 FastAPI `/tools/answer-direct`를 서명 토큰으로 직접 호출. Dify DB는 조직 데이터 저장소로 관리하고 조직 판단은 Dify에 두지 않는다. hms는 공용 Dify를 쓰지 않는다 | `AI_ARCHITECTURE.md` 3장, `docs/develop/_shared/dify/README.md` |
+| core-voice | _platform-core / 전 제품 | `VoiceAdapter.stt/tts` 하나의 인터페이스에 `elevenlabs`, `oss-voice` 구현 2개. Next.js `/api/voice/*` | `voice_sessions`, `voice_jobs`, `expire_voice_audio`, 버킷 `voice-audio`, `ai_usage`(kind `stt`, `tts`) | 체인 다음 제공자로 대체하고 `voice_jobs.fallback_from` 기록. 국외(ElevenLabs) 대체는 조직 동의가 있을 때만. 같은 목소리 연속 기능은 대체 없이 실패 + 환불. hms는 전용 `hms-voice` 서버만 사용 | `VOICE_ARCHITECTURE.md`, `docs/develop/_shared/voice/README.md` |
+| llm-wiki | _platform-core / 전 제품, 개발 환경 | 제품 위키는 FastAPI `wiki/`(ingest, compile, query, lint), 개발 위키는 스킬 `.claude/skills/llm-wiki/` | `wiki_pages`, `wiki_links`, `wiki_revisions`(수정·삭제 불가, `purge_wiki_page`만 예외) | 위키가 원본과 충돌하면 원본이 정본. ingest 실패는 잡 재시도 후 `failed`, 사용량만큼만 차감 | `LLM_WIKI.md`, `docs/develop/_shared/llm-wiki/SKILL.md` |
+
+공통 규칙: 브라우저에서 Dify, FastAPI, LLM, 음성 제공자를 직접 호출하지 않는다. 서명 토큰은 EdDSA다. 개인키 `AI_TOKEN_PRIVATE_KEY`는 제품 Next.js만, FastAPI·음성 서버는 공개키(`AI_TOKEN_JWKS_URL`)만 갖는다(`SECURITY_BASELINE.md` 16장).
+

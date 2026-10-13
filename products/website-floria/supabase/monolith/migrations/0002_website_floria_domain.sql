@@ -41,6 +41,8 @@ create table if not exists public.sites (
                          constraint sites_notify_email_check check (notify_email is null or (char_length(notify_email) <= 254 and notify_email ~* '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$')),
   accepts_inquiries      boolean not null default true,
   accepts_newsletter     boolean not null default true,
+  accepts_ai_chat        boolean not null default false,
+  accepts_voice          boolean not null default false,
   inquiry_retention_days integer not null default 365
                          constraint sites_retention_check check (inquiry_retention_days between 30 and 1095),
   privacy_policy_version text not null default 'v1'
@@ -49,11 +51,14 @@ create table if not exists public.sites (
                          constraint sites_status_check check (status in ('active', 'paused')),
   created_by             uuid,
   created_at             timestamptz not null default now(),
-  updated_at             timestamptz not null default now()
+  updated_at             timestamptz not null default now(),
+  constraint sites_voice_needs_chat_check check (not accepts_voice or accepts_ai_chat)
 );
 create index if not exists sites_org_idx on public.sites (org_id);
 comment on column public.sites.inquiry_retention_days is '문의 보존 일수(제안 기본 365). spam 상태는 30일. purge_expired 가 삭제한다';
 comment on column public.sites.privacy_policy_version is '폼이 보여 준 개인정보 수집 동의 문구의 버전. 다르면 SI004 로 거부한다';
+comment on column public.sites.accepts_ai_chat is 'AI 상담(방문자 채팅) 스위치. 기본 false. update_ai_settings 로만 바꾼다';
+comment on column public.sites.accepts_voice is '음성 상담 스위치. 기본 false. accepts_ai_chat 이 true 일 때만 true 가 될 수 있다';
 
 drop trigger if exists sites_set_updated_at on public.sites;
 create trigger sites_set_updated_at before update on public.sites
@@ -598,6 +603,42 @@ begin
 end;
 $$;
 
+-- AI 상담(방문자 채팅)과 음성 상담의 사이트별 스위치. 기본은 꺼짐(운영자가 켠다). 상담을 끄면 음성도 함께 끈다.
+-- update_site_settings 의 시그니처를 바꾸지 않으려고 별도 함수로 둔다. AI 기능 키와 라우팅은 11절이 정한다.
+create or replace function public.update_ai_settings(
+  p_site_id          uuid,
+  p_accepts_ai_chat  boolean default null,
+  p_accepts_voice    boolean default null
+)
+returns public.sites
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row public.sites; v_before jsonb; v_chat boolean; v_voice boolean;
+begin
+  select * into v_row from public.sites where id = p_site_id for update;
+  if not found then
+    raise exception 'update_ai_settings: not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller()
+     and not public.has_org_role(v_row.org_id, array['owner', 'admin']) then
+    raise exception 'update_ai_settings: owner/admin only' using errcode = '42501';
+  end if;
+  if not public.is_service_caller() and not public.has_entitlement(v_row.org_id, 'site') then
+    raise exception 'update_ai_settings: no entitlement' using errcode = '42501';
+  end if;
+  v_before := jsonb_build_object('accepts_ai_chat', v_row.accepts_ai_chat, 'accepts_voice', v_row.accepts_voice);
+  v_chat  := coalesce(p_accepts_ai_chat, v_row.accepts_ai_chat);
+  v_voice := coalesce(p_accepts_voice, v_row.accepts_voice) and v_chat;
+  update public.sites set accepts_ai_chat = v_chat, accepts_voice = v_voice
+   where id = p_site_id returning * into v_row;
+  perform public.write_audit(v_row.org_id, 'site.ai_settings', 'site', p_site_id::text, v_before,
+                           jsonb_build_object('accepts_ai_chat', v_row.accepts_ai_chat, 'accepts_voice', v_row.accepts_voice));
+  return v_row;
+end;
+$$;
+
 -- ---------------------------------------------------------------------
 -- 8. 운영 RPC (service_role 전용): 사이트 등록, 만료 정리
 -- ---------------------------------------------------------------------
@@ -664,7 +705,7 @@ $$;
 -- ---------------------------------------------------------------------
 -- 9. EXECUTE 정리: PUBLIC 회수 후 허용 목록만
 --    anon, authenticated, service_role : submit_inquiry (위 5절)
---    authenticated, service_role       : set_inquiry_status, delete_inquiry, erase_subscriber, update_site_settings
+--    authenticated, service_role       : set_inquiry_status, delete_inquiry, erase_subscriber, update_site_settings, update_ai_settings
 --    service_role 전용                 : subscribe/confirm/unsubscribe_newsletter, provision_site, purge_expired
 -- ---------------------------------------------------------------------
 revoke execute on function public.set_inquiry_status(uuid, text, text) from public, anon;
@@ -675,6 +716,8 @@ grant execute on function public.set_inquiry_status(uuid, text, text) to authent
 grant execute on function public.delete_inquiry(uuid) to authenticated;
 grant execute on function public.erase_subscriber(uuid) to authenticated;
 grant execute on function public.update_site_settings(uuid, text, text, boolean, boolean, text) to authenticated;
+revoke execute on function public.update_ai_settings(uuid, boolean, boolean) from public, anon;
+grant execute on function public.update_ai_settings(uuid, boolean, boolean) to authenticated;
 
 revoke execute on function public.subscribe_newsletter(text, text, text, text, text, text, integer) from public, anon, authenticated;
 revoke execute on function public.confirm_newsletter(uuid) from public, anon, authenticated;

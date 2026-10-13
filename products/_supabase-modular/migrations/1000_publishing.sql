@@ -1007,6 +1007,69 @@ grant execute on function publishing.request_generation_cancel(uuid) to authenti
 grant execute on function publishing.set_book_visibility(uuid, boolean, text) to authenticated, service_role;
 
 -- =====================================================================
+-- 15. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
+--   설계: docs/products/flora-publishing/02_ARCHITECTURE.md 5절, 01_PRD.md 4.7절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 이 조각과 모놀리스 seed 에서만 바꾼다(제품 화면에서 set_ai_routing 을 부르지 않는다).
+--   15.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'publishing'. 기능 키는 소문자.
+--        - publishing.draft     : 챕터 초안 그래프(개요, 초안, 일관성, 교정). 품질 우선 Claude 먼저. 국외 이전 동의가 없는 조직,
+--                                 "오픈소스 AI만" 책(01_PRD.md 6.5절)은 오픈소스로만 처리한다.
+--        - publishing.assist    : 단건 생성(제목, 기획안, 목차, 섹션, 보조 집필, 책 정보, 페르소나 합성). 같은 체인.
+--        - chat                 : 글쓰기 도우미 채팅(/tools/answer). 같은 체인.
+--        - wiki.*               : 책 설정집(캐릭터, 용어, 문체) ingest, query, lint. 대량·반복 작업이라 오픈소스 먼저.
+--        - dify.aux             : Dify 보조 LLM 노드(질문 분류). 조직을 알 수 없어 동의를 확인할 수 없으므로 오픈소스 강제.
+--        - publishing.knowledge : 책별 자료·원고 컬렉션 임베딩. 원고에 개인정보가 있을 수 있고 같은 컬렉션에 임베딩 모델을 섞을 수 없어
+--                                 국내 오픈소스 임베딩으로 고정(대체 없음, 모델을 바꾸면 컬렉션 재색인).
+--        - publishing.dictation : 받아쓰기 STT. 대량·저비용이라 오픈소스 먼저.
+--        - voice_chat           : 채팅 음성 질문 STT 는 오픈소스 먼저, 답변 읽어 주기 TTS 는 ElevenLabs 먼저.
+--        - narration            : 원고 낭독·오디오북 미리듣기 TTS. ElevenLabs 먼저. 같은 목소리로 이어져야 하므로 작업 도중 다른 제공자로
+--                                 대체하지 않는다. 이 금지는 체인이 아니라 음성 어댑터(packages/core-voice, feature=narration)가 강제한다.
+--                                 체인의 oss-voice 는 작업 시작 전에 ElevenLabs 를 쓸 수 없을 때(국외 동의 없음, 비활성, 오픈소스 책)만 고른다.
+--   15.2 플랜 features 의 AI 키(free, basic). 모듈러 seed.sql 이 이 조각보다 나중에 실행되면 덮어써지므로
+--        _supabase-modular/seed.sql 반영을 코어에 요청했다(06_AGENT_PLAN.md 6절 R7). 서버는 누락 키를 Free 기본값으로 읽는다.
+-- =====================================================================
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, 'publishing', 'publishing.draft',     'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'publishing', 'publishing.assist',    'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'publishing', 'chat',                 'llm',       'auto',        '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, 'publishing', 'wiki.query',           'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'publishing', 'wiki.ingest',          'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'publishing', 'wiki.lint',            'llm',       'auto',        '[{"provider":"oss-llm","model":"*"},{"provider":"anthropic","model":"*"}]', false),
+  (null, 'publishing', 'dify.aux',             'llm',       'open_source', '[{"provider":"oss-llm","model":"*"}]', true),
+  (null, 'publishing', 'publishing.knowledge', 'embedding', 'open_source', '[{"provider":"oss-embed","model":"*"}]', false),
+  (null, 'publishing', 'publishing.dictation', 'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'publishing', 'voice_chat',           'stt',       'auto',        '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, 'publishing', 'voice_chat',           'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false),
+  (null, 'publishing', 'narration',            'tts',       'auto',        '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
+
+-- 15.2 플랜 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 50, "book_wiki": true, "rag_files_max": 3, "voice_dictation": true, "narration": false}'::jsonb
+ where app_id = 'publishing' and code = 'free';
+update core.plans
+   set features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 300, "book_wiki": true, "rag_files_max": 20, "voice_dictation": true, "narration": true}'::jsonb
+ where app_id = 'publishing' and code = 'basic';
+
+-- 15.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.
+do $$
+declare v_bad text;
+begin
+  if exists (select 1 from core.ai_providers) then
+    select string_agg(s.feature || '/' || s.kind || ':' || coalesce(e.item ->> 'provider', '?'), ', ') into v_bad
+    from core.ai_routing_settings s
+    cross join lateral jsonb_array_elements(s.chain) as e(item)
+    left join core.ai_providers p on p.id = e.item ->> 'provider'
+    where s.org_id is null and s.app_id = 'publishing'
+      and (p.id is null or not (s.kind = any (p.kinds))
+           or ((s.mode = 'open_source' or s.force_open_source) and p.source <> 'open_source'));
+    if v_bad is not null then
+      raise exception 'publishing routing defaults: invalid chain providers %', v_bad;
+    end if;
+  end if;
+end $$;
+
+-- =====================================================================
 -- 끝. PostgREST 노출: config.toml [api].schemas 에 publishing 추가.
 -- 타입 생성: supabase gen types typescript --local --schema core,publishing
 -- =====================================================================

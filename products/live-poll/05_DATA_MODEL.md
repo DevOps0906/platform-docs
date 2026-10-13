@@ -2,6 +2,8 @@
 
 정본 SQL: `docs/products/_supabase-modular/migrations/1800_poll.sql`(아래 "조각:줄"). 모놀리스 사본: `supabase/monolith/migrations/0002_poll_domain.sql`.
 
+2026-10-13 개정: AI·음성 도입(확정 결정 13~17)에도 **제품 전용 AI 테이블은 만들지 않았다**(6절 근거). 표 구조 변경 없이 `events.settings`에 키 하나(`audience_voice`)를 문서화하고, 모듈러 조각에 19절(AI·음성 기본값: 라우팅 12행, 플랜 크레딧·AI 키 병합, 체인 검사)을 `@@modular-only` 블록으로 추가했다. 모놀리스 `0002_poll_domain.sql`은 바뀌지 않는다(19절이 변환에서 빠지므로). 같은 값은 모놀리스 `seed.sql`에 있다.
+
 ## 1. 개요와 ERD
 
 ```
@@ -37,7 +39,7 @@ core.app_entitlements / core.plans (플랜 features 읽기만), core.rate_limit_
 | status | text | N | 'draft' | draft, live, ended, archived |
 | join_locked | boolean | N | false | 신규 입장 막기 |
 | passcode_hash | text | Y | | sha256(event_id:passcode) |
-| settings | jsonb | N | {} | object, 4KB 이하. `qna_enabled`(true), `qna_moderation`(false), `allow_anonymous`(true), `share_results_after_end`(false) |
+| settings | jsonb | N | {} | object, 4KB 이하. `qna_enabled`(true), `qna_moderation`(false), `allow_anonymous`(true), `share_results_after_end`(false), `audience_voice`(false, 청중 음성 질문, 2026-10-13. 읽기·판정은 Route Handler만 하고 DB 함수는 이 키를 모른다) |
 | current_poll_id | uuid | Y | | 발표 중 문항(FK set null) |
 | max_participants | int | N | 100 | live 전환 시 플랜 값 고정 |
 | overlay_key_hash | text | Y | | 오버레이 키 sha256 |
@@ -163,7 +165,37 @@ Realtime(`realtime.messages`, 조각:1462): 멤버는 `poll:<자기 org>:...` �
 | `core.write_audit` | 진행자 RPC 감사 |
 | `core.set_updated_at`, `core.guard_privileged_write` | 트리거 |
 
-`core.*` ALTER 없음. 코어 테이블 쓰기 없음(감사와 레이트 리밋은 코어 함수 경유).
+`core.*` ALTER 없음. 코어 테이블 쓰기 없음(감사와 레이트 리밋은 코어 함수 경유). 19절의 `core.ai_routing_settings` INSERT와 `core.plans` UPDATE는 poll 자신의 행(app `poll`)에 대한 데이터 변경이며 표 구조는 바꾸지 않는다.
+
+AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql`):
+
+| core 객체 | poll 용도 | 쓰는 쪽 |
+|---|---|---|
+| `wallets`, `credit_ledger`, `consume_credits`, `refund_credits`, `grant_credits` | AI·음성 선차감과 정산, 가입 크레딧(free 100) | Next.js 서버(service_role). 투표·질문 RPC는 호출하지 않는다 |
+| `ai_conversations`, `ai_messages` | 진행자 어시스턴트 대화 매핑과 메시지(본인만 SELECT, `0008_core_ai.sql:635-642`) | Next.js(대화 생성, 사용자 메시지), FastAPI(assistant 메시지) |
+| `ai_runs`, `ai_run_steps` | 그래프 `poll.qna_assist` 실행 기록과 결과(`output`), 위키 lint 결과 | FastAPI |
+| `ai_usage`(0008 확장 컬럼) | 호출별 사용량, 정산(`settled_at`) | FastAPI, Next.js 음성, 정산 크론 |
+| `ai_routing_settings`, `resolve_ai_route` | 기능별 기본값 12행(19절), 경로 결정 | seed, FastAPI, Next.js 음성 |
+| `ai_org_settings`, `set_ai_cross_border_ack` | 국외 이전 동의 | 온보딩·설정(사용자 세션) |
+| `ai_collections`, `ai_documents`, `ai_chunks`, `match_ai_chunks` | 행사 자료(`event-<event_id>`), Q&A 아카이브(`qna-archive`) 컬렉션 | FastAPI |
+| `wiki_pages`, `wiki_links`, `wiki_revisions` | 행사 위키(slug 접두사 `events/<event_id>/`) | FastAPI(쓰기), Next.js(진행자 읽기) |
+| `voice_sessions`, `voice_jobs` | 진행자 음성 대화, 청중 음성 질문 STT 작업(`user_id` null, `visitor_key='pt:<participant_id>'`), 읽어 주기 TTS | Next.js |
+| `jobs`, `enqueue_job` | AI 작업 5종(02장 4절) | Route Handler(enqueue), FastAPI(소비) |
+| `ai_providers`, `ai_model_prices` | 제공자·단가(코어 seed, 제품은 추가하지 않음) | FastAPI, Next.js |
+
+제품 AI 표를 만들지 않은 이유(`docs/products/_platform-core/AI_ARCHITECTURE.md:165`의 "꼭 필요할 때만"):
+
+| 후보 | 필요해 보인 이유 | 대신 쓰는 것 |
+|---|---|---|
+| 청중 음성 질문 풀 표(`event_ai_pool`) | 행사별 사용량·한도·선차감 묶음 추적 | `core.rate_limit_hit` 버킷 카운터(행사 24시간 창 `poll:voice:ev:<event_id>`, 참가자 `poll:voice:pt:<participant_id>`)와 `credit_ledger`의 멱등 키 `voice-block:<event_id>:<n>`. 행사는 24시간을 넘겨 live일 수 없으므로(LP-F-023) 24시간 창으로 충분하다. 버킷은 1일 뒤 코어가 지운다 |
+| 질문 군집 컬럼(`qna_questions.cluster_id`) | AI 군집을 질문에 붙여 모든 화면에 표시 | MVP는 진행자 패널에서만 `ai_runs.output`의 질문 id 목록으로 보여 준다. 청중·발표 화면에 군집을 노출할 계획이 생기면 1810 마이그레이션으로 컬럼을 추가(Phase 2, 01장 D14와 함께) |
+| 질문 AI 라벨 컬럼(`qna_questions.ai_flag`) | 숨김 후보를 큐에서 정렬 | 같은 이유로 `ai_runs.output.flags` |
+| 행사-AI 실행 연결 표 | 행사별 AI 실행 횟수 한도 | `ai_runs.input->>'event_id'`(graph `poll.qna_assist`) 개수. 행사 물리 삭제 때 정리 잡이 함께 지운다 |
+| 행사-자료 연결 표 | 어느 문서가 어느 행사 것인가 | 행사별 컬렉션 이름 `event-<event_id>`(`ai_collections` `unique(org_id, app_id, name)`) |
+| 음성 고지 확인 표 | 진행자 음성 처리 고지 증빙 | `core.audit_log`의 `voice.notice_ack`(고지문 버전 포함) |
+| 아카이브 문서-행사 연결 | 보존 만료 때 삭제 대상 | `ai_documents.title='qna:<event_id>'` 규칙 + 정리 잡 |
+
+조각은 `core.*`를 ALTER하지 않는다. 플랜·크레딧·결제·잡 테이블을 `poll`에 다시 만들지 않는다. 19.2절의 `core.plans` UPDATE는 poll 자신의 free/pro/business 행의 `features`와 크레딧 열을 바꾸는 데이터 변경이다.
 
 ## 7. 리뷰 "높음" 결함의 차단 설계 (보안, 데이터)
 
@@ -183,9 +215,12 @@ Realtime(`realtime.messages`, 조각:1462): 멤버는 `poll:<자기 org>:...` �
 | 머리 | 스키마 생성, USAGE(authenticated, service_role), 기본 권한, `core.apps` 등록 | 생략(`@@modular-only` 블록 제거). apps/plans는 seed |
 | 접두사 | `core.`, `poll.` | 모두 `public.` |
 | 함수 권한 정리 | 이 파일 함수 이름 목록만(코어 함수 권한 보존) | 같은 목록. public의 코어 함수 권한을 건드리지 않는다 |
-| 코어 라이트에서 지운 절 | 해당 없음 | SECTION 4(크레딧), 6-A(OAuth state), 6-B(자격증명), 7(jobs), 8(Storage), 9(affiliate). 남김: 3(Toss, Phase 2), 6-C(레이트 리밋, 필수) |
-| `confirm_payment_order` | 원본 | credit_pack 분기는 크레딧 절 삭제 지시대로 `grant_credits` 호출을 지우고 22023으로 거부 |
-| 플랜 | 모듈러 seed의 free(`max_participants`만) + 기본값 | seed에 free/pro/business 전체 features |
+| 코어 라이트에서 지운 절 | 해당 없음 | SECTION 6-A(OAuth state), 6-B(자격증명), 9(affiliate). 남김: 3(Toss, Phase 2), 4(크레딧, AI·음성 선차감), 6-C(레이트 리밋, 필수), 7(jobs, AI 작업), 8(Storage, 행사 자료). 2026-10-12 최초에는 4, 7, 8도 지웠으나 AI 계층이 크레딧·잡·Storage를 요구해 2026-10-13에 복원했다. 복원 방식은 `astro-ai`의 코어 라이트와 같은 파일이다(헤더 문구만 poll용으로 교체) |
+| `confirm_payment_order` | 원본 | 크레딧 절이 있으므로 원본 그대로(credit_pack 분기 포함). 크레딧팩은 MVP에 팔지 않아 `credit_packs` 행이 없다 |
+| 플랜 | 모듈러 seed의 free(`max_participants`만) + 기본값. 19.2절 병합 UPDATE가 크레딧과 AI 키를 덮는다(모듈러 seed 반영은 06장 R-3) | seed에 free/pro/business 전체 features, 가입 크레딧(free 100)·월 크레딧(pro 1,000, business 5,000) |
+| AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함) |
+| AI 라우팅 기본값 | `1800_poll.sql` 19.1절 | `seed.sql`(같은 12행) |
+| 체인 검사 | 19.3절 DO 블록(제공자 행이 없으면 건너뜀) | `seed.sql` 끝 DO 블록(제공자는 0001이 먼저 넣음) |
 | 금칙어 기본 목록 | 조각 18절 | 같은 내용(변환본 18절) |
 | 결제 실패 기록(코어 수정 반영, 2026-10-13) | `confirm_payment_order` 금액 불일치는 `PM001`(계약 불변, 같은 호출의 UPDATE는 롤백). 주문 failed 기록은 `fail_payment_order`가 맡는다: Phase 2 결제 Route Handler가 PM001을 받으면 별도 호출로 `fail_payment_order(order_id, 'amount_mismatch', {...})`를 부른 뒤 Toss 취소를 호출하고 운영 알림을 보낸다 | 같음 |
 
@@ -193,8 +228,18 @@ Realtime(`realtime.messages`, 조각:1462): 멤버는 `poll:<자기 org>:...` �
 
 | 파일 | 내용 | 검증 |
 |---|---|---|
-| `docs/products/_supabase-modular/migrations/1800_poll.sql` | 테이블 9, 시퀀스 1, 트리거 함수 3, 내부 함수 13, 진행자 RPC 10, 청중/워커/정리 RPC 8, RLS, Realtime 정책(조건부), 기본 금칙어 | 체커 OK(core 0000~0007 + seed 뒤), RLS 스모크 79/79 |
-| `supabase/monolith/migrations/0001_core_lite.sql` | 코어 라이트 사본(6개 절 제거) | 체커 OK |
-| `supabase/monolith/migrations/0002_poll_domain.sql` | 조각의 public 변환본. 직접 고치지 않고 변환 스크립트(LP-06-002)로 다시 만든다 | 체커 OK, RLS 스모크 77/77 |
-| `supabase/monolith/seed.sql` | apps 1행, 플랜 3개(free만 활성) | 체커 OK |
-| 다음 번호 | 1810(인원별 브로드캐스트 간격, Phase 2) | - |
+| `docs/products/_supabase-modular/migrations/1800_poll.sql` | 테이블 9, 시퀀스 1, 트리거 함수 3, 내부 함수 13, 진행자 RPC 10, 청중/워커/정리 RPC 8, RLS, Realtime 정책(조건부), 기본 금칙어, 19절 AI·음성 기본값(라우팅 12행, 플랜 크레딧·AI 키, 체인 검사; `@@modular-only`) | 체커 OK(core 0000~0009 + seed 뒤, `--vector`), RLS 스모크 79/79(2026-10-12) |
+| `supabase/monolith/migrations/0001_core_lite.sql` | 코어 라이트 사본(6-A, 6-B, 9만 제거. SECTION 4, 7, 8 복원, SECTION 11·12 AI·음성 포함) | `check.mjs --vector mono` OK |
+| `supabase/monolith/migrations/0002_poll_domain.sql` | 조각의 public 변환본. 19절은 `@@modular-only`라 변환본에 없다. 직접 고치지 않고 변환 스크립트(LP-06-002)로 다시 만든다 | 체커 OK, RLS 스모크 77/77(2026-10-12) |
+| `supabase/monolith/seed.sql` | apps 1행, 플랜 3개(free만 활성, AI 키와 크레딧 포함), AI 라우팅 기본값 12행 + 체인 검사 | 체커 OK, 반복 적용 OK |
+| 다음 번호 | 1810(인원별 브로드캐스트 간격, Phase 2). 질문 군집·라벨 컬럼이 필요해지면 같은 번호대(01장 D14) | - |
+
+2026-10-13 재검증(PGlite `--vector`, `docs/products/_tools-sqlcheck/check.mjs`):
+
+| 검사 | 결과 |
+|---|---|
+| `check.mjs --vector mod` 0000~0009 + `seed.sql` + `1800_poll.sql` | 전부 OK |
+| `check.mjs --vector mono` 0001 + 0002 + `seed.sql` | 전부 OK |
+| 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app poll) | 12행(모듈러·모놀리스) |
+| free 플랜 | `signup_credits` 100, `features`에 기존 키 + AI 키 11개 |
+| 미동의 조직 `resolve_ai_route` | `chat` = oss-llm, `voice_chat` tts = oss-voice, `qna_read_aloud` = oss-voice, `poll.moderate`·`poll.knowledge`·`voice_question`·`dify.aux` = 오픈소스(강제) |

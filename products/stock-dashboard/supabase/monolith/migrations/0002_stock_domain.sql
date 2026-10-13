@@ -262,7 +262,7 @@ create table if not exists public.trade_notes (
 create table if not exists public.ai_reports (
   id                  uuid primary key default gen_random_uuid(),
   org_id              uuid not null references public.organizations(id) on delete cascade,
-  kind                text not null default 'diagnosis' constraint ai_reports_kind_check check (kind in ('diagnosis', 'idea')),
+  kind                text not null default 'diagnosis' constraint ai_reports_kind_check check (kind in ('diagnosis', 'idea', 'research', 'briefing')),
   scope_connection_id uuid,
   status              text not null default 'queued'
                       constraint ai_reports_status_check check (status in ('queued', 'running', 'succeeded', 'failed', 'canceled')),
@@ -528,7 +528,7 @@ create table if not exists public.consents (
   id          bigint generated always as identity primary key,
   org_id      uuid not null references public.organizations(id) on delete cascade,
   user_id     uuid not null,
-  kind        text not null constraint consents_kind_check check (kind in ('investment_disclaimer', 'ai_overseas_transfer', 'paper_order_risk')),
+  kind        text not null constraint consents_kind_check check (kind in ('investment_disclaimer', 'ai_overseas_transfer', 'paper_order_risk', 'voice_processing')),
   version     text not null constraint consents_version_check check (version ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}(\.[0-9]+)?$'),
   accepted_at timestamptz not null default now(),
   unique (org_id, user_id, kind, version)
@@ -644,3 +644,28 @@ revoke all on function public.revoke_beta_access(uuid, text) from public, anon, 
 grant execute on function public.revoke_beta_access(uuid, text) to service_role;
 
 
+-- =====================================================================
+-- 14.1 AI·음성 보강 (2026-10-13). 조각 1900_stock.sql 14.1절과 같은 내용(public. 접두사).
+--   ai_reports.kind 에 research, briefing 추가 / consents.kind 에 voice_processing 추가(위 표 정의에 반영됨. 아래는 옛 DB 용 업그레이드).
+--   성공 저장되는 AI 결과는 output.advice_check.passed = true 필수(투자 권유 금지 검사 기록, 마지막 방어선).
+--   라우팅 기본값과 플랜 AI 키는 seed.sql 이 넣는다.
+-- =====================================================================
+do $$
+begin
+  if exists (select 1 from pg_constraint where conname = 'ai_reports_kind_check' and conrelid = 'public.ai_reports'::regclass
+             and pg_get_constraintdef(oid) not like '%briefing%') then
+    alter table public.ai_reports drop constraint ai_reports_kind_check;
+    alter table public.ai_reports add constraint ai_reports_kind_check
+      check (kind in ('diagnosis', 'idea', 'research', 'briefing'));
+  end if;
+  if exists (select 1 from pg_constraint where conname = 'consents_kind_check' and conrelid = 'public.consents'::regclass
+             and pg_get_constraintdef(oid) not like '%voice_processing%') then
+    alter table public.consents drop constraint consents_kind_check;
+    alter table public.consents add constraint consents_kind_check
+      check (kind in ('investment_disclaimer', 'ai_overseas_transfer', 'paper_order_risk', 'voice_processing'));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'ai_reports_advice_check_passed_check' and conrelid = 'public.ai_reports'::regclass) then
+    alter table public.ai_reports add constraint ai_reports_advice_check_passed_check
+      check (status <> 'succeeded' or coalesce(output #>> '{advice_check,passed}', 'false') = 'true') not valid;
+  end if;
+end $$;

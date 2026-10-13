@@ -101,3 +101,5 @@ marketplace.json에는 `claude-api`, `academy-guide`, `discernment-nudge` 플러
 | toon-factory | frontend-design + UUPM | frontend-design(에디터 3패널) + UUPM | - | webapp-testing |
 | study-note | frontend-design | frontend-design + UUPM(`--domain ux`) | - | webapp-testing |
 | website-floria | frontend-design + UUPM(`--variance` 높게) | 해당 없음 | - | webapp-testing |
+
+컴포넌트 단위 작업을 지시할 때는 `DESIGN_SYSTEM.md` 8장의 작업 지시 템플릿을 쓴다(스택 버전, 특히 Tailwind CSS v4를 명시).

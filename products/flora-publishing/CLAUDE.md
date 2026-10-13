@@ -8,7 +8,8 @@
 |---|---|
 | 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
 | 2 | 이 폴더 `01_PRD.md`(기능 ID, 단가, features 키) → `02_ARCHITECTURE.md`(경계, 잡) → `04_API.md`(계약) → `05_DATA_MODEL.md`(테이블, RLS) |
-| 3 | 화면 작업이면 `03_SCREENS_UX.md`와 `docs/products/_design-guide/DESIGN_PRINCIPLES.md` |
+| 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장, `DB_CONVENTIONS.md` 14장(pgvector) |
+| 3 | 화면 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`, `DESIGN_PRINCIPLES.md`, 랜딩이면 `HERO_3D.md` |
 | 4 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 이식 대상(`07_SOURCE_MIGRATION.md` 2절, 금지 패턴 4절) |
 
 ## 2. 절대 규칙
@@ -23,18 +24,34 @@
 | 서버가 정본 | 플랜·한도·워터마크 판정은 서버. 클라이언트 잠금은 UX 보조 |
 | 렌더 위치 | WeasyPrint는 `services/render-weasyprint`에서만. Vercel 코드에서 PDF를 만들지 않는다 |
 | mock 금지 | 실패를 성공처럼 반환하지 않는다. 실패와 환불을 사용자에게 보여 준다 |
+| LLM 키 | `api/`(FastAPI)에만. web, worker, engine에 두지 않는다. ElevenLabs 키와 서명 토큰 개인키(`AI_TOKEN_PRIVATE_KEY`)는 web 서버에만 |
+| AI 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자 직접 호출 금지. web → FastAPI·음성 서버는 EdDSA 서명 토큰, Dify 경로는 대화 매핑(`platform_conversation_id`, `dify_user`)만. Dify 입력에 토큰·org·원고를 넣지 않는다 |
+| AI 크레딧 | 채팅·음성·낭독·설정집·색인은 제공자 호출 전에 선차감하고 끝나면 정산, 결과가 전달되지 않으면 전액 환불(01장 4.6절). 초안 그래프는 소제목 정액 선차감에 묶는다 |
+| 라우팅 | 기능 키와 기본 체인은 02장 5.1절과 seed가 정본. 코드에 제공자·모델을 하드코딩하지 않고 `resolve_ai_route` 결과만 쓴다. 국외 이전 미동의 조직과 오픈소스 전용 책에 상용 제공자를 쓰지 않는다 |
+| 낭독 | `feature='narration'`은 작업 도중 다른 제공자로 대체하지 않는다. 실패하면 파일을 만들지 않고 환불. TTS 입력은 DB 본문·메시지만 |
+| 설정집·RAG | 책별 컬렉션 `book-<book_id>`, 설정집 slug `books/<book_id>/...`. 사람 소유 블록(`<!-- owner:user -->`)을 덮어쓰지 않고 `expected_version` 없이 저장하지 않는다. 사용자 조직 데이터를 Dify 외부 지식에 두지 않는다 |
+| Tailwind | 반드시 Tailwind CSS v4(4.x 고정). CSS 우선 설정(`@import "tailwindcss"`, `@theme`, `@custom-variant dark`). `tailwind.config.js`, `@tailwind base` 같은 v3 문법 금지. 지시·문서에 "Tailwind"가 아니라 "Tailwind CSS v4"라고 쓴다 |
+| 디자인 시스템 | 정답은 코드 하나: `web/src/styles/tokens.css`(`@theme`)와 `web/src/components/ui/`. 피그마·문서 hex 표·MASTER.md는 정답이 아니다. 컴포넌트 작업은 `DESIGN_SYSTEM.md` 8장 템플릿(대상, 근거, 버전, 배리언트, 수치, 금지, 검증)으로 1개씩 맡긴다. 화면 작업은 PB-06-042 뒤 |
+| 3D | three.js는 `web/src/features/hero3d/`에서만 import. `HERO_3D.md` 성능 예산과 대체 화면을 지키고 3D 재질 색도 토큰만 |
 
 ## 3. 디렉토리와 소유 경계
 
 | 위치 | 책임 | 소유 작업 |
 |---|---|---|
 | `web/src/app/api/<리소스>/` | Route Handler | 06장 2절 표의 리소스별 단일 작업 |
-| `web/src/server/{http,pricing,features,prompts,personas,sanitize,books}/` | 서버 공용 코드 | 007, 008, 008, 011, 012, 013, 010 |
+| `web/src/server/{http,pricing,features,personas,sanitize,books}/` | 서버 공용 코드 | 007, 008, 008, 012, 013, 010 |
+| `web/src/server/ai/`, `web/src/server/ai-pricing.ts` | 서명 토큰, HMAC, 입력 마스킹, AI 단가 | 044 |
 | `web/src/features/{wizard,editor,books,finish,personas,settings,billing,landing}/` | 화면 | 021, 022, 023, 023, 023, 023, 009, 024 |
 | `worker/src/handlers/` | TS 잡(LLM, 표지, 웹훅, purge) | 014, 019, 026, 036 |
 | `engine/app/` | 파싱, HTML 조립, 프리셋, ePub, 렌더 잡 | 003, 015, 016, 018, 017 |
 | `services/render-weasyprint/` | 공용 PDF 렌더 | 004 |
 | `supabase/` | 마이그레이션, 테스트 | 001, 029 |
+| `api/` | FastAPI AI 서비스: 공용 부분과 설정 043, `app/ai/products/publishing/knowledge.py` 045, `wiki_config.py` 046, `prompts/` 011, `app/ai/graphs/publishing_draft.py` 047, `publishing_assist.py`·`app/ai/compliance/publishing.py`·`rules/` 048, `app/ai/tools/publishing/` 049, `tests/publishing/security/` 055 | 043, 045, 046, 047, 048, 049, 055 |
+| `web/src/app/api/{ai,internal,onboarding,voice}/` | AI·음성 Route Handler | ai·internal·onboarding 044, voice 052(narrations 053), wiki 046, references 045 |
+| `web/src/features/{ai-chat,wiki,voice,narration,hero3d}/`, `web/public/hero/` | AI 화면, 3D 히어로 | 050, 051, 052, 053, 054 |
+| `web/src/styles/`, `web/src/components/ui/`, `web/src/app/dev/components/` | 디자인 시스템 코드 | 040 |
+| `infra/dify/` | Dify 앱 정의(키 없음) | 049 |
+| `docs/file/03-설계/디자인/` | `DESIGN.md` 1절 039, 2절 이후와 `COMPONENTS.md` 042, `review/` 041(사람) | 039, 041, 042 |
 
 다른 작업의 디렉토리에 파일을 만들지 않는다. 공용 설정(`web/package.json` 등)은 PB-06-002에 요청한다.
 
@@ -51,18 +68,24 @@
 | 감사 | 사용자 경로는 `write_audit`(RPC 내부에서 이미 기록), 서버 경로(환불, 운영자 조정, 탈퇴)는 service INSERT |
 | Storage | 경로는 `orgPath({ orgId, appId: 'publishing', entity, ext })`만. 사용자 파일명은 표시용 컬럼에만 |
 | DB 스키마 | 모듈러는 `supabase.schema('publishing')`, 코어는 `SUPABASE_DB_SCHEMA` |
+| AI 게이트 | `packages/core-ai`(ai-gateway) 사용. 대화는 `ai_conversations` 행을 먼저 만들고(`dify_user`=HMAC), 턴마다 대화 주인과 `book_id`의 조직을 다시 확인. 서명 토큰은 `web/src/server/ai/token.ts`만 발급 |
+| AI 라우팅 | FastAPI·음성 Route Handler가 `resolve_ai_route(org, 'publishing', feature, kind)`(service_role)로 체인을 받는다. 제품 화면에서 `set_ai_routing`을 부르지 않는다 |
+| 국외 이전 | 온보딩·설정에서 사용자 세션으로 `rpc('set_ai_cross_border_ack')` + 감사 기록 같은 고지문 버전 |
+| 음성 | `packages/core-voice`의 `VoiceAdapter`. `store_audio=false`. 첫 녹음 전 `voice.notice_ack` 감사 기록 확인 |
+| 그래프 | 워커는 `/api/internal/ai-token`으로 잡 토큰을 받아 `POST /graphs/publishing.draft/runs`. FastAPI는 `ai_runs`·`ai_run_steps`·`ai_usage`를 기록하고 `sections`·`generation_runs`는 워커가 쓴다. 단건 생성은 web이 사용자 토큰으로 `publishing.assist` |
+| 설정집 | 이용자 조직의 `core.wiki_pages`에 책별 slug로 둔다. 읽기는 RLS, 쓰기는 FastAPI 경유. 채택(`published`)된 페이지만 일관성 검사의 근거 |
 
 ## 5. 코드 규칙
 
 | 항목 | 규칙 |
 |---|---|
-| 스택 | Next 16.2.x, React 19.2, TS strict, Tailwind v4, shadcn v4(`asChild` 없음, `buttonVariants()` + `<Link>`), Node 20, Python 3.11, FastAPI 0.115 |
+| 스택 | Next 16.2.x, React 19.2, TS strict, Tailwind CSS v4(4.x), shadcn/ui(Tailwind v4 지원 버전, `asChild` 없음, `buttonVariants()` + `<Link>`), three.js + React Three Fiber + drei(React 19 호환 버전), Node 20, Python 3.11(engine) / 3.12 제안(api), FastAPI 0.115 + LangChain/LangGraph(api) |
 | 의존성 | 버전 고정 + lockfile 커밋. `latest` 금지 |
 | 린트 | ESLint flat, `ruff`. raw `fetch`는 `web/src/lib/api` 밖에서 금지(린트 규칙) |
 | 타입 생성 | `supabase gen types typescript --local --schema core,publishing > web/src/types/supabase.ts` |
 | 입력 검증 | 모든 경계 zod(TS) / pydantic(Python). `any`로 Supabase 타입 우회 금지 |
-| 디자인 토큰 | `design-system/flora-publishing/MASTER.md`와 Tailwind 테마 변수. 컴포넌트 안 hex 금지. 아이콘은 Lucide |
-| 스트리밍 | fetch POST + ReadableStream. EventSource 금지 |
+| 디자인 토큰 | `web/src/styles/tokens.css`(03장 4.3절 토큰, 3.2절 의미 기반 이름). 컴포넌트와 3D 재질에 hex 금지(`bg-[#...]` 린트 차단, 제안). 아이콘은 Lucide |
+| 스트리밍 | fetch POST + ReadableStream. EventSource 금지. 채팅은 SSE(POST 응답), 낭독 진행은 NDJSON |
 | 문구 | 실패 문구는 원인과 다음 행동(환불 여부 포함). 금지 문구는 01장 6절 |
 
 ## 6. 테스트와 완료 조건
@@ -71,13 +94,16 @@
 |---|---|
 | `npm run lint && npx tsc --noEmit && npm run build` (web, worker) | 통과 |
 | `pytest` (engine, services/render-weasyprint) | 통과 |
-| `node check.mjs mod <0000~0007> seed.sql 1000_publishing.sql` (`docs/products/_tools-sqlcheck`) | 전부 OK |
-| `node check.mjs mono 0001_core_lite.sql 0002_publishing_domain.sql seed.sql` | 전부 OK |
+| `node check.mjs --vector mod <0000~0009> seed.sql 1000_publishing.sql` (`docs/products/_tools-sqlcheck`, AI 표가 있어 `--vector` 필수) | 전부 OK |
+| `node check.mjs --vector mono 0001_core_lite.sql 0002_publishing_domain.sql seed.sql` | 전부 OK |
 | RLS 스모크(`supabase/tests/`) | 05장 9절 항목 전부 통과 |
+| `pytest api` | 토큰·조직 격리·라우팅·그래프·채팅 평가셋(043, 045~049, 055) |
+| `npm run test:ai` / `web/e2e/ai/` | AI 게이트 선차감·정산·환불, 낭독 대체 금지(044, 053, 055) |
 | 결제 E2E, 핵심 플로우 E2E | PB-06-030, PB-06-037 통과 |
 
 완료 정의 전체는 06장 7절.
 
 ## 7. 금지 패턴
 
-07장 4절 요약: `FOR ALL` 정책, `'1234'`/localStorage 잠금해제, 이메일 하드코딩 관리자, 무인증 LLM·업로드·내보내기, 빈 JWT secret 허용, 웹훅 서명 생략, 비원자 차감, 사용자 파일명을 경로로, 서버가 사용자 URL fetch, url_fetcher 무제한, 범용 AI 프록시, 전역 n8n 키, escape 없는 HTML/XML, mock 폴백, async 안 동기 호출, 마지막 1,000자 다듬기, EventSource POST, localStorage를 정본으로, 실키 `.env` 커밋, Windows 폰트 경로, 허위 수치.
+07장 4절 요약(AI·디자인 항목은 끝에): `FOR ALL` 정책, `'1234'`/localStorage 잠금해제, 이메일 하드코딩 관리자, 무인증 LLM·업로드·내보내기, 빈 JWT secret 허용, 웹훅 서명 생략, 비원자 차감, 사용자 파일명을 경로로, 서버가 사용자 URL fetch, url_fetcher 무제한, 범용 AI 프록시, 전역 n8n 키, escape 없는 HTML/XML, mock 폴백, async 안 동기 호출, 마지막 1,000자 다듬기, EventSource POST, localStorage를 정본으로, 실키 `.env` 커밋, Windows 폰트 경로, 허위 수치.
+AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·원고, 개인정보 포함 원고의 상용 제공자 대체 전송, 임의 텍스트 TTS, 낭독 중 제공자 대체, 참고 파일 장문 복사 생성, 사람 소유 위키 블록 덮어쓰기, 토큰 밖 3D 색·보라 그라디언트, "Tailwind"만 적은 지시(v3 혼입).

@@ -1,6 +1,6 @@
 # CORE_SPEC: 플랫폼 공통 코어 명세
 
-작성일 2026-10-12. 대상 독자는 제품 기획 에이전트와 코어 구현 담당(Fable)이다. 이 문서는 "공통 코어가 무엇을 보장하고, 제품은 무엇을 호출하면 되는가"를 계약(contract) 단위로 적는다. 정본 SQL은 `docs/products/_supabase-modular/migrations/0000~0006`이며, 모놀리스용 축소판은 같은 폴더의 `MONOLITH_CORE_LITE.sql`이다. 아래 경로 인용에서 `migrations/`는 `docs/products/_supabase-modular/migrations/`를 뜻한다.
+작성일 2026-10-12. 대상 독자는 제품 기획 에이전트와 코어 구현 담당(Fable)이다. 이 문서는 "공통 코어가 무엇을 보장하고, 제품은 무엇을 호출하면 되는가"를 계약(contract) 단위로 적는다. 정본 SQL은 `docs/products/_supabase-modular/migrations/0000~0009`이며, 모놀리스용 축소판은 같은 폴더의 `MONOLITH_CORE_LITE.sql`이다. 아래 경로 인용에서 `migrations/`는 `docs/products/_supabase-modular/migrations/`를 뜻한다.
 
 ## 0. 읽는 순서와 표기
 
@@ -26,6 +26,7 @@
 | 보안 | RLS 헬퍼, 권한 컬럼 보호, 감사 로그, OAuth state, 암호화 자격증명, 레이트 리밋 | 제품 테이블의 RLS 정책(코어 헬퍼를 사용) |
 | 실행 | 잡 테이블과 워커 규약, Storage 버킷과 경로 규칙 | 잡 페이로드 스키마, 워커 구현 |
 | 수익화 | 제휴마케팅(계정, 링크, 클릭, 대가성 문구, 브랜드커넥트 지원) | 링크를 어디에 삽입할지(blog 본문, video 설명란) |
+| AI·음성·위키 | 제공자·단가·라우팅, RAG 컬렉션·문서·청크(pgvector), 위키, 대화, 그래프 실행 기록, 음성 세션·작업 | 제품 그래프, 기능별 라우팅 기본값(seed 행), 프롬프트, 제품 전용 AI 테이블(꼭 필요할 때만) |
 
 경계 원칙은 하나다. **제품은 코어 테이블을 직접 쓰지 않는다.** 읽기는 RLS SELECT 정책으로, 쓰기는 service_role 키를 가진 서버 코드 또는 SECURITY DEFINER RPC로만 한다. 이 원칙이 깨진 사례가 리뷰 전반에서 반복되었다(`docs/products/00_MERGE_ANALYSIS.md:516`, `:961`).
 
@@ -33,7 +34,7 @@
 
 | 형태 | SQL | 스키마 | 선택 기준 |
 |---|---|---|---|
-| 모듈러(통합) | `migrations/0000~0006` + 제품 조각 | `core` + 제품 스키마 | 기본값. SSO와 공용 지갑이 필요한 제품(`docs/products/_supabase-modular/ARCHITECTURE.md:74`) |
+| 모듈러(통합) | `migrations/0000~0009` + 제품 조각 | `core` + 제품 스키마 | 기본값. SSO와 공용 지갑이 필요한 제품(`docs/products/_supabase-modular/ARCHITECTURE.md:74`) |
 | 모놀리스 | `MONOLITH_CORE_LITE.sql` | `public` | hms(의료정보 격리), stock-dashboard(개인용), 고객사별 분리가 필요한 admin-suite(`ARCHITECTURE.md:75`) |
 
 함수 이름과 시그니처는 두 형태가 같다. 앱 코드는 `SUPABASE_DB_SCHEMA` 환경변수로 `core`/`public`을 바꾼다(`ARCHITECTURE.md:10`). 두 형태의 세부 차이는 `DB_CONVENTIONS.md` 9장에 있다.
@@ -53,6 +54,10 @@
 | Storage | 버킷 `org-files`, `exports`, `public-assets` | 정책에 따름 | 사용자 업로드는 `org-files`, `public-assets` 자기 조직 폴더만; `exports`는 서버만 |
 | 감사 | `core.audit_log` | owner/admin SELECT | 사용자: `write_audit`; service_role: 직접 INSERT |
 | 레이트 리밋 | `core.rate_limit_buckets` | 없음 | service_role: `rate_limit_hit` |
+| AI 라우팅·RAG | `core.ai_providers`, `core.ai_model_prices`, `core.ai_routing_settings`, `core.ai_collections`, `core.ai_documents`, `core.ai_chunks` | 단가·제공자는 인증 사용자, 나머지는 SELECT 정책(자기 조직) | service_role: `match_ai_chunks`, `resolve_ai_route`; 사용자(owner/admin): `set_ai_routing`(`AI001`) |
+| 위키 | `core.wiki_pages`, `core.wiki_links`, `core.wiki_revisions` | SELECT 정책 | service_role(FastAPI)만 쓰기. 이력은 수정·삭제 불가(예외: 조직 삭제, 개인정보 삭제 요청 시 `core.purge_wiki_page`). 평소 삭제는 archived |
+| 대화·그래프 | `core.ai_conversations`, `core.ai_messages`, `core.ai_runs`, `core.ai_run_steps`, 스키마 `ai_runtime` | 대화는 그 사용자 본인만, 실행 기록은 SELECT 정책 | service_role 전용 |
+| 음성 | `core.voice_sessions`, `core.voice_jobs`, 버킷 `voice-audio` | 본인 작업만 | service_role 전용, `expire_voice_audio` |
 | 제휴 | `core.affiliate_*`, `core.brandconnect_applications` | SELECT 정책 | service_role: 계정/링크 INSERT, `record_affiliate_click`; 사용자: `effective_disclosure`, `upsert_affiliate_disclosure`, `consent_brandconnect_risk`, `create_brandconnect_application` |
 
 ## 2. 인증과 조직 테넌시
@@ -414,8 +419,9 @@ pg_cron 또는 워커 크론으로 service_role이 호출한다(`docs/products/_
 | `JB001` | 잡이 해당 워커의 running 상태가 아님 | `complete_job`, `fail_job` |
 | `JB002` | queued가 아닌 잡 취소 | `cancel_job` |
 | `AU000` | 감사 로그 변경 시도 | `audit_log_immutable` |
+| `AI001` | 플랫폼이 오픈소스를 강제한 범위를 조직이 풀려고 함 | `set_ai_routing` |
 
-제품 Route Handler는 이 코드를 HTTP로 매핑한다(제안): `42501` → 403, `CR001` → 402, `P0002`/`PM404` → 404, `22023`/`SB001`/`JB002`/`PM410` → 409, `PM001`/`PM409` → 409 + 운영 알림, `OA001` → 400.
+제품 Route Handler는 이 코드를 HTTP로 매핑한다(제안): `42501` → 403, `CR001` → 402, `P0002`/`PM404` → 404, `22023`/`SB001`/`JB002`/`PM410` → 409, `PM001`/`PM409` → 409 + 운영 알림, `OA001` → 400, `AI001` → 403.
 
 ## 16. 코어 변경 규칙
 
@@ -423,5 +429,19 @@ pg_cron 또는 워커 크론으로 service_role이 호출한다(`docs/products/_
 |---|---|
 | 담당 | 코어 SQL 변경은 Fable 5.1(`docs/products/README.md:51`, `ARCHITECTURE.md:76`) |
 | 적용 조건 | 전 제품 RLS/RPC 회귀 테스트 통과 후에만(`ARCHITECTURE.md:76`). 검사 항목은 `README.md:145-156` |
-| 번호 | 0000~0099 (`docs/products/README.md:9`). 다음 코어 마이그레이션은 0007 |
+| 번호 | 0000~0099 (`docs/products/README.md:9`). 현재 코어는 0009까지(0008 AI, 0009 음성). 다음 코어 마이그레이션은 0010 |
 | 제품이 코어를 바꾸고 싶으면 | 제품 06_AGENT_PLAN에 "코어 요청" 작업으로 적고 `_platform-core`에 이슈를 남긴다. 제품 조각에서 `core.*`를 ALTER하지 않는다 |
+
+## 17. AI, 음성, 위키 계약 (2026-10-13 추가)
+
+설계 정본은 `AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`다. 이 장은 코어 계약 관점의 요약이다.
+
+| 계약 | 내용 |
+|---|---|
+| SQL 객체 | 0008: 테이블 13개(`ai_providers`, `ai_model_prices`, `ai_routing_settings`, `ai_collections`, `ai_documents`, `ai_chunks`, `wiki_pages`, `wiki_links`, `wiki_revisions`, `ai_conversations`, `ai_messages`, `ai_runs`, `ai_run_steps` + 스키마 `ai_runtime`), 함수 `match_ai_chunks`, `resolve_ai_route`, `set_ai_routing`, `wiki_revisions_immutable`, 확장 `vector`(`extensions` 스키마). 0009: `voice_sessions`, `voice_jobs`, `expire_voice_audio`, 버킷 `voice-audio`. 정확한 목록은 파일이 정본(`migrations/0008_core_ai.sql`, `0009_core_voice.sql`) |
+| 쓰기 경로 | AI·위키·음성 테이블 쓰기는 FastAPI와 Next.js 서버의 service_role만. 사용자가 부를 수 있는 RPC는 `set_ai_routing`뿐(owner/admin) |
+| 조직 격리 | FastAPI는 서명 토큰의 `org`·`app`만 신뢰한다(`SECURITY_BASELINE.md` 16장). `match_ai_chunks`는 org·app 필터를 강제하고 service_role만 호출 |
+| 강제 오픈소스 | `force_open_source` 범위는 조직 관리자가 풀 수 없다. 시도하면 `AI001` |
+| 크레딧 | AI·음성 사용은 `ai_usage` 기록 + `consume_credits`/`refund_credits`(4장 규약 그대로) |
+| 잡 | RAG 색인, 위키 ingest/lint, 장시간 그래프, 음성 만료 정리는 `core.jobs`(9장) |
+

@@ -205,3 +205,51 @@ insert into core.affiliate_disclosures (org_id, provider, placement, body) value
   (null, 'naver_shopping_connect', 'video_pinned_comment', '이 영상에는 네이버쇼핑 커넥트 제휴 링크가 포함되어 있으며, 구매 시 일정액의 수수료를 제공받습니다.')
 on conflict (provider, placement) where org_id is null do update
   set body = excluded.body;
+
+-- ---------------------------------------------------------------------
+-- AI 제공자, 모델 단가, 플랫폼 기본 라우팅 (0008, 0009). 모든 단가는 제안값이다.
+-- 상용/오픈소스 이원화: LLM(Claude, ChatGPT, Gemini, OpenRouter / vLLM), 임베딩(Voyage / 오픈소스),
+-- 음성(ElevenLabs / 공용 GPU 음성 서버). model '*' = 그 제공자의 기본 단가. 구체 모델 단가는 구현 시 추가한다.
+-- ---------------------------------------------------------------------
+insert into core.ai_providers (id, name, source, kinds, cross_border, notes) values
+  ('anthropic',  'Anthropic Claude',          'commercial',  array['llm'],        true,  '국외 이전 고지 대상'),
+  ('openai',     'OpenAI ChatGPT',            'commercial',  array['llm'],        true,  '국외 이전 고지 대상'),
+  ('google',     'Google Gemini',             'commercial',  array['llm'],        true,  '국외 이전 고지 대상'),
+  ('openrouter', 'OpenRouter',                'commercial',  array['llm'],        true,  '대체 경로. 국외 이전 고지 대상'),
+  ('oss-llm',    '오픈소스 LLM 서버(vLLM)',     'open_source', array['llm'],        false, '공용 GPU 서버. 상업 이용 가능 라이선스 모델만 등록'),
+  ('voyage',     'Voyage AI',                 'commercial',  array['embedding'],  true,  '기본 임베딩. 국외 이전 고지 대상'),
+  ('oss-embed',  '오픈소스 임베딩',              'open_source', array['embedding'],  false, '민감 데이터 컬렉션용'),
+  ('elevenlabs', 'ElevenLabs',                'commercial',  array['stt', 'tts'], true,  'TypeScript SDK, Next.js 서버에서만 호출. 국외 이전 고지 대상'),
+  ('oss-voice',  '오픈소스 음성 서버',           'open_source', array['stt', 'tts'], false, 'faster-whisper + 상업 이용 가능 TTS')
+on conflict (id) do update
+  set name = excluded.name, source = excluded.source, kinds = excluded.kinds,
+      cross_border = excluded.cross_border, notes = excluded.notes;
+
+insert into core.ai_model_prices (provider_id, model, kind, unit, credits_per_unit, license) values
+  ('anthropic',  '*', 'llm',       '1k_input_tokens',  1.0000, null),
+  ('anthropic',  '*', 'llm',       '1k_output_tokens', 4.0000, null),
+  ('openai',     '*', 'llm',       '1k_input_tokens',  1.0000, null),
+  ('openai',     '*', 'llm',       '1k_output_tokens', 4.0000, null),
+  ('google',     '*', 'llm',       '1k_input_tokens',  1.0000, null),
+  ('google',     '*', 'llm',       '1k_output_tokens', 4.0000, null),
+  ('openrouter', '*', 'llm',       '1k_input_tokens',  1.0000, null),
+  ('openrouter', '*', 'llm',       '1k_output_tokens', 4.0000, null),
+  ('oss-llm',    '*', 'llm',       '1k_input_tokens',  0.2000, '모델별 확인'),
+  ('oss-llm',    '*', 'llm',       '1k_output_tokens', 0.5000, '모델별 확인'),
+  ('voyage',     '*', 'embedding', '1k_tokens',        0.0500, null),
+  ('oss-embed',  '*', 'embedding', '1k_tokens',        0.0100, '모델별 확인'),
+  ('elevenlabs', '*', 'stt',       'minute',           3.0000, null),
+  ('elevenlabs', '*', 'tts',       '1k_characters',    5.0000, null),
+  ('oss-voice',  '*', 'stt',       'minute',           0.5000, 'faster-whisper MIT'),
+  ('oss-voice',  '*', 'tts',       '1k_characters',    1.0000, '모델별 확인')
+on conflict (provider_id, model, kind, unit) do update
+  set credits_per_unit = excluded.credits_per_unit, license = excluded.license;
+
+-- 플랫폼 기본 라우팅(org 없음, 앱 없음). 제품은 기능별 기본값을 자기 seed나 운영 화면에서 추가한다.
+insert into core.ai_routing_settings (org_id, app_id, feature, kind, mode, chain, force_open_source) values
+  (null, null, '*', 'llm',       'auto',       '[{"provider":"anthropic","model":"*"},{"provider":"openai","model":"*"},{"provider":"google","model":"*"},{"provider":"oss-llm","model":"*"}]', false),
+  (null, null, '*', 'embedding', 'commercial', '[{"provider":"voyage","model":"*"},{"provider":"oss-embed","model":"*"}]', false),
+  (null, null, '*', 'stt',       'auto',       '[{"provider":"oss-voice","model":"*"},{"provider":"elevenlabs","model":"*"}]', false),
+  (null, null, '*', 'tts',       'auto',       '[{"provider":"elevenlabs","model":"*"},{"provider":"oss-voice","model":"*"}]', false)
+on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind) do update
+  set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
