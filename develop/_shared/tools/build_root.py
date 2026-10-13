@@ -34,11 +34,13 @@ REVIEWS = {
     'toon-factory': ['Toon-Factory.md', 'NOMAD_Shorts_Maker.md', 'Nomad-BlogStudio.md', 'sellingstudio.md'],
     'study-note': ['study-note-organizer-codex-01.md'],
     'website-floria': ['WebSite.md'],
+    'nomad-docs': ['SellingDocs.md', 'flora.md', 'FortuneDocs.md'],
 }
 APP_ID = {
     'astro-ai': 'astro', 'flora-publishing': 'publishing', 'nomad-video': 'video', 'nomad-blog': 'blog',
     'nomad-commerce': 'commerce', 'microweb-studio': 'microweb', 'admin-suite': 'erp, hms, sms', 'live-poll': 'poll',
     'stock-dashboard': 'stock', 'toon-factory': 'toon', 'study-note': 'notes', 'website-floria': 'site',
+    'nomad-docs': 'docs',
 }
 
 PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
@@ -147,6 +149,11 @@ def build(prod):
             sql_rows.append((f'{src_dir}/migrations/{f}'[len(PLATFORM) + 1:], dst))
         write(f'{out}/{dst_dir}/seed.sql', read(f'{src_dir}/seed.sql'))
         sql_rows.append((f'{src_dir}/seed.sql'[len(PLATFORM) + 1:], f'{dst_dir}/seed.sql'))
+        # 선택: tests/rls_smoke.sql 등(DOC_TEMPLATE.md 2.10절 '제안'). 있는 제품만 복사한다.
+        if os.path.isdir(f'{src_dir}/tests'):
+            for f in sorted(x for x in os.listdir(f'{src_dir}/tests') if x.endswith('.sql')):
+                write(f'{out}/{dst_dir}/tests/{f}', read(f'{src_dir}/tests/{f}'))
+                sql_rows.append((f'{src_dir}/tests/{f}'[len(PLATFORM) + 1:], f'{dst_dir}/tests/{f}'))
 
     # 산출물 등록부
     rows = '\n'.join(f'| {d} | {n} | {s.replace("-", " ", 1)} | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | {p} | - |'

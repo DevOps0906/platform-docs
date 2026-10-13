@@ -59,10 +59,10 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 | `03_SCREENS_UX.md` | 화면 목록, 플로우(가입 → 첫 패키지 → 결제 포함), 체크리스트 마법사·편집기·추적표 화면 명세, 랜딩 디자인 방향(3D 히어로), 상태/오류, 접근성 |
 | `04_API.md` | Route Handler, RPC(SECURITY DEFINER), 잡 페이로드 계약, 수신·발신 웹훅, 외부 API 어댑터(HubSpot, ERP), 오류 코드(`DC001`~`DC010`) |
 | `05_DATA_MODEL.md` | 스키마 `docs` 테이블(카탈로그, 워크스페이스, 프로젝트, 문서, 연동, 운영), 상태 전이, RLS, 코어 참조, 리뷰 "높음" 보안·데이터 결함의 차단 설계, 모놀리스와 모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 목록(`DC-06-###`), 웨이브, 모델별 비율, 리뷰 작업 흡수표, 코어 요청(C-1~C-7) |
+| `06_AGENT_PLAN.md` | 문서 간 불일치 정리와 타당성 교차검증 기록(1장), 작업 목록(`DC-06-###`), 웨이브, 모델별 비율, 리뷰 작업 흡수표, 코어 요청(C-1~C-7) |
 | `07_SOURCE_MIGRATION.md` | 이식 원천별 자산 분류, 이식 자산 상세, 폐기 목록과 사유, 복사 금지 결함 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
-| `supabase/` | `monolith/migrations/0001_core_lite.sql`(코어 축소판 복사본), `0002_nomad_docs_domain.sql`(도메인), `monolith/seed.sql`(앱·플랜·크레딧팩·카탈로그 seed) |
+| `supabase/` | `monolith/migrations/0001_core_lite.sql`(코어 축소판 복사본), `0002_nomad_docs_domain.sql`(도메인), `monolith/seed.sql`(앱·플랜·크레딧팩·카탈로그 seed), `monolith/tests/rls_smoke.sql`(RLS·권한 회귀 59항목, `DOC_TEMPLATE.md` 2.10절) |
 | `../_supabase-modular/migrations/2300_docs.sql` | 모듈러 조각(스키마 `docs`, 번호 2300~2399). 모놀리스 0002와 같은 도메인 모델 |
 
 ## 5. DB 구조 선택
