@@ -36,7 +36,7 @@ D:\WorkSpace\DEV\nomad-docs\                            베이스를 복사해 �
 | 4 | project-profile 작성 | 6 |
 | 5 | 로컬 DB 기동, SQL 적용, RLS 스모크 | 7 |
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
-| 7 | 작업(59개)을 task로 변환 | 9 |
+| 7 | 작업(62개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
 | - | AI 계층, 개발 위키, 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
 | - | 체크리스트 | 18 |
@@ -82,9 +82,9 @@ D:\WorkSpace\DEV\nomad-docs\                            베이스를 복사해 �
 - Toss Payments(크레딧팩, Pro 구독)
 - Supabase
 - 서명 토큰 키쌍 `AI_TOKEN_PRIVATE_KEY`(Ed25519, web 서버 전용)
-- HubSpot(Phase 2. 앱 등록 절차·스코프·서명 방식 미확인, `04_API.md:213-221`)
+- HubSpot(Phase 2. 앱 등록 절차·스코프·서명 방식 미확인, `04_API.md:220-228`)
 
-이 제품에는 OpenRouter·Voyage 키가 없습니다(`02_ARCHITECTURE.md:383`).
+이 제품에는 OpenRouter·Voyage 키가 없습니다(`02_ARCHITECTURE.md:399`).
 
 공용 인프라 설치 문서는 다음과 같습니다.
 
@@ -149,7 +149,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/nomad-docs/supabase/monolith/migrations/0001_core_lite.sql` | `supabase/migrations/20261013000001_core_lite.sql` | - | DB(코어 축소판, SECTION 9 affiliate만 제거) |
 | `docs/products/nomad-docs/supabase/monolith/migrations/0002_nomad_docs_domain.sql` | `supabase/migrations/20261013000002_nomad_docs_domain.sql` | - | DB(도메인, 테이블 28·뷰 1·함수 34, 카탈로그 seed 포함) |
 | `docs/products/nomad-docs/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB(apps 1행, 플랜 free/pro/team, 크레딧팩 3종, AI 라우팅 13행) |
-| `docs/products/nomad-docs/supabase/monolith/tests/rls_smoke.sql` | `supabase/tests/rls_smoke.sql` | - | RLS·권한 회귀 59항목 |
+| `docs/products/nomad-docs/supabase/monolith/tests/rls_smoke.sql` | `supabase/tests/rls_smoke.sql` | - | RLS·권한 회귀 105항목 |
 | `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
 | (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 24개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 채팅 앱 설정 |
@@ -214,7 +214,7 @@ D:\WorkSpace\DEV\nomad-docs\
 │   ├── README.md                     [베이스]
 │   ├── migrations\20261013000001_core_lite.sql, 20261013000002_nomad_docs_domain.sql   [묶음]
 │   ├── seed.sql                      [묶음]
-│   └── tests\rls_smoke.sql           [묶음] RLS·권한 회귀 59항목(러너는 DC-06-003)
+│   └── tests\rls_smoke.sql           [묶음] RLS·권한 회귀 105항목(러너는 DC-06-003)
 └── tasks\  _local\                   [베이스] 작업 데이터(git 추적 안 함)
 ```
 
@@ -280,6 +280,8 @@ D:\WorkSpace\DEV\nomad-docs\
 
 기획 단계 검증 결과(2026-10-13, PGlite, `docs/file/03-설계/05_DATA_MODEL.md:5`): 모듈러 core 0000~0009 + seed + 2300 적용 정순·역순 OK, 모놀리스 0001 + 0002 + seed OK, RLS 스모크 59/59(모듈러)·59/59(모놀리스), 권한 감사 이상 0건(PUBLIC EXECUTE 남은 제품 함수 0, `search_path` 없는 DEFINER 0, RLS 꺼진 테이블 0).
 
+재검증(2026-10-14, 교차검증 반영 후): 모듈러 전 제품 체인 정순·역순·재실행 OK, 모놀리스 0001 + 0002 + seed OK, RLS 스모크 105/105(모듈러·모놀리스), 권한 감사 0건(`docs/file/03-설계/05_DATA_MODEL.md` 머리).
+
 개발 폴더의 SQL을 고친 뒤에는 같은 체커로 다시 확인합니다. 체커는 platform 쪽에 있고 처음 한 번 `npm install`이 필요합니다(`node_modules`는 platform 저장소에 포함돼 있지 않을 수 있음, 미확인).
 
 ```
@@ -298,7 +300,7 @@ node check.mjs --vector mono \
 
 ### 7.3 RLS 스모크(`supabase/tests/rls_smoke.sql`)
 
-59개 검사가 한 파일에 있습니다. 파일은 스키마 자리표시자를 씁니다.
+105개 검사가 한 파일에 있습니다(2026-10-13 기본 59 + 2026-10-14 교차검증 회귀·신규 기능·독립 검토 회귀 46). 파일은 스키마 자리표시자를 씁니다.
 
 | 자리표시자 | 뜻 | 모놀리스(이번 개발) | 모듈러 |
 |---|---|---|---|
@@ -326,7 +328,7 @@ node check.mjs --vector mono \
 
 - 파일 전체를 psql에 한 번에 넣으면 역할 전환과 기대 오류 판정이 되지 않습니다. 반드시 문장 단위로 판정합니다.
 - 이 파일은 pgTAP 형식이 아닙니다. `supabase test db`(pgTAP 실행)로 돌리지 않습니다(제안: 혼동을 피하려면 러너가 생긴 뒤 위치를 `supabase/tests/` 아래 하위 폴더로 옮기는 것은 DC-06-003에서 판단).
-- DC-06-003의 수용 기준은 모놀리스·모듈러 두 대상 모두 59/59와 추가 AI 항목(타인 `ai_conversations` 0행, `ai_chunks` SELECT 42501, `resolve_ai_route` authenticated 42501)입니다. 이번 개발은 단독(모놀리스)이므로 모듈러 대상은 platform의 `2300_docs.sql`로 돌립니다(7.4절).
+- DC-06-003의 수용 기준은 모놀리스·모듈러 두 대상 모두 105/105과 추가 AI 항목(타인 `ai_conversations` 0행, `ai_chunks` SELECT 42501, `resolve_ai_route` authenticated 42501)입니다. 이번 개발은 단독(모놀리스)이므로 모듈러 대상은 platform의 `2300_docs.sql`로 돌립니다(7.4절).
 
 ### 7.4 DB 변경 규칙(단독 개발에서)
 
@@ -356,10 +358,10 @@ node check.mjs --vector mono \
 | D-12 | 정부지원 신청서(`biz_plan`)를 Phase 2 맨 앞으로 | 페르소나 인터뷰 후. 앞당기면 D-5와 묶어 판단 | Phase 2 계획 시 |
 
 **D-3 계약서 게이트를 지키는 방법**
-- 규칙: 법무 검토 전에는 `doc_types.is_active=false`로 배포합니다(`01_PRD.md:384`, `06_AGENT_PLAN.md:32`, `:220`). 패키지는 7종으로 축소 표시합니다.
-- 현재 seed와의 차이(확인 2026-10-13): `0002` 말미 카탈로그 seed는 `dev_contract`를 `is_active=true`로 넣고, `on conflict do update`가 `is_active`까지 덮어씁니다(`20261013000002_nomad_docs_domain.sql:2525`, `:2541-2545`). 모듈러 `2300`도 같습니다. 즉 `db reset` 직후 로컬 DB에서는 계약서가 활성입니다.
-- RLS 스모크 2개가 이 활성 상태를 전제로 합니다: "계약서는 고지 동의 없이 생성 불가 DC007"(`rls_smoke.sql:48-49`)과 "카탈로그 doc_types 읽기 rows:9"(`:136-137`). 비활성으로 바꾸면 각각 22023과 rows:8이 됩니다.
-- 처리(제안): 로컬 개발·스모크는 seed 그대로 둡니다(고위험 경로를 테스트해야 하므로). 스테이징·운영 배포에는 DC-06-001이 "D-3 전 비활성" 단계(예: 배포 전용 마이그레이션 또는 seed 분기)를 추가하고, DC-06-003이 두 스모크 항목을 비활성 대상용으로 분리합니다. 어느 쪽이든 SQL 변경은 DC-06-001만 하고, 결정은 log.md에 `[DECISION]`으로 남깁니다.
+- 규칙: 법무 검토 전에는 `doc_types.is_active=false`로 배포합니다(`01_PRD.md:390`, `06_AGENT_PLAN.md:32`, `:220`). 패키지는 7종으로 축소 표시합니다.
+- 현재 seed(2026-10-14 반영): `dev_contract`는 `is_active=false`로 들어가고, `on conflict do update`가 `is_active`를 덮지 않습니다(운영자가 켠 값 보존). 패키지는 계약서 없이 7종으로 보입니다.
+- RLS 스모크는 비활성 상태를 먼저 확인("seed에서 계약서 유형은 비활성", "비활성 계약서 생성 거부 22023")한 뒤 테스트 안에서만 켜고 고지 동의 경로(DC007)를 검사합니다. 로컬·스테이징·운영 모두 같은 seed를 씁니다(분기 없음).
+- D-3 법무 검토가 끝나면 운영자 화면(DC-F-040) 또는 service_role로 `update doc_types set is_active = true where code = 'dev_contract'`를 실행하고 감사 기록을 남깁니다(사람이 확인 후 실행).
 - 활성 여부와 관계없이 지켜야 할 것: `dev_contract`는 template만, LLM `ai_usage` 0행, `docs.assist` 403 `assist_disabled_high_risk`, 첫 생성 전 고지 동의(DC007), 조항은 `status='draft'`라 확정 시 `L-REQUIRED-CLAUSE`가 막습니다(`05_DATA_MODEL.md` 9절 seed 표).
 
 **산출물 승인 절차**
@@ -373,7 +375,7 @@ node check.mjs --vector mono \
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 DC-06-001~059, 모두 59개입니다. 그중 DC-06-010은 사람이 하는 디자인 비주얼 검토이고, DC-06-052~055(P2)는 Phase 2 연동입니다.
+작업은 DC-06-001~062, 모두 62개입니다. DC-06-010은 판정을 사람이 하는 디자인 비주얼 검토(준비는 Sonnet)이고, DC-06-052~055·060(P2)은 Phase 2입니다. 2026-10-14에 DC-06-061(CRM형 워크스페이스)·062(생성 진행 애니메이션)를 W4에 추가했습니다.
 
 | 웨이브 | 작업 ID | 병렬 수 | 진입 조건 | 산출물 |
 |---|---|---|---|---|
@@ -381,12 +383,12 @@ node check.mjs --vector mono \
 | W1 | 002, 003, 006, 007, 012, 013, 017, 020, 046 | 9 | W0 완료 | 모놀리스 변환, RLS 러너, ai-service, CI, API 공통, 단가·features, 효과 엔진, 템플릿 9종, 법무 문구 |
 | W1-D | 009 → 010 → 011(직렬) | 1 | 004, 008 완료 | 디자인 시스템 2~4단계. 010은 사람이 수행. 011 완료가 모든 화면 작업(038~045)의 진입 조건 |
 | W2 | 014, 015, 016, 019, 021, 031, 033, 047 | 8 | W1 완료 | 인증, 워크스페이스·거래처, 정본 API, 효과 엔진 속성 테스트, compliance·lint, 업로드, AI 게이트, 결제 |
-| W3 | 018, 022, 028, 032, 036, 037, 038, 045, 049, 059 | 10 | W2 완료, 038·045는 011 완료 | 효과 적용, 생성 그래프, 문서 API, RAG, 음성, CSV, 화면 1, 3D 히어로, 운영자 카탈로그, 배포 |
-| W4 | 023, 024, 025, 027, 029, 030, 035, 039, 044, 048 | 10 | W3 완료. 029의 DOCX는 C-1 반영 전 비활성으로 진행 | 추출·회의록·다시 쓰기 그래프, 생성 요청·패키지, 내보내기, 추적표, 위키, 화면 2, 랜딩, 결제 E2E |
+| W3 | 018, 022, 028, 032, 036, 037, 038, 045, 049, 059 | 10 | W2 완료, 038·045는 011 완료 | 효과 적용, 생성 그래프, 문서 API, RAG, 음성, CSV, 화면 1, 3D 히어로(+ 3D 영상), 운영자 카탈로그, 배포 |
+| W4 | 023, 024, 025, 027, 029, 030, 035, 039, 044, 048, 061, 062 | 12 | W3 완료. 029의 DOCX는 C-1 반영 전 비활성으로 진행 | 추출·회의록·다시 쓰기 그래프, 생성 요청·패키지, 내보내기, 추적표, 위키, 화면 2, 랜딩, 결제 E2E, CRM 워크스페이스, 생성 진행 애니메이션 |
 | W5 | 026, 034, 040, 041, 042, 051 | 6 | W4 완료 | 골든·평가, Dify 채팅, 편집기, 화면 3·4, 계정 삭제·정리 |
 | W6 | 043, 050 | 2 | W5 완료 | 화면 5(채팅·위키), KPI |
 | W7 | 056, 057, 058 | 3 | W6 완료 | 통합·E2E·AI 회귀. 녹색이면 공개 베타(MVP). `dev_contract` 활성은 D-3 법무 검토 완료가 별도 조건 |
-| W8 | 052 → 053, 054, 055 | 1 → 3 | MVP 출시 후, team 플랜(C-5) 준비 | 연동 프레임워크, 발신 웹훅·Make/n8n, HubSpot, admin-suite ERP(Phase 2) |
+| W8 | 052 → 053, 054, 055, 060 | 1 → 4 | MVP 출시 후, team 플랜(C-5) 준비 | 연동 프레임워크, 발신 웹훅·n8n(Make는 쓰지 않음), HubSpot, admin-suite ERP, shorts_agency(Phase 2) |
 
 단독(모놀리스) 개발에서 읽는 방법:
 - DC-06-001의 "모듈러 조각 `2300` 적용, `--schema core,docs` 타입"은 단독 DB에서는 `0001`+`0002`+seed 적용과 `--schema public` 타입으로 읽습니다. 모듈러 체커 확인(`check.mjs --vector mod ...`)은 platform의 `_supabase-modular`로 그대로 수행합니다.
@@ -398,11 +400,11 @@ node check.mjs --vector mono \
 |---|---|---|
 | Fable | DB·RLS(001, 003), 결제·크레딧 차감 경로(013, 027, 033, 047), 권한 경계(006, 014, 049, 055), 체크리스트 효과 원자 적용(018), 고위험 문서 규칙이 걸린 생성 그래프(022), AI 보안 회귀(058), 개인정보 삭제(051) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`·`fastapi-expert`·`nextjs-expert`(Sonnet), 리뷰는 `review-expert` |
 | Opus | 그래프(extract·minutes·assist), RAG, 위키, Dify, 음성, 편집기, API, 템플릿, 효과 엔진, 테스트 설계 | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
-| Sonnet | 화면, 랜딩, 3D 히어로, 디자인 시스템 구현, CI, 배포 설정 | `nextjs-expert`(Sonnet), CI·배포 문서는 오케스트레이터 |
+| Sonnet | 화면, 랜딩, 3D 히어로·3D 영상, 디자인 시스템 구현, CRM 워크스페이스(061), 생성 진행 애니메이션(062), CI, 배포 설정 | `nextjs-expert`(Sonnet), CI·배포 문서는 오케스트레이터 |
 | Haiku | 법무 문구·점검표(046), KPI 쿼리(050) | 오케스트레이터가 직접 처리(베이스에 Haiku 워커 없음) |
-| 사람 | 디자인 비주얼 검토(DC-06-010) | 사용자 |
+| 사람 | 디자인 비주얼 검토 판정(DC-06-010, 준비는 Sonnet) | 사용자 |
 
-작업 수 비율(사람 작업 제외 58개, `06_AGENT_PLAN.md` 4절): Fable 14(24.1%), Opus 31(53.4%), Sonnet 11(19.0%), Haiku 2(3.4%). 규모 가중(S=1, M=2, L=3) 기준은 Fable 25.0%, Opus 54.7%, Sonnet 18.0%, Haiku 2.3%입니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(고문), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다. 고문을 Opus로 바꾼 경우(3절) "Fable" 행의 계획 검토는 Opus 고문이 맡고, 나머지 매핑은 같습니다.
+작업 수 비율(62개, `06_AGENT_PLAN.md` 4절, 2026-10-14 갱신): Fable 14(22.6%), Opus 32(51.6%), Sonnet 14(22.6%), Haiku 2(3.2%). 규모 가중(S=1, M=2, L=3) 기준은 Fable 23.4%, Opus 53.3%, Sonnet 21.2%, Haiku 2.2%입니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(고문), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다. 고문을 Opus로 바꾼 경우(3절) "Fable" 행의 계획 검토는 Opus 고문이 맡고, 나머지 매핑은 같습니다.
 
 ### 9.3 task 폴더 만들기
 
@@ -471,7 +473,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 6 | 개발 위키 갱신(12절) | `llm-wiki` 스킬 |
 | 7 | 완료: task status `done`, 웨이브의 모든 task가 끝나면 다음 웨이브 | - |
 
-- **MVP(공개 베타) 출시 조건**: W7(056, 057, 058)까지 녹색, `06_AGENT_PLAN.md` 7절 완료 정의 충족. P0·P1 작업 전부 완료(P2 = 052~055 제외). 3D 히어로(045), KPI(050), 계정 삭제·정리(051)는 P1입니다.
+- **MVP(공개 베타) 출시 조건**: W7(056, 057, 058)까지 녹색, `06_AGENT_PLAN.md` 7절 완료 정의 충족. P0·P1 작업 전부 완료(P2 = 052~055, 060 제외). 3D 히어로(045), KPI(050), 계정 삭제·정리(051)는 P1입니다.
 - **`dev_contract` 활성 조건**: 위와 별도로 D-3 법무 검토 완료(8절).
 - 화면 작업(038~045)은 디자인 시스템 4단계(DC-06-011)가 끝난 뒤 시작합니다.
 - 각 P0 작업은 대응 테스트 작업이 녹색이어야 완료입니다(`06_AGENT_PLAN.md` 7절 표. 예: 017 → 019, 020~025·029 → 026·058, 047 → 048).
@@ -535,6 +537,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
 - 기본 컴포넌트 다음에 제품 고유 컴포넌트(ChecklistStep, EffectsPreviewPanel, RequirementBoard, LineItemTable, DocEditor, DiffCard, LintPanel, FinalizeDialog, TraceMatrix, MeetingRecorder, RiskNoticeDialog, ChatPanel 등)를 만듭니다(`03_SCREENS_UX.md` 3.25절).
 - 금액 열은 tabular 숫자·오른쪽 정렬, 상태는 아이콘 + 텍스트(색만으로 구분 금지), 이모지 아이콘 금지(Lucide), hex 하드코딩 금지.
+- `docs/file/03-설계/디자인/DESIGN.md`, `COMPONENTS.md`는 빈 템플릿이 아니라 `03_SCREENS_UX.md` 3.25.1·3.25.2절 초기값(색 토큰 라이트/다크, 서체, radius, 행 높이, 모션 토큰, 컴포넌트 배리언트 표)으로 채워져 들어옵니다. DC-06-009는 이 값으로 `tokens.css`를 만들고, DC-06-011이 코드 기준으로 다시 맞춥니다(다르면 코드가 이깁니다).
 
 ### 13.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.6절)
 
@@ -554,6 +557,29 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 위치: 작업 계획의 소유 경로 `apps/web/src/features/hero3d/`, `apps/web/public/hero/`(DC-06-045, `06_AGENT_PLAN.md:107`)를 따릅니다. 03장 4.6절은 `src/components/hero3d/`로 적고 있어 서로 다릅니다(확인 2026-10-13). 소유 경계 정본은 06장이므로 `features/hero3d/`로 두고, 03장 표기 수정은 산출물 갱신 task로 처리합니다(제안).
 - 확인: PC·태블릿·모바일 스크린샷 3종, Lighthouse, 프레임 측정, 고문 디자인 검토(`HERO_3D.md:70-75`).
 - 레퍼런스 URL은 `REFERENCES.md`에 있는 것만 씁니다. nomad-docs 전용 절과 `HERO_3D.md` 소재 행 추가는 코어 요청 C-4입니다.
+- **3D 영상 레이어(DC-F-049, `03_SCREENS_UX.md` 4.6.1절)**: 메인은 "동적 3D + 3D 영상" 두 겹입니다. 실시간 3D를 못 돌리는 기기(모바일·저사양·WebGL 실패·30fps 미만)는 같은 장면을 미리 렌더한 8~12초 무음 루프 영상(`public/hero/hero-loop.mp4`·`.webm`·`hero-loop-m.mp4`, 포스터 avif)을 보고, reduced-motion·데이터 절약·영상 실패면 정지 이미지를 봅니다. 영상은 `scripts/nomad-docs/hero-record/`로 R3F 장면을 오프라인 렌더해 ffmpeg로 만듭니다(D-17). 예산: 영상 2MB(모바일 1MB), 포스터가 LCP, 첫 화면 JS에 3D·영상 코드 0. 킬 스위치 `NEXT_PUBLIC_HERO_VIDEO_ENABLED`.
+
+### 13.3 로그인 후 화면: CRM형 워크스페이스 (정본: `03_SCREENS_UX.md` 3.26절, DC-06-061)
+
+| 화면 | 벤치마킹 패턴 | 데이터 |
+|---|---|---|
+| 앱 셸 | 왼쪽 내비(홈·파이프라인·거래처·프로젝트·문서·연동·설정) + 상단 ⌘K 명령 막대(Linear) | - |
+| 파이프라인 `/app/pipeline` | 단계 열 보드 + 열 합계 + 14일 정체 표시(Pipedrive), 보드/표 전환(Attio) | 뷰 `project_pipeline`(단계는 문서 상태에서 계산, 저장 안 함) |
+| 거래처 360 `/app/parties/[id]` | 왼쪽 속성·가운데 활동·오른쪽 연결 카드(HubSpot) | 뷰 `project_activity`, `project_totals` |
+| 커맨드 팔레트 | 검색 + 명령 + 최근, `g p`/`g c` 이동(Linear) | `GET /api/search` |
+
+- 카드를 끌어 놓아 단계를 바꾸지 않습니다. 단계는 문서가 정합니다(견적서 확정 → quoted, 계약서 확정 → contracted, 검수확인서 확정 → accepted).
+- 요청 프롬프트 예시(9.4절 형식): "작업 DC-06-061. 근거 `03_SCREENS_UX.md` 3.26절, `04_API.md` 2장 `/api/pipeline`·`/api/search`·activity. 작업 대상 경로: `apps/web/src/features/pipeline/`, `apps/web/src/app/(app)/pipeline/`, `apps/web/src/app/api/{pipeline,search}/`, `apps/web/src/app/api/{projects,parties}/[id]/activity/`. 스택: Next.js 16.2.x, React 19.2, Tailwind CSS v4, shadcn/ui, motion(구 framer-motion, React 19 지원 버전). 완료 기준은 06장 DC-06-061 행."
+
+### 13.4 문서 생성 단계별 애니메이션 (정본: `03_SCREENS_UX.md` 3.27절, DC-06-062)
+
+| 단계 | 서버 근거 | 화면 |
+|---|---|---|
+| queued → collecting → drafting(섹션별) → assembling → linting → done | `generation_runs.progress`(ai-service가 `docs.report_generation_progress`로 기록, Realtime) | 단계 레일 + 용지에 섹션 줄이 차례로 그려짐, 패키지는 문서별 레인 |
+
+- 시간 기반 가짜 진행률을 쓰지 않습니다. 서버가 단계를 보내지 않으면 화면도 움직이지 않습니다.
+- 대기 중에만 [취소](`docs.cancel_generation`). reduced-motion이면 단계 목록만 바뀝니다.
+- 그래프 쪽 진행 보고는 DC-06-022(생성 그래프)의 수용 기준에 들어 있습니다. 화면(062)은 022·027 뒤에 시작합니다.
 
 ## 14. 원본 이식
 
@@ -606,7 +632,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | SQL(모놀리스) | `check.mjs --vector mono 0001 0002 seed` OK(7.2절), `node scripts/nomad-docs/to-monolith.mjs --check` 불일치 0 |
 | SQL(모듈러) | platform `_tools-sqlcheck`에서 `node check.mjs --vector mod <0000~0009> seed.sql 2300_docs.sql` OK |
 | 타입 | `supabase gen types typescript --local --schema public` 결과가 커밋본과 같음(CI 비교) |
-| RLS 스모크 | `node scripts/nomad-docs/rls-runner.mjs --target mono`(필수), `--target mod`(모듈러 정본 확인) 59항목 + 추가 항목 전부 통과 |
+| RLS 스모크 | `node scripts/nomad-docs/rls-runner.mjs --target mono`(필수), `--target mod`(모듈러 정본 확인) 105항목 + 추가 항목 전부 통과 |
 | 결제 E2E | `npx playwright test e2e/billing` 5개 시나리오(Toss 테스트 키) |
 | 핵심 플로우·AI | `npx playwright test e2e/flows e2e/ai`, `pytest apps/api/tests/docs/security`. 평가셋(hybrid 20, 검색 30, 채팅 30, 추출 10)을 상용·오픈소스 두 경로로 통과. `meeting_minutes`·`docs.minutes` 상용 호출 0 |
 | 고위험 문서 | `dev_contract` 생성의 LLM `ai_usage` 0, D-3 법무 검토 완료 전 배포 대상에서 `doc_types.is_active=false` |
@@ -616,16 +642,16 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | 위험 | 대응 |
 |---|---|
-| 계약서와 변호사법 | 문서 자동 작성이 변호사법상 비변호사의 법률사무 취급 금지 규정과 충돌하는지 미확인입니다(`01_PRD.md:384`). D-3 법무 검토 전에는 `dev_contract`를 배포 대상에서 비활성으로 두고, 템플릿만·AI 조항 생성 없음·개별 사안 판단 없음·채팅의 법률 판단 거절을 유지합니다. 표준계약서 원문 출처·이용 조건도 미확인(D-8)이라 조항은 운영자 작성분만, `source_note` 필수입니다 |
-| seed의 계약서 활성 상태 | 현재 seed는 `dev_contract`를 활성으로 넣습니다. 배포 전 비활성 단계를 빠뜨리면 법무 검토 전에 계약서가 열립니다. 8절 처리안을 DC-06-001·003에서 확정하고 스테이징 배포(DC-06-059) 체크 항목에 넣습니다 |
+| 계약서와 변호사법 | 문서 자동 작성이 변호사법상 비변호사의 법률사무 취급 금지 규정과 충돌하는지 미확인입니다(`01_PRD.md:390`). D-3 법무 검토 전에는 `dev_contract`를 배포 대상에서 비활성으로 두고, 템플릿만·AI 조항 생성 없음·개별 사안 판단 없음·채팅의 법률 판단 거절을 유지합니다. 표준계약서 원문 출처·이용 조건도 미확인(D-8)이라 조항은 운영자 작성분만, `source_note` 필수입니다 |
+| seed의 계약서 활성 상태 | 2026-10-14에 seed를 비활성으로 고쳤습니다(8절). 운영에서 켤 때는 D-3 법무 검토 기록이 먼저입니다 |
 | DOCX 의존성 | DOCX와 A4 공문서 프리셋은 공용 렌더 서비스 확장(C-1, flora-publishing 소유)에 달려 있습니다. 반영 전에는 DOCX 403 `format_unavailable`, Pro 요금 표의 DOCX 제공 문구는 반영 시점에 맞춰 확인합니다 |
 | 렌더 서비스 부재 | 단독 개발 시점에 공용 렌더 서비스가 없을 수 있습니다. PDF 내보내기(029), 한글 골든(026), 패키지 ZIP이 막히므로 flora-publishing 렌더 서비스를 로컬로 띄우거나 W4 전에 운영 상태를 확인합니다 |
-| HubSpot API | 엔드포인트, 스코프, 서명 헤더·알고리즘, 이벤트 id 필드, 레이트 한도, 앱 등록 절차가 모두 미확인입니다(`04_API.md:186-221`). DC-06-054는 공식 문서 확인 기록을 수용 기준으로 둡니다(Phase 2) |
+| HubSpot API | 엔드포인트, 스코프, 서명 헤더·알고리즘, 이벤트 id 필드, 레이트 한도, 앱 등록 절차가 모두 미확인입니다(`04_API.md:193-228`). DC-06-054는 공식 문서 확인 기록을 수용 기준으로 둡니다(Phase 2) |
 | 제3자 음성(회의) | 회의 녹음 STT·전사본 그래프는 오픈소스 강제, 녹음 전 매번 고지, 원본 24시간 삭제. 오픈소스 서버 장애 시 상용 대체 없이 실패·환불합니다(D-11) |
 | 고객 RFP 기밀성 | 추출은 오픈소스 우선, 임베딩은 `oss-embed` 고정, 업로드 텍스트는 LLM 전송 전 주민등록번호 마스킹, 원본 90일(D-10 제안), 인젝션 방어 문구 고정 |
 | 숫자 무결성 | 금액·VAT·문서번호·요구사항 코드는 DB가 만듭니다. LLM·클라이언트 숫자를 저장하거나 조용히 고치는 코드 경로는 수용 기준 미달입니다 |
 | AI·음성 비용 | 크레딧 선차감·정산·환불, 오픈소스 우선 라우팅으로 관리합니다. 요금·단가는 전부 제안값이라 베타 2주 원가 측정으로 확정합니다(D-4) |
-| 작업 수와 범위 | 59개로 권장 15~40개를 넘습니다(`06_AGENT_PLAN.md:15`). 사람 비주얼 검토(DC-06-010)가 화면 작업 전체의 병목이므로 W1-D를 일찍 시작합니다 |
+| 작업 수와 범위 | 62개로 권장 15~40개를 넘습니다(`06_AGENT_PLAN.md:15`). 사람 비주얼 검토(DC-06-010)가 화면 작업 전체의 병목이므로 W1-D를 일찍 시작합니다. 첫 검증만 빠르게 하려면 `06_AGENT_PLAN.md` 1.2.3절 축소 릴리스(v0, 작업 20개 안팎)를 먼저 고려합니다 |
 | 국외 이전과 개인정보 | 동의 전 국외 제공자 사용 금지, 주민등록번호 입력란 없음과 서버 PII lint, 녹음 기본 미저장 |
 | 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
 | 기획 변경 | 산출물 갱신 task로 처리합니다. 묶음을 다시 만들려면 `build_root.py`에 nomad-docs 등록을 먼저 추가합니다(5.1절) |
@@ -640,7 +666,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
 - [ ] 공용 인프라 준비: Dify, 오픈소스 LLM·임베딩·음성 서버(또는 모의 서버), 공용 렌더 서비스 확인
 - [ ] `supabase start` → `supabase db reset` 성공, 라우팅 13행·강제 오픈소스 3행·MVP 유형 9종 확인(7.1절)
-- [ ] PGlite 체커 `--vector mono` OK(7.2절), RLS 스모크 59항목 수동 또는 러너로 확인(7.3절)
+- [ ] PGlite 체커 `--vector mono` OK(7.2절), RLS 스모크 105항목 수동 또는 러너로 확인(7.3절)
 - [ ] 결정 D-1~D-12 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함

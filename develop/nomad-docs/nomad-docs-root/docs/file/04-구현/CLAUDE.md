@@ -23,7 +23,9 @@
 | 버전 불변 | `document_versions`는 append-only. 편집도 새 버전. `final` 문서는 수정 불가(`DC003`), 고치려면 `docs.create_revision` |
 | 고유식별정보 | 주민등록번호 입력란을 만들지 않는다. 모든 텍스트 입력·CSV·편집 저장에 서버 PII lint(422 `pii_detected`), 업로드 텍스트는 LLM 전송 전 마스킹 |
 | service_role | `SUPABASE_SERVICE_ROLE_KEY`와 admin 클라이언트는 서버 파일(Route Handler, 워커, ai-service)에서만. `NEXT_PUBLIC_`에 비밀 금지 |
-| 크레딧 선차감 | 생성은 `docs.start_generation`(run + `enqueue_job` + `consume_credits` 한 트랜잭션), 동기 AI는 `withCredits`, 렌더·추출·회의록·색인은 Route Handler가 차감 후 enqueue. 실패는 `fail_job` 자동 환불 또는 `refund_credits`. 사용자용 RPC 안에서 차감하지 않는다 |
+| 크레딧 선차감 | 생성은 `docs.start_generation`(run + `enqueue_job` + `consume_credits` 한 트랜잭션), 동기 AI는 `withCredits`, 렌더·추출·회의록·색인·채팅·음성은 Route Handler가 `docs.reserve_credits`(일일 상한 + 차감 한 트랜잭션)로 차감 후 enqueue. `core.consume_credits`를 Route Handler에서 직접 부르지 않는다. 실패는 `fail_job` 자동 환불 또는 `refund_credits`. 사용자용 RPC 안에서 차감하지 않는다 |
+| 생성 취소·실패 | 화면의 취소는 `docs.cancel_generation`만(코어 `cancel_job` 직접 호출 금지). 워커는 재시도가 남은 실패에 `docs.fail_generation`을 부르지 않는다(`02_ARCHITECTURE.md` 4장 실패·재시도 계약). 진행 표시는 `docs.report_generation_progress`(ai-service)만, 화면은 시간 기반 가짜 진행률 금지 |
+| 확정 게이트 | 버전 저장 경로(생성·편집)는 `lint_result`에 `ran_at`·`rules`를 넣는다. 정본이 바뀐 문서(`needs_regeneration`, 해시 불일치)는 확정되지 않는다(DC010). 파이프라인 단계는 저장하지 않고 뷰 `docs.project_pipeline`이 계산한다 |
 | 코어 재정의 금지 | auth, org, credits, toss, webhooks, oauth, weasyprint render, storage, audit, jobs, compliance, ai-gateway, ai-service, dify, core-voice, llm-wiki는 import·호출만 |
 | 수정 금지 | `D:/WorkSpace/platform/docs/products/_platform-core/`, `D:/WorkSpace/platform/docs/products/_design-guide/`, `_supabase-modular/`의 다른 파일, `packages/core-*`, 공용 렌더 서비스(flora-publishing 소유), 공용 ai-service 원본, 이식 원천 폴더. 필요하면 `06_AGENT_PLAN.md` 6절 코어 요청에 적는다 |
 | DB 변경 | `2300_docs.sql`만, DC-06-001 담당만. 모놀리스 `0002`는 변환 스크립트(DC-06-002)로만 재생성 |
@@ -36,7 +38,7 @@
 
 ## 3. 디렉토리와 소유 경계
 
-`02_ARCHITECTURE.md:34-76`과 `06_AGENT_PLAN.md` 1절·2절 "소유 파일/디렉토리" 열이 정본이다. 자기 작업 경로만 쓴다.
+`02_ARCHITECTURE.md:34-79`과 `06_AGENT_PLAN.md` 1절·2절 "소유 파일/디렉토리" 열이 정본이다. 자기 작업 경로만 쓴다.
 
 | 위치 | 책임 | 소유 작업 |
 |---|---|---|
@@ -51,7 +53,9 @@
 | `tpl/`(`tpl/tests/` 제외) | 문서 템플릿 9종(+ Phase 2 shorts_agency 7종, DC-06-060), lint 규칙, 조항 골격, sanitize 허용 목록, 체크섬 | 020 |
 | `int/` | 연동 어댑터(Phase 2) | 052~055 |
 | `web/src/styles/`, `web/src/components/ui/`, `web/src/app/dev/components/` | 디자인 시스템 코드 | 009 |
-| `web/src/features/hero3d/`, `web/public/hero/` | 3D 히어로(three.js는 여기서만 import) | 045 |
+| `web/src/features/hero3d/`, `web/public/hero/`, `scripts/nomad-docs/hero-record/` | 3D 히어로와 3D 영상(three.js는 여기서만 import) | 045 |
+| `web/src/features/pipeline/`, `web/src/app/(app)/pipeline/`, `web/src/app/api/{pipeline,search}/`, `web/src/app/api/{projects,parties}/[id]/activity/` | CRM형 워크스페이스(⌘K, 파이프라인, 거래처 360, 활동) | 061 |
+| `web/src/features/progress/` | 생성 단계 진행 애니메이션(`motion`은 여기와 `pipeline/`에서만 import) | 062 |
 | 테스트 디렉토리(`web/tests/`, `web/e2e/`, `api/tests/docs/`, `api/eval/docs/`) | 테스트 작업 소유 | 019, 026, 048, 056, 057, 058 |
 
 공용 설정(`web/package.json` 등)은 DC-06-004에 요청한다. 화면 작업은 DC-06-011(디자인 시스템 4단계) 뒤에 시작한다.
@@ -61,8 +65,8 @@
 | 상황 | 쓰는 것 |
 |---|---|
 | Route Handler 진입 | `const ctx = await requireSession('docs')` → zod → `core.rate_limit_hit('docs:<route>:<org_id>', ...)` → features → (고위험) 고지 확인 → 차감 → 처리. 실행 계열은 이메일 인증 필수 |
-| 기능 게이팅 | `web/src/lib/server/features`(키 없으면 Free 값, `01_PRD.md:279-293`). 단가는 `priceOf`(`01_PRD.md:295-310`) |
-| 크레딧 | 멱등 키 `consume:docs:<request_id>`, 패키지 자식 `consume:docs:<run_id>:<doc_type_code>`, 채팅 `conv:<id>:turn:<n>`, 음성 `voice:<request_id>` |
+| 기능 게이팅 | `web/src/lib/server/features`(키 없으면 Free 값, `01_PRD.md:285-299`). 단가는 `priceOf`(`01_PRD.md:301-316`) |
+| 크레딧 | 멱등 키 생성 `consume:docs:gen:<request_id>`, 패키지 자식 `consume:docs:gen:<run_id>:<doc_type_code>`, 생성 밖 `consume:docs:<작업>:<request_id>`(`docs.reserve_credits`, 다른 작업·금액·조직의 키 재사용 거부), 채팅 `conv:<id>:turn:<n>`, 음성 `voice:<request_id>` |
 | 잡 | `core.enqueue_job`, 큐 `docs.generate`·`docs.ai`·`docs.export`·`docs.integration`, 잡 키 `job:docs:<request_id>`. payload에 HTML·금액·비밀 금지(id만) |
 | 진행률 | Realtime `core.jobs`, `docs.generation_runs`, `docs.doc_exports`, `docs.documents` |
 | 그래프 실행 | 워커가 `/api/internal/ai-token`(워커 키)으로 잡 토큰을 받아 `POST /graphs/docs.generate/runs`. 버전 저장은 ai-service가 `docs.finish_generation`으로 1회, 워커는 `version_id` 존재만 확인 |
@@ -86,10 +90,10 @@
 | 모놀리스 동기화 | `node scripts/nomad-docs/to-monolith.mjs`(생성), `--check`(CI 비교) |
 | 린트 | ESLint flat(typescript-eslint, react-hooks), `ruff`. raw `fetch`는 `web/src/lib/client` 밖에서 금지, three.js import는 `hero3d/` 밖에서 금지, `effects-engine/`에서 `Date`·`Math.random`·`fetch` 금지 |
 | 입력 검증 | 모든 경계 zod(TS) / pydantic(Python). 잡 payload와 그래프 출력도 재검증 |
-| 디자인 토큰 | `web/src/styles/tokens.css`(`03_SCREENS_UX.md:670` 의미 기반 이름). hex 직접 사용 금지(`bg-[#...]` 린트 차단, 제안), 이모지 아이콘 금지(Lucide). `--color-seal`은 직인·확정 표시·3D 히어로에만. 컴포넌트는 `DESIGN_SYSTEM.md:84-94` 템플릿으로 1개씩 |
+| 디자인 토큰 | `web/src/styles/tokens.css`(`03_SCREENS_UX.md:674` 의미 기반 이름). hex 직접 사용 금지(`bg-[#...]` 린트 차단, 제안), 이모지 아이콘 금지(Lucide). `--color-seal`은 직인·확정 표시·3D 히어로에만. 컴포넌트는 `DESIGN_SYSTEM.md:84-94` 템플릿으로 1개씩 |
 | 템플릿 | Jinja2 autoescape, 변수는 서버 스냅샷만. CSS 폰트는 `"Noto Sans CJK KR"` 이름만(파일 경로 금지) |
 | 스트리밍 | fetch POST + ReadableStream(SSE 응답). EventSource로 POST 금지 |
-| 문구 | 실패 문구는 원인과 다음 행동(환불 여부 포함). 금지 문구는 `01_PRD.md:398-411`, AI 생성 표시는 `01_PRD.md:390` |
+| 문구 | 실패 문구는 원인과 다음 행동(환불 여부 포함). 금지 문구는 `01_PRD.md:404-417`, AI 생성 표시는 `01_PRD.md:396` |
 
 ## 6. 테스트와 완료 조건
 
@@ -102,7 +106,7 @@
 | `node check.mjs --vector mod <0000~0009> seed.sql 2300_docs.sql`(`D:/WorkSpace/platform/docs/products/_tools-sqlcheck`) | OK |
 | `node check.mjs --vector mono 0001_core_lite.sql 0002_nomad_docs_domain.sql seed.sql` | OK |
 | `node scripts/nomad-docs/to-monolith.mjs --check` | 불일치 0 |
-| `node scripts/nomad-docs/rls-runner.mjs --target mod` / `--target mono` | `rls_smoke.sql` 59항목 + 추가 항목 전부 통과(DC-06-003) |
+| `node scripts/nomad-docs/rls-runner.mjs --target mod` / `--target mono` | `rls_smoke.sql` 105항목 + 추가 항목 전부 통과(DC-06-003) |
 | `npx playwright test e2e/billing` | Toss 테스트 키 5개 시나리오(DC-06-048) |
 | `npx playwright test e2e/flows e2e/ai` | 핵심 플로우 5개(DC-06-057), AI 회귀(DC-06-058) |
 
@@ -121,8 +125,9 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 | AI·음성 | LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자·렌더 직접 호출, Dify 입력에 토큰·org·본문, 무인증 AI 프록시, 회의 녹음·전사본의 상용 대체 전송, 임의 텍스트 TTS, 사람 소유 위키 블록 덮어쓰기, 전역 n8n 키 |
 | 디자인 | 토큰 밖 색(3D 재질 포함), hex 하드코딩, 이모지 아이콘, "Tailwind"만 적은 지시(v3 혼입), 가상 후기·허위 수치·법적 효력 보장 문구 |
 
-## 8. 변경 이력
+변경 기록(장 구조는 `DOC_TEMPLATE.md` 2.9절 7장 그대로 두고 여기에 적는다):
 
 | 날짜 | 변경 |
 |---|---|
 | 2026-10-13 | Phase 2 `shorts_agency` 패키지(DC-F-046, DC-06-060). 효과 엔진 단가 토큰 `catalog:<key>` 추가(결정성 규칙 동일: 설정에서만 읽는다). content 프로젝트에서 성과 보장 문구는 `L-NO-GUARANTEE` error |
+| 2026-10-14 | 교차검증 "반드시 고칠 것" SQL 반영(`06_AGENT_PLAN.md` 1.2.4절 반영 현황), n8n만 사용(Make 제외), CRM형 워크스페이스(DC-F-047, DC-06-061), 생성 진행 애니메이션(DC-F-048, DC-06-062), 3D 영상 히어로(DC-F-049, DC-06-045 확장), RLS 스모크 105항목 |

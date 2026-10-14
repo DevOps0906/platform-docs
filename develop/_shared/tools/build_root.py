@@ -116,6 +116,18 @@ def sql_sets(prod):
     return [(base, 'supabase')]
 
 
+def design_seed(screens, name, prod):
+    """03장의 "#### <번호> <name> 초기값" 절 본문(다음 #### 이하 제목 전까지)을 DESIGN.md/COMPONENTS.md 초기본으로 만든다."""
+    m = re.search(r'^#### [0-9.]+ ' + re.escape(name) + r' 초기값[^\n]*\n(.*?)(?=^#{1,4} )', screens + '\n#### ', re.S | re.M)
+    if not m:
+        return None
+    kind = '디자인 토큰' if name == 'DESIGN.md' else '컴포넌트·배리언트 명세'
+    return (f'# {name} — {prod} {kind} (초기값: 화면설계서 3장에서 복사)\n\n'
+            '> 정답 소스는 코드다(`apps/web/src/styles/tokens.css`, `apps/web/src/components/ui/`). 이 문서는 코드에서 갱신하고, 다르면 코드가 이긴다.\n'
+            '> 규칙: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`. 출처: `docs/file/03-설계/03_SCREENS_UX.md` 같은 이름의 "초기값" 절.\n\n'
+            + m.group(1).strip() + '\n')
+
+
 def headings(text):
     return [l for l in text.splitlines() if l.startswith('## ')]
 
@@ -133,8 +145,12 @@ def build(prod):
         write(f'{out}/{dst}', rewrite(read(src), mapping))
 
     # 디자인 시스템 초기 템플릿(DESIGN_SYSTEM.md 9절)
-    write(f'{out}/docs/file/03-설계/디자인/DESIGN.md', DESIGN_TMPL.format(prod=prod))
-    write(f'{out}/docs/file/03-설계/디자인/COMPONENTS.md', COMPONENTS_TMPL.format(prod=prod))
+    # 03_SCREENS_UX.md 에 "#### ... DESIGN.md 초기값" / "#### ... COMPONENTS.md 초기값" 절이 있으면 그 내용으로 채운다(선택).
+    screens = read(f'{P}/{prod}/03_SCREENS_UX.md')
+    write(f'{out}/docs/file/03-설계/디자인/DESIGN.md',
+          design_seed(screens, 'DESIGN.md', prod) or DESIGN_TMPL.format(prod=prod))
+    write(f'{out}/docs/file/03-설계/디자인/COMPONENTS.md',
+          design_seed(screens, 'COMPONENTS.md', prod) or COMPONENTS_TMPL.format(prod=prod))
     index_rows.append(('DOC-DSN-006', '디자인 토큰 정의(DESIGN.md)', '03-설계', 'docs/file/03-설계/디자인/DESIGN.md'))
     index_rows.append(('DOC-DSN-007', '컴포넌트·배리언트 명세(COMPONENTS.md)', '03-설계', 'docs/file/03-설계/디자인/COMPONENTS.md'))
 

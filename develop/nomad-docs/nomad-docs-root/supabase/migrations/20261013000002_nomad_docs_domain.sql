@@ -151,6 +151,80 @@ drop policy if exists checklist_items_select on public.checklist_items;
 create policy checklist_items_select on public.checklist_items for select to authenticated
   using (exists (select 1 from public.current_org_ids() o where public.has_entitlement(o, 'docs')));
 
+-- 체크리스트 항목 버전 관리(교차검증 #6, 2026-10-14). 효과·선택지·입력 형식·적용 유형·필수 여부가 바뀌면
+-- version 이 오르고 그 내용이 checklist_item_versions 에 불변으로 남는다. version 은 운영자도 직접 정하지 않는다.
+-- checklist_answers_hash 가 답한 항목의 version 을 포함하므로, 미리보기와 적용 사이에 카탈로그가 바뀌면 DC010 이다.
+create table if not exists public.checklist_item_versions (
+  key          text not null,
+  version      integer not null constraint checklist_item_versions_version_check check (version >= 1),
+  label        text not null,
+  input_type   text not null,
+  options      jsonb not null,
+  effects      jsonb not null,
+  applies_to   text[] not null,
+  is_required  boolean not null,
+  captured_at  timestamptz not null default now(),
+  primary key (key, version)
+);
+
+create or replace function public.checklist_item_bump_version()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.version := 1;
+  elsif (new.effects, new.options, new.input_type, new.applies_to, new.is_required)
+        is distinct from (old.effects, old.options, old.input_type, old.applies_to, old.is_required) then
+    new.version := old.version + 1;
+  else
+    new.version := old.version;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists checklist_items_bump_version on public.checklist_items;
+create trigger checklist_items_bump_version before insert or update on public.checklist_items
+  for each row execute function public.checklist_item_bump_version();
+
+create or replace function public.checklist_item_snapshot()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.checklist_item_versions (key, version, label, input_type, options, effects, applies_to, is_required)
+  values (new.key, new.version, new.label, new.input_type, new.options, new.effects, new.applies_to, new.is_required)
+  on conflict (key, version) do nothing;
+  return null;
+end;
+$$;
+revoke execute on function public.checklist_item_snapshot() from public, anon, authenticated;
+drop trigger if exists checklist_items_snapshot on public.checklist_items;
+create trigger checklist_items_snapshot after insert or update on public.checklist_items
+  for each row execute function public.checklist_item_snapshot();
+
+create or replace function public.checklist_item_versions_immutable()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  raise exception 'checklist_item_versions is append-only (%)', tg_op using errcode = 'DC003';
+end;
+$$;
+drop trigger if exists checklist_item_versions_immutable on public.checklist_item_versions;
+create trigger checklist_item_versions_immutable before update or delete on public.checklist_item_versions
+  for each row execute function public.checklist_item_versions_immutable();
+alter table public.checklist_item_versions enable row level security;
+revoke all on public.checklist_item_versions from public, anon, authenticated;
+grant select on public.checklist_item_versions to authenticated;
+drop policy if exists checklist_item_versions_select on public.checklist_item_versions;
+create policy checklist_item_versions_select on public.checklist_item_versions for select to authenticated
+  using (exists (select 1 from public.current_org_ids() o where public.has_entitlement(o, 'docs')));
+
 -- 조항 라이브러리. org_id null = 플랫폼 표준(MVP), 값 있음 = 조직 맞춤(Phase 2, 쓰기 경로는 Phase 2 RPC 로 추가)
 create table if not exists public.clauses (
   id             uuid primary key default gen_random_uuid(),
@@ -203,6 +277,15 @@ create trigger runtime_config_guard_write before insert or update or delete on p
 alter table public.runtime_config enable row level security;
 revoke all on public.runtime_config from public, anon, authenticated;
 
+-- 일일 플랫폼 크레딧 사용량(KST 날짜). 생성·추출·회의록·채팅·색인·내보내기 등 docs 의 모든 차감이
+-- start_generation 또는 reserve_credits 를 거치며 같은 트랜잭션에서 더한다(교차검증 #11). 환불은 빼지 않는다(보수적 상한).
+create table if not exists public.daily_credit_usage (
+  day      date primary key,
+  credits  bigint not null default 0 constraint daily_credit_usage_credits_check check (credits >= 0)
+);
+alter table public.daily_credit_usage enable row level security;
+revoke all on public.daily_credit_usage from public, anon, authenticated;
+
 -- ---------------------------------------------------------------------
 -- 3. workspace_settings: 조직당 1행. owner/admin 이 컬럼 GRANT 범위 안에서 쓴다.
 --    자사 정보는 parties.kind='self' 행이다(여기엔 서식·기본값만).
@@ -210,7 +293,10 @@ revoke all on public.runtime_config from public, anon, authenticated;
 create table if not exists public.workspace_settings (
   org_id               uuid primary key references public.organizations(id) on delete cascade,
   doc_number_format    text not null default '{TYPE}-{YYYY}-{SEQ:4}'
-                       constraint workspace_settings_number_format_check check (doc_number_format like '%{SEQ%' and char_length(doc_number_format) <= 60),
+                       constraint workspace_settings_number_format_check check (doc_number_format like '%{SEQ%' and char_length(doc_number_format) <= 60
+                              -- 유형 토큰과 연도 토큰이 모두 있어야 유형 간·연도 간 번호가 겹치지 않는다(교차검증 #10)
+                              and (doc_number_format like '%{TYPE}%' or doc_number_format like '%{PREFIX}%')
+                              and (doc_number_format like '%{YYYY}%' or doc_number_format like '%{YY}%')),
   default_day_rate_krw bigint not null default 0 constraint workspace_settings_day_rate_check check (default_day_rate_krw >= 0),
   vat_rate_bp          integer not null default 1000 constraint workspace_settings_vat_check check (vat_rate_bp between 0 and 10000),
   seal_image_path      text constraint workspace_settings_seal_path_check check (seal_image_path is null or seal_image_path ~ '^[0-9a-f-]{36}/docs/seal/[0-9a-f-]{36}\.(png|webp)$'),
@@ -366,6 +452,7 @@ revoke all on public.projects from public, anon, authenticated;
 grant select on public.projects to authenticated;
 grant insert (org_id, client_party_id, name, code, project_type, profile, start_date, end_date) on public.projects to authenticated;
 grant update (client_party_id, name, code, project_type, profile, start_date, end_date, deleted_at) on public.projects to authenticated;
+-- deleted_at(소프트 삭제·복구)은 owner/admin 만(교차검증 #9). 컬럼 GRANT 는 member 도 갖지만 트리거가 역할을 다시 본다.
 grant delete on public.projects to authenticated;
 drop policy if exists projects_select on public.projects;
 create policy projects_select on public.projects for select to authenticated
@@ -408,9 +495,24 @@ set search_path = ''
 as $$
 declare v_max integer; v_n integer;
 begin
+  if tg_op = 'UPDATE' then
+    if new.deleted_at is distinct from old.deleted_at and not public.is_service_caller()
+       and not public.has_org_role(new.org_id, array['owner', 'admin']) then
+      raise exception 'projects: only owner/admin may delete or restore' using errcode = '42501';
+    end if;
+    -- 한도 검사는 "세지 않던 행이 다시 세어지는" 변경(복구, 보관 해제)에만 한다. 보관 해제는 set_project_status 경유.
+    if not ((old.deleted_at is not null and new.deleted_at is null and new.status <> 'archived')
+         or (old.status = 'archived' and new.status <> 'archived' and new.deleted_at is null)) then
+      return new;
+    end if;
+  end if;
+  -- 무제한 플랜은 features.projects_max 가 null(JSON null)이다. 키가 없으면 Free 값 2.
+  if (public.org_features(new.org_id) -> 'projects_max') = 'null'::jsonb then
+    return new;
+  end if;
   v_max := coalesce((public.org_features(new.org_id) ->> 'projects_max')::integer, 2);
   select count(*) into v_n from public.projects p
-  where p.org_id = new.org_id and p.deleted_at is null and p.status <> 'archived';
+  where p.org_id = new.org_id and p.deleted_at is null and p.status <> 'archived' and p.id <> new.id;
   if v_n >= v_max then
     raise exception 'projects: plan limit reached (% of %)', v_n, v_max using errcode = 'DC006';
   end if;
@@ -418,7 +520,7 @@ begin
 end;
 $$;
 drop trigger if exists projects_enforce_limit on public.projects;
-create trigger projects_enforce_limit before insert on public.projects
+create trigger projects_enforce_limit before insert or update of deleted_at, status on public.projects
   for each row execute function public.enforce_project_limit();
 
 -- ---------------------------------------------------------------------
@@ -472,6 +574,40 @@ drop trigger if exists checklist_answers_guard_write on public.checklist_answers
 create trigger checklist_answers_guard_write before insert or update or delete on public.checklist_answers
   for each row execute function public.guard_checklist_answer_write();
 
+-- 답 값 형식 검사(교차검증 #13, 2026-10-14). 서버 zod 와 같은 규칙을 DB 에서도 강제한다. null = 미응답.
+create or replace function public.validate_checklist_answer()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare v_item public.checklist_items; v_ok boolean;
+begin
+  if new.value = 'null'::jsonb then
+    return new;
+  end if;
+  select * into v_item from public.checklist_items i where i.key = new.item_key;
+  v_ok := case v_item.input_type
+    when 'boolean' then jsonb_typeof(new.value) = 'boolean'
+    when 'number'  then jsonb_typeof(new.value) = 'number'
+    when 'money'   then jsonb_typeof(new.value) = 'number' and (new.value #>> '{}')::numeric >= 0
+    when 'text'    then jsonb_typeof(new.value) = 'string' and char_length(new.value #>> '{}') <= 2000
+    when 'date'    then jsonb_typeof(new.value) = 'string' and (new.value #>> '{}') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'
+    when 'single'  then jsonb_typeof(new.value) = 'string'
+                        and (jsonb_array_length(v_item.options) = 0 or v_item.options @> jsonb_build_array(new.value))
+    when 'multi'   then jsonb_typeof(new.value) = 'array'
+                        and not exists (select 1 from jsonb_array_elements(new.value) x where jsonb_typeof(x) <> 'string')
+                        and (jsonb_array_length(v_item.options) = 0 or v_item.options @> new.value)
+    else false end;
+  if not coalesce(v_ok, false) then
+    raise exception 'checklist_answers: value does not match % item %', v_item.input_type, new.item_key using errcode = '22023';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists checklist_answers_validate on public.checklist_answers;
+create trigger checklist_answers_validate before insert or update of value on public.checklist_answers
+  for each row execute function public.validate_checklist_answer();
+
 alter table public.checklist_answers enable row level security;
 revoke all on public.checklist_answers from public, anon, authenticated;
 grant select on public.checklist_answers to authenticated;
@@ -493,9 +629,19 @@ create policy checklist_answers_delete on public.checklist_answers for delete to
   using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'docs'));
 
 -- ---------------------------------------------------------------------
--- 7. 프로젝트 내 코드 자동 부여(FR-001 / NFR-001 / CON-001 / SCR-001 ...). 트리거가 프로젝트 단위 advisory lock 뒤
---    현재 최대값 + 1 을 준다. 사용자가 준 값은 무시한다(코드는 서버 계산).
+-- 7. 프로젝트 내 코드 자동 부여(FR-001 / NFR-001 / CON-001 / SCR-001 ...). 트리거가 프로젝트·접두사별 카운터를 올린다.
+--    지운 번호는 다시 쓰지 않는다(교차검증 #8, 2026-10-14. 이전에는 현재 최대값 + 1 이라 마지막 번호가 재사용됐다).
+--    사용자가 준 값은 무시한다(코드는 서버 계산).
 -- ---------------------------------------------------------------------
+create table if not exists public.project_code_counters (
+  project_id  uuid not null references public.projects(id) on delete cascade,
+  prefix      text not null constraint project_code_counters_prefix_check check (prefix ~ '^[A-Z]{2,4}$'),
+  last_no     integer not null constraint project_code_counters_no_check check (last_no >= 1),
+  primary key (project_id, prefix)
+);
+alter table public.project_code_counters enable row level security;
+revoke all on public.project_code_counters from public, anon, authenticated;
+
 -- requirements/artifacts 의 INVOKER 트리거가 사용자 세션에서 호출하므로 authenticated 에 EXECUTE 가 필요하다.
 -- DEFINER 로 두어 RLS 와 무관하게 프로젝트 전체 번호를 보고, 비멤버의 직접 호출은 42501 로 막는다.
 create or replace function public.next_project_code(p_project_id uuid, p_table text, p_prefix text)
@@ -510,10 +656,15 @@ begin
      and not public.has_org_role((select p.org_id from public.projects p where p.id = p_project_id), array['owner', 'admin', 'member']) then
     raise exception 'next_project_code: not a member' using errcode = '42501';
   end if;
+  -- 사용자 세션은 트리거 안에서만 부를 수 있다(직접 호출로 카운터를 소모하지 못하게, 2026-10-14 검토)
+  if not public.is_service_caller() and pg_trigger_depth() = 0 then
+    raise exception 'next_project_code: trigger use only' using errcode = '42501';
+  end if;
   if p_table not in ('requirements', 'artifacts') or p_prefix !~ '^[A-Z]{2,4}$' then
     raise exception 'next_project_code: invalid arguments' using errcode = '22023';
   end if;
   perform pg_advisory_xact_lock(hashtext('docs:code:' || p_project_id::text || ':' || p_prefix));
+  -- 카운터가 없을 때(첫 번호, 또는 카운터 도입 전 행이 있는 프로젝트)는 현재 최대값 + 1 에서 시작한다.
   if p_table = 'requirements' then
     select coalesce(max(substring(r.req_code from '[0-9]+$')::integer), 0) + 1 into v_n
     from public.requirements r where r.project_id = p_project_id and r.req_code like p_prefix || '-%';
@@ -521,6 +672,10 @@ begin
     select coalesce(max(substring(a.code from '[0-9]+$')::integer), 0) + 1 into v_n
     from public.artifacts a where a.project_id = p_project_id and a.code like p_prefix || '-%';
   end if;
+  insert into public.project_code_counters (project_id, prefix, last_no) values (p_project_id, p_prefix, v_n)
+  on conflict (project_id, prefix) do update
+    set last_no = greatest(public.project_code_counters.last_no + 1, excluded.last_no)
+  returning last_no into v_n;
   return p_prefix || '-' || lpad(v_n::text, 3, '0');
 end;
 $$;
@@ -579,8 +734,9 @@ begin
        or new.source <> old.source or new.source_key is distinct from old.source_key then
       raise exception 'requirements: org/source columns are server-managed' using errcode = '42501';
     end if;
-    if (new.title, new.description, new.priority, new.acceptance_criteria) is distinct from
-       (old.title, old.description, old.priority, old.acceptance_criteria) then
+    -- status 도 포함한다: 사용자가 직접 rejected 로 둔 엔진 행을 재적용이 accepted 로 되돌리지 않게(2026-10-14 검토)
+    if (new.title, new.description, new.priority, new.acceptance_criteria, new.status) is distinct from
+       (old.title, old.description, old.priority, old.acceptance_criteria, old.status) then
       new.is_user_modified := true;   -- 효과 엔진 재적용 시 사용자 수정분 보존(DC-F-006)
     end if;
   end if;
@@ -936,7 +1092,8 @@ declare v_project uuid;
 begin
   v_project := case when tg_op = 'DELETE' then old.project_id else new.project_id end;
   update public.documents d set needs_regeneration = true
-  where d.project_id = v_project and d.status in ('draft', 'review') and not d.needs_regeneration;
+  -- generating 포함: 생성 중에 바뀐 정본도 놓치지 않는다. 표시는 start_generation 이 지우고 finish 는 건드리지 않는다.
+  where d.project_id = v_project and d.status in ('draft', 'review', 'generating') and not d.needs_regeneration;
   if tg_op = 'DELETE' then return old; end if;
   return new;
 end;
@@ -968,6 +1125,8 @@ create table if not exists public.document_versions (
   body_html           text constraint document_versions_body_size_check check (body_html is null or octet_length(body_html) <= 2097152),
   variables_snapshot  jsonb not null default '{}'::jsonb,
   inputs_hash         text,
+  -- lint 를 실제로 돌린 버전만 ran_at(ISO 시각)·rules(적용 규칙 ID 배열)를 가진다. 기본값(키 없음) = lint 미실행.
+  -- finalize_document 는 ran_at 이 없으면 DC005 로 막는다(교차검증 #2). 편집 저장 경로도 저장 전 lint 를 돌려 함께 넣는다.
   lint_result         jsonb not null default '{"errors": [], "warnings": []}'::jsonb,
   compliance_verdict  text not null default 'skipped' constraint document_versions_verdict_check
                       check (compliance_verdict in ('pass', 'warn', 'fail', 'skipped')),
@@ -1100,6 +1259,9 @@ create table if not exists public.generation_runs (
   credit_ledger_id  bigint references public.credit_ledger(id),
   idempotency_key   text not null unique constraint generation_runs_idem_check check (idempotency_key ~ '^gen:docs:'),
   error             text,
+  -- 단계별 진행 애니메이션용(DC-F-048, 2026-10-14). ai-service 가 report_generation_progress 로만 갱신한다.
+  -- {stage, section_key, step, total, at}. stage: queued|collecting|drafting|assembling|linting|rendering|done
+  progress          jsonb not null default '{}'::jsonb constraint generation_runs_progress_check check (jsonb_typeof(progress) = 'object'),
   created_by        uuid,
   queued_at         timestamptz not null default now(),
   started_at        timestamptz,
@@ -1340,7 +1502,7 @@ create table if not exists public.integration_connections (
   id                   uuid primary key default gen_random_uuid(),
   org_id               uuid not null references public.organizations(id) on delete cascade,
   provider             text not null constraint integration_connections_provider_check
-                       check (provider in ('csv', 'hubspot', 'salesforce', 'admin_suite_erp', 'ecount', 'douzone', 'make', 'n8n')),
+                       check (provider in ('csv', 'hubspot', 'salesforce', 'admin_suite_erp', 'ecount', 'douzone', 'n8n')),  -- 자동화는 n8n 만(2026-10-14, Make 제외)
   kind                 text not null constraint integration_connections_kind_check check (kind in ('crm', 'erp', 'automation', 'file')),
   status               text not null default 'pending' constraint integration_connections_status_check
                        check (status in ('pending', 'active', 'error', 'revoked')),
@@ -1602,6 +1764,48 @@ begin
   end loop;
 end $$;
 
+-- ---------------------------------------------------------------------
+-- 22a. 로그인 후 CRM형 워크스페이스용 읽기 뷰(DC-F-047, 2026-10-14). 새 정본 테이블을 만들지 않고 기존 행에서 계산한다.
+--      security_invoker 라 각 원본 테이블의 RLS 가 그대로 적용된다(다른 조직 행은 보이지 않는다).
+-- ---------------------------------------------------------------------
+-- 프로젝트 파이프라인 단계(보드 열). 우선순위: closed > accepted > contracted > quoted > drafting > lead
+create or replace view public.project_pipeline with (security_invoker = true) as
+  select p.id as project_id, p.org_id, p.name, p.client_party_id, p.project_type, p.status, p.updated_at,
+         case
+           when p.status in ('delivered', 'archived') then 'closed'
+           when bool_or(d.status = 'final' and d.doc_type_code = 'acceptance') then 'accepted'
+           when bool_or(d.status = 'final' and t.category = 'contract') then 'contracted'
+           when bool_or(d.status = 'final' and d.doc_type_code = 'quote') then 'quoted'
+           when count(d.id) > 0 then 'drafting'
+           else 'lead'
+         end as stage,
+         count(d.id) filter (where d.status in ('draft', 'review', 'generating'))::integer as open_documents,
+         count(d.id) filter (where d.needs_regeneration)::integer as stale_documents
+  from public.projects p
+  left join public.documents d on d.project_id = p.id and d.status <> 'archived'
+  left join public.doc_types t on t.code = d.doc_type_code
+  where p.deleted_at is null
+  group by p.id, p.org_id, p.name, p.client_party_id, p.project_type, p.status, p.updated_at;
+revoke all on public.project_pipeline from public, anon, authenticated;
+grant select on public.project_pipeline to authenticated;
+
+-- 프로젝트 활동 타임라인(최근 순). 원본: 생성 실행, 문서 버전 저장, 확정, 자료 업로드
+create or replace view public.project_activity with (security_invoker = true) as
+  select g.org_id, g.project_id, coalesce(g.finished_at, g.queued_at) as at, 'generation'::text as kind, g.id as ref_id,
+         g.status as detail, g.document_id
+  from public.generation_runs g where g.parent_run_id is null
+  union all
+  select v.org_id, d.project_id, v.created_at, 'version', v.id, v.created_kind || ':' || v.version::text, v.document_id
+  from public.document_versions v join public.documents d on d.id = v.document_id
+  union all
+  select d.org_id, d.project_id, d.finalized_at, 'finalized', d.id, d.doc_number, d.id
+  from public.documents d where d.finalized_at is not null
+  union all
+  select u.org_id, u.project_id, u.created_at, 'upload', u.id, u.purpose, null::uuid
+  from public.uploads u where u.project_id is not null;
+revoke all on public.project_activity from public, anon, authenticated;
+grant select on public.project_activity to authenticated;
+
 -- =====================================================================
 -- 23. 함수 (RPC)
 --   service_role 전용: next_doc_number, checklist_answers_hash, apply_checklist_effects, start_generation,
@@ -1648,7 +1852,8 @@ end;
 $$;
 
 -- 23.2 checklist_answers_hash: 효과 엔진 미리보기와 적용 사이에 입력이 바뀌었는지 판정(DC010).
---      입력 = 고정 체크리스트 버전 + 기본 일단가 + 확정 답 전부(키 순)
+--      입력 = 고정 체크리스트 버전 + 기본 일단가 + 단가 카탈로그(defaults) + 확정 답 전부(키 순, 항목 version 포함)
+--      항목 version 을 넣어 카탈로그 효과가 바뀐 경우도 DC010 으로 잡는다(교차검증 #6).
 create or replace function public.checklist_answers_hash(p_project_id uuid)
 returns text
 language sql
@@ -1658,10 +1863,12 @@ set search_path = ''
 as $$
   select md5(
     coalesce((select p.checklist_version::text from public.projects p where p.id = p_project_id), '') || '|' ||
-    coalesce((select s.default_day_rate_krw::text from public.projects p join public.workspace_settings s on s.org_id = p.org_id
+    coalesce((select s.default_day_rate_krw::text || '|' || md5(s.defaults::text)
+              from public.projects p join public.workspace_settings s on s.org_id = p.org_id
               where p.id = p_project_id), '0') || '|' ||
-    coalesce((select string_agg(a.item_key || '=' || a.value::text, '|' order by a.item_key)
-              from public.checklist_answers a where a.project_id = p_project_id and a.is_confirmed), '')
+    coalesce((select string_agg(a.item_key || '@' || coalesce(i.version, 0)::text || '=' || a.value::text, '|' order by a.item_key)
+              from public.checklist_answers a left join public.checklist_items i on i.key = a.item_key
+              where a.project_id = p_project_id and a.is_confirmed), '')
   );
 $$;
 
@@ -1715,6 +1922,12 @@ begin
      where r.project_id = p_project_id and r.source = 'checklist' and r.source_key = e.v ->> 'source_key' and not r.is_user_modified
        and (r.title, r.description, r.priority, r.acceptance_criteria) is distinct from
            (e.v ->> 'title', e.v ->> 'description', coalesce(e.v ->> 'priority', 'should'), e.v ->> 'acceptance_criteria');
+    get diagnostics v_n = row_count;
+    v_updated := v_updated + v_n;
+    -- 체크 해제로 rejected 가 된 엔진 행이 목표에 다시 들어오면 accepted 로 되돌린다(교차검증 #7).
+    update public.requirements r set status = 'accepted'
+     where r.project_id = p_project_id and r.source = 'checklist' and r.source_key = e.v ->> 'source_key'
+       and not r.is_user_modified and r.status = 'rejected';
     get diagnostics v_n = row_count;
     v_updated := v_updated + v_n;
     if not exists (select 1 from public.requirements r where r.project_id = p_project_id and r.source = 'checklist' and r.source_key = e.v ->> 'source_key') then
@@ -1846,18 +2059,16 @@ declare
   v_rid       text;
   v_credits   integer;
   v_max       integer;
-  v_cap       integer;
   v_active    integer;
-  v_used      integer;
   v_ledger    bigint;
   v_job       public.jobs;
   v_run_id    uuid := gen_random_uuid();
-  v_day_start timestamptz := ((now() at time zone 'Asia/Seoul')::date)::timestamp at time zone 'Asia/Seoul';
 begin
   if not public.is_privileged_session() then
     raise exception 'start_generation: service_role only' using errcode = '42501';
   end if;
-  if p_idempotency_key is null or p_idempotency_key !~ '^gen:docs:[A-Za-z0-9-]{8,64}$' then
+  -- 패키지 자식은 gen:docs:<run_id>:<doc_type_code> 이므로 ':' 와 '_' 를 허용한다(교차검증 #12).
+  if p_idempotency_key is null or p_idempotency_key !~ '^gen:docs:[A-Za-z0-9][A-Za-z0-9_:-]{7,119}$' then
     raise exception 'start_generation: idempotency key must be gen:docs:<request_id>' using errcode = '22023';
   end if;
   if (p_package_code is null) = (p_doc_type_code is null) then
@@ -1871,6 +2082,9 @@ begin
   perform pg_advisory_xact_lock(hashtext('docs:gen:' || p_idempotency_key));
   select * into v_run from public.generation_runs r where r.idempotency_key = p_idempotency_key;
   if found then
+    if v_run.org_id <> p_org_id then
+      raise exception 'start_generation: idempotency key belongs to another organization' using errcode = '42501';
+    end if;
     return v_run;
   end if;
 
@@ -1891,6 +2105,9 @@ begin
   if v_project.status = 'archived' then
     raise exception 'start_generation: project is archived' using errcode = 'DC001';
   end if;
+
+  -- public.cancel_job 이나 잡 정리기로 잡만 끝난 실행을 먼저 정리한다(그렇지 않으면 DC002·DC006 으로 영구 차단, 교차검증 #3)
+  perform public.reconcile_generation_runs(p_org_id);
 
   v_features := public.org_features(p_org_id);
   v_phase := coalesce(v_features ->> 'doc_phase', 'mvp');
@@ -1962,20 +2179,13 @@ begin
       raise exception 'start_generation: too many active generations for this organization' using errcode = 'DC006';
     end if;
   end if;
-  select c.value_int into v_cap from public.runtime_config c where c.key = 'daily_credit_cap';
-  if v_cap is not null and v_credits > 0 then
-    perform pg_advisory_xact_lock(hashtext('docs:daily_cap'));
-    select coalesce(sum(r.credits_reserved), 0) into v_used from public.generation_runs r where r.created_at >= v_day_start;
-    if v_used + v_credits > v_cap then
-      raise exception 'start_generation: daily platform budget exhausted' using errcode = 'DC006';
-    end if;
-  end if;
+  perform public.charge_daily_cap(v_credits);
 
   -- 선차감(원자, 멱등). 부족하면 CR001 로 전체 롤백(문서 생성 포함)
   if v_credits > 0 then
     select c.ledger_id into v_ledger
     from public.consume_credits(p_org_id, v_credits, 'docs', 'docs.generate', 'docs_generation_run', v_run_id::text,
-                              'consume:docs:' || v_rid,
+                              'consume:docs:gen:' || v_rid,   -- 생성 전용 네임스페이스(reserve_credits 는 gen: 을 쓰지 못한다)
                               jsonb_build_object('project_id', p_project_id, 'document_id', v_doc.id, 'doc_type_code', p_doc_type_code,
                                                  'package_code', p_package_code), p_actor) c;
   end if;
@@ -1994,7 +2204,7 @@ begin
 
   update public.generation_runs set job_id = v_job.id where id = v_run_id returning * into v_run;
   if v_doc.id is not null then
-    update public.documents set status = 'generating' where id = v_doc.id;
+    update public.documents set status = 'generating', needs_regeneration = false where id = v_doc.id;
   end if;
   return v_run;
 end;
@@ -2037,9 +2247,15 @@ begin
     update public.generation_runs set status = 'running', started_at = now() where id = p_run_id;
   end if;
 
+  -- 결과를 넘긴 실행은 잡이 나중에 실패로 끝나도 환불하지 않는다(교차검증 #4). 같은 트랜잭션에서 잡의 환불 표시를 끈다.
+  -- core 함수는 고치지 않고 이 실행이 소유한 잡 행의 refund_on_failure 만 바꾼다(public.fail_job 이 이 값을 본다).
+  if v_run.job_id is not null then
+    update public.jobs set refund_on_failure = false where id = v_run.job_id and refund_on_failure;
+  end if;
+
   if v_run.document_id is null then
     update public.generation_runs set status = 'succeeded', finished_at = now(), credits_settled = credits_reserved,
-           ai_run_id = coalesce(p_ai_run_id, ai_run_id)
+           ai_run_id = coalesce(p_ai_run_id, ai_run_id), progress = jsonb_build_object('stage', 'done', 'at', now())
     where id = p_run_id;
     return null;
   end if;
@@ -2068,9 +2284,9 @@ begin
           p_verdict, 'generated', p_run_id, v_run.created_by)
   returning * into v_ver;
 
-  update public.documents set status = 'review', needs_regeneration = false where id = v_doc.id;
+  update public.documents set status = 'review' where id = v_doc.id;   -- needs_regeneration 은 start 에서 지웠다(생성 중 변경 보존)
   update public.generation_runs set status = 'succeeded', finished_at = now(), credits_settled = credits_reserved,
-         ai_run_id = coalesce(p_ai_run_id, ai_run_id)
+         ai_run_id = coalesce(p_ai_run_id, ai_run_id), progress = jsonb_build_object('stage', 'done', 'at', now())
   where id = p_run_id;
   return v_ver;
 end;
@@ -2078,6 +2294,9 @@ $$;
 
 -- 23.6 fail_generation (service_role): 실행 failed + 문서를 이전 상태로. 크레딧 환불은 public.fail_job 이 같은 원장 행으로
 --      한다(멱등 키 refund:job:<job_id>). 여기서 환불하지 않아 이중 환불이 생기지 않는다.
+--      호출 순서(교차검증 #5): 워커는 재시도가 남은 실패에서는 이 함수를 부르지 않고 public.fail_job(retryable)만 부른다.
+--      마지막 시도 실패(또는 재시도 불가 오류)에서만 이 함수 → public.fail_job(retryable=false) 순서로 부른다.
+--      재시도 잡이 시작될 때 실행이 이미 succeeded 면 워커는 그래프를 다시 돌리지 않고 public.complete_job 으로 끝낸다.
 create or replace function public.fail_generation(p_run_id uuid, p_error text)
 returns public.generation_runs
 language plpgsql
@@ -2105,6 +2324,188 @@ begin
      where id = v_run.document_id and status = 'generating';
   end if;
   return v_run;
+end;
+$$;
+
+-- 23.6a reconcile_generation_runs (service_role, 내부 호출): 잡은 끝났는데 실행이 queued/running 으로 남은 행을 정리한다.
+--       잡 canceled -> 실행 canceled, 잡 failed -> 실행 failed. 문서는 generating 에서 이전 상태로 돌린다.
+--       start_generation·cancel_generation 이 먼저 부르고, 정리 스케줄(DC-06-051 sweeper)도 부른다.
+create or replace function public.reconcile_generation_runs(p_org_id uuid default null)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_n integer := 0; r record;
+begin
+  if not public.is_privileged_session() and not public.is_service_caller()
+     and not (p_org_id is not null and public.has_org_role(p_org_id, array['owner', 'admin', 'member'])) then
+    raise exception 'reconcile_generation_runs: not allowed' using errcode = '42501';
+  end if;
+  for r in
+    select g.id, g.document_id, j.status as job_status
+    from public.generation_runs g join public.jobs j on j.id = g.job_id
+    where g.status in ('queued', 'running') and j.status in ('canceled', 'failed')
+      and (p_org_id is null or g.org_id = p_org_id)
+    for update of g
+  loop
+    update public.generation_runs
+       set status = case when r.job_status = 'canceled' then 'canceled' else 'failed' end,
+           finished_at = now(), credits_settled = 0,
+           error = coalesce(error, 'job ' || r.job_status), progress = jsonb_build_object('stage', r.job_status, 'at', now())
+     where id = r.id;
+    if r.document_id is not null then
+      update public.documents set status = case when current_version > 0 then 'review' else 'draft' end
+       where id = r.document_id and status = 'generating';
+    end if;
+    v_n := v_n + 1;
+  end loop;
+  return v_n;
+end;
+$$;
+
+-- 23.6b cancel_generation (authenticated owner/admin 또는 실행을 시작한 member): 대기 중 생성 취소(교차검증 #3).
+--       잡 취소(환불 포함, public.cancel_job) + 실행 canceled + 문서 복구를 한 트랜잭션으로. 화면은 이 RPC 만 쓴다.
+--       running 실행은 취소하지 않는다(DC001): 그래프가 이미 비용을 쓰고 있어 결과를 받거나 실패 환불로 끝낸다.
+create or replace function public.cancel_generation(p_run_id uuid)
+returns public.generation_runs
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_run public.generation_runs; v_job public.jobs;
+begin
+  select * into v_run from public.generation_runs r where r.id = p_run_id for update;
+  if not found then
+    raise exception 'cancel_generation: not found' using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller()
+     and not public.has_org_role(v_run.org_id, array['owner', 'admin'])
+     and not (public.has_org_role(v_run.org_id, array['member']) and v_run.created_by is not distinct from auth.uid()) then
+    raise exception 'cancel_generation: owner/admin or the requester only' using errcode = '42501';
+  end if;
+  perform public.reconcile_generation_runs(v_run.org_id);
+  select * into v_run from public.generation_runs r where r.id = p_run_id;
+  if v_run.status <> 'queued' then
+    raise exception 'cancel_generation: run is % (only queued runs can be canceled)', v_run.status using errcode = 'DC001';
+  end if;
+  if v_run.job_id is not null then
+    select * into v_job from public.jobs j where j.id = v_run.job_id;
+    if v_job.status = 'queued' then
+      perform public.cancel_job(v_run.job_id);
+    elsif v_job.status = 'running' then
+      raise exception 'cancel_generation: job already started' using errcode = 'DC001';
+    end if;
+  end if;
+  -- 패키지 부모면 대기 중인 자식 실행도 함께 취소한다
+  perform public.cancel_job(c.job_id)
+    from public.generation_runs c join public.jobs j on j.id = c.job_id
+   where c.parent_run_id = v_run.id and c.status = 'queued' and j.status = 'queued';
+  -- 자식은 잡이 실제로 취소된 것만 닫는다(잡이 이미 running 이면 그 자식은 끝까지 진행)
+  update public.generation_runs g set status = 'canceled', finished_at = now(), credits_settled = 0,
+         progress = jsonb_build_object('stage', 'canceled', 'at', now())
+   where g.id = v_run.id
+      or (g.parent_run_id = v_run.id and g.status = 'queued'
+          and (g.job_id is null or exists (select 1 from public.jobs j where j.id = g.job_id and j.status = 'canceled')));
+  update public.documents d set status = case when d.current_version > 0 then 'review' else 'draft' end
+   where d.status = 'generating'
+     and d.id in (select g.document_id from public.generation_runs g
+                  where (g.id = v_run.id or g.parent_run_id = v_run.id) and g.status = 'canceled' and g.document_id is not null);
+  select * into v_run from public.generation_runs r where r.id = p_run_id;
+  perform public.write_audit(v_run.org_id, 'docs_generation.cancel', 'docs_generation_run', p_run_id::text);
+  return v_run;
+end;
+$$;
+
+-- 23.6c report_generation_progress (service_role): 단계별 진행 표시(DC-F-048). 종료된 실행은 무시한다(조용히 0행).
+create or replace function public.report_generation_progress(p_run_id uuid, p_stage text, p_section_key text, p_step integer, p_total integer)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_privileged_session() then
+    raise exception 'report_generation_progress: service_role only' using errcode = '42501';
+  end if;
+  if p_stage not in ('queued', 'collecting', 'drafting', 'assembling', 'linting', 'rendering')
+     or p_step < 0 or p_total < 0 or p_step > p_total or (p_section_key is not null and p_section_key !~ '^[a-z][a-z0-9_]{0,40}$') then
+    raise exception 'report_generation_progress: invalid progress' using errcode = '22023';
+  end if;
+  update public.generation_runs
+     set progress = jsonb_build_object('stage', p_stage, 'section_key', p_section_key, 'step', p_step, 'total', p_total, 'at', now()),
+         status = case when status = 'queued' then 'running' else status end,
+         started_at = coalesce(started_at, now())
+   where id = p_run_id and status in ('queued', 'running');
+end;
+$$;
+
+-- 23.6d charge_daily_cap (내부): 일일 플랫폼 상한 확인 + 사용량 가산(같은 트랜잭션). 초과면 DC006.
+create or replace function public.charge_daily_cap(p_credits integer)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_cap integer; v_day date := (now() at time zone 'Asia/Seoul')::date; v_used bigint;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'charge_daily_cap: service_role only' using errcode = '42501';
+  end if;
+  if coalesce(p_credits, 0) <= 0 then
+    return;
+  end if;
+  select c.value_int into v_cap from public.runtime_config c where c.key = 'daily_credit_cap';
+  insert into public.daily_credit_usage (day, credits) values (v_day, 0) on conflict (day) do nothing;
+  select u.credits into v_used from public.daily_credit_usage u where u.day = v_day for update;
+  if v_cap is not null and v_used + p_credits > v_cap then
+    raise exception 'daily platform budget exhausted' using errcode = 'DC006';
+  end if;
+  update public.daily_credit_usage set credits = credits + p_credits where day = v_day;
+end;
+$$;
+
+-- 23.6e reserve_credits (service_role): 생성 밖의 모든 docs 차감(추출, 회의록, 다시 쓰기, 채팅 턴, 음성, 색인, 내보내기)의
+--       단일 입구. 일일 상한 + public.consume_credits 를 한 트랜잭션으로 한다(교차검증 #11). 멱등 키가 이미 쓰였으면
+--       상한을 다시 세지 않고 기존 원장 행을 돌려준다. Route Handler 는 public.consume_credits 를 직접 부르지 않는다.
+create or replace function public.reserve_credits(
+  p_org_id uuid, p_actor uuid, p_credits integer, p_reason text, p_ref_type text, p_ref_id text,
+  p_idempotency_key text, p_metadata jsonb default '{}'::jsonb)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_ledger bigint; v_row public.credit_ledger;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'reserve_credits: service_role only' using errcode = '42501';
+  end if;
+  if p_credits is null or p_credits <= 0 or p_reason !~ '^(docs\.[a-z_.]+|chat|voice\.[a-z_]+|render\.[a-z]+|rag\.index)$' then
+    raise exception 'reserve_credits: invalid arguments' using errcode = '22023';
+  end if;
+  -- 키 형식: consume:docs:<작업>:<request_id>(작업 = extract, minutes, assist, render, index, export ...), conv:<id>:turn:<n>, voice:<id>.
+  -- consume:docs:gen: 은 start_generation 전용이다. 같은 키를 다른 작업·금액·조직이 쓰면 거부한다(2026-10-14 검토: 키 재사용 과금 우회).
+  if p_idempotency_key is null
+     or p_idempotency_key !~ '^(consume:docs:[a-z_]{2,20}:|conv:|voice:)[A-Za-z0-9][A-Za-z0-9_:-]{7,119}$'
+     or p_idempotency_key like 'consume:docs:gen:%' then
+    raise exception 'reserve_credits: invalid idempotency key' using errcode = '22023';
+  end if;
+  select * into v_row from public.credit_ledger l where l.idempotency_key = p_idempotency_key;
+  if found then
+    if v_row.org_id <> p_org_id then
+      raise exception 'reserve_credits: idempotency key belongs to another organization' using errcode = '42501';
+    end if;
+    if v_row.entry_type <> 'consume' or v_row.amount <> -p_credits or v_row.reason is distinct from p_reason then
+      raise exception 'reserve_credits: idempotency key reused for a different charge' using errcode = '22023';
+    end if;
+    return v_row.id;
+  end if;
+  perform public.charge_daily_cap(p_credits);
+  select c.ledger_id into v_ledger
+  from public.consume_credits(p_org_id, p_credits, 'docs', p_reason, p_ref_type, p_ref_id, p_idempotency_key,
+                            coalesce(p_metadata, '{}'::jsonb), p_actor) c;
+  return v_ledger;
 end;
 $$;
 
@@ -2160,8 +2561,10 @@ end;
 $$;
 
 -- 23.8 finalize_document (authenticated owner/admin): 확정 게이트 후 문서번호 부여.
---      검사 순서: 상태(DC001) -> 버전 일치(DC010) -> 필수 입력(DC004) -> lint 오류·compliance FAIL(DC005)
+--      검사 순서: 상태(DC001) -> 버전 일치·정본 최신성(DC010) -> 필수 입력(DC004) -> lint 미실행·lint 오류·compliance FAIL(DC005)
 --               -> WARN 확인(DC008) -> 고위험 고지(DC007). 확정 문서·보관 문서는 DC003.
+--      정본 최신성(교차검증 #2): needs_regeneration=true(단가·체크리스트 변경 뒤)이거나, 생성 버전의 inputs_hash 가
+--      현재 checklist_answers_hash 와 다르면 확정하지 않는다. 사용자가 고친 편집 버전(created_kind='edited')은 해시를 보지 않는다.
 create or replace function public.finalize_document(p_document_id uuid, p_expected_version integer, p_ack_warn boolean default false)
 returns public.documents
 language plpgsql
@@ -2198,6 +2601,13 @@ begin
 
   select * into v_ver from public.document_versions v where v.document_id = v_doc.id and v.version = v_doc.current_version;
   select * into v_type from public.doc_types t where t.code = v_doc.doc_type_code;
+  if v_doc.needs_regeneration then
+    raise exception 'finalize_document: source data changed, regenerate first' using errcode = 'DC010';
+  end if;
+  if v_ver.created_kind = 'generated' and v_ver.inputs_hash is not null
+     and v_ver.inputs_hash is distinct from public.checklist_answers_hash(v_doc.project_id) then
+    raise exception 'finalize_document: checklist changed since generation' using errcode = 'DC010';
+  end if;
 
   -- 필수 입력: 그 버전이 쓴 유형 버전의 required_fields 가 variables_snapshot 에 비어 있지 않게 있어야 한다
   select coalesce(jsonb_agg(f), '[]'::jsonb) into v_missing
@@ -2206,6 +2616,9 @@ begin
     and coalesce(nullif(v_ver.variables_snapshot ->> f, ''), nullif(v_ver.variables_snapshot #>> string_to_array(f, '.'), '')) is null;
   if jsonb_array_length(v_missing) > 0 then
     raise exception 'finalize_document: required inputs missing %', v_missing using errcode = 'DC004';
+  end if;
+  if not (v_ver.lint_result ? 'ran_at') then
+    raise exception 'finalize_document: lint has not run on version %', v_ver.version using errcode = 'DC005';
   end if;
   if v_ver.compliance_verdict = 'fail' or jsonb_array_length(coalesce(v_ver.lint_result -> 'errors', '[]'::jsonb)) > 0 then
     raise exception 'finalize_document: compliance fail or lint errors' using errcode = 'DC005';
@@ -2323,12 +2736,7 @@ begin
     return v_row;
   end if;
   v_from := v_row.status;
-  -- 보관에서 복원할 때도 활성 프로젝트 한도를 지킨다
-  if v_from = 'archived'
-     and (select count(*) from public.projects p where p.org_id = v_row.org_id and p.deleted_at is null and p.status <> 'archived')
-         >= coalesce((public.org_features(v_row.org_id) ->> 'projects_max')::integer, 2) then
-    raise exception 'set_project_status: plan limit reached' using errcode = 'DC006';
-  end if;
+  -- 보관에서 복원할 때의 활성 프로젝트 한도는 projects_enforce_limit 트리거가 본다(무제한 플랜 null 처리 포함, 2026-10-14)
   update public.projects set status = p_to where id = p_project_id returning * into v_row;
   perform public.write_audit(v_row.org_id, 'docs_project.status', 'docs_project', p_project_id::text,
                            jsonb_build_object('status', v_from), jsonb_build_object('status', p_to));
@@ -2492,7 +2900,7 @@ do $$
 declare r record;
 begin
   for r in select p.oid::regprocedure::text as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-           where n.nspname = 'public' and p.proname = any (array['ack_risk_notice', 'apply_checklist_effects', 'archive_document', 'artifacts_before_write', 'check_connection_transition', 'check_doc_export_transition', 'check_generation_run_transition', 'check_project_transition', 'checklist_answers_hash', 'confirm_checklist_suggestions', 'create_revision', 'decide_approval', 'doc_type_versions_immutable', 'document_versions_after_insert', 'document_versions_before_insert', 'document_versions_immutable', 'documents_before_update', 'enforce_project_limit', 'fail_generation', 'finalize_document', 'finish_generation', 'guard_checklist_answer_write', 'guard_field_mapping_columns', 'guard_org_columns', 'line_items_before_write', 'mark_documents_stale', 'next_doc_number', 'next_project_code', 'org_features', 'requirements_before_write', 'revoke_integration', 'set_project_status', 'start_generation', 'upsert_external_ref']) loop
+           where n.nspname = 'public' and p.proname = any (array['ack_risk_notice', 'apply_checklist_effects', 'archive_document', 'artifacts_before_write', 'cancel_generation', 'charge_daily_cap', 'check_connection_transition', 'check_doc_export_transition', 'check_generation_run_transition', 'check_project_transition', 'checklist_answers_hash', 'checklist_item_bump_version', 'checklist_item_snapshot', 'checklist_item_versions_immutable', 'confirm_checklist_suggestions', 'create_revision', 'decide_approval', 'doc_type_versions_immutable', 'document_versions_after_insert', 'document_versions_before_insert', 'document_versions_immutable', 'documents_before_update', 'enforce_project_limit', 'fail_generation', 'finalize_document', 'finish_generation', 'guard_checklist_answer_write', 'guard_field_mapping_columns', 'guard_org_columns', 'line_items_before_write', 'mark_documents_stale', 'next_doc_number', 'next_project_code', 'org_features', 'reconcile_generation_runs', 'report_generation_progress', 'requirements_before_write', 'reserve_credits', 'revoke_integration', 'set_project_status', 'start_generation', 'upsert_external_ref', 'validate_checklist_answer']) loop
     execute format('revoke execute on function %s from public, anon, authenticated', r.sig);
     execute format('grant execute on function %s to service_role', r.sig);
   end loop;
@@ -2507,6 +2915,7 @@ grant execute on function public.ack_risk_notice(text, text, uuid) to authentica
 grant execute on function public.revoke_integration(uuid) to authenticated;
 grant execute on function public.decide_approval(uuid, text, text) to authenticated;
 grant execute on function public.next_project_code(uuid, text, text) to authenticated;   -- 트리거 경유(내부 멤버 검사)
+grant execute on function public.cancel_generation(uuid) to authenticated;               -- 2026-10-14 추가(교차검증 #3)
 -- 트리거 함수(사용자 세션의 INSERT/UPDATE 가 호출하는 비-DEFINER 트리거 함수는 EXECUTE 가 필요 없다. 트리거 발화는 권한 검사를 하지 않는다)
 
 -- ---------------------------------------------------------------------
@@ -2522,7 +2931,7 @@ insert into public.doc_types (code, name, category, risk_level, generation_mode,
   ('req_spec',       '요구사항정의서',                 'dev',      'low',  'hybrid',   'mvp',    6,  '{outsourcing_basic}', 1, 'REQ', null, true,  30),
   ('wbs',            'WBS·일정표',                    'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic}', 1, 'WBS', null, true,  40),
   ('screen_list',    '화면목록·메뉴구조도',            'dev',      'low',  'hybrid',   'mvp',    6,  '{outsourcing_basic}', 1, 'SL',  null, true,  50),
-  ('dev_contract',   '소프트웨어 개발 용역계약서',      'contract', 'high', 'template', 'mvp',    2,  '{outsourcing_basic}', 4, 'CT',  'notice-contract-2026-10-13', true, 60),
+  ('dev_contract',   '소프트웨어 개발 용역계약서',      'contract', 'high', 'template', 'mvp',    2,  '{outsourcing_basic}', 4, 'CT',  'notice-contract-2026-10-13', false, 60),  -- D-3 법무 검토 전 비활성(교차검증 #1)
   ('acceptance',     '검수확인서',                    'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic,shorts_agency}', 5, 'AC',  null, true,  70),
   ('minutes',        '회의록',                        'ops',      'low',  'ai',       'mvp',    0,  '{}',                  null, 'MN', null, true, 80),
   ('trace_matrix',   '요구사항 추적표',                'dev',      'low',  'template', 'mvp',    2,  '{outsourcing_basic}', 6, 'TM',  null, true,  90),
@@ -2550,8 +2959,9 @@ insert into public.doc_types (code, name, category, risk_level, generation_mode,
 on conflict (code) do update
   set name = excluded.name, category = excluded.category, risk_level = excluded.risk_level, generation_mode = excluded.generation_mode,
       phase = excluded.phase, credits = excluded.credits, in_package = excluded.in_package, package_order = excluded.package_order,
-      number_prefix = excluded.number_prefix, notice_version = excluded.notice_version, is_active = excluded.is_active,
+      number_prefix = excluded.number_prefix, notice_version = excluded.notice_version,
       sort_order = excluded.sort_order;
+-- is_active 는 처음 넣을 때만 정한다. 운영자가 켜고 끈 값을 마이그레이션 재실행이 덮지 않는다(교차검증 #1).
 -- 회의록 크레딧 0: 가변 단가(STT 분당 1 + 그래프 5)라 Route Handler 가 계산해 차감한다(start_generation 을 쓰지 않음).
 
 -- MVP 유형별 게시 버전 1. 섹션 구조와 필수 입력은 01_PRD 3.1절. 게시 후 불변(DC003)이므로 on conflict do nothing.
