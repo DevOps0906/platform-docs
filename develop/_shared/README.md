@@ -4,6 +4,7 @@
 
 | 경로 | 내용 |
 |---|---|
+| [`auth/README.md`](auth/README.md) | 소셜 로그인 개발 지시서(Google·카카오·네이버): 외부 콘솔 설정 절차와 공식 링크, 공용 모듈 `@nomad/core-auth` 구조, 테스트, 공용 모듈 완료 후 14개 제품 적용 절차. 기획 정본은 `products/_platform-core/AUTH_ROADMAP.md` |
 | [`dify/README.md`](dify/README.md) | 공용 Dify(AI 채팅·운영 서버) 설치·운영 가이드. 제품마다 앱 1개를 만든다 |
 | [`llm/README.md`](llm/README.md) | LLM 키, 오픈소스 LLM 서버(vLLM), 기능별 모델 라우팅 설정(상용·오픈소스 이원화) |
 | [`voice/README.md`](voice/README.md) | 공용 음성 서버와 ElevenLabs 설정(음성 대화, STT·TTS) |

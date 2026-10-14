@@ -533,6 +533,8 @@ baseline:
 
 정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009, 확정 결정 22). 제품 적용: `docs/file/02-요구사항/01_PRD.md` 8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
 
+외부 콘솔 설정 절차(화면별), 공식 문서 링크, 공용 모듈 `@nomad/core-auth` 구조와 "공용 모듈 완료 후 모든 제품 적용" 절차는 공용 지시서 `D:/WorkSpace/platform/docs/develop/_shared/auth/README.md`를 따릅니다(2026-10-15). 통합 DB 제품은 Google·카카오·네이버 앱을 1세트만 같이 쓰므로(지시서 1장 AUTH-D1) 이 장의 외부 설정은 그 세트가 이미 있으면 Redirect URLs에 이 제품 도메인을 더하는 것으로 끝납니다. stock-dashboard는 모놀리스 단독 프로젝트라 제공자 앱을 따로 만듭니다.
+
 처음에는 Mock 로그인으로 모든 기능을 만들고, 기능이 다 돌면 Google 로그인을 붙이고, Google이 안정되면 카카오·네이버를 붙입니다. 이 제품은 초대제라 **초대 토큰 흐름(sha256 저장, 14일 만료, 이메일 일치)은 단계와 상관없이 그대로**이고, 바뀌는 것은 "초대받은 사람이 어떤 버튼으로 로그인하는가"뿐입니다.
 
 ### 19.1 단계 요약
