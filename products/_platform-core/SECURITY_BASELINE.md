@@ -1,6 +1,6 @@
 # SECURITY_BASELINE: 모든 제품이 지켜야 하는 보안 규칙
 
-작성일 2026-10-12. 이 문서의 규칙은 제품 기획서(02_ARCHITECTURE, 05_DATA_MODEL)와 제품 SQL 조각이 따라야 하는 최소선이다. 규칙마다 "왜"를 적었다. 리뷰 25개에서 반복된 결함(`docs/products/00_MERGE_ANALYSIS.md:516`, `:961`)이 출발점이며, 두 규칙(1장, 2장)은 2026-10-12 코어 SQL 점검에서 발견해 고친 것이다. 경로 인용에서 `migrations/`는 `docs/products/_supabase-modular/migrations/`다.
+작성일 2026-10-12. 이 문서의 규칙은 제품 기획서(02_ARCHITECTURE, 05_DATA_MODEL)와 제품 SQL 조각이 따라야 하는 최소선이다. 규칙마다 "왜"를 적었다. 리뷰 25개에서 반복된 결함(`docs/products/00_MERGE_ANALYSIS.md:526`, `:971`)이 출발점이며, 두 규칙(1장, 2장)은 2026-10-12 코어 SQL 점검에서 발견해 고친 것이다. 경로 인용에서 `migrations/`는 `docs/products/_supabase-modular/migrations/`다.
 
 ## 0. 적용 범위와 우선순위
 
@@ -92,7 +92,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 정책 안에서 쓰는 헬퍼는 anon, authenticated에 EXECUTE. 단 `has_entitlement`·`entitled_plan_code`는 조직의 이용 여부·플랜을 드러내므로 authenticated만 준다(anon 정책에서 직접 쓰지 않는다. DEFINER 함수 안의 호출은 영향 없음) | `:175-181` |
 | 모놀리스(public 스키마)는 Supabase 기본 권한이 anon/authenticated에 ALL을 주므로 반드시 회수한다 | `MONOLITH_CORE_LITE.sql` SECTION 0, SECTION 10 |
 
-리뷰에서 "크레딧 RPC 권한 미회수"가 반복되었다(`docs/products/00_MERGE_ANALYSIS.md:516`). 브라우저에서 `rpc('grant_credits')`가 성공하면 과금 체계 전체가 무의미하다.
+리뷰에서 "크레딧 RPC 권한 미회수"가 반복되었다(`docs/products/00_MERGE_ANALYSIS.md:526`). 브라우저에서 `rpc('grant_credits')`가 성공하면 과금 체계 전체가 무의미하다.
 
 ## 4. 쓰기 경로: service_role 또는 SECURITY DEFINER RPC만
 
@@ -113,20 +113,20 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 |---|---|---|
 | 저장 위치 | OAuth 토큰, 마켓 API 키, 제휴 키, 증권사 키는 `core.encrypted_credentials.ciphertext`(AES-256-GCM, 앱 계층) + `key_version`. 빌링키는 `core.billing_keys.billing_key_ciphertext` | `migrations/0004_core_security.sql:600-623`, `migrations/0002_core_billing.sql:66-84` |
 | 평문 컬럼 금지 | 제품 테이블에 `access_token`, `api_key`, `secret` 같은 평문 컬럼을 두지 않는다. 원본 `organizations.coupang_access_key`(`NOMAD Shorts Maker/PRD.md` 12장), `youtube_channels.access_token_enc`(같은 문서)는 코어 테이블로 옮긴다 | 확정 결정 12 |
-| 키 관리 | 키는 환경변수(버전별)로만. DB에 키를 두지 않는다. 키가 없으면 기동 실패. 0키 폴백 금지 | `docs/products/00_MERGE_ANALYSIS.md:611` |
+| 키 관리 | 키는 환경변수(버전별)로만. DB에 키를 두지 않는다. 키가 없으면 기동 실패. 0키 폴백 금지 | `docs/products/00_MERGE_ANALYSIS.md:621` |
 | 키 교체 | 새 버전 추가 → 재암호화 워커 → 구 키 제거. `key_version`이 현재보다 낮은 행을 주기적으로 점검 | 제안 |
 | 사용자 노출 | 요약 뷰(`credential_summaries`, `billing_key_summaries`)만. 암호문도 사용자에게 보내지 않는다 | `migrations/0004_core_security.sql:634-639` |
-| 저장소 | `.env`, `.env.local`을 커밋하지 않는다. 노출된 키는 재발급한다 | `docs/products/00_MERGE_ANALYSIS.md:198` |
+| 저장소 | `.env`, `.env.local`을 커밋하지 않는다. 노출된 키는 재발급한다 | `docs/products/00_MERGE_ANALYSIS.md:208` |
 | 클라이언트 | `SUPABASE_SERVICE_ROLE_KEY`, 제공자 시크릿은 `NEXT_PUBLIC_` 접두사를 붙이지 않는다. `createAdminClient`는 서버 파일에서만 import | `sellingstudio/lib/supabase/admin.ts:6` |
-| BYOK | 사용자 API 키를 localStorage나 평문 컬럼에 두는 기능은 만들지 않는다 | `docs/products/00_MERGE_ANALYSIS.md:153` |
+| BYOK | 사용자 API 키를 localStorage나 평문 컬럼에 두는 기능은 만들지 않는다 | `docs/products/00_MERGE_ANALYSIS.md:163` |
 
 ## 6. 웹훅: 서명 검증 + 멱등
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
-| 서명 검증 필수 | rawBody로 검증. 실패는 401, `webhook_events.signature_valid=false`, `status='ignored'`. "서명이 있으면 검증"이 아니라 "없으면 거부" | `migrations/0002_core_billing.sql:183-201`, `docs/products/00_MERGE_ANALYSIS.md:545` |
+| 서명 검증 필수 | rawBody로 검증. 실패는 401, `webhook_events.signature_valid=false`, `status='ignored'`. "서명이 있으면 검증"이 아니라 "없으면 거부" | `migrations/0002_core_billing.sql:183-201`, `docs/products/00_MERGE_ANALYSIS.md:555` |
 | 멱등 | `(provider, event_id)` 유일. 중복은 200 응답만 | `:200` |
-| 결제 지급은 confirm 경로 | 웹훅은 보조. 웹훅 본문의 금액으로 지급하지 않는다 | `docs/products/00_MERGE_ANALYSIS.md:356` |
+| 결제 지급은 confirm 경로 | 웹훅은 보조. 웹훅 본문의 금액으로 지급하지 않는다 | `docs/products/00_MERGE_ANALYSIS.md:366` |
 | 아웃바운드 | HMAC-SHA256 + 타임스탬프, 사용자가 등록한 URL만, 비밀은 사용자별 | `SHARED_MODULES.md` 6장 |
 | 콜백 URL | 공개 라우트지만 레이트 리밋과 본문 크기 제한(1MB, 제안)을 둔다 | 12장 |
 
@@ -138,7 +138,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 소비 | `core.consume_oauth_state`. 미소비·미만료만. 재사용은 `OA001` | `:561-581` |
 | redirect_to | 상대 경로만. 오픈 리다이렉트 금지 | `:549-551` |
 | PKCE | 지원 제공자는 `code_verifier` 사용 | `:515` |
-| 콜백 인증 | 콜백 라우트는 state로 사용자/조직을 확정한다. 콜백 요청의 쿠키 세션에만 의존하지 않는다(세션 없는 콜백 결함, `docs/products/00_MERGE_ANALYSIS.md:604`) |
+| 콜백 인증 | 콜백 라우트는 state로 사용자/조직을 확정한다. 콜백 요청의 쿠키 세션에만 의존하지 않는다(세션 없는 콜백 결함, `docs/products/00_MERGE_ANALYSIS.md:614`) |
 
 ## 8. 레이트 리밋
 
@@ -148,7 +148,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 생성 API(LLM, 이미지, 렌더) | 조직당 60회/분 + 플랜별 상한 | `core.rate_limit_hit` 또는 Redis |
 | 웹훅 수신 | 제공자당 600회/분 | `core.rate_limit_hit` |
 | `/r/[code]` 리다이렉트 | IP 해시당 60회/분 | `core.rate_limit_hit` |
-| 비회원 데모(astro Live Demo) | IP당 3회/일, 영속 저장 | `core.rate_limit_hit`(`docs/products/00_MERGE_ANALYSIS.md:369`, `:422`) |
+| 비회원 데모(astro Live Demo) | IP당 3회/일, 영속 저장 | `core.rate_limit_hit`(`docs/products/00_MERGE_ANALYSIS.md:379`, `:432`) |
 | 브랜드커넥트 자동 지원 | 계정당 5건/시간(blog 블로그형 + video 클립형 합산, 키 `brandconnect:apply:<account_id>`) | `core.rate_limit_hit` |
 | 네이버 클립 자동 업로드(Playwright) | 계정당 상한은 `docs/products/nomad-video/01_PRD.md` VD-F-075가 정한다. 위험 동의(`clip-2026-10-v1`) 없으면 잡 생성 금지 | `core.rate_limit_hit` |
 | 가입 크레딧 반복 수령 | 멱등 키 `signup:<org>:<app>` + 이메일 인증 필수 | `migrations/0003_core_credits.sql:426` |
@@ -169,7 +169,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
-| 경계 검증 | Route Handler 입력은 zod로 검증. `any` 캐스팅으로 Supabase 타입을 우회하지 않는다(`docs/products/00_MERGE_ANALYSIS.md:1154`) |
+| 경계 검증 | Route Handler 입력은 zod로 검증. `any` 캐스팅으로 Supabase 타입을 우회하지 않는다(`docs/products/00_MERGE_ANALYSIS.md:1164`) |
 | HTML sanitize | 사용자 원고, 에디터 출력은 서버에서 sanitize 후 저장·렌더(`:99`, `:107`, `:213`) |
 | SSRF | WeasyPrint `url_fetcher`는 허용 목록(자체 Storage)만(`:108`, `:213`). 외부 상품 URL 크롤링(amazon 공급자)은 사설 IP 차단 + 리다이렉트 제한(`:882`) |
 | 업로드 | MIME과 크기를 서버가 재검사. 경로는 서버가 생성(`<org>/<app>/<entity>/<uuid>`). 사용자 입력 파일명을 경로에 쓰지 않는다(경로 조작 결함 `:132`) |
@@ -180,11 +180,11 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 
 | 규칙 | 근거 |
 |---|---|
-| 기능 게이팅과 권한 판정은 서버. 클라이언트 판정은 UX 보조 | `docs/products/00_MERGE_ANALYSIS.md:149`, `:1131` |
+| 기능 게이팅과 권한 판정은 서버. 클라이언트 판정은 UX 보조 | `docs/products/00_MERGE_ANALYSIS.md:159`, `:1141` |
 | 클라이언트 PageGuard로 보호한 RSC는 데이터가 이미 노출된다. 서버 가드로 대체 | `:1132` |
 | 비밀번호/코드 우회(`OVERRIDE 1234`, `flora_pro_unlocked`) 기능을 두지 않는다. dev 전용이라도 프로덕션 빌드에서 제거. 허용되는 개발용 로그인은 로컬 시드 계정 Mock(실제 JWT, 원격 DB 불가)뿐이며 가드는 17장 | `:150`, `:1133`, `:1218` |
 | 프로필이 없으면 로그아웃. 기본 역할 admin 금지 | `Hospital/src/proxy.ts:57`, `:69` |
-| `proxy.ts`(미들웨어)는 반드시 로드되는 위치에 둔다(School은 루트 `middleware.ts`라 미로드) | `docs/products/00_MERGE_ANALYSIS.md:1125` |
+| `proxy.ts`(미들웨어)는 반드시 로드되는 위치에 둔다(School은 루트 `middleware.ts`라 미로드) | `docs/products/00_MERGE_ANALYSIS.md:1135` |
 | 백그라운드 작업은 service_role로 실행한다. 세션 없는 작업이 RLS에 막혀 조용히 실패하는 패턴 금지 | `:516` |
 | 장애를 mock 응답으로 숨기지 않는다 | `:155` |
 
@@ -192,7 +192,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
-| 민감 컬럼 암호화 | astro 생년월일시·이름은 제품 스키마에서 컬럼 암호화(앱 계층 AES-256-GCM, 같은 키 체계) | `docs/products/_supabase-modular/ARCHITECTURE.md:37`, `docs/products/00_MERGE_ANALYSIS.md:375` |
+| 민감 컬럼 암호화 | astro 생년월일시·이름은 제품 스키마에서 컬럼 암호화(앱 계층 AES-256-GCM, 같은 키 체계) | `docs/products/_supabase-modular/ARCHITECTURE.md:37`, `docs/products/00_MERGE_ANALYSIS.md:385` |
 | 의료정보 | hms는 모놀리스 강제, 감사 범위와 보존은 admin-suite 01_PRD | `docs/products/_supabase-modular/README.md:80-89` |
 | IP | 원문 저장 금지, 일 단위 솔트 해시 | `migrations/0006_core_affiliate.sql:88` |
 | 삭제 | 조직 soft delete(`deleted_at`) → 유예 기간 → `purge_organization`. 유예 기간은 제안 30일 | `migrations/0003_core_credits.sql:636-652` |
@@ -204,11 +204,11 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 
 | 규칙 | 내용 |
 |---|---|
-| 기동 시 환경변수 검증 | 필수 키(`SUPABASE_SERVICE_ROLE_KEY`, `CREDENTIALS_KEY_V<n>`, `TOSS_SECRET_KEY`, 웹훅 시크릿) 누락이면 기동 실패. 빈 JWT secret 허용 금지(`docs/products/00_MERGE_ANALYSIS.md:76`) |
+| 기동 시 환경변수 검증 | 필수 키(`SUPABASE_SERVICE_ROLE_KEY`, `CREDENTIALS_KEY_V<n>`, `TOSS_SECRET_KEY`, 웹훅 시크릿) 누락이면 기동 실패. 빈 JWT secret 허용 금지(`docs/products/00_MERGE_ANALYSIS.md:86`) |
 | 코어 변경 | Fable 담당, 전 제품 RLS/RPC 회귀 통과 후 적용(`docs/products/_supabase-modular/ARCHITECTURE.md:76`) |
 | 스케줄 함수 | pg_cron 또는 워커. `CRON_SECRET`으로 보호된 공개 라우트 방식은 쓰지 않는다(`docs/products/_supabase-modular/README.md:134`) |
 | CI | tsc, lint, build, pytest + SQL 체커(`docs/products/_tools-sqlcheck`) + RLS 스모크 테스트(15장) |
-| 의존성 | `latest` 태그 금지, lockfile 커밋(`docs/products/00_MERGE_ANALYSIS.md:174`) |
+| 의존성 | `latest` 태그 금지, lockfile 커밋(`docs/products/00_MERGE_ANALYSIS.md:184`) |
 | 커넥션 | 제품별 커넥션 풀 상한, Realtime 채널 `<app>:<org>:<entity>`, 큐 `<app>.<type>`(`ARCHITECTURE.md:77`) |
 
 ## 14. 복사 금지 패턴 (리뷰에서 발견된 것)
@@ -217,7 +217,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 
 | 패턴 | 출처 | 왜 금지인가 |
 |---|---|---|
-| 크레딧 RPC EXECUTE 미회수 | `docs/products/00_MERGE_ANALYSIS.md:516` | 브라우저에서 크레딧 지급 가능 |
+| 크레딧 RPC EXECUTE 미회수 | `docs/products/00_MERGE_ANALYSIS.md:526` | 브라우저에서 크레딧 지급 가능 |
 | 비원자 크레딧 차감(읽고 → 빼고 → 쓰기) | `:481` | 동시 요청으로 음수 잔액 |
 | 웹훅 서명 미검증/선택적 검증, 웹훅 시크릿 오용 | `:151`, `:545` | 위조 결제 이벤트로 플랜 상승 |
 | `customerKey = Date.now()`, orderId 파싱으로 org/plan 추출 | `:545`, `migrations/0002_core_billing.sql:68`, `:133` | 빌링키 충돌, 금액/대상 위조 |

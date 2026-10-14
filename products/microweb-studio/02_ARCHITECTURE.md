@@ -343,4 +343,4 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 | 고객 시안(`/p/[token]`) | 시안 토큰 | 단계와 무관. 대행 고객은 계정이 없다(01장 2절 시안 확인 링크 행) |
 | 쇼룸(`/`, `/templates`, `/pricing`, `/simulator`, `/portfolio`, `/contact`) | 없음 | 단계와 무관. 헤더에 운영자 로그인 링크를 새로 넣지 않는다 |
 
-이 경로의 미들웨어·레이아웃은 세션을 요구하지 않고 로그인 버튼을 두지 않는다(`AUTH_ROADMAP.md:339`). B·C 작업은 `src/app/i/`, `src/app/p/`, `src/app/(showroom)/`, `src/app/api/public/`를 수정하지 않는다(06장 8절).
+이 경로의 미들웨어·레이아웃은 세션을 요구하지 않고 로그인 버튼을 두지 않는다(`AUTH_ROADMAP.md:340`). B·C 작업은 `src/app/i/`, `src/app/p/`, `src/app/(showroom)/`, `src/app/api/public/`를 수정하지 않는다(06장 8절).

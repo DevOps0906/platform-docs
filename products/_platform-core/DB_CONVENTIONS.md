@@ -83,7 +83,7 @@ PostgREST 노출: `config.toml` `[api].schemas`에 스키마를 추가하고 타
 
 | 규칙 | 이유 |
 |---|---|
-| 항상 `timestamptz`. `timestamp`(without time zone)와 `date`에 시각을 넣지 않는다 | 세 관리 앱이 모두 UTC/KST 경계 버그를 냈다(`docs/products/00_MERGE_ANALYSIS.md:1147`) |
+| 항상 `timestamptz`. `timestamp`(without time zone)와 `date`에 시각을 넣지 않는다 | 세 관리 앱이 모두 UTC/KST 경계 버그를 냈다(`docs/products/00_MERGE_ANALYSIS.md:1157`) |
 | DB는 UTC로 저장하고 KST 변환은 조회 시 `at time zone 'Asia/Seoul'` 또는 앱의 `kstDayRange()`로 | 같은 근거 |
 | "오늘" 집계는 KST 자정 경계를 서버가 계산해 timestamptz 범위로 질의 | `:1232` |
 | 스케줄 표기는 UTC 크론 + KST 주석 | `docs/products/_supabase-modular/README.md:138` |
@@ -124,8 +124,8 @@ status text not null default 'draft'
 | SELECT 정책 | `core.is_org_member(org_id) and core.has_entitlement(org_id, '<app>')` | `README.md:111-112` |
 | 쓰기 기본값 "없음" | 쓰기는 service_role 또는 SECURITY DEFINER RPC. 사용자에게 쓰기 정책을 줄 때는 8장 조건을 만족해야 한다 | `migrations/0004_core_security.sql:718-720` |
 | 쓰기 정책에는 반드시 `with check` | `using`만 있는 UPDATE 정책은 org_id를 다른 조직으로 바꾸는 것을 막지 못한다 | `README.md:105` |
-| `FOR ALL` 정책 금지 | 플랜/크레딧 셀프 변경 결함의 원인(`docs/products/00_MERGE_ANALYSIS.md:77`) |
-| 정책 안에서 `org_members`를 직접 조회하지 않는다 | SECURITY DEFINER 헬퍼(`is_org_member` 등)만 쓴다. 자기참조 재귀 42P17 방지(`migrations/0004_core_security.sql:13-14`, `00_MERGE_ANALYSIS.md:1135`) |
+| `FOR ALL` 정책 금지 | 플랜/크레딧 셀프 변경 결함의 원인(`docs/products/00_MERGE_ANALYSIS.md:87`) |
+| 정책 안에서 `org_members`를 직접 조회하지 않는다 | SECURITY DEFINER 헬퍼(`is_org_member` 등)만 쓴다. 자기참조 재귀 42P17 방지(`migrations/0004_core_security.sql:13-14`, `00_MERGE_ANALYSIS.md:1145`) |
 | 삭제는 owner/admin | `core.has_org_role(org_id, array['owner','admin'])` | `README.md:117-118` |
 | 공개 읽기 | anon에게 SELECT를 주는 테이블은 `is_public`/`status='published'` 같은 명시 컬럼으로 필터하고 비공개 컬럼은 뷰로 가린다 | `migrations/0004_core_security.sql:749-754` 패턴 |
 | 플랫폼 운영자 | `core.is_platform_admin()`을 SELECT 정책에 OR로 더할 수 있다. 쓰기는 service_role로 | `:737` |
@@ -225,7 +225,7 @@ grant execute on function blog.publish_post(uuid) to authenticated;
 | 정의 | text + CHECK(6장) | |
 | 전이 강제 | (a) 전이 트리거: 허용 (old, new) 쌍 외에는 22023으로 거부. service_role 쓰기에도 적용된다 (b) 전이 RPC: `apply_<entity>_transition(id, to, reason)` 형태 | (a) `migrations/0006_core_affiliate.sql:189-211` (b) `migrations/0002_core_billing.sql:265-341` |
 | 선택 기준 | 전이에 부수 효과(엔타이틀먼트 동기화, 환불, 감사)가 있으면 RPC. 단순 순서 강제면 트리거 | |
-| 문서화 | 제품 05_DATA_MODEL에 "현재 → 허용 전이 → 누가" 표를 둔다(예약, 검사, 판매, 발행) | `docs/products/00_MERGE_ANALYSIS.md:1231` |
+| 문서화 | 제품 05_DATA_MODEL에 "현재 → 허용 전이 → 누가" 표를 둔다(예약, 검사, 판매, 발행) | `docs/products/00_MERGE_ANALYSIS.md:1241` |
 | 시각 | 전이마다 `<state>_at` 컬럼(`submitted_at`, `decided_at`) | `migrations/0006_core_affiliate.sql:169-170` |
 
 ## 11. `core.apps` 등록과 코어 참조
