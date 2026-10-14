@@ -23,7 +23,7 @@
 
 ## 2. 범위: MVP와 Phase
 
-확정 결정 7(MA:15)이 범위의 정본이다. 분석 원문의 "MVP는 A, B, C"(MA:725-728)와 "YouTube Live 폐기"(MA:598)는 확정 결정으로 대체되었다. 로그인 수단 범위(확정 결정 22, 2026-10-14)는 9절 표: MVP 개발은 Mock(Stage A), 공개 베타 전 Google(+이메일)(Stage B, P0), 카카오·네이버는 G2 후(Stage C, 둘 다 P1).
+확정 결정 7(MA:15)이 범위의 정본이다. 분석 원문의 "MVP는 A, B, C"(MA:725-728)와 "YouTube Live 폐기"(MA:598)는 확정 결정으로 대체되었다. 인증·조직·세션·라우트 보호는 MVP이고 로그인 수단은 단계로 켠다(확정 결정 22, 2026-10-14, `docs/products/_platform-core/AUTH_ROADMAP.md` 0장·8장): MVP 개발은 Mock(Stage A, 로컬 시드 계정), 공개 베타 전 Google(+이메일)(Stage B, P0), 카카오·네이버는 G2 후(Stage C, C1 카카오 P1, C2 네이버 P1). 대행 고객 승인 화면(`/review/[token]`)은 단계와 무관하게 로그인 없음. 단계표는 9절(이 표에 행을 넣지 않은 이유는 9절 머리말).
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
@@ -77,7 +77,7 @@
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
 | VD-F-001 | 가입·부트스트랩 | 통합 | Supabase Auth. 로그인 수단은 단계로 켠다(확정 결정 22, 9절): MVP 개발은 Mock(Stage A, 로컬 시드 계정 `owner` 등으로 실제 JWT), 공개 베타 전 Google + 이메일(Stage B, P0), 카카오·네이버는 G2 후(Stage C, P1). 이메일 가입 폼은 `signup_app='video'` 전송, OAuth 첫 로그인은 `/auth/callback`의 `finishLogin`이 `bootstrap_app_for_org('video')`를 1회 호출. 코어 트리거가 개인 조직·Starter 엔타이틀먼트·100크레딧 지급 | 가입 직후(A: `owner` 페르소나, B: 새 Google 계정) `session_context('video')`가 `plan_code=starter`, `credit_balance=100`. B는 `AUTH_ROADMAP.md` 5.3절 B-1~B-6, C1은 7.1.3절, C2는 7.2.4절을 그대로 따른다 | BS #9, CORE_SPEC 2.2, PRC:23, 확정 결정 22 |
-| VD-F-002 | 라우트 보호 | 통합 | `proxy.ts`가 `/dashboard/**`, `/api/**` 보호. 공개 예외: `/`, `/pricing`, `/legal/**`, `/landing/**`, `/lb/**`, `/r/**`, `/api/webhooks/**`, `/billing/success|fail`, `/auth/callback`(B). 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(`/api/dev/login`, 배포 환경 404) | 비로그인으로 `/dashboard` 접근 시 `/login` 302, `/landing/x` 200, 배포 빌드에서 `/api/dev/login` 404 | SM #6, BS #10, 확정 결정 22 |
+| VD-F-002 | 라우트 보호 | 통합 | `proxy.ts`가 `/dashboard/**`, `/api/**` 보호. 공개 예외: `/`, `/pricing`, `/legal/**`, `/landing/**`, `/lb/**`, `/r/**`, `/review/**`·`/api/review/**`(대행 고객 승인, 토큰, VD-F-123), `/api/webhooks/**`, `/billing/success|fail`, `/login`, `/api/dev/login`(A, 판정이 거짓이면 404), `/auth/callback`(B). 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(`/api/dev/login`, 배포 환경 404) | 비로그인으로 `/dashboard` 접근 시 `/login` 302, `/landing/x` 200, 배포 빌드에서 `/api/dev/login` 404 | SM #6, BS #10, 확정 결정 22 |
 | VD-F-003 | 플랜 게이팅 | 디벨롭 | 서버가 `entitled_plan_code` + `plans.features`로 Track, 언어, 채널 수, 플랫폼, 레이더 범위를 판정. DB도 `video.org_has_feature`로 Track D/F 쓰기를 막는다 | Starter 조직이 Track B 생성 요청 시 403 `VD009`. Starter가 `longform_projects` 직접 INSERT 시 42501 | PRC:116-143, SM #13 |
 | VD-F-010 | 플레이보드 랭킹 | 디벨롭 | KR/US/JP x 카테고리 x realtime/daily/weekly, 24시간 주기 수집. `weighted_score = views_24h x growth_rate 가중치`. 성장률을 계산할 수 없으면 `growth_rate=null`, `is_estimated=true`로 표시하고 난수를 쓰지 않는다 | 수집 행에 난수 지표 0건. UI에 "추정" 배지 | PRD 3-1, SM #17 |
 | VD-F-011 | 채널파인더 | 유지 | 구독자 상한, 최근 평균 조회수 하한, 기간 필터. 등급 S(>=15) A(10~14) B(5~9) C(2~4) D/F(<2) | 같은 입력에 같은 등급(단위 테스트) | PRD 3-2 |
@@ -391,7 +391,7 @@ D-5(네이버 로그인)는 결정 22로 C2 확정되어 해소했다. 기존 �
 
 ## 9. 인증 단계 범위 (2026-10-14 추가, 확정 결정 22)
 
-2절 범위 표에 로그인 행이 없어서 범위를 이 절에 둔다. "로그인"은 이 제품 사용자(크리에이터, 대행 운영팀)의 계정 로그인만 뜻한다. 채널 연결 OAuth(YouTube·Meta·TikTok, `core.oauth_states`, VD-F-070)와 네이버 클립 업로드용 네이버 로그인 세션(Playwright, `CredentialVault` provider `naver`, VD-F-075)은 사용자 로그인과 별개이며 이 단계의 영향을 받지 않는다.
+2절 머리말(인증 범위)의 단계별 상세다. 2절 표에 행을 넣으면 4장 줄 번호가 밀려 외부 참조(`Price_Plans/nomad-video/PRICE_PLAN.md:13`의 `01_PRD.md:140-233`)가 어긋나므로 표 대신 이 절에 둔다. "로그인"은 이 제품 사용자(크리에이터, 대행 운영팀)의 계정 로그인만 뜻한다. 채널 연결 OAuth(YouTube·Meta·TikTok, `core.oauth_states`, VD-F-070)와 네이버 클립 업로드용 네이버 로그인 세션(Playwright, `CredentialVault` provider `naver`, VD-F-075)은 사용자 로그인과 별개이며 이 단계의 영향을 받지 않는다.
 
 | 단계 | 범위 | 언제 | 켜지는 로그인 | 우선순위 | 작업 |
 |---|---|---|---|---|---|
@@ -399,6 +399,6 @@ D-5(네이버 로그인)는 결정 22로 C2 확정되어 해소했다. 기존 �
 | B | 공개 베타 전 필수 | G1(`AUTH_ROADMAP.md` 4장) 통과 후 | Google + 이메일(D-28). 배포 환경에서 Mock 차단 | P0 | VID-06-063 |
 | C1 | 출시 후 | G2(`AUTH_ROADMAP.md` 6장) 통과 후 | 카카오(Supabase 기본 제공자 `kakao`) | P1(`AUTH_ROADMAP.md` 8장 nomad-video 행) | VID-06-064 |
 | C2 | 출시 후 | G2 통과 후, C1과 병렬 가능 | 네이버(`custom:naver` 또는 브리지, D-27) | P1 | VID-06-065 |
-| 해당 없음 | 로그인 없는 흐름 | 단계와 무관 | 공개 랜딩 `/landing/[slug]`, 링크인바이오 `/lb/[handle]`, 단축 링크 `/r/[code]` 방문자, 대행 고객의 승인 화면 `/review/[token]`(토큰 소지자, VD-F-123)에는 로그인 버튼을 추가하지 않는다 | - | - |
+| 해당 없음 | 로그인 없는 흐름 | 단계와 무관 | 공개 랜딩 `/landing/[slug]`, 링크인바이오 `/lb/[handle]`, 단축 링크 `/r/[code]` 방문자, 대행 고객의 승인 화면 `/review/[token]`(토큰 소지자, VD-F-123)에는 로그인 버튼을 추가하지 않는다. 고객사 담당자는 계정을 만들지 않고 시드 페르소나도 없다. 고객 포털 로그인(D-24 (b), D-25 (c))은 Phase 2이며 이 로드맵 범위 밖이다 | - | - |
 
 Apple 로그인과 매직링크는 이 로드맵 범위 밖이다(`AUTH_ROADMAP.md` 1장).

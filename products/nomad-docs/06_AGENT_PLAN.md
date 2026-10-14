@@ -12,7 +12,9 @@
 | `tpl/` | `packages/docs-templates/` |
 | `int/` | `packages/docs-integrations/` |
 
-작업 수는 62개(Phase 2 shorts_agency DC-06-060, 2026-10-14 추가 CRM 워크스페이스 DC-06-061·생성 진행 애니메이션 DC-06-062 포함)로 `DOC_TEMPLATE.md:266`의 15~40개 권장을 넘는다. 확정 결정 13~17(AI·Dify·3D·음성·LLM 이원화)이 MVP 필수이고, 디자인 시스템 4단계와 Phase 2 연동 4개가 더해졌다. 검증할 수 있는 크기(`docs/products/_design-guide/DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다(flora-publishing 55개와 같은 판단, `docs/products/flora-publishing/06_AGENT_PLAN.md:3`).
+2026-10-14 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`)로 DC-06-014의 범위를 인증 Stage A(Mock 로그인)로 바꾸고 인증 단계 작업 3개(DC-06-063 Stage B, 064 C1 카카오, 065 C2 네이버, 8절)를 더했으며 007·057·059(수용 기준)도 함께 고쳤다.
+
+작업 수는 65개(Phase 2 shorts_agency DC-06-060, 2026-10-14 추가 CRM 워크스페이스 DC-06-061·생성 진행 애니메이션 DC-06-062, 인증 단계 DC-06-063~065 포함)로 `DOC_TEMPLATE.md:266`의 15~40개 권장을 넘는다. 확정 결정 13~17(AI·Dify·3D·음성·LLM 이원화)이 MVP 필수이고, 디자인 시스템 4단계와 Phase 2 연동 4개가 더해졌다. 검증할 수 있는 크기(`docs/products/_design-guide/DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다(flora-publishing 55개와 같은 판단, `docs/products/flora-publishing/06_AGENT_PLAN.md:3`).
 
 ## 1. 원칙과 소유 경계
 
@@ -171,14 +173,14 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 | DC-06-004 | web 골격: Next.js 16.2.x 앱, `src/proxy.ts`(`signup_app='docs'`), `@supabase/ssr` 클라이언트 3종, env zod 검증, 루트 레이아웃, 저장소 `CLAUDE.md`(이 폴더 CLAUDE.md 참조만), `.gitignore`(`.env*`) | `web/` 루트 설정(package.json, next.config.ts, tsconfig.json, eslint, `postcss` Tailwind CSS v4 설정), `web/src/proxy.ts`, `web/src/lib/supabase/`, `web/src/lib/env.ts`, `web/src/app/layout.tsx`, `web/CLAUDE.md` | 없음 | P0 | M | Opus | 필수 env 하나라도 빠지면 `next dev` 기동 실패. 미로그인 `/app` → `/login`. TS strict, `latest` 의존성 0, `tailwind.config.js`·`@tailwind base` 0. `web/CLAUDE.md`가 비어 있으면 CI 실패 | SellingDocs 5장 #2, #3, flora 5장 #15, `02_ARCHITECTURE.md:363-398` |
 | DC-06-005 | TS 워커 골격: `claim_jobs` 루프(`docs.generate`, `docs.export`, `docs.integration`), 핸들러 레지스트리, 하트비트, env 검증, payload zod | `worker/` 루트 설정, `worker/src/main.ts`, `worker/src/lib/`, `worker/src/handlers/index.ts` | 없음 | P0 | M | Opus | 빈 핸들러 잡을 `complete_job`. payload에 금액·HTML·비밀 필드가 있으면 zod 거부. 워커 env에 LLM 키 0(기동 검사). `SIGTERM` 시 진행 잡 하트비트 중단 후 종료 | `02_ARCHITECTURE.md:75`, `:220-253`, `04_API.md:142` |
 | DC-06-006 | ai-service 설치(docs 설정): 공용 ai-service 적용, app `docs` 설정, JWKS 검증(`aud=platform-ai:docs`), 잡 토큰 scope, 국외 이전 필터 연동, 기동 시 `tpl` 체크섬 검사, 비동기 HTTP만 | `api/`(아래 docs 확장 경로 제외: `app/ai/graphs/docs_*.py`, `app/ai/products/docs/**`, `app/ai/tools/docs/`, `app/ai/compliance/docs.py`), `api/tests/platform/` | DC-06-001 | P0 | M | Fable | 다른 app `aud`·만료·재사용 `jti` 토큰 401. 토큰 org와 다른 org 문서 요청 403. 미동의 조직의 라우팅 결과에 상용 제공자 0. `DOCS_TEMPLATES_DIR` 체크섬 불일치 유형은 비활성 + 운영 알림. `requests`·동기 SDK import 0(pytest 검사) | `02_ARCHITECTURE.md:81-90`, `:319`, flora 5장 #1, #4, #6 |
-| DC-06-007 | CI: tsc, lint, build, Vitest, pytest·ruff, SQL 체커(`--vector`), RLS 러너, 모놀리스 `--check`, actionlint, 금지 문자열·비밀 검사, `CLAUDE.md` 빈 파일 검사, 웹 번들의 렌더 클라이언트·three.js 경로 import 검사 | `.github/workflows/nomad-docs.yml` | DC-06-004, DC-06-005 | P0 | S | Sonnet | PR마다 실행, 하나라도 실패하면 병합 불가. step 레벨 `if`에 `secrets` 0(actionlint). `tailwind.config.js` 존재, `.env` 커밋, `flora_pro_unlocked`·`'1234'` 문자열이 있으면 실패 | SellingDocs 3장 #3, flora 3장 #7, 5장 #5, #15 |
+| DC-06-007 | CI: tsc, lint, build, Vitest, pytest·ruff, SQL 체커(`--vector`), RLS 러너, 모놀리스 `--check`, actionlint, 금지 문자열·비밀 검사, `CLAUDE.md` 빈 파일 검사, 웹 번들의 렌더 클라이언트·three.js 경로 import 검사 | `.github/workflows/nomad-docs.yml` | DC-06-004, DC-06-005 | P0 | S | Sonnet | PR마다 실행, 하나라도 실패하면 병합 불가. step 레벨 `if`에 `secrets` 0(actionlint). `tailwind.config.js` 존재, `.env` 커밋, `flora_pro_unlocked`·`'1234'` 문자열이 있으면 실패. 인증 단계 검사(`docs/products/_platform-core/AUTH_ROADMAP.md` 2.4절, 9장): 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈 밖의 `AUTH_MODE` 참조(허용: `web/src/lib/auth/`, `web/src/app/(auth)/`, `web/src/app/auth/`, `web/src/app/api/dev/login/`)가 있으면 실패, `AUTH_MODE=mock VERCEL_ENV=production npm run build`가 실패하는지 확인(DC-06-014 가드가 들어온 뒤 켠다) | SellingDocs 3장 #3, flora 3장 #7, 5장 #5, #15 |
 | DC-06-008 | 디자인 시스템 1단계: 레퍼런스 확정(앱 Atlassian 주 + Primer 보조, AI 화면 Astryx 패턴 확인, 랜딩 `HERO_3D.md`), 가져올 것·안 가져올 것 | `docs/file/03-설계/디자인/DESIGN.md`(1절 "레퍼런스와 방향") | 없음 | P0 | S | Sonnet | `03_SCREENS_UX.md:670-672` 표가 1절에 있다. Astryx 존재·라이선스 확인 결과 또는 미확인 시 대체안 기록. 고문(Fable) 검토 기록 1건 시각 레퍼런스: `03_SCREENS_UX.md` 4.1절 표(랜딩은 Awwwards, 앱 화면은 Dribbble. 후보는 `docs/products/_design-guide/REFERENCES.md:309` nomad-docs 절)를 DESIGN.md 1절에 옮기고, 각 링크를 브라우저로 열어 본 결과(열림/교체)를 적는다(`docs/products/_design-guide/DESIGN_PRINCIPLES.md:29-38`). | `DESIGN_SYSTEM.md:43`, `03_SCREENS_UX.md:664-679` |
 | DC-06-009 | 디자인 시스템 2단계: Tailwind CSS v4 토큰(`@theme`, 라이트/다크, `data-theme`), 기본 컴포넌트·배리언트, 미리보기 `/dev/components` | `web/src/styles/`, `web/src/components/ui/`, `web/src/app/dev/components/` | DC-06-004, DC-06-008 | P0 | M | Sonnet | `03_SCREENS_UX.md:674`, `:677-689`의 토큰 이름과 기본 컴포넌트 전부 라이트/다크 미리보기. hex 하드코딩 0, `tailwind.config.js` 0, Tailwind CSS v4 4.x 고정, 대비 4.5:1, `COMPONENTS.md` 배리언트 표 초안 | `DESIGN_SYSTEM.md:44`, 1.1절 I-13 |
 | DC-06-010 | 디자인 시스템 3단계: 사람 비주얼 검토(라이트/다크, 상태 6종, 크기 배리언트). Sonnet이 스크린샷·점검표를 준비하고 판정과 수치 수정은 사람이 한다 | `docs/file/03-설계/디자인/review/` | DC-06-009 | P0 | M | Sonnet | 기본 컴포넌트 전부의 스크린샷과 사람이 고친 수치 기록, 포커스 링·대비 확인, `--color-seal` 사용처가 직인·확정 표시·3D 히어로뿐인지 확인. 이 단계는 줄이지 않는다 | `DESIGN_SYSTEM.md:45` |
 | DC-06-011 | 디자인 시스템 4단계: 코드(Tailwind CSS v4 CSS + 컴포넌트)를 정답으로 확정, 문서를 코드 기준으로 재작성 | `docs/file/03-설계/디자인/DESIGN.md`(2절 이후), `docs/file/03-설계/디자인/COMPONENTS.md` | DC-06-010 | P0 | S | Opus | 문서 토큰 값과 `tokens.css`가 스크립트 비교로 100% 일치. 피그마 노드 id·외부 파일 링크 0 | `DESIGN_SYSTEM.md:46` |
 | DC-06-012 | API 공통: `requireSession('docs')` 래퍼, zod 파이프, 응답 봉투, `request_id`, SQLSTATE → HTTP 매핑(DC001~DC010, 코어 코드), 레이트 리밋(1.1절 I-7, I-8), `apiFetch`, Realtime 잡 구독 훅 | `web/src/lib/server/http/`, `web/src/lib/client/` | DC-06-004 | P0 | M | Opus | 모든 Route Handler가 래퍼를 거치는지 린트 규칙으로 검사. `04_API.md:242-261` 매핑 표대로 응답. 생성 API 21번째/분 429. `P0002` → 404(`.single()` 500 금지). 실패를 mock 응답으로 숨기는 코드 0 | `04_API.md:5-20`, flora 5장 #1, #10, #13 |
 | DC-06-013 | 크레딧 단가표(`priceOf`)와 features 해석기(서버 전용 `docs.org_features`, 키 없으면 Free 기본값) | `web/src/lib/server/pricing/`, `web/src/lib/server/features/` | DC-06-001 | P0 | M | Fable | `priceOf`가 `01_PRD.md:301-316`과 같다(단위 테스트, 패키지 28). features 11개 키가 `01_PRD.md:285-299`과 같고 키 누락 시 Free 값. 클라이언트에서 플랜을 판정하는 코드 경로 0 | `01_PRD.md:273-347`, flora 5장 #8, flora 3장 #6 |
-| DC-06-014 | 인증 화면과 콜백, 회사 정보 온보딩(`/onboarding/company`, self 당사자·`workspace_settings` 1행 보장) | `web/src/app/(auth)/`, `web/src/app/auth/callback/`, `web/src/app/onboarding/company/` | DC-06-004, DC-06-012 | P0 | M | Fable | 가입 → 메일 인증 → `/onboarding/ai` → `/app`. `next=//evil.com`은 `/app`으로. 가입 직후 잔액 80(가입 50 + 월 30). 재진입 10회에도 `workspace_settings`·self 당사자 각 1행. 인증 전 생성 요청 403 `email_not_verified` | DC-F-001, `01_PRD.md:88`, SellingDocs 5장 #3 |
+| DC-06-014 | 인증 Stage A(2026-10-14 범위 변경): 인증 모듈 경계(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`, 첫 진입 온보딩 경로 `onboarding.ts`, 02장 9.6절), Mock 로그인(`POST /api/dev/login`, `/login` 개발용 패널, 상단 배지 `MOCK AUTH · 로컬 전용`), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.docs.mjs`(05장 10절), 가드(env zod, 404, 빌드 검사), `finishLogin`의 `next` 화이트리스트와 첫 진입 워크스페이스 보장(self 당사자·`workspace_settings` 1행), 이메일 인증 전 실행 차단 가드(`email_confirmed_at`), 회사 정보 온보딩(`/onboarding/company`). 이메일 가입·메일 인증·비밀번호 재설정 화면과 Google·콜백 라우트는 B(DC-06-063)로 옮겼다 | `web/src/lib/auth/`, `web/src/app/api/dev/login/`, `web/src/app/(auth)/login/`(A 구성, 063이 이어 받음), `web/src/components/dev-auth/`, `scripts/dev/`, `web/src/app/onboarding/company/` | DC-06-001, DC-06-004, DC-06-012 | P0 | M | Fable | `owner` 페르소나 로그인 → `/onboarding/ai` → `/onboarding/company` → `/app`, 새로고침 유지, `session_context('docs')` `entitled=true`·`plan_code='free'`·잔액 80(가입 50 + 월 30). `no_app` 로그인 → `finishLogin`이 `bootstrap_app_for_org` 1회(모듈러), 재로그인 3회 뒤 가입 크레딧 원장 1행. 재로그인 10회에도 `workspace_settings`·self 당사자 각 1행. `outsider`로 owner 조직 `projects`·`parties`·`documents` 0행. `finishLogin` 단위 테스트 `next=//evil.com`·`https://evil.com`·`/\evil.com`·`@evil.com` → `/app`. 테스트가 만든 미인증 계정의 생성 요청 403 `email_not_verified`. `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404·개발용 패널 미렌더. 시드 스크립트가 원격 URL이면 exit 1, 2회 실행해도 크레딧 1회. 인증 모듈 밖 `AUTH_MODE` 참조 0 | DC-F-001, SellingDocs 5장 #3, AUTH_ROADMAP 2장, 3.1·3.2절 |
 | DC-06-015 | 워크스페이스·직인·거래처 API, 서버 PII lint(주민등록번호 패턴, 1.1절 I-10), 사업자등록번호 체크섬, 문서번호 서식 검증(I-6) | `web/src/app/api/workspace/`, `web/src/app/api/parties/`(`import/` 제외), `web/src/lib/server/pii/` | DC-06-012 | P0 | M | Opus | member의 `PATCH /api/workspace` 403. 직인 2MB 초과 413, 매직바이트 불일치 415. 메모에 `900101-1234567` 저장 422 `pii_detected`. 체크섬 오류 422. 서식에 `{SEQ` 없으면 422. 삭제 거래처 30일 복원 | DC-F-002, DC-F-003, `04_API.md:29-36` |
 | DC-06-016 | 프로젝트·요구사항·산출물·비용 항목 API와 합계(`project_totals` 읽기), 상태 전이 RPC 호출, 사용자 수정 표시(`is_user_modified`) | `web/src/app/api/projects/route.ts`, `web/src/app/api/projects/[id]/route.ts`, `.../[id]/status/`, `.../[id]/requirements/`, `.../[id]/artifacts/`, `.../[id]/line-items/`(`import/` 제외), `web/src/app/api/requirements/`, `web/src/app/api/artifacts/`, `web/src/app/api/line-items/`, `web/src/lib/server/totals/` | DC-06-012, DC-06-013 | P0 | L | Opus | Free 3번째 프로젝트 403 `DC006`. 수동 FR 2건 → FR-004, FR-005, 삭제 후 새 행 FR-006. 요청 본문의 `amount_krw`·`req_code` 무시. 수량 2.5 × 400,000 = 1,000,000. 항목 합계 3,250,000 → VAT 325,000, 총액 3,575,000(1.1절 I-5) | DC-F-004, DC-F-007~009, `04_API.md:37-53` |
 | DC-06-017 | 효과 엔진 순수 함수: `computeEffects(items, answers, settings)` → 목표 집합, `diffEffects(target, current)` → `EffectPlan`(add, update, remove, keepUserModified, clauses, affectedDocTypes). 시각·난수·LLM·I/O 없음 | `web/src/features/effects-engine/` | DC-06-001 | P0 | L | Opus | 1.1절 I-1~I-3 기준 반영. `feat.payment` 체크 → FR 2 + NFR 1, SCR 2, 비용 1, 조항 `dev.pg_responsibility`. 사용자 수정 행은 update·remove에 없고 keepUserModified에 있다. 항목 200·답 200 계산 50ms 이하. 파일 안에 `Date`, `Math.random`, `fetch` 사용 0(린트) | DC-F-006, `01_PRD.md:154-196`, `02_ARCHITECTURE.md:92-126` |
@@ -221,9 +223,9 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 | DC-06-054 | HubSpot 어댑터(Phase 2, D-6): OAuth, 딜·회사·연락처 pull, 확정 문서 링크 push, 딜 단계 웹훅 → "문서 생성 제안" 알림(자동 생성 0) | `int/src/hubspot/` | DC-06-052 | P2 | M | Opus | 엔드포인트·스코프·서명 방식을 HubSpot 공식 문서로 확인한 기록(미확인 해소). 서명 불일치 401. 딜 단계 변경 후 생성 run 0. 429는 `Retry-After` 준수 | DC-F-030, `04_API.md:220-228` |
 | DC-06-055 | admin-suite ERP 어댑터(Phase 2): service_role 함수로 `erp.products`(단가) → 비용 카탈로그, `erp.sales` → `invoice` 입력, 같은 org + 두 앱 엔타이틀먼트 검사(C-7 뒤, DB 함수는 001에 요청) | `int/src/admin-suite-erp/` | DC-06-052, DC-06-001 | P2 | M | Fable | docs만 쓰는 조직은 연결 422 `entitlement_missing`. 사용자 세션의 `erp` GRANT 0(003 회귀). `price numeric(12,2)` → 원 정수 반올림. `total_price` 불일치 시 경고 | DC-F-031, `04_API.md:230-236`, `docs/products/_supabase-modular/migrations/1600_erp.sql:113`, `:154` |
 | DC-06-056 | web 통합 테스트: 무세션 401, 402 `details`, 크레딧 동시성 50회, 레이트 리밋, 생성·추출·렌더 실패 환불, DC001~DC010 각 1개 이상, sanitize, PII lint, 금액·번호 본문 무시 | `web/tests/integration/` | DC-06-027, DC-06-028, DC-06-029, DC-06-037 | P0 | M | Opus | 동시 consume 50회 음수 잔액 0, drift 0. 실패 경로마다 환불 행 1개. SQLSTATE 10종 매핑 HTTP 일치 | SellingDocs 5장 #14 |
-| DC-06-057 | 핵심 플로우 E2E: (a) 가입 → AI 온보딩 → 회사 정보 → 프로젝트 → 체크리스트 → 패키지 → 확정 → PDF (b) RFP → 추출 → 확인 → 효과 → 재생성 (c) 회의 텍스트 → 회의록 → 후보 수락 (d) 채팅 1턴(목 제공자) (e) 3D 히어로 3기기 렌더 스모크 | `web/e2e/flows/` | DC-06-038~DC-06-044, DC-06-047 | P0 | M | Opus | 스테이징에서 5개 플로우 통과, (a)는 30분 KPI 목표 경로를 10분 안에 완주(자동화). 새로고침 후 세션 유지 | `03_SCREENS_UX.md:82-178` |
+| DC-06-057 | 핵심 플로우 E2E: (a) 첫 로그인(Stage A는 `no_app` 페르소나, 063 후 스테이징은 이메일 가입) → AI 온보딩 → 회사 정보 → 프로젝트 → 체크리스트 → 패키지 → 확정 → PDF (b) RFP → 추출 → 확인 → 효과 → 재생성 (c) 회의 텍스트 → 회의록 → 후보 수락 (d) 채팅 1턴(목 제공자) (e) 3D 히어로 3기기 렌더 스모크. Playwright `globalSetup`(`web/e2e/flows/global-setup.ts`, Playwright 설정 등록은 004에 1줄 요청)이 페르소나마다(`no_app` 제외, 03장 7.3절) `/api/dev/login`으로 `storageState`를 만든다 | `web/e2e/flows/` | DC-06-038~DC-06-044, DC-06-047 | P0 | M | Opus | Mock 페르소나 storageState로 로컬에서 5개 플로우 통과(G1 근거, W6 종료 직후 먼저), DC-06-063 완료 후 스테이징에서 재실행해 통과. (a)는 30분 KPI 목표 경로를 10분 안에 완주(자동화). 새로고침 후 세션 유지. `outsider`로 owner 조직 프로젝트·문서 URL 직접 접근 404 | `03_SCREENS_UX.md` 2절, AUTH_ROADMAP 2.1절 E2E 행 |
 | DC-06-058 | AI·음성 보안·라우팅 회귀: 서명 토큰 위조·만료·재사용, 대화 매핑, 국외 동의 필터, 강제 오픈소스(`meeting_minutes`, `docs.minutes`, `dify.aux`), 고위험 문서 LLM 0, 선차감·정산·환불, 라우팅 seed 스냅샷 | `api/tests/docs/security/`, `web/e2e/ai/`, `scripts/nomad-docs/ai-routing/` | DC-06-024, DC-06-025, DC-06-033, DC-06-034, DC-06-036 | P0 | M | Fable | `resolve_ai_route` 스냅샷(13행 × 동의 유/무)이 seed와 일치(1.1절 I-9). 위조 토큰 401, 타인 대화 404, 미동의 조직 상용 0, `dev_contract` LLM 행 0, 원장 drift 0. 실패 시 병합 차단 | `docs/products/_platform-core/SECURITY_BASELINE.md:278-305` |
-| DC-06-059 | 배포 설정: Vercel(web), Railway(worker, api), 렌더 서비스 private network 연결(`RENDER_SERVICE_URL`, `X-Render-Token`), env 문서 | `infra/nomad-docs/`, `docs/nomad-docs/ops/env.md` | DC-06-005, DC-06-006 | P0 | S | Sonnet | env 문서 = `02_ARCHITECTURE.md:363-398`(누락 0). 스테이징에서 가입 → PDF 1회 성공. 렌더 서비스 공개 URL 호출 불가 확인 | flora 5장 #5, #15, SellingDocs 3장 #1 |
+| DC-06-059 | 배포 설정: Vercel(web), Railway(worker, api), 렌더 서비스 private network 연결(`RENDER_SERVICE_URL`, `X-Render-Token`), env 문서 | `infra/nomad-docs/`, `docs/nomad-docs/ops/env.md` | DC-06-005, DC-06-006 | P0 | S | Sonnet | env 문서 = `02_ARCHITECTURE.md` 8절 + 9.3절(`AUTH_MODE`, `AUTH_PROVIDERS`, `DOCS_TERMS_VERSION`, 누락 0). 배포 환경은 Mock 금지(`AUTH_MODE=live`)이므로 Stage A 동안은 스테이징 헬스체크·로그인 없는 화면까지 확인하고, 스테이징 가입 → PDF 1회 성공은 DC-06-063 완료 후 확인. 렌더 서비스 공개 URL 호출 불가 확인 | flora 5장 #5, #15, SellingDocs 3장 #1 |
 | DC-06-060 | shorts_agency 패키지(Phase 2, DC-F-046, 확정 결정 21): content 체크리스트 14개 게시(효과 스키마 검증, `catalog:<key>` 단가 해석), 템플릿 7종(`content_brief`, `video_service_contract`, `channel_access_mandate`, `brand_guide_ack`, `ad_disclosure_checklist`, `monthly_report`, `service_intro`) v1, lint `L-NO-GUARANTEE`·`L-AD-DISCLOSURE`, 패키지 단계(`01_PRD.md` 3.5.1절), 위임 동의서 고지문 상수, 월간 리포트 KPI 입력(수동·CSV). 계약 템플릿·lint는 Opus가 직접, 나머지 화면·설정은 Sonnet 보조 | `tpl/content_brief/` 외 6개, `web/src/features/effects-engine/`(catalog 토큰만), `web/src/app/api/projects/[id]/packages/`(package_code 분기), `api/app/ai/products/docs/rules/`(lint 2종) | DC-06-020, DC-06-021, DC-06-027, DC-06-049 | P2 | L | Opus | content 프로젝트 체크리스트에 dev 전용 항목 0개. 월 12편 × 130,000원이 quote·sow·video_service_contract에 같은 값. `delivery.naver_clip_upload` 켜면 `vsc.automation_risk`·제약 요구사항 생성. 성과 보장 문구가 있는 계약서 확정 시 `DC005`. 업로드 대행 끄면 패키지 5종·18크레딧. 계약서·위임 동의서는 D-3·D-15 전 `is_active=false` 유지. RLS 러너 두 대상 통과 | `01_PRD.md` DC-F-046, 3.1.1·3.3.1·3.5.1·6.4절, `2300_docs.sql` 25절 |
 | DC-06-061 | CRM형 워크스페이스(DC-F-047): AppShell 확장(왼쪽 내비·상단 명령 막대), 커맨드 팔레트(⌘K), 파이프라인 보드·표(`/app/pipeline`, 뷰 `docs.project_pipeline`, Realtime `documents`로 카드 이동), 거래처 360(RecordSidebar·ActivityTimeline, 뷰 `docs.project_activity`), API `GET /api/pipeline`·`/api/search`·`/api/{projects,parties}/[id]/activity` | `web/src/features/pipeline/`, `web/src/app/(app)/pipeline/`, `web/src/app/api/pipeline/`, `web/src/app/api/search/`, `web/src/app/api/projects/[id]/activity/`, `web/src/app/api/parties/[id]/activity/` | DC-06-011, DC-06-012, DC-06-038 | P0 | M | Sonnet | 견적서 확정 후 새로고침 없이 카드가 quoted 열로 이동. 다른 조직 프로젝트·거래처·문서가 보드·팔레트·타임라인에 0건(E2E + RLS 러너 뷰 항목). 끌어 놓기로 단계가 바뀌지 않는다. 키보드만으로 팔레트 → 프로젝트 → 문서 생성. 50카드 보드 첫 렌더 p95 1.5초. 거래처 상세(038 소유 화면)는 이 작업의 RecordSidebar·ActivityTimeline 컴포넌트를 쓴다 | `03_SCREENS_UX.md` 3.26절, `01_PRD.md` DC-F-047 |
 | DC-06-062 | 문서 생성 단계별 진행 애니메이션(DC-F-048): GenerationProgress(StageRail·SectionLane·SheetAssembler), 단일 오버레이와 패키지 레인, Realtime `generation_runs.progress` 구독(끊기면 3초 폴링), 대기 중 [취소](`/api/generation-runs/[id]/cancel` → `docs.cancel_generation`), 상단 진행 칩, reduced-motion·`aria-live` | `web/src/features/progress/` | DC-06-011, DC-06-022, DC-06-027 | P0 | M | Sonnet | E2E에서 stage 순서(queued → collecting → drafting → assembling → linting → done)가 서버 progress와 같다. 시간 기반 가짜 진행률 0(코드 검사). 대기 중 취소 → 환불 표시 → 같은 문서 즉시 재생성 가능. reduced-motion에서 애니메이션 0. transform·opacity 외 애니메이션 속성 0 | `03_SCREENS_UX.md` 3.27절, `01_PRD.md` DC-F-048 |
@@ -235,25 +237,25 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 | W0 | 001, 004, 005, 008 | 4 | 없음 | DB 조각 적용, 타입, web·워커 골격, 디자인 레퍼런스(1단계) |
 | W1 | 002, 003, 006, 007, 012, 013, 017, 020, 046 | 9 | W0 완료 | 모놀리스 변환, RLS 러너, ai-service, CI, API 공통, 단가·features, 효과 엔진, 템플릿 9종, 법무 문구 |
 | W1-D | 009 → 010 → 011(직렬) | 1 | 004, 008 완료 | 디자인 시스템 2~4단계. 010은 사람이 수행. 011 완료가 모든 화면 작업(038~045)의 진입 조건 |
-| W2 | 014, 015, 016, 019, 021, 031, 033, 047 | 8 | W1 완료 | 인증, 워크스페이스·거래처, 정본 API, 효과 엔진 속성 테스트, compliance·lint, 업로드, AI 게이트, 결제 |
+| W2 | 014, 015, 016, 019, 021, 031, 033, 047 | 8 | W1 완료 | 인증 Stage A(Mock 로그인·시드·가드, 8.2절), 워크스페이스·거래처, 정본 API, 효과 엔진 속성 테스트, compliance·lint, 업로드, AI 게이트, 결제 |
 | W3 | 018, 022, 028, 032, 036, 037, 038, 045, 049, 059 | 10 | W2 완료, 038·045는 011 완료 | 효과 적용, 생성 그래프, 문서 API, RAG, 음성, CSV, 화면 1, 3D 히어로(+ 3D 영상), 운영자 카탈로그, 배포 |
 | W4 | 023, 024, 025, 027, 029, 030, 035, 039, 044, 048, 061, 062 | 12 | W3 완료. 029의 DOCX는 C-1 반영 전 비활성으로 진행 | 추출·회의록·다시 쓰기 그래프, 생성 요청·패키지, 내보내기, 추적표, 위키, 화면 2, 랜딩, 결제 E2E, CRM 워크스페이스, 생성 진행 애니메이션 |
 | W5 | 026, 034, 040, 041, 042, 051 | 6 | W4 완료 | 골든·평가, Dify 채팅, 편집기, 화면 3·4, 계정 삭제·정리 |
 | W6 | 043, 050 | 2 | W5 완료 | 화면 5(채팅·위키), KPI |
-| W7 | 056, 057, 058 | 3 | W6 완료 | 통합·E2E·AI 회귀. 녹색이면 공개 베타(MVP). `dev_contract` 활성은 D-3 법무 검토 완료가 별도 조건 |
-| W8 | 052 → 053, 054, 055, 060 | 1 → 4 | MVP 출시 후, team 플랜(C-5) 준비 | 연동 프레임워크, 발신 웹훅·n8n, HubSpot, admin-suite ERP, shorts_agency(Phase 2) |
+| W7 | 063(G1 통과 후 먼저), 056, 057, 058 | 4 | W6 완료. 063은 G1 통과(`[DECISION] G1 통과`) 후 시작하고 056·057·058의 공개 베타 마무리(스테이징·B 구성 재실행)는 063 완료를 기다린다. G1 근거인 Mock 핵심 플로우 E2E는 057이 W6 종료 직후 로컬에서 먼저 녹색으로 만든다(8.2절) | Google 로그인 전환(Stage B), 통합·E2E·AI 회귀. 녹색이면 공개 베타(MVP). `dev_contract` 활성은 D-3 법무 검토 완료가 별도 조건 |
+| W8 | 052 → 053, 054, 055, 060 / 064, 065(G2 통과 후) | 1 → 4, 064·065 병렬 2 | MVP 출시 후, team 플랜(C-5) 준비. 064·065는 G2 통과(`[DECISION] G2 통과`) 후, 둘은 병렬 가능(네이버 검수 신청은 G2 직후) | 연동 프레임워크, 발신 웹훅·n8n, HubSpot, admin-suite ERP, shorts_agency(Phase 2), 카카오 로그인(C1), 네이버 로그인(C2) |
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 14 (001, 003, 006, 013, 014, 018, 022, 027, 033, 047, 049, 051, 055, 058) | 22.6% | 32 / 137 = 23.4% |
-| Opus | 32 (002, 004, 005, 011, 012, 015, 016, 017, 019, 020, 021, 023, 024, 025, 026, 028, 029, 030, 031, 032, 034, 035, 036, 037, 040, 048, 052, 053, 054, 056, 057, 060) | 51.6% | 73 / 137 = 53.3% |
-| Sonnet | 14 (007, 008, 009, 010, 038, 039, 041, 042, 043, 044, 045, 059, 061, 062) | 22.6% | 29 / 137 = 21.2% |
-| Haiku | 2 (046, 050) | 3.2% | 3 / 137 = 2.2% |
-| 합계 | 62 | 100% | 137 |
+| Fable | 16 (001, 003, 006, 013, 014, 018, 022, 027, 033, 047, 049, 051, 055, 058, 063, 065) | 24.6% | 36 / 142 = 25.4% |
+| Opus | 33 (002, 004, 005, 011, 012, 015, 016, 017, 019, 020, 021, 023, 024, 025, 026, 028, 029, 030, 031, 032, 034, 035, 036, 037, 040, 048, 052, 053, 054, 056, 057, 060, 064) | 50.8% | 74 / 142 = 52.1% |
+| Sonnet | 14 (007, 008, 009, 010, 038, 039, 041, 042, 043, 044, 045, 059, 061, 062) | 21.5% | 29 / 142 = 20.4% |
+| Haiku | 2 (046, 050) | 3.1% | 3 / 142 = 2.1% |
+| 합계 | 65 | 100% | 142 |
 
-비율은 작업 62개 기준이다(2026-10-14 갱신: DC-06-010은 판정을 사람이 하지만 준비 작업 모델을 Sonnet으로 적는다. DC-06-060은 Opus 주도, 061·062 Sonnet 추가). 규모 내역: Fable M 10·L 4, Opus S 2·M 19·L 11, Sonnet S 3·M 8·L 4, Haiku S 1·M 1. Fable은 DB·RLS·결제·크레딧 차감 경로(013, 027, 033, 047), 권한 경계(006, 014, 049, 055), 체크리스트 효과의 원자 적용(018), 고위험 문서 규칙이 걸린 생성 그래프(022), AI 보안 회귀(058), 개인정보 삭제(051)를 맡는다. 나머지 그래프·RAG·위키·Dify·음성·편집기는 Opus, 화면·3D 히어로·디자인 시스템 구현은 Sonnet이다(`DOC_TEMPLATE.md:253`). Haiku 비율이 낮은 이유: 타입 생성은 001, 반복 점검은 CI(007)가 맡아 남는 보일러플레이트가 적다.
+비율은 작업 65개 기준이다(2026-10-14 갱신: DC-06-010은 판정을 사람이 하지만 준비 작업 모델을 Sonnet으로 적는다. DC-06-060은 Opus 주도, 061·062 Sonnet 추가. 인증 단계 3개 추가: 063·065 Fable M, 064 Opus S. 그 전 62개는 Fable 22.6%, Opus 51.6%, Sonnet 22.6%, Haiku 3.2%, 가중 137). 규모 내역: Fable M 12·L 4, Opus S 3·M 19·L 11, Sonnet S 3·M 7·L 4, Haiku S 1·M 1. Fable은 DB·RLS·결제·크레딧 차감 경로(013, 027, 033, 047), 권한 경계(006, 014, 049, 055, 인증 Stage B 063, 네이버 세션 발급 경로 065), 체크리스트 효과의 원자 적용(018), 고위험 문서 규칙이 걸린 생성 그래프(022), AI 보안 회귀(058), 개인정보 삭제(051)를 맡는다. 나머지 그래프·RAG·위키·Dify·음성·편집기는 Opus, 화면·3D 히어로·디자인 시스템 구현은 Sonnet이다(`DOC_TEMPLATE.md:253`). Haiku 비율이 낮은 이유: 타입 생성은 001, 반복 점검은 CI(007)가 맡아 남는 보일러플레이트가 적다.
 
 ## 5. 리뷰 작업 흡수표
 
@@ -263,7 +265,7 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 |---|---|---|
 | `docs/reviews/SellingDocs.md` 5장 #1 | PDF 엔진 결정과 데이터 모델 v2 | DC-06-001(데이터 모델은 `2300`으로 확정), DC-06-029(공용 WeasyPrint 렌더 소비), 코어 요청 C-1 |
 | SellingDocs 5장 #2 | `Claude.md` 작성 | 이 폴더 `CLAUDE.md`, DC-06-004(`web/CLAUDE.md`), DC-06-007(빈 파일 CI 검사) |
-| SellingDocs 5장 #3 | 골격 복제, shadcn, Supabase 클라이언트·proxy·auth callback 이식 | DC-06-004, DC-06-009(shadcn/ui), DC-06-014 |
+| SellingDocs 5장 #3 | 골격 복제, shadcn, Supabase 클라이언트·proxy·auth callback 이식 | DC-06-004, DC-06-009(shadcn/ui), DC-06-014(Stage A, `finishLogin`), DC-06-063(Stage B 콜백) |
 | SellingDocs 5장 #4 | 마이그레이션(profiles, books, chapters, credit_logs, exports, 차감 RPC) | DC-06-001(코어 원장·`generation_runs`·`document_versions`·`doc_exports`), DC-06-003 |
 | SellingDocs 5장 #5 | 목차 → 챕터별 생성 라우트(차감·환불) | DC-06-027(문서 1개 = 잡 1개, 패키지 부모·자식), DC-06-022(섹션 단위 생성) |
 | SellingDocs 5장 #6 | WeasyPrint Docker 서비스 + export/pdf | DC-06-029(컨테이너는 flora-publishing 소유 공용 서비스, docs는 소비자), DC-06-026(한글 골든) |
@@ -324,18 +326,19 @@ DB 기본 방어는 튼튼하다. 다만 핵심 약속을 깨는 빈틈이 SQL�
 | 타입 | `supabase gen types typescript --local --schema core,docs > apps/nomad-docs/src/types/supabase.ts` 결과가 커밋본과 같다(CI 비교) |
 | RLS 스모크 | `node scripts/nomad-docs/rls-runner.mjs --target mod`와 `--target mono` 전 항목(105 이상) 통과(DC-06-003) |
 | 결제 E2E | `npx playwright test e2e/billing` 5개 시나리오 통과(Toss 테스트 키, DC-06-048) |
-| 핵심 플로우 E2E | `npx playwright test e2e/flows` 5개 플로우 통과(DC-06-057) |
+| 핵심 플로우 E2E | `npx playwright test e2e/flows` 5개 플로우 통과(DC-06-057, Mock 페르소나로 로컬 먼저, 063 후 스테이징 재실행) |
+| 인증 단계 | Stage B: `docs/products/_platform-core/AUTH_ROADMAP.md` 5.3절 B-1~B-6(DC-06-063, B-5 Google 실로그인은 수동 점검표). CI 인증 검사(DC-06-007): 인증 모듈 밖 `AUTH_MODE` 참조 0, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패 |
 | AI·음성 | `npx playwright test e2e/ai`, `pytest apps/api/tests/docs/security` 녹색(DC-06-058). 평가셋(hybrid 20, 검색 30, 채팅 30, 추출 10)을 상용·오픈소스 두 경로로 통과. `meeting_minutes`·`docs.minutes` 상용 호출 0 |
 | 고위험 문서 | `dev_contract` 생성의 LLM `ai_usage` 0, D-3 법무 검토 완료 전 `doc_types.is_active=false` |
 | 3D·디자인 시스템 | `HERO_3D.md:70-75` 수용 기준(DC-06-045), 디자인 시스템 4단계(DC-06-011) 완료, `tailwind.config.js`·hex 하드코딩 0 |
-| 작업 | 2절 P0·P1 작업 전부 완료(P2 = DC-06-052~055, 060 제외). P2는 Phase 2 완료 조건 |
+| 작업 | 2절 P0·P1 작업 전부 완료(P2 = DC-06-052~055, 060 제외). P2는 Phase 2 완료 조건. 8절 인증 단계 작업 중 063(P0)은 MVP 출시 조건이고, 064·065(P1)는 G2 이후 작업이라 MVP 완료 정의에서 제외 |
 
 P0 작업과 대응 테스트 작업:
 
 | P0 작업 | 대응 테스트 작업 |
 |---|---|
 | 001, 002, 013, 018, 049 | 003, 056 |
-| 004, 012, 014, 015, 016, 037 | 056, 057 |
+| 004, 012, 014(Stage A), 015, 016, 037, 063(Stage B) | 056, 057(Mock 페르소나 storageState, 063 후 스테이징 재실행), 063 수동 점검표(B-5) |
 | 017 | 019 |
 | 020, 021, 022, 023, 024, 025, 029 | 026, 058 |
 | 027, 028, 030 | 056, 057, 026 |
@@ -344,3 +347,47 @@ P0 작업과 대응 테스트 작업:
 | 038, 039, 040, 041, 042, 043, 044, 046, 061, 062 | 057, 046 점검표 |
 | 005, 007, 059 | CI 자체 실행 결과, 스테이징 배포 확인(057) |
 | 008, 009, 010, 011 | 디자인 시스템 4단계 문서-코드 일치 검사(011), 010은 사람 검토 기록 |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(9장 작업 계획 반영 규칙, 8장 매트릭스의 nomad-docs 행: `docs`, open, 프리랜서·에이전시, A 추가 페르소나 없음, B Google + 이메일, C1 P1, C2 P1)다. Stage A는 기존 DC-06-014가 맡고(2절에서 범위 변경), 아래 3개를 새로 더한다. 작업 ID는 기존 최대 062 다음부터.
+
+### 8.1 작업 목록 (2절과 같은 열)
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| DC-06-063 | 인증 Stage B: Google OAuth 전환 + 이메일 가입·메일 인증·비밀번호 재설정 화면, `/auth/callback`(`finishLogin` 연결), 첫 OAuth 로그인 뒤 약관 동의 단계(`/onboarding/terms`, 온보딩 경로 계산에 약관 단계 추가), 배포 체크리스트(Google 콘솔·Supabase Providers·Redirect URLs·`AUTH_PROVIDERS`), Google 실로그인 수동 점검표 | `web/src/app/(auth)/`(014에서 이어 받음: login B 구성, signup, reset-password), `web/src/app/auth/callback/`, `web/src/app/onboarding/terms/`, `web/src/features/onboarding-terms/`, `web/src/app/api/terms/`, `web/src/lib/auth/onboarding.ts`(014 완료 후 이 파일만 이어 받음), `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`(001 완료 후 이 절만 이어 받음), `docs/nomad-docs/ops/auth-checklist.md` | DC-06-014, DC-06-033, DC-06-046, DC-06-059. 진입 조건 G1(`[DECISION] G1 통과`) | P0 | M | Fable | AUTH_ROADMAP 5.3절 그대로: B-1 새 Google 계정 첫 로그인 → `session_context('docs')` `entitled=true`, `plan_code='free'`, 가입·월 크레딧 1회(재로그인 3회 뒤에도 원장 행 수 같음). B-2 `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` → `/app`(온보딩이 남았으면 02장 9.6절 단계). B-3 `code` 없음·재사용·만료 → `/login?error=callback`, 오류 로그에 토큰·코드 없음. B-4 `VERCEL_ENV=production` 빌드에서 `/api/dev/login` 404, 로그인 화면에 개발용 패널 없음, `AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(DC-06-057 핵심 플로우) 계속 녹색, Google 실로그인은 사람이 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)로 확인하고 task `log.md`에 기록. B-6 운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS=google,email`이 배포 체크리스트와 일치. 제품 추가: 이메일 가입 → 메일 인증 → `/onboarding/ai` → `/onboarding/company` → `/app`, 메일 인증 전 생성 요청 403 `email_not_verified`, 같은 이메일 가입자의 Google 로그인은 같은 `user_id`(Supabase 자동 연결), 약관 동의 기록 없는 첫 OAuth 사용자는 `/onboarding/terms` → `/onboarding/ai` 순서(03장 7.3절), 로그인 화면 제공자 버튼은 `listLoginOptions`의 `oauth` 항목을 그리는 같은 컴포넌트(C에서 화면 수정 없이 버튼 추가) | AUTH_ROADMAP 5장, 9장 B 작업, DC-F-001, 03장 7절 |
+| DC-06-064 | 인증 Stage C1: 카카오 로그인(Supabase 기본 제공자 `kakao`), 설정 → 로그인 방법(연결·해제, 03장 7.4절) | `web/src/lib/auth/providers/kakao.ts`(014 완료 후 이 파일만), `web/src/features/login-methods/`(`/app/settings/login-methods` 페이지 파일은 038 소유 `web/src/app/(app)/settings/`에 1줄 장착 요청), `supabase/config.toml`의 `[auth.external.kakao]`·`[auth] enable_manual_linking`(063 완료 후 이어 받음), `docs/nomad-docs/ops/auth-checklist.md` 카카오 절(063 완료 후 이어 받음) | DC-06-063. 진입 조건 G2(`[DECISION] G2 통과`), 01장 D-18 확정 | P1 | S | Opus | AUTH_ROADMAP 7.1.3절 그대로: C1-1 새 카카오 계정 첫 로그인 → B-1과 같은 결과(엔타이틀먼트·크레딧 1회). C1-2 비즈 앱(a)이면 Google로 가입한 같은 이메일 사용자가 카카오로 로그인 → 같은 `user_id`(자동 연결은 제공자 이메일 인증 확인 시에만, 미확인이면 수동 연결 7.3절). C1-3 (b)면 이메일 없는 사용자가 결제 전 연락 이메일 입력 화면을 본다. C1-4 표시 이름은 카카오 닉네임, 없으면 `user` 규칙. C1-5 버튼은 카카오 디자인 가이드의 색·문구(미확인: 최신판 확인 후 반영). 계정 연결 화면(7.3절): 연결·해제, 마지막 수단 해제 거부, 감사 `auth.identity_link`·`auth.identity_unlink` | AUTH_ROADMAP 7.1, 7.3절, 9장 C1 작업, 01장 D-18 |
+| DC-06-065 | 인증 Stage C2: 네이버 로그인(스파이크 0.5일 → `custom:naver` 또는 서버 브리지), 네이버 검수 자료, 설정 → 로그인 방법의 네이버 행 | `web/src/lib/auth/providers/naver.ts`(014 완료 후 이 파일만), `scripts/auth/register-naver-provider.mjs`(제안), `web/src/app/auth/naver/`(브리지 경로일 때만), `docs/nomad-docs/ops/naver-review/`(검수 캡처) | DC-06-063(로그인 방법 화면의 네이버 행은 064 완료 후 064 파일에 요청). 진입 조건 G2. 브리지면 코어 C-13(8.3절) 적용 후 | P1 | M | Fable | AUTH_ROADMAP 7.2.4절 그대로: C2-1 스파이크 결과가 `[DECISION]`으로 기록되고 `NAVER_AUTH_PATH`가 그 값이다. C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과. C2-3 같은 네이버 계정 재로그인 5회 → 같은 `user_id`, 사용자 수 증가 0. C2-4 (브리지) state 변조·재사용·쿠키 없음 → 거부, 세션 미생성, 다른 브라우저에서 받은 콜백 URL 재생 → 거부. C2-5 (브리지) 같은 이메일의 Google 가입자가 네이버로 처음 로그인 → `email_in_use` 안내, 새 사용자 0. C2-6 네이버 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않는다 | AUTH_ROADMAP 7.2절, 9장 C2 작업, 01장 D-19 |
+
+### 8.2 게이트와 웨이브
+
+| 게이트·웨이브 | 작업 | 진입 조건 | 판정 |
+|---|---|---|---|
+| Stage A | DC-06-014(W2) | 없음. W0의 001·004, W1의 012 뒤. 014보다 앞 웨이브(W0·W1) 작업은 시드 스크립트 없이 SQL·단위 테스트로 검증한다(RLS 러너 003은 SQL 안 `-- AS` 역할 전환을 쓰므로 영향 없음) | - |
+| G1 | - | AUTH_ROADMAP 4장: 2절 MVP P0 기능 작업 완료(인증 B·C와 공개 베타 직전 통합 작업 056·057·058 제외), 핵심 플로우 E2E(DC-06-057)가 Mock 페르소나로 로컬 녹색, RLS 스모크(DC-06-003)와 `outsider` 교차 테넌트 거부, 결제 E2E(DC-06-048, Toss 테스트 키), 단계 분기 코드가 인증 모듈 밖 0건(DC-06-007 CI), Google Cloud 프로젝트·OAuth 동의 화면·웹 클라이언트 ID·운영 Supabase 프로젝트 준비(AUTH_ROADMAP 5.1절) | 사람(대표님)이 task `log.md`에 `[DECISION] G1 통과` |
+| Stage B | DC-06-063 | W7의 맨 앞(마지막 기능 웨이브 W6 다음, 공개 베타 직전 통합·E2E 웨이브). 056·057·058의 스테이징·B 구성 재실행은 063 완료를 기다린다 | - |
+| G2 | - | AUTH_ROADMAP 6장: Google 실로그인 공개 베타 운영 2주(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안), open 앱 신규 가입자 중 `entitled=false` 0, 카카오 디벨로퍼스 앱·비즈 앱 전환(01장 D-18), 네이버 애플리케이션 등록·검수 자료 준비 | 사람이 `[DECISION] G2 통과` |
+| Stage C | DC-06-064, DC-06-065 | W8(MVP 출시 후 웨이브, 052~055·060과 같은 웨이브), G2 통과 후. 064·065 병렬 가능 | - |
+
+### 8.3 코어 요청 (6절 표에 이어서)
+
+| ID | 요청 | 이유 | 대상 | 막히는 작업 / 우회 |
+|---|---|---|---|---|
+| C-13 | C2 스파이크가 실패해 브리지 경로를 택하면 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`(`core.auth_identity_links`) 적용 | 브리지 로그인은 네이버 고유 id로 사용자를 찾는다. 코어는 한 번만 적용하고 모든 제품이 쓴다(AUTH_ROADMAP 9장 공용 모듈 요청). `supabase_custom` 경로면 요청하지 않는다 | `_platform-core` | 065의 브리지 경로. 다른 제품이 먼저 적용했으면 요청 없이 진행 |
+
+### 8.4 기존 문서와 달라진 점
+
+| 항목 | 이전 | 지금 | 반영 |
+|---|---|---|---|
+| DC-06-014 범위 | 인증 화면과 콜백(이메일 가입, Google), 회사 정보 온보딩 | Stage A(Mock 로그인, 시드, 가드, `finishLogin`, 온보딩 경로 계산) + 회사 정보 온보딩. 이메일·Google 화면과 콜백은 063 | 2절 014 행 |
+| `web/src/app/(auth)/` 소유 | 014 단독 | 014(A 구성) → 063이 이어 받음(직렬이라 동시 쓰기 없음) | 2절 014 행, 8.1절 063 행 |
+| `web/src/app/auth/callback/` 소유 | 014 | 063(A에는 콜백이 없다. `/api/dev/login`이 `finishLogin`을 직접 부른다) | 2절 014 행, 8.1절 063 행 |
+| `web/src/lib/auth/` 소유 | 없음 | 014. 063은 `onboarding.ts`, 064는 `providers/kakao.ts`, 065는 `providers/naver.ts`만 014 완료 후 이어 받는다 | 8.1절 |
+| 온보딩 약관 단계 | 없음(이메일 가입 폼에서 동의) | OAuth 첫 로그인용 `/onboarding/terms`를 063이 만들고, 온보딩 순서(약관 → AI 처리 방식 → 회사 정보)는 02장 9.6절 | 02장 9.6절, 03장 7.3절 |
+| DC-06-007 수용 기준 | 금지 문자열 `flora_pro_unlocked`·`'1234'` | 인증 단계 CI 검사 추가(쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈 밖 `AUTH_MODE`, 배포 빌드 Mock 실패) | 2절 007 행 |
+| DC-06-057 수용 기준 | 스테이징에서 통과, (a)는 가입부터 | Mock 페르소나 storageState로 로컬 먼저(G1 근거), 063 후 스테이징 재실행. (a)는 `no_app` 첫 로그인부터 | 2절 057 행 |
+| DC-06-059 수용 기준 | 스테이징 가입 → PDF | 배포 환경은 Mock 금지라 스테이징 가입 확인은 063 완료 후. env 문서에 9.3절 포함 | 2절 059 행 |
+| 01장 열린 결정 | D-1~D-17 | 카카오 이메일 정책 D-18, 네이버 경로 D-19, 이메일 가입 유지 D-20을 01장 8.1절에 새로 둠 | 01장 8.1절 |
+| 공용 파일 요청 | - | 014: 상단 배지 `MOCK AUTH · 로컬 전용`의 레이아웃 장착(`web/src/app/layout.tsx`)과 `package.json` 스크립트 `db:seed-users`는 DC-06-004에 1줄 요청(1절 원칙). 064의 `/app/settings/login-methods` 장착은 038에 1줄 요청 | 1절 원칙 그대로 |
+| 작업 수 | 62개 | 65개 | 머리말, 4절 |

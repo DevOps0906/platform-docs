@@ -307,7 +307,7 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 
 | 규칙 | 내용 |
 |---|---|
-| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`, `/invite/[token]`의 로그인 버튼 영역에만 둔다. 기능 코드·`proxy.ts`·`requireSession`에 `if (mock)` 금지(CI grep) |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/`(`callback/`, C2 브리지 `naver/`), `src/app/api/dev/`, `src/components/auth/`(`/login`·`/invite/[token]`에 장착하는 로그인 버튼)에만 둔다(`CLAUDE.md` "인증 단계 규칙"과 같은 목록). 기능 코드·`proxy.ts`·`requireSession`에 `if (mock)` 금지(CI grep) |
 | invite 앱 콜백 | `finishLogin`은 invite 앱이므로 `bootstrap_app_for_org`를 부르지 않는다(`AUTH_ROADMAP.md:138`). 엔타이틀먼트는 초대 수락(`POST /api/beta/redeem`)만 만든다. `entitled=false`면 `/no-access`, 단 `next`가 `/invite/` 경로면 그 화면으로 돌려보내 수락을 이어 간다 |
 | 초대 이메일 불일치 | Google 계정 이메일이 초대 이메일과 다르면 수락이 `ST031`. 새 사용자는 엔타이틀먼트 없이 남고 `/no-access`에서 "초대받은 이메일로 로그인하세요"(`AUTH_ROADMAP.md:206`) |
 | MockBroker와 구분 | 인증 Mock(`AUTH_MODE=mock`, 시드 페르소나)과 증권사 Mock(`MockBroker`, `broker='mock'` 연결, "샘플 데이터" 배지, 2절)은 다른 개념이다. 인증 Mock은 배포 환경에서 404이고, `MockBroker`는 배포 환경에서도 사용자가 고르는 샘플 연결로 남는다. 서로의 스위치를 참조하지 않는다 |

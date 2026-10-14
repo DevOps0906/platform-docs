@@ -51,7 +51,7 @@
 | `apps/api/` | 공용 ai-service와 설정 045, `app/ai/products/blog/knowledge.py` 048, `wiki_config.py` 049, `app/ai/graphs/blog_post_draft.py`·`app/ai/compliance/blog.py`·`prompts/` 050, `app/ai/tools/blog/` 051, `tests/blog/security/` 056 | 045, 048, 049, 050, 051, 056 |
 | `packages/blog-rules/` | 금지 표현·대화 규칙(언어 중립) | BL-06-047 |
 | `src/app/api/` AI·음성 | ai(`keywords/`, `outline/` 제외)·internal·onboarding·posts/[id]/ai-approve·ai-reject 046, voice 053, materials 048, wiki 049 | 046, 048, 049, 053 |
-| `src/app/` AI 화면 | onboarding 046, assistant·materials 052, wiki 049, `posts/[id]/review` 022 | 022, 046, 049, 052 |
+| `src/app/` AI 화면 | onboarding 046(`terms/`는 057), assistant·materials 052, wiki 049, `posts/[id]/review` 022 | 022, 046, 049, 052 |
 | `src/components/` AI·3D | ai-chat·materials 052, voice 053, dictation 054, wiki 049, hero3d·`public/hero/` 055 | 049, 052~055 |
 | `src/server/ai/` | `credits.ts`, `purposes.ts` 006, `schemas/` 015, `gateway/`, `pricing.ts` 046 | 006, 015, 046 |
 | `src/styles/tokens.css`, `src/components/ui/`, `src/app/dev/components/` | 디자인 시스템 | BL-06-042 |
@@ -144,4 +144,5 @@
 | 금지 패턴 | 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock(`mock-auth`, `nomad_role`, `nomad_plan`, `dev-user`), `NEXT_PUBLIC_` 비밀번호, 원격 DB에 시드 계정 생성, 판정 거짓인데 조용히 live 전환, 콜백 `next` 무검증, 이메일 일치만으로 계정 합치기, `listUsers` 전체 조회로 사용자 찾기 |
 | 채널 로그인과 혼동 금지 | 네이버·티스토리 채널 연결(Playwright 게시·브랜드커넥트, `encrypted_credentials`)은 사용자 로그인과 별개다. 로그인 작업(057~059)은 채널 코드(`src/server/channels/`, `workers/blog-worker/src/channels/`)를 건드리지 않고, 채널 작업은 `src/lib/auth/`를 건드리지 않는다 |
 | 단계 전환 | G1(AUTH_ROADMAP 4장)·G2(6장)는 사람(대표님)이 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한다. 에이전트가 스스로 판정하지 않는다. C2 경로도 `[DECISION]`(스파이크 결과) |
-| 이 제품의 작업 ID | A: BL-06-004(W1). B: BL-06-057(P0, G1 후, W6 맨 앞). C1: BL-06-058(P1, G2 후, W7). C2: BL-06-059(P1, G2 후, W7, 네이버 블로거 비중으로 검수 신청 먼저) |
+| 소유 경로 | 004: `src/lib/auth/`, `src/app/(auth)/`(`signup/`, `reset-password/` 제외), `src/app/api/dev/`, `src/components/dev-auth/`, `scripts/dev/`. 057: `src/app/auth/callback/`, `src/app/(auth)/signup/`, `src/app/(auth)/reset-password/`, `src/components/auth-providers/`, `src/app/onboarding/terms/`(로그인 페이지 버튼 장착·`finishLogin` 연결은 004 파일에 1줄 요청). 058: `src/components/auth-providers/kakao.tsx`(057 디렉토리에 파일 추가 요청), `src/app/(app)/settings/login-methods/`. 059: `src/components/auth-providers/naver.tsx`, `src/app/auth/naver/`, `src/app/auth/link/`, `src/server/auth-bridge/`, `scripts/auth/`. `supabase/config.toml`은 001에 요청 |
+| 이 제품의 작업 ID | A: BL-06-004(W1). B: BL-06-057(P0, G1 후, W6에서 054 뒤·056 앞). C1: BL-06-058(P1, G2 후, W7). C2: BL-06-059(P1, G2 후, W7, 네이버 블로거 비중으로 검수 신청 먼저) |

@@ -250,7 +250,7 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 
 시드는 `scripts/dev/seed-users.mjs --app poll`(공통 페르소나, `docs/products/_platform-core/AUTH_ROADMAP.md` 2.2, 2.3절)을 실행한 뒤 제품 훅 `scripts/dev/seed-users.poll.mjs`가 아래 제품 행을 만든다. 로컬 Supabase(`127.0.0.1`·`localhost`)에서만 실행하고, 모든 쓰기는 실제 사용자 세션의 RPC 경로로 한다(service_role 직접 INSERT는 표에 적은 것만).
 
-공통 페르소나(이 제품 적용):
+### 10.1 공통 페르소나 (AUTH_ROADMAP 2.2절, 이 제품 적용)
 
 | 키 | 이메일 | 만드는 방법 | 기대 결과(poll) |
 |---|---|---|---|
@@ -262,7 +262,7 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | `ops` | `ops@dev.test` | 생성 후 service_role로 `platform_role=platform_admin` | 운영 화면(있을 때) |
 | `pending` | 만들지 않는다 | - | poll은 open 앱(seed `signup_policy='open'`)이라 승인 대기 상태가 없다 |
 
-제품 도메인 페르소나(AUTH_ROADMAP 2.2절 "live-poll 진행자" 행):
+### 10.2 제품 훅 행 (AUTH_ROADMAP 2.2절·8장 live-poll 행: 행사 진행자·공동 진행자)
 
 | 키 | 이메일 | 만드는 방법(RPC/서비스 경로) | 기대 결과 | 쓰임 |
 |---|---|---|---|---|
@@ -275,4 +275,13 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | 청중 | 페르소나를 만들지 않는다. 청중은 Supabase Auth 사용자가 아니라 참가자 토큰(D2)이며, E2E는 `POST /api/p/join { code }`로 브라우저 컨텍스트마다 참가자 쿠키를 받는다. Mock 단계에서도 그대로 동작한다 |
 | 오버레이 | 페르소나 없음. 훅이 `rotate_overlay_key`로 받은 키 URL로 접근한다 |
 | 멱등 | 같은 이메일이 있으면 건너뛰고, host 행사는 제목(`[DEV] 행사 A`, `[DEV] 행사 B`)으로 찾아 없을 때만 만든다. 가입 크레딧 멱등 키 `signup:<org>:poll`로 두 번 지급되지 않는다 |
-| 약관·온보딩 | 시드 페르소나는 베타 약관 동의 완료 상태로 만든다(기록 방식은 LP-06-049에서 정함, 03장 7.3절). 국외 이전 동의는 기본 미동의(오픈소스 경로). AI 상용 경로 테스트가 필요하면 owner 세션으로 `set_ai_cross_border_ack`를 따로 호출한다 |
+| 약관·온보딩 | A단계에는 약관 단계가 없다. B에서 LP-06-049가 약관 가드와 기록 방식(03장 7.3절)을 정하면 이 훅이 페르소나마다 동의 기록을 만든다(049가 003 소유 훅에 1줄 요청). 국외 이전 동의는 기본 미동의(오픈소스 경로). AI 상용 경로 테스트가 필요하면 owner 세션으로 `set_ai_cross_border_ack`를 따로 호출한다 |
+
+### 10.3 모놀리스와 모듈러 차이
+
+| 항목 | 모듈러(`poll` 스키마, 통합 DB) | 모놀리스(단독 `public`) |
+|---|---|---|
+| 시드 실행 | `seed-users.mjs --app poll`. 다른 앱도 쓰는 통합 DB면 `--app`을 여러 번 주고 두 번째 앱부터 `bootstrap_app_for_org`(AUTH_ROADMAP 2.3절) | `seed-users.mjs --app poll` 한 번 |
+| `no_app` | `entitled=false`로 생성 → 첫 로그인 `finishLogin`이 `bootstrap_app_for_org('poll')` 1회 | 앱 행이 1개라 가입 트리거가 자동 부트스트랩해 처음부터 `entitled=true`. `finishLogin`의 부트스트랩 단계는 아무 일도 하지 않는다 |
+| 훅 RPC 이름 | `poll.create_event`, `core.invite_member` 등 스키마 접두사 | 같은 함수가 `public`에 있다(`POLL_DB_SCHEMA=public`, `SUPABASE_DB_SCHEMA=public`) |
+| 스키마·RLS | 변경 없음 | 변경 없음 |

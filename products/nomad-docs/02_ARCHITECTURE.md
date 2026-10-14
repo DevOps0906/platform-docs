@@ -35,8 +35,9 @@
 apps/nomad-docs/                         Next.js (Vercel)
   src/proxy.ts                           라우트 보호(session_context, signup_app='docs')
   src/app/(marketing)/                   랜딩(3D 히어로), 가격, 이용약관, 개인정보처리방침
-  src/app/(auth)/, src/app/auth/callback/ 로그인, 가입, OAuth 콜백(next 화이트리스트)
-  src/app/onboarding/                    AI 처리 방식·국외 이전 동의(DC-F-025)
+  src/app/(auth)/, src/app/auth/callback/ 로그인, 가입, 재설정, OAuth 콜백(finishLogin, next 화이트리스트). 단계별 구성은 9절(A 개발용 패널, B Google·이메일, C 카카오·네이버)
+  src/lib/auth/                          인증 모듈 경계(getAuthConfig, isMockAuthAllowed, listLoginOptions, finishLogin). 단계 분기 코드는 여기·로그인 화면·콜백·api/dev/login에만(9.2절)
+  src/app/onboarding/                    약관 동의(terms, OAuth 첫 로그인, Stage B부터), AI 처리 방식·국외 이전 동의(ai, DC-F-025), 자사 정보(company)
   src/app/(app)/dashboard/               프로젝트 목록, 크레딧, 설정
   src/app/(app)/projects/[id]/           체크리스트 마법사, 요구사항·산출물·비용, 문서, 추적표, 자료, 회의록, 채팅
   src/app/(app)/app/projects/[pid]/documents/[did]/  에디터, 버전 비교, 확정, 내보내기(경로는 03장 1절이 정본)
@@ -202,7 +203,7 @@ interface AdapterCtx { connectionId: string; orgId: string; credential: () => Pr
 
 | 공용 모듈(SM 1장 `SHARED_MODULES.md:32-56`) | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 가입(`signup_app='docs'`), 세션, `requireSession('docs')` | `src/proxy.ts`, 모든 Route Handler | CS 2.2 |
+| auth | 가입(`signup_app='docs'`), 세션, `requireSession('docs')`. 제품 앱의 인증 모듈 경계는 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`). 단계 분기(`AUTH_MODE`, 제공자 목록)는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`에만 둔다(9절) | `src/proxy.ts`, 모든 Route Handler, 로그인 화면, 콜백 | CS 2.2, `docs/products/_platform-core/AUTH_ROADMAP.md` 3.1절 |
 | org | 개인 조직(MVP 1인). 팀은 Phase 2(C-5) | 세션 컨텍스트 | SM 3장 |
 | credits | 선차감-환불, `withCredits`(동기 AI), `priceOf`(단가표 `src/lib/server/pricing`) | Route Handler, `docs.start_generation` 내부 | CS 4.3(`CORE_SPEC.md:177-188`), SM 4장 |
 | toss | 팩·구독 주문, confirm, 빌링키 | `src/app/api/billing/*` | SM 5장(`SHARED_MODULES.md:139-163`) |
@@ -396,4 +397,80 @@ interrupt를 두지 않는 이유: AA 6장은 되돌리기 어려운 단계(발�
 | `NEXT_PUBLIC_HERO_VIDEO_ENABLED` | 3D 영상 레이어 끄기(DC-F-049) | 공개 | 기본 true, false면 정지 이미지 |
 | `WORKER_ID`, `WORKER_CONCURRENCY` | 워커 식별·동시성(기본 4, 제안) | 워커 | 기본값 사용 |
 
-AI 관련 변수는 `AI_ARCHITECTURE.md:160` 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED`, `NEXT_PUBLIC_HERO_VIDEO_ENABLED`를 빼고 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(`SECURITY_BASELINE.md:284`). `OPENROUTER_API_KEY`, `VOYAGE_API_KEY`는 기본 체인에 없으므로 두지 않는다.
+AI 관련 변수는 `AI_ARCHITECTURE.md:160` 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED`, `NEXT_PUBLIC_HERO_VIDEO_ENABLED`를 빼고 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(`SECURITY_BASELINE.md:284`). `OPENROUTER_API_KEY`, `VOYAGE_API_KEY`는 기본 체인에 없으므로 두지 않는다. 인증 단계 변수(`AUTH_MODE` 등)는 9.3절.
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`이고 이 절은 docs(가입 정책 open, 로그인하는 사람은 프리랜서·에이전시)에 맞춰 옮긴 것이다. 세션·권한 판정(`session_context`, `requireSession('docs')`, `proxy.ts`)과 RLS는 단계와 무관하게 같은 코드다(AUTH_ROADMAP 0장 불변 조건). 경로의 `web/`은 `apps/nomad-docs/`다(06장 머리 표).
+
+### 9.1 단계표 (이 제품 기준)
+
+| 단계 | 언제 | 켜지는 로그인 | 이 제품 작업 | 다음 단계 게이트 |
+|---|---|---|---|---|
+| A | W0부터 MVP P0 기능이 Mock으로 모두 동작할 때까지 | 로컬 시드 페르소나(05장 10절) 원클릭 로그인. 제공자 버튼 없음 | DC-06-014(Stage A로 범위 변경) | G1(AUTH_ROADMAP 4장): 06장 2절 MVP P0 작업 완료, DC-06-057 핵심 플로우 E2E·DC-06-003 RLS 스모크·DC-06-048 결제 E2E가 Mock으로 녹색, 단계 분기 코드가 인증 모듈 밖에 0건(DC-06-007), Google 콘솔 준비 |
+| B | G1 통과 후, 공개 베타 전 | Google + 이메일(가입·메일 인증·비밀번호 재설정, 01장 D-20) | DC-06-063(P0) | G2(AUTH_ROADMAP 6장): Google 실사용 공개 베타 2주(제안), 인증 P0·P1 장애 0, 콜백 오류율 1% 미만(제안), `entitled=false`로 남은 신규 가입자 0 |
+| C1 | G2 통과 후 | 카카오(Supabase 기본 제공자 `kakao`) | DC-06-064(P1) | AUTH_ROADMAP 7.1.3절 수용 기준 |
+| C2 | G2 통과 후(C1과 병렬 가능, 네이버 검수 신청은 G2 직후) | 네이버(`custom:naver` 또는 서버 브리지, 스파이크로 결정) | DC-06-065(P1) | AUTH_ROADMAP 7.2.4절 수용 기준 |
+
+단계 전환은 사람(대표님)이 게이트를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 남긴 뒤에만 한다.
+
+### 9.2 코드 위치와 단계 분기 규칙
+
+| 위치 | 하는 일 | 단계 분기 허용 |
+|---|---|---|
+| `web/src/lib/auth/` | `getAuthConfig()`(env zod 검증, 잘못된 조합이면 기동 실패), `isMockAuthAllowed()`, `listLoginOptions('docs')`, `finishLogin('docs', next)`, 첫 진입 온보딩 경로 계산(`onboarding.ts`, 9.6절) | 예 |
+| `web/src/app/(auth)/login/` | `listLoginOptions` 결과로 개발용 패널(A)·Google 버튼과 이메일 폼(B)·카카오·네이버 버튼(C)을 렌더. 판정은 서버 컴포넌트에서 | 예 |
+| `web/src/app/auth/callback/` | 코드 교환 → `finishLogin` | 예 |
+| `web/src/app/api/dev/login/` | Stage A Mock 로그인(로컬 전용, 판정 거짓이면 404) | 예 |
+| `web/src/app/auth/naver/` | C2 브리지 경로를 택한 경우만 | 예 |
+| 그 밖의 모든 코드(`web/src/lib/server/`, 기능 Route Handler, 화면, `src/proxy.ts`, worker, api, `tpl/`, `int/`) | `session_context`·`requireSession('docs')`만 쓴다. `AUTH_MODE`·페르소나 이메일로 분기하지 않는다 | 아니오(CI grep, 06장 DC-06-007) |
+
+`finishLogin`은 AUTH_ROADMAP 3.2절 순서를 그대로 따른다: `session_context('docs')` 조회 → `entitled=false`면(docs는 open) `rpc('bootstrap_app_for_org', { p_app_id: 'docs' })` 1회 후 재조회 → `status` 분기(`/pending`, 403) → 제품 단계: 첫 진입 워크스페이스 보장(`workspace_settings` 1행, self 당사자 1행, 01장 DC-F-001) → `next` 화이트리스트(기본 경로는 온보딩이 남았으면 9.6절의 첫 미완료 단계, 아니면 `/app`) → 감사 `auth.login`. 모놀리스(단독 `public` 스키마)는 앱 행이 1개라 가입 트리거가 자동 부트스트랩하므로 두 번째 단계가 아무 일도 하지 않는다(AUTH_ROADMAP 3.2절 끝).
+
+### 9.3 환경변수 (AUTH_ROADMAP 3.3절 중 이 제품에 해당하는 것)
+
+| 변수 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web 서버 전용. 워커·ai-service에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값 `mock`. `mock`인데 `isMockAuthAllowed()`가 거짓이면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web 서버 전용. 운영 B: `google,email`, C1 후 `google,email,kakao`, C2 검수 통과 후 `naver` 추가 | live에서 로그인 수단 0개면 기동 실패 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web 서버(로컬 `.env.local`)와 `scripts/dev/seed-users.mjs`. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬은 `supabase/config.toml`의 `env()`, 원격은 Supabase 대시보드에만. 앱 env(web·워커·ai-service)에 넣지 않는다 | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트(`scripts/auth/register-naver-provider.mjs`, 제안)만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web 서버 전용 | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지 경로만 | web 서버 전용, 32바이트 이상 | 브리지 경로면 기동 실패 |
+| `DOCS_TERMS_VERSION`(제안) | B | web 서버 전용. 약관 동의 기록(9.6절)에 남기는 이용약관·개인정보처리방침 버전(DC-06-046 고지문 버전 상수와 같은 방식) | 기동 실패 |
+
+콜백 origin은 8절 `APP_URL`로 고정한다(AUTH_ROADMAP 3.2절의 `NEXT_PUBLIC_APP_URL`에 해당. 이 제품은 서버 전용 `APP_URL`을 쓴다). 워커·ai-service·Dify는 로그인을 처리하지 않으므로 인증 단계 변수가 없다. HubSpot OAuth(`HUBSPOT_CLIENT_*`, Phase 2)는 연동 연결용이며 로그인 제공자가 아니다.
+
+### 9.4 외부 콘솔과 배포 토폴로지
+
+| 콘솔 | 단계 | 리디렉션 대상 | 메모 |
+|---|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트 ID) | B | `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 범위는 `openid`, `email`, `profile`만. 동의 화면에 개인정보처리방침·이용약관 URL(`/legal/privacy`, `/legal/terms`, DC-06-046)이 필요하다. 공개 베타 전 "프로덕션" 게시 |
+| Supabase 대시보드(Providers, URL Configuration) | B·C | Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록, 와일드카드 지양) | `AUTH_PROVIDERS`와 함께 배포 체크리스트(DC-06-059, B-6)로 확인 |
+| 카카오 디벨로퍼스 | C1 | Supabase 콜백(위와 같음) | 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email`(01장 D-18) |
+| 네이버 개발자센터 | C2 | `supabase_custom`이면 Supabase 콜백, `bridge`면 `https://<도메인>/auth/naver/callback` | 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않는다(C2-6) |
+
+```
+브라우저 ──> web(Vercel) /login ──signInWithOAuth──> Google·카카오(·네이버 custom) ──> Supabase /auth/v1/callback
+                                                                                         │ code
+브라우저 <── 세션 쿠키 <── web /auth/callback(exchangeCodeForSession → finishLogin) <───────┘
+(C2 브리지) web /auth/naver/start ──> 네이버 authorize ──> web /auth/naver/callback ──> 세션 발급 → finishLogin
+(A, 로컬) web /api/dev/login ──signInWithPassword(시드 계정)──> 로컬 Supabase(127.0.0.1:54321)
+```
+
+### 9.5 로그인 없는 사용자 흐름
+
+랜딩(`/`), 요금(`/pricing`), 법무 페이지(`/legal/*`), 수신 웹훅(`/api/webhooks/toss`, `/api/integrations/[provider]/webhook`, `/api/integrations/inbound/[endpointToken]`), Phase 2 외부 공유 링크(DC-F-037)를 받은 고객은 로그인이 없고 단계와 무관하다. 이 화면에 로그인 버튼을 새로 넣지 않는다(헤더의 기존 "로그인" 링크만 유지, AUTH_ROADMAP 8장 끝).
+
+### 9.6 첫 진입 온보딩 경로
+
+`finishLogin`의 기본 경로는 아래 순서에서 처음 끝나지 않은 단계다. 계산은 `web/src/lib/auth/onboarding.ts`(DC-06-014)가 하고 기능 코드는 이 함수를 부르지 않는다.
+
+| 순서 | 경로 | 끝난 것으로 보는 조건 | 단계 |
+|---|---|---|---|
+| 1 | `/onboarding/terms` | 현재 약관 버전의 동의 기록(감사 `terms.accept`, 제안)이 있다. 이메일 가입자는 `/signup`에서 동의했으므로 기록이 이미 있다 | B부터(DC-06-063이 이 단계를 추가한다. A에는 화면이 없어 건너뛴다) |
+| 2 | `/onboarding/ai` | owner의 첫 로그인(감사 `auth.login`의 첫 로그인 여부)에만 한 번 보인다(선택은 owner만 할 수 있다, 03장 1.1절). [나중에]는 미동의로 끝난 것으로 보고, 이후 변경은 `/app/settings/ai` | A부터(DC-06-033 화면) |
+| 3 | `/onboarding/company` | self 당사자의 회사명이 비어 있지 않다(owner/admin만. member·viewer는 건너뛴다) | A부터(DC-06-014 화면) |
+| - | `/app` | 위가 모두 끝났다 | - |

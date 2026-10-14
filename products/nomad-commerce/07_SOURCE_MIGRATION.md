@@ -162,3 +162,15 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 목록 밖이라
 | 4 | `sellingstudio/image.png`, `image-1.png`, `tsconfig.tsbuildinfo` 제거 |
 | 5 | sellingstudio 운영 Supabase 데이터가 있으면 `profiles`/`selling_pages`/`credit_logs`를 `_supabase-modular/ARCHITECTURE.md` 4.1 절차로 이관(크레딧은 `grant_credits(reason='migration')` 1회) |
 | 6 | 원본 Supabase 프로젝트는 읽기 전용 2주 보관 후 정지 |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+3절 폐기 12번 행(`mock-login`, `nomad_role`, `nomad_plan`)과 4절 쿠키 권한·콜백 행에 이어서 본다. 원본의 모의 인증은 폐기이고 이식·참고 대상이 아니며 아래 복사 금지로만 남긴다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 404)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`mock-login` 라우트, `nomad_role`·`nomad_plan` 쿠키로 역할·플랜 판정) | `nomad-ai-commerce/middleware.ts:5-8`, 3절 12번 행(`docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`, AUTH_ROADMAP 1장이 인용) | 권한 위조, 프로덕션 노출 | CM-06-007 Stage A Mock 로그인(`/api/dev/login`, 시드 페르소나), 권한은 `session_context`만. CI 금지 문자열(CM-06-036) |
+| 다른 원본의 `mock-auth.ts`, localStorage 역할·플랜, `dev-user` 우회 | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/_platform-core/SECURITY_BASELINE.md` 17장 | 같은 결함 계열 | 같음 |
+| 콜백 `next` 무검증, Host 헤더로 origin 구성 | `docs/reviews/sellingstudio.md:64`(4절 행) | 오픈 리다이렉트 | `finishLogin` 화이트리스트와 `NEXT_PUBLIC_APP_URL` 고정(04장 8절, CM-06-058 B-2) |
+| MVP(A·B단계) 로그인 화면에 카카오 버튼 두기 | 01장 CM-F-001과 06장 CM-06-007의 이전 범위(이메일/Google/Kakao, 2026-10-13판) | 단계 순서 위반(카카오는 C1) | 카카오는 CM-06-059(G2 후). A단계 로그인 화면에는 실제 제공자 버튼이 없다 |
+| 기능 코드의 `if (mock)`·페르소나 이메일 분기 | AUTH_ROADMAP 0장 불변 조건, 2.5절 | Mock과 실제 로그인의 권한 경로가 갈림 | 단계 분기는 `lib/auth/`, `app/(auth)/login/`, `app/auth/`, `app/api/dev/login/`에만(02장 9절) |

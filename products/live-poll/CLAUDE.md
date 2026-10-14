@@ -4,7 +4,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` |
 | 3 | `docs/products/_supabase-modular/migrations/1800_poll.sql`(DB 정본) |
 | 4 | UI 작업이면 `docs/products/_design-guide/` 문서(`DESIGN_PRINCIPLES.md`, `DESIGN_SYSTEM.md`, `HERO_3D.md`, `REFERENCES.md`, `SKILLS.md`) |
@@ -90,4 +90,5 @@
 | 금지 패턴 | 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock(`mock-auth`, `nomad_role`, `nomad_plan`, `dev-user`), 원격 Supabase를 가리키는 Mock, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`나 로그에 두기, 콜백 `next` 무검증, 이메일 일치만으로 외부 계정 합치기, `listUsers` 전체 조회로 사용자 찾기, 네이버 검수 전 운영 `AUTH_PROVIDERS`에 `naver` |
 | 가드 | `isMockAuthAllowed()` = `AUTH_MODE=mock` + Supabase 호스트 루프백 + `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 없음. 거짓이면 `/api/dev/login` 404, 개발용 패널 미렌더, `AUTH_MODE=mock`이면 기동 실패. CI에서 `AUTH_MODE=mock VERCEL_ENV=production` 빌드가 실패해야 한다 |
 | 단계 전환 | 에이전트가 스스로 단계를 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한 뒤에만 LP-06-049 / 050·051을 시작한다. C2 경로도 `[DECISION]`(01장 D20) |
-| 이 제품 작업 ID | A: LP-06-003. B: LP-06-049. C1: LP-06-050. C2: LP-06-051 |
+| 소유 경로 | 003: `src/lib/auth/`, `src/app/api/dev/login/`, `src/proxy.ts`, `scripts/dev/`, `src/app/(auth)/`(A 구성). 049: `src/app/(auth)/`(003에서 이어 받음), `src/app/auth/callback/`, `src/app/onboarding/terms/`. 050: `src/lib/auth/providers/kakao.ts`, `src/app/(host)/settings/login-methods/`. 051: `src/lib/auth/providers/naver.ts`, `src/lib/auth/naver/`, `src/app/auth/naver/`(브리지만), `scripts/auth/`. 배지·`db:seed-users`는 001, 약관 단계 연결은 037, 설정 탭 링크는 021 파일에 1줄 요청(06장 8.1, 8.4절) |
+| 이 제품 작업 ID | A: LP-06-003(W1). B: LP-06-049(W6 맨 앞). C1: LP-06-050, C2: LP-06-051(W7, G2 후). 남은 결정: 01장 8.1절 D19(카카오 이메일), D20(네이버 경로), D21(이메일 가입 유지) |

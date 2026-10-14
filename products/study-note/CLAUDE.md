@@ -6,7 +6,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/` 의 `CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/` 의 `CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·가입·콜백 작업이면 `AUTH_ROADMAP.md`(이 파일 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더의 `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` (특히 02장 6절, 05장, 06장 1절) |
 | 3 | DB 작업이면 `docs/products/_supabase-modular/migrations/2100_notes.sql` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
@@ -83,7 +83,7 @@
 | 항목 | 규칙 |
 |---|---|
 | 지금 단계 | 개발 시작 시 **Stage A(Mock 로그인)**. 실제 제공자(Google·카카오·네이버) 콘솔 설정과 버튼을 만들지 않는다. 이메일 가입·인증 메일·비밀번호 재설정 화면도 B에서 만든다. 이메일 인증 가드(`email_confirmed_at`)는 A부터 서버에 둔다 |
-| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`를 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`에만. 워커·FastAPI·AI 게이트·기능 화면에 `if (mock)` 금지(CI NT-06-022) |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`, (C2 브리지) `src/app/auth/naver/`에만. 워커·FastAPI·AI 게이트·기능 화면에 `if (mock)` 금지(CI NT-06-022) |
 | 페르소나 사용 | 로컬: `supabase start` → `supabase db reset` → `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` → `node scripts/dev/seed-users.mjs --app notes`(`npm run db:seed-users`) → `/login` 개발용 패널. 페르소나 목록은 05장 10절(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, `unverified`, `low_credit`) |
 | E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다(NT-06-024). 실제 Google 로그인은 자동화하지 않는다 |
 | 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, `dev-user` 우회, 페르소나 이메일로 권한 분기, 원격 DB에 시드, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`나 로그에, 콜백 `next` 무검증(07장 6절) |

@@ -1,6 +1,6 @@
 # nomad-docs(NOMAD Docs) 개발 방법
 
-작성일 2026-10-13. 이 문서는 `D:\WorkSpace\platform\docs\products\`의 통합 기획을 멀티에이전트 베이스(`D:\WorkSpace\DEV\MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겨 nomad-docs 개발을 시작하는 방법을 처음부터 끝까지 안내합니다. 근거는 `경로:줄`로 표시하고, 근거가 없는 값은 "제안", 확인하지 못한 값은 "미확인"으로 표시합니다.
+작성일 2026-10-13, 2026-10-14 개정(인증 단계 19장, 확정 결정 22). 이 문서는 `D:\WorkSpace\platform\docs\products\`의 통합 기획을 멀티에이전트 베이스(`D:\WorkSpace\DEV\MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겨 nomad-docs 개발을 시작하는 방법을 처음부터 끝까지 안내합니다. 근거는 `경로:줄`로 표시하고, 근거가 없는 값은 "제안", 확인하지 못한 값은 "미확인"으로 표시합니다.
 
 ## 0. 한눈에 보기
 
@@ -36,10 +36,11 @@ D:\WorkSpace\DEV\nomad-docs\                            베이스를 복사해 �
 | 4 | project-profile 작성 | 6 |
 | 5 | 로컬 DB 기동, SQL 적용, RLS 스모크 | 7 |
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
-| 7 | 작업(62개)을 task로 변환 | 9 |
+| 7 | 작업(65개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
 | - | AI 계층, 개발 위키, 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
 | - | 체크리스트 | 18 |
+| - | 인증 단계: Mock → Google → 카카오·네이버(7·9·10절과 함께 봅니다) | 19 |
 
 ## 1. 개요
 
@@ -341,7 +342,7 @@ node check.mjs --vector mono \
 
 ## 8. 6단계: 착수 전 결정 확정
 
-`docs/file/02-요구사항/01_PRD.md` 8절(`:449-464`)의 결정 12개를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
+`docs/file/02-요구사항/01_PRD.md` 8절의 결정 20개(D-13~D-17은 Phase 2·3D 영상, D-18~D-20은 8.1절 인증 단계)를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
 
 | ID | 결정 | 권고 | 확정 시점 |
 |---|---|---|---|
@@ -357,6 +358,14 @@ node check.mjs --vector mono \
 | D-10 | 업로드 자료 보존 | (a) 원본 90일 + 텍스트는 프로젝트 삭제 시까지(제안) | 업로드(DC-06-031)·정리 스케줄(DC-06-051) 전 |
 | D-11 | 회의 녹음 원본 보존, 전사본 처리 경로 | (a) 24시간 후 삭제 + 전사본 그래프 오픈소스 강제(seed가 이미 이 값) | 회의록(DC-06-024) 전 |
 | D-12 | 정부지원 신청서(`biz_plan`)를 Phase 2 맨 앞으로 | 페르소나 인터뷰 후. 앞당기면 D-5와 묶어 판단 | Phase 2 계획 시 |
+| D-13 | shorts_agency 공개 시점 | (a) Phase 2(team 플랜). 직접 대행 운영 조직에만 수동 부여 | W8(DC-06-060) 전 |
+| D-14 | content 단가 토큰 `catalog:<key>` 저장 위치 | (a) `workspace_settings.defaults` | DC-06-060 전 |
+| D-15 | 영상 제작 계약서·위임 동의서 조항 원문 출처 | 확인 전까지 (b) 자체 작성 + 법무 검토 | DC-06-060 게시 전 |
+| D-16 | 월간 리포트 KPI 입력 | (a) 사용자 입력·CSV로 시작 | DC-06-060 전 |
+| D-17 | 3D 영상 히어로 제작 방식 | (a) 3D 장면 직접 렌더 녹화 | DC-06-045 전 |
+| D-18 | 카카오 이메일 정책(비즈 앱 `account_email` 권장) | (a) 비즈 앱 전환 후 필수 동의 | G2 판정 전, DC-06-064 착수 전 |
+| D-19 | 네이버 경로(`supabase_custom`/`bridge`) | 스파이크로 결정 | C2 스파이크(DC-06-065 첫 단계) 결과로 |
+| D-20 | 이메일+비밀번호 가입 유지 | (a) 유지 | G1 판정 전, DC-06-063 착수 전 |
 
 **D-3 계약서 게이트를 지키는 방법**
 - 규칙: 법무 검토 전에는 `doc_types.is_active=false`로 배포합니다(`01_PRD.md:390`, `06_AGENT_PLAN.md:32`, `:220`). 패키지는 7종으로 축소 표시합니다.
@@ -376,20 +385,20 @@ node check.mjs --vector mono \
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 DC-06-001~062, 모두 62개입니다. DC-06-010은 판정을 사람이 하는 디자인 비주얼 검토(준비는 Sonnet)이고, DC-06-052~055·060(P2)은 Phase 2입니다. 2026-10-14에 DC-06-061(CRM형 워크스페이스)·062(생성 진행 애니메이션)를 W4에 추가했습니다.
+작업은 DC-06-001~065, 모두 65개입니다. DC-06-010은 판정을 사람이 하는 디자인 비주얼 검토(준비는 Sonnet)이고, DC-06-052~055·060(P2)은 Phase 2입니다. 2026-10-14에 DC-06-061(CRM형 워크스페이스)·062(생성 진행 애니메이션)를 W4에 추가했습니다. DC-06-063~065는 같은 날 추가한 인증 단계 작업이고(19장, `06_AGENT_PLAN.md` 8절), 기존 DC-06-014는 Stage A(Mock 로그인) 범위로 바뀌었습니다.
 
 | 웨이브 | 작업 ID | 병렬 수 | 진입 조건 | 산출물 |
 |---|---|---|---|---|
 | W0 | 001, 004, 005, 008 | 4 | 없음 | DB 조각 적용, 타입, web·워커 골격, 디자인 레퍼런스(1단계) |
 | W1 | 002, 003, 006, 007, 012, 013, 017, 020, 046 | 9 | W0 완료 | 모놀리스 변환, RLS 러너, ai-service, CI, API 공통, 단가·features, 효과 엔진, 템플릿 9종, 법무 문구 |
 | W1-D | 009 → 010 → 011(직렬) | 1 | 004, 008 완료 | 디자인 시스템 2~4단계. 010은 사람이 수행. 011 완료가 모든 화면 작업(038~045)의 진입 조건 |
-| W2 | 014, 015, 016, 019, 021, 031, 033, 047 | 8 | W1 완료 | 인증, 워크스페이스·거래처, 정본 API, 효과 엔진 속성 테스트, compliance·lint, 업로드, AI 게이트, 결제 |
+| W2 | 014, 015, 016, 019, 021, 031, 033, 047 | 8 | W1 완료 | 인증 Stage A(Mock 로그인·시드·가드), 워크스페이스·거래처, 정본 API, 효과 엔진 속성 테스트, compliance·lint, 업로드, AI 게이트, 결제 |
 | W3 | 018, 022, 028, 032, 036, 037, 038, 045, 049, 059 | 10 | W2 완료, 038·045는 011 완료 | 효과 적용, 생성 그래프, 문서 API, RAG, 음성, CSV, 화면 1, 3D 히어로(+ 3D 영상), 운영자 카탈로그, 배포 |
 | W4 | 023, 024, 025, 027, 029, 030, 035, 039, 044, 048, 061, 062 | 12 | W3 완료. 029의 DOCX는 C-1 반영 전 비활성으로 진행 | 추출·회의록·다시 쓰기 그래프, 생성 요청·패키지, 내보내기, 추적표, 위키, 화면 2, 랜딩, 결제 E2E, CRM 워크스페이스, 생성 진행 애니메이션 |
 | W5 | 026, 034, 040, 041, 042, 051 | 6 | W4 완료 | 골든·평가, Dify 채팅, 편집기, 화면 3·4, 계정 삭제·정리 |
 | W6 | 043, 050 | 2 | W5 완료 | 화면 5(채팅·위키), KPI |
-| W7 | 056, 057, 058 | 3 | W6 완료 | 통합·E2E·AI 회귀. 녹색이면 공개 베타(MVP). `dev_contract` 활성은 D-3 법무 검토 완료가 별도 조건 |
-| W8 | 052 → 053, 054, 055, 060 | 1 → 4 | MVP 출시 후, team 플랜(C-5) 준비 | 연동 프레임워크, 발신 웹훅·n8n(Make는 쓰지 않음), HubSpot, admin-suite ERP, shorts_agency(Phase 2) |
+| W7 | 063(G1 통과 후 먼저), 056, 057, 058 | 4 | W6 완료, 063은 G1 | Google + 이메일 로그인(Stage B), 통합·E2E(Mock 페르소나 storageState, 063 후 스테이징 재실행)·AI 회귀. 녹색이면 공개 베타(MVP). `dev_contract` 활성은 D-3 법무 검토 완료가 별도 조건 |
+| W8 | 052 → 053, 054, 055, 060 / 064·065(G2 통과 후) | 1 → 4, 064·065 병렬 2 | MVP 출시 후, team 플랜(C-5) 준비. 064·065는 G2 | 연동 프레임워크, 발신 웹훅·n8n(Make는 쓰지 않음), HubSpot, admin-suite ERP, shorts_agency(Phase 2), 카카오 로그인(C1, P1), 네이버 로그인(C2, P1) |
 
 단독(모놀리스) 개발에서 읽는 방법:
 - DC-06-001의 "모듈러 조각 `2300` 적용, `--schema core,docs` 타입"은 단독 DB에서는 `0001`+`0002`+seed 적용과 `--schema public` 타입으로 읽습니다. 모듈러 체커 확인(`check.mjs --vector mod ...`)은 platform의 `_supabase-modular`로 그대로 수행합니다.
@@ -399,13 +408,13 @@ node check.mjs --vector mono \
 
 | 06장 권장 모델 | 작업 성격 | 베이스에서 맡는 쪽 |
 |---|---|---|
-| Fable | DB·RLS(001, 003), 결제·크레딧 차감 경로(013, 027, 033, 047), 권한 경계(006, 014, 049, 055), 체크리스트 효과 원자 적용(018), 고위험 문서 규칙이 걸린 생성 그래프(022), AI 보안 회귀(058), 개인정보 삭제(051) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`·`fastapi-expert`·`nextjs-expert`(Sonnet), 리뷰는 `review-expert` |
-| Opus | 그래프(extract·minutes·assist), RAG, 위키, Dify, 음성, 편집기, API, 템플릿, 효과 엔진, 테스트 설계 | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
+| Fable | DB·RLS(001, 003), 결제·크레딧 차감 경로(013, 027, 033, 047), 권한 경계(006, 014 인증 Stage A, 049, 055, 063 인증 Stage B, 065 네이버 로그인), 체크리스트 효과 원자 적용(018), 고위험 문서 규칙이 걸린 생성 그래프(022), AI 보안 회귀(058), 개인정보 삭제(051) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`·`fastapi-expert`·`nextjs-expert`(Sonnet), 리뷰는 `review-expert` |
+| Opus | 그래프(extract·minutes·assist), RAG, 위키, Dify, 음성, 편집기, API, 템플릿, 효과 엔진, 테스트 설계, 카카오 로그인(064) | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
 | Sonnet | 화면, 랜딩, 3D 히어로·3D 영상, 디자인 시스템 구현, CRM 워크스페이스(061), 생성 진행 애니메이션(062), CI, 배포 설정 | `nextjs-expert`(Sonnet), CI·배포 문서는 오케스트레이터 |
 | Haiku | 법무 문구·점검표(046), KPI 쿼리(050) | 오케스트레이터가 직접 처리(베이스에 Haiku 워커 없음) |
 | 사람 | 디자인 비주얼 검토 판정(DC-06-010, 준비는 Sonnet) | 사용자 |
 
-작업 수 비율(62개, `06_AGENT_PLAN.md` 4절, 2026-10-14 갱신): Fable 14(22.6%), Opus 32(51.6%), Sonnet 14(22.6%), Haiku 2(3.2%). 규모 가중(S=1, M=2, L=3) 기준은 Fable 23.4%, Opus 53.3%, Sonnet 21.2%, Haiku 2.2%입니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(고문), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다. 고문을 Opus로 바꾼 경우(3절) "Fable" 행의 계획 검토는 Opus 고문이 맡고, 나머지 매핑은 같습니다.
+작업 수 비율(65개, `06_AGENT_PLAN.md` 4절, 2026-10-14 인증 단계 반영): Fable 16(24.6%), Opus 33(50.8%), Sonnet 14(21.5%), Haiku 2(3.1%). 규모 가중(S=1, M=2, L=3, 합계 142) 기준은 Fable 25.4%, Opus 52.1%, Sonnet 20.4%, Haiku 2.1%입니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(고문), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다. 고문을 Opus로 바꾼 경우(3절) "Fable" 행의 계획 검토는 Opus 고문이 맡고, 나머지 매핑은 같습니다.
 
 ### 9.3 task 폴더 만들기
 
@@ -474,7 +483,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 6 | 개발 위키 갱신(12절) | `llm-wiki` 스킬 |
 | 7 | 완료: task status `done`, 웨이브의 모든 task가 끝나면 다음 웨이브 | - |
 
-- **MVP(공개 베타) 출시 조건**: W7(056, 057, 058)까지 녹색, `06_AGENT_PLAN.md` 7절 완료 정의 충족. P0·P1 작업 전부 완료(P2 = 052~055, 060 제외). 3D 히어로(045), KPI(050), 계정 삭제·정리(051)는 P1입니다.
+- **MVP(공개 베타) 출시 조건**: W7(063 Stage B, 056, 057, 058)까지 녹색, `06_AGENT_PLAN.md` 7절 완료 정의 충족. P0·P1 작업 전부 완료(P2 = 052~055, 060 제외, G2 이후 작업인 064·065 제외). 3D 히어로(045), KPI(050), 계정 삭제·정리(051)는 P1입니다.
 - **`dev_contract` 활성 조건**: 위와 별도로 D-3 법무 검토 완료(8절).
 - 화면 작업(038~045)은 디자인 시스템 4단계(DC-06-011)가 끝난 뒤 시작합니다.
 - 각 P0 작업은 대응 테스트 작업이 녹색이어야 완료입니다(`06_AGENT_PLAN.md` 7절 표. 예: 017 → 019, 020~025·029 → 026·058, 047 → 048).
@@ -677,6 +686,7 @@ baseline:
 | 핵심 플로우·AI | `npx playwright test e2e/flows e2e/ai`, `pytest apps/api/tests/docs/security`. 평가셋(hybrid 20, 검색 30, 채팅 30, 추출 10)을 상용·오픈소스 두 경로로 통과. `meeting_minutes`·`docs.minutes` 상용 호출 0 |
 | 고위험 문서 | `dev_contract` 생성의 LLM `ai_usage` 0, D-3 법무 검토 완료 전 배포 대상에서 `doc_types.is_active=false` |
 | 3D·디자인 시스템 | `HERO_3D.md:70-75` 수용 기준, DC-06-011 완료, `tailwind.config.js`·hex 하드코딩 0 |
+| 인증 단계 | Stage A: CI 인증 검사(DC-06-007)와 DC-06-014 수용 기준. Stage B: `AUTH_ROADMAP.md` 5.3절 B-1~B-6(DC-06-063, Google 실로그인은 수동 점검표). 19장 |
 
 ## 17. 위험과 주의
 
@@ -691,7 +701,7 @@ baseline:
 | 고객 RFP 기밀성 | 추출은 오픈소스 우선, 임베딩은 `oss-embed` 고정, 업로드 텍스트는 LLM 전송 전 주민등록번호 마스킹, 원본 90일(D-10 제안), 인젝션 방어 문구 고정 |
 | 숫자 무결성 | 금액·VAT·문서번호·요구사항 코드는 DB가 만듭니다. LLM·클라이언트 숫자를 저장하거나 조용히 고치는 코드 경로는 수용 기준 미달입니다 |
 | AI·음성 비용 | 크레딧 선차감·정산·환불, 오픈소스 우선 라우팅으로 관리합니다. 요금·단가는 전부 제안값이라 베타 2주 원가 측정으로 확정합니다(D-4) |
-| 작업 수와 범위 | 62개로 권장 15~40개를 넘습니다(`06_AGENT_PLAN.md:15`). 사람 비주얼 검토(DC-06-010)가 화면 작업 전체의 병목이므로 W1-D를 일찍 시작합니다. 첫 검증만 빠르게 하려면 `06_AGENT_PLAN.md` 1.2.3절 축소 릴리스(v0, 작업 20개 안팎)를 먼저 고려합니다 |
+| 작업 수와 범위 | 65개(인증 단계 3개 포함)로 권장 15~40개를 넘습니다(`06_AGENT_PLAN.md:15`). 사람 비주얼 검토(DC-06-010)가 화면 작업 전체의 병목이므로 W1-D를 일찍 시작합니다. 첫 검증만 빠르게 하려면 `06_AGENT_PLAN.md` 1.2.3절 축소 릴리스(v0, 작업 20개 안팎)를 먼저 고려합니다 |
 | 국외 이전과 개인정보 | 동의 전 국외 제공자 사용 금지, 주민등록번호 입력란 없음과 서버 PII lint, 녹음 기본 미저장 |
 | 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
 | 기획 변경 | 산출물 갱신 task로 처리합니다. 묶음을 다시 만들려면 `build_root.py`에 nomad-docs 등록을 먼저 추가합니다(5.1절) |
@@ -707,12 +717,141 @@ baseline:
 - [ ] 공용 인프라 준비: Dify, 오픈소스 LLM·임베딩·음성 서버(또는 모의 서버), 공용 렌더 서비스 확인
 - [ ] `supabase start` → `supabase db reset` 성공, 라우팅 13행·강제 오픈소스 3행·MVP 활성 유형 8종(계약서 비활성) 확인(7.1절)
 - [ ] PGlite 체커 `--vector mono` OK(7.2절), RLS 스모크 105항목 수동 또는 러너로 확인(7.3절)
-- [ ] 결정 D-1~D-12 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
+- [ ] 결정 D-1~D-20 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
 - [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.5)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
-- [ ] W1~W7 진행, AI 보안 회귀(058) 통과, 공개 베타 출시 조건 충족
+- [ ] Stage A: 시드 페르소나로 로컬 로그인 확인(19.2절)
+- [ ] W1~W6 진행 후 G1 판정과 `[DECISION] G1 통과` 기록(19.3절)
+- [ ] W7: Stage B(DC-06-063) 먼저, 이어서 통합·E2E·AI 보안 회귀(058), 공개 베타 출시 조건 충족
+- [ ] 공개 베타 2주 뒤 G2 판정, C1·C2(19.5~19.7절)
 - [ ] `dev_contract` 활성은 법무 검토 완료 후에만
+
+## 19. 인증 단계: Mock → Google → 카카오·네이버
+
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(확정 결정 22, 2026-10-14. 이 묶음에 아직 없으면 `build_root.py`로 묶음을 다시 만든 뒤 들어옵니다. 원본은 `D:\WorkSpace\platform\docs\products\_platform-core\AUTH_ROADMAP.md`). 제품 반영: `docs/file/02-요구사항/01_PRD.md` DC-F-001·8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `07_SOURCE_MIGRATION.md` 6절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
+
+처음에는 Mock 로그인으로 모든 MVP 기능을 완성하고, 기능이 안정되면 Google 로그인(+ 이메일)을 붙이고, 그것이 안정되면 카카오·네이버를 붙입니다. 세션은 처음부터 실제 Supabase JWT이므로 단계가 바뀌어도 권한·RLS·크레딧·효과 엔진 코드는 바뀌지 않습니다. 이 제품은 가입 개방(open)이고 로그인하는 사람은 프리랜서·에이전시입니다. 경로의 `apps/web/`은 기획서의 `web/`(`apps/nomad-docs/`)입니다(5.2절).
+
+### 19.1 단계 요약
+
+| 단계 | 언제 | 켜지는 로그인 | 작업 | 끝나는 조건 |
+|---|---|---|---|---|
+| A Mock | W0부터 W6까지(MVP 기능 개발) | 로컬 시드 페르소나 원클릭 로그인. 상단 배지 `MOCK AUTH · 로컬 전용` | DC-06-014(W2) | G1(19.3절) |
+| B Google | G1 통과 후, 공개 베타 전(W7 맨 앞) | Google + 이메일(가입·메일 인증·재설정), 첫 OAuth 로그인 뒤 `/onboarding/terms` | DC-06-063(P0, Fable, M) | G2(19.5절) |
+| C1 카카오 | G2 통과 후(W8) | 카카오(Supabase 기본 제공자) | DC-06-064(P1, Opus, S) | `AUTH_ROADMAP.md` 7.1.3절 |
+| C2 네이버 | G2 통과 후(W8, C1과 병렬) | 네이버(`custom:naver` 또는 서버 브리지) | DC-06-065(P1, Fable, M) | `AUTH_ROADMAP.md` 7.2.4절 |
+
+### 19.2 Stage A 로컬 실행 순서
+
+| 순서 | 명령·행동 | 설명 |
+|---|---|---|
+| 1 | `supabase start` | 로컬 Supabase(`http://127.0.0.1:54321`) |
+| 2 | `supabase db reset` | 마이그레이션과 seed 적용(7.1절) |
+| 3 | `apps/web/.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD=<임의의 긴 값>` | 커밋하지 않습니다. `NEXT_PUBLIC_*`에 넣지 않습니다. `NEXT_PUBLIC_SUPABASE_URL`이 로컬이 아니면 web이 기동하지 않습니다 |
+| 4 | `node scripts/dev/seed-users.mjs --app docs` | 페르소나 owner, admin, member, viewer, outsider, no_app, suspended, ops와 제품 훅의 pro(제안)를 만듭니다. 원격 URL이면 즉시 종료, 두 번 실행해도 크레딧 1회. 비밀번호는 출력하지 않습니다. 단독(모놀리스) DB라 `no_app`도 가입 트리거가 바로 엔타이틀먼트를 줍니다(`05_DATA_MODEL.md` 10.3절) |
+| 5 | `npm run dev` 후 `/login` | 개발용 패널에서 페르소나 버튼을 누릅니다. 첫 로그인은 `/onboarding/ai`(owner) → `/onboarding/company`(자사 정보가 빈 조직의 owner/admin) → `/app` 순서이고, 다음 로그인부터 `/app`입니다(`02_ARCHITECTURE.md` 9.6절) |
+| 6 | E2E | Playwright `globalSetup`이 페르소나마다(`no_app` 제외) `/api/dev/login`을 호출해 `storageState`를 저장합니다. 온보딩 플로우는 `no_app` 첫 로그인으로 돌립니다(DC-06-057) |
+
+페르소나별 기대 결과는 `docs/file/03-설계/05_DATA_MODEL.md` 10절입니다(예: `owner` 잔액 80 = 가입 50 + 월 30, `outsider`로 owner 조직 프로젝트·문서 0행). 권한 분기는 페르소나를 바꿔 로그인해서 확인하고, 기능 코드에서 페르소나 이메일로 분기하지 않습니다. 7.3절 RLS 스모크는 SQL 안 `-- AS` 역할 전환을 쓰므로 페르소나와 별개로 그대로 돌립니다.
+
+### 19.3 G1 체크리스트 (사람이 판정)
+
+- [ ] `06_AGENT_PLAN.md` 2절 MVP P0 기능 작업 완료(인증 B·C 작업과 W7의 056·057·058 공개 베타 마무리 제외)
+- [ ] 핵심 플로우 E2E(DC-06-057) Mock 페르소나로 로컬 녹색
+- [ ] RLS 스모크(DC-06-003) 전 항목 통과, `outsider` 교차 테넌트 거부
+- [ ] 결제 E2E(DC-06-048) Toss 테스트 키로 녹색
+- [ ] CI(DC-06-007): 인증 모듈 밖 `AUTH_MODE` 참조 0, `mock-auth`·`nomad_role`·`nomad_plan` 0, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패
+- [ ] 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL `/legal/privacy`·`/legal/terms`, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트
+- [ ] 결과를 DC-06-063 task `log.md`에 `[DECISION] G1 통과`로 기록
+
+### 19.4 Stage B 외부 설정 순서 (`AUTH_ROADMAP.md` 5.1절)
+
+| 순서 | 할 일 | 비고 |
+|---|---|---|
+| 1 | Google Cloud 콘솔 → OAuth 동의 화면: 사용자 유형 External, 범위 `openid`, `email`, `profile`만 | 게시 상태 "테스트"에서는 등록한 테스트 사용자만 로그인됩니다 |
+| 2 | 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션). 승인된 리디렉션 URI = `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 앱 도메인이 아니라 Supabase 콜백입니다 |
+| 3 | Supabase 대시보드 → Authentication → Providers → Google 사용, 클라이언트 ID·시크릿 입력. 로컬은 `supabase/config.toml` `[auth.external.google]`의 `env(GOOGLE_CLIENT_ID)` | 앱 env에는 넣지 않습니다 |
+| 4 | Authentication → URL Configuration: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록) | 와일드카드 지양 |
+| 5 | 동의 화면을 "프로덕션"으로 게시 | 공개 베타 전 |
+| 6 | 배포 env: `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`, `DOCS_TERMS_VERSION`(제안) | 배포 체크리스트(B-6), `docs/nomad-docs/ops/auth-checklist.md` |
+| 7 | 수동 점검표: 데스크톱·모바일 각 1회, 신규·기존 계정 | 결과를 task `log.md`에(B-5). 실제 Google 로그인은 자동화하지 않습니다 |
+
+### 19.5 G2 체크리스트 (사람이 판정)
+
+- [ ] Google 실로그인으로 공개 베타 운영 2주(제안)
+- [ ] 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안, 감사 `auth.login`과 오류 로그)
+- [ ] 가입 기간 신규 가입자 중 `entitled=false`로 남은 사용자 0(`AUTH_ROADMAP.md` 6장의 SQL을 단독 `public` 스키마에 맞춰 `app_id = 'docs'`로 실행)
+- [ ] 카카오: 디벨로퍼스 앱 생성, 이메일 정책 D-18 확정(비즈 앱 전환 권장)
+- [ ] 네이버: 애플리케이션 등록, 검수 신청 자료(로그인 버튼부터 가입 완료까지 화면 캡처) 준비
+- [ ] 결과를 `[DECISION] G2 통과`로 기록
+
+### 19.6 C1 카카오 설정 (`AUTH_ROADMAP.md` 7.1.1절)
+
+| 순서 | 할 일 |
+|---|---|
+| 1 | 카카오 디벨로퍼스 앱 생성 → REST API 키 = `client_id` |
+| 2 | 카카오 로그인 Client Secret 활성 → `client_secret` |
+| 3 | Redirect URI = Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://localhost:54321/auth/v1/callback`) |
+| 4 | 카카오 로그인 활성, 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email` |
+| 5 | Supabase → Providers → Kakao 사용(로컬 `[auth.external.kakao]`). 이메일을 받지 못하면 "Allow users without an email"(D-18 (b)일 때만) |
+| 6 | 배포 env `AUTH_PROVIDERS=google,email,kakao`, 설정 → 로그인 방법 화면(`/app/settings/login-methods`) 확인(`03_SCREENS_UX.md` 7.4절) |
+
+### 19.7 C2 네이버 스파이크와 검수 (`AUTH_ROADMAP.md` 7.2.2절)
+
+| 단계 | 할 일 | 통과 기준 |
+|---|---|---|
+| 1 | 운영과 분리한 Supabase 프로젝트에 관리자 API로 `custom:naver` 등록(`provider_type: 'oauth2'`, authorize·token·`/v1/nid/me` 엔드포인트). 등록은 `scripts/auth/register-naver-provider.mjs`(제안)로 남깁니다 | 등록 성공 |
+| 2 | 네이버 "개발 중" 상태 + 등록한 테스트 아이디로 `signInWithOAuth({ provider: 'custom:naver' })` | 로그인 성공, `identities[].provider = 'custom:naver'` |
+| 3 | `auth.users.email`이 채워졌는지, 재로그인이 같은 사용자인지 | 둘 다 참이면 `supabase_custom` 채택 |
+| 4 | 실패하면 브리지 경로(`04_API.md` 8절 `/auth/naver/start`·`/auth/naver/callback`)를 택하고 코어 요청 C-13(`staged/0010_core_auth_identity_links.sql` 적용, 사람이 승인). 결과를 `NAVER_AUTH_PATH`와 `[DECISION]`에 기록 | 기록 |
+| 5 | 네이버 검수 신청(로그인 버튼부터 가입 완료까지 화면 캡처). 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않습니다(C2-6) | 검수 통과 |
+
+로컬 Supabase CLI가 커스텀 제공자를 지원하는지는 미확인입니다. 지원하지 않으면 로컬은 Mock·Google·카카오로 개발하고 네이버는 스테이징 프로젝트에서 확인합니다.
+
+### 19.8 단계 전환 요청 프롬프트 예시 (G1 통과 후 Stage B)
+
+베이스 `_templates/dev-request-prompt.md` 형식을 따르며 9.4절 예시를 본떴습니다.
+
+```
+D:/WorkSpace/DEV/nomad-docs/docs/file 의 모든 파일(프로젝트 산출물)을 최대한 자세히 읽고 분석한다.
+(이미 읽은 파일은 skip. 특히 docs/file/03-설계/공용코어/AUTH_ROADMAP.md 0·3·5장과 06_AGENT_PLAN.md 8절, 02_ARCHITECTURE.md 9절)
+
+[요구사항]
+DC-06-063: 인증 Stage B(Google OAuth + 이메일 가입·메일 인증·비밀번호 재설정)로 전환한다.
+전제 = log.md 에 [DECISION] G1 통과 기록이 있다(없으면 시작하지 않고 보고).
+완료 조건 = ① AUTH_ROADMAP.md 5.3절 B-1~B-6 ② /login 에 Google 버튼 + 이메일 폼, /signup·/reset-password 구현
+③ /auth/callback 이 finishLogin(코드 교환 → session_context('docs') → bootstrap_app_for_org 1회 → status 분기
+→ 워크스페이스 보장 → next 화이트리스트)을 거친다
+④ 첫 OAuth 로그인은 /onboarding/terms → /onboarding/ai → /onboarding/company 순서(02_ARCHITECTURE.md 9.6절, 03_SCREENS_UX.md 7.3절)
+⑤ 메일 인증 전 생성 요청 403 email_not_verified
+⑥ Mock E2E(DC-06-057)가 계속 녹색이고 배포 빌드에서 /api/dev/login 404
+⑦ 06_AGENT_PLAN.md 의 DC-06-063 수용 기준 충족.
+
+[작업의 특성]
+권한 경계 작업. 단계 분기는 apps/web/src/lib/auth/, (auth)/, auth/ 안에서만. Google 콘솔·Supabase 대시보드 설정은 사람이 하고(AUTH_ROADMAP.md 5.1절) 에이전트는 체크리스트만 만든다.
+작업 대상 경로: apps/web/src/app/(auth)/, apps/web/src/app/auth/callback/, apps/web/src/app/onboarding/terms/, apps/web/src/features/onboarding-terms/,
+apps/web/src/app/api/terms/, apps/web/src/lib/auth/onboarding.ts, supabase/config.toml([auth.external.google]·additional_redirect_urls만), docs/nomad-docs/ops/auth-checklist.md
+
+이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
+승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
+
+main worker 는 claude-main 이 진행한다.
+main worker 의 서브 에이전트는 nextjs-expert 가 진행한다.
+review role worker 는 claude-reviewer 가 진행한다.
+review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
+```
+
+C1·C2도 같은 형식으로 요청하되 전제를 `[DECISION] G2 통과`로, 완료 조건을 `AUTH_ROADMAP.md` 7.1.3절(C1-1~C1-5) 또는 7.2.4절(C2-1~C2-6)로 바꿉니다.
+
+### 19.9 이 제품의 인증 작업 ID
+
+| 단계 | 작업 | 우선순위·규모·모델 | 웨이브 |
+|---|---|---|---|
+| A | DC-06-014(범위 변경: Mock 로그인, 시드, 가드, `finishLogin`, 온보딩 경로, 회사 정보 온보딩) | P0, M, Fable | W2 |
+| B | DC-06-063 | P0, M, Fable | W7 맨 앞(G1 후) |
+| C1 | DC-06-064 | P1, S, Opus | W8(G2 후) |
+| C2 | DC-06-065 | P1, M, Fable | W8(G2 후) |
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

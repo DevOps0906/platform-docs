@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 | 근거 |
 |---|---|---|
-| 인증 | 모든 Route Handler 첫 줄 `const ctx = await requireSession('docs')`. 미로그인 401, pending/suspended 403, `entitled=false` 402. 공개 예외: `/api/webhooks/toss`, `/api/integrations/[provider]/webhook`, `/api/integrations/inbound/[endpointToken]`(서명·토큰 검증), `/api/integrations/[provider]/callback`(OAuth state 검증) | SM 2장, CS 2.2 |
+| 인증 | 모든 Route Handler 첫 줄 `const ctx = await requireSession('docs')`. 미로그인 401, pending/suspended 403, `entitled=false` 402. 공개 예외: `/api/webhooks/toss`, `/api/integrations/[provider]/webhook`, `/api/integrations/inbound/[endpointToken]`(서명·토큰 검증), `/api/integrations/[provider]/callback`(OAuth state 검증), 로그인 경로(`/api/dev/login` A 로컬 전용, `/auth/callback`, `/auth/naver/*`, 8절). 세션은 모든 인증 단계(Mock·Google·카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다 | SM 2장, CS 2.2, `docs/products/_platform-core/AUTH_ROADMAP.md` 0장 |
 | 순서 | 인증 → zod 검증 → 레이트 리밋 → 엔타이틀먼트·플랜 features 확인 → (고위험) 고지 동의 확인 → 크레딧 선차감 → 처리(동기 호출 또는 enqueue) → 실패 시 환불 | `docs/products/_platform-core/CORE_SPEC.md:177-188`, `docs/reviews/SellingDocs.md:70` |
 | 멱등 | 유료·비동기 요청은 본문 `request_id`(UUID v4) 필수. 차감 `consume:docs:gen:<request_id>`(생성) / `consume:docs:<작업>:<request_id>`(추출 `extract`, 회의록 `minutes`, 다시 쓰기 `assist`, 렌더 `render`, 색인 `index`, 내보내기 `export`. `docs.reserve_credits`가 형식과 재사용을 검사: 같은 키를 다른 작업·금액·조직이 쓰면 22023/42501), 잡 `job:docs:<request_id>`, 생성 run `generation_runs.idempotency_key = gen:docs:<request_id>`(제안) | `docs/products/_platform-core/CORE_SPEC.md:198`, SM 18장 |
 | 패키지 자식 키 | 자식 차감 `consume:docs:gen:<run_id>:<doc_type_code>`, 자식 잡 `job:docs:<run_id>:<doc_type_code>` | 제안(자식 단위 환불 추적) |
@@ -259,3 +259,27 @@ Dify `docs-chat` 계약: `user=dify_user`, 입력 변수 `platform_conversation_
 | 앱 코드 | `pii_detected` 422(주민등록번호 등 패턴), `locked_section` 422, `selection_too_long` 422, `assist_disabled_high_risk` 403, `format_unavailable` 403(DOCX, C-1 전), `url_not_allowed` 422, `entitlement_missing` 422, `recording_notice_required` 422, `expired` 410, `render_failed` 502 | - | Route Handler |
 | AI 앱 코드 | `AI_UNAVAILABLE` 503(체인 전부 실패, 환불 완료), `AI_CONVERSATION_CLOSED` 409, `AI_DAILY_LIMIT` 429, `CONSENT_VERSION_MISMATCH` 409, `INTERNAL_KEY_INVALID` 401, `VOICE_CONSENT_REQUIRED` 403, `VOICE_TOO_LONG` 413, `WIKI_VERSION_CONFLICT` 409 | - | Route Handler(flora-publishing과 같은 이름, `docs/products/flora-publishing/04_API.md:255-257`) |
 | FastAPI | `AI_TOKEN_INVALID` 401(서명, `aud`, scope, 만료, `jti` 재사용) | - | `apps/api` |
+
+## 8. 인증 단계 경로 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 3.2절, 7.2.3절이다. 아래 경로만 단계(`AUTH_MODE`, 제공자 목록)를 읽는다(02장 9.2절). 로그인 뒤의 모든 API는 1절 원칙 그대로다.
+
+| 메서드 경로 | 단계 | 입력 | 처리 | 출력 | 오류 |
+|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'pro', next?: string }`(zod, 목록 밖이면 422) | `isMockAuthAllowed()` 확인 → 쿠키 세션용 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('docs', next)` | `{ ok: true, data: { redirect } }` + 세션 쿠키 | 판정 거짓이면 404(본문 없음, 존재를 숨긴다). 시드 계정 없음 401 + "`node scripts/dev/seed-users.mjs --app docs`를 먼저 실행하세요". 레이트 리밋 대상 아님 |
+| `GET /auth/callback` | B·C | `?code&next` | `exchangeCodeForSession`(PKCE, `@supabase/ssr` 서버 클라이언트) → `finishLogin`: `session_context('docs')` 1회 → `entitled=false`면(open 앱) `rpc('bootstrap_app_for_org', { p_app_id: 'docs' })` 1회 후 재조회(모놀리스는 무동작) → `status` 분기(pending → `/pending`, suspended → 403 `/suspended`) → 첫 진입 워크스페이스 보장(`workspace_settings`·self 당사자 각 1행) → `next` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음, 아니면 02장 9.6절 온보딩 단계 또는 `/app`, origin은 `APP_URL` 고정) → 감사 `auth.login`(provider, 첫 로그인 여부. 토큰·코드 미기록) | 302 | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login` |
+| `POST /api/terms/accept` | B·C | `{ terms_version }`(zod, 서버 `DOCS_TERMS_VERSION`과 다르면 409) | `requireSession('docs')` → 감사 `terms.accept`(약관 버전, 마케팅 수신 선택, 제안) | 204 | 409 `CONSENT_VERSION_MISMATCH`(최신 약관 다시 표시) |
+| `GET /auth/naver/start` | C2 브리지 경로 채택 시만 | `?next&link?` | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 넣고 네이버 authorize로 302. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 302 | 429 |
+| `GET /auth/naver/callback` | C2 브리지 경로 채택 시만 | `?code&state` | 쿠키 state 상수 시간 비교 후 삭제 → 서버가 client secret으로 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(`provider='naver'`, `provider_user_id=response.id`) 조회 → 있으면 magiclink `generateLink` + `verifyOtp`로 세션, 없고 같은 이메일 사용자도 없으면 `auth.admin.createUser` + 링크 행 → `finishLogin`. 네이버 토큰은 저장하지 않는다 | 302 | state 불일치·없음·만료 → `/login?error=state`. 연결 없음 + 같은 이메일 사용자 있음 → `/login?error=email_in_use`(자동 연결 금지) |
+
+`supabase_custom` 경로(C2 스파이크 성공)면 네이버도 `signInWithOAuth({ provider: 'custom:naver' })` → `GET /auth/callback`을 그대로 쓰고 위 두 브리지 경로는 만들지 않는다. 카카오(C1)는 `signInWithOAuth({ provider: 'kakao' })` → `GET /auth/callback`이다. 이메일 가입·재설정(B)은 브라우저 클라이언트의 `signUp`·`resetPasswordForEmail`이 Supabase Auth를 직접 부르고 메일 링크가 `GET /auth/callback`으로 돌아온다(제품 Route Handler 없음).
+
+| 오류 코드(인증 단계) | HTTP·이동 | 발생 위치 |
+|---|---|---|
+| `error=callback` | `/login?error=callback` | `/auth/callback` 1단계 실패 |
+| `error=state` | `/login?error=state` | `/auth/naver/callback`(브리지) |
+| `error=email_in_use` | `/login?error=email_in_use` | `/auth/naver/callback`(브리지) |
+| `email_not_verified` | 403 | 실행 계열 Route Handler(생성·추출·채팅·녹음, `email_confirmed_at` 없음, 01장 DC-F-001) |
+| `dev_login_unavailable` | 404(본문 없음) | `/api/dev/login`, `isMockAuthAllowed()` 거짓 |
+| `dev_seed_missing` | 401 | `/api/dev/login`, 시드 계정 없음 |
+| `invalid_persona` | 422 | `/api/dev/login` zod |

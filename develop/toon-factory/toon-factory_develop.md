@@ -39,9 +39,9 @@ D:\WorkSpace\DEV\toon-factory\                            베이스를 복사해
 | 7 | 작업(69개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
 | - | AI 계층, 개발 위키 | 11, 12 |
-| - | 인증 단계: Mock → Google → 카카오·네이버(로컬 Mock 실행 순서, 게이트 G1·G2) | 13 |
-| - | 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 14~18 |
-| - | 체크리스트 | 19 |
+| - | 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 13~17 |
+| - | 체크리스트 | 18 |
+| - | 인증 단계: Mock → Google → 카카오·네이버(로컬 Mock 실행 순서, 게이트 G1·G2) | 19 |
 
 ## 1. 개요
 
@@ -276,7 +276,7 @@ D:\WorkSpace\DEV\toon-factory\
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 TN-06-001~069, 모두 69개입니다(2026-10-13 2차 보강 060~066, 2026-10-14 인증 단계 067~069 포함). 그중 TN-06-042는 사람이 하는 디자인 비주얼 검토입니다. 인증 Stage A는 기존 TN-06-004·027이 맡고, B·C는 새 작업 067~069입니다(13장).
+작업은 TN-06-001~069, 모두 69개입니다(2026-10-13 2차 보강 060~066, 2026-10-14 인증 단계 067~069 포함). 그중 TN-06-042는 사람이 하는 디자인 비주얼 검토입니다. 인증 Stage A는 기존 TN-06-004·027이 맡고, B·C는 새 작업 067~069입니다(19장, 06장 8절).
 
 | 웨이브 | 작업 ID | 진입 조건 | 산출물 |
 |---|---|---|---|
@@ -400,13 +400,136 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 키·토큰 값과 개인정보는 위키에 쓰지 않습니다.
 - 초기 페이지(`sources/*.md` 25개)는 setup 시 함께 들어옵니다.
 
-## 13. 인증 단계: Mock → Google → 카카오·네이버
+## 13. 메인 디자인과 디자인 시스템
 
-정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009, 확정 결정 22). 제품 적용은 `docs/file/02-요구사항/01_PRD.md` 8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 10절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
+디자인 작업 순서: 13.3 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
+### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
+
+주 레퍼런스는 Atlassian(회차·컷 관리, 상태 배지, 권한, 드래그 앤 드롭), 보조는 Primer(밀도)입니다. 채팅·음성·위키 화면은 Astryx 패턴(미확인, D15)입니다.
+
+| 단계 | 작업 | 담당 |
+|---|---|---|
+| 1. 레퍼런스 확정 | 앱 화면 Atlassian + Primer, 채팅은 Astryx 확인(D15), 랜딩은 HERO_3D | TN-06-041, 고문 검토 |
+| 2. 가진 것 위에서 시작 | 03장 토큰 플랜(원고지 흰, 거터 회색, 펜선 남색, 논포토 블루, 효과선 노랑, 에디터 크롬) + Tailwind CSS v4 `@theme` → `apps/toon/src/styles/tokens.css`, 기본 컴포넌트, `/dev/components` | TN-06-034 |
+| 3. 비주얼은 사람이 | 라이트/다크, 상태, 크기 배리언트를 스크린샷으로 보고 사람이 수치를 고칩니다 | TN-06-042(사람) |
+| 4. 정답을 한 곳으로 | 코드(Tailwind v4 CSS + 컴포넌트)를 정답으로 확정하고 `DESIGN.md`, `COMPONENTS.md`를 코드 기준으로 맞춤 | TN-06-043 |
+
+- AI에게는 컴포넌트 1개 단위로 맡깁니다(`DESIGN_SYSTEM.md` 8장 템플릿). "알아서 만들어 줘"는 쓰지 않습니다.
+- 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
+- 이전 계획의 `design-system/toon-factory/MASTER.md`는 만들지 않습니다(정답이 두 곳이 되지 않게).
+
+### 13.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
+
+| 기기 | 구성 |
+|---|---|
+| PC(1280px 이상), 태블릿(768~1279px) | 풀 3D: 공간에 흩어진 웹툰 컷 패널이 스크롤에 따라 가운데 세로 스크롤 만화 스트립으로 정렬됩니다 |
+| 모바일(767px 이하) | 가벼운 3D 자동 로드: 컷 3장이 세로로 정렬됩니다 |
+| 대체 | WebGL 미지원·저사양(로드 전 판정)·동작 줄이기 설정이면 정지 렌더 이미지 |
+
+- 제목, CTA, 샘플 스트립은 HTML로 3D 위에 겹칩니다. 3D 컷은 빈 컷(외곽선과 콘티 선)이고 캐릭터·말풍선·효과 글자는 넣지 않습니다.
+- 성능 예산(제안): PC·태블릿 1MB/60fps, 모바일 300KB/30fps, LCP 2.5초 이하
+- 금지: 보라/핑크 그라디언트, 만화 효과음 글자·말풍선을 UI 장식으로 쓰기, 토큰 밖 3D 색
+- 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(TN-06-056, 026)
+
+### 13.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+
+화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
+
+| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
+|---|---|---|---|
+| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
+| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
+
+이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` toon-factory 절(`:225`)에 있습니다.
+
+| 출처 | URL | 참고 포인트(가져올 것) | 적용 화면 |
+|---|---|---|---|
+| Awwwards (Nominee) | https://www.awwwards.com/sites/soul-reaper-html5-scroll-book | 스크롤로 진행되는 코믹. 세로 스크롤 문법을 랜딩 연출 하나로 쓰는 방식 | 히어로(샘플 웹툰 스크롤) |
+| Awwwards (Nominee) | https://www.awwwards.com/sites/manga-san | 만화 페이지를 경험 공간으로 보여 주는 구성 | 샘플 작품 구간 |
+| Dribbble | https://dribbble.com/shots/15313910-StoryBoard-Dashboard-App-Design | 장면 프레임을 나열해 관리하는 스토리보드 | 콘티 화면, 회차 목록 |
+| Dribbble | https://dribbble.com/shots/9071622-Webtoon-Factory | 사용자가 직접 코믹을 만드는 제작 흐름 | 에디터 흐름(이름이 비슷하므로 명칭·그래픽 차용 금지) |
+| Dribbble | https://dribbble.com/shots/24546086-Ai-Storybook-app | 캐릭터를 만들고 이야기에 배치하는 흐름 | Phase 2 캐릭터 시트 |
+
+- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
+- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
+- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 화면·랜딩 task의 `task.md` baseline에는 아래 3개를 넣습니다. 06장의 레퍼런스 확정 task와 랜딩 task 수용 기준에도 같은 레퍼런스 확인이 들어 있습니다.
+
+```yaml
+baseline:
+  - id: DOC-DES-002
+    path: docs/file/03-설계/03_SCREENS_UX.md   # 4.1절 레퍼런스 표, 4.2 브리프, 4.3 토큰 플랜
+  - id: DOC-DSN-005
+    path: docs/file/03-설계/디자인/REFERENCES.md   # 이 제품 절, 복제 금지 규칙
+  - id: DOC-DSN-001
+    path: docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md   # 1단계 레퍼런스 수집, 7단계 체크리스트
+```
+
+- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
+
+## 14. 원본 이식
+
+정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
+
+- 원본은 기획 문서 3개뿐이라 이식은 주로 개념과 참고 코드입니다. 원본 폴더 `D:\WorkSpace\platform\Toon-Factory\`는 옮기거나 지우지 않습니다(아카이브는 사용자 승인 뒤 별도 작업).
+- 참고 코드는 통째로 복사하지 않고 task마다 필요한 파일만 옮깁니다: `NOMAD Shorts Maker/src/lib/media/`의 `ken-burns.ts`, `layer-composite.ts`(FFmpeg 인자 구성)는 TN-06-020에서 `services/toon-worker/src/media/`로, `Nomad-BlogStudio`는 Next 16 골격 참고(TN-06-004)만.
+- 리뷰 "높음" 6건의 차단 설계는 `02_ARCHITECTURE.md` 6절(#5, #6)과 `05_DATA_MODEL.md` 7절(#1~#4)에 있습니다. 해당 task의 리뷰 단계에서 차단 여부를 확인합니다.
+- 07장의 "폐기" 항목(FFmpeg.wasm 브라우저 렌더, LoRA, 자동 누끼, 브라우저·Vercel의 LLM·음성 키 직접 사용, `enable_safety_checker: false`)은 옮기지 않습니다.
+
+## 15. 공용 모듈 경계
+
+| 항목 | 규칙 |
+|---|---|
+| core 코드 위치 | `apps/toon/src/lib/server/`(세션, 기능 게이팅, 단가, AI 게이트 `ai/`), `packages/toon-doc/`(문서 스키마·렌더·규칙), `apps/api/app/core/`, `apps/api/app/ai/`. 다음 제품에서 재사용하거나 공용 패키지로 뺄 수 있게 한곳에 모읍니다 |
+| 영상 렌더 | MP4 렌더는 제품 워커에 이식합니다. video의 미디어 워커와 공유할지는 D1입니다 |
+| 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 9) |
+| 남은 코어 과제 | `adjust_credits` 미구현(요청 3), 잡 토큰 패턴 표준화(요청 8), ai-service 사용자 조직 위키 저장 API(요청 10), core-voice 대체 금지 일반화(요청 11) 등. `docs/file/01-관리/06_AGENT_PLAN.md` 6절 코어 요청을 참고합니다 |
+
+## 16. 검증과 완료 정의
+
+- task 완료 = `06_AGENT_PLAN.md`의 수용 기준 충족 + 리뷰 추적성 표에 끊긴 곳 없음 + `gate.sh`·`scope_check.sh` 통과
+- 커밋 전에 `bash _shared/check-invariants.sh`가 PASS여야 합니다.
+- MVP 완료는 `06_AGENT_PLAN.md` 7절 완료 정의를 따릅니다.
+
+## 17. 위험과 주의
+
+| 위험 | 대응 |
+|---|---|
+| Supabase 프로젝트 비용 | 제품마다 프로젝트 1개입니다. 제품이 3~4개를 넘으면 통합 DB(모듈러) 전환을 검토합니다. 통합 DB SQL은 이미 있습니다(`D:\WorkSpace\platform\docs\products\_supabase-modular\`) |
+| AI·음성 비용 | 크레딧 선차감과 정산, 기능별 라우팅, 오픈소스 우선 기능으로 관리합니다. 운영 중 `core.ai_usage`로 원가를 확인해 단가(제안값)를 확정합니다 |
+| 국외 이전과 개인정보 | 동의 전 국외 제공자 사용 금지, AI 배경(fal)은 동의 없이 차단(`TN007`, D11), 이메일·이름·결제 정보 미전송, 녹음 기본 미저장 |
+| 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
+| AI 콘티 원가 | 정액 3크레딧은 오픈소스 경로 기준입니다. 상용 경로 원가를 `core.ai_usage`로 실측해 D9를 재검토합니다 |
+| 영상 음성 시간 제한 | Vercel 함수 시간 제한 때문에 `video-lines`는 요청당 대사 10개로 분할합니다 |
+| 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 platform에서 다시 묶으려면 `build_root.py`를 실행합니다 |
+| AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
+
+## 18. 체크리스트
+
+- [ ] 2절 도구 설치 확인(Git Bash, jq, Python, Node·pnpm, uv, Supabase CLI, Docker)
+- [ ] setup 스크립트 dry-run으로 할 일 확인
+- [ ] setup 스크립트 실행, 무결성 점검 PASS
+- [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
+- [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 상용만)
+- [ ] `supabase start` → `supabase db reset` 성공(7절)
+- [ ] 결정 D1~D17 확정, 산출물 "승인" 전환(8절). D22~D24는 G1·G2 전에
+- [ ] W0 task 생성과 진행(9절)
+- [ ] 인증 Stage A 로컬 실행 확인: `supabase db reset` → 시드 → `/api/dev/login`(TN-06-004, W0), `/login` 개발용 패널은 TN-06-027(W3) 뒤(19.2)
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
+- [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
+- [ ] W1~W5·W5-B 진행, W6 통합 E2E(TN-06-030)를 Mock으로 먼저 녹색
+- [ ] G1 판정(19.3) → W6 맨 앞 TN-06-067 Google·이메일 로그인 → B-1~B-6, AI 보안 회귀(TN-06-057) 통과, MVP 출시 조건 충족
+- [ ] 공개 베타 2주 뒤 G2 판정(19.5) → 카카오(TN-06-068)·네이버(TN-06-069)
+
+## 19. 인증 단계: Mock → Google → 카카오·네이버
+
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009, 확정 결정 22). 제품 적용은 `docs/file/02-요구사항/01_PRD.md` 2절 머리말·TN-F-040·8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 10절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
 
 처음 개발할 때는 외부 로그인 설정 없이 Mock으로 MVP 기능을 끝내고, 기능이 다 돌면 Google, 그다음 카카오·네이버를 붙입니다. Mock도 로컬 Supabase에 실제로 로그인하므로(가짜 쿠키 없음) 단계를 바꿀 때 권한·RLS·크레딧 코드는 그대로이고 로그인 버튼만 늘어납니다.
 
-### 13.1 단계 요약
+### 19.1 단계 요약
 
 | 단계 | 언제 | 켜지는 로그인 | 다음 단계 게이트 | 이 제품 작업 |
 |---|---|---|---|---|
@@ -415,7 +538,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | C1 카카오 | G2 통과 후 | 카카오 추가 | 7.1.3절 기준 | TN-06-068(P1, Opus, S, W7) |
 | C2 네이버 | G2 통과 후(C1과 병렬) | 네이버 추가(스파이크로 경로 결정) | 7.2.4절 기준 | TN-06-069(P1, Fable, M, W7) |
 
-### 13.2 Stage A 로컬 실행 순서
+### 19.2 Stage A 로컬 실행 순서
 
 | 순서 | 명령·작업 | 확인 |
 |---|---|---|
@@ -423,14 +546,14 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 2 | `supabase db reset` | 마이그레이션·seed 적용(7절) |
 | 3 | `apps/toon/.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD=<로컬 전용 임의 값>`, `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` 등 로컬 값 | `.env.local`은 커밋하지 않습니다. `DEV_SEED_PASSWORD`는 `NEXT_PUBLIC_*`로 만들지 않습니다 |
 | 4 | `node scripts/dev/seed-users.mjs --app toon`(또는 `pnpm db:seed-users`) | 페르소나·이메일·조직 id·플랜·잔액 표가 출력됩니다(비밀번호는 출력 안 함). Supabase 주소가 원격이면 즉시 종료합니다 |
-| 5 | `pnpm dev` → `http://localhost:3000/login` | "개발용 로그인" 패널에서 `owner` 클릭 → `/app/onboarding`. 상단에 `MOCK AUTH · 로컬 전용` 배지 |
+| 5 | `pnpm dev` → `http://localhost:3000/login` | "개발용 로그인" 패널에서 `owner` 클릭 → `/app/onboarding`. 상단에 `MOCK AUTH · 로컬 전용` 배지. 패널은 TN-06-027(W3)부터이고, 그 전에는 `POST /api/dev/login`(TN-06-004, W0)을 직접 호출합니다 |
 | 6 | E2E | `pnpm test:e2e`. Playwright `globalSetup`이 페르소나별 `storageState`를 만듭니다 |
 
 페르소나(정본 `05_DATA_MODEL.md` 10절): `owner`(free, 10크레딧, 국외 이전 동의), `admin`·`member`·`viewer`(owner 조직), `outsider`(다른 조직, 미동의), `no_app`(첫 진입 부트스트랩 확인), `suspended`, `ops`(카탈로그 운영), `pro_owner`(Pro, 워터마크 해제·MP4·협찬), `low_credit`(잔액 1, 402 확인).
 
 이 문서의 개발 방식은 단독 Supabase(`public`, 모놀리스)라 `no_app`도 가입 트리거가 바로 부트스트랩합니다. 모듈러 통합 DB로 바꾸면 `no_app`으로 콜백의 `bootstrap_app_for_org` 경로를 확인합니다.
 
-### 13.3 G1 체크리스트 (사람이 판정)
+### 19.3 G1 체크리스트 (사람이 판정)
 
 | # | 조건 | 확인 방법 |
 |---|---|---|
@@ -438,12 +561,12 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 2 | 핵심 플로우 E2E 녹색(Mock 페르소나 `storageState`) | `npx playwright test tests/e2e/flows` |
 | 3 | RLS 스모크 전 항목 통과, `outsider` 교차 테넌트 거부 | `pnpm test:rls`(TN-06-002, 060) |
 | 4 | 결제 E2E 녹색(Toss 테스트 키) | `npx playwright test tests/e2e/billing`(TN-06-025) |
-| 5 | 단계 분기 코드가 인증 모듈 밖에 0건 | CI 금지 패턴 검사(TN-06-031) |
-| 6 | 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, `/legal/privacy`·`/legal/terms` URL, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트 | 13.4절 |
+| 5 | 단계 분기 코드가 인증 모듈 밖에 0건 | CI 금지 패턴 검사(TN-06-031, P1이지만 G1 전에 완료) |
+| 6 | 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, `/legal/privacy`·`/legal/terms` URL, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트 | 19.4절 |
 
 판정 결과는 TN-06-067 task `log.md`에 `[DECISION] G1 통과`로 남깁니다. 결정 D24(이메일 가입 유지, 기본 유지)도 이때 확인합니다.
 
-### 13.4 Stage B 외부 설정 순서 (사람, AUTH_ROADMAP 5.1절)
+### 19.4 Stage B 외부 설정 순서 (사람, AUTH_ROADMAP 5.1절)
 
 | 순서 | 할 일 | 비고 |
 |---|---|---|
@@ -456,19 +579,19 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 TN-06-067 수용 기준 B-1~B-6(`06_AGENT_PLAN.md` 8.1절). Google 실로그인은 자동화하지 않고 사람이 데스크톱·모바일 각 1회, 신규·기존 계정으로 확인해 `log.md`에 남깁니다.
 
-### 13.5 G2 체크리스트 (사람이 판정)
+### 19.5 G2 체크리스트 (사람이 판정)
 
 | # | 조건 | 확인 방법 |
 |---|---|---|
 | 1 | Google 실로그인으로 공개 베타 2주 운영(제안) | 운영 기간 |
 | 2 | 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안) | 감사 `auth.login`, 오류 로그 |
 | 3 | 신규 가입자 중 `entitled=false`로 남은 사용자 0 | AUTH_ROADMAP 6장 3번 쿼리(모놀리스는 `core.`를 `public.`으로) |
-| 4 | 카카오 디벨로퍼스 앱 생성, 이메일이 필요하면 비즈 앱 전환(결정 D22) | 13.6절 |
-| 5 | 네이버 애플리케이션 등록, 검수 자료(로그인 버튼부터 가입 완료까지 캡처) 준비 | 13.7절 |
+| 4 | 카카오 디벨로퍼스 앱 생성, 이메일이 필요하면 비즈 앱 전환(결정 D22) | 19.6절 |
+| 5 | 네이버 애플리케이션 등록, 검수 자료(로그인 버튼부터 가입 완료까지 캡처) 준비, C2 스파이크 결과 기록(D23) | 19.7절 |
 
 판정 결과는 `[DECISION] G2 통과`로 남깁니다.
 
-### 13.6 C1 카카오 설정 (사람, AUTH_ROADMAP 7.1.1절)
+### 19.6 C1 카카오 설정 (사람, AUTH_ROADMAP 7.1.1절)
 
 | 순서 | 할 일 |
 |---|---|
@@ -481,7 +604,7 @@ TN-06-067 수용 기준 B-1~B-6(`06_AGENT_PLAN.md` 8.1절). Google 실로그인�
 
 수용 기준 C1-1~C1-5는 TN-06-068 행에 있습니다.
 
-### 13.7 C2 네이버 스파이크와 검수 (AUTH_ROADMAP 7.2.2~7.2.4절)
+### 19.7 C2 네이버 스파이크와 검수 (AUTH_ROADMAP 7.2.2~7.2.4절)
 
 | 단계 | 할 일 | 통과 기준 |
 |---|---|---|
@@ -493,7 +616,7 @@ TN-06-067 수용 기준 B-1~B-6(`06_AGENT_PLAN.md` 8.1절). Google 실로그인�
 
 로컬 CLI가 커스텀 제공자를 지원하는지는 미확인입니다. 지원하지 않으면 로컬은 Mock·Google·카카오로 개발하고 네이버는 스테이징 프로젝트에서 확인합니다.
 
-### 13.8 단계 전환 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
+### 19.8 단계 전환 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
 
 ```
 D:/WorkSpace/DEV/toon-factory/docs/file 의 모든 파일(프로젝트 산출물)을 최대한 자세히 읽고 분석한다.
@@ -509,8 +632,10 @@ TN-06-067: 인증 Stage B(Google OAuth + 이메일 가입·재설정 + 온보딩
 Google 실로그인 수동 점검(데스크톱·모바일, 신규·기존 계정)은 사람이 한다. 점검표만 log.md 에 만든다.
 
 [작업의 특성]
-권한 경계 작업. 원격 Supabase 대시보드·Google 콘솔 설정은 사람이 한다(13.4절). 원격 db push 금지.
-작업 대상 경로: apps/toon/src/app/(auth)/, apps/toon/src/app/onboarding/terms/, apps/toon/src/lib/auth/oauth/
+권한 경계 작업. 원격 Supabase 대시보드·Google 콘솔 설정은 사람이 한다(19.4절). 원격 db push 금지.
+작업 대상 경로: apps/toon/src/app/(auth)/signup/, apps/toon/src/app/(auth)/reset/, apps/toon/src/app/(auth)/auth/callback/,
+apps/toon/src/app/(auth)/login/providers/, apps/toon/src/app/onboarding/terms/, apps/toon/src/lib/auth/(oauth/ 와 콜백 연결부)
+(src/proxy.ts 의 약관 리다이렉트·공개 경로, supabase/config.toml 의 Google 설정은 소유 작업에 1줄 요청으로 남긴다.)
 
 이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
 승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
@@ -537,137 +662,15 @@ baseline:
     path: docs/file/01-관리/06_AGENT_PLAN.md   # 8절 TN-06-067~069
 ```
 
-### 13.9 이 제품의 인증 작업 ID
+### 19.9 이 제품의 인증 작업 ID
 
 | 단계 | 작업 | 우선순위 | 웨이브 | 게이트 |
 |---|---|---|---|---|
-| A | TN-06-004, TN-06-027 | P0 | W0, W3 | 없음 |
+| A | TN-06-004(모듈 경계·`/api/dev/login`·시드·가드), TN-06-027(개발용 패널) | P0 | W0, W3 | 없음 |
 | B | TN-06-067 | P0 | W6 맨 앞 | G1 |
 | C1 | TN-06-068 | P1 | W7 | G2 |
 | C2 | TN-06-069 | P1 | W7 | G2 |
-
-## 14. 메인 디자인과 디자인 시스템
-
-디자인 작업 순서: 14.3 시각 레퍼런스(Awwwards·Dribbble) → 14.1 디자인 시스템 → 14.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
-
-### 14.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
-
-주 레퍼런스는 Atlassian(회차·컷 관리, 상태 배지, 권한, 드래그 앤 드롭), 보조는 Primer(밀도)입니다. 채팅·음성·위키 화면은 Astryx 패턴(미확인, D15)입니다.
-
-| 단계 | 작업 | 담당 |
-|---|---|---|
-| 1. 레퍼런스 확정 | 앱 화면 Atlassian + Primer, 채팅은 Astryx 확인(D15), 랜딩은 HERO_3D | TN-06-041, 고문 검토 |
-| 2. 가진 것 위에서 시작 | 03장 토큰 플랜(원고지 흰, 거터 회색, 펜선 남색, 논포토 블루, 효과선 노랑, 에디터 크롬) + Tailwind CSS v4 `@theme` → `apps/toon/src/styles/tokens.css`, 기본 컴포넌트, `/dev/components` | TN-06-034 |
-| 3. 비주얼은 사람이 | 라이트/다크, 상태, 크기 배리언트를 스크린샷으로 보고 사람이 수치를 고칩니다 | TN-06-042(사람) |
-| 4. 정답을 한 곳으로 | 코드(Tailwind v4 CSS + 컴포넌트)를 정답으로 확정하고 `DESIGN.md`, `COMPONENTS.md`를 코드 기준으로 맞춤 | TN-06-043 |
-
-- AI에게는 컴포넌트 1개 단위로 맡깁니다(`DESIGN_SYSTEM.md` 8장 템플릿). "알아서 만들어 줘"는 쓰지 않습니다.
-- 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
-- 이전 계획의 `design-system/toon-factory/MASTER.md`는 만들지 않습니다(정답이 두 곳이 되지 않게).
-
-### 14.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
-
-| 기기 | 구성 |
-|---|---|
-| PC(1280px 이상), 태블릿(768~1279px) | 풀 3D: 공간에 흩어진 웹툰 컷 패널이 스크롤에 따라 가운데 세로 스크롤 만화 스트립으로 정렬됩니다 |
-| 모바일(767px 이하) | 가벼운 3D 자동 로드: 컷 3장이 세로로 정렬됩니다 |
-| 대체 | WebGL 미지원·저사양(로드 전 판정)·동작 줄이기 설정이면 정지 렌더 이미지 |
-
-- 제목, CTA, 샘플 스트립은 HTML로 3D 위에 겹칩니다. 3D 컷은 빈 컷(외곽선과 콘티 선)이고 캐릭터·말풍선·효과 글자는 넣지 않습니다.
-- 성능 예산(제안): PC·태블릿 1MB/60fps, 모바일 300KB/30fps, LCP 2.5초 이하
-- 금지: 보라/핑크 그라디언트, 만화 효과음 글자·말풍선을 UI 장식으로 쓰기, 토큰 밖 3D 색
-- 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(TN-06-056, 026)
-
-### 14.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
-
-화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
-
-| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
-|---|---|---|---|
-| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
-| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
-
-이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` toon-factory 절(`:225`)에 있습니다.
-
-| 출처 | URL | 참고 포인트(가져올 것) | 적용 화면 |
-|---|---|---|---|
-| Awwwards (Nominee) | https://www.awwwards.com/sites/soul-reaper-html5-scroll-book | 스크롤로 진행되는 코믹. 세로 스크롤 문법을 랜딩 연출 하나로 쓰는 방식 | 히어로(샘플 웹툰 스크롤) |
-| Awwwards (Nominee) | https://www.awwwards.com/sites/manga-san | 만화 페이지를 경험 공간으로 보여 주는 구성 | 샘플 작품 구간 |
-| Dribbble | https://dribbble.com/shots/15313910-StoryBoard-Dashboard-App-Design | 장면 프레임을 나열해 관리하는 스토리보드 | 콘티 화면, 회차 목록 |
-| Dribbble | https://dribbble.com/shots/9071622-Webtoon-Factory | 사용자가 직접 코믹을 만드는 제작 흐름 | 에디터 흐름(이름이 비슷하므로 명칭·그래픽 차용 금지) |
-| Dribbble | https://dribbble.com/shots/24546086-Ai-Storybook-app | 캐릭터를 만들고 이야기에 배치하는 흐름 | Phase 2 캐릭터 시트 |
-
-- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
-- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
-- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
-- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 14.1 디자인 시스템 → 14.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
-- 화면·랜딩 task의 `task.md` baseline에는 아래 3개를 넣습니다. 06장의 레퍼런스 확정 task와 랜딩 task 수용 기준에도 같은 레퍼런스 확인이 들어 있습니다.
-
-```yaml
-baseline:
-  - id: DOC-DES-002
-    path: docs/file/03-설계/03_SCREENS_UX.md   # 4.1절 레퍼런스 표, 4.2 브리프, 4.3 토큰 플랜
-  - id: DOC-DSN-005
-    path: docs/file/03-설계/디자인/REFERENCES.md   # 이 제품 절, 복제 금지 규칙
-  - id: DOC-DSN-001
-    path: docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md   # 1단계 레퍼런스 수집, 7단계 체크리스트
-```
-
-- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
-
-## 15. 원본 이식
-
-정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
-
-- 원본은 기획 문서 3개뿐이라 이식은 주로 개념과 참고 코드입니다. 원본 폴더 `D:\WorkSpace\platform\Toon-Factory\`는 옮기거나 지우지 않습니다(아카이브는 사용자 승인 뒤 별도 작업).
-- 참고 코드는 통째로 복사하지 않고 task마다 필요한 파일만 옮깁니다: `NOMAD Shorts Maker/src/lib/media/`의 `ken-burns.ts`, `layer-composite.ts`(FFmpeg 인자 구성)는 TN-06-020에서 `services/toon-worker/src/media/`로, `Nomad-BlogStudio`는 Next 16 골격 참고(TN-06-004)만.
-- 리뷰 "높음" 6건의 차단 설계는 `02_ARCHITECTURE.md` 6절(#5, #6)과 `05_DATA_MODEL.md` 7절(#1~#4)에 있습니다. 해당 task의 리뷰 단계에서 차단 여부를 확인합니다.
-- 07장의 "폐기" 항목(FFmpeg.wasm 브라우저 렌더, LoRA, 자동 누끼, 브라우저·Vercel의 LLM·음성 키 직접 사용, `enable_safety_checker: false`)은 옮기지 않습니다.
-
-## 16. 공용 모듈 경계
-
-| 항목 | 규칙 |
-|---|---|
-| core 코드 위치 | `apps/toon/src/lib/server/`(세션, 기능 게이팅, 단가, AI 게이트 `ai/`), `packages/toon-doc/`(문서 스키마·렌더·규칙), `apps/api/app/core/`, `apps/api/app/ai/`. 다음 제품에서 재사용하거나 공용 패키지로 뺄 수 있게 한곳에 모읍니다 |
-| 영상 렌더 | MP4 렌더는 제품 워커에 이식합니다. video의 미디어 워커와 공유할지는 D1입니다 |
-| 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 9) |
-| 남은 코어 과제 | `adjust_credits` 미구현(요청 3), 잡 토큰 패턴 표준화(요청 8), ai-service 사용자 조직 위키 저장 API(요청 10), core-voice 대체 금지 일반화(요청 11) 등. `docs/file/01-관리/06_AGENT_PLAN.md` 6절 코어 요청을 참고합니다 |
-
-## 17. 검증과 완료 정의
-
-- task 완료 = `06_AGENT_PLAN.md`의 수용 기준 충족 + 리뷰 추적성 표에 끊긴 곳 없음 + `gate.sh`·`scope_check.sh` 통과
-- 커밋 전에 `bash _shared/check-invariants.sh`가 PASS여야 합니다.
-- MVP 완료는 `06_AGENT_PLAN.md` 7절 완료 정의를 따릅니다.
-
-## 18. 위험과 주의
-
-| 위험 | 대응 |
-|---|---|
-| Supabase 프로젝트 비용 | 제품마다 프로젝트 1개입니다. 제품이 3~4개를 넘으면 통합 DB(모듈러) 전환을 검토합니다. 통합 DB SQL은 이미 있습니다(`D:\WorkSpace\platform\docs\products\_supabase-modular\`) |
-| AI·음성 비용 | 크레딧 선차감과 정산, 기능별 라우팅, 오픈소스 우선 기능으로 관리합니다. 운영 중 `core.ai_usage`로 원가를 확인해 단가(제안값)를 확정합니다 |
-| 국외 이전과 개인정보 | 동의 전 국외 제공자 사용 금지, AI 배경(fal)은 동의 없이 차단(`TN007`, D11), 이메일·이름·결제 정보 미전송, 녹음 기본 미저장 |
-| 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
-| AI 콘티 원가 | 정액 3크레딧은 오픈소스 경로 기준입니다. 상용 경로 원가를 `core.ai_usage`로 실측해 D9를 재검토합니다 |
-| 영상 음성 시간 제한 | Vercel 함수 시간 제한 때문에 `video-lines`는 요청당 대사 10개로 분할합니다 |
-| 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 platform에서 다시 묶으려면 `build_root.py`를 실행합니다 |
-| AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
-
-## 19. 체크리스트
-
-- [ ] 2절 도구 설치 확인(Git Bash, jq, Python, Node·pnpm, uv, Supabase CLI, Docker)
-- [ ] setup 스크립트 dry-run으로 할 일 확인
-- [ ] setup 스크립트 실행, 무결성 점검 PASS
-- [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
-- [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 상용만)
-- [ ] `supabase start` → `supabase db reset` 성공(7절)
-- [ ] 결정 D1~D17 확정, 산출물 "승인" 전환(8절). D22~D24는 G1·G2 전에
-- [ ] W0 task 생성과 진행(9절)
-- [ ] 인증 Stage A 로컬 실행 확인: `supabase db reset` → 시드 → `/login` 개발용 패널(13.2)
-- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(14.3)
-- [ ] 디자인 시스템 1~4단계 완료(14.1). 사람 비주얼 검토 포함
-- [ ] G1 판정(13.3) → TN-06-067 Google·이메일 로그인 → B-1~B-6
-- [ ] W1~W6 진행, AI 보안 회귀(TN-06-057) 통과, MVP 출시 조건 충족
-- [ ] 공개 베타 2주 뒤 G2 판정(13.5) → 카카오(TN-06-068)·네이버(TN-06-069)
+| 관련 | TN-06-002·060(RLS, `outsider`), TN-06-030(Mock storageState E2E), TN-06-031(CI 금지 문자열) | P0, 031은 P1 | W1·W5-B, W6, W4 | - |
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

@@ -410,7 +410,7 @@ ASCII(상품DB):
 
 | 단계 | `/login` 구성 | `/auth/callback` | 비고 |
 |---|---|---|---|
-| A(MVP 개발, 로컬) | "개발용 로그인" 패널: 페르소나 버튼(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, 05장 10절), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼은 렌더하지 않는다 | 없음(`POST /api/dev/login`이 세션 쿠키를 설정하고 `next` 또는 `/dashboard`로 이동) | 모든 화면 상단에 고정 배지 `MOCK AUTH · 로컬 전용`. `isMockAuthAllowed()`가 거짓이면 패널·배지 코드를 렌더하지 않는다(서버 컴포넌트 분기) |
+| A(MVP 개발, 로컬) | "개발용 로그인" 패널: 페르소나 버튼(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops` + 제품 행 `pro`, `ai_consent`, 05장 10절), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼은 렌더하지 않는다 | 없음(`POST /api/dev/login`이 세션 쿠키를 설정하고 `next` 또는 `/dashboard`로 이동) | 모든 화면 상단에 고정 배지 `MOCK AUTH · 로컬 전용`. `isMockAuthAllowed()`가 거짓이면 패널·배지 코드를 렌더하지 않는다(서버 컴포넌트 분기) |
 | B(공개 베타 전) | "Google로 계속하기" 버튼 + 이메일 폼(로그인/가입 탭, 비밀번호 재설정 링크). 하단에 이용약관·개인정보처리방침 링크 | `finishLogin` 후 `/dashboard`(또는 화이트리스트 `next`) | Google은 가입과 로그인이 같은 버튼. 이메일 가입 화면·인증 메일 안내·비밀번호 재설정 화면은 B단계에 만든다 |
 | C1·C2(G2 후) | B 구성 + "카카오로 계속하기"(카카오 디자인 가이드 색·문구, 미확인: 최신판 확인), "네이버로 계속하기"(검수 통과 전 운영에서 숨김) | 카카오·`custom:naver`는 같은 콜백. 브리지면 `/auth/naver/start` → `/auth/naver/callback` | 버튼 순서는 Google, 카카오, 네이버, 이메일(제안) |
 

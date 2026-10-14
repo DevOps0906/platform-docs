@@ -216,6 +216,10 @@ RLS 스모크(기존 87항목)에 위 항목을 더한 목록은 MW-06-030이 `s
 
 invite 앱 특이점: 가입 트리거는 `signup_app='microweb'`이어도 엔타이틀먼트를 만들지 않는다(`docs/products/_supabase-modular/migrations/0001_core_identity.sql:149-155`, 모놀리스도 apps 1행 자동 선택 뒤 같은 검사를 한다 `supabase/monolith/migrations/0001_core_lite.sql:260-266`). 그래서 공통 행의 "`signup_app=<app>`으로 생성 → `entitled=true`"가 이 제품에서는 성립하지 않고, 훅이 운영자 초대 경로(MW-06-026)와 같은 service_role 호출로 권한을 만든다.
 
+### 10.1 공통 페르소나와 제품 훅 행 (AUTH_ROADMAP 2.2절·8장 microweb 행: `studio_access` 허용·미허용)
+
+invite 앱이라 공통 행도 훅이 권한을 만들므로 한 표에 적는다. 제품 행은 `studio_denied`(미허용)이고 `owner`가 허용 쪽 기준 페르소나다.
+
 | 키 | 만드는 방법(RPC/서비스 경로) | 기대 결과 | 쓰임 |
 |---|---|---|---|
 | `owner` | 공통 생성 후 훅: service_role `core.bootstrap_app_for_org('microweb', <owner 개인 조직>)`(`0003_core_credits.sql:440`) + service INSERT `microweb.studio_access(org_id, mode='agency', max_active_sites=3, granted_by=ops)`. 출력된 조직 id를 `.env.local`의 `MICROWEB_STUDIO_ORG_ID`에 넣는다(문의 `create_lead`는 agency 허용 목록 조직만 받는다, `1500_microweb.sql:1233`) | `session_context('microweb')` `entitled=true`, plan `free`, `has_studio_access=true`. `/studio` 진입, `create_site` 성공 | 기본 운영자(studio_access 허용) |
@@ -226,9 +230,13 @@ invite 앱 특이점: 가입 트리거는 `signup_app='microweb'`이어도 엔�
 | `suspended` | 공통: service_role로 `status=suspended`. 훅이 `owner`처럼 권한을 먼저 부여 | 403 | 차단 확인 |
 | `ops` | 공통: service_role로 `platform_role=platform_admin` | `/studio/admin/*`, `POST /api/admin/invites`·`/access` 허용(다른 페르소나는 403) | 운영자 초대·허용 목록 관리(MW-06-026), 지식·위키 관리 |
 | `pending` | 만들지 않는다(approval 앱 전용) | - | - |
+| 하객·시안·쇼룸 방문자 | 만들지 않는다. Supabase Auth 사용자가 아니다 | E2E는 페르소나 없이 `/i/[slug]`, `/p/[token]`, `/contact`를 연다(F2, F3, F8) | 로그인 없는 흐름(02장 9.5절) |
+
+### 10.2 규칙과 모놀리스·모듈러 차이
 
 | 규칙 | 내용 |
 |---|---|
+| 약관 동의 | A단계에는 약관 단계가 없다. B에서 MW-06-054가 약관 가드와 기록 방식(03장 7절)을 정하면 이 훅이 페르소나마다 동의 기록을 만든다(054가 003 소유 훅에 1줄 요청) |
 | 멱등 | 이미 있는 이메일은 건너뛰고 역할·상태·`studio_access`만 맞춘다. `bootstrap_app_for_org`는 구독·엔타이틀먼트를 `on conflict do nothing`으로 만들고 free 플랜은 가입·월 크레딧이 0이라 원장 행이 생기지 않는다 |
 | 모놀리스/모듈러 차이 | 모듈러 `--app microweb`과 모놀리스(`public` 스키마, `bootstrap_app_for_org`는 `public.`)는 같은 훅 순서를 쓴다. 차이는 함수 스키마 접두사(`SUPABASE_DB_SCHEMA`)뿐이고, `no_app`이 모놀리스에서도 `entitled=false`인 점이 공통 표(`AUTH_ROADMAP.md:59`)와 다르다(invite 검사 때문) |
 | 셀프서비스(Phase 2) | `studio_access.mode='self_service'` 페르소나(`owner_self`, 제안)는 MW-06-027 착수 때 훅에 더한다 |

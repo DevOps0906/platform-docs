@@ -938,3 +938,44 @@ seed 내용(전부 제안값, 정본은 `01_PRD.md` 3·4장).
 | `runtime_config` | `max_active_generations_per_org`=3, `daily_credit_cap` 등 |
 | 플랜·크레딧팩 | free(가입 50, 월 30), pro(19,900원, 월 400), team(59,000원, 월 1,500, Phase 2 비활성), 팩 100/300/1,000 |
 | `ai_routing_settings` | 기능별 13행. `docs.minutes`(llm)와 `meeting_minutes`(stt), `dify.aux`는 오픈소스 강제 |
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경은 없다. 인증 단계는 코어 계약(`session_context`, 가입 트리거, `bootstrap_app_for_org`)을 그대로 쓰고, Stage A의 Mock 로그인은 로컬 Supabase에 시드한 실제 계정으로 로그인한다(`docs/products/_platform-core/AUTH_ROADMAP.md` 2장). C2에서 브리지 경로를 택하면 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`의 `core.auth_identity_links`를 참조만 한다(제품 테이블 추가 없음, 06장 8.3절 C-13).
+
+시드는 `scripts/dev/seed-users.mjs --app docs`(공통, AUTH_ROADMAP 2.3절)가 공통 페르소나를 만든 뒤 제품 훅 `scripts/dev/seed-users.docs.mjs`(제안)를 실행한다. 원격 호스트면 즉시 종료하고, 두 번 실행해도 크레딧이 두 번 지급되지 않는다. 이메일 도메인 `.test`, 비밀번호는 `DEV_SEED_PASSWORD`(출력하지 않음). 워크스페이스 행(`workspace_settings`, self 당사자)은 시드가 만들지 않고 첫 로그인의 `finishLogin`이 만든다(02장 9.2절. 실제 가입과 같은 경로를 검증하기 위해서다).
+
+### 10.1 공통 페르소나 (AUTH_ROADMAP 2.2절)
+
+| 키 | 만드는 경로 | 기대 `session_context('docs')` | docs에서 확인하는 것 |
+|---|---|---|---|
+| `owner` | `auth.admin.createUser`(`user_metadata.signup_app='docs'`) → 가입 트리거 `core.handle_new_user` | 개인 조직 owner, `entitled=true`, `plan_code='free'`, `credit_balance=80`(가입 pack 50 + 월 plan 30) | 01장 DC-F-001 Stage A 수용 기준, Free 한도(`projects_max` 2 → 3번째 `DC006`, PDF만·워터마크, 채팅 30턴/일), 온보딩(03장 7.3절) |
+| `admin` | 생성 후 owner가 `invite_member(org, user, 'admin')` → 본인 `accept_invite` | owner 조직의 admin | `PATCH /api/workspace`·직인·문서번호 설정 가능, 소프트 삭제·복구(owner/admin), 연동 화면 접근 |
+| `member` | 같은 방법(`member`) | owner 조직의 member | 프로젝트·체크리스트·생성·편집 가능, `PATCH /api/workspace` 403, 소프트 삭제 403, `/app/billing` 쓰기 불가 |
+| `viewer` | 같은 방법(`viewer`) | owner 조직의 viewer | 모든 프로젝트 화면 읽기 전용(03장 1절), 쓰기 API 403, 생성 취소(`docs.cancel_generation`) 거부 |
+| `outsider` | `signup_app='docs'`으로 생성(다른 개인 조직) | 자기 조직 owner | 교차 테넌트: owner 조직의 `projects`·`parties`·`documents`·`document_versions`·`doc_exports`·대화·위키·파이프라인 뷰 0행, 다른 조직 `project_id`로 채팅 404, 다른 컬렉션 RAG 42501, 커맨드 팔레트 검색 0건 |
+| `no_app` | `signup_app` 없이 생성 | 모듈러: `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('docs')` 1회 후 `entitled=true`. 모놀리스: 가입 트리거가 자동 부트스트랩해 처음부터 `entitled=true` | OAuth 첫 로그인 경로(B-1)를 A단계에서 미리 검증. 재로그인 3회 뒤 가입 크레딧 원장 행 1개. 온보딩 E2E(DC-06-057 (a))의 첫 로그인 |
+| `suspended` | 생성 후 service_role로 `status=suspended` | 403 | `/suspended` 안내, 모든 API 403 |
+| `ops` | 생성 후 service_role로 `platform_role=platform_admin` | 운영자 | `/admin/catalog`·`/admin/ops` 접근(일반 사용자 403, DC-F-040), 카탈로그 게시 감사 1행 |
+
+`pending`은 approval 앱 전용이라 만들지 않는다(docs `signup_policy='open'`, `docs/products/_supabase-modular/seed.sql:26`). Free·Pro의 `members_max`는 1이지만 이 키는 화면·서버의 구성원 초대 경로(Phase 2, C-5)가 읽고 코어 `invite_member`(`docs/products/_supabase-modular/migrations/0004_core_security.sql:317`)는 검사하지 않으므로, 역할 페르소나를 Free 조직에 만들 수 있다. 역할 분기는 MVP에서도 RLS·API 권한으로 존재하므로 이 페르소나로 검증한다.
+
+### 10.2 제품 훅 행 (docs 도메인)
+
+AUTH_ROADMAP 8장의 docs "A 추가 페르소나"는 "-"(필수 추가 없음)이다. 아래 행은 Pro 게이팅과 온보딩 분기를 Mock으로 돌리기 위한 제안이다.
+
+| 키 | 만드는 경로 | 기대 결과 | 확인하는 것 |
+|---|---|---|---|
+| `pro`(제안) | `signup_app='docs'`으로 생성 → service_role로 `core.subscriptions`에 pro 플랜 `trialing` 행 INSERT → `core.apply_subscription_transition(<sub>, 'active', 'dev_seed')`(`docs/products/_supabase-modular/migrations/0002_core_billing.sql:265`) → `grant_credits`(bucket `plan`, 멱등 키 `dev-seed:pro:<org>`, 400) | `plan_code='pro'`, pack 버킷 50 유지, plan 버킷에 400 지급(정확한 합계는 월 크레딧 버킷 처리에 따르므로 시드 출력 표로 확인, 제안) | `projects_max` 50, PDF 워터마크 없음, DOCX·ZIP 요청 가능(DOCX는 C-1 전 403 `format_unavailable`), 발신 웹훅(Phase 2), 채팅 200턴/일. 실제 결제 경로는 DC-06-048이 Toss 테스트 키로 따로 검증한다 |
+| 약관 동의 기록 | 모든 페르소나에 감사 행(제안: 행동 `terms.accept`, 약관 버전 `DOCS_TERMS_VERSION`)을 service_role로 만든다. 단 `no_app`은 만들지 않는다 | B 이후에도 `no_app`만 `/onboarding/terms`부터 본다 | 03장 7.3절 약관 단계 E2E와 기능 E2E를 분리 |
+| 자사 정보 | `outsider`, `pro` 조직의 self 당사자에 테스트 회사명·사업자등록번호(체크섬이 맞는 가짜 번호, 제안)를 service_role로 채운다. `owner` 조직(admin·member·viewer가 함께 쓰는 조직)과 `no_app` 조직은 비워 둔다 | `owner`·`admin`은 첫 로그인 때 `/onboarding/company`를 본다(02장 9.6절). 다른 조직은 바로 `/app` | 문서 생성 E2E가 회사 정보 입력 없이 시작할 수 있다 |
+| AI 국외 이전 동의 | 만들지 않는다(모든 페르소나 미동의로 시작) | 오픈소스 체인 | 동의 경로는 E2E(DC-06-057)가 `no_app`으로 직접 통과시킨다. 상용 체인이 필요한 테스트는 테스트 안에서 `set_ai_cross_border_ack`(owner)를 부른다 |
+| 고위험 문서 고지 동의 | 만들지 않는다 | `dev_contract` 첫 생성 시 `DC007` 428 | 고지 모달(03장 3.22절) 경로. `dev_contract`는 seed에서 비활성이므로 테스트 안에서만 켠다(D-3) |
+
+### 10.3 모놀리스와 모듈러 차이
+
+| 항목 | 모듈러(`docs` + `core`) | 모놀리스(단독 `public`, 개발 폴더 기본) |
+|---|---|---|
+| `no_app` | `entitled=false`로 생성, `finishLogin`의 `bootstrap_app_for_org`가 메운다 | 앱 행이 1개라 가입 트리거가 자동 부트스트랩(`entitled=true`), `finishLogin`의 부트스트랩 단계는 무동작 |
+| 시드 대상 | `--app`을 여러 번 줄 수 있다(두 번째 앱부터 service_role `bootstrap_app_for_org`). admin-suite ERP 연동(DC-06-055) 확인용으로 `--app docs --app erp`를 줄 수 있다(제안) | `--app docs` 한 번 |
+| 스키마 | 코어 `core.*`, 제품 `docs.*` | 모두 `public.*`(`SUPABASE_DB_SCHEMA=public`) |

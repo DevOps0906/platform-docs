@@ -14,7 +14,10 @@
 | `/newsletter/confirm` | 구독 확인(토큰 검증 후 버튼 1개) | 누구나(토큰 필요) | 해당 없음 | P0 |
 | `/newsletter/unsubscribe` | 구독 해지(토큰 검증 후 버튼 1개) | 누구나(토큰 필요) | 해당 없음 | P0 |
 | `not-found` | 헤더/푸터 유지 404 | 누구나 | 해당 없음 | P0 |
-| `/admin/login` | 운영자 로그인(가입 링크 없음). 단계별: A 개발용 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B "Google로 계속하기" + 이메일·비밀번호 폼(초대 메일 수락 후), C 제외. 화면 콜백 `/auth/callback`(B), 초대받지 않은 계정 `/admin/no-access`(B) — 7절 | 비로그인 | 해당 없음 | P0 |
+| `/admin/login` | 운영자 로그인(가입 링크 없음). 단계별: A 개발용 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B "Google로 계속하기" + 이메일·비밀번호 폼(초대 메일 수락 후), C 제외. 화면 콜백 `/auth/callback`(B), 초대받지 않은 계정 `/admin/no-access`(A·B) — 7절 | 비로그인 | 해당 없음 | P0 |
+| `/admin/no-access` | 엔타이틀먼트 없음 안내 + 로그아웃(콘솔 레이아웃 없음, 7.2절). A는 `no_app` 페르소나로 확인 | 로그인 | 해당 없음 | P0 |
+| `/admin/accept-invite`, `/admin/reset-password` | 초대 메일 수락(비밀번호 설정), 비밀번호 재설정. Stage B에서 만든다(7.1절) | 초대 링크·재설정 링크 | 해당 없음 | P0(B) |
+| `/auth/callback` | OAuth 콜백(화면 없음, `finishLogin` 후 이동, 04장 8절) | 누구나 | 해당 없음 | P0(B) |
 | `/admin` | 문의 목록으로 리다이렉트. 등록된 사이트가 없으면 "초대가 필요합니다" 안내 | owner, admin, member | `app_entitlements` 활성 + 등록된 사이트 1개 이상 | P0 |
 | `/admin/inquiries` | 문의 목록(상태/종류 필터) | owner, admin, member | 같음 | P0 |
 | `/admin/inquiries/[id]` | 문의 상세, 상태 변경, 메모, 삭제(owner/admin) | owner, admin, member(삭제는 owner/admin) | 같음 | P0 |
