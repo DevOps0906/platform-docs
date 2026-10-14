@@ -14,13 +14,13 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
-| LangGraph 초안 그래프 패턴(outline → draft → consistency → proofread → compliance, compliance 뒤 output만) | 기획만 | 참고 | `api/app/ai/graphs/docs_generate.py`(load_context → plan_sections → fill_template → draft_ai_sections → consistency_check → lint → compliance → output) | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:107`, `02_ARCHITECTURE.md:287-306` |
+| LangGraph 초안 그래프 패턴(outline → draft → consistency → proofread → compliance, compliance 뒤 output만) | 기획만 | 참고 | `api/app/ai/graphs/docs_generate.py`(load_context → plan_sections → fill_template → draft_ai_sections → consistency_check → lint → compliance → output) | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:107`, `02_ARCHITECTURE.md:302-321` |
 | 단건 보조 그래프 `publishing.assist`(compose → generate → compliance) | 기획만 | 참고 | `api/app/ai/graphs/docs_assist.py` | `D:/WorkSpace/platform/docs/products/flora-publishing/06_AGENT_PLAN.md:74` |
 | Tiptap 편집기 + 선택영역 툴바 + Diff 카드 + 서버 sanitize | 기획만 | 참고 | `web/src/features/editor/`, `web/src/lib/server/sanitize/` | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:78` |
-| sanitize 허용 목록(p, h2~h4, 목록, a[https], img[Storage 경로] 등) | 기획만 | 이식(목록 확장) | `tpl/sanitize-allowlist.json`(TS·Python 공용) | `D:/WorkSpace/platform/docs/products/flora-publishing/04_API.md:24`, `02_ARCHITECTURE.md:141` |
+| sanitize 허용 목록(p, h2~h4, 목록, a[https], img[Storage 경로] 등) | 기획만 | 이식(목록 확장) | `tpl/sanitize-allowlist.json`(TS·Python 공용) | `D:/WorkSpace/platform/docs/products/flora-publishing/04_API.md:24`, `02_ARCHITECTURE.md:144` |
 | 업로드 계약(서명 URL → 완료 검증, 20MB, 매직바이트, 서버 생성 경로) | 기획만 | 참고 | `web/src/app/api/projects/[id]/uploads/`, `web/src/app/api/uploads/` | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:87` |
-| RLS 복합 FK `(parent_id, org_id)`, 상태 전이 트리거, 컬럼 GRANT 패턴 | 기획만(SQL 검증 완료) | 참고 | `2300_docs.sql`(이미 반영) | `D:/WorkSpace/platform/docs/products/flora-publishing/05_DATA_MODEL.md:33`, `05_DATA_MODEL.md:17` |
-| 크레딧 선차감 → 잡 → `fail_job` 자동 환불 흐름, `generation_runs` 멱등 키 | 기획만 | 참고 | `docs.start_generation`, `worker/src/handlers/docs-generate.ts` | `D:/WorkSpace/platform/docs/products/flora-publishing/02_ARCHITECTURE.md:74`, `05_DATA_MODEL.md:828` |
+| RLS 복합 FK `(parent_id, org_id)`, 상태 전이 트리거, 컬럼 GRANT 패턴 | 기획만(SQL 검증 완료) | 참고 | `2300_docs.sql`(이미 반영) | `D:/WorkSpace/platform/docs/products/flora-publishing/05_DATA_MODEL.md:33`, `05_DATA_MODEL.md:19` |
+| 크레딧 선차감 → 잡 → `fail_job` 자동 환불 흐름, `generation_runs` 멱등 키 | 기획만 | 참고 | `docs.start_generation`, `worker/src/handlers/docs-generate.ts` | `D:/WorkSpace/platform/docs/products/flora-publishing/02_ARCHITECTURE.md:74`, `05_DATA_MODEL.md:867` |
 | AI 게이트(대화 매핑, 서명·잡 토큰, 턴 선차감·정산, 국외 이전 온보딩) | 기획만 | 참고 | `web/src/app/api/ai/`, `web/src/lib/server/ai/` | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:104`, `06_AGENT_PLAN.md:70` |
 | 아웃바운드 웹훅(HTTPS URL, HMAC, 5회 재시도, failing) | 기획만 | 참고 | `web/src/app/api/webhook-endpoints/`, `worker/src/handlers/webhook-deliver.ts` | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:96` |
 | 탈퇴·데이터 삭제(30일 유예 → purge) | 기획만 | 참고 | `web/src/app/api/account/`, `worker/src/handlers/purge.ts` | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md:98` |
@@ -52,7 +52,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 |---|---|---|---|---|
 | "구조화 JSON → HTML 템플릿 → PDF" 파이프라인 | 기획만 | 참고 | `docs.generate` 그래프 + `tpl/` + `render.pdf` | `README.md:48`, `docs/reference/reviews/SellingDocs.md:77` |
 | 목차 → 챕터별 생성(2단계 파이프라인, 단계별 단가) | 기획만 | 참고(섹션 단위 생성, 패키지 부모·자식 잡) | `docs.package`, `draft_ai_sections` | `docs/reference/reviews/SellingDocs.md:72`, `:80` |
-| `deduct_credits` 원자 차감·환불 교훈 | 기획만 | 참고(코어 `consume_credits` + `start_generation` 한 트랜잭션) | `2300`:1837 | `docs/reference/reviews/SellingDocs.md:68`, `:92` |
+| `deduct_credits` 원자 차감·환불 교훈 | 기획만 | 참고(코어 `consume_credits` + `start_generation` 한 트랜잭션) | `2300`:2050 | `docs/reference/reviews/SellingDocs.md:68`, `:92` |
 | Route Handler 순서 규칙(인증 → 크레딧 → 처리) | 기획만 | 참고 | `04_API.md:10`, `CLAUDE.md` | `docs/reference/reviews/SellingDocs.md:70` |
 | sellingstudio Supabase 클라이언트 3종·`proxy.ts`·auth callback | 동작(sellingstudio) | 참고(코어 auth 골격 사용) | `web/src/lib/supabase/`, `web/src/proxy.ts` | `docs/reference/reviews/SellingDocs.md:88-89` |
 | 단일 JSON 일괄 생성, Next/Vercel 안 WeasyPrint, LLM 4사 직접 연동, QuickChart, 공개 서가, ePub(epub-gen-memory) | 기획만 | 폐기 | - | DS-11~DS-14, DS-16, DS-04 |
@@ -80,10 +80,10 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
-| `erp.products`(sku, name, category, price, is_active) | 기획만(SQL 검증) | 참고(읽기 전용 매핑) | `int/src/admin-suite-erp/`, 비용 단가 카탈로그 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql:113`, `04_API.md:227` |
-| `erp.sales`(quantity, unit_price, total_price, status) | 기획만 | 참고(Phase 2 `invoice` 입력) | 같음 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql:154`, `04_API.md:228` |
-| `erp.employees` | 기획만 | 참고(Phase 3 인사 문서, MVP·Phase 2 미사용) | - | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql:76`, `04_API.md:229` |
-| `erp` 스키마 쓰기, 사용자 세션 교차 GRANT | - | 폐기(만들지 않음) | - | `02_ARCHITECTURE.md:189`, 코어 요청 C-7 |
+| `erp.products`(sku, name, category, price, is_active) | 기획만(SQL 검증) | 참고(읽기 전용 매핑) | `int/src/admin-suite-erp/`, 비용 단가 카탈로그 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql:113`, `04_API.md:234` |
+| `erp.sales`(quantity, unit_price, total_price, status) | 기획만 | 참고(Phase 2 `invoice` 입력) | 같음 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql:154`, `04_API.md:235` |
+| `erp.employees` | 기획만 | 참고(Phase 3 인사 문서, MVP·Phase 2 미사용) | - | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql:76`, `04_API.md:236` |
+| `erp` 스키마 쓰기, 사용자 세션 교차 GRANT | - | 폐기(만들지 않음) | - | `02_ARCHITECTURE.md:193`, 코어 요청 C-7 |
 
 ## 2. 이식 자산 상세
 
@@ -91,9 +91,9 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 
 | 자산 | 수정할 점 |
 |---|---|
-| flora-publishing 초안 그래프 패턴 | 노드를 문서 조립용으로 바꾼다: `plan_sections`·`fill_template`은 결정적(LLM 0회), `draft_ai_sections`는 `kind=ai` 섹션만, `risk_level='high'`면 건너뜀. compliance 뒤 `lint`를 앞에 둔다. 사람 승인 interrupt는 두지 않는다(초안 버전만 추가, `02_ARCHITECTURE.md:298`). 소제목 정액 선차감 대신 문서 유형 단가(2/6/12) |
+| flora-publishing 초안 그래프 패턴 | 노드를 문서 조립용으로 바꾼다: `plan_sections`·`fill_template`은 결정적(LLM 0회), `draft_ai_sections`는 `kind=ai` 섹션만, `risk_level='high'`면 건너뜀. compliance 뒤 `lint`를 앞에 둔다. 사람 승인 interrupt는 두지 않는다(초안 버전만 추가, `02_ARCHITECTURE.md:313`). 소제목 정액 선차감 대신 문서 유형 단가(2/6/12) |
 | flora-publishing 편집기·Diff 카드 | 문단 단위가 아니라 섹션 단위 노드. 고정·표·조항 섹션 잠금 확장 추가, 변수 칩(금액·당사자)은 편집 불가 + "정본에서 수정" 링크. 저장은 Tiptap 출력 그대로가 아니라 섹션 배열을 Route Handler가 sanitize 후 새 버전으로. 고위험 유형은 AI 툴바 비활성 |
-| sanitize 허용 목록 | `table`, `colgroup`, `col`, `th[colspan,rowspan]`, `td[colspan,rowspan]`, `section[data-key]` 추가(제안, `02_ARCHITECTURE.md:141`). TS·Python이 같은 JSON 파일을 읽고 해시 일치 테스트 |
+| sanitize 허용 목록 | `table`, `colgroup`, `col`, `th[colspan,rowspan]`, `td[colspan,rowspan]`, `section[data-key]` 추가(제안, `02_ARCHITECTURE.md:144`). TS·Python이 같은 JSON 파일을 읽고 해시 일치 테스트 |
 | 업로드 계약 | 원고 대신 RFP·참고 자료·회의 녹음. 문서 20MB·300쪽, 녹음 200MB와 플랜 `minutes_max_minutes`. "사용 권한 있음" 확인(감사), `contains_pii` 표시, 녹음은 제3자 고지 버전 필수. 파싱 결과는 LLM 전송 전 주민등록번호 마스킹 |
 | 크레딧 흐름 | 단건 선차감은 `docs.start_generation`(service_role) 안에서 run + `enqueue_job` + `consume_credits`를 한 트랜잭션으로. 패키지는 부모 `p_credits=0`, 자식 단위 차감·환불, 실패 자식의 하류는 canceled + 환불 |
 | v1 `content_disposition` | Python → TS. 서명 URL의 `download` 파라미터에 적용. 파일명은 `<문서번호>_<유형명>.<ext>`(제안), 사용자 입력 제목은 표시용으로만 |
@@ -117,7 +117,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 | DS-05 | 판형 프리셋·Auto-Fit·표지 디자인 | flora-publishing, flora v1 | `README.md:46` | 책 판형 개념이 없다. 업무 문서는 A4 하나 | A4 공문서 프리셋(C-1) |
 | DS-06 | 페르소나 60종·Taste 문체 합성 | flora-publishing, flora v1 | `README.md:46-47`, 분석:94 | 업무 문서는 문체 선택이 아니라 표준 서식·용어 일관성이 핵심 | 프로젝트 용어 위키(DC-F-024), 유형별 프롬프트 |
 | DS-07 | TTS 낭독·오디오북, F5-TTS 벤더링, 레퍼런스 WAV 보이스 클론 | flora-publishing, flora v1 | `README.md:46`, `docs/reference/reviews/flora.md:71`, 분석:137, :202, `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:57` | 제품에 낭독 수요 없음. F5-TTS 공개 가중치는 비상업 라이선스(CC-BY-NC), WAV 업로드는 경로 조작·음성 복제 동의 문제 | core-voice 음성 대화(DC-F-027, 저장하지 않음), 회의 STT(DC-F-026) |
-| DS-08 | 3D 책 소재(낱장 → 제본 → 책장) | flora-publishing | `README.md:46` | 제품 소재가 다르다 | 체크 → 서류 낱장 → 묶음 → 직인(`03_SCREENS_UX.md:812-830`) |
+| DS-08 | 3D 책 소재(낱장 → 제본 → 책장) | flora-publishing | `README.md:46` | 제품 소재가 다르다 | 체크 → 서류 낱장 → 묶음 → 직인(`03_SCREENS_UX.md:1005-1023`) |
 | DS-09 | n8n 연동(전역 API 키 프록시) | flora v1·v2 | `README.md:47`, 분석:145 | 키 하나를 모든 테넌트가 공유해 격리 붕괴 | 조직별 수신 토큰(해시 저장) + HMAC 수신, 발신 웹훅(DC-F-029, DC-F-032) |
 | DS-10 | React Flow AI 캔버스 | flora v1 | `docs/reference/reviews/flora.md:31`, 분석:143 | 실행 엔진 없는 노드 UI, 위저드와 중복 | 3단계 체크리스트 마법사 + 결정적 효과 엔진 |
 | DS-11 | 산출물 전체를 단일 JSON 한 번에 생성 | SellingDocs | `README.md:48`, `docs/reference/reviews/SellingDocs.md:51`, 분석:182 | 출력 토큰·시간 제한으로 잘림·파싱 실패 | 문서 1개 = 잡 1개, 섹션별 JSON, 패키지 부모·자식 잡 |
@@ -125,13 +125,13 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 | DS-13 | QuickChart 차트 삽입 | SellingDocs | `docs/reference/reviews/SellingDocs.md:61`, 분석:120 | 사용자 데이터 외부 전송 | 문서 표는 HTML table, 차트는 Phase 2 이후 인라인 SVG(제안) |
 | DS-14 | 공개 서가 + JSON-LD GEO | SellingDocs | `docs/reference/reviews/SellingDocs.md:52`, 분석:119 | 고객 계약·견적 문서를 공개 색인할 이유가 없다(기밀) | 읽기 전용 만료 공유 링크(DC-F-037, Phase 2) |
 | DS-15 | Stripe 결제 | flora v1 | `docs/reference/reviews/flora.md:20`, `:69` | 확정 결정 4(전 제품 Toss), 원천은 서명 미검증 | 코어 Toss(confirm 정본 + 웹훅 서명·멱등) |
-| DS-16 | LLM 4사 SDK 직접 연동, 사용자 모델 선택, Multi-LLM 역할 고정 분담 | SellingDocs, FortuneDocs, flora v1 | `docs/reference/reviews/SellingDocs.md:57`, `docs/reference/reviews/FortuneDocs.md:46`, 분석:159, :182 | 키·SDK 관리 부담, 모델별 단가 설명 불가 | ai-service 라우터 기능별 체인(`02_ARCHITECTURE.md:259-277`), 문서 유형 정액 단가 |
+| DS-16 | LLM 4사 SDK 직접 연동, 사용자 모델 선택, Multi-LLM 역할 고정 분담 | SellingDocs, FortuneDocs, flora v1 | `docs/reference/reviews/SellingDocs.md:57`, `docs/reference/reviews/FortuneDocs.md:46`, 분석:159, :182 | 키·SDK 관리 부담, 모델별 단가 설명 불가 | ai-service 라우터 기능별 체인(`02_ARCHITECTURE.md:274-292`), 문서 유형 정액 단가 |
 | DS-17 | 만세력·사주 도메인 | FortuneDocs | `README.md:49` | 도메인 무관(astro-ai 소유) | 없음 |
 | DS-18 | Pro 잠금해제(`'1234'`, localStorage), 클라이언트 전용 플랜 판정 | flora v1·v2 | 분석:155, :201, `docs/reference/reviews/flora.md:73` | 유료 기능 무료 사용 | 서버 `docs.org_features`, DB 트리거·RPC(DC006) |
 | DS-19 | 사용자 API 키(BYOK) 평문 저장 | flora v1 | 분석:158, :199 | 평문 키 위험, 죽은 기능 | 만들지 않음. 연동 토큰만 `core.encrypted_credentials` |
 | DS-20 | mock 폴백 응답, `/debug-api-keys` | flora v1 | 분석:160, :198, `docs/reference/reviews/flora.md:92`, `:101` | 장애를 정상 응답으로 위장, 키 정보 노출 | 실패 표시 + 환불 + 구조화 로그 |
 | DS-21 | v1 대형 단일 페이지(4,095줄 위저드, 1,422줄 manuscript) | flora v1 | 분석:190, `docs/reference/reviews/flora.md:90` | 유지보수 불가 | 기능 디렉토리 단위 화면(DC-06-038~043) |
-| DS-22 | in-memory waitlist와 시드 수치 147 | flora v1 | 분석:199, `docs/reference/reviews/flora.md:82` | 허위 수치 | 대기자 명단 없음(가입 개방 베타). 랜딩에 수치 표시 금지(`01_PRD.md:403`) |
+| DS-22 | in-memory waitlist와 시드 수치 147 | flora v1 | 분석:199, `docs/reference/reviews/flora.md:82` | 허위 수치 | 대기자 명단 없음(가입 개방 베타). 랜딩에 수치 표시 금지(`01_PRD.md:409`) |
 | DS-23 | platform-docs 내부 개발 표기(모델 배정, `경로:줄` 근거, 작업 ID) | 문서 표준 | `README.md:50` | 고객 문서에 의미 없는 내부 표기 | 요구사항·화면·마일스톤 코드와 추적표 |
 | DS-24 | AI 표지·이미지 생성(제공자 7종) | flora v1 | 분석:109 | 업무 문서에 생성 이미지가 필요 없다. 직인은 사용자 업로드 | 직인 이미지(비공개 버킷) |
 | DS-25 | 사진집·룩북, AI 조판(`/llm/layout`) | flora v1 | 분석:108, :146-147 | 도메인 무관, 목업 | 없음 |
@@ -146,20 +146,20 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 |---|---|---|---|
 | 크레딧 RPC EXECUTE 미회수 | `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:219` | 브라우저에서 크레딧 지급 | 코어 RPC는 service_role만. RLS 러너가 `rpc('grant_credits')` 42501 확인(DC-06-003) |
 | 비원자 크레딧 차감(읽고 → 빼고 → 쓰기) | `SECURITY_BASELINE.md:220`, `docs/reference/reviews/SellingDocs.md:49` | 동시 요청으로 음수 잔액 | `docs.start_generation` 한 트랜잭션 + `core.consume_credits`, 동시성 50회 테스트(DC-06-056) |
-| 웹훅 서명 미검증·선택적 검증, 시크릿 오용 | `SECURITY_BASELINE.md:221`, `docs/reference/reviews/flora.md:69` | 위조 이벤트로 플랜 상승, 위조 프로젝트 생성 | Toss·HubSpot·Make/n8n 모두 원시 본문 서명 검증 + `core.webhook_events` 멱등. 수신 토큰은 sha256 해시만 저장 |
+| 웹훅 서명 미검증·선택적 검증, 시크릿 오용 | `SECURITY_BASELINE.md:221`, `docs/reference/reviews/flora.md:69` | 위조 이벤트로 플랜 상승, 위조 프로젝트 생성 | Toss·HubSpot·n8n 모두 원시 본문 서명 검증 + `core.webhook_events` 멱등. 수신 토큰은 sha256 해시만 저장 |
 | `customerKey = Date.now()`, orderId 파싱으로 org/plan 추출 | `SECURITY_BASELINE.md:222` | 빌링키 충돌, 금액·대상 위조 | 코어 `payment_orders` 서버 생성, confirm 정본 |
 | OAuth state 위조, 콜백 인증 결함 | `SECURITY_BASELINE.md:223` | 타인 계정에 CRM 연결 | `core.oauth_states` 서버 발급·1회 소비(`OA001`) |
 | 토큰 평문 저장, 0키 폴백 | `SECURITY_BASELINE.md:224` | DB 유출 시 연동 계정 탈취 | `core.encrypted_credentials`, `CREDENTIALS_KEY_V<n>` 없으면 기동 실패 |
 | 세션 없는 백그라운드 작업이 RLS에 막혀 무동작 | `SECURITY_BASELINE.md:225` | 장애가 조용히 숨겨짐 | 워커·ai-service는 service_role + 행의 `org_id` 대조, 실패는 `fail_job` |
-| `user_plans FOR ALL` 정책(셀프 업그레이드) | `SECURITY_BASELINE.md:226`, `docs/reference/reviews/flora.md:70` | 자기 플랜 변경 | `FOR ALL` 정책 0(`05_DATA_MODEL.md:735`), 플랜은 코어 엔타이틀먼트 SELECT만 |
+| `user_plans FOR ALL` 정책(셀프 업그레이드) | `SECURITY_BASELINE.md:226`, `docs/reference/reviews/flora.md:70` | 자기 플랜 변경 | `FOR ALL` 정책 0(`05_DATA_MODEL.md:771`), 플랜은 코어 엔타이틀먼트 SELECT만 |
 | Pro 잠금해제 `'1234'`, localStorage 플래그 | `SECURITY_BASELINE.md:227`, `docs/reference/reviews/flora.md:73` | 유료 기능 무료 사용 | 서버 features 해석(DC-06-013), CI 금지 문자열 검사(DC-06-007) |
-| RLS 정책 안 자기참조 재귀(42P17) | `SECURITY_BASELINE.md:230` | 전체 거부 또는 우회 | 정책은 `is_org_member`·`has_org_role`·`has_entitlement`·`current_org_ids`만, `org_members` 직접 조회 0(`05_DATA_MODEL.md:735`) |
+| RLS 정책 안 자기참조 재귀(42P17) | `SECURITY_BASELINE.md:230` | 전체 거부 또는 우회 | 정책은 `is_org_member`·`has_org_role`·`has_entitlement`·`current_org_ids`만, `org_members` 직접 조회 0(`05_DATA_MODEL.md:771`) |
 | 전역 n8n API 키 프록시 | `SECURITY_BASELINE.md:231`, 분석:145 | 테넌트 격리 붕괴 | 연결별 수신 토큰 + HMAC(DS-09) |
 | 인증 없는 공개 AI 프록시, CORS `*` | `SECURITY_BASELINE.md:232` | 키 도용, 비용 폭증 | `/api/ai/*`는 `requireSession` + 서명 토큰, ai-service는 토큰 없으면 401 |
 | 라우터 무인증(LLM/export/upload), `dev-user` 우회, 빈 JWT secret | `SECURITY_BASELINE.md:234`, `docs/reference/reviews/flora.md:68`, `:80` | 무료 사용, 데이터 접근 | 모든 Route Handler 래퍼(린트 검사), JWKS 없으면 ai-service 기동 실패 |
 | 실키가 든 `.env` 커밋 | `SECURITY_BASELINE.md:235`, `docs/reference/reviews/flora.md:79` | 키 유출 | `.gitignore`, CI 비밀 검사, 원천 `.env` 복사 금지(5절) |
 | 한글에 `\b` 경계 금지어 매칭 | `SECURITY_BASELINE.md:236` | 필터 무효 | compliance·`L-BANNED` 규칙은 한글 경계를 쓰지 않는 사전 매칭 + 단위 테스트(DC-06-021) |
-| 사용자 입력 파일명·label을 Storage 경로에 사용 | `docs/reference/reviews/flora.md:71` | 경로 조작 | 서버 생성 `<org_id>/docs/<purpose>/<uuid>.<ext>` + 첫 세그먼트 CHECK(`05_DATA_MODEL.md:832`), 원본 이름은 `original_name`만 |
+| 사용자 입력 파일명·label을 Storage 경로에 사용 | `docs/reference/reviews/flora.md:71` | 경로 조작 | 서버 생성 `<org_id>/docs/<purpose>/<uuid>.<ext>` + 첫 세그먼트 CHECK(`05_DATA_MODEL.md:871`), 원본 이름은 `original_name`만 |
 | 서버가 사용자 URL fetch(`cover_url`), 렌더러 무제한 외부 fetch | `docs/reference/reviews/flora.md:72` | SSRF(메타데이터 엔드포인트) | 렌더 입력은 서버 조립 HTML만, `url_fetcher` 허용 목록(공용 렌더), 웹훅 URL https + 사설 대역 CHECK + 발송 직전 DNS 재검사 |
 | WeasyPrint를 Vercel·Route Handler에서 실행 | `docs/reference/reviews/SellingDocs.md:48` | 배포 불가 | web은 `render.pdf`/`render.docx` enqueue만, 웹 번들의 렌더 클라이언트 import 린트 차단 |
 | 산출물 전체를 단일 JSON으로 생성 | `docs/reference/reviews/SellingDocs.md:51` | 잘림·타임아웃 | 문서·섹션 단위 생성(DS-11) |
@@ -171,19 +171,19 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 | escape 없는 HTML 삽입 | `docs/reference/reviews/flora.md:78` | XSS, PDF 주입 | Jinja autoescape + 서버 sanitize(TS·Python 같은 허용 목록) |
 | 장애를 mock 응답으로 숨김, `except Exception` 무로깅 | `docs/reference/reviews/flora.md:92` | 장애 은폐 | 실패 상태 + 환불 + 로그(본문·프롬프트 제외) |
 | `.single()` 0행에서 500 | `docs/reference/reviews/flora.md:83` | 404 대신 500 | `maybe_single`, `P0002` → 404 매핑(DC-06-012) |
-| LLM이 금액·합계·VAT·문서번호를 생성하거나 조용히 수정 | `docs/reference/reviews/FortuneDocs.md:47`, 설계 기준서 2장 원칙 4 | 문서 간 숫자 불일치, 계약 분쟁 | 서버 계산값만 변수로, consistency_check 불일치는 실패(`02_ARCHITECTURE.md:156`) |
-| 고위험 문서(계약서)의 조항을 AI가 생성·수정 | 설계 기준서 2장 원칙 3, `01_PRD.md:392` | 법률사무 취급 위험(미확인), 책임 소재 | `doc_types` CHECK(high면 template만), `draft_ai_sections` 건너뜀, `docs.assist` 403, 채팅 조항 작성 거절 |
-| 주민등록번호 등 고유식별정보 입력란·저장 | `01_PRD.md:381` | 법정 수집 제한 정보 | 입력란 없음, 서버 PII lint 422 `pii_detected`, 확정 lint `L-RRN`, 업로드는 LLM 전송 전 마스킹 |
+| LLM이 금액·합계·VAT·문서번호를 생성하거나 조용히 수정 | `docs/reference/reviews/FortuneDocs.md:47`, 설계 기준서 2장 원칙 4 | 문서 간 숫자 불일치, 계약 분쟁 | 서버 계산값만 변수로, consistency_check 불일치는 실패(`02_ARCHITECTURE.md:160`) |
+| 고위험 문서(계약서)의 조항을 AI가 생성·수정 | 설계 기준서 2장 원칙 3, `01_PRD.md:398` | 법률사무 취급 위험(미확인), 책임 소재 | `doc_types` CHECK(high면 template만), `draft_ai_sections` 건너뜀, `docs.assist` 403, 채팅 조항 작성 거절 |
+| 주민등록번호 등 고유식별정보 입력란·저장 | `01_PRD.md:387` | 법정 수집 제한 정보 | 입력란 없음, 서버 PII lint 422 `pii_detected`, 확정 lint `L-RRN`, 업로드는 LLM 전송 전 마스킹 |
 | 클라이언트가 보낸 HTML·금액·`req_code`·문서번호를 그대로 저장·렌더 | `04_API.md:17-18` | 위조 문서, XSS | zod에 해당 필드 없음, 서버 sanitize 후 새 버전, 렌더는 DB의 `body_html`만 |
-| 효과 엔진에 시각·난수·LLM·외부 호출 사용 | `01_PRD.md:161` | 같은 입력에 다른 결과, 추적성 붕괴 | 순수 함수 + 속성 테스트(DC-06-019), 린트로 `Date`·`Math.random`·`fetch` 차단 |
-| 효과 엔진이 사용자 수정 행을 덮어쓰거나 삭제 | `01_PRD.md:159-160` | 사용자 작업 소실 | `is_user_modified` 보존, `apply_checklist_effects` 해시 비교(DC010) |
+| 효과 엔진에 시각·난수·LLM·외부 호출 사용 | `01_PRD.md:167` | 같은 입력에 다른 결과, 추적성 붕괴 | 순수 함수 + 속성 테스트(DC-06-019), 린트로 `Date`·`Math.random`·`fetch` 차단 |
+| 효과 엔진이 사용자 수정 행을 덮어쓰거나 삭제 | `01_PRD.md:165-166` | 사용자 작업 소실 | `is_user_modified` 보존, `apply_checklist_effects` 해시 비교(DC010) |
 | 회의 녹음·전사본을 상용 제공자로 대체 전송 | `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:297`, `supabase/monolith/seed.sql:57` | 제3자 음성·발언 국외 이전 | `meeting_minutes`·`docs.minutes` 강제 오픈소스, 실패 시 대체 없이 환불 |
 | 브라우저에서 Dify·FastAPI·AI·렌더 서비스 직접 호출 | `SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*`, 제품 Route Handler만 |
 | Dify 입력에 토큰·org·문서 본문 | `SECURITY_BASELINE.md:285` | Dify 로그에 평문 | 대화 매핑(`platform_conversation_id`, `dify_user`), 선택 입력 `project_id`만 |
 | LLM·음성 키를 브라우저·Vercel·워커에 두기 | `SECURITY_BASELINE.md:284`, `:300` | 키 유출, 라우팅 우회 | LLM 키는 `apps/api`만, ElevenLabs·서명 개인키는 web 서버만 |
 | 임의 텍스트 TTS | `D:/WorkSpace/platform/docs/products/flora-publishing/07_SOURCE_MIGRATION.md:138` | 비용 남용 | TTS 입력은 DB의 assistant 메시지만(403) |
 | 사람 소유 위키 블록 덮어쓰기 | `docs/file/03-설계/공용코어/LLM_WIKI.md:30` | 사용자 수정 소실 | `expected_version` 잠금, 에이전트는 제안만 |
-| 웹훅·이벤트 본문에 연락처·문서 본문 포함 | `04_API.md:195` | 외부로 개인정보 유출 | id와 서명 링크만 |
+| 웹훅·이벤트 본문에 연락처·문서 본문 포함 | `04_API.md:202` | 외부로 개인정보 유출 | id와 서명 링크만 |
 | 토큰 밖 3D 재질 색, "Tailwind"만 적은 지시 | `docs/file/03-설계/디자인/HERO_3D.md:52-53`, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md:23` | 제네릭 인상, v3 설정 혼입 | 토큰만, 지시와 문서에 "Tailwind CSS v4", `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차

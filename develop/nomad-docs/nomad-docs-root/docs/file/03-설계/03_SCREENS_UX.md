@@ -16,7 +16,7 @@
 
 | 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|
-| `/` | 메인페이지(랜딩, 3D 히어로, DC-F-041) | 누구나 | - | P0 |
+| `/` | 메인페이지(랜딩, 동적 3D 히어로 + 3D 영상, DC-F-041, DC-F-049) | 누구나 | - | P0 |
 | `/pricing` | 요금(Free, Pro, 크레딧팩, 작업별 크레딧 표) | 누구나 | - | P0 |
 | `/legal/terms`, `/legal/privacy`, `/legal/ai-notice`, `/legal/contract-notice` | 이용약관, 개인정보처리방침, AI 처리 고지, 계약서 초안 고지(법률 자문 아님) | 누구나 | - | P0 |
 | `/signup`, `/login`, `/reset-password` | 가입, 로그인, 비밀번호 재설정(DC-F-001) | 비로그인 | - | P0 |
@@ -29,7 +29,11 @@
 | 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|
 | `/app` | 대시보드(최근 프로젝트, 재생성 필요 문서, 진행 중 잡, 잔액, 플랜 사용량, 연동 알림) | owner/admin/member/viewer | 전 플랜 | P0 |
-| `/app/parties`, `/app/parties/[id]` | 거래처(당사자) 목록·상세(DC-F-003) | 읽기 전원, 쓰기 member 이상 | 전 플랜 | P0 |
+| `/app/pipeline?view=board\|table` | CRM형 파이프라인 보드·표(프로젝트를 단계 열로, DC-F-047, 3.26절) | 전원 | 전 플랜 | P0 |
+| 전역 ⌘K / Ctrl+K | 커맨드 팔레트(프로젝트·거래처·문서 검색, "새 견적서" 같은 명령, DC-F-047) | 전원(명령은 역할에 따라 숨김) | 전 플랜 | P0 |
+| `/app/projects/[pid]/activity` | 프로젝트 활동 타임라인(생성·버전·확정·업로드, DC-F-047) | 전원 | 전 플랜 | P1 |
+| 생성 진행 오버레이(문서 목록·패키지·편집기 위) | 문서 생성 단계별 진행 애니메이션(DC-F-048, 3.27절) | 전원(취소는 시작한 사람·owner/admin) | 전 플랜 | P0 |
+| `/app/parties`, `/app/parties/[id]` | 거래처(당사자) 목록·상세(DC-F-003). 상세는 거래처 360(프로젝트·문서·금액·활동, DC-F-047) | 읽기 전원, 쓰기 member 이상 | 전 플랜 | P0 |
 | `/app/projects` | 프로젝트 목록(상태 필터, 보관 탭) | 전원 | 전 플랜(생성 한도 `projects_max`) | P0 |
 | `/app/projects/new` | 프로젝트 만들기(유형, 기간, 예산, 거래처, 시작 방식: 체크리스트 / RFP 올리기) | member 이상 | `projects_max` | P0 |
 | `/app/projects/[pid]` | 프로젝트 홈(진행 단계, 정본 요약, 문서 묶음 상태, 다음 행동) | 전원 | 전 플랜 | P0 |
@@ -56,7 +60,7 @@
 |---|---|---|---|---|
 | `/app/integrations` | 연동 홈(연결 목록, 상태, 마지막 동기화) | owner/admin | 전 플랜(목록은 `integrations` 값으로 잠금 표시) | P0 |
 | `/app/integrations/csv` | CSV/Excel 가져오기 마법사(거래처, 비용 단가표, DC-F-028) | owner/admin/member | `integrations` 에 `csv`(Free 포함) | P0 |
-| `/app/integrations/connect/[provider]` | HubSpot, admin-suite ERP, Make/n8n 연결(DC-F-030~032) | owner/admin | team(Phase 2) | P2 |
+| `/app/integrations/connect/[provider]` | HubSpot, admin-suite ERP, n8n 연결(DC-F-030~032) | owner/admin | team(Phase 2) | P2 |
 | `/app/integrations/[cid]/mappings` | 필드 매핑(`docs.field_mappings`) | owner/admin | team(Phase 2), CSV 매핑은 마법사 안에서 전 플랜 | P2 |
 | `/app/integrations/[cid]/sync` | 동기화 기록(`docs.sync_runs`), 외부 변경 충돌 목록 | owner/admin | team(Phase 2) | P2 |
 | `/app/integrations/webhooks` | 발신 웹훅(엔드포인트, 이벤트, 전송 기록, DC-F-029) | owner/admin | pro 이상(Phase 2) | P2 |
@@ -383,9 +387,9 @@
 |---|---|
 | 순서 열 | 설계 기준서 3장 의존 순서. 같은 번호는 병렬 |
 | 필수 입력 | `doc_type_versions.required_fields` 검사 결과. 누락이면 실행 버튼 비활성 + 해당 화면 링크(`DC004` 예방) |
-| 진행 중 | 행마다 상태 칩(대기, 생성 중, 완료, 실패, 취소됨). 실패 자식 이후 하류는 "멈춤, 환불됨" |
+| 진행 중 | 행마다 상태 칩(대기, 생성 중, 완료, 실패, 취소됨)과 단계 진행 레인(3.27절, `generation_runs.progress`). 실패 자식 이후 하류는 "멈춤, 환불됨" |
 | 동시 생성 | 조직 동시 생성 3(DC-F-039)에 걸리면 "다른 생성이 끝나면 시작합니다" 대기 표시 |
-| 취소 | 대기 중 자식은 취소·환불, 생성 중 문서는 끝까지 진행(코어 `cancel_job` 규칙) |
+| 취소 | [취소]는 `docs.cancel_generation`만 부른다(코어 `cancel_job` 직접 호출 금지). 대기 중 부모·자식은 취소·환불되고 문서는 이전 상태로 돌아간다. 생성 중 문서는 끝까지 진행 |
 | 크레딧 | 실행 전 예상 합계, 완료 후 실제 차감·환불 내역 |
 
 ### 3.11 문서 편집기 `/app/projects/[pid]/documents/[did]`
@@ -600,7 +604,7 @@
 |---|---|---|---|---|---|
 | `/app/integrations` | 연결 상태 | 행: 제공자, 종류(crm·erp·automation·file), 상태(pending·active·error·revoked), 방향(pull·push·both), 마지막 동기화, 마지막 오류. 잠긴 제공자는 "Team에서 사용" | `docs.integration_connections` | 연결, 해지(`docs.revoke_integration`, owner/admin) | 없음 |
 | CSV 가져오기 마법사 `/csv` | 거래처·단가표 일괄 입력 | 1 대상 선택(거래처 / 비용 단가표) → 2 파일 선택(csv, xlsx) → 3 열 매핑(자동 추정 + 수정, 미리보기 5행) → 4 검사 결과(오류 행 번호와 이유, 중복 처리: 건너뛰기/덮어쓰기) → 5 가져오기 결과 | `docs.parties`, `docs.line_items` 단가 카탈로그, `docs.sync_runs`(provider csv) | 다음, 이전, 오류 행 CSV 받기 | 없음 |
-| 연결 `/connect/[provider]` (Phase 2) | HubSpot·admin-suite ERP·Make/n8n | 설명, 필요한 권한, [연결]. ERP는 같은 조직 + 두 앱 엔타이틀먼트 조건 안내 | `core.oauth_states`, `docs.integration_connections` | 연결 | 없음 |
+| 연결 `/connect/[provider]` (Phase 2) | HubSpot·admin-suite ERP·n8n | 설명, 필요한 권한, [연결]. ERP는 같은 조직 + 두 앱 엔타이틀먼트 조건 안내 | `core.oauth_states`, `docs.integration_connections` | 연결 | 없음 |
 | 필드 매핑 `/[cid]/mappings` (Phase 2) | 외부 필드 → 내부 경로 | 표: 엔티티, 외부 필드, 내부 경로, 변환(none·date·money·enum_map), 사용 여부. enum_map 편집기 | `docs.field_mappings` | 추가, 수정, 테스트 변환 | 없음 |
 | 동기화 기록 `/[cid]/sync` (Phase 2) | 실패와 충돌 확인 | 실행 표(방향, 상태, 시작·종료, 통계), 충돌 목록("외부 변경 있음": 내부 값, 외부 값, 선택) | `docs.sync_runs`, `docs.external_refs` | 다시 실행, 충돌 해결 | 없음 |
 | 발신 웹훅 `/webhooks` (Phase 2) | 이벤트 알림 | 엔드포인트 목록(URL, 이벤트: `project.created`, `document.generated`, `document.finalized`, `document.exported`, `package.completed`, 상태 active·disabled·failing, 실패 수), 서명 비밀 1회 표시, 전송 기록 20건 | `docs.webhook_endpoints`, `docs.webhook_deliveries` | 추가(URL 검증), 비활성, 테스트 전송 | 없음 |
@@ -688,7 +692,196 @@
 | Tabs, Tooltip, Popover, Progress, Skeleton, Kbd, Stepper(3단계) | - | - | - |
 | Tag(출처 칩, 변수 칩) | 자료 출처, 위키 출처, 요구사항 코드, 변수 | sm | 기본, 호버, 포커스 |
 
-제품 고유 컴포넌트(기본 세트 뒤): ChecklistStep, EffectsPreviewPanel, RequirementBoard, LineItemTable, PackageRunTable, DocEditor(Tiptap 섹션 노드, LockedSection, VariableChip), DiffCard, LintPanel, FinalizeDialog, VersionDiffView, TraceMatrix, ExtractReviewList, MeetingRecorder, RiskNoticeDialog, ChatPanel, MessageBubble, CitationChip, VoiceButton, WikiArticle, CsvImportWizard, Hero3D.
+제품 고유 컴포넌트(기본 세트 뒤): ChecklistStep, EffectsPreviewPanel, RequirementBoard, LineItemTable, PackageRunTable, DocEditor(Tiptap 섹션 노드, LockedSection, VariableChip), DiffCard, LintPanel, FinalizeDialog, VersionDiffView, TraceMatrix, ExtractReviewList, MeetingRecorder, RiskNoticeDialog, ChatPanel, MessageBubble, CitationChip, VoiceButton, WikiArticle, CsvImportWizard, Hero3D, 그리고 2026-10-14 추가분 AppShell(왼쪽 내비 + 상단 명령 막대), CommandPalette, PipelineBoard·PipelineCard·StageColumn, RecordHeader·RecordSidebar(거래처 360), ActivityTimeline, SavedViewBar(필터 칩, URL 동기화), GenerationProgress(StageRail·SectionLane·SheetAssembler), HeroVideo.
+
+모션 토큰(2026-10-14 추가, 제안): `--motion-fast` 120ms(호버·포커스), `--motion-base` 200ms(패널·시트 열기), `--motion-slow` 360ms(보드 카드 이동), `--motion-stage` 600ms(생성 단계 전환), 이징 `--ease-standard` cubic-bezier(0.2, 0, 0, 1), `--ease-emphasized` cubic-bezier(0.3, 0, 0, 1). 모든 모션은 `prefers-reduced-motion: reduce`에서 0ms(상태 변화는 즉시 반영). 애니메이션 라이브러리는 `motion`(구 framer-motion, React 19 지원 버전, 제안·구현 시 확인)을 `features/progress/`와 `features/pipeline/`에서만 쓴다. 나머지는 CSS 전환.
+
+#### 3.25.1 DESIGN.md 초기값 (개발 폴더 `docs/file/03-설계/디자인/DESIGN.md`로 복사된다)
+
+| 항목 | 값 |
+|---|---|
+| 주 레퍼런스 | 앱: Atlassian(단계형 폼·보드·상태 lozenge) + Primer(표 밀도). 로그인 후 셸: Attio·HubSpot·Pipedrive·Linear 패턴(3.26절). 랜딩: `HERO_3D.md` + 4장 |
+| 가져올 패턴 | 단계형 진행, 칸반 열과 키보드 대안, 고밀도 표, 레코드 페이지(헤더 + 탭 + 오른쪽 속성 사이드바), 활동 타임라인, ⌘K 팔레트, 필터 칩 + 저장된 뷰 |
+| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`), 각 서비스의 색·로고·아이콘·일러스트, 끌어 놓기로 데이터 상태 바꾸기, 무한 커스텀 필드 |
+
+| 토큰 | 라이트 | 다크(제안, 3단계 사람 검토에서 확정) | 용도 |
+|---|---|---|---|
+| `--color-canvas` | #E6EBE7 | #141A17 | 페이지 배경(서류철) |
+| `--color-surface` | #FBFCFA | #1B2320 | 문서 지면·카드·표 바탕(용지) |
+| `--color-text` | #1D2421 | #E3E8E4 | 본문(먹회) |
+| `--color-text-muted` | #4F5A55 | #A7B0AB | 보조 글자(대비 4.5:1 이상, 구현 시 측정) |
+| `--color-rule` | #8A948F | #3A4440 | 괘선·구분선(글자에 쓰지 않음) |
+| `--color-accent` | #1F4E8C | #7FA8E0 | 주 행동·링크·포커스 링(결재청) |
+| `--color-seal` | #B3262E | #D0464E | 직인·확정 표시·3D 히어로 직인에만(인주) |
+| `--color-success` | #1F7A45 | #4CB97A | 확정 완료, compliance pass |
+| `--color-warning` | #8F5B00 | #D9A23B | WARN, 재생성 필요 |
+| `--color-danger` | #A3361A | #E07A5F | 오류(인주와 구분) |
+| `--color-diff-add` / `--color-diff-remove` | #DCEFE2 / #F6DEDA | #1F3A2A / #3E2523 | Diff 바탕(밑줄·취소선·텍스트 병기) |
+
+| 토큰 | 값 | 용도 |
+|---|---|---|
+| `--font-display`, `--font-body` | Spoqa Han Sans Neo | UI·제목. 본문 15/24px 400 |
+| `--font-doc` | Noto Serif KR | 문서 지면 15/26px |
+| `--radius-control` / `--radius-sheet` | 6px / 10px | 입력·버튼 / 카드·시트 |
+| `--space-row-compact` / `--space-row-default` | 32px / 40px | 표 행 높이 |
+| `--shadow-sheet` | 0 1px 2px 먹회 8%, 0 8px 24px 먹회 6% | 시트·팔레트(다크는 그림자 대신 테두리) |
+| 모션 | 위 모션 토큰 | 3.25절 |
+
+밀도: 표·보드는 컴팩트/기본 두 단계(사용자 설정, 기본 = 기본). 다크 전환: `data-theme` 하나(`@custom-variant dark`). 다크는 앱 화면만, 랜딩은 라이트.
+
+#### 3.25.2 COMPONENTS.md 초기값 (개발 폴더 `docs/file/03-설계/디자인/COMPONENTS.md`로 복사된다)
+
+| 컴포넌트 | 배리언트 | 크기 | 상태 | 작업 |
+|---|---|---|---|---|
+| Button | primary, secondary, ghost, danger | sm 32 / md 36 / lg 40px | 기본, 호버, 포커스, 비활성, 로딩 | DC-06-009 |
+| Input·Textarea·Select·Combobox·DateField·MoneyInput | default, error | md 36 / lg 44px | 기본, 포커스, 비활성, 오류 | DC-06-009 |
+| Checkbox·Switch·RadioGroup·SegmentedRadio | - | md | 기본, 포커스, 비활성, 오류 | DC-06-009 |
+| Dialog·Sheet(400/480px)·Toast | - | - | 열림, 닫힘 | DC-06-009 |
+| Table | compact 32px, default 40px, 숫자 오른쪽 정렬 | - | 빈 상태, 스켈레톤, 행 선택 | DC-06-009 |
+| StatusLozenge | 프로젝트·문서·요구사항·생성 실행·내보내기·연동·compliance·파이프라인 단계 | sm | 아이콘 + 텍스트 | DC-06-009 |
+| Tabs·Tooltip·Popover·Progress·Skeleton·Kbd·Stepper·Tag | - | - | - | DC-06-009 |
+| AppShell | 내비 펼침 240px / 접힘 56px, 상단 명령 막대 48px | - | 모바일은 하단 탭 4개 + 햄버거 | DC-06-011 |
+| CommandPalette | 검색, 명령, 최근 | 640px 폭 | 열림, 결과 없음, 로딩 | DC-06-061 |
+| PipelineBoard·StageColumn·PipelineCard | board, table | 열 280px, 카드 높이 자동 | 기본, 포커스, 단계 이동 애니메이션, 재생성 필요 배지 | DC-06-061 |
+| RecordHeader·RecordSidebar·ActivityTimeline | 거래처, 프로젝트 | 사이드바 320px | 기본, 접힘, 빈 타임라인 | DC-06-061 |
+| SavedViewBar | 필터 칩, 정렬, 열 선택 | - | 기본, 변경됨(저장 안 됨) | DC-06-061 |
+| GenerationProgress(StageRail·SectionLane·SheetAssembler) | 단일, 패키지 | 오버레이 560px / 패키지 전체 폭 | 대기, 진행, 완료, 실패, 취소, reduced-motion | DC-06-062 |
+| Hero3D·HeroVideo | 실시간 3D, 영상, 정지 이미지 | 전체 폭 | 로딩, 재생, 일시정지, 강등 | DC-06-045 |
+
+### 3.26 로그인 후 CRM형 워크스페이스 (DC-F-047)
+
+목적: 로그인 후 화면을 "문서 도구"가 아니라 "고객·프로젝트·문서를 한곳에서 굴리는 작업 공간"으로 만든다. 벤치마킹(2026-10-14, 화면 패턴만 참고하고 코드·자산·색은 가져오지 않는다. URL은 C-4로 `REFERENCES.md`에 추가 요청):
+
+| 서비스 | 가져올 패턴 | 이 제품에서의 모습 | 가져오지 않을 것 |
+|---|---|---|---|
+| Attio | 레코드 페이지(헤더 + 탭 + 속성 사이드바), 같은 데이터를 표·보드로 바꿔 보는 뷰 | 거래처 360, 프로젝트 표/보드 전환 | 임의 객체·커스텀 필드 빌더 |
+| HubSpot | 레코드 왼쪽 속성, 가운데 활동 타임라인, 오른쪽 연결 카드(Associations) | 거래처 상세: 왼쪽 회사 정보, 가운데 활동, 오른쪽 프로젝트·문서 카드 | 이메일·전화 기록, 마케팅 기능 |
+| Pipedrive | 딜 파이프라인 보드, 열마다 합계, 오래 멈춘 카드 표시(rotting) | 파이프라인 보드: 열 합계(VAT 포함), 14일 넘게 변화 없는 카드 흐림 + "14일째 변화 없음" | 끌어 놓기로 단계 변경(이 제품은 문서가 단계를 정한다) |
+| Linear | 키보드 우선, ⌘K 팔레트, 빠른 전환 | 팔레트, `g p`(파이프라인)·`g c`(거래처) 이동, `n q`(새 견적서) | 이슈 트래커 개념 |
+
+앱 셸(모든 `/app` 화면):
+
+```
++--------+-------------------------------------------------------------------+
+| NOMAD  | [⌘K 검색·명령]                     잔액 42cr  [결제] [알림] [계정] |
+| Docs   +-------------------------------------------------------------------+
+|        |                                                                   |
+| 홈     |                         (화면 본문)                                |
+| 파이프 |                                                                   |
+| 라인   |                                                                   |
+| 거래처 |                                                                   |
+| 프로젝트|                                                                   |
+| 문서   |                                                                   |
+| ─────  |                                                                   |
+| 연동   |                                                                   |
+| 설정   |                                                       [채팅 열기] |
++--------+-------------------------------------------------------------------+
+```
+
+파이프라인 보드 `/app/pipeline`:
+
+```
++------------------------------------------------------------------------------------------+
+| 파이프라인   [보드|표]   필터: [거래처 ▾] [유형 ▾] [담당 ▾] [재생성 필요만]   [+ 프로젝트] |
++--------------+--------------+--------------+--------------+--------------+---------------+
+| 리드 3        | 작성 중 4    | 견적 확정 2   | 계약 확정 1   | 검수 완료 1   | 종료 5        |
+| 0원           | 12,400,000   | 8,800,000    | 22,000,000   | 5,500,000    |               |
+| +----------+ | +----------+ | +----------+ | +----------+ |              |               |
+| |쇼핑몰 리뉴|| |사내 ERP   | | |홈페이지   | | |앱 MVP    | |              |               |
+| |(주)한빛   || |(주)누리   | | |○○상사     | | |△△랩      | |              |               |
+| |문서 0     || |3,575,000 | | |4,400,000 | | |22,000,000| |              |               |
+| +----------+ | |열린 문서 2| | |다음: 계약서| | |다음: 검수 | |              |               |
+|              | |재생성 필요1| | +----------+ | +----------+ |              |               |
+|              | +----------+ |              |              |              |               |
++--------------+--------------+--------------+--------------+--------------+---------------+
+```
+
+| 요소 | 동작 |
+|---|---|
+| 단계 | 뷰 `docs.project_pipeline.stage`(01장 DC-F-047). 저장 값이 아니라 문서 상태에서 계산하므로 문서를 확정하면 카드가 스스로 옮겨진다(Realtime `documents` 이벤트 → 보드 재조회, 카드 이동 `--motion-slow`) |
+| 카드 | 프로젝트명, 거래처, 합계(`project_totals.total_krw`, tabular 숫자), 열린 문서 수, 재생성 필요 배지(경고색 + 아이콘 + 텍스트), "다음 할 일" 한 줄(예: 다음 = 계약서 생성). 클릭 → 프로젝트 홈 |
+| 열 머리 | 단계명, 카드 수, 합계. 종료 열은 접힘이 기본 |
+| 끌어 놓기 | 하지 않는다. 카드를 끌면 "이 단계는 문서가 정합니다: 견적서를 확정하면 이동합니다" 툴팁. 키보드 사용자는 Enter로 카드 열기 |
+| 표 보기 | 같은 데이터를 Table(compact)로. 열: 이름, 거래처, 단계, 합계, 열린 문서, 재생성 필요, 수정일. 정렬·필터는 URL 쿼리(`?stage=quoted&party=...`)에 남아 링크로 공유된다 |
+| 빈 상태 | "아직 프로젝트가 없습니다. 거래처를 고르고 체크리스트로 시작하세요" + [첫 프로젝트 만들기] |
+
+거래처 360 `/app/parties/[id]`(HubSpot식 3단):
+
+```
++--------------------+-----------------------------------------+---------------------+
+| (주)한빛            | 활동                                    | 프로젝트 2           |
+| 사업자 123-45-67890 | 10/14 견적서 QT-2026-0003 확정           | 쇼핑몰 리뉴얼 견적확정|
+| 대표 김○○           | 10/13 과업지시서 v2 생성                 | 앱 MVP     리드       |
+| 담당 이○○ 메일·전화  | 10/12 RFP 업로드 → 후보 14개             |---------------------|
+| 메모               | 10/10 프로젝트 생성                      | 문서 5 (확정 2)      |
+| [편집]             | [더 보기]                                | 합계 7,975,000원     |
++--------------------+-----------------------------------------+---------------------+
+```
+
+| 요소 | 동작 |
+|---|---|
+| 활동 | 뷰 `docs.project_activity`를 거래처의 프로젝트로 모아 최근 순 20건, 무한 스크롤 없음([더 보기]) |
+| 오른쪽 카드 | 프로젝트(단계 lozenge), 문서 수, 합계. 연동 시(Phase 2) HubSpot 회사 링크 |
+| 개인정보 | 담당자 연락처는 member 이상만 원문, viewer는 가림(제안) |
+
+커맨드 팔레트(⌘K / Ctrl+K, 상단 검색 칸 클릭도 같음):
+
+| 구역 | 내용 |
+|---|---|
+| 검색 | 프로젝트·거래처·문서(제목, 문서번호, 요구사항 코드 `FR-003`). 조직 안에서만, 서버 검색 API(레이트 리밋) |
+| 명령 | 새 프로젝트, 새 견적서(현재 프로젝트), 문서 묶음 만들기, 체크리스트 이어서, 파이프라인 열기, 채팅 열기. viewer에게 쓰기 명령은 보이지 않는다 |
+| 최근 | 최근 연 5개 |
+| 키보드 | ↑↓ 이동, Enter 실행, Esc 닫기, `g p`/`g c`/`g d` 이동 단축키(설정에서 끌 수 있음) |
+
+프로젝트 홈 상단에는 파이프라인 단계 진행 막대(리드 → 작성 중 → 견적 확정 → 계약 확정 → 검수 완료)를 두고, 지금 단계와 "다음 할 일"을 같은 규칙으로 보여 준다.
+
+### 3.27 문서 생성 단계별 진행 애니메이션 (DC-F-048)
+
+목적: 생성이 진행되는 동안 무엇이 실제로 일어나는지 보여 줘 기다림을 신뢰로 바꾼다. 데이터: Realtime `docs.generation_runs`(status, `progress` = `{stage, section_key, step, total, at}`), `core.jobs`(대기 순번). 진행 값은 ai-service가 그래프 노드 경계에서 `docs.report_generation_progress`로만 쓴다. 화면은 시간으로 가짜 진행률을 만들지 않는다.
+
+단일 문서 오버레이:
+
+```
++---------------------------------------------------------+
+| 과업지시서를 만들고 있습니다                    [닫기] |
+|                                                         |
+|  ● 대기열        ✓                                      |
+|  ● 자료 모으기   ✓  요구사항 14 · 비용 9 · 일정 3        |
+|  ● 섹션 작성     …  [개요 ✓][과업 범위 ▓▓░][요구사항 ][일정 ][산출물 ][금액 ] |
+|  ○ 문서 조립                                            |
+|  ○ 검사(lint)                                           |
+|                                                         |
+|   +-----------------+   ← 용지 위에 섹션 줄이 차례로    |
+|   | ▬▬▬▬▬▬         |      채워지고(작성 중 섹션은 줄이   |
+|   | ▬▬▬▬           |      왼쪽에서 오른쪽으로 그려짐),   |
+|   | ▬▬▬░░░         |      검사 단계에서 괘선이 훑고      |
+|   |                 |      지나간다                      |
+|   +-----------------+                                   |
+|  대기 중일 때만 [취소]          예상 차감 6크레딧        |
++---------------------------------------------------------+
+```
+
+| 단계(stage) | 화면 표현 | 서버 근거 |
+|---|---|---|
+| queued | "대기열 n번째"(같은 큐 앞 잡 수), 용지 흐림. [취소] 보임 | `generation_runs.status='queued'` |
+| collecting | 정본 요약 숫자(요구사항·비용·일정 개수)가 한 줄씩 나타남 | `progress.stage='collecting'` |
+| drafting | 섹션 칩이 차례로 켜지고 `section_key` 칩이 진행 중. 용지에 해당 섹션 줄 막대가 그려짐. template 섹션은 즉시 채움, ai 섹션은 줄이 천천히 | `progress.section_key`, `step/total` |
+| assembling | 섹션 막대가 한 장으로 모여 정렬 | `progress.stage='assembling'` |
+| linting | 괘선 색 선이 위에서 아래로 한 번 훑음, 오류·경고 개수 배지 | `progress.stage='linting'` |
+| done | 용지가 편집기로 전환(`--motion-stage`), "버전 n 저장됨" 토스트. 직인은 쓰지 않는다(확정 때만) | `status='succeeded'` |
+| failed | 실패 단계에서 멈추고 경고색 테두리, "원인 · 환불 n크레딧 · [다시 시도]" | `status='failed'`, `error` |
+| canceled | "취소했습니다. n크레딧을 돌려드렸습니다" | `status='canceled'` |
+
+패키지 진행(`/package`): 문서마다 가로 레인 1줄(SectionLane). 의존 순서 그룹(1 → 6)마다 레인이 차례로 켜지고 같은 그룹은 동시에 진행한다. 위쪽에 전체 단계 막대(문서 완료 수 / 전체)와 남은 예상 크레딧. 실패한 레인 아래 하류 레인은 "멈춤 · 환불됨"으로 흐려진다.
+
+| 규칙 | 내용 |
+|---|---|
+| 연결 | Realtime 구독(`generation_runs` 행 id). 끊기면 3초 간격 폴링으로 대체, 다시 연결되면 폴링 중지 |
+| 재진입 | 오버레이를 닫아도 생성은 계속된다. 상단 명령 막대에 진행 칩(“생성 2건”)을 두고, 다시 열면 현재 단계부터 보인다 |
+| reduced-motion | 애니메이션 없이 단계 목록의 체크만 바뀐다. 섹션 칩은 텍스트 상태(완료/진행 중/대기) |
+| 접근성 | 단계 변화는 `aria-live="polite"` 한 줄 요약("섹션 작성 중: 과업 범위, 2/6"), 포커스는 이동하지 않는다 |
+| 성능 | 애니메이션은 transform·opacity만, 60fps 목표, 진행 이벤트는 200ms 단위로 묶어 렌더 |
+| 금지 | 시간 기반 가짜 퍼센트, "AI가 생각 중" 같은 의인화 문구, 실제 단계와 다른 순서 |
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
@@ -859,6 +1052,26 @@ reduced-motion이면 0~5단계 없이 정지 이미지와 HTML 견적서만 보�
 | 피할 인상 | 저울·법봉, 보라/핑크 그라디언트, 별 파티클, 네온 그리드, 지구본(`docs/file/03-설계/디자인/HERO_3D.md:53`) |
 | 접근성 | 캔버스 `aria-hidden`, 견적서 예시는 HTML(이미지에는 대체 텍스트), [움직임 멈춤] 키보드 조작 |
 | 검증 | PC·태블릿·모바일 스크린샷 3종, Lighthouse 모바일·데스크톱, 프레임 측정, 고문(Fable) 디자인 검토(`docs/file/03-설계/디자인/HERO_3D.md:70-75`) |
+
+#### 4.6.1 3D 영상 레이어 (DC-F-049, 2026-10-14 추가)
+
+메인 페이지는 "동적 3D 장면 + 3D 영상" 두 겹이다. 실시간 장면(위 4.6)과 같은 소재·토큰 색을 쓴 미리 렌더한 시네마틱 영상을 함께 두어, 실시간 3D를 못 돌리는 기기에서도 움직이는 3D를 보여 준다. `HERO_3D.md`는 대체 수단으로 정지 이미지만 정하므로 "영상 단계"를 코어 요청 C-4에 추가한다.
+
+| 단계(위에서부터 시도) | 조건 | 보여 주는 것 |
+|---|---|---|
+| 1 실시간 3D | PC·태블릿, 저사양 아님, WebGL 정상, reduced-motion 아님, 킬 스위치 켜짐 | 4.6 장면(인터랙티브: 포인터에 따라 묶음 시점이 조금 돈다, 스크롤 진입 시 체크 시작) |
+| 2 3D 영상 | 모바일, 저사양, WebGL 실패, 런타임 30fps 미만 강등 | `hero-loop` 영상(장면 0~5단계를 카메라가 한 바퀴 돌며 보여 주는 8~12초 무음 루프) |
+| 3 정지 이미지 | reduced-motion, 데이터 절약 모드, 영상 로드 실패, `NEXT_PUBLIC_HERO_VIDEO_ENABLED=false` | 4.6 정지 렌더 이미지 + HTML 견적서 첫 쪽 |
+
+| 항목 | 결정 |
+|---|---|
+| 파일 | `apps/nomad-docs/public/hero/hero-loop.mp4`(H.264, 1920x1080, 2MB 이하), `hero-loop.webm`(VP9), 모바일 `hero-loop-m.mp4`(1080x1350 세로, 1MB 이하), 포스터 `hero-loop-poster.avif`(첫 프레임, LCP 요소) |
+| 재생 | `<video autoplay muted loop playsinline preload="metadata" poster>`. 화면 밖·탭 숨김이면 일시정지(IntersectionObserver, visibilitychange). 재생/일시정지 버튼(키보드 조작) 제공 |
+| 제작 | 실시간 장면(R3F)을 같은 코드로 오프라인 렌더해 프레임을 뽑고 ffmpeg로 인코딩한다(`scripts/nomad-docs/hero-record/`, DC-06-045). 장면이 바뀌면 영상도 다시 만든다. 생성형 영상 도구는 D-17 확인 전에는 쓰지 않는다 |
+| 내용 규칙 | 실존 인물·실존 회사 직인·가상 후기·숫자 통계 없음. 마지막 프레임은 "예시 문서" 표시가 있는 견적서 첫 쪽. 자막·소리 없음 |
+| 두 번째 영상 | 4.4 A안의 "체크 하나 → 바뀌는 자리" 표 옆에 6초 짧은 영상(체크 → 요구사항·견적·계약서 칸이 동시에 바뀜). 스크롤로 화면에 들어올 때 한 번 재생, reduced-motion이면 정지 프레임 |
+| 예산 | 첫 화면 JS에 영상·3D 코드 0(동적 import), LCP 2.5초(포스터), CLS 0(크기 고정), 영상은 첫 화면 뒤 로드 |
+| 검증 | 3기기 스크린샷 + 영상 재생 확인, Lighthouse 모바일, 자동재생 차단 브라우저(저전력 모드 iOS)에서 포스터 + 재생 버튼 표시 확인 |
 
 ### 4.7 카피 (금지 문구 통과)
 

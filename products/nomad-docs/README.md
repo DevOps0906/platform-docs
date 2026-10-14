@@ -33,7 +33,7 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 | 리뷰 | 높음 수 | 대상 여부 | 이유 | 근거 |
 |---|---|---|---|---|
 | `docs/reviews/SellingDocs.md` | 4 | 대상 | 이식하는 핵심 파이프라인("구조화 JSON → HTML 템플릿 → PDF")의 원천이다. #1 WeasyPrint 런타임 불일치(렌더를 Next/Vercel에서 돌리려 함), #2 크레딧 차감 경계 부재, #3 에이전트 규칙 문서 부재, #4 단일 JSON 일괄 생성은 모두 문서 묶음 생성(패키지 8종)에서 그대로 재발할 수 있다 | `docs/reviews/SellingDocs.md:48-51` |
-| `docs/reviews/flora.md` | 10 | 대상 | export 경로(WeasyPrint 단일화, Noto CJK)와 업로드 파서를 v1에서 이식한다. 같은 경로에 붙어 있던 무인증 LLM 엔드포인트(#1), 웹훅 서명 미검증(#2, 이 제품은 HubSpot·Make 수신 웹훅이 있음), 플랜 자기 상향(#3), 업로드 경로 조작(#4), WeasyPrint SSRF(#5), 클라이언트 Pro 잠금(#6), 배포 설정 오류(#7, #8), 이벤트 루프 차단(#9), 편집 지시 유실(#10)은 이 제품의 업로드·렌더·AI 다시 쓰기·연동 경로에서 같은 형태로 다시 생길 수 있다 | `docs/reviews/flora.md:68-77` |
+| `docs/reviews/flora.md` | 10 | 대상 | export 경로(WeasyPrint 단일화, Noto CJK)와 업로드 파서를 v1에서 이식한다. 같은 경로에 붙어 있던 무인증 LLM 엔드포인트(#1), 웹훅 서명 미검증(#2, 이 제품은 HubSpot·n8n 수신 웹훅이 있음), 플랜 자기 상향(#3), 업로드 경로 조작(#4), WeasyPrint SSRF(#5), 클라이언트 Pro 잠금(#6), 배포 설정 오류(#7, #8), 이벤트 루프 차단(#9), 편집 지시 유실(#10)은 이 제품의 업로드·렌더·AI 다시 쓰기·연동 경로에서 같은 형태로 다시 생길 수 있다 | `docs/reviews/flora.md:68-77` |
 | `docs/reviews/FortuneDocs.md` | 6 | 제외 | 가져오는 것은 "결정적 값은 서버가 계산하고 LLM은 해석만 한다"는 원칙 하나다(`:47`). #1~#3은 만세력·절기·대운 계산 규칙으로 이 제품 도메인에 없다. #4(`FOR ALL` RLS), #5(크레딧 원자 차감 부재), #6(Puppeteer on Vercel)는 일반 결함이지만 같은 계열을 SellingDocs #1·#2와 flora #3·#5의 차단 설계가 이미 덮고, 원천 자산(만세력 코드, Puppeteer 경로)을 하나도 옮기지 않는다. 해당 결함의 정본 차단 설계는 astro-ai가 소유한다 | `docs/reviews/FortuneDocs.md:40-45`, `docs/products/astro-ai/02_ARCHITECTURE.md:205-207`, `docs/products/astro-ai/05_DATA_MODEL.md:269-271` |
 | `docs/reviews/Flora-v2.md` | 9 | 제외 | Flora-v2에서 가져오는 자산이 없다. #1·#2(로그인 토큰 폐기, Bearer 미전송), #6~#9(업로드·전체 집필·내보내기 계약 불일치, `tsc` 실패)는 v2 프론트-백엔드 계약 결함이고, #3~#5는 v1 #1·#3·#6의 미해결 반복이라 flora v1 차단 설계로 이미 덮인다. 정본 차단 설계는 flora-publishing이 소유한다 | `docs/reviews/Flora-v2.md:61-69`, `docs/products/flora-publishing/02_ARCHITECTURE.md:240-245`, `docs/products/flora-publishing/05_DATA_MODEL.md:212-214` |
 
@@ -76,8 +76,9 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 | 코어 사용 | 크레딧 선차감, 잡 큐, Storage(`org-files`, `exports`), 자격증명 vault(`core.encrypted_credentials`, 연동 토큰), OAuth state(HubSpot), 웹훅 이벤트, AI·음성 테이블(`core.ai_*`, `core.wiki_*`, `core.voice_*`)을 쓰므로 모놀리스 코어 축소판에서도 해당 SECTION을 유지한다. 제거 범위와 사유는 `0001_core_lite.sql` 안 주석에 적는다 |
 | 주의 | `docs.clauses`, `docs.doc_type_versions`, `docs.checklist_items`는 org가 없는 플랫폼 카탈로그라 service_role만 쓴다. 조직 맞춤 조항(`clauses.org_id` 값 있음)은 Phase 2에서 쓰기 경로를 연다(`01_PRD.md` DC-F-019, DC-F-045) |
 
-## 6. 변경 이력
+변경 기록(장 구조는 `DOC_TEMPLATE.md` 2.1절 5장 그대로 두고 여기에 적는다):
 
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-13 | Phase 2 패키지 `shorts_agency`(숏폼 제작·채널 운영 대행) 추가: `project_type=content`, 비용 분류·단위 확장, 문서 유형 7종(비활성, 초안 버전), content 체크리스트 14개, 계약·위임 동의서 조항 골격 23개, lint 2종, D-13~D-16 | 확정 결정 21(`docs/products/00_MERGE_ANALYSIS.md`), `01_PRD.md` DC-F-046·6.4절 |
+| 2026-10-14 | 개발 착수 점검 반영: 교차검증 "반드시 고칠 것" SQL 수정(`06_AGENT_PLAN.md` 1.2.4절), n8n만 사용, CRM형 워크스페이스(DC-F-047), 생성 진행 애니메이션(DC-F-048), 3D 영상 히어로(DC-F-049), 작업 62개, RLS 스모크 105항목 | 사용자 요청(2026-10-14), `06_AGENT_PLAN.md` 1.2절 |

@@ -50,12 +50,15 @@ apps/nomad-docs/                         Next.js (Vercel)
   src/features/exports/                  내보내기 요청, 다운로드, ZIP
   src/features/integrations/             연결 화면, 필드 매핑, 동기화 이력, 웹훅 엔드포인트
   src/features/{ai-chat,wiki,voice,hero3d,billing,parties,projects}/   (제안) 채팅·위키·음성, 3D 히어로(three.js는 hero3d/만), 결제, 거래처, 프로젝트
+  src/features/pipeline/                 CRM형 워크스페이스(DC-F-047): AppShell, CommandPalette, PipelineBoard, RecordSidebar, ActivityTimeline
+  src/features/progress/                 생성 단계 진행 애니메이션(DC-F-048): Realtime generation_runs.progress 구독, StageRail, SectionLane
+  public/hero/                           3D 영상(hero-loop.mp4·webm, 모바일, 포스터 avif)과 정지 이미지(DC-F-049)
   src/lib/server/                        requireSession, 레이트 리밋, 크레딧 단가(priceOf), 서명 토큰(ai/), sanitize/, totals/, numbering/
   src/lib/client/                        apiFetch, Realtime 잡 구독 훅
   src/styles/tokens.css                  Tailwind CSS v4 @theme 토큰(라이트/다크)
 apps/nomad-docs-worker/                  TS 워커 (Railway, 제안 경로)
   src/handlers/                          docs-generate, docs-package, render-pdf, render-docx, export-zip, integration-sync, webhook-deliver
-packages/docs-integrations/              연동 어댑터(제안 패키지명, 브리프 11장): hubspot/, admin-suite-erp/, make/, n8n/, csv/, canonical/
+packages/docs-integrations/              연동 어댑터(제안 패키지명, 브리프 11장): hubspot/, admin-suite-erp/, n8n/, csv/, canonical/
 packages/docs-templates/                 데이터 전용 패키지: templates/<doc_type>/<version>/{document.html.j2, sections/*.j2, structure.json, lint_rules.json},
                                          clauses/, sanitize-allowlist.json(TS·Python 공용), checksums.json
 apps/api/app/ai/graphs/docs_generate.py, docs_extract.py, docs_minutes.py, docs_assist.py
@@ -141,8 +144,9 @@ doc_type_versions.structure(섹션 key/title/kind) ─▶ plan_sections ─▶ f
 | 조립 | 섹션 HTML을 `document.html.j2`로 감싼다. `content` jsonb = 섹션 배열(편집기의 정본 구조), `body_html` = 조립본(렌더 입력) |
 | sanitize | Python nh3와 TS sanitize가 같은 허용 목록 파일을 쓴다(`docs/products/flora-publishing/04_API.md:24`의 허용 목록에 `table`, `colgroup`, `col`, `th[colspan,rowspan]`, `td[colspan,rowspan]`, `section[data-key]`를 더함, 제안). `img`는 Storage 경로만 |
 | 크기 | `body_html` 2MB 상한. 초과하면 실패(환불) |
-| 버전 | `docs.finish_generation`이 `document_versions`를 INSERT(append-only, `created_kind='generated'`), `documents.current_version` 증가, `needs_regeneration=false`, `inputs_hash` 기록 |
-| 편집 | 사용자 편집은 Route Handler가 섹션 단위로 받아 잠금 섹션 변경 여부 확인 → 같은 허용 목록으로 sanitize → `expected_version` 비교(DC010) → 새 버전(`created_kind='edited'`). Tiptap 출력 그대로 저장하지 않는다(`SECURITY_BASELINE.md:172`) |
+| 버전 | `docs.finish_generation`이 `document_versions`를 INSERT(append-only, `created_kind='generated'`), `documents.current_version` 증가, `needs_regeneration=false`, `inputs_hash`(= 생성 시점 `docs.checklist_answers_hash`) 기록. 같은 트랜잭션에서 잡의 `refund_on_failure`를 꺼 버전 전달 뒤 환불을 막는다. `lint_result`는 `ran_at`(ISO 시각)과 `rules`(적용 규칙 ID)를 반드시 포함한다(없으면 확정 DC005) |
+| 진행 | 그래프 노드 경계마다 `docs.report_generation_progress(run_id, stage, section_key, step, total)`: load_context = collecting, plan_sections·fill_template·draft_ai_sections = drafting(섹션별 step), consistency_check·조립 = assembling, lint·compliance = linting. 화면은 Realtime `generation_runs.progress`로 받는다(DC-F-048) |
+| 편집 | 사용자 편집은 Route Handler가 섹션 단위로 받아 잠금 섹션 변경 여부 확인 → 같은 허용 목록으로 sanitize → `expected_version` 비교(DC010) → 코드 lint(TS, 3.4절 규칙 중 코드 검사분) 실행 → `lint_result`에 `ran_at` 포함 → 새 버전(`created_kind='edited'`). Tiptap 출력 그대로 저장하지 않는다(`SECURITY_BASELINE.md:172`) |
 | 패키지 | Phase 2 `shorts_agency`는 같은 부모 잡 구조로 `content_brief` → `quote` → `sow` → `video_service_contract`·`channel_access_mandate` → `acceptance`를 연다(`01_PRD.md` 3.5.1절). `outsourcing_basic`은 부모 잡이 의존 순서(브리프 3장: `req_spec`·`screen_list`·`wbs` → `quote` → `sow` → `dev_contract` → `acceptance` → `trace_matrix`)로 자식 `docs.generate`를 연다. 같은 단계는 병렬(최대 3, 제안) |
 
 ### 2.3 서버 측 번호와 금액
@@ -160,7 +164,7 @@ doc_type_versions.structure(섹션 key/title/kind) ─▶ plan_sections ─▶ f
 
 ```ts
 // packages/docs-integrations/src/types.ts (계약 예시, 브리프 11장 인터페이스)
-type Provider = 'csv' | 'hubspot' | 'salesforce' | 'admin_suite_erp' | 'ecount' | 'douzone' | 'make' | 'n8n'
+type Provider = 'csv' | 'hubspot' | 'salesforce' | 'admin_suite_erp' | 'ecount' | 'douzone' | 'n8n'
 type Entity = 'party' | 'project' | 'line_item' | 'document'
 interface CanonicalParty { kind: 'client' | 'vendor' | 'freelancer'; name: string; biz_reg_no?: string; representative?: string; address?: string; contact_name?: string; contact_email?: string; contact_phone?: string }
 interface CanonicalProject { name: string; client_external_id?: string; start_date?: string; end_date?: string; budget_krw?: number; stage?: string }
@@ -188,7 +192,7 @@ interface AdapterCtx { connectionId: string; orgId: string; credential: () => Pr
 | HubSpot push | `document.finalized` 뒤 확정 PDF 서명 URL(24시간, 제안)과 문서 링크를 딜 노트로. 첨부 업로드 API 사용 여부 미확인 |
 | admin-suite ERP pull | 같은 모듈러 DB의 `erp.products`(`sku`, `name`, `category`, `price numeric(12,2)`, `is_active`)를 단가 카탈로그로(`docs/products/_supabase-modular/migrations/1600_erp.sql:113-130`), `erp.sales`(`unit_price`, `quantity`, `total_price`, `status='completed'`)를 `invoice` 문서 입력으로(`:154-176`, Phase 2 유형). `erp.employees`는 Phase 3 인사 문서용(`:76-91`) |
 | 교차 스키마 읽기 | service_role 함수만 `erp.*`를 읽는다. 조건: 연결의 org = 대상 org이고 `core.app_entitlements`에 `docs`와 `erp`가 모두 활성. 사용자 세션에 `erp` 교차 GRANT를 주지 않는다. 금액은 `numeric` → 원 단위 정수 변환(반올림, 제안). 규약 문서화는 코어 요청 C-7. 모놀리스 배포는 Phase 3 API 방식 |
-| Make/n8n | 발신: 웹훅 엔드포인트 등록(이벤트 구독). 수신: `/api/integrations/inbound/[endpointToken]` → 프로젝트 생성·체크리스트 답 입력(`source='integration'`). 전역 n8n 키 프록시는 쓰지 않는다(`SECURITY_BASELINE.md:231`) |
+| n8n | 발신: 웹훅 엔드포인트 등록(이벤트 구독). 수신: `/api/integrations/inbound/[endpointToken]` → 프로젝트 생성·체크리스트 답 입력(`source='integration'`). 전역 n8n 키 프록시는 쓰지 않는다(`SECURITY_BASELINE.md:231`) |
 | 발신 웹훅 | 이벤트 `project.created`, `document.generated`, `document.finalized`, `document.exported`, `package.completed`. 이벤트 발생 시 `webhook_deliveries`(pending, `event_id` uuid) + `webhook.deliver` 잡. 서명 HMAC-SHA256(`timestamp.rawBody`), `X-Signature`, `X-Timestamp`(`SHARED_MODULES.md:181`). 재시도 5회(1m, 5m, 30m, 2h, 12h, 제안), 연속 실패 10회(제안)면 엔드포인트 `failing` → 사용자 알림. 코어 `emit` 재시도 표준화는 C-6 |
 | 수신 검증 | 원시 본문으로 서명 검증 → `core.webhook_events`(provider, event_id) 유니크로 멱등 → 처리(`SHARED_MODULES.md:175-179`). HubSpot 딜 단계 변경은 "문서 생성 제안" 알림만 만들고 자동 생성하지 않는다 |
 | 자격증명 | OAuth는 `core.oauth_states`(create/consume), 토큰·웹훅 비밀은 `core.encrypted_credentials`(SM 7장, `SHARED_MODULES.md:193-194`). payload·로그에 비밀 금지 |
@@ -202,10 +206,10 @@ interface AdapterCtx { connectionId: string; orgId: string; credential: () => Pr
 | org | 개인 조직(MVP 1인). 팀은 Phase 2(C-5) | 세션 컨텍스트 | SM 3장 |
 | credits | 선차감-환불, `withCredits`(동기 AI), `priceOf`(단가표 `src/lib/server/pricing`) | Route Handler, `docs.start_generation` 내부 | CS 4.3(`CORE_SPEC.md:177-188`), SM 4장 |
 | toss | 팩·구독 주문, confirm, 빌링키 | `src/app/api/billing/*` | SM 5장(`SHARED_MODULES.md:139-163`) |
-| webhooks | Toss 수신, HubSpot·Make/n8n 수신 멱등, 발신 HMAC 서명 | `/api/webhooks/toss`, `/api/integrations/*/webhook`, 워커 `webhook-deliver` | SM 6장(`SHARED_MODULES.md:165-186`) |
+| webhooks | Toss 수신, HubSpot·n8n 수신 멱등, 발신 HMAC 서명 | `/api/webhooks/toss`, `/api/integrations/*/webhook`, 워커 `webhook-deliver` | SM 6장(`SHARED_MODULES.md:165-186`) |
 | oauth(vault 포함) | HubSpot OAuth, 웹훅 서명 비밀·inbound 토큰 비밀 보관 | `/api/integrations/[provider]/connect`, `callback`, 워커 | SM 7장(`SHARED_MODULES.md:188-208`) |
 | weasyprint render | PDF(`/render/pdf`), DOCX(`/render/docx`, C-1) | 워커 `render-pdf`, `render-docx` | SM 10장(`SHARED_MODULES.md:264-288`). `app_id`에 `'docs'` 추가는 C-1 |
-| automation-core | 사용하지 않는다(캔버스 없음). n8n/Make는 서명 POST 하나로 통일한 규약만 따른다 | - | `SHARED_MODULES.md:331` |
+| automation-core | 사용하지 않는다(캔버스 없음). n8n은 서명 POST 하나로 통일한 규약만 따른다 | - | `SHARED_MODULES.md:331` |
 | compliance | 그래프 compliance 노드의 규칙 단계(금지 문구 JSON) + 제품 규칙(법률 자문 단정, 보장 표현, 고유식별정보 패턴) | `apps/api/app/ai/compliance/`, 확정 게이트 | SM 13장(`SHARED_MODULES.md:353-374`). FAIL 확정 차단, WARN 확인 후 진행(audit) |
 | storage | `org-files`(업로드, 직인), `exports`(PDF·DOCX·ZIP) | web 서명 URL, 워커·렌더 서비스 | SM 14장(`SHARED_MODULES.md:376-397`). 경로 `<org_id>/docs/<entity>/<uuid>.<ext>` |
 | audit | 고위험 고지 동의, WARN 확정, 확정·보관·개정, 연동 연결·해지, 운영자 게시, 계정 삭제 | RPC 내부, 서버 경로 | SM 15장 |
@@ -226,7 +230,7 @@ interface AdapterCtx { connectionId: string; orgId: string; credential: () => Pr
 |---|---|---|---|---|---|
 | `docs.generate` | `docs.generate` | TS 워커 오케스트레이션 → FastAPI 그래프 `docs.generate`(잡 토큰) | O. 문서 유형 단가(template 2, hybrid 6, ai 12). `docs.start_generation`이 run 생성 + `enqueue_job` + `consume_credits`를 한 트랜잭션으로 | 2회(제공자 오류·타임아웃만. compliance FAIL, 필수 입력 누락, 템플릿 오류는 재시도 불가) | 사용자에게 버전이 전달되지 않으면 전액(`fail_job` 자동 환불, `docs.fail_generation`이 run 실패 기록) |
 | `docs.package` | `docs.generate` | TS(부모 잡). 자식 `docs.generate`를 의존 순서로 | O. 시작 전 합계(28)를 잔액과 비교해 부족하면 402. 차감은 자식 단위(자식 `start_generation`) | 부모 0, 자식 단위 | 실패한 자식만 환불. 그 자식에 의존하는 하류 자식은 `canceled` + 환불(`cancel_job`) |
-| `docs.extract` | `docs.ai` | Python(FastAPI 그래프 `docs.extract`) | O. 10(50쪽까지, 이후 50쪽당 +5) | 1회 | 전액 |
+| `docs.extract` | `docs.ai` | Python(FastAPI 그래프 `docs.extract`) | O. 10(50쪽까지, 이후 50쪽당 +5). Route Handler가 `docs.reserve_credits`(일일 상한 + 차감 한 트랜잭션) 후 enqueue. 아래 extract·minutes·render·rag 차감도 모두 `docs.reserve_credits` | 1회 | 전액 |
 | `docs.minutes` | `docs.ai` | Python(core-voice STT `oss-voice` → 그래프 `docs.minutes`) | O. STT 분당 1 + 그래프 5 | 1회 | 전액 |
 | `render.pdf` | 공용(렌더) | 공용 WeasyPrint 렌더 서비스. 호출은 워커 `render-pdf` 핸들러(큐 이름은 C-1에서 렌더 소유자와 확정, 제안 `docs.render`) | O. 1 | 1회(네트워크·타임아웃·429만) | 전액 |
 | `render.docx` | 공용(렌더) | 렌더 서비스 확장(C-1) | O. 1 | 1회 | 전액 |
@@ -242,6 +246,7 @@ interface AdapterCtx { connectionId: string; orgId: string; credential: () => Pr
 | 내보내기 만료 | `doc_exports.expires_at` 경과 → `expired` + Storage 삭제 | 1일 |
 | 회의 녹음 원본 삭제 | 업로드 후 24시간(D-11 제안) 경과 `minutes_audio` 삭제 | 1시간 |
 | 웹훅 재시도 스캔 | `webhook_deliveries.next_attempt_at <= now()` 재큐잉(잡 유실 대비) | 5분 |
+| 생성 실행 정리 | `docs.reconcile_generation_runs(null)`(service_role) | 5분 |
 
 생성 1건 시퀀스(`docs.generate`):
 
@@ -251,7 +256,17 @@ interface AdapterCtx { connectionId: string; orgId: string; credential: () => Pr
 | 2 | 워커 | `claim_jobs('docs.generate')` → `documents.status='generating'` → `/api/internal/ai-token`으로 잡 토큰(scope `graph:docs.generate`) | 토큰 실패 `fail_job` |
 | 3 | 워커 → FastAPI | `POST /graphs/docs.generate/runs` → `GET /graphs/runs/{id}` 2초 간격, 최대 300초(제안) | 시간 초과 → `fail_job(retryable=true)` |
 | 4 | FastAPI | 토큰 검증 → `documents.org_id = token.org` 확인 → 노드 실행 → `output`이 sanitize·버전 저장(`docs.finish_generation`) | 노드 실패 → `ai_runs.status='failed'` |
-| 5 | 워커 | 결과 zod 재검증(버전 id 존재 확인) → `complete_job` → 발신 이벤트 `document.generated` | 실패면 `docs.fail_generation` + `fail_job`(환불) |
+| 5 | 워커 | 결과 zod 재검증(버전 id 존재 확인) → `complete_job` → 발신 이벤트 `document.generated` | 실패 순서는 아래 "실패·재시도 계약" |
+
+실패·재시도 계약(2026-10-14, 교차검증 #3~#5):
+
+| 상황 | 워커가 할 일 | 이유 |
+|---|---|---|
+| 재시도가 남은 실패(제공자 오류·타임아웃) | `core.fail_job(retryable=true)`만. `docs.fail_generation`은 부르지 않는다(실행은 running 유지) | 먼저 failed로 굳히면 재큐잉된 잡이 끝날 수 없다 |
+| 마지막 시도 실패, 재시도 불가 오류 | `docs.fail_generation` → `core.fail_job(retryable=false)`(환불) | 실행·문서 복구와 환불을 한 번씩 |
+| 재시도 잡 시작 시 실행이 이미 `succeeded` | 그래프를 다시 돌리지 않고 `core.complete_job` | `finish_generation` 뒤 워커가 죽은 경우. 환불 표시는 이미 꺼져 있다 |
+| 사용자가 대기 중 생성 취소 | 화면은 `docs.cancel_generation`만 호출(잡 취소 + 환불 + 실행 canceled + 문서 복구) | 코어 `cancel_job`만 부르면 실행·문서가 멈춘다 |
+| 잡만 끝나고 실행이 남은 경우(코어 `cancel_job` 직접 호출, 잡 정리기) | `docs.reconcile_generation_runs`가 다음 `start_generation`·취소·정리 스케줄에서 정리 | DC002·DC006 영구 차단 방지 |
 
 ## 5. AI 라우팅
 
@@ -341,7 +356,7 @@ interrupt를 두지 않는 이유: AA 6장은 되돌리기 어려운 단계(발�
                      ├──> ai-service(Railway) <──────────────────────────────────────────┘                v
                      │        │ ─ 상용 LLM / GPU(oss-llm, oss-embed, oss-voice)          render-weasyprint(공용, private)
                      └──> Dify(docs-chat) ── 내부 키 ──> ai-service /tools/*
-외부: HubSpot <── worker push/pull, Make/n8n ──> web /api/integrations/inbound/[token], worker ──> 사용자 웹훅 URL
+외부: HubSpot <── worker push/pull, n8n ──> web /api/integrations/inbound/[token], worker ──> 사용자 웹훅 URL
 ```
 
 네트워크 경계: 렌더 서비스는 공개 인터넷에서 호출할 수 없다(`SHARED_MODULES.md:272`). 공개 크론 라우트는 두지 않고 내부 라우트는 워커 키로만 받는다(`SECURITY_BASELINE.md` 13장).
@@ -377,7 +392,8 @@ interrupt를 두지 않는 이유: AA 6장은 되돌리기 어려운 단계(발�
 | `HUBSPOT_CLIENT_ID`, `HUBSPOT_CLIENT_SECRET` | HubSpot OAuth(Phase 2) | 서버 전용 | HubSpot 연결 비활성(기능 플래그 꺼짐). 플래그가 켜졌는데 없으면 기동 실패 |
 | `HUBSPOT_WEBHOOK_SECRET` | HubSpot 수신 서명 검증(방식 미확인) | web 서버 전용 | 수신 라우트 401 고정 + 운영 알림 |
 | `RATE_LIMIT_IP_SALT` | IP 해시 솔트 | 서버 전용 | 기동 실패 |
-| `NEXT_PUBLIC_HERO3D_ENABLED` | 3D 히어로 전체 끄기 | 공개 | 기본 true, false면 정지 이미지 |
+| `NEXT_PUBLIC_HERO3D_ENABLED` | 3D 히어로 전체 끄기 | 공개 | 기본 true, false면 3D 영상(영상도 꺼져 있으면 정지 이미지) |
+| `NEXT_PUBLIC_HERO_VIDEO_ENABLED` | 3D 영상 레이어 끄기(DC-F-049) | 공개 | 기본 true, false면 정지 이미지 |
 | `WORKER_ID`, `WORKER_CONCURRENCY` | 워커 식별·동시성(기본 4, 제안) | 워커 | 기본값 사용 |
 
-AI 관련 변수는 `AI_ARCHITECTURE.md:160` 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED`를 빼고 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(`SECURITY_BASELINE.md:284`). `OPENROUTER_API_KEY`, `VOYAGE_API_KEY`는 기본 체인에 없으므로 두지 않는다.
+AI 관련 변수는 `AI_ARCHITECTURE.md:160` 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED`, `NEXT_PUBLIC_HERO_VIDEO_ENABLED`를 빼고 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(`SECURITY_BASELINE.md:284`). `OPENROUTER_API_KEY`, `VOYAGE_API_KEY`는 기본 체인에 없으므로 두지 않는다.

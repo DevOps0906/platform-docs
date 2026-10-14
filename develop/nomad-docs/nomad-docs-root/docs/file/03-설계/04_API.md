@@ -8,8 +8,8 @@
 |---|---|---|
 | 인증 | 모든 Route Handler 첫 줄 `const ctx = await requireSession('docs')`. 미로그인 401, pending/suspended 403, `entitled=false` 402. 공개 예외: `/api/webhooks/toss`, `/api/integrations/[provider]/webhook`, `/api/integrations/inbound/[endpointToken]`(서명·토큰 검증), `/api/integrations/[provider]/callback`(OAuth state 검증) | SM 2장, CS 2.2 |
 | 순서 | 인증 → zod 검증 → 레이트 리밋 → 엔타이틀먼트·플랜 features 확인 → (고위험) 고지 동의 확인 → 크레딧 선차감 → 처리(동기 호출 또는 enqueue) → 실패 시 환불 | `docs/file/03-설계/공용코어/CORE_SPEC.md:177-188`, `docs/reference/reviews/SellingDocs.md:70` |
-| 멱등 | 유료·비동기 요청은 본문 `request_id`(UUID v4) 필수. 차감 `consume:docs:<request_id>`, 잡 `job:docs:<request_id>`, 생성 run `generation_runs.idempotency_key = gen:docs:<request_id>`(제안) | `docs/file/03-설계/공용코어/CORE_SPEC.md:198`, SM 18장 |
-| 패키지 자식 키 | 자식 차감 `consume:docs:<run_id>:<doc_type_code>`, 자식 잡 `job:docs:<run_id>:<doc_type_code>` | 제안(자식 단위 환불 추적) |
+| 멱등 | 유료·비동기 요청은 본문 `request_id`(UUID v4) 필수. 차감 `consume:docs:gen:<request_id>`(생성) / `consume:docs:<작업>:<request_id>`(추출 `extract`, 회의록 `minutes`, 다시 쓰기 `assist`, 렌더 `render`, 색인 `index`, 내보내기 `export`. `docs.reserve_credits`가 형식과 재사용을 검사: 같은 키를 다른 작업·금액·조직이 쓰면 22023/42501), 잡 `job:docs:<request_id>`, 생성 run `generation_runs.idempotency_key = gen:docs:<request_id>`(제안) | `docs/file/03-설계/공용코어/CORE_SPEC.md:198`, SM 18장 |
+| 패키지 자식 키 | 자식 차감 `consume:docs:gen:<run_id>:<doc_type_code>`, 자식 잡 `job:docs:<run_id>:<doc_type_code>` | 제안(자식 단위 환불 추적) |
 | 크레딧 선차감 위치 | 생성: `docs.start_generation`(service_role, 한 트랜잭션), 동기 AI(`assist`, 채팅): Route Handler `withCredits`, 렌더: 내보내기 Route Handler가 `consume_credits` 후 `enqueue_job(p_credit_ledger_id)`, extract·minutes·색인: Route Handler가 차감 후 enqueue | SM 4장, 02장 4절 |
 | DB 접근 | 정본 테이블(`parties`, `projects`, `checklist_answers`(source='user'), `requirements`, `artifacts`, `line_items`, `documents.title`)은 세션 클라이언트(RLS, 컬럼 GRANT). 서버 전용 테이블과 RPC는 `createAdminClient`로, 호출 전 `ctx.org.id`와 대상 행 `org_id` 일치 확인 | `docs/file/03-설계/공용코어/SECURITY_BASELINE.md` 4장, 11장 |
 | 응답 봉투 | 성공 `{ ok: true, data }`, 실패 `{ ok: false, error: { code, message, details? } }`. 402는 `details: { required, balance }`, DC004는 `details: { missing: string[] }`, DC005는 `details: { lint, compliance }` | 제안(`D:/WorkSpace/platform/docs/products/flora-publishing/04_API.md:15`와 같음) |
@@ -54,7 +54,10 @@
 | `GET /api/doc-types` | 멤버 / F | - | `[{ code, name, category, risk_level, generation_mode, phase, credits, required_fields, current_version }]` | 0 | - | - |
 | `POST /api/projects/[id]/documents` | member+ / F | `{ request_id, doc_type_code }`(문서가 없으면 만들고 생성 시작, 있으면 재생성) | `{ document, run, job_id, estimated_credits }` | template 2 / hybrid 6 / ai 12 | service_role `docs.start_generation`(내부 `enqueue_job`, `consume_credits`) | 402 `CR001`, 403 `DC006`(doc_phase), 409 `DC002`, 422 `DC004`, 428 `DC007`, 429 |
 | `POST /api/projects/[id]/packages` | member+ / F | `{ request_id, package_code: 'outsourcing_basic' \| 'shorts_agency'(Phase 2, `project_type=content`만, 아니면 422), include?: doc_type_code[] }` | `{ run, parent_job_id, estimated_credits: 28(shorts_agency 20 또는 18) }` | 자식 합계(28) | `docs.start_generation`(부모 run), 자식은 워커가 같은 RPC | 402(합계 부족), 409 `DC002`, 422 `DC004`(`details.missing`를 유형별로), 428 `DC007`(`dev_contract` 포함 시) |
-| `POST /api/generation-runs/[id]/cancel` | member+ / F | - | `{ run }`(대기 자식 환불) | 0 | `cancel_job` | 409 `JB002`, 404 |
+| `POST /api/generation-runs/[id]/cancel` | 시작한 member 또는 oa / F | - | `{ run }`(대기 부모·자식 환불, 문서 복구) | 0 | `docs.cancel_generation`(코어 `cancel_job` 직접 호출 금지) | 409 `DC001`(이미 실행 중), 404 |
+| `GET /api/pipeline` | 멤버 / F | `?stage&party&type&stale&sort&cursor` | `{ items: [{ project_id, name, party, stage, total_krw, open_documents, stale_documents, next_action, updated_at }], columns: [{ stage, count, total_krw }] }` | 0 | 뷰 `docs.project_pipeline` + `project_totals` | - |
+| `GET /api/projects/[id]/activity`, `GET /api/parties/[id]/activity` | 멤버 / F | `?before&limit≤50` | `{ items: [{ at, kind, ref_id, detail, document_id }] }` | 0 | 뷰 `docs.project_activity` | 404 |
+| `GET /api/search` | 멤버 / F | `?q(1..80)&types=project,party,document` | `{ projects, parties, documents }`(각 최대 8) | 0 | 조직 안 ILIKE(제안. 느리면 `pg_trgm` 인덱스를 2300에 추가), 레이트 리밋 60/분 | 422 |
 | `GET /api/documents/[id]` | 멤버 / F | - | `{ document, version (current), lint_result, compliance_verdict, needs_regeneration }` | 0 | - | 404 |
 | `PATCH /api/documents/[id]` | member+ / F | `{ title 1..200 }` | `{ document }` | 0 | - | 409 `DC003`(final) |
 | `POST /api/documents/[id]/versions` | member+ / F | `{ expected_version, sections: [{ key, html ≤ 200KB }] ≤ 60 }`(잠금 섹션 key가 있으면 거부) | `{ version }`(sanitize 후 새 버전, `created_kind='edited'`) | 0 | service_role INSERT `document_versions` | 409 `DC010`, 409 `DC003`, 422 `locked_section`, 413(2MB 초과) |
@@ -73,7 +76,7 @@
 | `POST /api/projects/[id]/minutes` | member+ / F | `{ request_id, upload_id (minutes_audio\|minutes_text), attendees: [{ name, role? }] ≤ 30, meeting_at }` | `{ job_id, document_id, estimated_credits }` | STT 분당 1 + 5 | `consume_credits`, `enqueue_job('docs.minutes')` | 402, 413 `VOICE_TOO_LONG`(플랜 `minutes_max_minutes` 초과), 422 |
 | `POST /api/projects/[id]/suggestions/requirements/accept` | member+ / F | `{ requirement_ids: uuid[] }`(extract·minutes가 만든 proposed 행) | `{ accepted }`(status accepted) | 0 | - | 404 |
 | `GET /api/integrations` | oa / F | - | `[{ connection_id, provider, status, last_synced_at, last_error }]` | 0 | - | - |
-| `POST /api/integrations/[provider]/connect` | oa / T(hubspot, admin_suite_erp, make, n8n), F(csv) | `{ sync_direction: pull\|push\|both, settings? }` | `{ authorize_url }`(OAuth) 또는 `{ connection }`(ERP: 엔타이틀먼트 확인, Make/n8n: inbound 토큰 1회 표시) | 0 | `create_oauth_state` | 403 `DC006`, 409(이미 연결), 422 `entitlement_missing`(ERP) |
+| `POST /api/integrations/[provider]/connect` | oa / T(hubspot, admin_suite_erp, n8n), F(csv) | `{ sync_direction: pull\|push\|both, settings? }` | `{ authorize_url }`(OAuth) 또는 `{ connection }`(ERP: 엔타이틀먼트 확인, n8n: inbound 토큰 1회 표시) | 0 | `create_oauth_state` | 403 `DC006`, 409(이미 연결), 422 `entitlement_missing`(ERP) |
 | `GET /api/integrations/[provider]/callback` | 공개(state) | `?code&state` | 302 → 설정 화면 | 0 | `consume_oauth_state`, vault put | 400 `OA001` |
 | `PUT /api/integrations/[id]/mappings` | oa / T | `{ mappings: [{ entity, external_field, internal_path, transform, enum_map? }] ≤ 100 }`(`internal_path`는 허용 목록) | `{ mappings }` | 0 | - | 409 `DC009`, 422 |
 | `POST /api/integrations/[id]/sync` | oa / T | `{ request_id, entity: party\|project\|line_item, direction: pull\|push }` | `{ sync_run, job_id }` | 0 | `enqueue_job('integration.sync')` | 409 `DC009`, 409(진행 중), 429 |
@@ -115,7 +118,7 @@
 
 | 시그니처 | 호출자 | 검사 | 반환 | SQLSTATE |
 |---|---|---|---|---|
-| `docs.finalize_document(p_document_id uuid, p_expected_version int, p_ack_warn boolean)` | authenticated(oa), service_role | 상태 `draft`·`review`, `current_version = p_expected_version`, 필수 입력, 최신 버전 `lint_result` 오류 0, `compliance_verdict <> 'fail'`, `warn`이면 `p_ack_warn`, 고위험이면 `risk_acknowledgements` 존재. 통과 시 `docs.next_doc_number` → `status='final'`, `finalized_at`, 감사(`warn` 확인 포함) | `docs.documents` | `DC001`, `DC010`, `DC004`, `DC005`, `DC008`, `DC007`, `42501`, `P0002` |
+| `docs.finalize_document(p_document_id uuid, p_expected_version int, p_ack_warn boolean)` | authenticated(oa), service_role | 상태 `draft`·`review`, `current_version = p_expected_version`, `needs_regeneration=false`, 생성 버전의 `inputs_hash` = 현재 체크리스트 해시(DC010), `lint_result.ran_at` 있음(DC005), 필수 입력, 최신 버전 `lint_result` 오류 0, `compliance_verdict <> 'fail'`, `warn`이면 `p_ack_warn`, 고위험이면 `risk_acknowledgements` 존재. 통과 시 `docs.next_doc_number` → `status='final'`, `finalized_at`, 감사(`warn` 확인 포함) | `docs.documents` | `DC001`, `DC010`, `DC004`, `DC005`, `DC008`, `DC007`, `42501`, `P0002` |
 | `docs.archive_document(p_document_id uuid)` | authenticated(oa), service_role | `final`·`draft` → `archived`. 감사 | `docs.documents` | `DC001`, `42501` |
 | `docs.create_revision(p_document_id uuid)` | authenticated(oa), service_role | 원본 `final`. 새 문서 `draft`, `supersedes_document_id`, 원본 최신 버전 content를 버전 1로 복사(`created_kind='imported'`). 감사 | 새 `docs.documents` | `DC001`, `DC002`(진행 중 개정본 있음), `42501` |
 | `docs.set_project_status(p_project_id uuid, p_to text)` | authenticated(oa), service_role | draft→active→delivered→archived, active↔delivered(제안) | `docs.projects` | `DC001`, `42501` |
@@ -125,14 +128,18 @@
 | `docs.decide_approval(...)` | authenticated(Phase 2) | Phase 2 승인 흐름. 시그니처는 Phase 2 설계에서 확정 | - | - |
 | `docs.start_generation(p_org_id uuid, p_project_id uuid, p_document_id uuid, p_doc_type_code text, p_package_code text, p_parent_job_id uuid, p_credits int, p_idempotency_key text, p_actor uuid)` | service_role | 문서·패키지 활성 run 없음(부분 유니크), 조직 동시 생성 상한, `generation_runs` INSERT + `core.enqueue_job` + `core.consume_credits`(패키지 부모는 `p_credits=0`) 한 트랜잭션, `documents.status='generating'` | `docs.generation_runs` | `DC002`, `CR001`, `DC006` |
 | `docs.finish_generation(p_run_id uuid, p_content jsonb, p_body_html text, p_variables jsonb, p_inputs_hash text, p_lint jsonb, p_verdict text, p_ai_run_id uuid)` | service_role | run running, `body_html` ≤ 2MB, 버전 INSERT, `current_version+1`, `status='review'`, `needs_regeneration=false`, `credits_settled` | `docs.document_versions` | `DC001`, `22023` |
-| `docs.fail_generation(p_run_id uuid, p_error text)` | service_role | run → failed, 문서 `generating` → 이전 상태(버전 없으면 `draft`). 환불은 `fail_job`이 함 | `docs.generation_runs` | `DC001` |
+| `docs.fail_generation(p_run_id uuid, p_error text)` | service_role | run → failed, 문서 `generating` → 이전 상태(버전 없으면 `draft`). 환불은 `fail_job`이 함. 마지막 시도 실패에서만 부른다(02장 4절 실패·재시도 계약) | `docs.generation_runs` | `DC001` |
+| `docs.cancel_generation(p_run_id uuid)` | authenticated(시작한 member, oa), service_role | run `queued`만. `core.cancel_job`(환불) + run·대기 자식 `canceled` + 문서 복구 + 감사. 먼저 `reconcile_generation_runs` | `docs.generation_runs` | `DC001`, `42501`, `P0002` |
+| `docs.reconcile_generation_runs(p_org_id uuid default null)` | service_role(정리 스케줄), 내부 | 잡이 `canceled`·`failed`인데 run이 `queued`·`running`인 행을 같은 상태로 닫고 문서 복구 | int(정리 수) | `42501` |
+| `docs.report_generation_progress(p_run_id uuid, p_stage text, p_section_key text, p_step int, p_total int)` | service_role(ai-service) | stage ∈ queued·collecting·drafting·assembling·linting·rendering, `0 ≤ step ≤ total`. 종료된 run은 무시 | void | `22023`, `42501` |
+| `docs.reserve_credits(p_org_id uuid, p_actor uuid, p_credits int, p_reason text, p_ref_type text, p_ref_id text, p_idempotency_key text, p_metadata jsonb)` | service_role | 생성 밖 모든 docs 차감의 단일 입구. 같은 멱등 키면 기존 원장 id. 일일 상한(`daily_credit_usage`) + `core.consume_credits` 한 트랜잭션 | bigint(ledger_id) | `DC006`(일일 상한), `CR001`, `22023` |
 | `docs.next_doc_number(p_org_id uuid, p_doc_type_code text)` | service_role(및 `finalize_document` 내부) | `doc_counters` 행 잠금 + `last_no+1`, 연도 경계는 KST | text(형식 적용 결과) | - |
 | `docs.upsert_external_ref(p_connection_id uuid, p_entity text, p_internal_id uuid, p_external_type text, p_external_id text, p_etag text)` | service_role | 연결 `active`, 같은 org | `docs.external_refs` | `DC009`, `23505` |
 | `docs.apply_checklist_effects(p_project_id uuid, p_plan jsonb, p_expected_hash text)` | service_role | 제안(브리프 6장에 없는 이름). 현재 답 해시 재계산 = `p_expected_hash`, `is_user_modified` 행 불변, 한 트랜잭션 적용 + `needs_regeneration` + 감사 | jsonb(집계) | `DC010`, `42501` |
 
 ## 4. 잡 페이로드 계약
 
-공통: 비밀값·HTML·금액을 payload에 넣지 않는다(서버가 DB에서 읽는다). 경로는 서버가 만든 Storage 경로만. `progress` 0~100, `progress_message`는 한국어 한 줄. 모든 payload는 zod(TS)·pydantic(Python) 스키마 1개에서 생성(제안).
+공통: 비밀값·HTML·금액을 payload에 넣지 않는다(서버가 DB에서 읽는다). 경로는 서버가 만든 Storage 경로만. `progress` 0~100, `progress_message`는 한국어 한 줄. 생성 화면의 단계 애니메이션은 `core.jobs.progress`가 아니라 `docs.generation_runs.progress`(stage·section_key·step·total)가 정본이다(DC-F-048, 02장 2.2절). 모든 payload는 zod(TS)·pydantic(Python) 스키마 1개에서 생성(제안).
 
 | job_type | payload | result | progress 메시지 |
 |---|---|---|---|
@@ -185,7 +192,7 @@ interface RenderDocxResponse { storage_path: string; bytes: number; duration_ms:
 |---|---|---|---|---|
 | 수신 | Toss 결제 상태 | Toss 검증 방식(미확인, `SHARED_MODULES.md:186`) | CS 6장 규약 | `webhook_events` INSERT → 상태 동기화만. 지급은 confirm 경로 |
 | 수신 | HubSpot 딜 단계 변경(`/api/integrations/hubspot/webhook`) | HubSpot 서명 헤더(버전·알고리즘 미확인). 원시 본문으로 검증 | HubSpot 이벤트 id(필드명 미확인) | `webhook_events`(provider `hubspot`) 멱등 → 해당 딜의 `external_refs`로 프로젝트 찾기 → "문서 생성 제안" 알림만(자동 생성 안 함). 연결이 `active`가 아니면 200 + 무시 기록 |
-| 수신 | Make/n8n(`/api/integrations/inbound/[endpointToken]`) | 경로 토큰(조회는 토큰 해시) + HMAC-SHA256(`X-Signature`, `X-Timestamp`, 비밀은 연결 생성 시 1회 표시, 5분 허용) | 본문 `event_id`(UUID, 필수) | `webhook_events`(provider `make`/`n8n`) 멱등 → `create_project` 또는 `answer_checklist`(`source='integration'`) → 202 |
+| 수신 | n8n(`/api/integrations/inbound/[endpointToken]`) | 경로 토큰(조회는 토큰 해시) + HMAC-SHA256(`X-Signature`, `X-Timestamp`, 비밀은 연결 생성 시 1회 표시, 5분 허용) | 본문 `event_id`(UUID, 필수) | `webhook_events`(provider `make`/`n8n`) 멱등 → `create_project` 또는 `answer_checklist`(`source='integration'`) → 202 |
 | 발신 | `project.created` | HMAC-SHA256(`timestamp.rawBody`), `X-Signature`, `X-Timestamp`, 5분 허용(`SHARED_MODULES.md:181`) | `event_id` UUID | `{ project_id, name, client_party_id, created_at }` |
 | 발신 | `document.generated` | 같음 | 같음 | `{ document_id, project_id, doc_type_code, version, compliance_verdict }` |
 | 발신 | `document.finalized` | 같음 | 같음 | `{ document_id, doc_number, version, finalized_at, download_url? }`(PDF가 있으면 서명 URL 24시간, 제안) |
@@ -206,7 +213,7 @@ interface RenderDocxResponse { storage_path: string; bytes: number; duration_ms:
 | 렌더 서비스 `POST /render/docx`(C-1) | 워커 `render-docx` | 같음. C-1 반영 전에는 DOCX 형식을 비활성(403 `format_unavailable`) | 같음 |
 | HubSpot | 워커(`integration.sync`, push), web(OAuth) | 401 → 토큰 갱신 1회 → 실패면 연결 `error` + 알림. 429 → `Retry-After` 준수 후 잡 재시도. 5xx → 지수 백오프 3회 | 레이트 한도 미확인 |
 | admin-suite ERP(내부) | 워커 서비스 함수(service_role, `erp.products`·`erp.sales` 읽기) | 엔타이틀먼트 없음 → 연결 `error`(DC009). 스키마 변경(컬럼 없음) → 동기화 실패 + 운영 알림 | DB 내부, 1회 1,000행 페이지(제안) |
-| Make/n8n | 수신 라우트, 발신 웹훅 | 5절 | 수신 엔드포인트당 60회/분(제안) |
+| n8n | 수신 라우트, 발신 웹훅 | 5절 | 수신 엔드포인트당 60회/분(제안) |
 | Toss | 공용 toss 모듈 | CS 5장. `PM001`은 운영 알림 + 승인 취소 요청 | - |
 | Supabase Storage | web(서명 URL), 워커·렌더(service_role) | 업로드 완료 검증 실패 시 객체 삭제 | 문서 20MB, 음성 200MB(제안) |
 
@@ -240,12 +247,12 @@ Dify `docs-chat` 계약: `user=dify_user`, 입력 변수 `platform_conversation_
 | `DC002` | 같은 문서(또는 패키지) 생성 이미 진행 중 | 409 | `start_generation`(부분 유니크) |
 | `DC003` | 확정·불변 데이터 수정 시도(확정 문서, 게시된 유형 버전, 버전 행) | 409 | 불변 트리거 |
 | `DC004` | 필수 입력 누락으로 생성·확정 불가 | 422 | Route Handler 사전 검사, `finalize_document` |
-| `DC005` | compliance FAIL 또는 lint 오류로 확정 불가 | 422 | `finalize_document` |
-| `DC006` | 플랜 한도 초과(프로젝트 수, 문서 유형 단계, 형식) | 402 또는 403(제안: 업그레이드 안내는 403) | 한도 트리거, Route Handler |
+| `DC005` | compliance FAIL, lint 오류, lint 미실행으로 확정 불가 | 422 | `finalize_document` |
+| `DC006` | 플랜 한도 초과(프로젝트 수(복구 포함), 문서 유형 단계, 형식), 조직 동시 생성, 일일 플랫폼 상한 | 402 또는 403(제안: 업그레이드 안내는 403), 동시 생성 429, 일일 상한 503 | 한도 트리거, `start_generation`, `reserve_credits`, Route Handler |
 | `DC007` | 고위험 문서 고지 미동의 | 428 | Route Handler, `finalize_document` |
 | `DC008` | WARN 확인 없이 확정 시도 | 409 | `finalize_document` |
 | `DC009` | 연동 연결 상태 불가(해지, 오류) | 409 | `revoke_integration`, `upsert_external_ref`, 동기화 |
-| `DC010` | 버전 충돌(expected_version 불일치) | 409 | `finalize_document`, 편집 저장, `apply_checklist_effects`(해시) |
+| `DC010` | 버전 충돌(expected_version 불일치) 또는 정본이 바뀐 낡은 문서 확정 시도("다시 생성 필요") | 409 | `finalize_document`, 편집 저장, `apply_checklist_effects`(해시, 카탈로그 항목 version 포함) |
 | 코어 코드 | `42501` 403, `22023` 409, `P0002` 404, `CR001` 402(`details: { required, balance }`), `JB002` 409, `OA001` 400, `PM001`/`PM409` 409 + 운영 알림, `PM404` 404, `SB001` 409, `AI001` 403, `AI002` 403 | - | `docs/file/03-설계/공용코어/CORE_SPEC.md:424` 매핑 |
 | `23505` | 중복(활성 run, 외부 매핑, 유니크) | 409 | 유니크 인덱스 |
 | `23503` | 다른 조직·프로젝트 행 참조 | 422 | 복합 FK |

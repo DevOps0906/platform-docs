@@ -4,14 +4,16 @@
 
 검증 결과(2026-10-13, PGlite, `docs/products/_tools-sqlcheck`): 모듈러 core 0000~0009 + seed + 2300 적용 정순·역순 OK, 모놀리스 0001 + 0002 + seed OK, RLS 스모크 59/59(모듈러), 59/59(모놀리스), 권한 감사(PUBLIC EXECUTE 남은 제품 함수 0, search_path 없는 DEFINER 0, RLS 꺼진 테이블 0).
 
+재검증(2026-10-14, 교차검증 반영 후): 모듈러 전 제품 체인(0000~0009 + seed + 1000~2300, 정순·역순·재실행) OK, 모놀리스 0001 + 0002 + seed OK, RLS 스모크 105/105(모듈러), 105/105(모놀리스), 권한 감사 0건. 추가 객체: `checklist_item_versions`, `project_code_counters`, `daily_credit_usage`, `generation_runs.progress`, 뷰 `project_pipeline`·`project_activity`, 함수 `cancel_generation`·`reconcile_generation_runs`·`report_generation_progress`·`charge_daily_cap`·`reserve_credits`.
+
 ## 1. 개요와 ERD
 
 설계 원칙(`2300`:8-19 머리 주석, 기준서 2장).
 
 | 원칙 | 데이터 모델에서의 구현 |
 |---|---|
-| 입력 한 번, 문서 여러 개 | 정본은 `projects.profile`, `checklist_answers`, `requirements`, `artifacts`, `line_items`, `parties`. 문서(`document_versions.content`)는 정본의 투영이며 정본이 바뀌면 `documents.needs_regeneration=true`(트리거 `mark_documents_stale`, `2300`:944) |
-| 효과 엔진은 결정적 | 체크리스트 효과로 생긴 행은 `source='checklist'`, `source_key='<item_key>#<effect_id>'`. 사용자가 고친 행은 `is_user_modified=true`가 되어 재적용 때 보존된다(트리거, `2300`:574) |
+| 입력 한 번, 문서 여러 개 | 정본은 `projects.profile`, `checklist_answers`, `requirements`, `artifacts`, `line_items`, `parties`. 문서(`document_versions.content`)는 정본의 투영이며 정본이 바뀌면 `documents.needs_regeneration=true`(트리거 `mark_documents_stale`, `2300`:1100) |
+| 효과 엔진은 결정적 | 체크리스트 효과로 생긴 행은 `source='checklist'`, `source_key='<item_key>#<effect_id>'`. 사용자가 고친 행은 `is_user_modified=true`가 되어 재적용 때 보존된다(트리거, `2300`:729) |
 | 숫자는 DB가 계산 | 요구사항·산출물 코드(FR-001, SCR-001)는 트리거, 금액은 생성 컬럼 `line_items.amount_krw`, 합계·VAT는 뷰 `project_totals`, 문서번호는 `next_doc_number` |
 | 버전은 불변 | `document_versions` append-only(DC003), 확정 문서는 title 포함 불변, 개정은 `create_revision`이 새 문서를 만든다 |
 | 조직 격리 | 모든 테넌트 테이블에 `org_id` + 자식은 `(parent_id, org_id)` 복합 FK. 다른 조직 부모를 가리키는 행은 23503(또는 그 전에 42501) |
@@ -114,7 +116,7 @@
 | `effects` | jsonb | 아니오 | `'[]'::jsonb` | 결정적 효과 엔진 입력: [{when, create: requirement\|artifact\|line_item\|clause, ...}] |
 | `applies_to` | text[] | 아니오 | `'{}'` | 비면 전체 project_type. dev 전용 항목은 `{web,app,ai,mixed,other}`, shorts_agency 항목은 `{content}`(`01_PRD.md` 3.3.1절) |
 | `is_required` | boolean | 아니오 | `false` |  |
-| `version` | integer | 아니오 | `1` |  |
+| `version` | integer | 아니오 | `1` | 트리거 `checklist_items_bump_version`이 관리(직접 지정 무시). 효과·선택지·입력 형식·적용 유형·필수 여부가 바뀌면 +1, 이력은 `checklist_item_versions` |
 | `is_active` | boolean | 아니오 | `true` |  |
 | `sort_order` | integer | 아니오 | `100` |  |
 | `created_at` | timestamptz | 아니오 | `now()` |  |
@@ -122,9 +124,23 @@
 
 제약: `constraint checklist_items_options_check check (jsonb_typeof(options) = 'array')`; `constraint checklist_items_effects_check check (jsonb_typeof(effects) = 'array')`
 
+#### `docs.checklist_item_versions`
+
+목적: 체크리스트 항목의 불변 이력(교차검증 #6, 2026-10-14). `checklist_items` INSERT·의미 있는 UPDATE마다 트리거가 1행을 넣는다. UPDATE·DELETE는 DC003. 정의 `2300`:172.
+
+| 이름 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| `key` | text | 아니오 |  | 항목 key |
+| `version` | integer | 아니오 |  | 항목 version(PK key + version) |
+| `label`, `input_type` | text | 아니오 |  | 그 버전의 값 |
+| `options`, `effects` | jsonb | 아니오 |  | 그 버전의 값 |
+| `applies_to` | text[] | 아니오 |  | 그 버전의 값 |
+| `is_required` | boolean | 아니오 |  | 그 버전의 값 |
+| `captured_at` | timestamptz | 아니오 | `now()` |  |
+
 #### `docs.clauses`
 
-목적: 조항 라이브러리. org_id null = 플랫폼 표준(MVP), 값 있음 = 조직 맞춤(Phase 2). 표준 컬럼: id, org_id, created_at, updated_at, status. 정의 `2300`:170.
+목적: 조항 라이브러리. org_id null = 플랫폼 표준(MVP), 값 있음 = 조직 맞춤(Phase 2). 표준 컬럼: id, org_id, created_at, updated_at, status. 정의 `2300`:244.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -145,7 +161,7 @@
 
 #### `docs.runtime_config`
 
-목적: 운영 상한(동시 생성, 일일 크레딧 상한). 사용자 접근 없음. 표준 컬럼: updated_at. 정의 `2300`:206.
+목적: 운영 상한(동시 생성, 일일 크레딧 상한). 사용자 접근 없음. 표준 컬럼: updated_at. 정의 `2300`:280.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -154,11 +170,20 @@
 | `note` | text | 예 |  |  |
 | `updated_at` | timestamptz | 아니오 | `now()` |  |
 
+#### `docs.daily_credit_usage`
+
+목적: 일일 플랫폼 크레딧 사용량(KST 날짜). `start_generation`과 `reserve_credits`가 같은 트랜잭션에서 더하고 `runtime_config.daily_credit_cap`과 비교한다(교차검증 #11). 환불은 빼지 않는다. 사용자 접근 없음. 정의 `2300`:297.
+
+| 이름 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| `day` | date | 아니오 |  | PK, KST 날짜 |
+| `credits` | bigint | 아니오 | `0` | 그날 차감 합계 |
+
 ### 2.2 워크스페이스
 
 #### `docs.workspace_settings`
 
-목적: 조직당 1행. 문서번호 서식, 기본 일단가, VAT, 직인 경로. 표준 컬럼: org_id, created_at, updated_at. 정의 `2300`:225.
+목적: 조직당 1행. 문서번호 서식, 기본 일단가, VAT, 직인 경로. 표준 컬럼: org_id, created_at, updated_at. 정의 `2300`:308.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -175,7 +200,7 @@
 
 #### `docs.parties`
 
-목적: 당사자(자사·거래처·협력사·프리랜서). 주민등록번호 컬럼 없음, 사업자번호는 10자리만. 표준 컬럼: id, org_id, created_at, updated_at, created_by, deleted_at. 정의 `2300`:259.
+목적: 당사자(자사·거래처·협력사·프리랜서). 주민등록번호 컬럼 없음, 사업자번호는 10자리만. 표준 컬럼: id, org_id, created_at, updated_at, created_by, deleted_at. 정의 `2300`:345.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -201,7 +226,7 @@
 
 #### `docs.projects`
 
-목적: 프로젝트와 공통 프로필. 표준 컬럼: id, org_id, created_at, updated_at, created_by, deleted_at, status. 정의 `2300`:327.
+목적: 프로젝트와 공통 프로필. 표준 컬럼: id, org_id, created_at, updated_at, created_by, deleted_at, status. 정의 `2300`:413.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -226,7 +251,7 @@
 
 #### `docs.checklist_answers`
 
-목적: 체크리스트 답. 추출·연동 후보는 is_confirmed=false. 표준 컬럼: org_id, created_at, updated_at. 정의 `2300`:443.
+목적: 체크리스트 답. 추출·연동 후보는 is_confirmed=false. 표준 컬럼: org_id, created_at, updated_at. 정의 `2300`:545.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -244,7 +269,7 @@
 
 #### `docs.requirements`
 
-목적: 요구사항(FR/NFR/CON 코드 자동). 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:546.
+목적: 요구사항(FR/NFR/CON 코드 자동). 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:701.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -270,7 +295,7 @@
 
 #### `docs.artifacts`
 
-목적: 산출물 항목(화면, 마일스톤, 산출물 등). 표준 컬럼: id, org_id, created_at, updated_at, created_by. 정의 `2300`:632.
+목적: 산출물 항목(화면, 마일스톤, 산출물 등). 표준 컬럼: id, org_id, created_at, updated_at, created_by. 정의 `2300`:788.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -291,9 +316,19 @@
 
 제약: `unique (id, org_id)`; `unique (project_id, code)`; `constraint artifacts_project_fk foreign key (project_id, org_id) references docs.projects (id, org_id) on delete cascade`
 
+#### `docs.project_code_counters`
+
+목적: 요구사항·산출물 코드 일련번호(프로젝트·접두사별, 교차검증 #8). `next_project_code`만 쓴다. 지운 번호를 다시 쓰지 않는다. 사용자 접근 없음. 정의 `2300`:651.
+
+| 이름 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| `project_id` | uuid | 아니오 |  | FK docs.projects(cascade) |
+| `prefix` | text | 아니오 |  | FR, NFR, CON, SCR, MS, DLV ... |
+| `last_no` | integer | 아니오 |  | 마지막으로 준 번호 |
+
 #### `docs.line_items`
 
-목적: 비용 항목. 금액은 생성 컬럼. 표준 컬럼: id, org_id, created_at, updated_at, created_by. 정의 `2300`:714.
+목적: 비용 항목. 금액은 생성 컬럼. 표준 컬럼: id, org_id, created_at, updated_at, created_by. 정의 `2300`:870.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -318,7 +353,7 @@
 
 #### `docs.uploads`
 
-목적: RFP·녹음·참고 자료 메타데이터. 서버만 쓴다. 표준 컬럼: id, org_id, created_at, updated_at, created_by. 정의 `2300`:808.
+목적: RFP·녹음·참고 자료 메타데이터. 서버만 쓴다. 표준 컬럼: id, org_id, created_at, updated_at, created_by. 정의 `2300`:964.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -345,7 +380,7 @@
 
 #### `docs.documents`
 
-목적: 문서. 사용자는 title만. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:848.
+목적: 문서. 사용자는 title만. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1004.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -370,7 +405,7 @@
 
 #### `docs.document_versions`
 
-목적: 문서 버전(append-only). 표준 컬럼: id, org_id, created_at, created_by. 정의 `2300`:976.
+목적: 문서 버전(append-only). 표준 컬럼: id, org_id, created_at, created_by. 정의 `2300`:1133.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -394,7 +429,7 @@
 
 #### `docs.trace_links`
 
-목적: 요구사항 추적 연결. 표준 컬럼: id, org_id, created_at. 정의 `2300`:1072.
+목적: 요구사항 추적 연결. 표준 컬럼: id, org_id, created_at. 정의 `2300`:1231.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -410,7 +445,7 @@
 
 #### `docs.generation_runs`
 
-목적: 생성 실행(크레딧·잡 연결). 표준 컬럼: id, org_id, created_at, updated_at, created_by, status, idempotency_key. 정의 `2300`:1101.
+목적: 생성 실행(크레딧·잡 연결). 표준 컬럼: id, org_id, created_at, updated_at, created_by, status, idempotency_key. 정의 `2300`:1260.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -429,6 +464,7 @@
 | `credit_ledger_id` | bigint | 예 |  | FK core.credit_ledger. |
 | `idempotency_key` | text | 아니오 |  |  |
 | `error` | text | 예 |  |  |
+| `progress` | jsonb | 아니오 | `'{}'::jsonb` | 단계 진행(DC-F-048) `{stage, section_key, step, total, at}`. `report_generation_progress`만 갱신, Realtime으로 화면에 전달 |
 | `created_by` | uuid | 예 |  |  |
 | `queued_at` | timestamptz | 아니오 | `now()` |  |
 | `started_at` | timestamptz | 예 |  |  |
@@ -440,7 +476,7 @@
 
 #### `docs.doc_exports`
 
-목적: 내보내기 결과. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1176.
+목적: 내보내기 결과. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1338.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -467,7 +503,7 @@
 
 #### `docs.doc_counters`
 
-목적: 문서번호 일련번호. 표준 컬럼: org_id, updated_at. 정의 `2300`:1242.
+목적: 문서번호 일련번호. 표준 컬럼: org_id, updated_at. 정의 `2300`:1404.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -481,7 +517,7 @@
 
 #### `docs.risk_acknowledgements`
 
-목적: 고위험 문서 고지 동의. 표준 컬럼: id, org_id. 정의 `2300`:1266.
+목적: 고위험 문서 고지 동의. 표준 컬럼: id, org_id. 정의 `2300`:1428.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -496,7 +532,7 @@
 
 #### `docs.approval_steps`
 
-목적: (Phase 2) 검토·승인 단계. 표준 컬럼: id, org_id, created_at, updated_at, status. 정의 `2300`:1288.
+목적: (Phase 2) 검토·승인 단계. 표준 컬럼: id, org_id, created_at, updated_at, status. 정의 `2300`:1450.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -516,7 +552,7 @@
 
 #### `docs.signature_requests`
 
-목적: (Phase 3) 전자서명 요청. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1320.
+목적: (Phase 3) 전자서명 요청. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1482.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -538,7 +574,7 @@
 
 #### `docs.integration_connections`
 
-목적: 외부 연동 연결. 자격증명은 core.encrypted_credentials 참조만. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1354.
+목적: 외부 연동 연결. 자격증명은 core.encrypted_credentials 참조만. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1516.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -551,7 +587,7 @@
 | `external_account_id` | text | 아니오 | `''` |  |
 | `sync_direction` | text | 아니오 | `'pull'` | 값: pull, push, both |
 | `settings` | jsonb | 아니오 | `'{}'::jsonb` | 비밀값 금지(커서, 파이프라인 id 등) |
-| `inbound_token_hash` | text | 예 |  | Make/n8n 수신 토큰의 sha256(원문은 1회 표시 후 버림) |
+| `inbound_token_hash` | text | 예 |  | n8n 수신 토큰의 sha256(원문은 1회 표시 후 버림) |
 | `last_synced_at` | timestamptz | 예 |  |  |
 | `last_error` | text | 예 |  |  |
 | `revoked_at` | timestamptz | 예 |  |  |
@@ -563,7 +599,7 @@
 
 #### `docs.field_mappings`
 
-목적: 외부 필드 ↔ 내부 경로 매핑. 표준 컬럼: id, org_id, created_at, updated_at. 정의 `2300`:1421.
+목적: 외부 필드 ↔ 내부 경로 매핑. 표준 컬럼: id, org_id, created_at, updated_at. 정의 `2300`:1583.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -583,7 +619,7 @@
 
 #### `docs.external_refs`
 
-목적: 내부 엔티티 ↔ 외부 엔티티 1:1. 표준 컬럼: id, org_id, created_at, updated_at. 정의 `2300`:1483.
+목적: 내부 엔티티 ↔ 외부 엔티티 1:1. 표준 컬럼: id, org_id, created_at, updated_at. 정의 `2300`:1645.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -603,7 +639,7 @@
 
 #### `docs.sync_runs`
 
-목적: 동기화 실행 기록. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1514.
+목적: 동기화 실행 기록. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1676.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -626,7 +662,7 @@
 
 #### `docs.webhook_endpoints`
 
-목적: (Phase 2) 발신 웹훅 대상. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1550.
+목적: (Phase 2) 발신 웹훅 대상. 표준 컬럼: id, org_id, created_at, updated_at, created_by, status. 정의 `2300`:1712.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -645,7 +681,7 @@
 
 #### `docs.webhook_deliveries`
 
-목적: (Phase 2) 발신 기록. 표준 컬럼: id, org_id, created_at, updated_at, status. 정의 `2300`:1579.
+목적: (Phase 2) 발신 기록. 표준 컬럼: id, org_id, created_at, updated_at, status. 정의 `2300`:1741.
 
 | 이름 | 타입 | NULL | 기본 | 설명 |
 |---|---|---|---|---|
@@ -669,7 +705,7 @@
 
 모든 전이는 트리거로 강제되므로 service_role 쓰기에도 적용된다(`DB_CONVENTIONS.md` 10장 (a)). 부수 효과가 있는 전이는 RPC가 맡는다.
 
-### 3.1 projects.status (`2300`:358)
+### 3.1 projects.status (`2300`:444)
 
 | 현재 | 허용 전이 | 누가 | 부수 효과 |
 |---|---|---|---|
@@ -680,7 +716,7 @@
 
 위반은 DC001. 사용자는 `status` 컬럼 GRANT가 없어 직접 UPDATE하면 42501이다(스모크 테스트 통과).
 
-### 3.2 documents.status (`2300`:887)
+### 3.2 documents.status (`2300`:1043)
 
 | 현재 | 허용 전이 | 누가 | 부수 효과 |
 |---|---|---|---|
@@ -690,19 +726,19 @@
 | final | archived | `archive_document` | 그 밖의 변경은 DC003. 수정은 `create_revision`(새 draft 문서, `supersedes_document_id`) |
 | archived | 없음 | | |
 
-`final`이면 CHECK로 `doc_number`, `finalized_at`, `current_version >= 1`이 반드시 있다(`2300`:869).
+`final`이면 CHECK로 `doc_number`, `finalized_at`, `current_version >= 1`이 반드시 있다(`2300`:1025).
 
-### 3.3 generation_runs.status (`2300`:1144)
+### 3.3 generation_runs.status (`2300`:1306)
 
 | 현재 | 허용 전이 | 누가 | 부수 효과 |
 |---|---|---|---|
-| queued | running, failed, canceled | 워커(service) | failed: 크레딧 환불은 `core.fail_job`이 원장 행으로 한다(이중 환불 방지, `2300`:2094) |
+| queued | running, failed, canceled | 워커(service) | failed: 크레딧 환불은 `core.fail_job`이 원장 행으로 한다(이중 환불 방지, `2300`:2310) |
 | running | succeeded, failed, canceled | 워커 | succeeded: `credits_settled = credits_reserved` |
 | succeeded, failed, canceled | 없음 | | 종료 행의 금액·대상 변경은 DC003 |
 
-문서당 활성 실행 1개, 프로젝트·패키지당 활성 패키지 실행 1개는 부분 유니크 인덱스로 보장한다(DC002, `2300`:1129).
+문서당 활성 실행 1개, 프로젝트·패키지당 활성 패키지 실행 1개는 부분 유니크 인덱스로 보장한다(DC002, `2300`:1291).
 
-### 3.4 doc_exports.status (`2300`:1212)
+### 3.4 doc_exports.status (`2300`:1374)
 
 | 현재 | 허용 전이 | 누가 | 부수 효과 |
 |---|---|---|---|
@@ -710,7 +746,7 @@
 | rendering | ready, failed | 워커(렌더 서비스 응답) | ready: `storage_path` 필수(CHECK) |
 | ready | expired | 정리 스케줄(파일 30일, 제안) | Storage 객체 삭제 |
 
-### 3.5 integration_connections.status (`2300`:1388)
+### 3.5 integration_connections.status (`2300`:1550)
 
 | 현재 | 허용 전이 | 누가 | 부수 효과 |
 |---|---|---|---|
@@ -740,6 +776,9 @@
 | `checklist_items` | `exists (select 1 from core.current_org_ids() o where core.has_entitlement(o, 'docs'))` | 정책 없음(거부) | 정책 없음(거부) | 정책 없음(거부) | select |
 | `clauses` | `status = 'published' and ((org_id is null and exists (select 1 from core.current_org_ids() o where core.has_entitlement(o, 'docs'))) or (org_id is not null and core.is_org_member(org_id) and core.has_entitlement(org_id, 'docs')))` | 정책 없음(거부) | 정책 없음(거부) | 정책 없음(거부) | select |
 | `runtime_config` | 정책 없음(거부) | 정책 없음(거부) | 정책 없음(거부) | 정책 없음(거부) | 없음 |
+| `checklist_item_versions` | `exists (select 1 from core.current_org_ids() o where core.has_entitlement(o, 'docs'))` | 정책 없음(거부) | 정책 없음(거부, 불변 트리거 DC003) | 정책 없음(거부) | select |
+| `daily_credit_usage`, `project_code_counters` | 정책 없음(거부) | 정책 없음(거부) | 정책 없음(거부) | 정책 없음(거부) | 없음(DEFINER 함수만 쓴다) |
+| 뷰 `project_totals`, `project_pipeline`, `project_activity` | `security_invoker`: 원본 테이블 RLS 그대로 | - | - | - | select |
 | `workspace_settings` | `core.is_org_member(org_id) and core.has_entitlement(org_id, 'docs')` | `core.has_org_role(org_id, array['owner', 'admin']) and core.has_entitlement(org_id, 'docs')` | `core.has_org_role(org_id, array['owner', 'admin']) and core.has_entitlement(org_id, 'docs') / with check: core.has_org_role(org_id, array['owner', 'admin'])` | 정책 없음(거부) | select; insert (org_id, doc_number_format, default_day_rate_krw, vat_rate_bp, seal_image_path, defaults); update (doc_number_format, default_day_rate_krw, vat_rate_bp, seal_image_path, defaults) |
 | `parties` | `core.is_org_member(org_id) and core.has_entitlement(org_id, 'docs')` | `core.has_org_role(org_id, array['owner', 'admin', 'member']) and core.has_entitlement(org_id, 'docs')` | `core.has_org_role(org_id, array['owner', 'admin', 'member']) and core.has_entitlement(org_id, 'docs') / with check: core.has_org_role(org_id, array['owner', 'admin', 'member'])` | `core.has_org_role(org_id, array['owner', 'admin'])` | select; insert (org_id, kind, name, biz_reg_no, representative, address, contact_name, contact_email, contact_phone, notes); update (kind, name, biz_reg_no, representative, address, contact_name, contact_email, contact_phone, notes, deleted_at); delete |
 | `projects` | `core.is_org_member(org_id) and core.has_entitlement(org_id, 'docs')` | `core.has_org_role(org_id, array['owner', 'admin', 'member']) and core.has_entitlement(org_id, 'docs')` | `core.has_org_role(org_id, array['owner', 'admin', 'member']) and core.has_entitlement(org_id, 'docs') / with check: core.has_org_role(org_id, array['owner', 'admin', 'member'])` | `core.has_org_role(org_id, array['owner', 'admin'])` | select; insert (org_id, client_party_id, name, code, project_type, profile, start_date, end_date); update (client_party_id, name, code, project_type, profile, start_date, end_date, deleted_at); delete |
@@ -790,7 +829,7 @@
 | `documents_one_open_revision_uniq (supersedes_document_id)` | 원본당 진행 중 개정본 1건 |
 | `generation_runs_one_active_per_document_uniq`, `generation_runs_one_active_package_uniq` | DC002(동시 생성 차단) |
 | `generation_runs_org_active_idx (org_id) where status in (queued, running)` | 조직 동시 생성 한도(기본 3) 계산 |
-| `generation_runs_created_idx (created_at)` | 일일 플랫폼 크레딧 상한(KST 자정) 계산 |
+| `generation_runs_created_idx (created_at)` | 기간별 생성 조회(일일 상한은 2026-10-14부터 `daily_credit_usage` 1행 잠금으로 계산) |
 | `uploads_expires_idx (expires_at)` | 회의 녹음 원본 만료 정리(D-11, 기본 24시간 제안) |
 | `integration_connections_live_uniq (org_id, provider, external_account_id) where status <> 'revoked'` | 같은 외부 계정 중복 연결 방지 |
 | `external_refs` 유니크 2개 | 외부 1건 ↔ 내부 1건(중복 pull로 거래처가 둘 되지 않음) |
@@ -807,7 +846,7 @@
 |---|---|
 | `core.organizations`, `org_members`(헬퍼 경유) | 테넌시. 정책은 `is_org_member`, `has_org_role`, `has_entitlement`, `current_org_ids`만 쓴다 |
 | `core.apps`, `plans`, `app_entitlements`, `credit_packs` | 앱 `docs` 등록, 플랜 features 해석(`docs.org_features`, 서버 전용) |
-| `core.consume_credits`, `credit_ledger` | `start_generation`의 선차감(멱등 키 `consume:docs:<request_id>`), `generation_runs.credit_ledger_id` |
+| `core.consume_credits`, `credit_ledger` | `start_generation`의 선차감(멱등 키 `consume:docs:gen:<request_id>`), 생성 밖 차감은 `reserve_credits`(`consume:docs:<작업>:<request_id>`), `generation_runs.credit_ledger_id` |
 | `core.enqueue_job`, `jobs`, `fail_job` | 생성·패키지·추출·회의록·렌더·동기화·웹훅 잡. 실패 환불은 `fail_job` |
 | `core.encrypted_credentials`, `revoke_credential` | 연동 토큰, 웹훅 서명 비밀(평문 컬럼 없음) |
 | `core.ai_documents`, `ai_runs`, `ai_routing_settings`, `ai_providers` | 업로드 색인 연결, 그래프 실행 연결, 기능별 라우팅 기본값 13행 |
@@ -824,12 +863,12 @@ AI·음성 테이블(`core.ai_*`, `core.voice_*`)은 참조만 하며 제품 전
 
 | 리뷰 #n | 출처 | 결함 요약 | 차단 설계 | 담당 장/작업 |
 |---|---|---|---|---|
-| `docs/reviews/SellingDocs.md` 3장 #2 | `docs/reviews/SellingDocs.md:49` | 크레딧 차감 주체·시점·원자성·환불·장부가 없다 | `start_generation`이 실행 행 + `core.consume_credits`(원자, 멱등 `consume:docs:<request_id>`) + `core.enqueue_job`을 한 트랜잭션으로 처리(`2300`:1837). 실패 환불은 `core.fail_job` 단일 경로. 사용자는 원장·지갑에 쓰기 불가(스모크 테스트) | `generation_runs`, DC-06-027(생성 요청 API·워커) |
-| `docs/reviews/flora.md` 3장 #1 | `docs/reviews/flora.md:68` | LLM 엔드포인트 무인증 | DB 쪽: 생성 RPC는 service_role 전용(`is_privileged_session`) + 행위자(`p_actor`)의 조직 멤버십을 함수 안에서 다시 검사(`2300`:1831). 앱 쪽: `/api/ai/*`는 ai-gateway 서명 토큰(`02_ARCHITECTURE.md` 5장) | `start_generation`, `04_API.md` 2장 |
+| `docs/reviews/SellingDocs.md` 3장 #2 | `docs/reviews/SellingDocs.md:49` | 크레딧 차감 주체·시점·원자성·환불·장부가 없다 | `start_generation`이 실행 행 + `core.consume_credits`(원자, 멱등 `consume:docs:<request_id>`) + `core.enqueue_job`을 한 트랜잭션으로 처리(`2300`:2050). 실패 환불은 `core.fail_job` 단일 경로. 사용자는 원장·지갑에 쓰기 불가(스모크 테스트) | `generation_runs`, DC-06-027(생성 요청 API·워커) |
+| `docs/reviews/flora.md` 3장 #1 | `docs/reviews/flora.md:68` | LLM 엔드포인트 무인증 | DB 쪽: 생성 RPC는 service_role 전용(`is_privileged_session`) + 행위자(`p_actor`)의 조직 멤버십을 함수 안에서 다시 검사(`2300`:2044). 앱 쪽: `/api/ai/*`는 ai-gateway 서명 토큰(`02_ARCHITECTURE.md` 5장) | `start_generation`, `04_API.md` 2장 |
 | `docs/reviews/flora.md` 3장 #2 | `docs/reviews/flora.md:69` | 결제 웹훅 서명 미검증으로 플랜 상승 | 제품 테이블에 플랜·결제 상태가 없다. 결제는 코어 Toss confirm + `webhook_events` 서명·멱등(`CORE_SPEC.md` 5, 6장). 연동 수신 웹훅도 `inbound_token_hash`(sha256만 저장)로 검증 | `integration_connections`, 코어 결제 |
 | `docs/reviews/flora.md` 3장 #3 | `docs/reviews/flora.md:70` | `user_plans` `FOR ALL` 정책으로 셀프 업그레이드 | `FOR ALL` 정책 0개. 플랜 판정은 서버 전용 `docs.org_features`(EXECUTE service_role만). 프로젝트 한도는 INSERT 트리거(DC006) | `projects`, `org_features` |
-| `docs/reviews/flora.md` 3장 #4 | `docs/reviews/flora.md:71` | 사용자 label을 파일명으로 써서 경로 조작 | `uploads.storage_path`, `doc_exports.storage_path`, `signature_requests.signed_pdf_path`, `workspace_settings.seal_image_path`는 서버가 만든 `<org_id>/docs/<purpose>/<uuid>.<ext>` 형식만 CHECK로 허용하고 첫 세그먼트가 `org_id`와 같아야 한다(`2300`:826). 원본 파일명은 표시용 `original_name`에만 | `uploads`, `doc_exports` |
-| `docs/reviews/flora.md` 3장 #5 | `docs/reviews/flora.md:72` | 서버가 사용자 URL을 가져오는 SSRF, 렌더러의 외부 리소스 fetch | 웹훅 URL은 https + 사설·루프백 대역 차단 CHECK(`2300`:1550), 발송 직전 DNS 재검증(앱). 렌더는 서버 조립 HTML만, 렌더 서비스 `url_fetcher` 허용 목록(`SHARED_MODULES.md` 10장). 업로드는 Route Handler가 매직바이트 검사 후 service로만 INSERT | `webhook_endpoints`, `uploads` |
+| `docs/reviews/flora.md` 3장 #4 | `docs/reviews/flora.md:71` | 사용자 label을 파일명으로 써서 경로 조작 | `uploads.storage_path`, `doc_exports.storage_path`, `signature_requests.signed_pdf_path`, `workspace_settings.seal_image_path`는 서버가 만든 `<org_id>/docs/<purpose>/<uuid>.<ext>` 형식만 CHECK로 허용하고 첫 세그먼트가 `org_id`와 같아야 한다(`2300`:982). 원본 파일명은 표시용 `original_name`에만 | `uploads`, `doc_exports` |
+| `docs/reviews/flora.md` 3장 #5 | `docs/reviews/flora.md:72` | 서버가 사용자 URL을 가져오는 SSRF, 렌더러의 외부 리소스 fetch | 웹훅 URL은 https + 사설·루프백 대역 차단 CHECK(`2300`:1712), 발송 직전 DNS 재검증(앱). 렌더는 서버 조립 HTML만, 렌더 서비스 `url_fetcher` 허용 목록(`SHARED_MODULES.md` 10장). 업로드는 Route Handler가 매직바이트 검사 후 service로만 INSERT | `webhook_endpoints`, `uploads` |
 | `docs/reviews/flora.md` 3장 #6 | `docs/reviews/flora.md:73` | 클라이언트 비밀번호·localStorage로 Pro 판정 | 형식(pdf/docx/zip)·워터마크·문서 단계·프로젝트 수는 모두 `plans.features`를 서버가 읽어 판정(`start_generation`의 `doc_phase` 검사 DC006, 내보내기 형식은 Route Handler). 클라이언트 플래그로 바뀌는 컬럼이 없다 | `org_features`, `start_generation` |
 | (참고) 02장 처리 | `docs/products/nomad-docs/02_ARCHITECTURE.md` 6절 | SellingDocs #1, #3, #4, flora #7, #8, #9, #10 | 런타임·배포·파이프라인 결함이라 02장에서 차단 | 02장 6절 |
 
@@ -855,11 +894,11 @@ AI·음성 테이블(`core.ai_*`, `core.voice_*`)은 참조만 하며 제품 전
 
 | 파일 | 줄 수 | 내용 |
 |---|---|---|
-| `docs/products/_supabase-modular/migrations/2300_docs.sql` | 2708 | 스키마 `docs`, 테이블 28, 뷰 1, 함수 34, 카탈로그 seed, 라우팅 기본값 13행 |
+| `docs/products/_supabase-modular/migrations/2300_docs.sql` | 3203 | 스키마 `docs`, 테이블 31, 뷰 3, 함수 43, 카탈로그 seed, 라우팅 기본값 13행 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | 3373 | 코어 축소판(SECTION 9 제거) |
-| `supabase/monolith/migrations/0002_nomad_docs_domain.sql` | 2626 | 도메인(public 변환본) |
+| `supabase/monolith/migrations/0002_nomad_docs_domain.sql` | 3121 | 도메인(public 변환본) |
 | `supabase/monolith/seed.sql` | 90 | apps 1행, 플랜 free/pro/team(team은 Phase 2라 비활성), 크레딧팩 3종, 라우팅 기본값 |
-| `supabase/monolith/tests/rls_smoke.sql` | 163 | RLS·권한 회귀 테스트 59항목 |
+| `supabase/monolith/tests/rls_smoke.sql` | 330 | RLS·권한 회귀 테스트 105항목(2026-10-13 59 + 2026-10-14 46) |
 
 함수 목록.
 
@@ -867,12 +906,17 @@ AI·음성 테이블(`core.ai_*`, `core.voice_*`)은 참조만 하며 제품 전
 |---|---|---|---|---|
 | `start_generation(org, project, document, doc_type, package, parent_job, credits, idempotency_key, actor)` | service_role | 멱등 키 형식, 행위자 멤버십, 엔타이틀먼트, 유형 단계, 고지 동의, 동시 생성·일일 상한 | `generation_runs` | 42501, 22023, P0002, DC001~DC003, DC006, DC007, CR001 |
 | `finish_generation(run, content, body_html, variables, inputs_hash, lint, verdict, ai_run)` | service_role | 실행·문서 상태, 2MB, verdict | `document_versions` | DC001, 22023 |
-| `fail_generation(run, error)` | service_role | 실행 상태 | `generation_runs` | DC001 |
+| `fail_generation(run, error)` | service_role | 실행 상태. 마지막 시도 실패에서만 호출 | `generation_runs` | DC001 |
+| `cancel_generation(run)` | authenticated(시작한 member, owner/admin), service_role | queued만, 대기 자식 포함, 먼저 정리 | `generation_runs` | DC001, 42501, P0002 |
+| `reconcile_generation_runs(org default null)` | service_role, 내부 | 잡 canceled·failed인데 실행이 남은 행 | int | 42501 |
+| `report_generation_progress(run, stage, section_key, step, total)` | service_role | stage 목록, 0 ≤ step ≤ total, 종료 실행 무시 | void | 22023 |
+| `reserve_credits(org, actor, credits, reason, ref_type, ref_id, idempotency_key, metadata)` | service_role | 사유·멱등 키 형식, 멱등 재호출, 일일 상한 | bigint(ledger_id) | DC006, CR001, 22023 |
+| `charge_daily_cap(credits)` | 내부(`start_generation`, `reserve_credits`) | `daily_credit_usage` 행 잠금 | void | DC006 |
 | `apply_checklist_effects(project, plan, expected_hash)` | service_role | 입력 해시 일치, 사용자 수정 보존 | jsonb(추가·갱신·제거·유지 수) | DC010 |
 | `checklist_answers_hash(project)` | service_role | | text | |
 | `next_doc_number(org, doc_type)` | service_role | 행 잠금 | text | |
 | `upsert_external_ref(connection, entity, internal_id, external_type, external_id, etag)` | service_role | 연결 active, 같은 조직 엔티티 | `external_refs` | DC009, 42501 |
-| `finalize_document(document, expected_version, ack_warn)` | authenticated owner/admin | 상태, 버전, 필수 입력, lint·compliance, WARN 확인, 고지 | `documents` | DC001, DC003, DC004, DC005, DC007, DC008, DC010 |
+| `finalize_document(document, expected_version, ack_warn)` | authenticated owner/admin | 상태, 버전, 정본 최신성(`needs_regeneration`, 입력 해시), 필수 입력, lint 실행·오류·compliance, WARN 확인, 고지 | `documents` | DC001, DC003, DC004, DC005, DC007, DC008, DC010 |
 | `archive_document(document)` | authenticated owner/admin | 상태 | `documents` | DC001 |
 | `create_revision(document)` | authenticated owner/admin | 확정 문서만, 진행 중 개정본 1건 | `documents` | DC001, DC002 |
 | `set_project_status(project, to)` | authenticated owner/admin | 전이, 한도 | `projects` | DC001, DC006 |
@@ -881,13 +925,13 @@ AI·음성 테이블(`core.ai_*`, `core.voice_*`)은 참조만 하며 제품 전
 | `revoke_integration(connection)` | authenticated owner/admin | 이미 해지 | `integration_connections` | DC009 |
 | `decide_approval(...)` | authenticated(지정 승인자) | Phase 2 | `approval_steps` | DC001 |
 | `next_project_code`, `org_features`, `enforce_project_limit`, `mark_documents_stale` | 트리거·서버 내부 | DEFINER, 비멤버 직접 호출 42501 | | |
-| 트리거 함수 15개 | 트리거 | 전이·불변·2차 잠금 | | DC001, DC003, 42501 |
+| 트리거 함수 19개 | 트리거 | 전이·불변·2차 잠금, 체크리스트 version·이력, 답 형식 검사(22023) | | DC001, DC003, 22023, 42501 |
 
 seed 내용(전부 제안값, 정본은 `01_PRD.md` 3·4장).
 
 | 대상 | 내용 |
 |---|---|
-| `doc_types` | MVP 9종 활성(quote, sow, req_spec, wbs, screen_list, dev_contract, acceptance, minutes, trace_matrix), Phase 2/3 유형 비활성. `dev_contract`는 고위험 + `notice-contract-2026-10-13`. Phase 2 shorts_agency 7종(content_brief, video_service_contract, channel_access_mandate, brand_guide_ack, ad_disclosure_checklist, monthly_report, service_intro) 비활성. 계약서는 `notice-contract-2026-10-13`, 위임 동의서는 `notice-channel-mandate-2026-10-13` |
+| `doc_types` | MVP 9종(quote, sow, req_spec, wbs, screen_list, dev_contract, acceptance, minutes, trace_matrix) 중 8종 활성. `dev_contract`는 D-3 법무 검토 전 비활성으로 넣고, 재실행해도 운영자가 바꾼 활성 값을 덮지 않는다. Phase 2/3 유형 비활성. `dev_contract`는 고위험 + `notice-contract-2026-10-13`. Phase 2 shorts_agency 7종(content_brief, video_service_contract, channel_access_mandate, brand_guide_ack, ad_disclosure_checklist, monthly_report, service_intro) 비활성. 계약서는 `notice-contract-2026-10-13`, 위임 동의서는 `notice-channel-mandate-2026-10-13` |
 | `doc_type_versions` | MVP 유형별 v1(섹션 구조, 필수 입력, lint 규칙 코드, 템플릿 경로). shorts_agency 7종은 v1 초안(`published_at` null, 사용자에게 보이지 않음) |
 | `checklist_items` | 대표 항목(구축 유형, 로그인·결제 등 기능, 산출물, 계약 조건)과 효과. 전체 목록과 효과 문법은 `01_PRD.md` 3장. content 항목 14개(`applies_to={content}`, 3.3.1절) |
 | `clauses` | `dev_contract` 표준 조항 골격 9개, `video_service_contract` 18개(`vsc.*`), `channel_access_mandate` 5개(`cam.*`, 출처 미확인 D-15). 원문 출처·이용 조건이 미확인(D-8)이라 전부 `status='draft'`(사용자에게 보이지 않음). 법무 검토(D-3) 후 운영자가 본문을 채워 `published`로 바꾼다. 그 전에는 `dev_contract` 확정을 lint `L-REQUIRED-CLAUSE`가 막는다 |
