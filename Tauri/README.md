@@ -278,6 +278,8 @@ export interface NativeBridge {
 | nomad-blog | 낮음 | 해당 없음 | 없음 | 없음 | 웹 유지. 로컬 브라우저 자동화로 발행하는 방식은 플랫폼 약관 위험이 커 셸 도입 근거로 삼지 않는다 |
 | astro-ai, microweb-studio, website-floria | 없음 | 해당 없음 | 없음 | 없음 | 웹(또는 모바일, Capacitor 가이드) |
 
+판매 모델과의 관계: 셸 앱을 만드는 것과 설치형으로 파는 것(판매 모델 A, `Price_Plans/_common/PRICING_PRINCIPLES.md:68`)은 별개다. 구독형 SaaS 제품도 데스크톱 셸을 가질 수 있고, 그때는 라이선스 파일 없이 세션 + 서버 엔타이틀먼트로 판정한다(8장 마지막 행). 각 제품의 판매 모델 A 결정은 `Price_Plans/<제품>/PRICE_PLAN.md`가 정본이다: arch-studio는 설치형이 본체, admin-suite hms는 "예"(`Price_Plans/admin-suite/PRICE_PLAN.md:89`), nomad-docs는 "장기 검토"(`Price_Plans/nomad-docs/PRICE_PLAN.md:99`), 나머지 제품은 "아니오"다. 위 표의 Phase 2·3 권고는 "구독형 데스크톱 클라이언트"를 뜻하며 판매 모델을 바꾸지 않는다.
+
 ### 12.1 제품별 상세 메모
 
 | 제품 | 메모 |
@@ -367,7 +369,7 @@ D:/WorkSpace/DEV/<제품>/docs/file 의 모든 파일과 D:/WorkSpace/platform/d
 | T-C2 | Route Handler CORS 허용 목록 규격(제품별 셸 출처, 와일드카드 금지) | 셸 출처가 웹 도메인과 다르다 |
 | T-C3 | `payment_orders.kind` 일회성 상품 추가 | 설치형 판매(`docs/products/arch-studio/01_PRD.md` 8.1절 C-1과 같은 요청) |
 | T-C4 | 라이선스 서명 키 규격(키 id, 교체, 공개키 배포)과 업데이트 서명키 관리 | 8장 |
-| T-C5 | BYOK 데스크톱 예외 여부 | `docs/products/_platform-core/SECURITY_BASELINE.md:121` |
+| T-C5 | BYOK 데스크톱 예외 여부 | `docs/products/_platform-core/SECURITY_BASELINE.md:121`은 BYOK를 금지하지만 판매 모델 A 정의는 "고객 API 키"를 전제한다(`Price_Plans/_common/PRICING_PRINCIPLES.md:68`). 둘 중 하나를 고쳐야 한다(arch-studio는 크레딧 게이트웨이 방식으로 BYOK 없이 설계, `docs/products/arch-studio/01_PRD.md` 4장) |
 | T-C6 | Supabase Auth Redirect URLs에 제품별 앱 스킴 등록 절차 | 5.1절 |
 | T-C7 | 네이버 서버 브리지 경로를 쓸 경우 앱으로 세션을 넘기는 1회용 교환 코드(짧은 만료, 1회 소비, PKCE 검증값 결합) | 5.4절, `docs/products/_platform-core/AUTH_ROADMAP.md` 7.2절 |
 
