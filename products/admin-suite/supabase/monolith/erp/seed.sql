@@ -10,8 +10,8 @@ insert into public.apps (id, name, schema_name, signup_policy, status) values
 on conflict (id) do update set name = excluded.name, signup_policy = excluded.signup_policy, status = excluded.status;
 
 insert into public.plans (app_id, code, name, price_krw, billing_interval, monthly_credits, signup_credits, carry_over, features, is_default, is_active, sort_order) values
-  ('erp', 'default',  'Default',  0,     'none',  0, 0, false, '{"max_members": 5, "storage_mb": 500, "export_xlsx": false, "sales_trend_days": 31, "ai_assistant": true, "ai_turns_per_day": 30, "ai_voice": false, "ai_docs_max": 20, "ai_wiki": false}', true,  true, 0),
-  ('erp', 'standard', 'Standard', 49000, 'month', 0, 0, false, '{"max_members": 50, "storage_mb": 10240, "export_xlsx": true, "sales_trend_days": 366, "ai_assistant": true, "ai_turns_per_day": 200, "ai_voice": true, "ai_docs_max": 500, "ai_wiki": true}', false, true, 1)
+  ('erp', 'default',  'Default',  0,     'none',  0, 0, false, '{"max_members": 5, "storage_mb": 500, "export_xlsx": false, "sales_trend_days": 31, "ai_assistant": true, "ai_turns_per_day": 30, "ai_turns_per_month": 100, "ai_commercial_turns_per_month": 0, "ai_voice": false, "ai_docs_max": 20, "ai_wiki": false}', true,  true, 0),
+  ('erp', 'standard', 'Standard', 49000, 'month', 0, 0, false, '{"max_members": 50, "storage_mb": 10240, "export_xlsx": true, "sales_trend_days": 366, "ai_assistant": true, "ai_turns_per_day": 200, "ai_turns_per_month": 1500, "ai_commercial_turns_per_month": 300, "ai_voice": true, "ai_docs_max": 500, "ai_wiki": true}', false, true, 1)
 on conflict (app_id, code) do update
   set name = excluded.name, price_krw = excluded.price_krw, billing_interval = excluded.billing_interval,
       features = excluded.features, is_default = excluded.is_default, is_active = excluded.is_active, sort_order = excluded.sort_order;

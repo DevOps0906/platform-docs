@@ -1496,7 +1496,7 @@ insert into public.templates (code, kind, name, summary, status, release_phase, 
                                 price_note, self_publish_credits, allowed_blocks, required_blocks, sort_order)
 values
   ('wedding_classic', 'wedding', '모바일 청첩장', '사진, 인사말, 달력, 오시는 길, 연락처와 계좌, 방명록을 담는 예식 안내 페이지', 'beta', 'mvp',
-   80000, 250000, '기본 80,000원, 풀커스텀 250,000원', 30,
+   80000, 250000, '라이트 80,000원, 스탠다드 150,000원, 프리미엄 250,000원', 20,
    array['hero', 'greeting', 'hosts', 'calendar', 'gallery', 'location', 'transport', 'contacts', 'accounts', 'wreath', 'guestbook', 'rsvp', 'bgm', 'notice', 'share'],
    array['hero', 'greeting', 'calendar', 'location', 'share'], 0),
   ('dol_basic', 'dol', '모바일 돌잔치 초대장', '아이 사진, 성장 타임라인, 일시와 장소 안내', 'planned', 'phase2',

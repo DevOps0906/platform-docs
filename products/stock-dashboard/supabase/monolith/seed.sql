@@ -18,7 +18,7 @@ insert into public.plans (app_id, code, name, price_krw, billing_interval, month
   ('stock', 'beta', 'Beta', 0, 'month', 300, 0, false,
    '{"ai_diagnosis_per_day": 10, "broker_connections_max": 2, "ai_modes": ["quality"], "ai_compare": false, "ideas": false, "leaderboard": false, "paper_orders": false, "history_days": 365, "ai_chat": true, "ai_chat_turns_per_day": 100, "ai_research_per_day": 20, "voice_chat": true, "briefing": true}',
    false, true, 1),
-  ('stock', 'pro', 'Pro', 9900, 'month', 600, 0, false,
+  ('stock', 'pro', 'Pro', 9900, 'month', 400, 0, false,
    '{"ai_diagnosis_per_day": 20, "broker_connections_max": 3, "ai_modes": ["fast", "quality"], "ai_compare": true, "ideas": true, "leaderboard": true, "paper_orders": true, "history_days": 730, "ai_chat": true, "ai_chat_turns_per_day": 200, "ai_research_per_day": 40, "voice_chat": true, "briefing": true}',
    false, false, 2)
 on conflict (app_id, code) do update

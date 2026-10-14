@@ -29,8 +29,8 @@ on conflict (app_id, code) do update
 -- 셀프서비스 발행권(Phase 2). 1 크레딧 = 1,000원 기준(제안). 청첩장 발행 30, 돌잔치 20, 부고장 10 크레딧.
 insert into public.credit_packs (app_id, code, name, credits, price_krw, is_active, sort_order)
 values
-  ('microweb', 'pack_30', '30 크레딧 (청첩장 1건)', 30, 30000, false, 1),
-  ('microweb', 'pack_60', '60 크레딧 (청첩장 2건)', 60, 57000, false, 2)
+  ('microweb', 'pack_30', '30 크레딧 (청첩장 1건 + AI 10)', 30, 30000, false, 1),
+  ('microweb', 'pack_60', '60 크레딧 (청첩장 3건)', 60, 57000, false, 2)
 on conflict (app_id, code) do update
   set name = excluded.name, credits = excluded.credits, price_krw = excluded.price_krw,
       is_active = excluded.is_active, sort_order = excluded.sort_order;

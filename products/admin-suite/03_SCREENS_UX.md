@@ -16,7 +16,7 @@
 | `/settings/account` | 계정(이름, 비밀번호, 로그아웃) | 전원 | 전체 | P0 |
 | `/settings/audit` | 감사 로그 | owner/admin | 전체 | P1 |
 | `/settings/billing` | 플랜과 구독(erp, sms) | owner | 전체 | P2 |
-| 채팅 패널(모든 앱 화면 오른쪽 시트), `/assistant` | AI 업무 어시스턴트(텍스트·음성), 대화 목록 | 로그인 + 허용 컬렉션이 1개 이상인 역할(SMS student 제외) | `features.ai_assistant`, 질문은 `ai_turns_per_day`, 음성은 `ai_voice` | P0 |
+| 채팅 패널(모든 앱 화면 오른쪽 시트), `/assistant` | AI 업무 어시스턴트(텍스트·음성), 대화 목록 | 로그인 + 허용 컬렉션이 1개 이상인 역할(SMS student 제외) | `features.ai_assistant`, 질문은 `ai_turns_per_day`(사용자 하루)·`ai_turns_per_month`(조직 월), 음성은 `ai_voice` | P0 |
 | `/settings/ai` | AI 처리 방식(상용 AI 국외 이전 동의 / 국내 오픈소스만). **hms에는 없음** | owner | 전체 | P0 |
 | `/settings/knowledge` | 규정·매뉴얼 문서 업로드, 색인 상태, 컬렉션 | 앱 관리자(erp master_admin, sms admin, hms admin) | `ai_docs_max` | P0 |
 | `/wiki`, `/wiki/[...slug]` | 기관 운영 위키 목록·페이지(허용 컬렉션 범위만 표시) | 허용 컬렉션 역할 | `ai_wiki` | P0 |
@@ -133,7 +133,7 @@
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | 아무 앱 화면 | 헤더의 "어시스턴트" 버튼 → 채팅 패널 열기 | `POST /api/ai/conversations` → `core.ai_conversations` 행(erp, sms는 `dify_user`=HMAC) | `ai_assistant` 꺼짐 403 `AI_DISABLED`, student 403 |
-| 2 | 채팅 패널 | 질문 입력(1,000자) → 보내기 | 서버가 형식 마스킹(hms는 환자 식별정보면 차단) → 하루 한도 확인 → erp, sms: Dify Chat API → HTTP 노드 `/tools/answer` / hms: FastAPI `/tools/answer-direct` | 한도 429 `AI_DAILY_LIMIT`, hms 환자 식별정보 422 `AI_PHI_BLOCKED` |
+| 2 | 채팅 패널 | 질문 입력(1,000자) → 보내기 | 서버가 형식 마스킹(hms는 환자 식별정보면 차단) → 하루·조직 월 한도 확인 → erp, sms: Dify Chat API → HTTP 노드 `/tools/answer` / hms: FastAPI `/tools/answer-direct` | 한도 429 `AI_DAILY_LIMIT`/`AI_MONTHLY_LIMIT`, hms 환자 식별정보 422 `AI_PHI_BLOCKED` |
 | 3 | 같은 화면 | 스트리밍 답변 읽기 | 그래프 `admin.assistant`: `permission`(DB 역할 확인, 허용 컬렉션 계산) → `retrieve` → `answer` → `compliance` | 허용 컬렉션 없음 403 `AI_NO_PERMISSION`, 근거 없음 "근거 자료를 찾지 못했습니다" |
 | 4 | 같은 화면 | 출처 칩 열기 | 출처(문서 제목, 컬렉션, 검수일) 표시. 위키 페이지면 `/wiki/...` 링크 | - |
 | 5 | 같은 화면 | 제공자 장애 | 체인 대체(해당 시 "다른 AI 모델로 답했습니다" 표시). hms는 대체 없음 | 전부 실패 503 `AI_UNAVAILABLE`, 오류 띠 |

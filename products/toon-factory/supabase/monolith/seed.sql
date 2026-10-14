@@ -20,7 +20,7 @@ insert into public.plans (app_id, code, name, price_krw, billing_interval, month
    '{"watermark": true, "export": ["png"], "exports_per_month": 20, "max_series": 1, "max_episodes_per_series": 3, "max_cuts_per_episode": 10, "asset_tiers": ["free"], "commercial_use": false, "mp4_max_seconds": 0, "user_asset_storage_mb": 100, "ai_chat": true, "ai_chat_turns_per_day": 20, "voice_chat": true, "dialogue_voice": true, "video_voice": false, "sponsorship": false}',
    true, true, 0),
   ('toon', 'pro', 'Pro', 14900, 'month', 300, 0, false,
-   '{"watermark": false, "export": ["png", "zip", "webtoon_strip", "mp4"], "exports_per_month": -1, "max_series": 20, "max_episodes_per_series": -1, "max_cuts_per_episode": 60, "asset_tiers": ["free", "premium"], "commercial_use": true, "mp4_max_seconds": 60, "user_asset_storage_mb": 2048, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dialogue_voice": true, "video_voice": true, "sponsorship": true}',
+   '{"watermark": false, "export": ["png", "zip", "webtoon_strip", "mp4"], "exports_per_month": 300, "max_series": 20, "max_episodes_per_series": 500, "max_cuts_per_episode": 60, "asset_tiers": ["free", "premium"], "commercial_use": true, "mp4_max_seconds": 60, "user_asset_storage_mb": 2048, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dialogue_voice": true, "video_voice": true, "sponsorship": true}',
    false, true, 1)
 on conflict (app_id, code) do update
   set name = excluded.name, price_krw = excluded.price_krw, billing_interval = excluded.billing_interval,

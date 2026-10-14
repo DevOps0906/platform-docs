@@ -101,8 +101,8 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | 코드 | 가격(원/월) | 월 크레딧 | 가입 크레딧 | 이월 | 상태 | 주요 한도 |
 |---|---|---|---|---|---|---|
 | `free` | 0 | 0 | 100(1회, 제안) | 안 함 | 베타 기본(is_default) | 참가자 100, 동시 live 1, 보존 30일 |
-| `pro` | 19,900 | 1,000(제안) | 0 | 안 함 | Phase 2(is_active=false) | 참가자 1,000, 동시 live 3, 보존 365일, 브랜딩 제거 |
-| `business` | 59,000 | 5,000(제안) | 0 | 안 함 | Phase 2(is_active=false) | 참가자 3,000, 동시 live 10, 보존 730일, 팀 5인 |
+| `pro` | 19,900(VAT 포함) | 1,000(제안) | 0 | 안 함 | Phase 2(is_active=false) | 참가자 1,000, 동시 live 3, 보존 365일, 브랜딩 제거 |
+| `business` | 59,000(VAT 별도) | 5,000(제안) | 0 | 안 함 | Phase 2(is_active=false) | 참가자 3,000, 동시 live 10, 보존 730일, 팀 5인 |
 
 크레딧은 2026-10-13부터 AI·음성 기능에만 쓴다(4.2절). 투표, 일반 Q&A, 발표 화면, 오버레이, 입장은 크레딧을 쓰지 않는다. free는 월 지급이 없으므로(`billing_interval='none'`) 가입 크레딧 100을 한 번 받고, 다 쓴 뒤의 보충 방법(월 리필 또는 크레딧팩)은 열린 결정 D8, D11이다. 크레딧팩은 MVP에 팔지 않는다(Phase 2 결제와 함께).
 
@@ -111,9 +111,9 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | 키 | 타입 | 의미 | 강제 위치 |
 |---|---|---|---|
 | `max_participants` | int | 행사당 청중 상한. live 전환 시 `events.max_participants`로 고정(100) | `transition_event`, `join_event` |
-| `max_live_events` | int, -1 무제한 | 조직의 동시 live 행사 수(1) | `transition_event` |
-| `max_events` | int, -1 무제한 | archived가 아닌 행사 수(50) | `create_event` |
-| `polls_per_event` | int, -1 무제한 | 행사당 한 번이라도 연 문항 수(50) | `transition_poll` |
+| `max_live_events` | int | 조직의 동시 live 행사 수(1) | `transition_event` |
+| `max_events` | int | archived가 아닌 행사 수(50). free 50 / pro 500 / business 2,000(제안) | `create_event` |
+| `polls_per_event` | int | 행사당 한 번이라도 연 문항 수(50). free 50 / pro 200 / business 500(제안) | `transition_poll` |
 | `qna` | bool | Q&A 사용 가능(true) | Route Handler |
 | `export_csv` | bool | CSV 내보내기(true) | Route Handler |
 | `overlay` | bool | OBS 오버레이(true) | Route Handler |
@@ -121,7 +121,11 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | `retention_days` | int | 종료 후 원본 투표/참가자/질문 보존 일수(30) | `end_event_internal` |
 | `team_members` | int | 조직 멤버 수(Phase 2) | 초대 Route Handler |
 
-키가 없으면 기본값으로 동작한다. 결제(Phase 2)는 `CORE_SPEC.md` 5장 일반결제/빌링키 시퀀스를 그대로 쓴다. 환불: 결제 후 7일 이내 live 행사를 연 적이 없으면 전액(제안).
+키가 없으면 기본값으로 동작한다. 판매 플랜의 정수 한도는 모두 숫자로 둔다. `poll.plan_feature_int`는 -1을 무제한으로 읽지만 판매 플랜에는 -1을 쓰지 않는다(2026-10-14, 공용 가격 원칙 6장 무제한 금지, `Price_Plans/live-poll/PRICE_PLAN.md` 10장).
+
+가격 표기(2026-10-14 결정): `free`·`pro`는 VAT 포함, `business`는 VAT 별도로 표기한다(사내 교육·행사 고객은 사업자, 공용 가격 원칙 7장). 운영 규칙(2026-10-14 결정): 참가자 1,000명 이상 행사는 진행자가 행사 날짜를 미리 등록하게 안내해 Realtime 동시 접속 월 최고치를 관리한다.
+
+결제(Phase 2)는 `CORE_SPEC.md` 5장 일반결제/빌링키 시퀀스를 그대로 쓴다. 환불: 결제 후 7일 이내 live 행사를 연 적이 없으면 전액(제안).
 
 ### 4.1 AI·음성 플랜 키 (2026-10-13)
 

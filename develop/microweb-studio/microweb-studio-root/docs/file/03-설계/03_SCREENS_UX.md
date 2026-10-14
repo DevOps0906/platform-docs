@@ -72,7 +72,7 @@
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | 편집기 | "게시(30 크레딧)" | 잔액 확인 | 부족 402 → `/studio/billing` |
+| 1 | 편집기 | "게시(20 크레딧)" | 잔액 확인 | 부족 402 → `/studio/billing` |
 | 2 | `/studio/billing` | 팩 선택, 결제 | `payment_orders` INSERT → Toss 결제창 → successUrl → confirm | PM001 → Toss 취소 + "결제가 취소되었습니다" |
 | 3 | 편집기 | 다시 게시 | consume → request_publish → 잡 | 잡 실패 → 자동 환불, "크레딧을 돌려드렸습니다" |
 
@@ -133,7 +133,7 @@
 |---|---|---|---|---|---|
 | 쇼룸 랜딩 | 무엇을 만드는지 보여 주고 문의로 이끈다 | 4절 와이어프레임 | `templates`, `portfolio_items`(published) | 샘플 열기, 문의 | 없음 |
 | 템플릿 카탈로그 | 출시/준비 중 구분 | 그리드: 실제 엔진으로 렌더한 375px 썸네일, 가격대, 상태 | `templates` status, release_phase | 상세, 문의 | 셀프 크레딧(Phase 2) |
-| 가격표 | 대행가 한눈에 | 표 2개(마이크로웹 / 웹 제작 4등급), 포함 항목, 기간 | `templates`, `src/showroom/data/pricing.ts` | 상담 | 없음 |
+| 가격표 | 대행가 한눈에 | 표 2개(마이크로웹 VAT 포함 / 웹 제작 4등급 = Web-App-Agency `AG-LP`·`AG-ML`·`AG-BR`·견적, VAT 별도, 01장 4절), 포함 항목, 기간 | `templates`, `src/showroom/data/pricing.ts` | 상담 | 없음 |
 | 시뮬레이터 | 등급별 결과물 차이 | 좌 업종 9, 상 등급 4, 디바이스 3, 우 미리보기 | `src/showroom/data/industries.ts` | 상담받기 | 없음 |
 | 하객 페이지 | 안내와 축하 | 템플릿 블록 순서(hero → greeting(+인사말 음성 재생 버튼) → calendar → gallery → location → contacts/accounts → guestbook(+음성으로 남기기) → rsvp → share), 하단 공개 기한 | `site_publications.content`, `guestbook_entries.has_voice` | 복사, 전화, 지도, 작성, 인사말 재생, 음성 남기기 | 없음 |
 | 시안 확인 | 승인 기록 | 상단 배너 "시안입니다. 하객에게는 아직 보이지 않습니다", 하객 페이지와 같은 렌더, 하단 승인 폼 | service 조회 `sites` | 승인 | 없음 |

@@ -41,14 +41,14 @@ insert into core.plans (app_id, code, name, price_krw, billing_interval, monthly
    '{"posts_per_month": 50, "max_channel_accounts": 10, "channel_types": ["naver","tistory","wordpress"], "ai_modes": ["fast","quality"], "affiliate": true, "affiliate_auto_insert": true, "brandconnect": true, "schedule": true, "automation": false, "team_members": 1}',
    false, true, 1),
   ('blog', 'business', 'Business', 99000, 'month', 1500, 0, false,
-   '{"posts_per_month": -1, "max_channel_accounts": -1, "channel_types": ["naver","tistory","wordpress","instagram"], "ai_modes": ["fast","quality"], "affiliate": true, "affiliate_auto_insert": true, "brandconnect": true, "schedule": true, "automation": true, "team_members": 5}',
+   '{"posts_per_month": 300, "max_channel_accounts": 30, "channel_types": ["naver","tistory","wordpress","instagram"], "ai_modes": ["fast","quality"], "affiliate": true, "affiliate_auto_insert": true, "brandconnect": true, "schedule": true, "automation": true, "team_members": 5}',
    false, true, 2)
 on conflict (app_id, code) do nothing;
 
 insert into core.credit_packs (app_id, code, name, credits, price_krw, is_active, sort_order) values
   ('blog', 'pack_100',  '100 크레딧',   100,  4900,  true, 1),
-  ('blog', 'pack_500',  '500 크레딧',   500,  19900, true, 2),
-  ('blog', 'pack_1500', '1,500 크레딧', 1500, 49000, true, 3)
+  ('blog', 'pack_500',  '500 크레딧',   500,  21900, true, 2),
+  ('blog', 'pack_1500', '1,500 크레딧', 1500, 63000, true, 3)
 on conflict (app_id, code) do nothing;
 
 -- ---------------------------------------------------------------------
