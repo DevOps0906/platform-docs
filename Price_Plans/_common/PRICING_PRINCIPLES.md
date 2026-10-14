@@ -57,7 +57,7 @@
 | 항목 | 값(제안) | 근거 |
 |---|---|---|
 | 목표 매출총이익률 | 70% 이상 | SaaS 일반 기준(제안) |
-| AI 원가 지표 | 코어 seed 단가 사용 | `products/_supabase-modular/seed.sql:228-246` |
+| AI 원가 지표 | 코어 seed 단가 사용 | `products/_supabase-modular/seed.sql:243-262` |
 | 원화 환산 | 미확인(구현 시 측정) | `products/website-floria/01_PRD.md` 4.1절과 같은 처리 |
 
 ## 5. 판매 모델 (모든 플랫폼 공용)
