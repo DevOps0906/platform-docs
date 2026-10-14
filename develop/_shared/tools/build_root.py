@@ -57,6 +57,8 @@ PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
 CORE_DOCS = ['CORE_SPEC.md', 'SHARED_MODULES.md', 'SECURITY_BASELINE.md', 'DB_CONVENTIONS.md', 'DOC_TEMPLATE.md',
              'AI_ARCHITECTURE.md', 'LLM_WIKI.md', 'VOICE_ARCHITECTURE.md']
 DESIGN_DOCS = ['DESIGN_PRINCIPLES.md', 'DESIGN_SYSTEM.md', 'HERO_3D.md', 'SKILLS.md', 'REFERENCES.md']
+# 나중에 추가한 디자인 기준 문서. DOC-DSN-006/007은 DESIGN.md/COMPONENTS.md가 쓰므로 008부터 고정 ID를 준다(기존 ID를 바꾸지 않는다).
+EXTRA_DESIGN_DOCS = [('DASHBOARD_PATTERNS.md', 'DOC-DSN-008')]
 
 
 def read(p):
@@ -77,7 +79,9 @@ def plan(prod):
         items.append((f'{P}/_platform-core/{f}', f'docs/file/03-설계/공용코어/{f}', f'DOC-CORE-{i:03d}', f'공용 코어: {f[:-3]}', '03-설계'))
     for i, f in enumerate(DESIGN_DOCS, 1):
         items.append((f'{P}/_design-guide/{f}', f'docs/file/03-설계/디자인/{f}', f'DOC-DSN-{i:03d}', f'디자인 기준: {f[:-3]}', '03-설계'))
-    refs = [(f'{P}/00_MERGE_ANALYSIS.md', 'docs/reference/00_MERGE_ANALYSIS.md')]
+    for f, did in EXTRA_DESIGN_DOCS:
+        items.append((f'{P}/_design-guide/{f}', f'docs/file/03-설계/디자인/{f}', did, f'디자인 기준: {f[:-3]}', '03-설계'))
+    refs =[(f'{P}/00_MERGE_ANALYSIS.md', 'docs/reference/00_MERGE_ANALYSIS.md')]
     for r in REVIEWS[prod]:
         refs.append((f'{PLATFORM}/docs/reviews/{r}', f'docs/reference/reviews/{r}'))
     mapping = {}

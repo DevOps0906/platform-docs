@@ -1,6 +1,6 @@
 # DESIGN_SYSTEM — 12개 제품 공통 디자인 시스템 구축 규칙
 
-작성일 2026-10-13. 모든 제품의 UI 구현 에이전트와 사람 담당자는 컴포넌트·토큰을 만들거나 고치기 전에 이 문서를 따른다. 화면 디자인 절차는 `DESIGN_PRINCIPLES.md`, 메인 히어로는 `HERO_3D.md`, 제품별 레퍼런스와 브랜드 토큰은 `REFERENCES.md`, 스킬은 `SKILLS.md`에 있다. 이 문서는 "무엇을 정답으로 두고, AI에게 어디까지 맡기는가"를 정한다.
+작성일 2026-10-13. 모든 제품의 UI 구현 에이전트와 사람 담당자는 컴포넌트·토큰을 만들거나 고치기 전에 이 문서를 따른다. 화면 디자인 절차는 `DESIGN_PRINCIPLES.md`, 메인 히어로는 `HERO_3D.md`, 제품별 레퍼런스와 브랜드 토큰은 `REFERENCES.md`, 스킬은 `SKILLS.md`, 앱 화면의 구조(패턴 A~O)는 `DASHBOARD_PATTERNS.md`에 있다. 이 문서는 "무엇을 정답으로 두고, AI에게 어디까지 맡기는가"를 정한다.
 
 ## 1. 근거 자료
 
@@ -8,7 +8,7 @@
 |---|---|---|---|
 | Primer (GitHub) | 개발자 친화, 높은 정보 밀도, 명확한 상태 표시. `@primer/react` | 데이터 밀도 조절, 표·목록·상태 표시, 코드 블록·`kbd`·커밋 상태 같은 생산성 UI 패턴 | 공개 문서(primer.style) 기준, 구현 시 버전 확인 |
 | Atlassian Design System (Jira, Confluence) | 복잡한 엔터프라이즈 워크플로, 일관된 정보 구조 | 드래그 앤 드롭, 칸반, 모달·사이드바 중첩, 상태 배지·태그, 권한 패턴, 디자인 토큰 체계, 접근성 기준 | 공개 문서(atlassian.design) 기준, 구현 시 버전 확인 |
-| Astryx (Meta) | 사용자 제공 자료 기준: Meta 내부 8년 사용, React 19+, StyleX, 150개 이상 컴포넌트, CLI와 MCP 서버로 AI 코딩 도구 연동, 내부 컴포넌트 추출(Swizzle) | 채팅·메시지 스레드·데이터 테이블 같은 프로덕션 패턴, AI 에이전트가 읽기 쉬운 컴포넌트 구조 | **미확인**. 공식 사이트(사용자 제공 링크 astryx.atmeta.com)에서 존재·라이선스·내용을 확인한 뒤 사용한다 |
+| Astryx (Meta) | 공개 보도 기준: Meta 내부 약 8년 개발 후 오픈소스 베타 공개, MIT 라이선스, React 19+, StyleX(표준 `className`도 받아 Tailwind와 함께 쓸 수 있음), 150개 이상 접근성 컴포넌트, CLI(`@astryxdesign/cli`)와 MCP 엔드포인트로 AI 코딩 도구 연동. 사용자 제공 자료: 내부 컴포넌트 추출(Swizzle) | 채팅·메시지 스레드·데이터 테이블 같은 프로덕션 패턴, AI 에이전트가 읽기 쉬운 컴포넌트 구조 | **존재·라이선스 확인(2026-10-14, InfoQ 2026-09-13 보도: MIT, 베타)**. 채팅·데이터 테이블 컴포넌트의 구체 내용은 구현 시 공식 문서에서 확인한다. 베타이므로 아래 문단대로 패턴만 배우고 설치하지 않는다 |
 | 실무 사례: "디자인 시스템을 AI한테 맡기고 5천 달러를 태웠다"(MAYDEN, 2026-08-05, 사용자 제공) | AI와 디자인 시스템을 4개월간 다시 만든 실패 4건과 정착 방식 | 2장 원칙, 4장 워크플로, 7장 금지 사항 | 사용자 제공 원문 요약 |
 
 세 레퍼런스는 **라이브러리를 설치해 쓰는 대상이 아니라 패턴·밀도·토큰 체계를 배우는 대상**이다. 이 플랫폼의 구현 스택은 Tailwind CSS v4 + shadcn/ui로 고정이고, 세 시스템은 각자 다른 스타일 방식(Primer는 자체 CSS, Astryx는 StyleX 등)을 쓰므로 그대로 섞지 않는다.
@@ -54,7 +54,7 @@
 |---|---|---|---|
 | B2B SaaS, 관리자, 자동화 도구(데이터 밀도) | Primer | Atlassian(권한·상태 배지) | admin-suite, stock-dashboard, nomad-commerce, nomad-video(작업·채널 대시보드), nomad-blog(발행 관리) |
 | 협업, 워크플로, 보드(복잡한 폼과 상태) | Atlassian | Primer | flora-publishing(원고·제작 단계), toon-factory(회차·컷 관리), live-poll(진행자 콘솔), microweb-studio(제작 주문 관리) |
-| AI 채팅, 메시지 스레드, AI 연동 UI | Astryx(확인 후) | Primer(밀도) | 12개 제품 공통 AI 채팅 위젯·음성 UI·위키 화면, study-note, astro-ai(리딩 대화) |
+| AI 채팅, 메시지 스레드, AI 연동 UI | Astryx(MIT 베타, 패턴만) | Primer(밀도) | 12개 제품 공통 AI 채팅 위젯·음성 UI·위키 화면, study-note, astro-ai(리딩 대화) |
 | 메인페이지(랜딩) | `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` | - | 모든 제품의 공개 랜딩 |
 
 - 사용자 제공 자료의 권고처럼 Tailwind v4 + shadcn/ui 위에서는 "Primer의 데이터 레이아웃 + Astryx의 AI-Ready 모듈 패턴" 조합을 기본으로 삼는다.
@@ -97,3 +97,20 @@
 - 각 제품 `03_SCREENS_UX.md`에 "디자인 시스템" 항목을 둔다: 주 레퍼런스(5장), 토큰 파일 위치, 기본 컴포넌트·배리언트 목록, 정답 소스 위치.
 - 각 제품 `06_AGENT_PLAN.md`의 W0~W1에 4장 1~4단계 작업을 둔다. 3단계(사람 비주얼 검토)는 사람이 수행하는 작업으로 명시한다.
 - 개발 폴더(`<제품>-root/docs/file/03-설계/디자인/`)에는 이 문서와 함께 `DESIGN.md`, `COMPONENTS.md`의 초기 템플릿을 둔다.
+- 각 제품 `03_SCREENS_UX.md` 화면 목록 표에 `패턴` 열을 두고 `DASHBOARD_PATTERNS.md`의 코드(A~O, 맞지 않으면 `고유`)를 적는다. 열이 아직 없는 제품은 다음에 그 화면 표를 고칠 때 함께 채운다.
+
+## 10. 작업 지시 템플릿 (화면 1개 단위)
+
+컴포넌트는 8장, 화면은 이 템플릿으로 맡긴다. 화면 작업은 4장 4단계(정답 확정)가 끝난 뒤 시작한다.
+
+```
+대상: <경로와 화면 이름> (예: /customers 고객 목록)
+패턴: <DASHBOARD_PATTERNS.md 코드> (예: B + G시트)
+빼거나 바꿀 것: <패턴 필수 요소 중 이 화면에서 빼거나 바꾸는 것과 이유, 없으면 "없음">
+데이터: <테이블·RPC·Route Handler> (04_API.md, 05_DATA_MODEL.md의 해당 절)
+근거: 03_SCREENS_UX.md 해당 행, DASHBOARD_PATTERNS.md 해당 패턴 절, COMPONENTS.md
+스택: Next.js <버전>, React <버전>, Tailwind CSS v4.<x>, shadcn/ui <버전>, <패턴 라이브러리와 버전>
+상태: 기본·로딩·빈 상태·오류·권한 없음 (DASHBOARD_PATTERNS.md 6장)
+금지: components/ui 밖에서 새 기본 컴포넌트 만들기, hex 직접 사용, 새 토큰 임의 추가, tailwind.config.js
+검증: 라이트/다크 × 컴팩트/기본 스크린샷, 375px 폭, 키보드만으로 주 행동 수행
+```
