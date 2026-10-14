@@ -248,7 +248,7 @@
 | Web Push(VAPID) | 워커 `news.push_send` | 404·410이면 `revoke_push_subscription`, 그 외 2회 재시도 | 페이로드 상한(구현 시 확인) |
 | 기상청 단기예보, 에어코리아 대기오염(공공데이터포털) | `src/modules/local-life/server/weather.ts` | 실패·지연(3초) 시 블록 숨김, 가짜 값 금지 | 일일 호출 한도·상업 재배포 조건 **미확인**(D-8). 지역별 30분 캐시 |
 | Google Ad Manager / AdSense | 브라우저 태그(GPT). `serve_ads`의 `external_network`·`external_unit_id`만 사용 | 태그 실패 시 하우스 광고 | 서버 API 없음. 계정·정책은 신문사 소유 |
-| 포털(네이버·다음) | 없음. 크롤링 대상(뉴스 사이트맵, RSS, 구조화 데이터)만 제공 | - | 기사 전송·색인 요청 API는 있다고 가정하지 않음(미확인). 검색제휴 신청은 신문사가 직접(`RESEARCH_MARKET.md` 포털) |
+| 포털(네이버·다음) | 없음. 크롤링 대상(뉴스 사이트맵, RSS, 구조화 데이터)만 제공 | - | 기사 전송·색인 요청 API는 있다고 가정하지 않음(미확인). 검색제휴 신청은 신문사가 직접(`docs/products/local-news/research/MARKET_LEGAL.md` 포털) |
 | Google 뉴스 | 뉴스 사이트맵(최근 2일, 1,000개), `NewsArticle` | - | `https://developers.google.com/search/docs/crawling-indexing/sitemaps/news-sitemap` |
 | YouTube 임베드 | 영상 id만 저장, `youtube-nocookie.com` iframe 지연 로드 | 잘못된 id는 저장 거부 | oEmbed 제목 조회는 선택(구현 시 확인) |
 | 지도 임베드 | 정적 지도 이미지 + 외부 지도 링크(제안) | - | 카카오·네이버 지도 SDK 키·약관 미확인 |

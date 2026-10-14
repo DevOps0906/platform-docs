@@ -83,7 +83,7 @@ supabase/monolith/                         0001_core_lite, 0002_tenant_theming, 
 | M2 reader-membership | `readers`, `membership_tiers`, `memberships`, `donations`, `paywall_rules` | 독자 계정·멤버십·후원, 편집국 독자 관리 | `/api/r/membership/*`, `/api/newsroom/readers/*` | 결제 승인 로직(코어 toss), 조직 멤버십 |
 | M3 ad-manager | `ad_slots`, `advertisers`, `ad_campaigns`, `ad_creatives`, `ad_daily_stats`, `local_listings`, `public_notices` | 광고·업소·공고 관리, 독자 사이트 슬롯 | `/api/newsroom/ads/*`, `/api/r/ad-event`, `/api/r/listings` | 정부광고 직접 결제(언론재단 대행) |
 | M4 notify-newsletter | `newsletter_lists`, `newsletter_subscriptions`, `newsletter_issues`, `push_subscriptions` | 구독 폼·확인·해지, 편집국 발송 | `/api/r/newsletter/*`, `/api/r/push/*`, `/api/newsroom/newsletter/*` | 메일 제공자 구현(어댑터는 04장 6절) |
-| M5 community | `comments`, `comment_reports`, `tips`, `life_events` | 댓글·신고, 제보·투고, 경조사 신청과 편집국 검토 | `/api/r/comments/*`, `/api/r/tips`, `/api/r/life-events`, `/api/newsroom/(comments|tips|life-events)/*` | 본인확인(2012 위헌, `RESEARCH_MARKET`) |
+| M5 community | `comments`, `comment_reports`, `tips`, `life_events` | 댓글·신고, 제보·투고, 경조사 신청과 편집국 검토 | `/api/r/comments/*`, `/api/r/tips`, `/api/r/life-events`, `/api/newsroom/(comments|tips|life-events)/*` | 본인확인(2012 위헌, `docs/products/local-news/research/MARKET_LEGAL.md`) |
 | M6 distribution-seo | `wire_contracts`, `syndication_settings` | 전재 계약, 배포 설정 | `rss.xml`, `sitemap-news.xml`, `robots.txt`, `llms.txt`, `/api/newsroom/wire-contracts/*` | 포털 전송 API(존재 미확인, 04장 6절) |
 | M7 compliance-desk | `correction_requests`, `election_periods`, 함수 `compliance_weekly_stats` | 매체정보, 법정 푸터, 정정 청구함, 자체기사 비율 대시보드, 선거 모드 | `/api/r/corrections`, `/api/newsroom/(profile|corrections|compliance|elections)/*` | 법률 판단(표시·타이머·이력만) |
 | M8 search-analytics | `article_view_hourly`, 뷰·함수 | 검색, 많이 본 뉴스, 편집국 대시보드, 지원사업 리포트 | `/api/r/view`, `/api/r/search`, `/api/r/most-read`, `/api/newsroom/stats/*` | 외부 분석 도구 대체 |
@@ -190,7 +190,7 @@ COMMON_MODULES_ROADMAP과의 관계: M4는 `notify`(0100), M5 일부는 `support
 |---|---|---|
 | 국외 이전 동의 | 신문사 owner가 편집국 온보딩에서 `set_ai_cross_border_ack`. 동의 전에는 체인에서 상용(국외)이 빠져 `news.draft`는 `oss-llm`만, `news.alt_text`는 비활성 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
 | 제보 원문 금지 | `tips` 원문·첨부, 독자 개인정보, 정정 청구인 정보는 어떤 상용 기능의 입력에도 넣지 않는다. 제보를 기사로 쓰려면 기자가 사실만 옮겨 적은 메모를 입력으로 쓴다 | 브리프 7절, `docs/products/_platform-core/SECURITY_BASELINE.md:292` |
-| AI 표시 | AI가 초안·제목·요약·alt·음성에 관여한 기사는 `articles.ai_assisted`·`ai_disclosure`(05장, 보조 기능 키는 감사·`ai_runs`)로 남기고 독자 화면에 고지 문구(D-9)를 렌더한다. TTS는 "AI 음성" 표시 | AI기본법 2026-01-22 시행, 언론계 생성형 AI 준칙(`RESEARCH_MARKET.md` 규제 표) |
+| AI 표시 | AI가 초안·제목·요약·alt·음성에 관여한 기사는 `articles.ai_assisted`·`ai_disclosure`(05장, 보조 기능 키는 감사·`ai_runs`)로 남기고 독자 화면에 고지 문구(D-9)를 렌더한다. TTS는 "AI 음성" 표시 | AI기본법 2026-01-22 시행, 언론계 생성형 AI 준칙(`docs/products/local-news/research/MARKET_LEGAL.md` 규제 표) |
 | 기사 유형 불변 | AI 초안은 원래 유형(`press_release`)을 유지한다. AI가 `original`로 바꾸지 못한다(자체기사 비율 왜곡 방지, D-9) | 01장 NW-F-050 |
 | 조직 재정의 | 제품 화면에서 `set_ai_routing`을 부르지 않는다. 신문사가 고르는 것은 국외 이전 동의뿐 | flora 5.1절과 같은 규칙 |
 
@@ -221,19 +221,19 @@ COMMON_MODULES_ROADMAP과의 관계: M4는 `notify`(0100), M5 일부는 `support
 
 | 위험 #n | 출처 | 위험 요약 | 차단 설계 | 담당 장/작업 |
 |---|---|---|---|---|
-| #1 | `RESEARCH_DESIGN.md` 4장(web.dev optimize-cls) | 광고 늦은 로드가 CLS 최대 원인. CWV 미달은 검색 노출 손실 | 슬롯 크기를 IAB 고정 규격으로만 등록(`ad_slots`), 슬롯마다 `min-height`·`aspect-ratio`를 서버 렌더 시 예약하고 비어도 접지 않음(하우스 광고로 채움). 팝업·전면 광고 기능 없음. 접힌 아래 슬롯은 지연 로드. 블록 레지스트리가 슬롯 위치를 고정(테넌트는 ON/OFF만). 목표 CLS ≤0.1(p75) | M3, 03장 블록 레지스트리, 06장 광고·성능 작업 |
+| #1 | `docs/products/local-news/research/DESIGN_BENCHMARK.md` 4장(web.dev optimize-cls) | 광고 늦은 로드가 CLS 최대 원인. CWV 미달은 검색 노출 손실 | 슬롯 크기를 IAB 고정 규격으로만 등록(`ad_slots`), 슬롯마다 `min-height`·`aspect-ratio`를 서버 렌더 시 예약하고 비어도 접지 않음(하우스 광고로 채움). 팝업·전면 광고 기능 없음. 접힌 아래 슬롯은 지연 로드. 블록 레지스트리가 슬롯 위치를 고정(테넌트는 ON/OFF만). 목표 CLS ≤0.1(p75) | M3, 03장 블록 레지스트리, 06장 광고·성능 작업 |
 | #2 | 브리프 7절, README 5절 이유 1 | 속보·재난·선거 때 독자 트래픽 급증 → DB 커넥션 고갈, 응답 지연 | 독자 페이지는 ISR(요청 경로에서 DB 미조회), 캐시 태그로 게시 즉시 갱신. 조회수는 비동기 비콘(`/api/r/view`)이 시간 버킷 증분만 한다(샤드 컬럼으로 행 경합 분산, 제안, 05장). 많이 본 뉴스는 60초 캐시. 단독 Supabase 프로젝트로 다른 제품과 격리, 서버는 풀러(Supavisor) 경유 | 10.3절, M8, 05장 5절 |
 | #3 | 제안(뉴스 운영 특성) | 캐시 무효화 지연으로 수정·정정·게시 취소 기사가 계속 보임(법적 위험: 정정 미반영, 엠바고) | 상태를 바꾼 Route Handler가 응답 전에 태그 무효화. 워커·크론 변경은 서명된 `/api/internal/revalidate`. `news.post_publish`가 공개 URL을 요청해 `x-article-version` 헤더가 새 버전인지 확인, 다르면 재무효화 후 경보. 게시 취소 기사는 410 + 태그 무효화. 기사 페이지 최대 수명 300초(제안, 무효화 실패 대비) | M1, M6, 4절 `news.post_publish` |
-| #4 | `Multi-tenant_Theming/05_RUNTIME_AND_DOMAINS.md:63-71`, 정보통신망법 50조(`RESEARCH_MARKET.md`) | 뉴스레터가 스팸함으로 가거나 발신 도메인 평판이 한 신문사 때문에 전체가 떨어짐 | 플랫폼 발신 도메인 1개(SPF·DKIM·DMARC), 신문사별 발신 이름·`Reply-To`. 이중 동의만 발송, `List-Unsubscribe` 원클릭, 반송·수신 거부 웹훅으로 즉시 억제 목록. 신문사별 반송률 5%·신고율 0.3% 초과 시 발송 일시 중지(제안). 광고 포함 호는 제목 "(광고)", 21~08시 발송은 별도 동의자만, 2년 재확인 잡 | M4, 4절, 04장 5절 |
-| #5 | `RESEARCH_MARKET.md` 포털(검색제휴는 크롤링·정량평가) | 포털·Google 수집 실패, 중복 URL로 점수 손실 | 뉴스 사이트맵(최근 2일, 파일당 1,000개), `NewsArticle` 구조화 데이터, RSS, canonical은 대표 도메인 하나(서브도메인은 대표 커스텀 도메인으로 301), 기사 URL 영구 고정(`/news/<id>/<slug>`, slug 변경 시 301). 포털 전송 API는 있다고 가정하지 않는다(미확인) | M6, 10.2절 |
+| #4 | `Multi-tenant_Theming/05_RUNTIME_AND_DOMAINS.md:63-71`, 정보통신망법 50조(`docs/products/local-news/research/MARKET_LEGAL.md`) | 뉴스레터가 스팸함으로 가거나 발신 도메인 평판이 한 신문사 때문에 전체가 떨어짐 | 플랫폼 발신 도메인 1개(SPF·DKIM·DMARC), 신문사별 발신 이름·`Reply-To`. 이중 동의만 발송, `List-Unsubscribe` 원클릭, 반송·수신 거부 웹훅으로 즉시 억제 목록. 신문사별 반송률 5%·신고율 0.3% 초과 시 발송 일시 중지(제안). 광고 포함 호는 제목 "(광고)", 21~08시 발송은 별도 동의자만, 2년 재확인 잡 | M4, 4절, 04장 5절 |
+| #5 | `docs/products/local-news/research/MARKET_LEGAL.md` 포털(검색제휴는 크롤링·정량평가) | 포털·Google 수집 실패, 중복 URL로 점수 손실 | 뉴스 사이트맵(최근 2일, 파일당 1,000개), `NewsArticle` 구조화 데이터, RSS, canonical은 대표 도메인 하나(서브도메인은 대표 커스텀 도메인으로 301), 기사 URL 영구 고정(`/news/<id>/<slug>`, slug 변경 시 301). 포털 전송 API는 있다고 가정하지 않는다(미확인) | M6, 10.2절 |
 | #6 | 07장(이관 계획) | 기존 CMS 이관 후 옛 URL 404 → 검색 순위·포털 링크·외부 인용 상실 | 이관 잡이 기사마다 옛 URL을 기록(리디렉션 맵, 05장 표), `proxy.ts`가 테넌트 호스트의 미매칭 경로를 맵에서 찾아 301. 이관 후 사이트맵 전수 크롤 검증 리포트(404 0건이 완료 조건). 엔디소프트 URL 패턴은 미확인(이관 1호 고객 실측) | M1 import, 07장 |
 | #7 | 브리프 7절, D-7 | 한국어 형태소 분석 없음 → 검색 품질 저하(조사 붙은 단어, 2글자 검색) | 제목·부제 `pg_trgm` GIN + 본문 `tsvector('simple')`. 2글자 이하 질의는 최근 12개월 제목 `ILIKE`로 제한(제안). 결과는 최신순 가중. pg_bigm은 Supabase 지원 미확인, 기사 10만 건 초과 신문사가 생기면 Meilisearch/Typesense(P2) | M8, 05장 5절 |
 | #8 | `Multi-tenant_Theming/05_RUNTIME_AND_DOMAINS.md:38-61` | 와일드카드 서브도메인·커스텀 도메인 인증서·DNS 실패로 사이트 접속 불가 | MT 도메인 흐름(요청 → Vercel 등록 → DNS 안내 → 10분 검증 → `active`) 그대로. 활성 전에는 해석하지 않음. 대표 도메인 `failed`면 서브도메인 이동 중지. 와일드카드는 네임서버 위임 필요 여부 확인 필요. Vercel 프로젝트당 도메인 상한 미확인 → 운영 콘솔에 도메인 수 지표 | 10.4절, M7(운영) |
 | #9 | 브리프 4절 NW-F-012 | 엠바고·예약 기사가 시각 전에 노출(미리보기 링크 유출, 캐시) | 미리보기는 서명 토큰 URL(10분, `noindex`, 캐시 금지), ISR은 `published`만. 예약 게시는 워커 크론 + `run_scheduled_publishing`(`skip locked`, 4절), 엠바고 시각 전 `publish_article`은 DB가 거부 | M1, 4절 |
-| #10 | `RESEARCH_MARKET.md` 신문법 2조·포털 심사 | 자체기사 비율 오계산 → 포털 심사 감점·법정 요건 미달 | 기사 유형 필수, 비율 계산은 `news.compliance_weekly_stats` 함수 1곳(화면·리포트·경고가 같은 함수), AI 초안은 `press_release` 유지(D-9), 주간 경고 잡 | M7, 4절 |
-| #11 | `RESEARCH_DESIGN.md` 4장 | 고해상도 사진으로 LCP 초과 | 업로드 시 파생본 4종(WebP·JPEG), `srcset`·`sizes`, 리드 사진만 `priority`, 원본 20MB·장변 6,000px 상한(제안). 목표 LCP ≤2.5s | M1 `news.media_derive`, 1절 이미지 행 |
+| #10 | `docs/products/local-news/research/MARKET_LEGAL.md` 신문법 2조·포털 심사 | 자체기사 비율 오계산 → 포털 심사 감점·법정 요건 미달 | 기사 유형 필수, 비율 계산은 `news.compliance_weekly_stats` 함수 1곳(화면·리포트·경고가 같은 함수), AI 초안은 `press_release` 유지(D-9), 주간 경고 잡 | M7, 4절 |
+| #11 | `docs/products/local-news/research/DESIGN_BENCHMARK.md` 4장 | 고해상도 사진으로 LCP 초과 | 업로드 시 파생본 4종(WebP·JPEG), `srcset`·`sizes`, 리드 사진만 `priority`, 원본 20MB·장변 6,000px 상한(제안). 목표 LCP ≤2.5s | M1 `news.media_derive`, 1절 이미지 행 |
 | #12 | 제안(큐 설계) | 뉴스레터 대량 발송·이관이 예약 게시·속보 푸시를 지연 | 큐 분리(`news.publish`·`news.newsletter`·`news.ingest`), 워커 큐별 동시성(publish 우선, 4절), 이관 배치 크기 100 | 4절, 06장 워커 작업 |
-| #13 | 제안(외부 광고 태그) | GAM/AdSense 태그가 INP·LCP를 악화하고 저품질 광고가 포털 감점 요인 | 외부 태그는 신문사별 스위치(NW-F-031), LCP 이후 비동기 로드, 슬롯 크기 고정(#1). 네이티브 수익배분 위젯은 제공하지 않음(`RESEARCH_MARKET.md` 경쟁 표 Taboola 행) | M3 |
+| #13 | 제안(외부 광고 태그) | GAM/AdSense 태그가 INP·LCP를 악화하고 저품질 광고가 포털 감점 요인 | 외부 태그는 신문사별 스위치(NW-F-031), LCP 이후 비동기 로드, 슬롯 크기 고정(#1). 네이티브 수익배분 위젯은 제공하지 않음(`docs/products/local-news/research/MARKET_LEGAL.md` 경쟁 표 Taboola 행) | M3 |
 | #14 | 브리프 4절 NW-F-023, D-8 | 기상청·에어코리아 API 장애·쿼터 초과 | 서버에서 지역별 30분 캐시, 실패 시 블록 숨김(가짜 값 금지), 키·쿼터·이용 조건 미확인(D-8 확정 전 P1 비활성) | local-life, 04장 6절 |
 | #15 | `Multi-tenant_Theming/03_CODE_STRUCTURE.md:80-106` | ISR 캐시 키에 호스트가 빠져 다른 신문사 페이지가 섞임 | `proxy.ts`가 테넌트 요청을 `/_t/<host>/...`로 재작성해 캐시 경로에 호스트가 들어간다. 태그에 `org_id` 포함. E2E가 `acme`·`beta` 두 테넌트로 교차 확인. 데이터 접근 측 격리는 05장 7절 | 10.1절, 06장 테넌시 작업 |
 
@@ -435,7 +435,7 @@ proxy는 문자열 판별과 헤더·재작성만 하고 DB 호출은 서버 컴
 | 항목 | 규칙 |
 |---|---|
 | 테마 CSS | `(reader)` 레이아웃이 `themeCss(tenant)`를 `<head>`의 nonce `<style>`로 서버 렌더(깜빡임 0). 허용 목록 의미 토큰만(`brand`, `accent`, 섹션 색은 템플릿 B만, `Multi-tenant_Theming/README.md:58-77`) |
-| 서체 | 테넌트는 레지스트리 키만: `noto-serif-kr`, `source-han-serif`, `nanum-myeongjo`, `pretendard`(모두 OFL, `RESEARCH_DESIGN.md` 3장). KoPub 계열은 등록하지 않는다 |
+| 서체 | 테넌트는 레지스트리 키만: `noto-serif-kr`, `source-han-serif`, `nanum-myeongjo`, `pretendard`(모두 OFL, `docs/products/local-news/research/DESIGN_BENCHMARK.md` 3장). KoPub 계열은 등록하지 않는다 |
 | 자산 | 로고 3종 + 파비콘 + OG(1200x630) + 메일 머리. 제호 로고는 마스트헤드 높이 기준 |
 | 편집국 콘솔 | 플랫폼 브랜드 고정(신문사 테마 미적용, 제안: 여러 신문사를 오가는 기자의 혼동 방지와 단순화). 단 조직 전환기에 신문사 로고 표시 |
 | 커스텀 도메인 | MT 4장 흐름 그대로(`/api/tenant/domains` → Vercel 등록 → DNS 안내 → `news.domain_verify` → `active` → 캐시 무효화 → 완료 메일). news 추가: `active` 직후 `news.domain_auth_redirect`(9.6절), 사이트맵·canonical 대표 도메인 전환 |
