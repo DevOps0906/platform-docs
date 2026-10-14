@@ -524,6 +524,8 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 ## 13. 메인 디자인과 디자인 시스템
 
+디자인 작업 순서: 13.5 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
 ### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`, 제품 선택은 `03_SCREENS_UX.md` 3.25절)
 
 | 단계 | 작업 | 담당 |
@@ -556,7 +558,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 금지: 저울·법봉, 보라/핑크 그라디언트, 별 파티클, 네온 그리드, 지구본, 가상 후기·허위 수치.
 - 위치: 작업 계획의 소유 경로 `apps/web/src/features/hero3d/`, `apps/web/public/hero/`(DC-06-045, `06_AGENT_PLAN.md:107`)를 따릅니다. 03장 4.6절은 `src/components/hero3d/`로 적고 있어 서로 다릅니다(확인 2026-10-13). 소유 경계 정본은 06장이므로 `features/hero3d/`로 두고, 03장 표기 수정은 산출물 갱신 task로 처리합니다(제안).
 - 확인: PC·태블릿·모바일 스크린샷 3종, Lighthouse, 프레임 측정, 고문 디자인 검토(`HERO_3D.md:70-75`).
-- 레퍼런스 URL은 `REFERENCES.md`에 있는 것만 씁니다. nomad-docs 전용 절과 `HERO_3D.md` 소재 행 추가는 코어 요청 C-4입니다.
+- 레퍼런스 URL은 `REFERENCES.md`에 있는 것만 씁니다(nomad-docs 절 `REFERENCES.md:309`, 13.5절). `HERO_3D.md`에 이 제품의 소재 행(5장)과 영상 단계(6장)가 들어가 C-4는 반영됐습니다.
 - **3D 영상 레이어(DC-F-049, `03_SCREENS_UX.md` 4.6.1절)**: 메인은 "동적 3D + 3D 영상" 두 겹입니다. 실시간 3D를 못 돌리는 기기(모바일·저사양·WebGL 실패·30fps 미만)는 같은 장면을 미리 렌더한 8~12초 무음 루프 영상(`public/hero/hero-loop.mp4`·`.webm`·`hero-loop-m.mp4`, 포스터 avif)을 보고, reduced-motion·데이터 절약·영상 실패면 정지 이미지를 봅니다. 영상은 `scripts/nomad-docs/hero-record/`로 R3F 장면을 오프라인 렌더해 ffmpeg로 만듭니다(D-17). 예산: 영상 2MB(모바일 1MB), 포스터가 LCP, 첫 화면 JS에 3D·영상 코드 0. 킬 스위치 `NEXT_PUBLIC_HERO_VIDEO_ENABLED`.
 
 ### 13.3 로그인 후 화면: CRM형 워크스페이스 (정본: `03_SCREENS_UX.md` 3.26절, DC-06-061)
@@ -580,6 +582,31 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 시간 기반 가짜 진행률을 쓰지 않습니다. 서버가 단계를 보내지 않으면 화면도 움직이지 않습니다.
 - 대기 중에만 [취소](`docs.cancel_generation`). reduced-motion이면 단계 목록만 바뀝니다.
 - 그래프 쪽 진행 보고는 DC-06-022(생성 그래프)의 수용 기준에 들어 있습니다. 화면(062)은 022·027 뒤에 시작합니다.
+
+### 13.5 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+
+화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
+
+| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
+|---|---|---|---|
+| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
+| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
+
+이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` nomad-docs 절(`:309`)에 있습니다.
+
+| 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 | REFERENCES.md 위치 |
+|---|---|---|---|---|---|---|---|
+| 랜딩 | Superlist (SOTD) | Awwwards | https://www.awwwards.com/sites/superlist | 생산성 도구의 실제 제품 화면을 첫 화면 주인공으로 두는 구성. 여기서는 체크리스트 화면 한 장 | 할 일 관리 카피, 브랜드 색 | 히어로 오버레이 옆 체크리스트 실제 화면 | study-note 절 `:258` |
+| 랜딩 | Codapress Publishing (Honorable Mention) | Awwwards | https://www.awwwards.com/sites/codapress-publishing | 결과물을 히어로의 주인공으로 두는 방식. 여기서는 책 대신 문서 묶음(8장 서류) | 원형 캐러셀과 GSAP 스크롤 연출 반복 | 히어로 마지막 프레임, "만들어지는 문서" 섹션 | flora-publishing 절 `:51` |
+| 앱 | Lexi - AI Writer Assistant Web App Saas Platform | Dribbble | https://dribbble.com/shots/22398012-Lexi-AI-Writer-Assistant-Web-App-Saas-Platform | 좌측 사이드바 + 본문 편집 영역의 작업 공간 구조 | 모든 패널을 같은 둥근 카드로 나누는 SaaS 카드 키트 | 프로젝트 셸, 문서 편집기 | flora-publishing 절 `:55` |
+| 앱 | Scribbler - Writing App | Dribbble | https://dribbble.com/shots/15364448-Scribbler-Writing-App | 본문 폭과 도구 노출을 최소화한 편집 화면 | 종이 질감 배경, 크림 배경 | 문서 편집기 본문 영역 | flora-publishing 절 `:53` |
+| 앱 | Table data view for admin dashboard | Dribbble | https://dribbble.com/shots/22988094-Table-data-view-for-admin-dashboard | 행 선택 상태, 페이지네이션, 페이지당 행 수 | 행 호버 전환 효과 | 비용 항목, 요구사항 표, 버전 이력, 내보내기 기록 | admin-suite 절 `:176` |
+
+- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
+- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
+- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
 
 ## 14. 원본 이식
 
@@ -617,7 +644,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | PDF 렌더 서비스 | 공용 `services/render-weasyprint`는 flora-publishing 소유입니다. nomad-docs는 워커가 `render.pdf`/`render.docx`를 enqueue하고 private network로 호출(`RENDER_SERVICE_URL`, `X-Render-Token`)만 합니다. web(Vercel) 코드에 렌더 호출 0. 단독 개발에서 렌더 서비스가 아직 없으면 DC-06-029의 PDF 경로가 막힙니다. flora-publishing 개발 폴더의 렌더 서비스를 로컬 Docker로 띄워 쓰는 것을 제안합니다(17절) |
 | DOCX(C-1) | 렌더 서비스에 `POST /render/docx`, `app_id='docs'`, A4 공문서 프리셋(머리말·꼬리말, "n / N", 간인), DOCX 경로 폰트 검사가 반영되기 전에는 DOCX 요청을 403 `format_unavailable`로 둡니다. PDF는 기존 `/render/pdf`로 진행 |
 | 3D 키트 | 로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 측정은 `packages/ui-3d`로 분리 가능하게 만듭니다(C-9). 그 전에는 같은 인터페이스로 `hero3d/` 안에 둡니다 |
-| 남은 코어 과제 | C-1 DOCX·A4 프리셋(029), C-3 모듈러 seed의 docs 행(001은 조각 보충으로 진행), C-4 레퍼런스·3D 소재 행(044, 045), C-5 팀 조직(W8), C-6 웹훅 재시도 표준(053), C-7 교차 스키마 읽기(055), C-8 `adjust_credits`(047 환불, 반영 전 수동 기록), C-9 3D 키트(045), C-10 공용 Dify `docs-chat`·대화 삭제 절차(034, 051), C-11 ai-service `dify.aux` 모델 해석·위키 사용자 편집 저장(034, 035), C-2 조직 API 키(Phase 3). `docs/file/01-관리/06_AGENT_PLAN.md` 6절 참고 |
+| 남은 코어 과제 | C-1 DOCX·A4 프리셋(029), C-3 모듈러 seed의 docs 행(001은 조각 보충으로 진행), C-5 팀 조직(W8), C-6 웹훅 재시도 표준(053), C-7 교차 스키마 읽기(055), C-8 `adjust_credits`(047 환불, 반영 전 수동 기록), C-9 3D 키트(045), C-10 공용 Dify `docs-chat`·대화 삭제 절차(034, 051), C-11 ai-service `dify.aux` 모델 해석·위키 사용자 편집 저장(034, 035), C-2 조직 API 키(Phase 3). `docs/file/01-관리/06_AGENT_PLAN.md` 6절 참고 |
 
 ## 16. 검증과 완료 정의
 
@@ -669,6 +696,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] PGlite 체커 `--vector mono` OK(7.2절), RLS 스모크 105항목 수동 또는 러너로 확인(7.3절)
 - [ ] 결정 D-1~D-12 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.5)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
 - [ ] W1~W7 진행, AI 보안 회귀(058) 통과, 공개 베타 출시 조건 충족
 - [ ] `dev_contract` 활성은 법무 검토 완료 후에만

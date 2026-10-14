@@ -303,3 +303,36 @@
 | Andreas & Mathilde · Wedding (Nominee) | https://www.awwwards.com/sites/andreas-mathilde-wedding | microweb-studio |
 | +_+ crypton.trading (SOTD) | https://www.awwwards.com/sites/crypton-trading-bot | stock-dashboard(네온 톤은 피함) |
 | Monolith (SOTD) | https://www.awwwards.com/sites/monolith | website-floria |
+
+---
+
+## nomad-docs (NOMAD Docs, 체크리스트 기반 실무 문서 생성)
+
+추가일 2026-10-14(nomad-docs 코어 요청 C-4 중 레퍼런스 절). 아래 URL은 모두 이 파일의 다른 제품 절에 이미 있는 것(같은 확인 결과)이며, 원래 제품과 다른 참고 포인트로 쓴다(이 파일 "다른 제품 간 공유" 규칙).
+
+방향 요약: 대상은 계약 전후로 같은 숫자를 여러 문서에 손으로 옮겨 적는 1인 개발자·외주 개발사 PM이다. 랜딩은 "체크 하나가 여러 문서의 같은 자리를 함께 채운다"를 실제 체크리스트 화면과 문서 묶음으로 보여 준다. 로그인 후 화면은 고객·프로젝트·문서를 한곳에서 굴리는 CRM형 작업 공간이다.
+
+| 항목 | 내용 |
+|---|---|
+| 기존 토큰 | 신설 제품이라 원본 토큰 없음. 제품 `03_SCREENS_UX.md` 4.3절 토큰 플랜(서류철 #E6EBE7, 용지 #FBFCFA, 먹회 #1D2421, 괘선 #8A948F, 결재청 #1F4E8C, 인주 #B3262E) |
+| 피할 인상 | 법률 서비스 같은 저울·법봉 그림, 보라 그라디언트 AI 툴, 계약서 "보장" 문구, 크림색 + 세리프 + 테라코타(생성형 기본값 1번) |
+| UUPM 쿼리 | `search.py "document generator quote contract checklist b2b saas" --design-system -p "nomad-docs"` |
+
+| 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 |
+|---|---|---|---|---|---|---|
+| 랜딩 | Superlist (SOTD) | Awwwards | https://www.awwwards.com/sites/superlist | 생산성 도구의 실제 제품 화면을 첫 화면 주인공으로 두는 구성. 여기서는 체크리스트 화면 한 장 | 할 일 관리 카피, 브랜드 색 | 히어로 오버레이 옆 체크리스트 실제 화면 |
+| 랜딩 | Codapress Publishing (Honorable Mention) | Awwwards | https://www.awwwards.com/sites/codapress-publishing | 결과물을 히어로의 주인공으로 두는 방식. 여기서는 책 대신 문서 묶음(8장 서류) | 원형 캐러셀과 GSAP 스크롤 연출 반복 | 히어로 마지막 프레임, "만들어지는 문서" 섹션 |
+| 앱 | Lexi - AI Writer Assistant Web App Saas Platform | Dribbble | https://dribbble.com/shots/22398012-Lexi-AI-Writer-Assistant-Web-App-Saas-Platform | 좌측 사이드바 + 본문 편집 영역의 작업 공간 구조 | 모든 패널을 같은 둥근 카드로 나누는 SaaS 카드 키트 | 프로젝트 셸, 문서 편집기 |
+| 앱 | Scribbler - Writing App | Dribbble | https://dribbble.com/shots/15364448-Scribbler-Writing-App | 본문 폭과 도구 노출을 최소화한 편집 화면 | 종이 질감 배경, 크림 배경 | 문서 편집기 본문 영역 |
+| 앱 | Table data view for admin dashboard | Dribbble | https://dribbble.com/shots/22988094-Table-data-view-for-admin-dashboard | 행 선택 상태, 페이지네이션, 페이지당 행 수 | 행 호버 전환 효과 | 비용 항목, 요구사항 표, 버전 이력, 내보내기 기록 |
+
+로그인 후 CRM형 화면(거래처 360, 파이프라인 보드, 명령 팔레트)은 갤러리 샷이 아니라 실제 서비스의 화면 패턴을 참고한다. 2026-10-14에 각 URL을 직접 열어 페이지 제목을 확인했다. 세부 패턴과 화면 배치는 제품 `03_SCREENS_UX.md` 3.26절에 있다.
+
+| 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 |
+|---|---|---|---|---|---|---|
+| 앱 | Attio | 서비스 사이트 | https://attio.com/ | 레코드 페이지(헤더 + 탭 + 속성 사이드바), 같은 데이터를 표·보드로 바꿔 보는 뷰 | 임의 객체·커스텀 필드 빌더, 브랜드 색 | 거래처 360, 프로젝트 표/보드 전환 |
+| 앱 | HubSpot CRM | 서비스 사이트 | https://www.hubspot.com/products/crm | 레코드 왼쪽 속성, 가운데 활동 타임라인, 오른쪽 연결 카드 | 이메일·전화 기록, 마케팅 기능, 주황 브랜드 색 | 거래처 상세 |
+| 앱 | Pipedrive | 서비스 사이트 | https://www.pipedrive.com/ | 딜 파이프라인 보드, 열마다 합계, 오래 멈춘 카드 표시 | 끌어 놓기로 단계 변경(이 제품은 문서가 단계를 정한다) | 파이프라인 보드 |
+| 앱 | Linear | 서비스 사이트 | https://linear.app/ | 키보드 우선, ⌘K 명령 팔레트, 빠른 화면 전환 | 이슈 트래커 개념, 다크 기본 테마 | 명령 팔레트, 단축키 |
+
+이 네 행은 Awwwards·Dribbble이 아니라 서비스 공식 사이트다. 실제 앱 화면은 로그인 뒤에 있으므로 패턴은 공개된 제품 소개 화면 기준으로만 참고하고, 화면을 캡처해 자산으로 쓰지 않는다.

@@ -408,6 +408,8 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 ## 13. 메인 디자인과 디자인 시스템
 
+디자인 작업 순서: 13.3 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
 ### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
 
 | 단계 | 작업 | 담당 |
@@ -434,6 +436,31 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 금지: 보라/핑크 그라디언트, 종이비행기·종이 조각 파티클, 별 파티클, 노트북 목업 3D, video와 구분 안 되는 다크 장면
 - 히어로를 3D로 바꾼 것은 사용자 결정(2026-10-13, 확정 결정 15)입니다. 토큰·서체·카피 원칙은 그대로입니다.
 - 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(BL-06-055, 026)
+
+### 13.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+
+화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
+
+| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
+|---|---|---|---|
+| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
+| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
+
+이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` nomad-blog 절(`:101`)에 있습니다.
+
+| 출처 | URL | 참고 포인트 | 적용 화면 |
+|---|---|---|---|
+| Awwwards | https://www.awwwards.com/sites/catalyze-ai-saas-website | AI SaaS 랜딩의 기능 설명 순서와 제품 화면 노출 방식(장식 그라디언트·아이브로 라벨은 가져오지 않음) | 랜딩 |
+| Dribbble | https://dribbble.com/shots/20827495-AI-Writing-tool-Website | 첫 화면에서 "검색에 맞춘 원고를 만든다"는 가치를 설명하는 카피 구조(영어 카피·일러스트 제외) | 랜딩 히어로 카피 |
+| Dribbble | https://dribbble.com/shots/22408990-Lexi-AI-Writer-Assistant-Web-App-Saas-Platform-Chat-AI | 편집기 옆 대화형 수정 패널 | 에디터 |
+| Dribbble | https://dribbble.com/shots/9895896-WP-Scheduled-Posts-Missed-Schedule-Best-Editorial-Calendar | 편집 캘린더 + 예약 위젯 | 캘린더 |
+| Dribbble | https://dribbble.com/shots/14671941-Farmhouse-Affiliate-Marketing-Dashboard | 상품별 클릭·수익 추이 | 제휴 통계 |
+
+- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
+- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
+- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
 
 ## 14. 원본 이식
 
@@ -491,6 +518,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] `supabase start` → `supabase db reset` 성공(7절)
 - [ ] 결정 D-1~D-20 확정(Phase 2 항목은 보류 가능), 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
 - [ ] W1~W6 진행, AI 보안 회귀 통과, 대가성 문구 포함률 100%, MVP 출시 조건 충족
 

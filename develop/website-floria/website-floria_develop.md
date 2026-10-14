@@ -400,6 +400,8 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 ## 13. 메인 디자인과 디자인 시스템
 
+디자인 작업 순서: 13.3 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
 ### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
 
 | 단계 | 작업 | 담당 |
@@ -427,6 +429,31 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 성능 예산(제안): PC·태블릿 1MB/60fps, 모바일 300KB/30fps, LCP 2.5초 이하. 3D는 첫 화면 2MB 예산 밖(첫 화면 뒤 로드), 정지 이미지는 안.
 - 금지: 보라/핑크 그라디언트, 별 파티클, 금색 재질, 잎 일러스트 패턴. 3D 재질 색은 토큰만 씁니다.
 - 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(SI-06-047, 008).
+
+### 13.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+
+화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
+
+| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
+|---|---|---|---|
+| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
+| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
+
+이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` website-floria 절(`:267`)에 있습니다.
+
+| 출처 | 제목 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 |
+|---|---|---|---|---|---|
+| Awwwards | Botanic Expo (SOTD) | https://www.awwwards.com/sites/botanic-expo | 식물을 전시 공간처럼 보여 주는 쇼케이스 구성 | 2074년 SF 세계관과 3D 자산 | Hero 연출 |
+| Awwwards | plantica (Honorable Mention) | https://www.awwwards.com/sites/plantica-1 | 작업물 중심 포트폴리오 목록 구성 | 일본어 타이포와 스튜디오 사진 | Archive |
+| Awwwards | Humbert & Poyet (SOTD) | https://www.awwwards.com/sites/humbert-poyet | 깨끗하고 미니멀한 프로젝트 제시 | 사진, 로고 | Collections |
+| Awwwards | Kononenko Architectural Bureau (SOTD) | https://www.awwwards.com/sites/kononenko-architectural-bureau | 굵은 타이포와 정돈된 구조로 프로젝트를 보이는 방식 | 몰입형 인터랙션을 여러 개 겹치는 것 | Hero 타이포 처리 |
+
+- 이 제품은 Dribbble 샷을 고르지 않았습니다. 운영 화면은 13.1의 디자인 시스템 레퍼런스를 따릅니다.
+- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
+- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
+- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
 
 ## 14. 원본 이식
 
@@ -478,6 +505,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] `supabase start` → `supabase db reset` 성공(7절)
 - [ ] 결정 D-1~D-17 확정, 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
 - [ ] 운영자 제공 지식 자료와 고객 동의 증빙 확보(D-11)
 - [ ] W1~W6 진행, AI 보안 회귀 통과, MVP 출시 조건 충족
