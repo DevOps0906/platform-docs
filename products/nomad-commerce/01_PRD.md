@@ -173,14 +173,14 @@ V.2 PRD(`PRD.md:243-251`), DETAIL(`DETAIL_PAGE_SYSTEM.md:360-437`), CLAUDE 진�
 
 ### 4.1 플랜 (정본, 확정 결정 8)
 
-가격은 V.2(`Nomad-AI-Factory_V.2/PRD.md:296-301`), 월 크레딧은 sellingstudio(`sellingstudio/PRD.md:155-158`)를 플랜별로 옮겼다.
+가격은 V.2(`Nomad-AI-Factory_V.2/PRD.md:296-301`), 월 크레딧은 sellingstudio(`sellingstudio/PRD.md:155-158`)를 플랜별로 옮겼다. 모든 가격은 원화, VAT 포함이다(B2C SaaS 기본, `docs/Price_Plans/_common/PRICING_PRINCIPLES.md` 7장, 2026-10-14 결정). 2026-10-14 가격 정책 판정으로 Free 가입 크레딧 30(D-3 (b)), `enterprise` 월 900 크레딧·상품 10,000·계정 30·초기 미판매(D-1), 크레딧팩 단가 조정(4.5절)을 반영했다. 단계별 인상 계획은 `docs/Price_Plans/nomad-commerce/PRICE_PLAN.md` 6장.
 
-| 코드 | 가격(월) | 월 크레딧 | 가입 크레딧 | 이월 | 주요 features |
+| 코드 | 가격(월, VAT 포함) | 월 크레딧 | 가입 크레딧 | 이월 | 주요 features |
 |---|---|---|---|---|---|
-| `free` | 0원 | 15 | 0 | 없음 | 상품 30, 계정 1, 유형 설득형, 10슬롯, 동시 1, ZIP |
+| `free` | 0원 | 15 | 30 | 없음 | 상품 30, 계정 1, 유형 설득형, 10슬롯, 동시 1, ZIP |
 | `starter` | 29,000원 | 150 | 0 | 없음 | 상품 300, 계정 3, 유형 3종, 10/15슬롯, 동시 1, 엑셀, URL·음성 입력 |
 | `pro` | 69,000원 | 350 | 0 | 없음 | 상품 2,000, 계정 10, 동시 2, 고화질 모델 |
-| `enterprise` | 149,000원 | 550 | 0 | 없음 | 상품·계정 무제한, 동시 5, 최고 화질, API 접근(Phase 2) |
+| `enterprise` | 149,000원 | 900 | 0 | 없음 | 상품 10,000, 계정 30, 동시 5, 최고 화질, API 접근(Phase 2). 초기 미판매(`is_active=false`, D-1), 중기 게이트 통과 후 판매 |
 
 연간 결제(월 x 10, `PRD.md:303`)와 Add-on(`PRD.md:304`)은 Phase 2. 이월(SS PRO 50%, ENT 100%, `sellingstudio/PRD.md:157-158`)은 core `plans.carry_over`가 boolean이라 MVP는 이월 없음(8장 결정). 모듈러 `seed.sql`은 2026-10-13에 이 표(모놀리스 seed)와 같은 값으로 맞춰졌다. 모놀리스 `supabase/monolith/seed.sql`은 이 표와 같다.
 
@@ -211,9 +211,9 @@ AI 계층 도입(2026-10-13) 뒤에도 위 단가는 바꾸지 않는다. 그래
 | 인포그래픽·법적고지 6장 | Puppeteer, 외부 비용 0 | `MARKET_IMAGE_SPEC.md:16` |
 | LLM(스토리라인, 카피, 판정) | 약 $0.05(제안, 미확인) | 토큰 단가 미확인 |
 | 합계 | 약 $0.13~0.23 = 180~330원(환율 1,400원 가정) | |
-| 매출(9크레딧) | starter 1,740원 / pro 1,775원 / enterprise 2,435원 | 플랜가 / 월 크레딧 |
+| 매출(9크레딧) | starter 1,740원 / pro 1,775원 / enterprise 1,490원 | 플랜가 / 월 크레딧(enterprise 900 기준) |
 
-엔터프라이즈의 크레딧당 단가(271원)가 프로(197원)보다 비싸다. 8장 D-1.
+엔터프라이즈의 크레딧당 단가가 550 크레딧일 때 271원으로 프로(197원)보다 비쌌다. 2026-10-14 900 크레딧(크레딧당 약 166원)으로 고쳐 역전을 없앴다. ultra 화질 330원/건으로 전부 써도 매출총이익률 약 70%다(`docs/Price_Plans/nomad-commerce/PRICE_PLAN.md` 3장). 1,100(D-1 (b))은 약 64%라 쓰지 않는다. 8장 D-1.
 
 그래프 도입으로 규칙 검색·금지어 재작성·마켓 변환이 더해져 LLM 항목은 약 $0.06~0.08(제안, 미확인)로 늘 수 있다. 오픈소스 경로(국외 이전 미동의)는 GPU 원가 기준으로 더 낮다. 구현 뒤 `core.ai_usage`(run_id)로 실제 원가를 확인해 정액을 재검토한다.
 
@@ -221,8 +221,8 @@ AI 계층 도입(2026-10-13) 뒤에도 위 단가는 바꾸지 않는다. 그래
 
 | 키 | 타입 | 의미 | 없을 때 | 집행 위치 |
 |---|---|---|---|---|
-| `products` | int | 삭제되지 않은 상품 수 상한, -1 무제한 | 0 | 트리거 `products_enforce_quota`(CM002) |
-| `market_slots` | int | active 마켓 계정 수 상한 | 1 | 트리거 `market_accounts_enforce`(CM003) |
+| `products` | int | 삭제되지 않은 상품 수 상한, -1 무제한(판매 플랜에는 쓰지 않는다. enterprise 10,000) | 0 | 트리거 `products_enforce_quota`(CM002) |
+| `market_slots` | int | active 마켓 계정 수 상한(enterprise 30) | 1 | 트리거 `market_accounts_enforce`(CM003) |
 | `detail_types` | text[] | 허용 유형 | `["persuasive"]` | Route Handler 403 |
 | `slot_sets` | int[] | 허용 슬롯 세트 | `[10]` | Route Handler 403 |
 | `concurrency` | int | 동시 generating 상세페이지 수 | 1 | 디스패처 |
@@ -240,11 +240,13 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `shorts_narration`
 
 ### 4.5 크레딧팩과 구독 정책
 
-| 코드 | 크레딧 | 가격 | 근거 |
-|---|---|---|---|
-| `pack_50` | 50 | 10,000원 | `sellingstudio/PRD.md:160` |
-| `pack_120` | 120 | 20,000원 | 같은 줄 |
-| `pack_200` | 200 | 30,000원 | 같은 줄 |
+| 코드 | 크레딧 | 가격(VAT 포함) | 크레딧당 | 근거 |
+|---|---|---|---|---|
+| `pack_50` | 50 | 10,000원 | 200원 | `sellingstudio/PRD.md:160` |
+| `pack_120` | 120 | 23,900원 | 약 199원 | 2026-10-14 결정(이전 20,000원) |
+| `pack_200` | 200 | 39,900원 | 약 200원 | 2026-10-14 결정(이전 30,000원) |
+
+팩 단가 근거(2026-10-14): 소멸 없는 팩의 크레딧당 단가가 구독(starter 약 193원, pro 약 197원)보다 싸면 구독을 잠식한다. 팩 3종을 크레딧당 약 199~200원으로 맞춰 모든 구독보다 비싸게 둔다. 그래도 상세페이지 1건(9크레딧) 약 1,800원으로 국내 경쟁 도구(건당 약 5,000원)보다 낮다(`docs/Price_Plans/nomad-commerce/PRICE_PLAN.md` 4장, 10장 CM-P-6).
 
 | 정책 | 내용 |
 |---|---|
@@ -257,7 +259,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `shorts_narration`
 
 ### 4.6 AI·음성 크레딧 단가 (2026-10-13, 제안)
 
-4.2절 단가와 4.5절 크레딧팩은 바꾸지 않는다. 제공자 단가는 코어 seed `core.ai_model_prices`(`docs/products/_supabase-modular/seed.sql:228-246`: LLM 상용 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자, 모두 제안값)이고, 이 표는 그 값을 commerce 기능에 적용한 것이다. 계산 상수는 `apps/nomad-commerce/lib/ai/pricing.ts`(4.2절과 같은 이유로 코드 상수). 선차감과 정산 규칙은 `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:97-104`를 따른다.
+4.2절 단가와 4.5절 크레딧팩은 이 절에서 바꾸지 않는다(팩 가격은 2026-10-14 가격 정책으로 따로 조정). 제공자 단가는 코어 seed `core.ai_model_prices`(`docs/products/_supabase-modular/seed.sql:243-262`: LLM 상용 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자, 모두 제안값)이고, 이 표는 그 값을 commerce 기능에 적용한 것이다. 계산 상수는 `apps/nomad-commerce/lib/ai/pricing.ts`(4.2절과 같은 이유로 코드 상수). 선차감과 정산 규칙은 `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:97-104`를 따른다.
 
 | 작업 | 선차감(예상) | 정산 | 상용 경로 예 | 오픈소스 경로 예 | 멱등 키 |
 |---|---|---|---|---|---|
@@ -280,7 +282,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `shorts_narration`
 | 정산 시점 | 응답·작업 종료 직후 정산. 스트림이 끊기면 선차감을 남기고 정산 잡이 `settled_at is null` 행을 5분 주기로 처리(제안) | `docs/products/_platform-core/AI_ARCHITECTURE.md:128` |
 | 표시 | 보내기 전 "약 3크레딧(정산 후 1~5)", 내레이션 버튼에 예상치, 정산 결과는 메시지 아래와 원장 표에 | 제안 |
 | 공정 사용 | 사용자당 하루 `features.ai_chat_turns_per_day`턴(free 20, starter·pro 200, enterprise 500) | 제안 |
-| Free 플랜 | 월 15크레딧이라 채팅 5턴이면 소진된다. 채팅 무료 제공은 D-10 | 제안 |
+| Free 플랜 | 월 15크레딧(첫 달은 가입 30 추가)이라 채팅 5턴이면 월 지급분이 소진된다. 채팅 무료 제공은 D-10 | 제안 |
 
 ## 5. 비기능 요구사항
 
@@ -380,14 +382,14 @@ AI 대화 추가 규칙(6절 금지 문구에 더해 생성물·채팅·내레�
 
 | ID | 항목 | 선택지 | 권고 |
 |---|---|---|---|
-| D-1 | 엔터프라이즈 크레딧 | (a) 550 유지(크레딧 단가가 pro보다 비쌈) (b) 1,100으로 상향 (c) MVP에서 엔터 미판매 | (c) 후 (b). V.2 리뷰도 엔터를 MVP 보류로 둠(`docs/reviews/Nomad-AI-Factory_V.2.md:124`) |
+| D-1 | 엔터프라이즈 크레딧 | (a) 550 유지(크레딧 단가가 pro보다 비쌈) (b) 1,100으로 상향 (c) MVP에서 엔터 미판매 | 결정됨(2026-10-14, Price_Plans 반영): (c) 초기 미판매(`is_active=false`) 후 중기에 900 크레딧으로 판매. (b) 1,100은 매출총이익률 약 64%라 쓰지 않는다(`docs/Price_Plans/nomad-commerce/PRICE_PLAN.md` 10장 CM-P-4). 상품·계정 무제한은 10,000·30으로(CM-P-5). V.2 리뷰도 엔터를 MVP 보류로 둠(`docs/reviews/Nomad-AI-Factory_V.2.md:124`) |
 | D-2 | 이월 | (a) 없음 (b) SS 규칙(pro 50%, ent 100%) 지원을 코어에 요청 | (a). 코어 변경 필요 |
-| D-3 | Free 체험량 | (a) 월 15(10슬롯 1건) (b) 가입 크레딧 30 추가 | (b). 첫 생성 KPI에 필요 |
+| D-3 | Free 체험량 | (a) 월 15(10슬롯 1건) (b) 가입 크레딧 30 추가 | 결정됨(2026-10-14, Price_Plans 반영): (b) 가입 크레딧 30. 첫 생성 KPI에 필요 |
 | D-4 | 아마존 데이터 공급자 | Rainforest API, Keepa 등(미확인) | 단가·약관 비교 후 1곳 |
 | D-5 | 네이버 커머스 API 형태 | 셀러 직접 발급 / 솔루션사 등록(미확인) | 출시 2주 전까지 확인. 막히면 엑셀/ZIP으로 출시 |
 | D-6 | 코드 베이스 | (a) sellingstudio 확장(분석 D-5-1 권장) (b) 모노레포 `apps/nomad-commerce`로 이식 | (b): 공용 packages를 쓰기 위해 sellingstudio 코드를 모노레포로 옮김(06장) |
 | D-7 | 모놀리스 스키마 | `public` | 사용자 확인 대기 |
-| D-8 | 연간 플랜·Add-on | Phase 2 | 연간은 `billing_interval='year'` 별도 코드 |
+| D-8 | 연간 플랜·Add-on | Phase 2 | 연간은 `billing_interval='year'` 별도 코드. 2026-10-14 가격 정책: 중기 단계 계획으로 확정(`docs/Price_Plans/nomad-commerce/PRICE_PLAN.md` 6.2절, CM-P-8) |
 | D-9 | 마켓 규칙 위키 공개 범위와 원고 출처 | (a) 공개(SEO) + 운영자 검수 (b) 로그인 셀러만. 마켓 가이드 인용 범위와 약관상 재배포 허용 여부는 미확인 | (a)(제안). 원고는 요약·재구성하고 원문을 전재하지 않으며 항목마다 출처·기준일·검수자를 남긴다. 공개 위키는 `published`만 |
 | D-10 | AI 채팅 무료 제공 | (a) 무료 없음(턴 선차감, Free 하루 20턴 상한) (b) Free 월 N턴 무료 | (a)(제안). (b)는 전환 효과를 본 뒤 결정 |
 | D-11 | 상품 스펙 RAG 색인 대상과 상한 | 색인 필드(상품 행만 / 업로드 스펙 시트 포함), 조직별 월 색인 문서 상한, 보존 | 상품 행 + 스펙 시트(md, txt, csv, xlsx), 조직당 활성 문서는 플랜 상품 수 한도와 같게, 월 업로드 20건(제안). 공급자 자료 저작권은 셀러 책임 |

@@ -69,7 +69,7 @@
 | MW-F-019 | 제작 주문 장부 | 신규 | quoted → paid(결제수단·참조 필수) → in_production → delivered → closed, 취소/환불. 카드번호 저장 금지 | 12자리 이상 숫자열 참조는 거부 | `00_MERGE_ANALYSIS.md:1079` |
 | MW-F-020 | 템플릿 카탈로그 `/templates` | 통합 | nexus 12개 모델. beta/released는 "만들기", planned(phase2/3)는 "준비 중" 시안, backlog는 숨김 | 카탈로그가 DB `templates`에서 렌더된다 | `nexus-micro-web-builder.md:108`, `00_MERGE_ANALYSIS.md:1041` |
 | MW-F-021 | 포트폴리오 `/portfolio` | 디벨롭 | 실제 납품작만(WebSite 엔트리 포함). 고객 게시 동의와 이미지가 없으면 게시 불가(DB 제약). 상세페이지 탭 유지 | picsum URL이 코드에 없다 | `00_MERGE_ANALYSIS.md:1048` |
-| MW-F-022 | 가격표 `/pricing` | 통합 | 웹 제작 4등급 + 마이크로웹 템플릿 가격대 한 표. 할인 표시는 실제 정가 판매 이력이 있을 때만 | 근거 없는 "50% 할인" 문구가 없다 | `00_MERGE_ANALYSIS.md:1050` |
+| MW-F-022 | 가격표 `/pricing` | 통합 | 웹 제작 4등급(Web-App-Agency `AG-LP`·`AG-ML`·`AG-BR`·견적 가격, VAT 별도) + 마이크로웹 템플릿 가격대(VAT 포함) 한 표. 할인 표시는 실제 정가 판매 이력이 있을 때만 | 근거 없는 "50% 할인" 문구가 없다 | `00_MERGE_ANALYSIS.md:1050` |
 | MW-F-023 | 시뮬레이터 `/simulator` | 유지 | 업종 9 x 등급 4, 디바이스 3종. "이 조합으로 상담받기"가 선택값을 `/contact`에 넘긴다. Custom의 병원·교육은 admin-suite 데모 링크(Phase 2) | 선택값이 리드 `simulator` jsonb에 저장된다 | `webcraft-agency-simulator.md:30`, `00_MERGE_ANALYSIS.md:1053` |
 | MW-F-024 | 초대제 베타 | 신규 | Supabase Auth 공개 가입 끔, 운영자가 초대 메일 발송, `studio_access` 허용 목록 | 엔타이틀먼트만 있고 허용 목록이 없는 조직은 `/studio`에서 0행, `create_site` 42501 | 브리프, 05장 3절 |
 | MW-F-025 | 셀프서비스(Phase 2) | 신규 | `studio_access.mode='self_service'`, 발행 1건 = 템플릿 `self_publish_credits` 차감 | 잔액 부족 402, 게시 실패 시 환불 행 1개 | 확정 결정 11 |
@@ -88,6 +88,8 @@
 ## 4. 요금과 크레딧
 
 정본: 대행가는 nexus 원본 기획값(`nexus-micro-web-builder/CLAUDE.md:120-135`)과 webcraft 가격표(`webcraft-agency-simulator/frontend/constants.ts:139-162`). 셀프서비스 크레딧은 이 문서의 제안이다(확정 결정 8에 microweb 항목 없음).
+
+2026-10-14 가격 정책 반영(`Price_Plans/microweb-studio/PRICE_PLAN.md` 10장): 이 제품의 원화 가격(대행 청첩장·돌잔치·부고장, 크레딧팩)은 개인 고객(B2C)이라 모두 **VAT 포함**이다(MW-P-1). 대행 청첩장은 3등급으로 고정하고(MW-P-2), 셀프 청첩장 발행 단가는 30 → 20크레딧으로 내린다(MW-P-3, 셀프 청첩장 시장 0~2만원대보다 크게 비싸 팔리지 않을 가격). 웹 제작 대행은 이 제품의 상품표에서 빼고 Web-App-Agency 상품 코드로 판다(MW-P-6). "무제한 수정" 같은 무제한 표현은 쓰지 않는다(MW-P-11). 중기 인상·부고장 무료화·사진 60장·만료 +180일·연장/사진 추가 옵션은 Price_Plans 6장 단계 계획이며 이 장을 바꾸지 않는다.
 
 | 플랜 코드 | 가격 | 월 크레딧 | 가입 크레딧 | 이월 | features | 비고 |
 |---|---|---|---|---|---|---|
@@ -115,24 +117,24 @@
 
 AI·음성 키 8개는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/seed.sql`의 `free` 행에, 모듈러는 `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1500_microweb.sql:1589-1592`의 병합 UPDATE에 있다(모듈러 `seed.sql` 반영은 06장 6절 요청 R-8).
 
-| 상품(대행, `production_orders`) | 가격 | 근거 |
+| 상품(대행, `production_orders`) | 가격(VAT 포함) | 근거 |
 |---|---|---|
-| 모바일 청첩장 | 80,000 ~ 250,000원 | `nexus-micro-web-builder/frontend/data/models.ts:21-24` |
+| 모바일 청첩장 라이트 / 스탠다드 / 프리미엄 | 80,000 / 150,000 / 250,000원 | 범위는 `nexus-micro-web-builder/frontend/data/models.ts:21-24`. 등급(2026-10-14, MW-P-2): 라이트 템플릿 1종·사진 15장·방명록·RSVP·카톡 공유·수정 1회 / 스탠다드 사진 30장·AI 문구 제안·인사말 음성·수정 2회 / 프리미엄 맞춤 구성·하객 음성 방명록·수정 3회. 크몽 맞춤형 88,000~220,000원과 같은 구간 |
 | 돌잔치(Phase 2) | 40,000 ~ 100,000원 | `models.ts:34` |
 | 부고장(Phase 2) | 30,000 ~ 60,000원 | `models.ts:47` |
-| 웹 제작 Basic / Pro / Premium / Custom | 50~75만 / 150~200만 / 400~600만 / 상담 | `webcraft-agency-simulator/frontend/constants.ts:142-159`의 할인가. 정가 대비 할인 표기는 금지(6절) |
+| 웹 제작(`kind='website'`, tier basic / pro / premium / custom) | Web-App-Agency 상품 코드 가격(VAT 별도): basic → `AG-LP`, pro → `AG-ML`, premium → `AG-BR`, custom → `AG-IM`·`AG-WA` 견적 | 2026-10-14 이관(MW-P-6). 정본은 `Price_Plans/Web-App-Agency/PRICE_PLAN.md` 6장. 이전 값(webcraft 할인가 50~75만 / 150~200만 / 400~600만 / 상담)은 쓰지 않는다. 정가 대비 할인 표기는 금지(6절) |
 
 | 셀프 크레딧 단가(Phase 2, 제안) | 크레딧 | 이유 |
 |---|---|---|
-| 청첩장 1건 발행(재게시 무료) | 30 | 대행 기본가 80,000원의 약 40%. 운영자 노동이 빠짐 |
+| 청첩장 1건 발행(재게시 무료) | 20 | 2026-10-14 30 → 20(MW-P-3). 셀프 청첩장 시장 0~2만원대(바른손·보자기 무료, 유료 9,900~19,800원)에서 30,000원은 팔기 어렵다. 20,000원도 시장 상단이며 AI 인사말·음성 방명록이 차별점 |
 | 돌잔치 1건 | 20 | 대행가 비율 유지 |
 | 부고장 1건 | 10 | 대행가 비율 유지, 긴급 수요 |
 | AI 축하말 | 0 | 하객 기능이라 과금 주체가 없다. 비용은 `core.ai_usage`로 추적 |
 
 | 크레딧팩(Phase 2 전 비활성) | 크레딧 | 가격 |
 |---|---|---|
-| `pack_30` | 30 | 30,000원 |
-| `pack_60` | 60 | 57,000원 |
+| `pack_30` | 30(청첩장 1건 + AI·음성 10) | 30,000원 |
+| `pack_60` | 60(청첩장 3건) | 57,000원 |
 
 환불(제안): 대행 착수(in_production) 전 전액, 착수 후 50%, 게시 뒤 불가. 크레딧팩은 미사용분만 7일 안에 환불(코어 `adjust` 함수 요청, `CORE_SPEC.md` 5.4).
 
@@ -231,7 +233,7 @@ AI·음성 키 8개는 2026-10-13에 추가했다. 모놀리스는 `supabase/mon
 |---|---|---|---|
 | D-1 | 모놀리스 스키마 | public(코어 lite와 동일) / 별도 | public. 사용자 최종 확인 대기 |
 | D-2 | 대행 결제 수단 | 계좌이체 수기 기록 / Toss 결제링크 / Toss 결제창(주문 kind 추가 필요) | MVP 계좌이체 수기, Phase 2 Toss. Toss 결제링크 API는 미확인 |
-| D-3 | 셀프 크레딧 단가 | 4절 제안값 | 베타 고객 10명 인터뷰 후 확정 |
+| D-3 | 셀프 크레딧 단가 | 4절 제안값 | 청첩장 20크레딧은 결정됨(2026-10-14, Price_Plans 반영, MW-P-3). 돌잔치·부고장 단가와 사진 60장·만료 +180일은 베타 고객 10명 인터뷰 후 확정 |
 | D-4 | RSVP MVP 포함 | 포함 / 제외 | 포함(기본 꺼짐) |
 | D-5 | 만료 기본값 | 예식+30일 / +90일 / +365일 | +90일 |
 | D-6 | 지도 표시 | 카카오맵 임베드 / 정적 지도 이미지 / 딥링크만 | 임베드 + 딥링크. 정적 지도 약관 미확인 |

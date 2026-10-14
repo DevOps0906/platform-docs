@@ -82,7 +82,7 @@ ID 접두사 `PB`(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md` 1장 SQLS
 | PB-F-013 | AI 제목 추천 | 유지 | 장르+페르소나+기획 방향으로 후보 3~5개(제목, 부제, 추천 이유). 직접 입력 가능 | 1회 1크레딧. 응답이 JSON 스키마를 어기면 1회 재시도 후 실패 + 환불 | `Flora-v2/PRD.md:76-80` |
 | PB-F-014 | 기획안 3종 | 통합 | synopsis, logline, theme, characters + 입력 "타겟 독자", "강조 톤"(SD 6필드 중 2개). 탭 비교 후 1종 선택, 인라인 편집 | 선택본이 `books.plan_brief`에 저장된다. 1회 2크레딧 | 분석:94, `구현해야 할 프로젝트/SellingDocs/PRD.md:52` |
 | PB-F-015 | 목차 3종 + 편집 | 통합 | 챕터 수(1~20), 소제목 수(챕터당 1~10), 단락 수(소제목당 1~5) 설정 → 목차 3종 → 선택 후 드래그 정렬·인라인 편집. 플랜 한도: Free 챕터 3·소제목 합계 6·단락 3 | Free 사용자가 4번째 챕터를 추가하면 DB가 `PB002`를 내고 화면에 "Free는 챕터 3개까지" 안내. 1회 2크레딧 | `Flora-v2/PRD.md:88-93`, 분석:95, `flora-publisher/frontend/docs/prd/02_user_flow.md:31` |
-| PB-F-016 | 섹션 단건 집필 | 유지 | 소제목 1개를 스트리밍 생성(fetch POST + ReadableStream). 완료 시 서버가 sanitize 후 `sections.body_html` 저장. 2026-10-14: 본문이 이미 있는 소제목(`overwrite=true`)은 저장하지 않고 제안(Diff)으로만 돌려준다(PB-F-058) | 생성 중 연결이 끊겨도 서버가 끝까지 받아 저장하고, 다시 열면 본문이 보인다. fast 1크레딧, quality 2크레딧 | 분석:96, `docs/reference/reviews/Flora-v2.md:105` |
+| PB-F-016 | 섹션 단건 집필 | 유지 | 소제목 1개를 스트리밍 생성(fetch POST + ReadableStream). 완료 시 서버가 sanitize 후 `sections.body_html` 저장. 2026-10-14: 본문이 이미 있는 소제목(`overwrite=true`)은 저장하지 않고 제안(Diff)으로만 돌려준다(PB-F-058) | 생성 중 연결이 끊겨도 서버가 끝까지 받아 저장하고, 다시 열면 본문이 보인다. fast 1크레딧, quality 3크레딧(2026-10-14 2 → 3, 4.3절) | 분석:96, `docs/reference/reviews/Flora-v2.md:105` |
 | PB-F-017 | 전체 순차 생성 | 디벨롭 | Basic 이상. 서버 잡이 챕터 단위로 그래프 `publishing.draft`(PB-F-047)를 실행하고 섹션 단위로 저장(2026-10-13). 책당 동시 3섹션, 섹션 재시도 3회(지수 백오프), 실패 섹션만 표시, 진행률은 Realtime. 이미 본문이 있는 섹션은 건너뛴다(덮어쓰기 옵션 별도). 취소 시 대기 섹션은 환불 | 15섹션 책에서 2개가 3회 실패하면 실행 상태 `partial`, 13개 저장, 2개 `failed`, 차감 = 성공 섹션분만(실패분 자동 환불). 취소 요청 후 60초 안에 새 섹션 생성이 멈춘다 | 분석:98, `flora-publisher/frontend/docs/prd/03_features.md:83-97`, `docs/reference/reviews/Flora-v2.md:67`, `:122` |
 | PB-F-018 | 원고 에디터 + 마이크로 프롬프트 | 디벨롭 | Tiptap. 선택영역 플로팅 툴바(이어쓰기, 살붙이기, 다듬기, 직접 명령), `/` 명령, 결과 Diff 카드(삽입/대체/재생성/취소). 저장 HTML은 서버 sanitize(허용 태그 목록) | `<script>`, `on*` 속성, `javascript:` 링크가 저장 후 사라진다. 선택영역 2,000자 초과는 청크로 나뉜다. 1회 1크레딧 | 분석:99, `flora-publisher/frontend/docs/prd/03_features.md:110-131`, `docs/reference/reviews/SellingDocs.md:55` |
 | PB-F-019 | 전체 다듬기 | 통합 | v1 "AI 고도화"를 대체. 원고 전체를 2,000자 청크로 나눠 순서대로 다듬고, 섹션별 Diff로 수락/거절. Basic 이상 | 3만 자 원고 → 15청크 처리, 마지막 1,000자만 처리되는 결함이 재현되지 않는다(청크 수 = 결과 수). 청크당 1크레딧 | 분석:100, `docs/reference/reviews/flora.md:77` |
@@ -153,12 +153,12 @@ ID 접두사 `PB`(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md` 1장 SQLS
 
 ### 4.1 플랜 (정본 출처: 확정 결정 8 "크레딧팩 + 저가 구독")
 
-금액·크레딧은 모듈러 seed(`D:/WorkSpace/platform/docs/products/_supabase-modular/seed.sql:33`, `:95`, `:100-101`)과 같게 두었다. 저가 구독 ₩9,900은 FP 기획의 NOMAD PRO 가격(`flora-publisher/frontend/docs/prd/02_user_flow.md:65`)이 근거다. 월 크레딧 수치는 제안이며 이유는 4.3절에 적었다.
+금액·크레딧은 모듈러 seed(`D:/WorkSpace/platform/docs/products/_supabase-modular/seed.sql:33`, `:95`, `:100-101`)과 같게 두었다. 저가 구독 ₩9,900은 FP 기획의 NOMAD PRO 가격(`flora-publisher/frontend/docs/prd/02_user_flow.md:65`)이 근거다. 월 크레딧 수치는 제안이며 이유는 4.3절에 적었다. 가격은 모두 VAT 포함(B2C SaaS, 2026-10-14 `Price_Plans/_common/PRICING_PRINCIPLES.md` 7장). 런칭 할인·연간 결제·장기 pro 등급·pack_1500은 `Price_Plans/flora-publishing/PRICE_PLAN.md` 6장 단계 계획이며 이 절을 바꾸지 않는다.
 
 | 코드 | 이름 | 월 가격 | 월 크레딧(plan 버킷) | 가입 크레딧 | 이월 | 주요 features |
 |---|---|---|---|---|---|---|
 | `free` | Free(기본) | ₩0 | 20 | 0(첫 달 20이 가입 시 지급) | 없음 | 워터마크, 월 내보내기 2회, 책 3권, 챕터 3, 소제목 6, 단락 3, 페르소나 40, fast 모드만 |
-| `basic` | Basic | ₩9,900 | 200 | 0 | 없음(남은 plan 크레딧은 갱신 시 만료) | 워터마크 없음, 내보내기 무제한, 책 무제한, 챕터 20, 소제목 200, 단락 5, 페르소나 60, 전체 순차 생성, 업로드, 어조, 보조 집필, quality 모드, 페르소나 합성, 웹훅, 공개 페이지(Phase 2) |
+| `basic` | Basic | ₩9,900 | 200 | 0 | 없음(남은 plan 크레딧은 갱신 시 만료) | 워터마크 없음, 내보내기 월 100회, 책 100권(2026-10-14 "무제한"에서 숫자 상한으로, `Price_Plans/_common/PRICING_PRINCIPLES.md` 6장), 챕터 20, 소제목 200, 단락 5, 페르소나 60, 전체 순차 생성, 업로드, 어조, 보조 집필, quality 모드, 페르소나 합성, 웹훅, 공개 페이지(Phase 2) |
 
 ### 4.2 크레딧팩 (pack 버킷, 소멸 없음)
 
@@ -177,7 +177,7 @@ ID 접두사 `PB`(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md` 1장 SQLS
 | 기획안 3종 | 2 | 1회 | 3안 동시 생성 |
 | 목차 3종 | 2 | 1회 | 3안 동시 생성 |
 | 섹션 집필 fast | 1 | 소제목 1개 | 원고 생성의 기본 단위. SD 리뷰가 "단계별 단가 분리"를 요구(`docs/reference/reviews/SellingDocs.md:72`) |
-| 섹션 집필 quality | 2 | 소제목 1개 | 상위 모델 비용 |
+| 섹션 집필 quality | 3 | 소제목 1개 | 상위 모델 비용. 2026-10-14 2 → 3: Sonnet 경로 원가가 크레딧당 약 18원으로 Basic 허용 원가 12.9원(70% 매출총이익률)을 넘는다(`Price_Plans/flora-publishing/PRICE_PLAN.md` 3.2절) |
 | 이어쓰기/살붙이기/다듬기 | 1 | 선택영역 2,000자 청크 | 청크 단위로 비용 비례 |
 | 사례·예시 제안, 문체·설정 확인, 출처 검토(PB-F-060, 2026-10-14) | 1 | 선택영역 2,000자 청크 | 보조 집필과 같은 출력 규모 |
 | 전체 다듬기 | 1 | 2,000자 청크 | 위와 같음 |
@@ -198,9 +198,9 @@ ID 접두사 `PB`(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md` 1장 SQLS
 | 키 | 타입 | 기본값 | 의미 | 강제 위치 |
 |---|---|---|---|---|
 | `watermark` | boolean | true | PDF/ePub 워터마크 | 렌더 잡 옵션(서버) |
-| `exports_per_month` | integer | 2 | 월 내보내기 횟수(-1 무제한). KST 달력 월 기준 succeeded+진행 중 건수 | 내보내기 Route Handler |
+| `exports_per_month` | integer | 2 | 월 내보내기 횟수(Basic 100. -1 무제한은 쓰지 않는다, 2026-10-14). KST 달력 월 기준 succeeded+진행 중 건수 | 내보내기 Route Handler |
 | `themes` | text[] | `["basic"]` | 화면 테마 그룹 | `member_settings` 트리거(`PB008`) |
-| `max_books` | integer | 3 | 삭제되지 않은 책 수 | `books` INSERT 트리거(`PB001`) |
+| `max_books` | integer | 3 | 삭제되지 않은 책 수(Basic 100, 2026-10-14 -1에서 변경) | `books` INSERT 트리거(`PB001`) |
 | `max_chapters` | integer | 3 | 책당 챕터 수 | `chapters` INSERT 트리거(`PB002`) |
 | `max_sections` | integer | 6 | 책당 소제목 합계 | `sections` INSERT 트리거(`PB003`) |
 | `max_paragraphs` | integer | 3 | 소제목당 단락 목표 | `sections` 트리거(`PB004`) |
@@ -231,7 +231,7 @@ ID 접두사 `PB`(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md` 1장 SQLS
 
 ### 4.6 AI·음성 크레딧 단가 (2026-10-13, 제안)
 
-4.3절 기존 단가는 바꾸지 않는다. 제공자 단가는 코어 seed `core.ai_model_prices`(`D:/WorkSpace/platform/docs/products/_supabase-modular/seed.sql:228-246`: LLM 상용 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자, 임베딩 오픈소스 0.01cr/1k 토큰, 모두 제안값)이고 이 표는 그 값을 publishing 기능에 적용한 것이다. 계산 상수는 `web/src/server/ai-pricing.ts`(코드 상수, 4.3절 `pricing`과 같은 이유). 선차감과 정산 규칙은 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:97-104`를 따른다.
+4.3절 기존 단가는 바꾸지 않는다(2026-10-14 섹션 집필 quality 2 → 3만 예외). 제공자 단가는 코어 seed `core.ai_model_prices`(`D:/WorkSpace/platform/docs/products/_supabase-modular/seed.sql:243-262`: LLM 상용 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자, 임베딩 오픈소스 0.01cr/1k 토큰, 모두 제안값)이고 이 표는 그 값을 publishing 기능에 적용한 것이다. 계산 상수는 `web/src/server/ai-pricing.ts`(코드 상수, 4.3절 `pricing`과 같은 이유). 선차감과 정산 규칙은 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:97-104`를 따른다.
 
 | 작업 | 선차감(예상) | 정산 | 상용 경로 예 | 오픈소스 경로 예 | 멱등 키 |
 |---|---|---|---|---|---|
@@ -240,7 +240,7 @@ ID 접두사 `PB`(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md` 1장 SQLS
 | AI 채팅 1턴 | 3 | 실제 토큰 × 단가 + Dify 보조 노드 오버헤드 0.5, 올림. 최소 1, 상한 5(초과분은 운영사 부담) | 원고 근거 질문 약 3~5 | 약 1~2 | `conv:<id>:turn:<n>` |
 | 받아쓰기(구간 120초 이하) | 구간 길이(분) × 단가, 구간마다 올림 | 실제 `audio_seconds` | 60초 3 / 120초 6 | 60초 1 / 120초 1 | `voice:<voice_job_id>` |
 | 답변 읽어 주기 TTS | 답변 글자 수 × 단가, 천 자 단위 올림 | 실제 `characters` | 600자 5 | 600자 1 | `voice:<voice_job_id>` |
-| 원고 낭독·오디오북 미리듣기 | 본문 글자 수 × TTS 단가, 천 자 단위 올림 | 실제 `characters` | 8,000자 40 | 8,000자 8 | `voice:<voice_job_id>`(= 요청 `request_id`) |
+| 원고 낭독·오디오북 미리듣기 | 본문 글자 수 × 낭독 단가(천 자당 ElevenLabs 8 / 오픈소스 1), 천 자 단위 올림. ElevenLabs 낭독은 코어 지표 5가 아니라 제품 단가 8(2026-10-14: Multilingual 원가가 크레딧당 22.4원으로 Basic 허용 원가 12.9원을 넘는다, `Price_Plans/flora-publishing/PRICE_PLAN.md` 3.2절) | 실제 `characters` | 8,000자 64 | 8,000자 8 | `voice:<voice_job_id>`(= 요청 `request_id`) |
 | 낭독 재생·재다운로드, 같은 본문 해시 재요청 | 0 | - | - | - | - |
 | 자료 색인(파일 1개) | 1, 10만 토큰마다 +1 | 실제 토큰 | 해당 없음(임베딩은 오픈소스 고정) | 1~2 | `rag:<document_id>` |
 | 설정집 만들기(ingest) | 3 | 실제 사용량, 최소 1 상한 10 | 약 3 | 약 1 | `run:<ai_run_id>` |
@@ -372,13 +372,13 @@ AI 대화 추가 규칙(PB-F-054의 근거):
 | D5 | 판매·유통 | (a) 없음 (b) 공개 책 페이지만(Phase 2) (c) 판매·정산 | (b) | 분석:269-273 |
 | D6 | 카카오 로그인 | (a) 이메일 + Google (b) 카카오 추가 | 닫힘(2026-10-14): 결정 22로 C1 확정. 공개 베타까지는 (a)(Stage B), 카카오는 G2 통과 후 C1(P1, PB-06-057). 카카오 이메일 정책은 8.1절 D20 | 분석:275-279, 확정 결정 22 |
 | D7 | LLM 전략 | 공용 LLM 게이트웨이가 "Anthropic + OpenRouter 폴백, 2모드 노출"로 이미 정해져 있다(`SHARED_MODULES.md:204`) | 닫힘(2026-10-13): 확정 결정 17. 기능별 체인은 02장 5.1절(Claude → ChatGPT → Gemini → 오픈소스). "빠름/고품질" 2모드는 모델 선택이 아니라 프롬프트·단가 모드로 남긴다 | 분석:251-255 |
-| D8 | 크레딧 단가·월 크레딧 | 4.3절 제안값 | 출시 전 실제 토큰 원가로 재산정 | 제안 |
+| D8 | 크레딧 단가·월 크레딧 | 4.3절 제안값 | 출시 전 실제 토큰 원가로 재산정. 결정됨(2026-10-14, Price_Plans 반영): 섹션 집필 quality 2 → 3. 표지 단가는 D11 모델 확정 후 | 제안 |
 | D9 | Free의 업로드·전체 생성 허용 | (a) v2처럼 막음 (b) 크레딧이 비용을 막으므로 허용 | (a)로 시작(유료 전환 동기). 업로드 사용률 KPI가 목표 미달이면 (b) | `Flora-v2/PRD.md:313-314` |
 | D10 | 모놀리스 스키마 | `public`(코어 lite와 같음) | 사용자 최종 확인 대기 | 작업 지시, `MONOLITH_CORE_LITE.sql:5` |
 | D11 | 표지 이미지 모델 | fal 안의 모델 1~2개 | 출시 전 한글 제목 없는 표지 품질 비교 후 1개 | 분석:104 "제공자는 1~2개로 축소" |
 | D12 | 원고의 개인정보 분류와 오픈소스 강제 범위(`contains_pii` 라우팅) | (a) 기본 비강제 + 국외 이전 동의 + 이용자 선택 시 책 단위 오픈소스 전용 (b) 전 책 오픈소스 강제(`force_open_source`) (c) 항상 상용 | (a). 6.1절. (b)를 고르면 02장 5.1절 `publishing.*`, `chat` 행을 `open_source` + `force_open_source=true`로 바꾸고 초안 품질 평가셋(PB-06-047)을 오픈소스 모델로 다시 통과시켜야 한다. 책 단위 스위치를 `book_info` 키로 둘지 전용 컬럼(`books.ai_open_source_only`)으로 승격할지도 이 결정에서 닫는다(승격하면 PB-06-001 후속 마이그레이션) | `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:291` |
 | D13 | 단건 LLM 호출 경로와 스트리밍 | (a) ai-service 그래프 `publishing.assist`로 이전하고 그래프 SSE 중계를 코어에 요청 (b) 기존 TS 게이트웨이 직접 호출 유지 | (a)(제안). 그래프 SSE가 공용 계약에 없다(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:149-158`). 지원되기 전에는 Route Handler가 `GET /graphs/runs/{id}`로 완성본을 받아 SSE로 흘려보낸다(첫 토큰 목표 완화). 코어 요청 R9 | 02장 5절 |
-| D14 | AI·음성 크레딧 단가 | 4.6절 제안값(초안 그래프 2/4, 채팅 3, 설정집 3 등) | 출시 전 `core.ai_usage` 원가로 재산정. 토큰 원가가 단가보다 크면 정산 상한을 조정 | 4.6절 |
+| D14 | AI·음성 크레딧 단가 | 4.6절 제안값(초안 그래프 2/4, 채팅 3, 설정집 3 등) | 출시 전 `core.ai_usage` 원가로 재산정. 토큰 원가가 단가보다 크면 정산 상한을 조정. 결정됨(2026-10-14, Price_Plans 반영): 원고 낭독 ElevenLabs 천 자당 5 → 8. 나머지는 실측 후 | 4.6절 |
 | D15 | 낭독·미리듣기 보이스와 ElevenLabs 데이터 보관 | (a) ElevenLabs 기본 보이스 1종 + 오픈소스 보이스 1종 고정 (b) 이용자 선택. 입력 보관·학습 사용·제로 리텐션 옵션 여부 | (a). 보이스 id는 환경변수(02장 8절). 오픈소스 보이스는 `VOICE_ARCHITECTURE.md` 4.1절 후보 중 코드·가중치 라이선스와 한국어 낭독 품질을 확인해 고른다(`docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:63-73`). 생성 음성의 상업 이용 조건(미리듣기 파일을 이용자가 배포해도 되는지)과 데이터 보관 조건은 ElevenLabs 계약으로 구현 시 확인 | `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:81-83` |
 | D16 | 동의 증빙 저장 위치 | (a) 코어 `ai_org_settings` + `audit_log`(제품 AI 표 없음) (b) 제품 `publishing.consents` 표 추가(astro-ai 방식) | (a)(제안: 제품 AI 표는 꼭 필요할 때만, `AI_ARCHITECTURE.md:165`). `audit_log` 보존은 2년(제안, 5절)이라 분쟁 증빙 기간이 부족하면 (b)로 전환하고 PB-06-001 후속 마이그레이션 | 05장 6절 |
 | D17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md:11`). PB-06-039에서 확인 결과를 기록. 앱 화면의 주 레퍼런스는 Atlassian(03장 3.2절) |

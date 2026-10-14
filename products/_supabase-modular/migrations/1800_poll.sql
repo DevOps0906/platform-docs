@@ -1537,17 +1537,18 @@ on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind
   set mode = excluded.mode, chain = excluded.chain, force_open_source = excluded.force_open_source;
 
 -- 19.2 플랜 크레딧과 AI 키(있으면 병합, 없으면 아무 일도 하지 않음)
+--   pro/business 의 max_events, polls_per_event 는 -1(무제한) 대신 숫자 한도(2026-10-14, 01_PRD.md 4장).
 update core.plans
    set signup_credits = 100,
        features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 100, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 5, "voice_question": true, "audience_voice_per_event": 20, "audience_voice_per_participant": 5, "event_wiki": true, "materials_max_docs": 10, "materials_max_mb": 20}'::jsonb
  where app_id = 'poll' and code = 'free';
 update core.plans
    set monthly_credits = 1000,
-       features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 300, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 20, "voice_question": true, "audience_voice_per_event": 100, "audience_voice_per_participant": 10, "event_wiki": true, "materials_max_docs": 50, "materials_max_mb": 200}'::jsonb
+       features = features || '{"max_events": 500, "polls_per_event": 200, "ai_chat": true, "ai_chat_turns_per_day": 300, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 20, "voice_question": true, "audience_voice_per_event": 100, "audience_voice_per_participant": 10, "event_wiki": true, "materials_max_docs": 50, "materials_max_mb": 200}'::jsonb
  where app_id = 'poll' and code = 'pro';
 update core.plans
    set monthly_credits = 5000,
-       features = features || '{"ai_chat": true, "ai_chat_turns_per_day": 1000, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 100, "voice_question": true, "audience_voice_per_event": 500, "audience_voice_per_participant": 20, "event_wiki": true, "materials_max_docs": 200, "materials_max_mb": 1000}'::jsonb
+       features = features || '{"max_events": 2000, "polls_per_event": 500, "ai_chat": true, "ai_chat_turns_per_day": 1000, "voice_chat": true, "qna_assist": true, "qna_assist_runs_per_event": 100, "voice_question": true, "audience_voice_per_event": 500, "audience_voice_per_participant": 20, "event_wiki": true, "materials_max_docs": 200, "materials_max_mb": 1000}'::jsonb
  where app_id = 'poll' and code = 'business';
 
 -- 19.3 체인 검사: 제공자 행이 있을 때만(seed 전에 적용되는 배포 순서에서도 실패하지 않게) 존재·종류·오픈소스 모드를 확인한다.

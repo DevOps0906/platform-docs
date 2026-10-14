@@ -1,6 +1,6 @@
 -- =====================================================================
 -- seed.sql (nomad-video 모놀리스)
--- apps 1행, 플랜 4개(PRD_pricing.md 정본, 확정 결정 8), 크레딧팩 4개 + Advanced 30% 할인팩 4개, video 배치 대가성 문구 기본값.
+-- apps 1행, 플랜 4개(PRD_pricing.md 정본, 확정 결정 8), 크레딧팩 4개 + Advanced 20% 할인팩 4개(2026-10-14 30% → 20%), video 배치 대가성 문구 기본값.
 -- 정본: NOMAD Shorts Maker/PRD_pricing.md:116-155. Track F 는 확정 결정 7 로 추가(모듈러 seed.sql:211-212 와 같게 Pro 이상).
 -- features 키 해석은 docs/products/nomad-video/01_PRD.md 4장(AI 키 4개 ai_chat, ai_chat_turns_per_day, voice_chat, ai_script 는 2026-10-13 추가). 반복 실행 가능(upsert).
 -- AI 라우팅 기본값 17행과 체인 검사는 파일 끝.
@@ -21,23 +21,23 @@ insert into public.plans (app_id, code, name, price_krw, billing_interval, month
    '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 15, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads","naver_clip"], "brandconnect_clip": true, "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "bling_monthly_limit": 20, "team_members": 1, "priority_render": true, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}',
    false, true, 2),
   ('video', 'advanced', 'Advanced', 149000, 'month', 5000, 0, false,
-   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 40, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads","naver_clip"], "brandconnect_clip": true, "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "react_flow_full": true, "bling_monthly_limit": -1, "team_members": 5, "api_access": true, "agency": true, "priority_render": true, "credit_discount_pct": 30, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}',
+   '{"tracks": ["A","B","C","D","E","F"], "languages": ["KO","JA","EN"], "max_channels": 40, "watermark": false, "platforms": ["youtube","instagram","tiktok","threads","naver_clip"], "brandconnect_clip": true, "radar": ["playboard","channel_finder","bling"], "compliance": true, "silence_cut": true, "layer_composite": true, "coupang_landing": true, "suno": true, "osmu": true, "react_flow_full": true, "bling_monthly_limit": 100, "team_members": 5, "api_access": true, "agency": true, "priority_render": true, "credit_discount_pct": 20, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "ai_script": true}',
    false, true, 3)
 on conflict (app_id, code) do update
   set name = excluded.name, price_krw = excluded.price_krw, billing_interval = excluded.billing_interval,
       monthly_credits = excluded.monthly_credits, signup_credits = excluded.signup_credits, carry_over = excluded.carry_over,
       features = excluded.features, is_default = excluded.is_default, is_active = excluded.is_active, sort_order = excluded.sort_order;
 
--- 크레딧팩: 정가 4종(PRD_pricing.md:149-154). adv_* 4종은 Advanced 30% 할인가. 서버(createOrder)가 Advanced 조직에만 adv_* 를 허용한다.
+-- 크레딧팩: 정가 4종(PRD_pricing.md:149-154). adv_* 4종은 Advanced 20% 할인가(2026-10-14, Price_Plans/nomad-video/PRICE_PLAN.md 10장). 서버(createOrder)가 Advanced 조직에만 adv_* 를 허용한다.
 insert into public.credit_packs (app_id, code, name, credits, price_krw, is_active, sort_order) values
   ('video', 'pack_500',      '500 크레딧',              500,  15000,  true, 1),
   ('video', 'pack_1000',     '1,000 크레딧',            1000, 28000,  true, 2),
   ('video', 'pack_3000',     '3,000 크레딧',            3000, 75000,  true, 3),
   ('video', 'pack_5000',     '5,000 크레딧',            5000, 110000, true, 4),
-  ('video', 'adv_pack_500',  '500 크레딧 (Advanced)',   500,  10500,  true, 11),
-  ('video', 'adv_pack_1000', '1,000 크레딧 (Advanced)', 1000, 19600,  true, 12),
-  ('video', 'adv_pack_3000', '3,000 크레딧 (Advanced)', 3000, 52500,  true, 13),
-  ('video', 'adv_pack_5000', '5,000 크레딧 (Advanced)', 5000, 77000,  true, 14)
+  ('video', 'adv_pack_500',  '500 크레딧 (Advanced)',   500,  12000,  true, 11),
+  ('video', 'adv_pack_1000', '1,000 크레딧 (Advanced)', 1000, 22400,  true, 12),
+  ('video', 'adv_pack_3000', '3,000 크레딧 (Advanced)', 3000, 60000,  true, 13),
+  ('video', 'adv_pack_5000', '5,000 크레딧 (Advanced)', 5000, 88000,  true, 14)
 on conflict (app_id, code) do update
   set name = excluded.name, credits = excluded.credits, price_krw = excluded.price_krw, is_active = excluded.is_active, sort_order = excluded.sort_order;
 

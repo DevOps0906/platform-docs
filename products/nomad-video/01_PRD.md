@@ -81,7 +81,7 @@
 | VD-F-003 | 플랜 게이팅 | 디벨롭 | 서버가 `entitled_plan_code` + `plans.features`로 Track, 언어, 채널 수, 플랫폼, 레이더 범위를 판정. DB도 `video.org_has_feature`로 Track D/F 쓰기를 막는다 | Starter 조직이 Track B 생성 요청 시 403 `VD009`. Starter가 `longform_projects` 직접 INSERT 시 42501 | PRC:116-143, SM #13 |
 | VD-F-010 | 플레이보드 랭킹 | 디벨롭 | KR/US/JP x 카테고리 x realtime/daily/weekly, 24시간 주기 수집. `weighted_score = views_24h x growth_rate 가중치`. 성장률을 계산할 수 없으면 `growth_rate=null`, `is_estimated=true`로 표시하고 난수를 쓰지 않는다 | 수집 행에 난수 지표 0건. UI에 "추정" 배지 | PRD 3-1, SM #17 |
 | VD-F-011 | 채널파인더 | 유지 | 구독자 상한, 최근 평균 조회수 하한, 기간 필터. 등급 S(>=15) A(10~14) B(5~9) C(2~4) D/F(<2) | 같은 입력에 같은 등급(단위 테스트) | PRD 3-2 |
-| VD-F-012 | 블링 리포트 | 유지 | 주제 점수 0~100, KO/JA/EN 수익 추정, GEO 키워드, 대본 구조, 추천 Track. 수익 추정에는 근거 출처 1개 이상 필수(DB CHECK). 월 한도 `bling_monthly_limit`(Pro 20, Advanced 무제한) | 출처 없는 리포트 저장 시 23514. Pro 21번째 요청 402가 아니라 429 `VD012` | PRD 3-3, MA:556 |
+| VD-F-012 | 블링 리포트 | 유지 | 주제 점수 0~100, KO/JA/EN 수익 추정, GEO 키워드, 대본 구조, 추천 Track. 수익 추정에는 근거 출처 1개 이상 필수(DB CHECK). 월 한도 `bling_monthly_limit`(Pro 20, Advanced 100. 2026-10-14 무제한 폐지, Price_Plans 반영) | 출처 없는 리포트 저장 시 23514. Pro 21번째 요청 402가 아니라 429 `VD012` | PRD 3-3, MA:556 |
 | VD-F-013 | 주제 점수 게이트 | 유지 | Track C Mode1, Track D는 점수 60 미만이면 생성 거부하고 대안 주제 3개 제시 | 점수 59 요청 시 409 `VD010` + `alternatives` 3개 | PRD:225-226, :247 |
 | VD-F-020 | 소싱 | 통합 | 도우인/샤오홍슈/YouTube/TikTok URL. 도메인 허용 목록, yt-dlp 인자 앞 `--`, 하위 프로세스 타임아웃 300초(제안). Track A 60초 이내·좋아요 6K+, Track B 120초 이내·3K+ 권장 필터. 사용자가 권리 근거(`rights_basis`) 선택 필수. pHash 중복 차단 | 허용 목록 밖 URL 422. 같은 원본 재요청 시 기존 소스 반환 | PRD 4-5장, BS #19, YSM #14 |
 | VD-F-021 | 원본 24시간 삭제 | 유지 | 원본은 `ready` 후 24시간 뒤 `purge_expired_sources()`로 표시하고 워커가 Storage 객체 삭제 | `purge_after` 경과 10분 내 status=purged, 객체 없음 | PRD:706, CORE_SPEC 10장 |
@@ -139,14 +139,14 @@
 
 ## 4. 요금과 크레딧
 
-정본: PRC(확정 결정 8). 모듈러 `seed.sql:209-223`, 모놀리스 `supabase/monolith/seed.sql`과 같다. Track F는 확정 결정으로 추가된 Track이라 PRC에 없다. E와 같은 Suno 엔진을 쓰므로 Pro 이상으로 둔다(모듈러 seed와 같음, 제안).
+정본: PRC(확정 결정 8). 가격은 모두 VAT 포함(B2C SaaS, 2026-10-14 `Price_Plans/_common/PRICING_PRINCIPLES.md` 7장). 단계별 가격 계획(런칭 할인, 연간 결제, 중·장기 인상)은 `Price_Plans/nomad-video/PRICE_PLAN.md` 6장이며 이 표를 바꾸지 않는다. 모듈러 `seed.sql:209-223`, 모놀리스 `supabase/monolith/seed.sql`과 같다. Track F는 확정 결정으로 추가된 Track이라 PRC에 없다. E와 같은 Suno 엔진을 쓰므로 Pro 이상으로 둔다(모듈러 seed와 같음, 제안).
 
 | 코드 | 가격 | 월 크레딧 | 가입 크레딧 | 이월 | 주요 features |
 |---|---|---|---|---|---|
 | starter(기본) | 0원 | 0 | 100(1회) | 없음 | tracks A, KO, 채널 1, watermark, youtube |
 | basic | 49,000원/월 | 1,200 | 0 | 불가 | A~C, KO, 채널 5, 플레이보드, compliance, 무음컷, 쿠팡 랜딩 |
 | pro | 99,000원/월 | 3,000 | 0 | 불가 | A~F, KO/JA/EN, 채널 15, 5개 플랫폼(네이버 클립 포함), 레이더 전체, 레이어, Suno, OSMU, 블링 20회, 브랜드커넥트 클립 캠페인 |
-| advanced | 149,000원/월 | 5,000 | 0 | 불가 | Pro + 채널 40, 팀 5인, React Flow, API, 블링 무제한, 크레딧팩 30% 할인, 대행 운영(`agency`) |
+| advanced | 149,000원/월 | 5,000 | 0 | 불가 | Pro + 채널 40, 팀 5인, React Flow, API, 블링 월 100회, 크레딧팩 20% 할인, 대행 운영(`agency`) |
 
 `core.plans.features` 키 해석(서버만 읽는다):
 
@@ -162,11 +162,11 @@
 | `radar` | false 또는 text[] | playboard / channel_finder / bling |
 | `compliance` | bool | LLM 판정 단계 사용. false여도 규칙 단계는 필수(제안) |
 | `silence_cut`, `layer_composite`, `osmu`, `suno`, `coupang_landing` | bool | 해당 기능 |
-| `bling_monthly_limit` | int | 월 블링 리포트 수, -1 무제한, 키 없음 0 |
+| `bling_monthly_limit` | int | 월 블링 리포트 수, 키 없음 0. -1(무제한)은 쓰지 않는다(2026-10-14, `Price_Plans/_common/PRICING_PRINCIPLES.md` 6장 무제한 금지). Advanced 100 |
 | `team_members` | int | 조직 활성 멤버 상한 |
 | `priority_render` | bool | BullMQ priority 1(기본 100) |
 | `react_flow_full`, `api_access` | bool | Phase 2 기능 |
-| `credit_discount_pct` | int | 30이면 `adv_pack_*` 구매 허용 |
+| `credit_discount_pct` | int | 0보다 크면 `adv_pack_*` 구매 허용. Advanced 20(2026-10-14, 30에서 변경) |
 | `ai_chat` | bool | AI 채널 코치 채팅 허용. 키가 없으면 true로 읽는다 |
 | `ai_chat_turns_per_day` | int | 사용자당 하루 채팅 턴 상한(공정 사용). 키가 없으면 200(제안) |
 | `voice_chat` | bool | 음성 대화·받아쓰기 허용. 키가 없으면 true |
@@ -196,7 +196,7 @@
 
 예: Track A 60초, 3언어 = 소싱 1 + STT 5 + TTS 12 + 무음컷 2 + 레이어 3 + 인코딩 9 = 32크레딧(업로드·검사 별도).
 
-크레딧팩(PRC:149-154): pack_500 15,000원 / pack_1000 28,000원 / pack_3000 75,000원 / pack_5000 110,000원. Advanced 전용 adv_pack 4종 10,500 / 19,600 / 52,500 / 77,000원. 모듈러 seed에도 adv_pack이 반영되었다(2026-10-13, 모놀리스 seed와 일치).
+크레딧팩(PRC:149-154): pack_500 15,000원 / pack_1000 28,000원 / pack_3000 75,000원 / pack_5000 110,000원. Advanced 전용 adv_pack 4종 12,000 / 22,400 / 60,000 / 88,000원(정가의 20% 할인. 2026-10-14 30% → 20%: 30% 할인팩은 상용 TTS·채팅 작업에서 70% 매출총이익률에 못 미칠 수 있다, `Price_Plans/nomad-video/PRICE_PLAN.md` 3.2절). 모듈러 seed에도 adv_pack이 반영되었다(2026-10-13, 모놀리스 seed와 일치).
 
 AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `ai_script`)는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/seed.sql`의 플랜 4행에, 모듈러는 `docs/products/_supabase-modular/migrations/1200_video.sql` 11절의 병합 UPDATE에 있다(모듈러 `seed.sql` 반영은 06장 6절 R-V1). 플랜 가격·월 크레딧·팩은 바꾸지 않았다.
 
@@ -353,7 +353,7 @@ nomad-blog의 채널 자동 게시 고지(`ch-2026-10-v1`)와 같은 구조다. 
 | D-1 | 모놀리스 스키마 | (a) `public`(코어 lite 그대로) (b) 제품 스키마 | (a). 사용자 최종 확인 대기 |
 | D-2 | Track F 허용 플랜 | (a) Pro 이상(seed 현재값) (b) Basic 포함 | (a). Suno 엔진을 쓰는 E와 같은 등급 |
 | D-3 | Starter compliance | (a) 규칙 단계만 필수 (b) 검사 없음(PRC 그대로) | (a). "업로드 전 검증 필수"(PRD:710)와 플랜표(PRC:28) 충돌을 비용 0인 규칙 단계로 해소 |
-| D-4 | Advanced 30% 할인 | (a) adv_pack 4종 seed 추가 (b) 코어 주문에 할인 지원 | (a). 코어 변경 없음. 모듈러 seed 갱신은 2026-10-13 반영 완료 |
+| D-4 | Advanced 30% 할인 | (a) adv_pack 4종 seed 추가 (b) 코어 주문에 할인 지원 | (a). 코어 변경 없음. 모듈러 seed 갱신은 2026-10-13 반영 완료. 할인율은 결정됨(2026-10-14, Price_Plans 반영): 20%(12,000 / 22,400 / 60,000 / 88,000원) |
 | D-5 | 네이버 로그인 | (a) MVP 제외 (b) naver_id 매핑 + 명시적 연결 | (a). Phase 2에서 (b), 이메일 자동 병합 금지(YSM #3) |
 | D-6 | 대용량 미디어 저장소 | (a) Supabase `video-media` 버킷 5GB (b) 외부 객체 저장소(R2 등) | (a)로 시작, 월 저장량 1TB 초과 시 (b) 검토(제안) |
 | D-7 | Track A 원본 권리 | 법률 검토 전 출시 범위 | 권리 근거 선언 + 신고 처리 절차를 갖추고 출시, 법률 검토 병행 |

@@ -188,7 +188,7 @@ AI·음성·3D·디자인 시스템 작업(041~056)은 리뷰 작업이 아니�
 
 | 요청 | 대상 | 이유 |
 |---|---|---|
-| 모듈러 `seed.sql`에 video `adv_pack_*` 4행 추가 | `_supabase-modular/seed.sql` | Advanced 30% 할인(PRD_pricing.md:149-154). 모놀리스 seed에는 반영함. 해결(2026-10-13 코어 반영 완료): 모듈러 seed에도 추가됨 |
+| 모듈러 `seed.sql`에 video `adv_pack_*` 4행 추가 | `_supabase-modular/seed.sql` | Advanced 30% 할인(PRD_pricing.md:149-154, 2026-10-14 20%로 변경, 01장 4절). 모놀리스 seed에는 반영함. 해결(2026-10-13 코어 반영 완료): 모듈러 seed에도 추가됨 |
 | `affiliate_disclosures.placement`에 `landing`(랜딩·링크인바이오) 추가 검토 | 0006 | 현재 `video_description` 문구 재사용 |
 | `storage` 대용량 미디어 버킷을 코어 표준으로 정의할지 결정 | 0005 | 제품 조각이 `video-media`(5GB, 서버 쓰기만)를 만든다 |
 | `confirm_payment_order` 금액 불일치 시 failed 기록(롤백되지 않게) | 0003 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 이를 별도 호출하고 운영 알림·취소 |

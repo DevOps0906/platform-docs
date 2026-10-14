@@ -30,18 +30,18 @@ Price_Plans/
 | 플랫폼 | 유형 | 가격 플랜 | 상태 | 현재 요금 정본 |
 |---|---|---|---|---|
 | Web-App-Agency | 서비스(대행) | [`Web-App-Agency/PRICE_PLAN.md`](Web-App-Agency/PRICE_PLAN.md) | 초안 | 이 폴더가 정본(제품 DB 없음) |
-| admin-suite | 제품 SaaS | [`admin-suite/PRICE_PLAN.md`](admin-suite/PRICE_PLAN.md) | 미작성 | `products/admin-suite/01_PRD.md` 4장 |
-| astro-ai | 제품 SaaS | [`astro-ai/PRICE_PLAN.md`](astro-ai/PRICE_PLAN.md) | 미작성 | `products/astro-ai/01_PRD.md` 4장 |
-| flora-publishing | 제품 SaaS | [`flora-publishing/PRICE_PLAN.md`](flora-publishing/PRICE_PLAN.md) | 미작성 | `products/flora-publishing/01_PRD.md` 4장 |
-| live-poll | 제품 SaaS | [`live-poll/PRICE_PLAN.md`](live-poll/PRICE_PLAN.md) | 미작성 | `products/live-poll/01_PRD.md` 4장 |
-| microweb-studio | 제품 SaaS + 대행 | [`microweb-studio/PRICE_PLAN.md`](microweb-studio/PRICE_PLAN.md) | 미작성 | `products/microweb-studio/01_PRD.md` 4장 |
-| nomad-blog | 제품 SaaS | [`nomad-blog/PRICE_PLAN.md`](nomad-blog/PRICE_PLAN.md) | 미작성 | `products/nomad-blog/01_PRD.md` 4장 |
-| nomad-commerce | 제품 SaaS | [`nomad-commerce/PRICE_PLAN.md`](nomad-commerce/PRICE_PLAN.md) | 미작성 | `products/nomad-commerce/01_PRD.md` 4장 |
-| nomad-docs | 제품 SaaS | [`nomad-docs/PRICE_PLAN.md`](nomad-docs/PRICE_PLAN.md) | 미작성 | `products/nomad-docs/01_PRD.md` 4장 |
-| nomad-video | 제품 SaaS + 대행 | [`nomad-video/PRICE_PLAN.md`](nomad-video/PRICE_PLAN.md) | 미작성 | `products/nomad-video/01_PRD.md` 4장 |
-| stock-dashboard | 제품 SaaS | [`stock-dashboard/PRICE_PLAN.md`](stock-dashboard/PRICE_PLAN.md) | 미작성 | `products/stock-dashboard/01_PRD.md` 4장 |
-| study-note | 제품 SaaS | [`study-note/PRICE_PLAN.md`](study-note/PRICE_PLAN.md) | 미작성 | `products/study-note/01_PRD.md` 4장 |
-| toon-factory | 제품 SaaS | [`toon-factory/PRICE_PLAN.md`](toon-factory/PRICE_PLAN.md) | 미작성 | `products/toon-factory/01_PRD.md` 4장 |
+| admin-suite | 제품 SaaS | [`admin-suite/PRICE_PLAN.md`](admin-suite/PRICE_PLAN.md) | 초안 | `products/admin-suite/01_PRD.md` 4장 |
+| astro-ai | 제품 SaaS | [`astro-ai/PRICE_PLAN.md`](astro-ai/PRICE_PLAN.md) | 초안 | `products/astro-ai/01_PRD.md` 4장 |
+| flora-publishing | 제품 SaaS | [`flora-publishing/PRICE_PLAN.md`](flora-publishing/PRICE_PLAN.md) | 초안 | `products/flora-publishing/01_PRD.md` 4장 |
+| live-poll | 제품 SaaS | [`live-poll/PRICE_PLAN.md`](live-poll/PRICE_PLAN.md) | 초안 | `products/live-poll/01_PRD.md` 4장 |
+| microweb-studio | 제품 SaaS + 대행 | [`microweb-studio/PRICE_PLAN.md`](microweb-studio/PRICE_PLAN.md) | 초안 | `products/microweb-studio/01_PRD.md` 4장 |
+| nomad-blog | 제품 SaaS | [`nomad-blog/PRICE_PLAN.md`](nomad-blog/PRICE_PLAN.md) | 초안 | `products/nomad-blog/01_PRD.md` 4장 |
+| nomad-commerce | 제품 SaaS | [`nomad-commerce/PRICE_PLAN.md`](nomad-commerce/PRICE_PLAN.md) | 초안 | `products/nomad-commerce/01_PRD.md` 4장 |
+| nomad-docs | 제품 SaaS | [`nomad-docs/PRICE_PLAN.md`](nomad-docs/PRICE_PLAN.md) | 초안 | `products/nomad-docs/01_PRD.md` 4장 |
+| nomad-video | 제품 SaaS + 대행 | [`nomad-video/PRICE_PLAN.md`](nomad-video/PRICE_PLAN.md) | 초안 | `products/nomad-video/01_PRD.md` 4장 |
+| stock-dashboard | 제품 SaaS | [`stock-dashboard/PRICE_PLAN.md`](stock-dashboard/PRICE_PLAN.md) | 초안 | `products/stock-dashboard/01_PRD.md` 4장 |
+| study-note | 제품 SaaS | [`study-note/PRICE_PLAN.md`](study-note/PRICE_PLAN.md) | 초안 | `products/study-note/01_PRD.md` 4장 |
+| toon-factory | 제품 SaaS | [`toon-factory/PRICE_PLAN.md`](toon-factory/PRICE_PLAN.md) | 초안 | `products/toon-factory/01_PRD.md` 4장 |
 | website-floria | 마케팅 사이트 | [`website-floria/PRICE_PLAN.md`](website-floria/PRICE_PLAN.md) | 해당 없음(요금 없음) | `products/website-floria/01_PRD.md` 4장 |
 
 상태 값: 미작성 / 초안 / 검토 / 확정. 확정이 되면 아래 3장의 정본 반영 절차를 밟습니다.

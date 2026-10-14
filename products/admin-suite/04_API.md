@@ -18,7 +18,7 @@
 | AI·음성 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자는 Route Handler가 부른다(`docs/products/_platform-core/SECURITY_BASELINE.md:299`). 진입부는 다른 Route Handler와 같다: `requireSession(appId)` → `requireRole(appId, roles)`. 단 AI 경로는 역할 목록 대신 "허용 컬렉션이 1개 이상인 역할"을 `collections.json`으로 판정한다(SMS student는 거부) |
 | 서명 토큰 | `src/server/ai/token.ts`(admin-kit gateway)가 EdDSA JWT를 발급: `iss=<app>`, `aud=platform-ai:<app>`, `org`, `app`, `sub`(사용자 id), `conv`, `feat`, `scope`, `jti`, `iat`, `exp`(10분). org는 세션에서만 가져온다(`docs/products/_platform-core/AI_ARCHITECTURE.md:33-42`). 토큰 클레임에 역할을 넣지 않는다(역할은 FastAPI가 DB에서 확정, 02장 5.3절) |
 | AI 크레딧 | 해당 없음. 선차감·정산·환불 없음(01장 4.1절, D-10). 한도는 `features.ai_*` + `core.rate_limit_hit`. `CR001`은 발생하지 않는다 |
-| AI 레이트 리밋 | 키 `<app>:ai-chat:<user>` 20회/60초, `<app>:ai-chat-day:<user>` `ai_turns_per_day`/86400초, `<app>:voice-stt:<user>` 10회/60초, `<app>:ai-upload:<org>` 20회/3600초, `<app>:wiki-ingest:<org>` 5회/3600초(01장 4.1절) |
+| AI 레이트 리밋 | 키 `<app>:ai-chat:<user>` 20회/60초, `<app>:ai-chat-day:<user>` `ai_turns_per_day`/86400초, `<app>:ai-chat-month:<org>:<YYYYMM>` `ai_turns_per_month`/2678400초, `<app>:ai-chat-commercial:<org>:<YYYYMM>` `ai_commercial_turns_per_month`/2678400초(초과 시 오류 없이 오픈소스 경로, erp·sms만), `<app>:voice-stt:<user>` 10회/60초, `<app>:ai-upload:<org>` 20회/3600초, `<app>:wiki-ingest:<org>` 5회/3600초(01장 4.1절) |
 | 스트리밍 | 채팅은 SSE(`text/event-stream`): 이벤트 `delta`, `citations`, `fallback`, `done` / `error`. 응답 봉투 규칙은 JSON 응답에만 적용 |
 | 멱등 | 채팅 `request_id`(클라이언트 UUID)로 같은 질문 재전송 시 새 턴을 만들지 않고 이전 턴을 반환. 한도 카운트도 1회만 |
 
@@ -52,7 +52,7 @@
 |---|---|---|---|---|---|---|
 | `POST /api/ai/consent` (erp, sms만) | owner | `{ granted: boolean, noticeVersion }`(서버 상수와 같아야 함) | 204 | 없음 | 사용자 세션 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack, p_notice_version })` | 409 `CONSENT_VERSION_MISMATCH`, 403, hms는 라우트 없음(404) |
 | `POST /api/ai/conversations` | 허용 컬렉션 있는 역할, `ai_assistant` | `{ channel: 'text'\|'voice' }` | `{ conversationId }` | 없음 | `ai_conversations` INSERT(service_role, erp·sms는 `dify_user`=HMAC(org:user)) | 403 `AI_DISABLED`·`AI_NO_PERMISSION` |
-| `POST /api/ai/chat` | 대화 주인 | `{ conversationId, requestId, message(1..1000) }` | SSE `delta`, `citations`, `fallback`, `done` / `error` | erp, sms: Dify Chat API(`user=dify_user`, 입력 `platform_conversation_id`). Dify 장애 시와 **hms 항상** FastAPI `/tools/answer-direct`(scope `chat rag wiki`, `conv`=대화 id, `feat=admin.assistant`) | `rate_limit_hit` 3종, 사용자 `ai_messages` INSERT | 429 `AI_DAILY_LIMIT`/`RATE_LIMITED`, 422 `AI_PHI_BLOCKED`(hms), 403 `AI_NO_PERMISSION`, 404 대화, 409 `AI_CONVERSATION_CLOSED`, 503 `AI_UNAVAILABLE` |
+| `POST /api/ai/chat` | 대화 주인 | `{ conversationId, requestId, message(1..1000) }` | SSE `delta`, `citations`, `fallback`, `done` / `error` | erp, sms: Dify Chat API(`user=dify_user`, 입력 `platform_conversation_id`). Dify 장애 시와 **hms 항상** FastAPI `/tools/answer-direct`(scope `chat rag wiki`, `conv`=대화 id, `feat=admin.assistant`) | `rate_limit_hit` 3종, 사용자 `ai_messages` INSERT | 429 `AI_DAILY_LIMIT`/`AI_MONTHLY_LIMIT`/`RATE_LIMITED`, 422 `AI_PHI_BLOCKED`(hms), 403 `AI_NO_PERMISSION`, 404 대화, 409 `AI_CONVERSATION_CLOSED`, 503 `AI_UNAVAILABLE` |
 | `POST /api/ai/conversations/[id]/close` | 대화 주인 | - | 204 | - | `ai_conversations.status='closed'` | 404 |
 | `DELETE /api/ai/conversations/[id]` | 대화 주인 | - | 204 | erp, sms: Dify 대화 삭제 API(구현 시 확인) | 대화·메시지 삭제(service_role), `write_audit('ai.conversation.delete')` | 404 |
 | `GET /api/ai/knowledge/documents` | 앱 관리자 | `?collection=&status=` | 문서 목록(제목, 상태, 청크 수, 검수일) | - | `ai_documents` SELECT(service_role, 조직 필터) | 403 |
@@ -252,6 +252,7 @@ AI·음성 코어 RPC 인용(제품 AI RPC는 새로 만들지 않는다): `set_
 | 앱 코드 `AI_DISABLED` | 플랜 `ai_assistant`/`ai_voice`/`ai_wiki` 꺼짐 | 403 |
 | 앱 코드 `AI_NO_PERMISSION` | 역할이 읽을 수 있는 컬렉션이 없음, 비활성 사용자 | 403 |
 | 앱 코드 `AI_DAILY_LIMIT` | 하루 질문 한도 | 429 |
+| 앱 코드 `AI_MONTHLY_LIMIT` | 조직 월 질문 한도(`ai_turns_per_month`, erp·sms) | 429 |
 | 앱 코드 `AI_PHI_BLOCKED` | hms 질문에 환자 식별정보 패턴 | 422 |
 | 앱 코드 `AI_DOC_PII_DETECTED` | 문서에 개인정보(hms는 환자 정보) 패턴 | 422 |
 | 앱 코드 `AI_UNAVAILABLE` | 체인의 모든 제공자(hms는 전용 서버) 실패 | 503 |
