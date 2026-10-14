@@ -36,10 +36,12 @@ D:\WorkSpace\DEV\nomad-commerce\                            베이스를 복사�
 | 4 | project-profile 작성 | 6 |
 | 5 | 로컬 DB 기동과 SQL 적용 | 7 |
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
-| 7 | 작업(57개)을 task로 변환 | 9 |
+| 7 | 작업(60개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
-| - | AI 계층, 개발 위키, 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
-| - | 체크리스트 | 18 |
+| - | AI 계층, 개발 위키 | 11~12 |
+| - | 인증 단계(Mock → Google → 카카오·네이버) | 13 |
+| - | 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 14~18 |
+| - | 체크리스트 | 19 |
 
 ## 1. 개요
 
@@ -49,7 +51,7 @@ D:\WorkSpace\DEV\nomad-commerce\                            베이스를 복사�
 | 통합 원본 | Nomad-AI-Factory_V.2(기획 정본), nomad-ai-factory(v1), nomad-ai-commerce, sellingstudio(코드 베이스). 경로는 `D:\WorkSpace\platform\` 아래 각 폴더 |
 | 모듈러 앱 id / 스키마 | `commerce` / `commerce` (통합 DB를 쓸 때) |
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(`public` 스키마, 기획서 D-7) |
-| 개발 근거 | `docs/file/`의 산출물 24개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
+| 개발 근거 | `docs/file/`의 산출물 25개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
 | AI 범위 | 상세페이지 생성 그래프, 보조 AI 그래프, 마켓 규칙·상품 스펙 RAG, 마켓 규칙 위키, 셀러 어시스턴트 채팅(Dify), 음성(상품 설명 입력, 쇼츠 내레이션, 음성 대화) |
 | 경계 | 쇼츠 영상 렌더 엔진은 nomad-video 소유(Phase 2에 워커 API 호출). 이 폴더에서 구현하지 않습니다 |
 
@@ -131,7 +133,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/nomad-commerce/03_SCREENS_UX.md` | `docs/file/03-설계/03_SCREENS_UX.md` | DOC-DES-002 | 화면설계서 |
 | `docs/products/nomad-commerce/04_API.md` | `docs/file/03-설계/04_API.md` | DOC-DES-003 | 인터페이스설계서 |
 | `docs/products/nomad-commerce/05_DATA_MODEL.md` | `docs/file/03-설계/05_DATA_MODEL.md` | DOC-DES-004 | 데이터설계서 |
-| `docs/products/_platform-core/` 8개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~008 | 공용 코어 명세 |
+| `docs/products/_platform-core/` 9개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE, AUTH_ROADMAP) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(DOC-CORE-009 `AUTH_ROADMAP.md`는 2026-10-14 추가, 인증 단계) |
 | `docs/products/_design-guide/` 5개(DESIGN_PRINCIPLES, DESIGN_SYSTEM, HERO_3D, SKILLS, REFERENCES) | `docs/file/03-설계/디자인/` | DOC-DSN-001~005 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md 초기 템플릿 | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 디자인 토큰, 컴포넌트 명세 |
 | `docs/products/nomad-commerce/CLAUDE.md` | `docs/file/04-구현/CLAUDE.md` | DOC-IMP-001 | 개발지침 |
@@ -142,7 +144,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/nomad-commerce/supabase/monolith/migrations/0002_commerce_domain.sql` | `supabase/migrations/20261013000002_commerce_domain.sql` | - | DB |
 | `docs/products/nomad-commerce/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB |
 | `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
-| (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 24개 |
+| (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 25개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 채팅 앱 설정 |
 
 **문서 경로 보정**
@@ -187,12 +189,12 @@ D:\WorkSpace\DEV\nomad-commerce\
 │   │   ├── 00_MERGE_ANALYSIS.md      [묶음]
 │   │   └── reviews\Astro_AI.md, FortuneDocs.md   [묶음]
 │   ├── file\
-│   │   ├── _index.md                 [묶음] 산출물 등록부 완성본(24개)
+│   │   ├── _index.md                 [묶음] 산출물 등록부 완성본(25개)
 │   │   ├── README.md  _sources\      [베이스]
 │   │   ├── 01-관리\README.md, 06_AGENT_PLAN.md          [묶음]
 │   │   ├── 02-요구사항\01_PRD.md                         [묶음]
 │   │   ├── 03-설계\02~05 *.md                            [묶음]
-│   │   │   ├── 공용코어\ 8개                              [묶음]
+│   │   │   ├── 공용코어\ 9개                              [묶음]
 │   │   │   └── 디자인\ 5개 + DESIGN.md, COMPONENTS.md     [묶음]
 │   │   └── 04-구현\CLAUDE.md, 07_SOURCE_MIGRATION.md     [묶음]
 │   └── wiki\WIKI_SCHEMA.md, index.md, log.md, sources\  [묶음] 개발 위키
@@ -231,6 +233,7 @@ D:\WorkSpace\DEV\nomad-commerce\
 | 2 | `supabase start` | Docker로 로컬 Supabase 기동 |
 | 3 | `supabase db reset` | `migrations/`를 이름순(타임스탬프)으로 적용하고 `seed.sql`을 넣습니다 |
 | 4 | `supabase gen types typescript --local > apps/web/src/types/database.ts` | 타입 생성(경로 제안) |
+| 5 | `node scripts/dev/seed-users.mjs --app commerce` | 개발용 로그인 페르소나 시드(Stage A). 스크립트는 CM-06-007이 만들므로 그 전에는 건너뜁니다(13.2절) |
 
 - `core_lite`에는 SECTION 11(AI, pgvector)과 SECTION 12(음성)가 들어 있습니다. pgvector 확장은 Supabase에서 기본 제공되며 `extensions` 스키마에 생성됩니다.
 - 기획 단계 검증은 PGlite로 했습니다(`D:\WorkSpace\platform\docs\products\_tools-sqlcheck\check.mjs --vector`). 실제 Supabase(`db reset`)에서 한 번 더 확인하는 것이 첫 작업(CM-06-001)의 수용 기준입니다.
@@ -239,7 +242,7 @@ D:\WorkSpace\DEV\nomad-commerce\
 
 ## 8. 6단계: 착수 전 결정 확정
 
-`docs/file/02-요구사항/01_PRD.md` 8절의 결정 17개(D-1~D-17)를 확정합니다. 기획은 각 항목의 "권고"를 가정으로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
+`docs/file/02-요구사항/01_PRD.md` 8절의 결정 17개(D-1~D-17)와 8.1절의 인증 단계 결정 3개(D-18~D-20)를 확정합니다. 기획은 각 항목의 "권고"를 가정으로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
 
 | ID | 결정 | 확정 시점 |
 |---|---|---|
@@ -260,6 +263,9 @@ D:\WorkSpace\DEV\nomad-commerce\
 | D-15 | 이미지 생성(fal)과 국외 이전 동의 | AI 게이트(CM-06-046)와 법적 문서(CM-06-033) 전, 법무 확인 |
 | D-16 | Vision의 오픈소스 경로(멀티모달 서빙 여부) | 보조 AI 라우트(CM-06-011) 전 |
 | D-17 | AI 생성물 표시의 마켓 정책 | 출시 2주 전 |
+| D-18 | 카카오 이메일 정책(비즈 앱 `account_email` 필수 권장) | C1(CM-06-059) 전, G2 직후 |
+| D-19 | 네이버 로그인 경로(`custom:naver` / 서버 브리지) | C2(CM-06-060) 스파이크 결과 |
+| D-20 | 이메일+비밀번호 가입 유지 | G1 판정 전 |
 
 **산출물 승인 절차**
 1. 결정 결과를 해당 산출물에 반영하는 task를 만듭니다.
@@ -270,20 +276,20 @@ D:\WorkSpace\DEV\nomad-commerce\
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 CM-06-001~057, 모두 57개입니다. 그중 CM-06-043은 사람이 하는 디자인 비주얼 검토입니다.
+작업은 CM-06-001~060, 모두 60개입니다. 그중 CM-06-043은 사람이 하는 디자인 비주얼 검토입니다. CM-06-058~060은 2026-10-14에 더한 인증 단계 B·C1·C2 작업이고(`06_AGENT_PLAN.md` 8절), CM-06-007은 Stage A(Mock 로그인) 범위로 바뀌었습니다(13장).
 
 | 웨이브 | 작업 ID | 진입 조건 | 산출물 |
 |---|---|---|---|
 | W0 | 001, 004, 006, 008, 017, 041 | 없음 | DB 적용·타입(AI 기본값 포함), 앱 골격, 도메인 상수, 안전 fetch, 금지어 매처·규칙 파일, 디자인 레퍼런스(디자인 시스템 1단계) |
-| W1 | 002, 003, 005, 007, 015, 016, 021, 022, 045 | W0 | 모놀리스 스크립트, RLS 테스트, env, 인증, 렌더 템플릿, 변환, 마켓 어댑터 2개, AI 서비스 설치 |
+| W1 | 002, 003, 005, 007, 015, 016, 021, 022, 045 | W0 | 모놀리스 스크립트, RLS 테스트, env, 인증 Stage A(Mock 로그인·시드), 렌더 템플릿, 변환, 마켓 어댑터 2개, AI 서비스 설치 |
 | W1-D | 042 → 043 → 044(직렬) | 004, 041 | 디자인 시스템 2~4단계(토큰·기본 컴포넌트, 사람 검토, 정답 확정). 화면 작업의 진입 조건 |
 | W2 | 009, 010, 012, 025, 027, 032, 033, 046, 047 | W1, 화면은 044 | 계정, 생성 API, 워커 런타임, 결제, 셸, 랜딩, 법적 문서, AI 게이트, 마켓 규칙 원고 |
 | W3 | 014, 018, 019, 023, 024, 034, 036, 048, 056 | W2 | 이미지, 소싱, 업로드, 내보내기, 문구, CI, RAG 색인, 3D 히어로 |
 | W4 | 020, 026, 028, 029, 030, 031, 049, 051, 052, 053 | W3 | 소싱 API, 결제 E2E, 화면 4종, 위키 운영, 생성·보조 그래프, Dify 채팅, 채팅 패널 |
 | W5 | 011, 013, 050, 054 | W4 | 보조 AI 라우트, 상세페이지 파이프라인(그래프 연결), 공개 위키, 음성 대화·상품 음성 입력 |
 | W6 | 035, 055, 057 | W5 | 플로우 E2E, 쇼츠 내레이션, AI 보안 회귀. **MVP 출시 조건** |
-| W7 | 037 | W6 | 원본 아카이브 → 베타 |
-| W8 | 038, 039, 040 | 베타 출시 | Phase 2(쇼츠 영상 연동, 자동화, 모바일) |
+| W7 | 058(G1 통과 후 먼저), 037 | W6, 058은 사람의 G1 판정 | Google 로그인 전환(Stage B), 원본 아카이브 → 공개 베타 |
+| W8 | 038, 039, 040, 059·060(G2 통과 후) | 베타 출시, 059·060은 사람의 G2 판정 | Phase 2(쇼츠 영상 연동, 자동화, 모바일), 카카오(C1)·네이버(C2) 로그인 |
 
 ### 9.2 모델과 에이전트 매핑 (주 Opus, 부 Sonnet, 고문 Fable)
 
@@ -357,6 +363,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 7 | 완료: task status `done`, 웨이브의 모든 task가 끝나면 다음 웨이브 | - |
 
 - **MVP 출시 조건**: W6까지 완료, AI 보안 회귀(CM-06-057) 통과, `06_AGENT_PLAN.md` 7절 완료 정의를 충족해야 합니다.
+- **공개 베타 조건**: 사람이 G1을 판정한 뒤 W7의 CM-06-058(Google 로그인, Stage B)을 끝내야 합니다. 그 전까지 배포 환경에는 로그인 수단이 없으므로 외부 사용자를 받지 않습니다(13장).
 - 구현이 산출물과 달라지면 코드를 조용히 맞추지 말고 산출물 갱신 task를 따로 만듭니다(베이스 `orchestrator-rules.md` §4.5).
 
 ## 11. AI 계층 구축 (nomad-commerce)
@@ -391,13 +398,137 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 - 위키는 산출물을 대체하지 않습니다. 충돌하면 `docs/file/`이 정본입니다.
 - 키·토큰 값과 개인정보는 위키에 쓰지 않습니다.
-- 초기 페이지(`sources/*.md` 24개)는 setup 시 함께 들어옵니다.
+- 초기 페이지(`sources/*.md` 25개)는 setup 시 함께 들어옵니다.
 
-## 13. 메인 디자인과 디자인 시스템
+## 13. 인증 단계: Mock → Google → 카카오·네이버
 
-디자인 작업 순서: 13.3 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009, 확정 결정 22). 제품 적용값은 `docs/file/02-요구사항/01_PRD.md` CM-F-001·8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙" 절입니다.
 
-### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
+처음 개발은 Mock 로그인으로 진행하고, MVP 기능이 모두 잘 동작하면 Google 로그인을 붙이고, 그것이 안정되면 카카오·네이버 로그인을 붙입니다. 세 단계 모두 세션은 실제 Supabase JWT라서 로그인 뒤 코드(권한, RLS, 크레딧)는 바뀌지 않습니다. 기존 기획의 MVP 카카오 로그인은 이 결정으로 C1 단계로 옮겼습니다.
+
+### 13.1 단계 요약
+
+| 단계 | 언제 | 켜지는 로그인 | 다음 단계 게이트(사람 판정) | 작업 |
+|---|---|---|---|---|
+| A Mock | W0부터 W6까지(MVP 기능 개발) | 로컬 시드 페르소나 원클릭 로그인. 실제 제공자 버튼 없음. 화면 상단 `MOCK AUTH · 로컬 전용` 배지 | G1(13.3절) | CM-06-007(W1) |
+| B Google | G1 통과 후, 공개 베타 전 | Google + 이메일(가입·인증 메일·비밀번호 재설정). 배포 환경에서 Mock 차단 | G2(13.5절) | CM-06-058(P0, Fable, W7 맨 앞) |
+| C1 카카오 | G2 통과 후 | 카카오(Supabase 기본 제공자) | 7.1.3절 수용 기준 | CM-06-059(P1, Opus, W8) |
+| C2 네이버 | G2 통과 후(C1과 병렬) | 네이버(`custom:naver` 또는 서버 브리지, 스파이크로 결정) | 7.2.4절 수용 기준 | CM-06-060(P1, Fable, W8) |
+
+### 13.2 Stage A 로컬 실행 순서
+
+CM-06-007(W1)이 끝나야 시드 스크립트와 개발용 로그인이 생깁니다. 그 전 W0 작업은 SQL·단위 테스트로만 검증합니다.
+
+| 순서 | 명령 / 동작 | 확인 |
+|---|---|---|
+| 1 | `supabase start` | 로컬 Supabase(`http://127.0.0.1:54321`) 기동 |
+| 2 | `supabase db reset` | 마이그레이션·seed 적용(7절) |
+| 3 | `apps/web/.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD=<로컬 전용 임의 값>`, `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` | `DEV_SEED_PASSWORD`는 `NEXT_PUBLIC_`을 붙이지 않습니다. 원격 Supabase URL이면 Mock 모드 기동이 실패합니다 |
+| 4 | `node scripts/dev/seed-users.mjs --app commerce` | 페르소나 표 출력(이메일, 조직 id, 플랜, 잔액. 비밀번호 없음). 두 번 실행해도 크레딧 1회 |
+| 5 | `pnpm dev` → `/login` | "개발용 로그인" 패널에서 `owner` 선택 → `/dashboard`, 플랜 `free`, 잔액 15 |
+| 6 | E2E | Playwright `globalSetup`이 페르소나별로 `/api/dev/login`을 호출해 `storageState`를 저장합니다(CM-06-035) |
+
+페르소나: `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops` + 제품 행 `pro`, `ai_consent`(제안). 기대 결과는 `05_DATA_MODEL.md` 10절입니다. commerce는 open 앱이라 `pending` 페르소나를 만들지 않습니다.
+
+### 13.3 G1 체크리스트(A → B, 사람이 판정)
+
+- [ ] `06_AGENT_PLAN.md` 2절 MVP P0 기능 작업 완료(인증 B·C 작업 제외)
+- [ ] 핵심 플로우 E2E(CM-06-035) 녹색, Mock 페르소나 `storageState`로 실행
+- [ ] RLS 스모크(CM-06-003) 전 항목 통과, `outsider` 교차 테넌트 거부 확인
+- [ ] 결제 E2E(CM-06-026, Toss 테스트 키) 녹색
+- [ ] CI(CM-06-036): 인증 모듈 밖 단계 분기 0건, `nomad_role`·`nomad_plan`·`mock-auth` 0건, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패 확인
+- [ ] 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트
+- [ ] 결과를 CM-06-058 task `log.md`에 `[DECISION] G1 통과`로 기록
+
+### 13.4 Stage B 외부 설정 순서(사람, `AUTH_ROADMAP.md` 5.1절)
+
+| 순서 | 할 일 | 비고 |
+|---|---|---|
+| 1 | Google Cloud 콘솔 → OAuth 동의 화면: 사용자 유형 External, 범위 `openid`, `email`, `profile`만 | "테스트" 게시 상태에서는 등록한 테스트 사용자만 로그인됩니다 |
+| 2 | 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션). 승인된 리디렉션 URI = `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 앱 도메인이 아니라 Supabase 콜백입니다 |
+| 3 | Supabase 대시보드 → Authentication → Providers → Google 사용, 클라이언트 ID·시크릿 입력. 로컬은 `supabase/config.toml`의 `[auth.external.google]`에 `env(GOOGLE_CLIENT_ID)`, `env(GOOGLE_CLIENT_SECRET)` | 키는 앱·워커·ai-service env에 넣지 않습니다 |
+| 4 | Authentication → URL Configuration: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(미리보기 도메인은 명시 등록) | 와일드카드 지양 |
+| 5 | 배포 env: `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email` | `DEV_SEED_PASSWORD`는 배포 환경에 두지 않습니다 |
+| 6 | 동의 화면을 "프로덕션"으로 게시 | 공개 베타 전 |
+| 7 | 수동 점검표: Google 실로그인 데스크톱·모바일 각 1회, 신규·기존 계정 → task `log.md` | B-5. 실제 Google 로그인은 자동화하지 않습니다 |
+
+### 13.5 G2 체크리스트(B → C, 사람이 판정)
+
+- [ ] Google 실로그인으로 공개 베타 운영 2주(제안)
+- [ ] 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안, 감사 `auth.login`과 오류 로그)
+- [ ] 가입 기간 신규 가입자 중 commerce `entitled=false`로 남은 사용자 0(`AUTH_ROADMAP.md` 6장의 SQL)
+- [ ] 카카오 디벨로퍼스 앱 생성, 이메일 정책 결정(D-18, 비즈 앱 전환 권장)
+- [ ] 네이버 애플리케이션 등록, 검수 자료(로그인 버튼부터 가입 완료까지 캡처) 준비
+- [ ] CM-06-059·060 task `log.md`에 `[DECISION] G2 통과`
+
+### 13.6 C1 카카오 설정(`AUTH_ROADMAP.md` 7.1.1절)
+
+| 순서 | 할 일 |
+|---|---|
+| 1 | 카카오 디벨로퍼스 앱 생성 → REST API 키 = `client_id` |
+| 2 | 카카오 로그인 Client Secret 활성 → `client_secret` |
+| 3 | Redirect URI = Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://localhost:54321/auth/v1/callback`) |
+| 4 | 카카오 로그인 활성(State ON), 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email` |
+| 5 | Supabase → Providers → Kakao 사용(이메일을 받지 못하면 "Allow users without an email"). 로컬 `[auth.external.kakao]`에 `env(KAKAO_CLIENT_ID)`, `env(KAKAO_CLIENT_SECRET)` |
+| 6 | 배포 `AUTH_PROVIDERS=google,email,kakao`. 수용 기준 C1-1~C1-5(`06_AGENT_PLAN.md` CM-06-059) |
+
+### 13.7 C2 네이버 스파이크와 검수(`AUTH_ROADMAP.md` 7.2.2절)
+
+| 단계 | 할 일 | 통과 기준 |
+|---|---|---|
+| 1 | 운영과 분리한 Supabase 프로젝트에 관리자 API로 `custom:naver` 등록(`provider_type: 'oauth2'`, authorize `https://nid.naver.com/oauth2.0/authorize`, token `https://nid.naver.com/oauth2.0/token`, 사용자 정보 `https://openapi.naver.com/v1/nid/me`). 스크립트 `scripts/auth/register-naver-provider.mjs` | 등록 성공 |
+| 2 | 네이버 "개발 중" 상태 + 등록된 테스트 아이디로 `signInWithOAuth({ provider: 'custom:naver' })` | 로그인 성공, `identities[].provider = 'custom:naver'` |
+| 3 | `auth.users.email`이 채워지는지, 재로그인이 같은 사용자인지 | 둘 다 참이면 `supabase_custom` |
+| 4 | 실패하면 서버 브리지(`/auth/naver/start`·`/auth/naver/callback`) + 코어 요청 R-9(`staged/0010_core_auth_identity_links.sql` 적용) | `[DECISION]`과 `NAVER_AUTH_PATH` 기록 |
+| 5 | 네이버 검수 신청(로그인 버튼부터 가입 완료까지 캡처). 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않습니다 | C2-6 |
+
+중첩 응답(`response.id`, `response.email`)을 Supabase 커스텀 OAuth2가 읽는지는 문서에 없어 미확인이고, 그래서 스파이크가 첫 단계입니다. 로컬 CLI의 커스텀 제공자 지원도 미확인이라 네이버는 스테이징 프로젝트에서 확인합니다.
+
+### 13.8 단계 전환 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
+
+G1 판정을 사람이 기록한 뒤 B단계 작업을 시작할 때의 예시입니다. C1·C2도 같은 형식으로 작업 ID와 수용 기준 절만 바꿉니다.
+
+```
+D:/WorkSpace/DEV/nomad-commerce/docs/file 의 모든 파일(프로젝트 산출물)을 최대한 자세히 읽고 분석한다.
+(이미 읽은 파일은 skip. docs/file/_index.md 가 없으면 deliverable-first 스킬 절차로 산출물부터 추출한다.)
+
+[요구사항]
+CM-06-058: 인증 Stage B(Google OAuth + 이메일 가입·재설정, /auth/callback finishLogin, 온보딩 약관 단계)를 구현한다.
+진입 조건 = tasks/CM-06-058-*/log.md 에 사람이 남긴 [DECISION] G1 통과가 있어야 한다(없으면 중단하고 보고).
+완료 조건 = ① docs/file/03-설계/공용코어/AUTH_ROADMAP.md 5.3절 B-1~B-6 충족
+② Mock 페르소나 E2E(tests/e2e/flows) 계속 녹색 ③ AUTH_MODE=mock VERCEL_ENV=production 빌드 실패, live 빌드에서 /api/dev/login 404
+④ 첫 Google 로그인 사용자가 약관 동의 전 /dashboard 에 들어가지 않음 ⑤ 06_AGENT_PLAN.md 의 CM-06-058 수용 기준 충족.
+Google 실로그인 수동 점검표(B-5)는 사람이 수행하도록 체크리스트만 만든다.
+
+[작업의 특성]
+인증 경계 작업. 단계 분기는 apps/web/src/lib/auth/, 로그인 화면, 콜백 라우트에만 둔다. 기능 코드 수정 금지.
+작업 대상 경로: 06_AGENT_PLAN.md 8절 CM-06-058 소유 경로. 원격 Supabase 대시보드 설정과 Google Cloud 콘솔 작업은 하지 않는다(사람).
+
+이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
+승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
+
+main worker 는 claude-main 이 진행한다.
+main worker 의 서브 에이전트는 nextjs-expert, supabase-expert 가 진행한다.
+review role worker 는 claude-reviewer 가 진행한다.
+review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
+```
+
+`task.md` baseline에는 `DOC-CORE-009`(`docs/file/03-설계/공용코어/AUTH_ROADMAP.md`), `DOC-MGT-002`(06_AGENT_PLAN.md, CM-06-058 수용 기준), `DOC-DES-002`(03_SCREENS_UX.md 7절), `DOC-DES-003`(04_API.md 8절)을 넣습니다.
+
+### 13.9 이 제품의 인증 작업 ID
+
+| 단계 | 작업 | 우선순위 | 모델 | 웨이브 |
+|---|---|---|---|---|
+| A | CM-06-007(범위를 Stage A로 바꿈) | P0 | Fable | W1 |
+| B | CM-06-058 | P0(공개 베타 필수) | Fable | W7 맨 앞(G1 후) |
+| C1 | CM-06-059 | P1 | Opus | W8(G2 후) |
+| C2 | CM-06-060 | P1 | Fable | W8(G2 후) |
+
+## 14. 메인 디자인과 디자인 시스템
+
+디자인 작업 순서: 14.3 시각 레퍼런스(Awwwards·Dribbble) → 14.1 디자인 시스템 → 14.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
+### 14.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
 
 | 단계 | 작업 | 담당 |
 |---|---|---|
@@ -409,7 +540,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - AI에게는 컴포넌트 1개 단위로 맡깁니다(`DESIGN_SYSTEM.md` 8장 템플릿). "알아서 만들어 줘"는 쓰지 않습니다.
 - 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
 
-### 13.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
+### 14.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
 
 | 기기 | 구성 |
 |---|---|
@@ -422,7 +553,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 금지: 보라/핑크 그라디언트, 별 파티클, 흔한 지구본·네온 그리드, 다크 + 민트, 마켓 로고
 - 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(CM-06-056, 032)
 
-### 13.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+### 14.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
 
 화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
 
@@ -444,7 +575,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
 - 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
 - Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
-- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 14.1 디자인 시스템 → 14.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
 - 화면·랜딩 task의 `task.md` baseline에는 아래 3개를 넣습니다. 06장의 레퍼런스 확정 task와 랜딩 task 수용 기준에도 같은 레퍼런스 확인이 들어 있습니다.
 
 ```yaml
@@ -459,7 +590,7 @@ baseline:
 
 - 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
 
-## 14. 원본 이식
+## 15. 원본 이식
 
 정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
 
@@ -468,7 +599,7 @@ baseline:
 - 리뷰 "높음" 22건의 차단 설계는 `02_ARCHITECTURE.md` 6절(5건)과 `05_DATA_MODEL.md` 7절(17건)에 있습니다. 해당 task의 리뷰 단계에서 차단 여부를 확인합니다.
 - 07장의 "폐기" 항목(예: 분리 크레딧 차감, 클라이언트 `selling_pages` insert, 단일 env 마켓 키, fal whisper STT, OpenRouter 직접 호출)은 옮기지 않습니다.
 
-## 15. 공용 모듈 경계
+## 16. 공용 모듈 경계
 
 | 항목 | 규칙 |
 |---|---|
@@ -478,13 +609,13 @@ baseline:
 | 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 R-6) |
 | 남은 코어 과제 | `adjust_credits` 미구현, 잡 토큰 패턴 표준화(R-3), 조직별 동시성 claim 등. `docs/file/01-관리/06_AGENT_PLAN.md` 6절과 6.1절을 참고합니다 |
 
-## 16. 검증과 완료 정의
+## 17. 검증과 완료 정의
 
 - task 완료 = `06_AGENT_PLAN.md`의 수용 기준 충족 + 리뷰 추적성 표에 끊긴 곳 없음 + `gate.sh`·`scope_check.sh` 통과
 - 커밋 전에 `bash _shared/check-invariants.sh`가 PASS여야 합니다.
 - MVP 완료는 `06_AGENT_PLAN.md` 7절 완료 정의를 따릅니다.
 
-## 17. 위험과 주의
+## 18. 위험과 주의
 
 | 위험 | 대응 |
 |---|---|
@@ -496,7 +627,7 @@ baseline:
 | 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 platform에서 다시 묶으려면 `build_root.py`를 실행합니다 |
 | AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
 
-## 18. 체크리스트
+## 19. 체크리스트
 
 - [ ] 2절 도구 설치 확인(Git Bash, jq, Python, Node·pnpm, uv, Supabase CLI, Docker)
 - [ ] setup 스크립트 dry-run으로 할 일 확인
@@ -504,11 +635,14 @@ baseline:
 - [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
 - [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 상용만)
 - [ ] `supabase start` → `supabase db reset` 성공(7절)
-- [ ] 결정 D-1~D-17 확정, 산출물 "승인" 전환(8절)
+- [ ] 결정 D-1~D-17 확정(인증 D-18~D-20은 각 단계 전), 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
-- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
-- [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(14.3)
+- [ ] 디자인 시스템 1~4단계 완료(14.1). 사람 비주얼 검토 포함
+- [ ] Stage A: CM-06-007 완료 후 `seed-users.mjs --app commerce`, `/login` 개발용 패널 확인(13.2)
 - [ ] W1~W6 진행(W6까지가 MVP), AI 보안 회귀 통과, MVP 출시 조건 충족
+- [ ] G1 판정(사람, 13.3) → Google 외부 설정(13.4) → CM-06-058 완료 → 공개 베타
+- [ ] G2 판정(사람, 13.5) → 카카오(13.6)·네이버 스파이크와 검수(13.7)
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

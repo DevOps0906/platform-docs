@@ -6,7 +6,8 @@
 |---|---|
 | 주 사용자 | 자기 이해·가족 선물용 리포트를 원하는 20~40대 |
 | DB 스키마(모듈러 번호) | `astro`(1100) |
-| 개발 작업 수 | 54개(`products/astro-ai/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 57개(`products/astro-ai/06_AGENT_PLAN.md`, 인증 단계 작업 3개 포함) |
+| 로그인 | MVP 개발은 Mock(Stage A), 공개 베타 전 Google + 이메일(B), G2 후 카카오·네이버(C). [`astro-ai_develop.md`](astro-ai_develop.md) 13절 |
 | 기획서 | [`products/astro-ai/`](../../products/astro-ai/) |
 | 참고 | 개발 가이드 형식의 기준 예시(astro-ai 기준)입니다. |
 

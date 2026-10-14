@@ -28,7 +28,7 @@
 | 기능 | 단계 | 근거 |
 |---|---|---|
 | KIT: 인증, 프로필 상태 게이트, 서버 가드, 역할 매트릭스, AppShell, DataTable, KST 유틸, Realtime 훅, 감사 로그 화면 | MVP | `analysis:1120-1155` |
-| KIT: 승인제(ERP)·초대제(SMS, HMS) 가입 | MVP | 사용자 결정 "가입 정책 C"(`analysis:1242`) |
+| KIT: 승인제(ERP)·초대제(SMS, HMS) 가입과 로그인 | MVP. 인증 단계(확정 결정 22): MVP 개발은 Mock(Stage A, 로컬 시드 계정), 출시(첫 기관 배포) 전 erp·sms Google + 이메일·초대 메일, hms 이메일·초대 메일만(Stage B, P0, hms Google은 기관 정책 확인 전 보류 D-21), 카카오·네이버는 G2 후 erp·sms P2 선택(Stage C), hms 제외(이유: 의료정보 격리, 병원 직원 계정에 외부 소셜 제공자를 붙이지 않는다. `AUTH_ROADMAP.md` 8장) | 사용자 결정 "가입 정책 C"(`analysis:1242`), `docs/products/00_MERGE_ANALYSIS.md:30`(확정 결정 22), `docs/products/_platform-core/AUTH_ROADMAP.md` 0장, 8장 |
 | KIT: Toss 구독(standard 플랜) | Phase 2 | 원본에 결제 근거 없음. 출시는 계약형(수동 엔타이틀먼트) 제안 |
 | ERP: 상품, 입출고/조정, 판매(상태/취소), 대시보드, 직원/부서, 가입 승인 | MVP | `analysis:1159-1169` |
 | ERP: 판매 추이 차트, 설정 저장, 상품 이미지 | MVP 직후(P1) | `docs/reviews/ERP-Wesite.md:128`, `:130` |
@@ -63,15 +63,15 @@
 | KIT-F-002 | 서버 라우트 가드 `createAdminProxy` | 통합+디벨롭 | 세션 갱신 → `session_context(app, org)` 1회 → 미로그인 `/login`, 프로필 없음 로그아웃, pending `/pending`, suspended 403, 엔타이틀먼트 없음 `/no-access`, 역할 미허용 경로 403 | 역할별 미허용 URL 직접 입력 시 RSC 페이로드 없이 403 HTML | `analysis:1125`, `docs/reviews/Hospital.md:83` |
 | KIT-F-003 | 역할→페이지 매트릭스 팩토리 | 통합 | 앱이 `defineAccess({role: PageKey[]})`로 선언. 메뉴 필터와 가드가 같은 매트릭스를 쓴다 | 매트릭스 밖 메뉴는 렌더되지 않는다(자물쇠 노출 금지) | `Hospital/src/lib/permissions.ts:5-10`, `docs/reviews/Hospital.md:73` |
 | KIT-F-004 | `requireRole(app, roles)` | 신규 | 모든 Server Action/Route Handler 첫 줄. DB RPC가 2차 검사 | 미허용 역할 호출 시 403, DB까지 가지 않음 | `docs/reviews/ERP-Wesite.md:122` |
-| KIT-F-005 | 가입 승인제 | 디벨롭 | 가입 코드(8자) 입력 → 가입 요청 → 관리자 승인(역할·부서 지정) → 본인 수락 → 활성. pending 사용자는 `/pending` 안내 | 승인 전 도메인 테이블 SELECT 0행 | `ERP-Wesite/PRD.md:39`, `analysis:1129` |
-| KIT-F-006 | 초대제 | 신규 | 관리자가 이메일 입력 → 서버가 Auth Admin 초대(미가입자) → 도메인 RPC로 초대 행 생성 → 본인 수락 | 수락 전 `has_access=false` | `analysis:1130`, `docs/reviews/School_Management_System.md:104` |
+| KIT-F-005 | 가입 승인제 | 디벨롭 | 가입 코드(8자) 입력 → 가입 요청 → 관리자 승인(역할·부서 지정) → 본인 수락 → 활성. pending 사용자는 `/pending` 안내. 인증 단계(확정 결정 22): Stage A는 이 흐름을 Mock 페르소나(`pending`, `join_requested`, `join_rejected`, 05장 10절)로 개발한다. 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(배포 환경 404). Stage B(P0)에서 이메일 가입 폼(`signup_app='erp'`)과 Google을 켠다. OAuth 첫 로그인은 `signup_app`을 보낼 수 없어 `/auth/callback`이 `bootstrap_app_for_org('erp')`를 1회 호출해 pending을 만들고 `/pending`으로 보낸다(이미 활성인 기관 구성원에게는 호출하지 않는다, 04장 8.2절). Stage C(카카오·네이버)는 P2 선택 | 승인 전 도메인 테이블 SELECT 0행. Stage A: Mock `join_requested` 세션의 도메인 SELECT 0행. Stage B: `AUTH_ROADMAP.md` 5.3절 B-1~B-6(erp의 B-1은 `entitled=true` 대신 `/pending` 도달 + 기존 활성 구성원 pending 강등 0). Stage C: 7.1.3절 C1-1~C1-5, 7.2.4절 C2-1~C2-6 | `ERP-Wesite/PRD.md:39`, `analysis:1129`, `docs/products/00_MERGE_ANALYSIS.md:30` |
+| KIT-F-006 | 초대제 | 신규 | 관리자가 이메일 입력 → 서버가 Auth Admin 초대(미가입자) → 도메인 RPC로 초대 행 생성 → 본인 수락. 인증 단계(확정 결정 22): Stage A는 초대 대기 Mock 페르소나(`sms_invited`, `hms_invited`)가 로그인한 상태에서 수락한다. Stage B(P0)에서 초대 메일 링크(비밀번호 설정)를 켜고 sms는 Google도 켠다. hms는 기관 정책 확인 전 이메일만(D-21). 초대받은 이메일과 다른 계정으로 OAuth 로그인하면 엔타이틀먼트 없는 새 사용자라 `/no-access`에서 "초대받은 이메일로 로그인하세요"를 안내한다. hms는 Stage C 제외 | 수락 전 `has_access=false`. Stage B: `AUTH_ROADMAP.md` 5.3절 B-1(invite 앱: `entitled=false`, `/no-access`)~B-6. Stage C(sms만, P2 선택): 7.1.3절, 7.2.4절 | `analysis:1130`, `docs/reviews/School_Management_System.md:104`, `docs/products/00_MERGE_ANALYSIS.md:30` |
 | KIT-F-007 | 사용자 수명주기 | 신규(기획 공백 2) | 아래 3.5절 표 | 정지 즉시 다음 요청부터 403 | `analysis:1229` |
 | KIT-F-008 | AppShell | 통합 | 사이드바(역할 필터) + 헤더 + 로그아웃 + 1024px 미만 햄버거 | 375px에서 가로 스크롤 없음 | `docs/reviews/ERP-Wesite.md:84` |
 | KIT-F-009 | DataTable/FormModal/ConfirmDialog/Toast/KpiCard/차트 래퍼 | 통합 | 행 선택, 페이지당 행 수 20/50/100, 서버 페이지네이션, `alert()` 금지 | 1만 행 테이블 첫 페이지 500ms 이내 | `ERP-Wesite/CLAUDE.md` 5절 |
 | KIT-F-010 | KST 날짜 유틸 | 신규 | `kstDayRange(date)`, `kstMonthRange`, `formatKst`. DB 집계 RPC도 KST 경계 | 00:30 KST 데이터가 당일로 집계 | `analysis:1147` |
 | KIT-F-011 | `useRealtimeTable` | 통합 | 채널 1개, payload 부분 갱신, `<app>:<org>:<entity>` 채널명, 언마운트 시 해제 | 같은 화면 구독 채널 수 = 1 | `docs/reviews/Hospital.md:61` |
 | KIT-F-012 | 감사 로그 화면 | 디벨롭 | `core.audit_log` 조회(owner/admin). 필터: 기간, 행위자, action | 역할 변경 1건 → 목록 1행 | `analysis:1138`, `CORE_SPEC.md` 11장 |
-| KIT-F-013 | 계정 설정 | 통합 | 표시 이름, 비밀번호 변경, 로그아웃만. 프로젝트 URL/키 표시 금지 | 화면에 `supabase.co` 문자열 0개 | `docs/reviews/ERP-Wesite.md:72` |
+| KIT-F-013 | 계정 설정 | 통합 | 표시 이름, 비밀번호 변경, 로그아웃만. 프로젝트 URL/키 표시 금지. Stage C를 도입하면 erp·sms에 "로그인 방법"(연결·해제, `AUTH_ROADMAP.md` 7.3절)을 더한다(hms 없음) | 화면에 `supabase.co` 문자열 0개 | `docs/reviews/ERP-Wesite.md:72` |
 | KIT-F-014 | 타입 생성 | 신규 | `pnpm db:types`가 앱별 스키마 타입 생성. `as any` 금지 | lint `no-explicit-any` 오류 0 | `analysis:1154` |
 
 ### 3.2 ERP
@@ -281,13 +281,13 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 
 | 항목 | 내용 |
 |---|---|
-| 개인정보(수집 항목) | ERP: 이름, 이메일, 전화, 부서, 직급. SMS: 이름, 이메일, 학번, 학급, 출석. HMS: 6.2절 |
+| 개인정보(수집 항목) | ERP: 이름, 이메일, 전화, 부서, 직급. SMS: 이름, 이메일, 학번, 학급, 출석. HMS: 6.2절. 로그인 제공자 식별자(확정 결정 22): Stage B erp·sms는 Google 계정 식별자·이름·프로필 이미지 URL, hms는 이메일 로그인만이라 외부 제공자 식별자 없음(D-21 전). Stage C(erp·sms, P2 선택)는 카카오 사용자 식별자·닉네임·프로필 이미지(비즈 앱이면 이메일), 네이버 사용자 고유 id·이메일·이름(브리지 경로면 `core.auth_identity_links`에 저장). hms는 Stage C 제외. Stage A 시드 계정은 로컬 DB에만 있고 실제 개인정보가 아니다 |
 | 목적 | 내부 업무 처리(재고·판매·인사 / 학사 출석 / 진료). 마케팅 이용 없음 |
 | 보존 | 재직·재학·근무 기간 + 탈퇴 후 30일 유예 뒤 파기(제안). 업무 기록(입출고, 판매, 출석)은 회사·학교 기록으로 남고 행위자 id만 남는다 |
 | 암호화 대상 컬럼 | ERP/SMS는 없음(전화는 업무 연락처). HMS는 6.2절 |
 | 삭제 절차 | 사용자: core `remove_member` → 프로필 삭제는 운영자. 조직: soft delete → 30일 → 파기(코어 `purge_organization`는 크레딧 절과 함께 모놀리스에서 빠지므로 06장 6절 코어 요청) |
 | 제3자 제공 | 이미지 제공자 호출 없음. 차트 렌더도 자체(QuickChart 등 외부 렌더러 금지, `SECURITY_BASELINE.md` 10장). AI·음성 제공자(erp, sms 한정)는 국외 이전에 동의한 조직의 요청에만 쓴다(6.5절). hms는 상용 AI·음성 제공자와 공용 AI 서버로 보내지 않는다(6.6절) |
-| 약관/고지 | 이용약관, 개인정보처리방침(고객사가 처리자, 플랫폼은 수탁자로 위탁 계약 명시, 제안), AI 생성 표시: 어시스턴트 답변과 음성에 표시(6.5절) |
+| 약관/고지 | 이용약관, 개인정보처리방침(고객사가 처리자, 플랫폼은 수탁자로 위탁 계약 명시, 제안), AI 생성 표시: 어시스턴트 답변과 음성에 표시(6.5절). OAuth 첫 로그인(Stage B 이후)은 가입 폼을 거치지 않으므로 이 제품의 온보딩 첫 단계에서 동의를 받는다: erp는 `/pending` 첫 단계(가입 코드 입력 전), sms·hms는 `/invite/accept` 수락 전(03장 7.3절, `AUTH_ROADMAP.md` 5.2절) |
 | 제휴/광고 | 해당 없음(affiliate 모듈 미사용) |
 | 플랫폼 약관 | 외부 플랫폼 자동화 없음 |
 
@@ -402,3 +402,22 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 | D-18 | 채팅 위젯 레퍼런스 Astryx | 존재·라이선스 확인 뒤 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). ADM-06-041에서 결과 기록 |
 | D-19 | hms 음성 모델과 진료 구술 | 한국어 의료 용어 STT 정확도, 전용 TTS 라이선스(코드·가중치 각각) 확인. 진료 구술은 Phase 2 | 구현 시 확인(`VOICE_ARCHITECTURE.md` 4.1절 후보). 구술은 접근 기록 설계 뒤 |
 | D-20 | 위키 대상 컬렉션 범위 | A) 구성원 전원 공개 컬렉션만(3.7절, R-14 전) / B) 코어 RLS 개정(R-14) 뒤 전 컬렉션 | A로 출시, R-14 반영 뒤 B. 코어가 바뀌지 않으면 제한된 컬렉션의 위키는 만들지 않는다 |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`)로 로그인은 A Mock → G1 → B Google(+이메일·초대 메일) → G2 → C1 카카오, C2 네이버 순서로 켠다(`docs/products/_platform-core/AUTH_ROADMAP.md` 0장, 8장 admin-suite 행). 이 제품의 단계표는 아래와 같고, 그 아래 4개가 남은 결정이다. 기존 결정(ERP 승인제·가입 코드, SMS·HMS 초대제, 운영자 프로비저닝, hms 격리)은 바꾸지 않는다. 이 기획에는 기존 카카오 로그인 열린 결정이 없었다.
+
+| 앱 | 가입 정책 | A(MVP 개발) | B(출시 전, P0) | C1 카카오 | C2 네이버 |
+|---|---|---|---|---|---|
+| erp | approval(가입 코드) | Mock 페르소나(05장 10절) | Google + 이메일 가입·인증·비밀번호 재설정 | P2 선택(D-24) | P2 선택(D-24) |
+| sms | invite | Mock 페르소나 | Google + 초대 메일(비밀번호 설정) | P2 선택(D-24) | P2 선택(D-24) |
+| hms | invite, 별도 모놀리스 DB | Mock 페르소나(로컬 hms 프로젝트만) | 초대 메일 + 이메일 로그인만. Google은 D-21 확정 전 끄기(제안) | 제외(의료정보 격리) | 제외 |
+
+| ID | 결정 | 선택지 | 권고와 이 기획의 가정 | 확정 시점 |
+|---|---|---|---|---|
+| D-21 | hms Google 로그인 | (a) 이메일·초대 메일만(Google 끔) (b) 병원 정책이 허용하면 병원 단위로 Google 켬(`AUTH_PROVIDERS`는 병원 배포마다 따로) | (a)(`AUTH_ROADMAP.md` 8장 "기관 정책 확인 전 이메일만", 제안). 병원 직원 계정을 외부 개인 계정에 묶는 것을 병원 보안 정책이 허용하는지 미확인이다. (b)로 바꾸면 그 병원 배포의 Google Cloud 동의 화면·Redirect URL을 병원 Supabase 프로젝트마다 따로 만든다 | 병원별 출시 전(ADM-06-058) |
+| D-22 | 카카오 로그인 이메일 정책(erp, sms) | (a) 비즈 앱 전환 후 `account_email` 필수 동의 (b) 이메일 없이 허용 | (a)(`AUTH_ROADMAP.md` 7.1.2절 권장). 초대·가입 승인이 이메일 기준이라(KIT-F-005, 006) 이메일 없는 카카오 계정은 초대와 연결되지 않는다 | C1 착수 전(D-24가 "도입"일 때만) |
+| D-23 | 네이버 로그인 경로(erp, sms) | (a) Supabase 커스텀 OAuth2 `custom:naver` (b) 서버 브리지 + 코어 `staged/0010_core_auth_identity_links.sql` | C2 첫 단계 스파이크(`AUTH_ROADMAP.md` 7.2.2절, 0.5일) 결과로 정한다. 결과는 task `log.md` `[DECISION]`과 `NAVER_AUTH_PATH`에 남긴다. 브리지면 06장 8.4절 R-15 | C2 스파이크 직후(D-24가 "도입"일 때만) |
+| D-24 | erp·sms Stage C 도입 여부 | (a) G2 후 도입(C1·C2, P2) (b) 도입하지 않음(Google + 이메일 유지) | 미정(P2 선택, `AUTH_ROADMAP.md` 8장). 기관 직원은 업무 이메일로 초대·승인되므로 소셜 로그인 수요는 고객 기관 요청으로 판단한다(제안). (b)면 ADM-06-059, 060을 만들지 않는다 | G2 판정 때 |
+
+이메일+비밀번호 로그인은 열린 결정이 아니다: 운영자 프로비저닝·초대 메일(비밀번호 설정)과 hms의 유일한 로그인 수단이므로 유지한다(3.5절).

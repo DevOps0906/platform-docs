@@ -55,7 +55,7 @@
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 가입(`signup_app='notes'`), 세션, `requireSession('notes')` | proxy, 모든 Route Handler | 이메일 인증 미완료는 403 |
+| auth | 가입(`signup_app='notes'`), 세션, `requireSession('notes')`. 인증 단계(확정 결정 22)는 `apps/study-note/src/lib/auth/`(단계 분기는 여기·로그인 화면·콜백만, 9절) | proxy, 모든 Route Handler, `/login`, `/auth/callback`, `/api/dev/login`(Stage A 로컬 전용) | 이메일 인증 미완료는 403. 세션은 모든 단계에서 실제 Supabase JWT라 이 행의 호출 위치는 단계와 무관하다 |
 | org | 1인 1워크스페이스. 개인 조직 id를 `org_id`로 사용 | RLS 헬퍼 | 팀 기능은 Phase 3 |
 | credits | `consume_credits`는 `notes.start_run` 안에서만, `refund_credits`는 `finish_run` 안에서만 호출 | DB 함수(service_role 전용) | 사용자용 RPC에서 직접 차감 금지(`DB_CONVENTIONS.md:238`) |
 | toss | Pro 구독, 크레딧팩(Phase 2) | `/api/billing/*` | 코어 `confirm_payment_order`의 금액 불일치 시 failed 미저장 결함에 의존하지 않는다. 불일치는 지급 없이 오류 반환 + 운영 알림만 |
@@ -255,3 +255,57 @@ AI 계층을 추가한 뒤에도 리뷰 #1 차단 설계는 유지한다: LLM �
 | `NEXT_PUBLIC_HERO3D_ENABLED` | 3D 히어로 전체 끄기 스위치(장애 대응) | 공개 | 기본 true. false면 정지 이미지 |
 
 AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/products/_platform-core/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`다. 이 절은 study-note에 해당하는 부분만 옮긴다. 세션·조직·엔타이틀먼트 계약과 3절 auth 행은 바뀌지 않는다.
+
+### 9.1 단계표 (study-note 기준)
+
+| 단계 | 언제 | 켜지는 로그인 | 작업 | 다음 단계 게이트 |
+|---|---|---|---|---|
+| A | W0부터 MVP 기능 완료(W6의 051)까지 | 로컬 Supabase 시드 계정(페르소나) 원클릭 로그인. 실제 제공자 버튼 없음 | NT-06-006 | G1(`AUTH_ROADMAP.md` 4장, 06장 8.2절) |
+| B | G1 통과 후, 공개 베타 전(W6 맨 앞) | Google + 이메일+비밀번호(01장 D-22). 배포 환경에서 Mock 차단 | NT-06-053(P0) | G2(`AUTH_ROADMAP.md` 6장) |
+| C1 | G2 통과 후(W7) | 카카오(Supabase 기본 제공자 `kakao`) | NT-06-054(P1) | 7.1.3절 |
+| C2 | G2 통과 후, C1과 병렬(W7) | 네이버(`custom:naver` 또는 브리지, 스파이크로 결정) | NT-06-055(P1) | 7.2.4절 |
+
+| 불변 조건 | study-note에서의 의미 |
+|---|---|
+| 세션은 항상 실제 Supabase Auth JWT | Mock 단계에서도 `requireSession('notes')`, RLS(`core.is_org_member` 등), `notes.start_run`의 크레딧 선차감이 진짜로 동작한다. 이메일 인증 가드(`email_confirmed_at`)도 같은 코드 |
+| 단계 분기는 인증 모듈 안에서만 | `AUTH_MODE`·제공자 목록을 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`에만 있다. 워커(`apps/study-note-worker`), FastAPI(`apps/api`), AI 게이트(`src/server/ai/`)는 단계를 모른다. CI 검사는 NT-06-022 |
+
+### 9.2 모듈 경계 추가
+
+| 모듈 | 디렉토리 | 책임 | 작업 |
+|---|---|---|---|
+| 인증 모듈 | `src/lib/auth/`(`config.ts`, `mock.ts`, `finish-login.ts`, `providers/`) | `getAuthConfig`(env zod), `isMockAuthAllowed`, `listLoginOptions('notes')`, `finishLogin('notes', next)`(콜백·Mock 공통: `session_context` → open 앱이므로 `entitled=false`면 `bootstrap_app_for_org('notes')` 1회 → 상태 분기 → `next` 화이트리스트) | 006(A), 053(`providers/` B), 054·055(C) |
+| Mock 로그인 | `src/app/api/dev/login/`, `src/components/auth/dev/` | 페르소나 로그인, 개발용 패널, `MOCK AUTH · 로컬 전용` 배지 | 006 |
+| 콜백 | `src/app/auth/callback/` | PKCE 코드 교환 → `finishLogin` | 053 |
+| 네이버 브리지(조건부) | `src/app/auth/naver/`, `src/lib/auth/naver-bridge/` | C2 스파이크가 브리지를 택했을 때만 | 055 |
+| 시드 | `scripts/dev/seed-users.mjs`, `scripts/dev/seed-users.notes.mjs` | 로컬 페르소나 생성(05장 10절) | 006 |
+
+### 9.3 환경변수 (`AUTH_ROADMAP.md` 3.3절 중 이 제품에 해당)
+
+| 변수 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버)만. 워커·FastAPI에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값 `mock` |
+| `AUTH_PROVIDERS` | B·C | web | live에서 로그인 수단 0개면 기동 실패. 운영 값: B `google,email`, C1 후 `google,email,kakao`, C2 검수 통과 후 `naver` 추가 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web, 시드 스크립트. 배포 환경에 넣지 않는다 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱 env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web, 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+워커(Railway)와 FastAPI(`apps/api`)에는 인증 단계 변수가 하나도 없다. 둘은 사용자 로그인을 하지 않고 service_role·서명 토큰(EdDSA)으로만 동작한다. 8절 env 검증기(NT-06-005)는 위 변수를 함께 검증하고, `AUTH_MODE=mock`인데 `isMockAuthAllowed()`가 거짓이면 기동을 실패시킨다(`AUTH_ROADMAP.md` 2.4절). 위 변수는 모두 `NEXT_PUBLIC_` 접두사가 없다.
+
+### 9.4 외부 콘솔과 배포 토폴로지 메모
+
+| 콘솔 | 단계 | 연결 | 비고 |
+|---|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트) | B | 리디렉션 URI = Supabase 콜백 `https://<project-ref>.supabase.co/auth/v1/callback`(로컬 `http://127.0.0.1:54321/auth/v1/callback`). 앱 도메인이 아니다 | 범위 `openid`, `email`, `profile`만. 개인정보처리방침·이용약관 URL(NT-06-021의 `/privacy`, `/terms`)이 G1 전에 공개돼 있어야 한다 |
+| 카카오 디벨로퍼스 | C1 | 같은 Supabase 콜백 | 이메일 정책 01장 D-20 |
+| 네이버 개발자센터 | C2 | `custom:naver`면 Supabase 콜백, 브리지면 `https://<도메인>/auth/naver/callback`(Vercel) | 검수 전 "개발중" 상태 |
+| Supabase 대시보드(Authentication) | B·C | Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(미리보기 도메인은 명시 등록) | 7절 표의 Supabase 프로젝트 1개에 설정. 와일드카드 지양 |
+
+7절 배포 토폴로지의 구성은 바뀌지 않는다. 로그인 경로는 브라우저 → 제공자 → Supabase Auth → Vercel `/auth/callback`이고, 워커·FastAPI·Dify·GPU 서버는 관여하지 않는다. 로그인 없는 사용자 흐름은 이 제품에 없다(랜딩 `/`과 약관은 비로그인 공개 화면일 뿐 별도 사용자 흐름이 아니다).

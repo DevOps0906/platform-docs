@@ -2,7 +2,7 @@
 
 작업 ID는 `LP-06-###`(DB_CONVENTIONS 1장 SQLSTATE 접두사 `PL`과 약어 `LP`). 모델 기준은 `docs/products/_platform-core/DOC_TEMPLATE.md` 1장: Fable(결제, 권한, RLS, 데이터 모델), Opus(기능 구현, API 연동, 테스트 설계), Sonnet(UI, 메인페이지, 컴포넌트, 문서), Haiku(보일러플레이트, 린트/타입, 문구, 반복 체크).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(LP-06-033~048)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 001, 002, 004, 007, 008, 009, 015, 022, 023(디자인 시스템 2단계로 재정의), 024, 025, 026, 027, 030, 031, 032이다. 작업 수 48개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수 범위로 추가돼서 생긴 증가다(astro-ai의 54개와 같은 이유).
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(LP-06-033~048)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 001, 002, 004, 007, 008, 009, 015, 022, 023(디자인 시스템 2단계로 재정의), 024, 025, 026, 027, 030, 031, 032이다. 작업 수 48개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다(2026-10-14 확정 결정 22로 인증 단계 작업 3개 LP-06-049~051을 8절에 더해 51개, LP-06-003은 Stage A로 범위 변경). AI·음성·3D·디자인 시스템이 MVP 필수 범위로 추가돼서 생긴 증가다(astro-ai의 54개와 같은 이유).
 
 ## 1. 원칙과 소유 경계
 
@@ -27,7 +27,7 @@
 |---|---|---|---|---|---|---|---|---|
 | LP-06-001 | 앱 골격과 스택 ADR: basic-master-module 복제, Next 16.2.9, Tailwind CSS v4, shadcn, `packages/core-db` 연결, ADR(Supabase Realtime 확정, Socket.io/FastAPI WebSocket/Redis 폐기, FastAPI는 AI 서비스 전용) | `apps/live-poll/package.json`, `next.config.ts`, `tsconfig.json`, `components.json`, `src/app/layout.tsx`, `docs/adr/` | 없음 | P0 | S | Sonnet | `pnpm build`, `tsc --noEmit`, `lint` 통과. ADR 1개에 02장 6절 리뷰 #2 결정이 적혀 있다. Tailwind는 4.x로 lockfile 고정, `tailwind.config.js` 0건, three.js·R3F·drei는 `components/hero3d/`에서만 import하는 린트 규칙 | 리뷰 5장 #1, #2, 02장 1절 |
 | LP-06-002 | DB 적용: 조각 1800 복사(19절 AI·음성 기본값 포함), 모놀리스 변환 스크립트(`@@modular-only` 제거 + 접두사 치환), 모놀리스 코어 라이트(SECTION 4·7·8 복원본)와 seed 적용, `config.toml`에 `poll` 노출, 타입 생성 | `supabase/migrations/`, `supabase/scripts/`, `src/types/supabase.ts` | 없음 | P0 | M | Fable | `supabase db reset` 성공(pgvector·`ai_*`·`voice_*` 테이블 생성 확인). 변환 결과가 저장소의 `0002_poll_domain.sql`과 바이트 단위 같다(19절은 `@@modular-only`라 변환본에 없다). 체커 `--vector` mod/mono OK. 제품 파일 2회 반복 적용 뒤 `ai_routing_settings`(org null, app poll) 12행 | 리뷰 5장 #3, #4, 05장 |
-| LP-06-003 | 진행자 인증: `proxy.ts`(세션 갱신, 보호 경로), 로그인/가입(`signup_app='poll'`, 베타 약관), `requireSession('poll')`, 다른 제품 사용자 `bootstrap_app_for_org` | `src/proxy.ts`, `src/app/(auth)/` | LP-06-001 | P0 | S | Opus | 가입 직후 `/events`에서 entitled=true. 프로필 없는 세션은 로그아웃. 기본 역할 admin 코드 없음 | LP-F-001, `SECURITY_BASELINE.md` 11장 |
+| LP-06-003 | 진행자 인증 Stage A(확정 결정 22): 인증 모듈 경계(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`, AUTH_ROADMAP 3.1절), Mock 로그인(`POST /api/dev/login`, `/login` 개발용 패널, 상단 배지 `MOCK AUTH · 로컬 전용`), 시드 스크립트 `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.poll.mjs`(05장 10절 `host`·`cohost`), 가드(기동 env 검증, 배포 404, 빌드 검사, CI 금지 문자열), `proxy.ts`(세션 갱신, 보호 경로), `requireSession('poll')`, `finishLogin`의 `bootstrap_app_for_org`. 이메일 가입·비밀번호 재설정 화면과 Google 버튼·`/auth/callback`은 B(LP-06-049)로 옮겼다. 배지는 LP-06-001 `layout.tsx`에 장착 1줄 요청 | `src/proxy.ts`, `src/app/(auth)/`, `src/lib/auth/`, `src/app/api/dev/login/`, `scripts/dev/` | LP-06-001, LP-06-002 | P0 | M | Opus | `owner`·`host` 페르소나 로그인 직후 `/events`에서 `entitled=true`, `plan_code='free'`. `no_app` 로그인 → `finishLogin`이 부트스트랩 1회 후 entitled=true(크레딧 1회). `outsider`로 host 조직 행사 0행·진행자 RPC 42501. `suspended` 403. 프로필 없는 세션은 로그아웃, 기본 역할 admin 코드 없음. `AUTH_MODE=mock VERCEL_ENV=production npm run build` 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404·개발용 패널 미렌더. 시드 스크립트는 원격 Supabase URL이면 exit 1, 2회 실행해도 원장 행 수 같음. CI 금지 문자열(`nomad_role`, `nomad_plan`, `mock-auth`, 쿠키·localStorage 역할/플랜, 인증 모듈 밖 `AUTH_MODE` 참조) 0건 | LP-F-001, `SECURITY_BASELINE.md` 11장, 17장, `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 3.1절, 9장 |
 | LP-06-004 | 도메인 라이브러리: zod 스키마, 타입, PL 오류 → HTTP/문구 매핑, 참가자 토큰 생성(32바이트), 쿠키 유틸, IP HMAC(`POLL_IP_HMAC_SECRET` + 날짜) | `src/lib/poll/` | LP-06-001 | P0 | S | Opus | 단위 테스트: HMAC이 날짜마다 달라지고 원문 IP가 로그에 없다. PL 오류 코드 15개와 04장 7절의 AI·음성 앱 코드 전부 매핑 | 리뷰 5장 #10, 04장 1, 7절 |
 | LP-06-005 | 청중 Route Handler: join, snapshot, vote, question, upvote(service_role RPC, 본문 4KB 상한, no-store, noindex) | `src/app/api/p/join/`, `.../snapshot/`, `.../vote/`, `.../question/`, `.../upvote/` | LP-06-002, LP-06-004 | P0 | M | Opus | 04장 2절 표의 입력/출력/오류 그대로. 쿠키 없는 vote는 401 PL009 | 리뷰 5장 #7, LP-F-007~014 |
 | LP-06-006 | 청중 API 통합 테스트(로컬 Supabase): 입장/재입장/정원/잠금/비밀번호/중복 투표/다른 행사 문항/레이트 리밋 | `tests/api/participant/` | LP-06-005 | P0 | M | Opus | 01장 LP-F-007, 008, 013, 017, 018, 019 수용 기준을 각각 테스트 1개 이상으로 검증 | 01장 3절 |
@@ -49,13 +49,13 @@
 | LP-06-022 | 랜딩, 가격, robots/sitemap(랜딩만 색인), 행사 페이지 noindex 메타. 히어로는 LP-06-047의 `Hero3D` 컴포넌트를 import | `src/app/(marketing)/`, `src/app/robots.ts`, `src/app/sitemap.ts` | LP-06-015, LP-06-047 | P1 | M | Sonnet | 03장 4절 안 A 구현(히어로 = 4.5절 3D 장면). 01장 6절 금지 문구 0건(AI 금지 문구 포함). `/e/*` 응답 헤더 noindex. 3D 로딩 전에도 헤드라인·코드·CTA가 보인다 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/products/_design-guide/REFERENCES.md:16-23`). | 리뷰 5장 #12, 분석:1261 |
 | LP-06-023 | 디자인 시스템 2단계(가진 것 위에서 시작): 03장 4.3 토큰 + Tailwind CSS v4 `@theme`로 `tokens.css`, 기본 컴포넌트와 배리언트(03장 3.8절 표), 컴포넌트 미리보기 `/dev/components`. UUPM 초안(`MASTER.md`)은 입력 자료이고 정답은 코드 | `design-system/live-poll/`, `src/styles/tokens.css`, `src/components/ui/`, `src/app/dev/components/` | LP-06-001, LP-06-033 | P0 | M | Sonnet | `MASTER.md`에 UUPM 대비 변경점 표. 03장 3.8절 기본 컴포넌트 전부가 라이트/다크로 `/dev/components`에 있다. 하드코딩 hex 0건(린트 규칙), `tailwind.config.js` 0건, v3 문법(`@tailwind base`) 0건 | `DESIGN_SYSTEM.md` 4장 2단계, 8장 템플릿 |
 | LP-06-024 | 문구 사전: 청중/진행자 오류 문구, 고지 문구(음성 고지, 국외 이전 고지, AI 생성 표시 포함), 빈 상태(03장 5절) | `src/messages/ko.json` | LP-06-004 | P1 | S | Haiku | PL 오류 코드 15개와 AI·음성 앱 코드 전부 문구 있음. 사과 표현 0건. AI 생성 표시 문구 5종(01장 6.1절) 있음 | `DESIGN_PRINCIPLES.md` 카피 규칙 |
-| LP-06-025 | E2E(Playwright): 가입(온보딩 AI 동의 포함) → 행사 생성 → 시작 → 청중 2명(다른 브라우저 컨텍스트) 입장 → 투표 → 발표 화면 반영 → Q&A → 종료. AI 경로는 목 제공자로 LP-06-048이 검증한다 | `tests/e2e/` | LP-06-008, LP-06-009, LP-06-010, LP-06-016, LP-06-017 | P0 | M | Opus | 전 흐름 통과. 청중 화면에서 결과 반영 1초 이내 단언. AI 서비스를 끈 상태에서도 전 흐름 통과(투표 경로 격리) | 03장 2절 |
+| LP-06-025 | E2E(Playwright, Mock 페르소나 storageState로 실행: `globalSetup`이 `/api/dev/login`으로 `host`·`cohost`·`viewer`·`outsider`·`no_app` 상태 저장, 청중은 페르소나 없이 `/api/p/join`): 첫 진입(`no_app` 부트스트랩, 온보딩 AI 동의 포함) → 행사 생성 → 시작 → 청중 2명(다른 브라우저 컨텍스트) 입장 → 투표 → 발표 화면 반영 → Q&A → 종료. AI 경로는 목 제공자로 LP-06-048이 검증한다 | `tests/e2e/` | LP-06-008, LP-06-009, LP-06-010, LP-06-016, LP-06-017 | P0 | M | Opus | 전 흐름 통과. 청중 화면에서 결과 반영 1초 이내 단언. AI 서비스를 끈 상태에서도 전 흐름 통과(투표 경로 격리). Mock 페르소나 시나리오: `outsider`는 host 행사 콘솔 404·데이터 0행, `viewer`는 편집·진행 버튼 없음, `cohost`가 문항 열기·모더레이션 성공. 이 흐름이 G1 판정 근거(AUTH_ROADMAP 4장 2번) | 03장 2절, `SECURITY_BASELINE.md` 17장 |
 | LP-06-026 | RLS/권한 회귀 테스트: 기획 단계 스모크(79항목, 05장 9절)를 저장소로 이식, 모듈러/모놀리스 둘 다, CI 연결 | `supabase/tests/` | LP-06-002 | P0 | M | Fable | B가 A 행사 데이터 0행, 역할/플랜/크레딧 변경 42501, anon 전부 42501, 종료 행사 스냅샷 poll/qna null. 다른 조직의 `ai_runs`·`ai_documents`·`wiki_pages` 0행(코어 RLS가 poll 조직 격리에도 유효한지 확인). CI 실패 시 머지 차단 | `SECURITY_BASELINE.md` 15장 |
 | LP-06-027 | 부하 테스트: 3,000 구독 + 300 votes/s(k6 + Realtime 클라이언트 시뮬레이터), p95 측정, Realtime 플랜 한도 확인, 인원별 간격과 Redis 필요 여부 결론 | `tests/load/` | LP-06-010, LP-06-005 | P1 | L | Fable | 01장 5절 표의 인원별 p95를 측정해 보고서로 남긴다. 미달이면 원인과 1810 마이그레이션 제안. Q&A AI 정리를 동시에 실행해도 투표 p95·브로드캐스트 간격이 달라지지 않음을 함께 측정 | 리뷰 5장 #11, 리뷰 3장 #1 |
 | LP-06-028 | 결제 E2E(Toss 테스트 키): Pro 구독 결제 → 엔타이틀먼트 pro → `max_participants` 1,000 반영, 금액 위조 PM001 시 Toss 취소 호출 | `tests/e2e-billing/` | LP-06-029 | P2 | M | Opus | 테스트 키로 전 흐름 통과. PM001에서 `fail_payment_order` 호출 후 취소 API 호출 | 확정 결정 4, `CORE_SPEC.md` 5장 |
 | LP-06-029 | Phase 2 결제 라우트: checkout, confirm, Toss 웹훅(서명 필수), seed 플랜 활성화 요청 | `src/app/api/billing/`, `src/app/api/webhooks/toss/` | LP-06-003 | P2 | M | Fable | 클라이언트 금액 무시, 주문 선저장, 웹훅 서명 실패 401 | `SHARED_MODULES.md` 5, 6장 |
 | LP-06-030 | 접근성/반응형 체크(375/768/1024/1440, 포커스, reduced-motion, 대비, aria-live 요약) | `tests/a11y/` | LP-06-009, LP-06-016, LP-06-022 | P1 | S | Haiku | `DESIGN_PRINCIPLES.md` 7단계 12항목 통과 기록. AI 패널·음성 버튼·3D 히어로의 키보드/스크린리더/reduced-motion 항목 포함 | 03장 6절 |
-| LP-06-031 | 배포 설정: Vercel(icn1), Railway 워커 2대, env 기동 검증(누락 시 실패), 스케줄 | `src/env.ts`, `vercel.json`, `services/poll-broadcaster/deploy/` | LP-06-010 | P1 | S | Sonnet | 필수 env 하나라도 없으면 기동 실패(AI·음성 변수 포함, 02장 8절). 워커 헬스체크 엔드포인트. FastAPI(`apps/api`) Railway 서비스와 정산·정리 호출 스케줄 설정 | 02장 7, 8절 |
+| LP-06-031 | 배포 설정: Vercel(icn1), Railway 워커 2대, env 기동 검증(누락 시 실패), 스케줄 | `src/env.ts`, `vercel.json`, `services/poll-broadcaster/deploy/` | LP-06-010 | P1 | S | Sonnet | 필수 env 하나라도 없으면 기동 실패(AI·음성 변수 포함, 02장 8절). 인증 단계 변수(02장 9절)는 LP-06-003의 `getAuthConfig()`를 호출해 검증하고 배포 env는 `AUTH_MODE=live`, `DEV_SEED_PASSWORD` 없음. 워커 헬스체크 엔드포인트. FastAPI(`apps/api`) Railway 서비스와 정산·정리 호출 스케줄 설정 | 02장 7, 8절 |
 | LP-06-032 | 진행자 가이드와 FAQ(소프트 1인 1표 설명, OBS 연결 방법, 개인정보 고지) | `docs/guide/` | LP-06-017 | P2 | S | Haiku | 01장 6절·6.1절 고지와 문구가 일치(청중 원문은 국내 오픈소스로 처리, 음성 질문 고지). 금지 문구 0건 | 리뷰 5장 #12 |
 | LP-06-033 | 디자인 시스템 1단계: 레퍼런스 확정(진행자 콘솔 Atlassian 주·Primer 보조, AI 패널 Astryx 패턴 존재·라이선스 확인, 랜딩 HERO_3D), 가져올 것과 안 가져올 것 | `docs/file/03-설계/디자인/DESIGN.md`(1절 "레퍼런스와 방향") | 없음 | P0 | S | Sonnet | 03장 3.8절의 주 레퍼런스·가져올 것·안 가져올 것이 1절 표로 있다. Astryx 존재·라이선스 확인 결과와 미확인 시 대체안 기록(01장 D17). 고문(Fable) 검토 기록 시각 레퍼런스: `03_SCREENS_UX.md` 4.1절 표(랜딩은 Awwwards, 앱 화면은 Dribbble. 후보는 `docs/products/_design-guide/REFERENCES.md:183` live-poll 절)를 DESIGN.md 1절에 옮기고, 각 링크를 브라우저로 열어 본 결과(열림/교체)를 적는다(`docs/products/_design-guide/DESIGN_PRINCIPLES.md:29-38`). | `DESIGN_SYSTEM.md` 4장 1단계, 9절 |
 | LP-06-034 | 디자인 시스템 3단계: 사람 비주얼 검토(라이트/다크, 상태 6종, 크기 배리언트) | `docs/file/03-설계/디자인/review/`(스크린샷, 수정 기록) | LP-06-023 | P0 | M | 사람(보조 Sonnet) | 03장 3.8절 기본 컴포넌트 전부의 라이트/다크·상태별 스크린샷과 사람이 고친 수치 기록, 대비 4.5:1(발표 화면 막대 라벨 7:1)·포커스 링 확인. 이 단계는 줄이지 않는다 | `DESIGN_SYSTEM.md` 4장 3단계 |
@@ -72,33 +72,33 @@
 | LP-06-045 | 청중 음성 질문: `/api/p/voice-question`, 5중 한도, 묶음 선차감, 행사 `audience_voice` 토글 라우트, 청중 입력 컴포넌트와 음성 고지 | `src/app/api/p/voice-question/`, `src/app/api/host/events/[id]/audience-voice/`, `src/server/audience-voice/`, `src/components/voice/audience/` | LP-06-005, LP-06-009, LP-06-037 | P0 | M | Opus | 참가자 쿠키 없음·차단 401 PL009, 한도 소진 뒤 요청은 STT 호출 0 + 429 `AI_VOICE_LIMIT`, 변환 텍스트·오디오 서버 저장 0(로그 포함), `ai_usage`에 상용 제공자 0, 같은 IP에서 입장·투표 500건이 막히지 않음, 마이크 거부·미지원에서 텍스트 질문 정상, `voice_sessions` visitor_key `pt:<participant_id>` | LP-F-032 |
 | LP-06-046 | Q&A 요약 읽어 주기: `/api/voice/qna-summary`(요약 텍스트는 DB에서만, 선차감·정산)와 재생 UI | `src/app/api/voice/qna-summary/`, `src/components/voice/summary/` | LP-06-040, LP-06-044 | P1 | S | Opus | 임의 텍스트 전송 400, 존재하지 않는 `run_id` 404, 미동의 조직의 `ai_usage` 제공자에 elevenlabs 0, "AI가 생성한 음성입니다" 표시, 실패 시 환불 | LP-F-033 |
 | LP-06-047 | 3D 히어로: 무대 위 막대·구(PC·태블릿), 막대 3개(모바일), 정지 이미지 대체, 성능 예산, 시연 값 표시 | `src/components/hero3d/`, `public/hero/` | LP-06-035 | P1 | L | Sonnet | `HERO_3D.md` 4절 수용 기준 전부(기기 3종 동작, 3D 번들+에셋 1MB/300KB, LCP 2.5초, 로딩 전 저사양 판정과 `deviceMemory` 없는 Safari·Firefox 분기, 런타임 강등, 3D 전 HTML 사용 가능, 스크린샷 3종 고문 검토), 토큰 밖 3D 색 0, 네온·보라/핑크 그라디언트 0 | LP-F-036, 03장 4.5절 |
-| LP-06-048 | AI·음성 보안·라우팅 회귀 테스트(서명 토큰, 대화 매핑, 국외 동의 필터, 청중 원문 오픈소스 강제, 선차감·정산·환불, 청중 음성 남용 시나리오, 라우팅 seed 스냅샷, AI 서비스 정지 시 투표 경로 정상) | `apps/api/tests/poll/security/`, `tests/e2e-ai/`, `scripts/ai-routing/` | LP-06-037, LP-06-040, LP-06-041, LP-06-044, LP-06-045 | P0 | M | Fable | `resolve_ai_route` 스냅샷(기능 12행 × 동의 유/무)이 02장 5-2절과 일치, 위조·만료·재사용 토큰 401, 타인 대화 이어 쓰기 404, 청중 쿠키로 `/api/ai/*` 401, 미동의 조직 상용 호출 0, 청중 원문 단계 상용 호출 0, 음성 남용 시나리오(한 참가자 연타, 다중 참가자 같은 IP, 풀 소진, 지갑 0) 통과, 원장 drift 0, 목 AI 서비스 정지 상태에서 투표·브로드캐스트 정상. CI 실패 시 머지 차단 | `SECURITY_BASELINE.md` 16장 |
+| LP-06-048 | AI·음성 보안·라우팅 회귀 테스트(서명 토큰, 대화 매핑, 국외 동의 필터, 청중 원문 오픈소스 강제, 선차감·정산·환불, 청중 음성 남용 시나리오, 라우팅 seed 스냅샷, AI 서비스 정지 시 투표 경로 정상) | `apps/api/tests/poll/security/`, `tests/e2e-ai/`, `scripts/ai-routing/` | LP-06-037, LP-06-040, LP-06-041, LP-06-044, LP-06-045, LP-06-049(통합 작업은 B 완료 뒤) | P0 | M | Fable | `resolve_ai_route` 스냅샷(기능 12행 × 동의 유/무)이 02장 5-2절과 일치, 위조·만료·재사용 토큰 401, 타인 대화 이어 쓰기 404, 청중 쿠키로 `/api/ai/*` 401, 미동의 조직 상용 호출 0, 청중 원문 단계 상용 호출 0, 음성 남용 시나리오(한 참가자 연타, 다중 참가자 같은 IP, 풀 소진, 지갑 0) 통과, 원장 drift 0, 목 AI 서비스 정지 상태에서 투표·브로드캐스트 정상. CI 실패 시 머지 차단 | `SECURITY_BASELINE.md` 16장 |
 
 ## 3. 웨이브(병렬 실행 순서)
 
 | 웨이브 | 작업 ID | 병렬 수 | 진입 조건 | 산출물 |
 |---|---|---|---|---|
 | W0 | LP-06-001, 002, 033 | 3 | 없음 | 앱 골격, DB 적용과 타입(AI 기본값 포함), 디자인 레퍼런스(디자인 시스템 1단계) |
-| W1 | LP-06-003, 004, 010, 011, 023, 026, 036 | 7 | W0 완료 | 진행자 인증, 도메인 라이브러리, 브로드캐스터, Realtime 권한, 토큰·기본 컴포넌트(2단계), RLS 회귀, AI 서비스 설치 |
+| W1 | LP-06-003, 004, 010, 011, 023, 026, 036 | 7 | W0 완료 | 진행자 인증(Stage A Mock 로그인·시드 페르소나. W0 작업은 시드 없이 SQL·단위 테스트로 검증), 도메인 라이브러리, 브로드캐스터, Realtime 권한, 토큰·기본 컴포넌트(2단계), RLS 회귀, AI 서비스 설치 |
 | W1-D | LP-06-034 → 035(직렬) | 1 | 023 | 디자인 시스템 3~4단계(사람 비주얼 검토, 정답 확정). 화면 작업의 진입 조건 |
 | W2 | LP-06-005, 013, 015, 018, 021, 024, 037, 047 | 8 | W1·W1-D 완료 | 청중 API, 실시간 훅, 공용 컴포넌트, 오버레이 API, 설정, 문구, AI 게이트, 3D 히어로 |
 | W3 | LP-06-006, 007, 012, 014, 016, 017, 022, 038, 040 | 9 | W2 완료 | API 테스트, 편집 화면, 남용 테스트, 훅 테스트, 발표/오버레이, 랜딩, 자료 RAG, Q&A 정리 그래프 |
 | W4 | LP-06-008, 009, 027, 031, 039, 041 | 6 | W3 완료 | 콘솔, 청중 화면, 부하 테스트, 배포, 행사 위키, Dify 어시스턴트 |
 | W5 | LP-06-019, 020, 025, 030, 032, 042, 044, 045 | 8 | W4 완료 | Q&A 패널, 결과/CSV, E2E, 접근성, 가이드, 어시스턴트 패널, 진행자 음성 대화, 청중 음성 질문 |
-| W6 | LP-06-043, 046, 048 | 3 | W5 완료 | Q&A AI 정리 패널, 요약 읽어 주기, AI 보안 회귀 → **MVP 출시 조건**(베타 공개) |
-| W7(Phase 2) | LP-06-029, 028 | 2(순차) | 베타 8주 후 가격 결정(01장 D4, D11) | 유료 플랜 |
+| W6 | LP-06-049(G1 통과 후 먼저), 043, 046, 048 | 4 | W5 완료. 049는 G1 판정(`[DECISION] G1 통과`) 뒤 맨 먼저 시작하고 048은 049 완료 뒤 | Stage B Google·이메일 로그인, Q&A AI 정리 패널, 요약 읽어 주기, AI 보안 회귀 → **MVP 출시 조건**(베타 공개) |
+| W7(Phase 2) | LP-06-029, 028 / LP-06-050, 051(G2 통과 후) | 2(순차) + 2(병렬) | 029·028은 베타 8주 후 가격 결정(01장 D4, D11). 050·051은 G2(Google 실사용 2주 안정, AUTH_ROADMAP 6장)로 029·028과 독립 | 유료 플랜, 카카오·네이버 로그인 |
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 8 (002, 011, 026, 027, 029, 036, 037, 048) | 17.0% | 18/85 = 21.2% |
-| Opus | 21 (003, 004, 005, 006, 008, 009, 010, 012, 013, 014, 018, 025, 028, 035, 038, 039, 040, 041, 044, 045, 046) | 44.7% | 39/85 = 45.9% |
-| Sonnet | 14 (001, 007, 015, 016, 017, 019, 020, 022, 023, 031, 033, 042, 043, 047) | 29.8% | 24/85 = 28.2% |
-| Haiku | 4 (021, 024, 030, 032) | 8.5% | 4/85 = 4.7% |
-| 합계 | 47(사람 작업 1개 제외, 전체 48개) | 100% | 85 |
+| Fable | 10 (002, 011, 026, 027, 029, 036, 037, 048, 049, 051) | 20.0% | 22/91 = 24.2% |
+| Opus | 22 (003, 004, 005, 006, 008, 009, 010, 012, 013, 014, 018, 025, 028, 035, 038, 039, 040, 041, 044, 045, 046, 050) | 44.0% | 41/91 = 45.1% |
+| Sonnet | 14 (001, 007, 015, 016, 017, 019, 020, 022, 023, 031, 033, 042, 043, 047) | 28.0% | 24/91 = 26.4% |
+| Haiku | 4 (021, 024, 030, 032) | 8.0% | 4/91 = 4.4% |
+| 합계 | 50(사람 작업 1개 제외, 전체 51개) | 100% | 91 |
 
-비율은 모델 작업 47개 기준이다. 사람 작업 1개(LP-06-034, M)는 비율에서 뺐다. 2026-10-13 이전(32개)은 Fable 15.6%, Opus 40.6%, Sonnet 31.3%, Haiku 12.5%였다. Fable은 DB 적용과 RLS, Realtime 권한, 부하 측정, 결제 라우트에 더해 AI 보안 경계(서명 토큰 검증 036, AI 게이트의 선차감·정산·동의 037, AI 회귀 048)를 맡는다. 그래프·RAG·위키·Dify·음성 구현은 Opus, 패널·3D 히어로·디자인 레퍼런스는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
+비율은 모델 작업 50개 기준이다(2026-10-14: 인증 B·C 작업 049 Fable M, 050 Opus S, 051 Fable M 추가, 003은 Stage A 범위 확대로 S→M. 직전 47개 기준은 Fable 17.0%, Opus 44.7%, Sonnet 29.8%, Haiku 8.5%, 가중 85). 사람 작업 1개(LP-06-034, M)는 비율에서 뺐다. 2026-10-13 이전(32개)은 Fable 15.6%, Opus 40.6%, Sonnet 31.3%, Haiku 12.5%였다. Fable은 DB 적용과 RLS, Realtime 권한, 부하 측정, 결제 라우트에 더해 AI 보안 경계(서명 토큰 검증 036, AI 게이트의 선차감·정산·동의 037, AI 회귀 048)를 맡는다. 그래프·RAG·위키·Dify·음성 구현은 Opus, 패널·3D 히어로·디자인 레퍼런스는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -141,9 +141,44 @@ AI·음성·3D·디자인 시스템 작업(LP-06-033~048)은 리뷰 5장 작업 
 | 타입/린트 | `tsc --noEmit`, `eslint` 0 오류, `as any` 0건 |
 | SQL | `docs/products/_tools-sqlcheck` mod/mono OK |
 | RLS | LP-06-026 전 항목 통과(모듈러, 모놀리스) |
-| E2E | LP-06-025 통과. Phase 2는 LP-06-028(결제 E2E) 통과 |
+| E2E | LP-06-025 통과(Mock 페르소나 storageState). 공개 베타 전 P0 LP-06-049(Stage B) ↔ 테스트: B-1~B-6(Google 실로그인은 수동 점검표, LP-06-025 Mock E2E 계속 녹색). Phase 2는 LP-06-028(결제 E2E) 통과, C1·C2는 LP-06-050·051 수용 기준 |
 | 성능 | LP-06-027 보고서에서 300명 이하 p95 500ms 이내, Q&A AI 정리 동시 실행에도 변화 없음 |
 | AI·음성 | `pytest apps/api` 통과, LP-06-048 녹색, 그래프 평가셋(LP-06-040)·대화 평가셋(LP-06-041) 통과, 청중 원문 단계 상용 호출 0, 음성 남용 시나리오 통과 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준, 디자인 시스템 4단계(LP-06-035) 완료, `tailwind.config.js`·hex 하드코딩 0 |
-| 06장 | 48개 작업 완료(Phase 2 작업은 Phase 2 완료 정의) |
-| 명령 | `pnpm test`, `pnpm test:e2e`, `pnpm test:rls`, `pytest`(apps/api), `node check.mjs --vector mod ...`, `node check.mjs --vector mono ...` |
+| 06장 | MVP 작업 완료(51개 중 Phase 2 작업 029·028과 G2 후 작업 050·051은 각자 완료 정의) |
+| 명령 | `pnpm db:seed-users`(로컬 전용, `supabase db reset` 뒤), `pnpm test`, `pnpm test:e2e`, `pnpm test:rls`, `pytest`(apps/api), `node check.mjs --vector mod ...`, `node check.mjs --vector mono ...` |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 9장(작업 계획 반영 규칙)과 8장(live-poll 행: open, 진행자만 로그인, B Google + 이메일, C1 P1, C2 P1). 기존 인증 작업 LP-06-003은 2절에서 Stage A로 범위를 바꿨다. 아래 3개는 새 작업이고 ID는 기존 최대 048 다음부터다. 로그인하지 않는 청중(코드·QR 입장, 참가자 토큰)과 OBS 오버레이(키)의 흐름은 단계와 무관하므로 이 작업들은 `src/app/(participant)/`, `src/app/overlay/`, `src/app/api/p/`, `src/app/api/overlay/`, `src/lib/realtime-auth/`를 수정하지 않는다.
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| LP-06-049 | Stage B: Google OAuth 전환 + 이메일 가입·로그인·비밀번호 재설정 화면. 로그인 화면 제공자 버튼("Google로 계속하기", `prompt: 'select_account'`), `/auth/callback`(`finishLogin` 전체: 코드 교환 → `session_context` → poll은 open이라 `bootstrap_app_for_org('poll')` 1회 → 상태 분기 → `next` 화이트리스트 → 감사 `auth.login`)과 단위 테스트, `/onboarding` 첫 단계 베타 약관 동의(OAuth 첫 로그인)와 동의 기록 방식 결정, 로컬 `supabase/config.toml` B 설정, 배포 체크리스트 | `src/app/(auth)/`(제공자 버튼·이메일 폼), `src/app/auth/callback/`, `src/app/onboarding/terms/`(온보딩 첫 단계. AI 동의 단계는 LP-06-037 소유, 단계 연결 1줄 요청), `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`, `docs/deploy/auth-checklist.md` | LP-06-003, LP-06-037, LP-06-025, G1(사람 판정 `[DECISION] G1 통과`) | P0 | M | Fable | AUTH_ROADMAP 5.3절 B-1~B-6 그대로: B-1 새 Google 계정 첫 로그인 → `session_context('poll')` `entitled=true`, `plan_code='free'`, 가입 크레딧 100이 1회만(재로그인 3회 뒤 원장 행 수 같음). B-2 `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` → `/events`. B-3 `code` 없음·재사용·만료 → `/login?error=callback`, 서버 오류 로그에 토큰·코드 없음. B-4 `VERCEL_ENV=production` 빌드에서 `/api/dev/login` 404, 개발용 패널 없음, `AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(LP-06-025) 계속 녹색, Google 실로그인은 사람이 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)로 확인해 task `log.md`에 기록. B-6 운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS=google,email`이 배포 체크리스트와 일치. 제품 추가: 청중 입장·투표·오버레이 E2E가 B 전환 전후 같은 결과(로그인 없는 흐름 불변) | LP-F-001, AUTH_ROADMAP 3.2, 5장, 01장 8.1절 |
+| LP-06-050 | Stage C1: 카카오 로그인. "카카오로 계속하기" 버튼, 로컬 config C1 설정, 이메일 정책(01장 D19) 반영, (b)면 결제 전 연락 이메일 입력 화면, 설정 → 로그인 방법(연결·해제, `linkIdentity`, 감사 `auth.identity_link`·`auth.identity_unlink`) | `src/app/(auth)/`의 카카오 버튼 컴포넌트, `src/app/(host)/settings/login-methods/`, `supabase/config.toml`의 `[auth.external.kakao]` | LP-06-049, G2(사람 판정 `[DECISION] G2 통과`) | P1 | S | Opus | AUTH_ROADMAP 7.1.3절 C1-1~C1-5 그대로: C1-1 새 카카오 계정 첫 로그인 → B-1과 같은 결과. C1-2 비즈 앱(a)이면 Google로 가입한 같은 이메일 사용자가 카카오로 로그인 → 같은 `user_id`(자동 연결은 제공자가 이메일 인증을 확인한 경우만, 미확인이면 7.3절 수동 연결). C1-3 (b)면 이메일 없는 사용자가 결제 전 연락 이메일 입력 화면을 본다. C1-4 표시 이름은 카카오 닉네임, 없으면 `user` 규칙. C1-5 버튼은 카카오 디자인 가이드 색·문구(미확인: 최신판 확인 후 반영). 계정 연결 해제는 남는 수단 1개 이상일 때만 | 01장 8.1절, AUTH_ROADMAP 7.1, 7.3절 |
+| LP-06-051 | Stage C2: 네이버 로그인. 첫 단계 스파이크(0.5일, `custom:naver` 등록 스크립트 `scripts/auth/register-naver-provider.mjs`) → `supabase_custom` 또는 브리지 채택(01장 D20). 브리지면 `/auth/naver/start`·`/auth/naver/callback`과 코어 요청(6절 R-9). "네이버로 계속하기" 버튼, 설정 → 로그인 방법에 네이버 연결, 네이버 검수 신청 자료(로그인 버튼부터 가입 완료까지 캡처) | `scripts/auth/`, `src/app/auth/naver/`(브리지만), `src/lib/auth/naver/`, `src/app/(auth)/`의 네이버 버튼 컴포넌트 | LP-06-049, LP-06-050(설정 → 로그인 방법 화면), G2 | P1 | M | Fable | AUTH_ROADMAP 7.2.4절 C2-1~C2-6 그대로: C2-1 스파이크 결과가 `[DECISION]`으로 기록되고 `NAVER_AUTH_PATH`가 그 값. C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과. C2-3 같은 네이버 계정 재로그인 5회 → 같은 `user_id`, 사용자 수 증가 0. C2-4 (브리지) state 변조·재사용·쿠키 없음 → 거부, 세션 미생성, 다른 브라우저 콜백 URL 재생 거부. C2-5 (브리지) 같은 이메일의 Google 가입자가 네이버로 처음 로그인 → `email_in_use` 안내, 새 사용자 0. C2-6 네이버 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver` 없음 | 01장 8.1절, AUTH_ROADMAP 7.2, 7.3절, `SECURITY_BASELINE.md` 17장 |
+
+게이트와 웨이브(3절 표에 같은 내용을 줄 안에 적었다):
+
+| 작업 | 게이트 | 웨이브 | 비고 |
+|---|---|---|---|
+| LP-06-003(Stage A) | 없음 | W1 | 이보다 앞선 W0(001, 002, 033)은 시드 스크립트 없이 SQL·단위 테스트로 검증 |
+| LP-06-049(Stage B) | G1(AUTH_ROADMAP 4장): 2절 MVP P0 기능 작업 완료(049·050·051과 공개 베타 직전 통합 작업 048 제외), LP-06-025 핵심 플로우 Mock E2E 녹색, LP-06-026 RLS 스모크 전 항목과 `outsider` 거부, 인증 모듈 밖 단계 분기 0건, 외부 준비(Google Cloud 동의 화면·웹 클라이언트 ID·운영 Supabase). 결제 E2E는 Phase 2라 G1 조건에서 제외 | W6 맨 앞 | 마지막 기능 웨이브 W5 다음, 공개 베타 직전 통합 웨이브. LP-06-048(AI 보안 회귀)은 049 완료 뒤 시작 |
+| LP-06-050(C1), LP-06-051(C2) | G2(AUTH_ROADMAP 6장): Google 실사용 공개 베타 2주(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안), `entitled=false` 잔존 0, 카카오 앱·네이버 등록 준비 | W7(Phase 2 웨이브 행에 병렬로) | MVP 출시 후 웨이브. 결제 작업 029·028과 독립. 네이버 검수 기간 때문에 신청은 G2 직후 |
+
+공용 모듈 요청(6절 표에 더하는 행):
+
+| ID | 요청 | 대상 | 이유 | 우선순위 |
+|---|---|---|---|---|
+| R-9 | C2를 브리지 경로로 정하면 `staged/0010_core_auth_identity_links.sql` 적용 | `_platform-core`(코어가 한 번만 적용, 전 제품 공용) | 브리지는 네이버 고유 id로 사용자를 찾아야 하고 `core.oauth_states`는 로그인 전에 쓸 수 없다(AUTH_ROADMAP 7.2.3절) | P1(D20이 bridge일 때만) |
+| R-10 | 베타 약관 동의 기록의 코어 표준(감사 이벤트 이름 또는 동의 테이블) | `_platform-core` | OAuth 첫 로그인 약관 동의를 제품마다 다르게 기록하지 않게. 해결 전까지 LP-06-049가 `core.write_audit`(`terms.accept`, 약관 버전)로 기록(제안) | P2 |
+
+불일치 기록(이번 반영에서 판단한 점):
+
+| 항목 | 내용 | 처리 |
+|---|---|---|
+| LP-06-003 규모 | Stage A 범위(인증 모듈, Mock 로그인, 시드 스크립트+제품 훅, 가드 4종)가 기존 범위(proxy, 로그인·가입 화면)보다 커졌다 | S → M으로 바꾸고 4절 가중치에 반영. 선행 작업에 LP-06-002(시드가 로컬 DB를 요구) 추가 |
+| G1의 결제 E2E 조건 | AUTH_ROADMAP 4장 4번은 결제가 있는 제품에만 적용. live-poll 결제는 Phase 2(029, 028) | G1 조건에서 제외 |
+| CI 금지 문자열 | 기존 작업에 "Mock 로그인" 금지 검사가 없었다 | AUTH_ROADMAP 9장 문구로 LP-06-003 수용 기준에 새로 넣었다 |
+| 공동 진행자 | 01장 2절에서 Phase 2 기능인데 AUTH_ROADMAP 8장은 A 페르소나로 "공동 진행자"를 요구 | 화면 없이 코어 `invite_member`·`accept_invite`로 `cohost`(member) 페르소나만 만든다(05장 10절). 초대 화면은 계속 Phase 2 |
+| `pending` 페르소나 | poll은 open 앱이라 approval 상태가 없다 | 만들지 않는다(05장 10절) |

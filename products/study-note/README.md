@@ -36,7 +36,7 @@ AI 요약(2026-10-13): 노트·교재를 과목별로 색인(RAG)하고, LangGra
 | `03_SCREENS_UX.md` | 화면 목록, 플로우, 화면별 명세, 랜딩 디자인 방향(레퍼런스, 브리프, 토큰, 와이어프레임), 상태/오류, 접근성 |
 | `04_API.md` | Route Handler, RPC, 잡 페이로드, 웹훅, 외부 API, 오류 코드 |
 | `05_DATA_MODEL.md` | 테이블 7개, 상태 전이, RLS, 코어 참조, 차단 설계(보안/데이터), 모놀리스와 모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 52개(AI·음성·3D·디자인 시스템 22개 포함), 웨이브 W0~W7, 모델별 비율, 리뷰 작업 흡수표, 코어 요청(C-1~C-10) |
+| `06_AGENT_PLAN.md` | 작업 55개(AI·음성·3D·디자인 시스템 22개, 인증 단계 B·C1·C2 3개 포함), 웨이브 W0~W7, 모델별 비율, 리뷰 작업 흡수표, 코어 요청(C-1~C-12) |
 | `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 폐기 목록, 복사 금지 결함, 아카이브 절차 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | `migrations/0001_core_lite.sql`(코어 축소판 복사본), `0002_study_note_domain.sql`(도메인), `seed.sql` |

@@ -75,3 +75,19 @@
 | `toISOString()` 날짜 | KST 오류 |
 | 가상 후기, 미검증 수치, 보장 표현 | 01장 6.1절 |
 | AI·디자인(2026-10-13) | LLM·음성 키를 브라우저·Vercel에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·개인정보, 제3자(강의자) 음성의 상용 전송, 퀴즈 정답 선공개, 클라이언트 텍스트 그대로 TTS, 사용자 위키 블록 덮어쓰기, 토큰 밖 3D 색·파스텔 스티커, "Tailwind"만 적은 지시(v3 혼입). `07_SOURCE_MIGRATION.md` 4절 |
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본: `docs/products/_platform-core/AUTH_ROADMAP.md`. 제품 반영: 01장 NT-F-001·8.1절, 02장 9절, 03장 7절, 04장 8절, 05장 10절, 06장 8절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 **Stage A(Mock 로그인)**. 실제 제공자(Google·카카오·네이버) 콘솔 설정과 버튼을 만들지 않는다. 이메일 가입·인증 메일·비밀번호 재설정 화면도 B에서 만든다. 이메일 인증 가드(`email_confirmed_at`)는 A부터 서버에 둔다 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`를 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`에만. 워커·FastAPI·AI 게이트·기능 화면에 `if (mock)` 금지(CI NT-06-022) |
+| 페르소나 사용 | 로컬: `supabase start` → `supabase db reset` → `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` → `node scripts/dev/seed-users.mjs --app notes`(`npm run db:seed-users`) → `/login` 개발용 패널. 페르소나 목록은 05장 10절(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, `unverified`, `low_credit`) |
+| E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다(NT-06-024). 실제 Google 로그인은 자동화하지 않는다 |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, `dev-user` 우회, 페르소나 이메일로 권한 분기, 원격 DB에 시드, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`나 로그에, 콜백 `next` 무검증(07장 6절) |
+| 배포 | 배포 환경은 `AUTH_MODE=live`. `AUTH_MODE=mock VERCEL_ENV=production` 빌드는 실패해야 하고 `/api/dev/login`은 404 |
+| 단계 전환 | 에이전트가 스스로 바꾸지 않는다. 사람(대표님)이 G1(`AUTH_ROADMAP.md` 4장)·G2(6장)를 판정하고 task `log.md`에 `[DECISION] G1 통과`·`[DECISION] G2 통과`로 기록한 뒤 해당 작업을 시작한다 |
+| 이 제품의 작업 ID | A: NT-06-006(범위 변경, W2). B: NT-06-053(P0, W6 맨 앞, G1 후). C1: NT-06-054(카카오, P1, W7, G2 후). C2: NT-06-055(네이버, P1, W7, G2 후) |
+| 첫 제품 | study-note는 개발 순서상 첫 제품이라 Stage A 시드 스크립트 계약(`AUTH_ROADMAP.md` 2.3·2.4절)이 처음 실전 검증되는 곳이다. 계약과 다르게 동작하면 코드를 조용히 맞추지 말고 `[DECISION]`과 06장 C-12 요청으로 남긴다 |

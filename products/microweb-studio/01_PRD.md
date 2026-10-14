@@ -1,6 +1,6 @@
 # 01 PRD: Microweb Studio
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(템플릿·문구 RAG, 이벤트 종류별 문구 위키, LangGraph `microweb.invitation_copy`, Dify 제작 상담 채팅), 음성(제작 상담 음성 대화, 청첩장 인사말 음성, 하객 음성 방명록), 상용/오픈소스 모델 이원화와 국외 이전 동의, 쇼룸 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. "제안"은 원본과 리뷰에 근거가 없어 이 문서가 새로 정한 값이다.
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(템플릿·문구 RAG, 이벤트 종류별 문구 위키, LangGraph `microweb.invitation_copy`, Dify 제작 상담 채팅), 음성(제작 상담 음성 대화, 청첩장 인사말 음성, 하객 음성 방명록), 상용/오픈소스 모델 이원화와 국외 이전 동의, 쇼룸 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. "제안"은 원본과 리뷰에 근거가 없어 이 문서가 새로 정한 값이다. 2026-10-14 개정: 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`, 정본 `docs/products/_platform-core/AUTH_ROADMAP.md`)에 따라 운영자 로그인을 단계로 켠다(MW-F-024, 범위는 8.2절, 결정은 8.1절).
 
 ## 1. 페르소나와 핵심 과제
 
@@ -25,7 +25,7 @@
 | `/i/:slug` 공개 페이지, slug별 OG 메타, 카카오 공유 | MVP | `00_MERGE_ANALYSIS.md:1037-1038` |
 | 방명록(Supabase), 참석 여부(RSVP) | MVP | `00_MERGE_ANALYSIS.md:1033`. RSVP는 제안(이유: 하객 수 파악이 대행 고객의 공통 요청이며 같은 쓰기 경로를 재사용) |
 | AI 축하말(전용 엔드포인트) | MVP | `00_MERGE_ANALYSIS.md:1092` 권고 B |
-| 운영자 편집기 `/studio`, 사진 업로드 | MVP | `00_MERGE_ANALYSIS.md:1062`, `premium-wedding-invitation.md:104` |
+| 운영자 편집기 `/studio`, 사진 업로드, 운영자 로그인(MVP 개발은 Mock(Stage A), 공개 베타 전 Google + 초대 메일(Stage B, P0), 카카오·네이버는 G2 후(Stage C, P2 선택). 8.2절) | MVP | `00_MERGE_ANALYSIS.md:1062`, `premium-wedding-invitation.md:104`, 확정 결정 22 |
 | 쇼룸 `/`, `/portfolio`, `/pricing`, `/simulator`, `/templates`, `/contact` | MVP | `00_MERGE_ANALYSIS.md:1012-1020` |
 | 견적 문의 저장과 리드 관리, 제작 주문 장부(수기 결제 기록) | MVP | 확정 결정 11(대행 시작), `00_MERGE_ANALYSIS.md:1058` |
 | 고객 시안 확인 링크 `/p/:token` | MVP | 신규(제안). 이유: 대행 고객은 계정이 없으므로 승인 기록이 필요 |
@@ -71,7 +71,7 @@
 | MW-F-021 | 포트폴리오 `/portfolio` | 디벨롭 | 실제 납품작만(WebSite 엔트리 포함). 고객 게시 동의와 이미지가 없으면 게시 불가(DB 제약). 상세페이지 탭 유지 | picsum URL이 코드에 없다 | `00_MERGE_ANALYSIS.md:1048` |
 | MW-F-022 | 가격표 `/pricing` | 통합 | 웹 제작 4등급 + 마이크로웹 템플릿 가격대 한 표. 할인 표시는 실제 정가 판매 이력이 있을 때만 | 근거 없는 "50% 할인" 문구가 없다 | `00_MERGE_ANALYSIS.md:1050` |
 | MW-F-023 | 시뮬레이터 `/simulator` | 유지 | 업종 9 x 등급 4, 디바이스 3종. "이 조합으로 상담받기"가 선택값을 `/contact`에 넘긴다. Custom의 병원·교육은 admin-suite 데모 링크(Phase 2) | 선택값이 리드 `simulator` jsonb에 저장된다 | `webcraft-agency-simulator.md:30`, `00_MERGE_ANALYSIS.md:1053` |
-| MW-F-024 | 초대제 베타 | 신규 | Supabase Auth 공개 가입 끔, 운영자가 초대 메일 발송, `studio_access` 허용 목록 | 엔타이틀먼트만 있고 허용 목록이 없는 조직은 `/studio`에서 0행, `create_site` 42501 | 브리프, 05장 3절 |
+| MW-F-024 | 초대제 베타와 운영자 로그인(단계, 확정 결정 22) | 신규 | Supabase Auth 공개 가입 끔, 운영자가 초대 메일 발송, `studio_access` 허용 목록. 로그인 단계: MVP 개발은 Mock(Stage A, 로컬 Supabase 시드 페르소나로 실제 JWT를 받는 `POST /api/dev/login`. 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만, 배포 환경 404), 공개 베타 전 Google + 초대 메일(Stage B, P0, MW-06-054. 초대받은 이메일과 같은 Google 계정이어야 같은 사용자이고 다르면 `/no-access`에서 "초대받은 이메일로 로그인하세요"), 카카오·네이버는 G2 후 P2 선택(Stage C, MW-06-055·056). 하객·고객 시안·쇼룸 방문자는 단계와 무관하게 로그인 없음 | 엔타이틀먼트만 있고 허용 목록이 없는 조직은 `/studio`에서 0행, `create_site` 42501. A(MW-06-003): `owner` 페르소나 `/studio` 진입, `studio_denied` `/pending`, `no_app` `/no-access`, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패. B: `AUTH_ROADMAP.md` 5.3절 B-1~B-6. C: 7.1.3절 C1-1~C1-5, 7.2.4절 C2-1~C2-6 | 브리프, 05장 3절, `AUTH_ROADMAP.md` 8장 |
 | MW-F-025 | 셀프서비스(Phase 2) | 신규 | `studio_access.mode='self_service'`, 발행 1건 = 템플릿 `self_publish_credits` 차감 | 잔액 부족 402, 게시 실패 시 환불 행 1개 | 확정 결정 11 |
 | MW-F-026 | 청첩 문구·구성 제안 | 신규 | 편집기 "AI로 문구 제안"이 FastAPI 그래프 `microweb.invitation_copy`를 실행한다: `intake`(입력 정리, LLM 없음) → `retrieve`(템플릿·문구 예시 RAG + 문구 위키) → `draft_copy`(인사말·안내 문구 초안 3안) → `propose_composition`(블록 순서, 필수 블록, 테마 제안 JSON) → `compliance`(금지 문구, 템플릿 `allowed_blocks`/`required_blocks`와 블록 zod 스키마 검사, 걸린 안만 1회 재작성). 입력은 이벤트 종류, 어조, 월/계절, 호칭 토큰(`{{신랑}}`, `{{신부}}`, `{{혼주}}`), 운영자 메모 500자뿐이고 실명·전화·계좌·사진은 보내지 않는다. 결과는 `sites.content`에 자동 반영하지 않고 운영자가 안마다 "적용"을 눌러야 블록 props에 들어간다(사람 승인 지점). 크레딧은 실행 전 선차감 후 정산(4.1절) | 1회 실행 = `core.ai_runs` 1행 + 노드별 `ai_run_steps`. 제안 JSON이 템플릿 필수 블록을 모두 포함하고 모르는 블록 타입 0개. 금지 문구 규칙 위반 0(평가셋 30건, 제안). 모델 요청 본문에 실명·전화·계좌 패턴 0(테스트). 실패 시 선차감 전액 환불, 같은 `request_id` 재전송 차감 1회. "적용" 전 `sites.content` 변경 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119`, 02장 5.2절 |
 | MW-F-027 | 템플릿·문구 예시 RAG | 신규 | 운영자가 작성한 문구 예시·표현 가이드(`content/copy/`)와 템플릿 카탈로그 설명(블록 구성, 어조 가이드)을 지식 조직(`MICROWEB_KNOWLEDGE_ORG_ID`)의 컬렉션 `microweb-copy`, `microweb-templates`(kind `rag`)에 색인한다. 임베딩은 오픈소스(`microweb_knowledge`, 대체 없음). 고객의 실제 청첩 문구·이름·연락처는 색인하지 않는다(`contains_pii=false`만). 조직 구분 없는 제품 공통 지식이라 Dify에는 외부 지식 API(`/dify/retrieval`)로만 노출하고 그래프와 `/tools/answer`는 FastAPI 안에서 같은 컬렉션을 검색한다 | 평가셋 40문항(제안)에서 상위 8개 안 정답 청크 재현율 0.8 이상(제안). 색인 전 검사에서 전화·계좌·이메일 패턴 0건. 외부 지식 응답에 사용자 조직 데이터 0. 원고 항목마다 작성자·검수일·라이선스 메타데이터 | `docs/products/_platform-core/AI_ARCHITECTURE.md:58-66`, `:94-107` |
@@ -189,7 +189,7 @@ AI·음성 키 8개는 2026-10-13에 추가했다. 모놀리스는 `supabase/mon
 
 | 항목 | 내용 |
 |---|---|
-| 개인정보 수집 | (a) 사이트 정보: 신랑·신부·혼주 이름, 전화번호, 계좌번호, 예식 일시·장소, 사진. 목적: 하객 안내. 보존: 게시 만료 후 30일 내 공개 파생본 삭제, 원본은 보관 후 30일 (b) 하객: 방명록 이름·본문, RSVP 이름·인원·메시지, IP 일 단위 솔트 해시. 보존: 만료 후 180일 (c) 문의자: 이름, 전화/이메일, 메시지. 보존 1년, 요청 시 즉시 삭제(`delete_lead`) |
+| 개인정보 수집 | (a) 사이트 정보: 신랑·신부·혼주 이름, 전화번호, 계좌번호, 예식 일시·장소, 사진. 목적: 하객 안내. 보존: 게시 만료 후 30일 내 공개 파생본 삭제, 원본은 보관 후 30일 (b) 하객: 방명록 이름·본문, RSVP 이름·인원·메시지, IP 일 단위 솔트 해시. 보존: 만료 후 180일 (c) 문의자: 이름, 전화/이메일, 메시지. 보존 1년, 요청 시 즉시 삭제(`delete_lead`) (d) 운영자 계정(2026-10-14, 인증 단계별): 초대 이메일, 이름. B단계부터 Google 계정 식별자, 이름, 프로필 이미지 URL. C1(선택) 카카오 회원번호, 닉네임, 프로필 이미지, (비즈 앱이면) 이메일. C2(선택) 네이버 고유 id, 이메일, 이름(브리지 경로면 `core.auth_identity_links`에 네이버 id). 보존: 탈퇴 시 코어 삭제 절차. Mock(A) 계정은 로컬 DB에만 있는 `.test` 가상 계정이라 수집 대상이 아니다 |
 | 공개 동의 | 계좌번호·전화번호를 공개하는 정보주체(부부, 혼주)의 동의를 게시 전 기록(`disclosure_consent_basis`: self/written/recorded_call). 대행 모드는 운영자가 서면 또는 녹취 동의를 받았음을 표시 |
 | 암호화 대상 | 앱 계층 컬럼 암호화 대상 없음(공개 목적 데이터). IP 원문 저장 금지(`SECURITY_BASELINE.md` 12장). 사진 EXIF GPS 제거 |
 | 삭제 절차 | 사이트: 보관(archived) → 30일 → 하객 데이터·파일 삭제 → 행 삭제. 조직: core soft delete → `purge_organization` |
@@ -247,3 +247,21 @@ AI·음성 키 8개는 2026-10-13에 추가했다. 모놀리스는 `supabase/mon
 | D-16 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). MW-06-036에서 확인 결과를 기록 |
 | D-17 | 쇼룸 비로그인 AI 상담 시기 | (a) Phase 2 (b) MVP | (a)(제안). 방문자 쿠키 + 운영자 조직 예산 + 강한 레이트 리밋이 필요(`docs/products/_platform-core/AI_ARCHITECTURE.md:54-56`, `:130`) |
 | D-18 | AI 생성물 표시 의무 범위 | 스튜디오 내부 표시만 / 최종 청첩장·음성 플레이어까지 | 음성은 플레이어 표시, 문구는 호스트 선택(제안). 법적 의무는 구현 시 확인(미확인) |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 순서(Mock → Google → 카카오·네이버)와 microweb의 B단계 구성(Google + 초대 메일)은 확정이다(`AUTH_ROADMAP.md:330`). 이 제품은 초대제라 "이메일+비밀번호 유지 여부"(공개 가입 제품 항목)는 해당 없고 기존 초대 메일 경로를 그대로 둔다. 기존 열린 결정 중 카카오 로그인 관련 항목은 없다(D-6, MW-F-009의 카카오는 지도·공유 SDK이고 로그인과 무관).
+
+| ID | 항목 | 선택지 | 권고 |
+|---|---|---|---|
+| D-19 | C단계(카카오·네이버) 도입 여부 | (a) G2 후 도입 (b) 도입하지 않음(Google + 초대 메일만) | 운영자가 소수의 초대 사용자라 P2 선택. G2 통과 뒤 초대 사용자 요청이 있을 때 (a)(제안) |
+| D-20 | 카카오 이메일 정책(C1을 켤 때) | (a) 비즈 앱 전환 후 `account_email` 필수 동의 (b) 이메일 없이 허용 | (a). 초대제는 초대 이메일과 로그인 이메일이 같아야 같은 사용자가 되므로 (b)로는 초대 사용자를 찾을 수 없다(`AUTH_ROADMAP.md` 7.1.2절) |
+| D-21 | 네이버 경로(C2를 켤 때) | `supabase_custom`(`custom:naver`) / `bridge`(서버 브리지 + 코어 `auth_identity_links`) | 스파이크(`AUTH_ROADMAP.md` 7.2.2절, MW-06-056 첫 단계) 결과로 결정하고 `[DECISION]`으로 기록 |
+
+### 8.2 인증 단계 범위 (2026-10-14, 2절 범위 표 보충)
+
+| 기능 | 범위 | 근거 |
+|---|---|---|
+| 운영자 로그인 | MVP 개발은 Mock(Stage A), 공개 베타 전 Google + 초대 메일(Stage B, P0), 카카오·네이버는 G2 후(Stage C, P2 선택, D-19) | 확정 결정 22, `AUTH_ROADMAP.md` 0장, 8장 |
+| 하객(`/i/*`), 고객 시안(`/p/*`), 쇼룸 방문자 | 로그인 없음. 어느 단계에서도 로그인 버튼을 넣지 않는다 | `AUTH_ROADMAP.md:339` |
+| Apple 로그인, 매직링크 | 범위 밖(기존 연기 결정 유지) | `AUTH_ROADMAP.md` 1장 |

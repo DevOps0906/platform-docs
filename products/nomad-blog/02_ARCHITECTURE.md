@@ -35,7 +35,7 @@ YSM의 네이버 게시 로직은 Python(`[5f6d262] Youtube_shots_Maker/backend/
 | 디렉토리 | 책임 | 다른 모듈 호출 |
 |---|---|---|
 | `src/app/(marketing)/` | 랜딩, 가격, 약관, 개인정보처리방침 | 없음(정적, `plans` 공개 SELECT만) |
-| `src/app/(auth)/` | 로그인, 가입(`signup_app='blog'`), 대기·정지 안내 | core-auth |
+| `src/app/(auth)/`, `src/lib/auth/`, `src/app/auth/callback/`, `src/app/api/dev/login/` | 로그인, 가입(`signup_app='blog'`), 대기·정지 안내. 인증 단계 분기(`AUTH_MODE`, 제공자 목록)는 `src/lib/auth/`·로그인 화면·콜백 라우트에만 둔다(9절, `AUTH_ROADMAP.md` 3.1절) | core-auth |
 | `src/app/(app)/dashboard/`, `posts/`, `calendar/` | 대시보드, 원고 목록, 캘린더 | server/* |
 | `src/app/(app)/posts/[id]/` | 에디터 화면 | features/editor, server/* |
 | `src/app/(app)/channels/`, `affiliate/`, `brandconnect/`, `settings/`, `billing/` | 채널, 제휴 통계, 브랜드커넥트, 설정(대가성 문구·멤버·활동 기록), 결제 | server/* |
@@ -91,7 +91,7 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 
 | 공용 모듈(`SHARED_MODULES.md`) | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 가입, 세션, `requireSession('blog')` | proxy.ts, 레이아웃, 모든 Route Handler | 프로필 없으면 로그아웃 |
+| auth | 가입, 세션, `requireSession('blog')`, 인증 단계(`src/lib/auth/`: `getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`) | proxy.ts, 레이아웃, 모든 Route Handler, 로그인 화면, `/auth/callback` | 프로필 없으면 로그아웃. 세션은 모든 단계에서 실제 Supabase JWT(9절) |
 | org | 1인 1워크스페이스, Business 팀 5인 | 설정 > 멤버 | |
 | credits | AI 선차감·환불 `withCredits` | server/ai, 워커 generate | 단가는 01장 4.2절 |
 | toss | 구독·팩 결제, 빌링키 | billing 라우트, 정기결제는 공용 워커 | `confirm_payment_order` 금액 불일치는 `PM001`이며 같은 호출의 주문 UPDATE는 롤백된다. blog는 PM001을 받으면 별도 호출로 `fail_payment_order`(service_role, 2026-10-13 코어 반영)로 주문을 failed로 기록하고 운영 알림 + Toss 취소를 한다 |
@@ -223,7 +223,7 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 | 리뷰 #n | 출처 | 결함 요약 | 차단 설계 | 담당 장/작업 |
 |---|---|---|---|---|
 | `docs/reviews/NOMAD_Shorts_Maker.md` 3장 #4 | `docs/reviews/NOMAD_Shorts_Maker.md:81` | `x-internal-call` 헤더 하나로 발행·큐 실행 인증 우회 | 리뷰 #4 → 차단 설계: 자기 HTTP 호출이 없다. 예약 발행은 `core.jobs.run_after`로 워커가 직접 실행하고, 웹 라우트는 모두 `requireSession`만 받는다. 내부 호출 헤더 분기 금지(CLAUDE.md 7장), 정적 검사로 `x-internal-call` 문자열을 CI에서 거부 | 4절, BL-06-014, BL-06-032 |
-| 같은 리뷰 #6 | `:83` | 미들웨어 없음, 대시보드 무인증, Mock 로그인 상시 노출 | 리뷰 #6 → 차단 설계: `src/proxy.ts`가 `(app)` 경로와 `/api/**`(웹훅, `/r` 제외)를 보호하고, 레이아웃과 라우트가 `requireSession('blog')`로 서버에서 다시 확인. Mock 로그인 파일 자체를 만들지 않는다 | BL-06-004 |
+| 같은 리뷰 #6 | `:83` | 미들웨어 없음, 대시보드 무인증, Mock 로그인 상시 노출 | 리뷰 #6 → 차단 설계: `src/proxy.ts`가 `(app)` 경로와 `/api/**`(웹훅, `/r` 제외)를 보호하고, 레이아웃과 라우트가 `requireSession('blog')`로 서버에서 다시 확인. 쿠키 역할 Mock(`mock-auth.ts`, `nomad_role`) 금지, 허용 Mock은 `AUTH_ROADMAP.md` 2장(로컬 시드 계정의 실제 JWT, 배포 환경 404, 9절) | BL-06-004 |
 | 같은 리뷰 #8 | `:85` | 웹훅·cron·워커가 쿠키 anon 클라이언트를 써서 RLS로 0행 처리, 에러 미확인 | 리뷰 #8 → 차단 설계: 2절 3계층. 워커와 웹훅은 `createAdminClient`만 import 가능(ESLint 경계 규칙). 모든 쓰기의 `error`를 검사하고 0행 갱신을 오류로 취급하는 래퍼 사용 | BL-06-010, BL-06-003 |
 | 같은 리뷰 #9 | `:86` | 단계 간 의존 없이 동시 enqueue, placeholder 전달, 즉시 done, fire-and-forget | 리뷰 #9 → 차단 설계: blog 잡은 단계 1개(생성) 또는 1개(발행)다. 상태 정본은 `core.jobs`와 `post_publications`이고, 원고 집계 상태는 발행 행 트리거가 계산한다(`1300_blog.sql:438`). 라우트는 enqueue까지만 하고 응답한다 | 4절, 05장 3절 |
 | 같은 리뷰 #10 | `:87` | 워커가 `next/headers`에 의존해 독립 실행 불가, TS/Python이 같은 큐 소비 | 리뷰 #10 → 차단 설계: `workers/blog-worker`는 Next를 import하지 않는 독립 패키지(`npm run worker`), 큐 이름 `blog.ai`, `blog.publish`, `blog.browser`는 blog 워커만 소비. Python 워커 없음 | BL-06-010 |
@@ -277,3 +277,52 @@ Supabase 접근 3계층(`docs/products/00_MERGE_ANALYSIS.md:678`, `docs/reviews/
 | `BRANDCONNECT_NOTICE_VERSION`, `CHANNEL_NOTICE_VERSION` | 현재 고지문 버전 | 공개 가능 | 기동 실패 |
 
 쿠팡파트너스 키는 환경변수가 아니라 조직별 `encrypted_credentials`다(원본은 전역 env `COUPANG_ACCESS_KEY`, `NOMAD Shorts Maker/src/skill/channel-api/coupang-client.ts:8-11`). 환경변수 검증은 `src/lib/env.ts`의 zod 스키마 하나로 한다. AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. 공유 비밀키 방식 `AI_TOKEN_SECRET`은 쓰지 않는다(EdDSA, `docs/products/_platform-core/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(이하 AUTH_ROADMAP)이고 코어 계약은 `CORE_SPEC.md` 18장, 보안 규칙은 `SECURITY_BASELINE.md` 17장이다. 이 절은 blog(`blog`, 가입 정책 open)에 적용한 값만 적는다.
+
+### 9.1 단계표 (blog 기준)
+
+| 단계 | 언제 | 켜지는 로그인 | blog 작업 | 진입 게이트 |
+|---|---|---|---|---|
+| A Mock | W0부터 MVP 기능(06장 W6)이 모두 동작할 때까지 | 로컬 Supabase 시드 계정(페르소나) 원클릭 로그인, 상단 배지 `MOCK AUTH · 로컬 전용` | BL-06-004(Stage A 범위) | 없음 |
+| B Google | G1 통과 후, 공개 베타 전 | Google + 이메일 가입·로그인·비밀번호 재설정(01장 D-24) | BL-06-057(P0) | G1(AUTH_ROADMAP 4장) |
+| C1 카카오 | G2 통과 후 | Supabase 기본 제공자 `kakao` | BL-06-058(P1) | G2(AUTH_ROADMAP 6장) |
+| C2 네이버 | G2 통과 후(C1과 병렬, 검수 기간 때문에 신청은 G2 직후) | `custom:naver` 또는 서버 브리지(01장 D-23) | BL-06-059(P1) | G2 |
+
+| 불변 조건 | blog에서의 의미 |
+|---|---|
+| 세션은 항상 실제 Supabase JWT | Mock도 `signInWithPassword`로 로컬 Supabase에 로그인한다. `requireSession('blog')`, `src/proxy.ts`, RLS(05장 4절), 크레딧·엔타이틀먼트는 단계와 무관하게 같은 코드다 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`(+ C2 브리지면 `src/app/auth/naver/`)에만 있다. 워커(`workers/blog-worker`)와 `apps/api`(FastAPI)는 인증 단계를 모른다(BL-06-032 CI 검사) |
+| 채널 로그인과 분리 | 네이버·티스토리 채널 연결(BL-F-041, Playwright 게시·브랜드커넥트)은 조직의 채널 자격증명(`encrypted_credentials`)이고 사용자 로그인 신원이 아니다. C2 네이버 로그인이 켜져도 채널 연결을 대신하지 않고, 같은 네이버 계정이어도 자동으로 묶지 않는다 |
+
+### 9.2 환경변수 (AUTH_ROADMAP 3.3절 중 blog 해당분)
+
+| 변수 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버). 워커·`apps/api`에는 두지 않음 | `live`. 로컬 `.env.example` 기본값 `mock` |
+| `AUTH_PROVIDERS` | B·C | web | live에서 로그인 수단 0개면 기동 실패. B `google,email`, C1 후 `google,email,kakao`, C2 검수 통과 후 `naver` 추가 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web 서버, `scripts/dev/seed-users.mjs`. `NEXT_PUBLIC_` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱 env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트(`scripts/auth/register-naver-provider.mjs`, 제안)만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지 경로만 | web 서버(32바이트 이상) | 브리지 경로면 기동 실패 |
+
+`src/lib/env.ts`(BL-06-003) zod 스키마에 위 변수를 더한다. `AUTH_MODE=mock`인데 `isMockAuthAllowed()`(AUTH_ROADMAP 2.4절: Supabase 호스트가 `127.0.0.1`·`localhost`, `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 비어 있음)가 거짓이면 기동 실패한다. 블로그 채널용 네이버·티스토리 자격증명(8절 `CREDENTIALS_KEY_V<n>`로 암호화)과 이름이 겹치지 않게 로그인용은 위 이름만 쓴다.
+
+### 9.3 외부 콘솔과 배포 토폴로지 메모
+
+| 콘솔 | 단계 | 리디렉션 URI | blog 메모 |
+|---|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트) | B | `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 범위 `openid`, `email`, `profile`만. 동의 화면의 개인정보처리방침·약관 URL은 `(marketing)` 화면(BL-06-026) |
+| Supabase 대시보드(Providers, URL Configuration) | B·C | Site URL = 운영 도메인, Redirect URLs = `https://<blog 도메인>/auth/callback`(미리보기 도메인은 명시 등록) | 단축 링크 도메인(`BLOG_PUBLIC_BASE_URL`)과 앱 도메인이 다르면 앱 도메인을 등록 |
+| 카카오 디벨로퍼스 | C1 | Supabase 콜백 | 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email`(01장 D-22) |
+| 네이버 개발자센터(네이버 로그인 애플리케이션) | C2 | `custom:naver`면 Supabase 콜백, 브리지면 `https://<blog 도메인>/auth/naver/callback` | 블로그 게시용 네이버 계정 연결과 무관한 별도 애플리케이션. 검수 통과 전 운영 `AUTH_PROVIDERS`에 `naver` 금지(C2-6) |
+
+웹(Vercel)만 인증 단계의 영향을 받는다. Railway의 `blog-worker`와 `apps/api`는 잡 토큰·서명 토큰(2절 AI 모듈 경계)으로만 인증하므로 단계 전환 때 바뀌는 것이 없다. 배포 환경(Vercel Production·Preview)은 항상 `AUTH_MODE=live`다.
+
+### 9.4 로그인 없는 흐름
+
+`/r/[code]` 제휴 리다이렉트(클릭 기록)와 `(marketing)` 랜딩·가격·약관은 로그인 없이 쓰는 화면이며 단계와 무관하다. 이 화면에 로그인 버튼이나 단계 분기를 넣지 않는다(랜딩 상단의 기존 "로그인" 링크는 그대로 `/login`으로 간다).

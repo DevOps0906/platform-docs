@@ -109,3 +109,16 @@ AI·디자인 도입(2026-10-13)으로 추가된 금지 패턴:
 | 3 | 원본 `.env`가 있었다면 그 키를 OpenRouter에서 재발급하고 폐기한다 |
 | 4 | zip/사본 중복이 있으면 하나만 남긴다 |
 | 5 | 새 `apps/study-note`에서 위 이식 자산만 복사하고, `git ls-files`에 `node_modules`, `dist`, `.env`가 없는지 확인한다 |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+원본(`study-note-organizer-codex-01`)은 로그인이 없는 로컬 도구라 아래 패턴의 원본 출처는 없다. 다른 제품 원본에서 확인된 결함이며(`docs/products/_platform-core/AUTH_ROADMAP.md:30`), 이 제품에서 새로 만들거나 다른 제품 코드에서 가져오지 않도록 4절 표에 이어 적는다. 허용되는 Mock은 `AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 로그인)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`mock-auth.ts`, `mock-login`, `nomad_role`, `nomad_plan` 쿠키, localStorage 역할·플랜) | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96` | 권한 위조, 프로덕션 노출. RLS·크레딧이 Mock 단계에서 검증되지 않는다 | `AUTH_ROADMAP.md` 2장 Mock 로그인(실제 JWT, `isMockAuthAllowed()`, 배포 404). CI 금지 문자열(NT-06-022) |
+| 콜백 `next` 무검증 리다이렉트 | `AUTH_ROADMAP.md` 3.2절 5번, B-2 | 오픈 리다이렉트 | `/`로 시작하고 `//`·`@`·`\` 없음만 허용, 아니면 `/app`. origin 고정 |
+| 기능 코드의 `if (mock)`, 페르소나 이메일 분기, 인증 모듈 밖 `AUTH_MODE` 참조 | `AUTH_ROADMAP.md` 0장 불변 조건, 2.5절 | 단계 전환 시 기능 코드가 바뀌고 배포에 Mock 경로가 남는다 | 권한은 `session_context`로만. 분기는 `src/lib/auth/`·로그인 화면·콜백만 |
+| `dev-user` 같은 인증 우회 사용자, 원격 DB를 가리키는 Mock | `SECURITY_BASELINE.md` 14장, `AUTH_ROADMAP.md` 2.4절 | 배포 환경 인증 우회 | 시드 스크립트는 로컬 호스트가 아니면 exit 1, 기동 시 env 검증 실패 |
+
+CLAUDE.md 2장 "장애: mock 응답으로 숨기지 않는다"는 LLM·외부 호출 장애의 가짜 응답을 금지하는 규칙이며, 위의 허용된 Mock 로그인과 별개다.

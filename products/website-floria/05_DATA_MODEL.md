@@ -261,3 +261,29 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 AI 기능별 기본값 행(정본 02장 5.1절): `site.consult`(llm, auto, anthropic → openai → google → oss-llm), `wiki.query`·`wiki.ingest`·`wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `site.knowledge`(embedding, open_source, oss-embed), `voice_consult` stt(auto, oss-voice → elevenlabs), `voice_consult` tts(auto, elevenlabs → oss-voice).
 
 RLS 스모크 스크립트(`tests/rls/`, SI-06-004)는 2026-10-13 변경분(스위치 컬럼, `update_ai_settings`, 방문자 대화 접근 항목)을 아직 포함하지 않는다. 추가 항목은 SI-06-004와 SI-06-048의 수용 기준에 적었다.
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음(코어 계약 그대로). C2 브리지를 쓰지 않으므로(C 제외) 코어 `auth_identity_links`도 참조하지 않는다. 정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.2~2.3절. 공통 스크립트 `scripts/dev/seed-users.mjs --app site`가 공통 행을 만든 뒤 제품 훅 `scripts/dev/seed-users.site.mjs`가 아래 "제품 훅" 열을 실행한다(SI-06-019 소유). 로컬(`127.0.0.1`·`localhost`)이 아니면 실행하지 않는다.
+
+이 제품의 특이점: invite 앱이라 `signup_app=site`로 만들어도 가입 트리거가 엔타이틀먼트를 만들지 않는다(`docs/products/_supabase-modular/migrations/0001_core_identity.sql:149-154`, 모놀리스 `supabase/monolith/migrations/0001_core_lite.sql:266-271`). 그래서 엔타이틀먼트는 실제 운영과 같은 경로인 service_role `bootstrap_app_for_org`(SI-06-028의 운영 절차와 같음)로, 사이트는 `site.provision_site`(service_role, 엔타이틀먼트 없으면 42501, `docs/products/_supabase-modular/migrations/2200_site.sql:668-674`)로 만든다.
+
+| 키 | 이메일 | 만드는 방법(공통 → 제품 훅) | 기대 결과 | 쓰임 |
+|---|---|---|---|---|
+| `owner` | `owner@dev.test` | `signup_app=site`로 생성 → 훅: service_role `bootstrap_app_for_org('site', <개인 조직>)` → `provision_site(<조직>, 'floria', 'Floria', 'floria', '{http://localhost:3000}', null)` | `entitled=true`, 플랜 `default`, 크레딧 0, `site.sites` 1행. `/admin` → `/admin/inquiries` | **provision_site 완료 운영자**. 기본 사용자 |
+| `site_pending` | `site_pending@dev.test` | `signup_app=site`로 생성 → 훅: `bootstrap_app_for_org`만, `provision_site`는 하지 않음 | `entitled=true`, `site.sites` 0행. `/admin`에서 "등록된 사이트가 없습니다"(03장 2.3 3단계) | **provision_site 미완료 운영자**. 사이트 등록 게이트 검증 |
+| `admin` | `admin@dev.test` | 공통: 생성 후 owner가 `invite_member(admin)` → 본인 `accept_invite` | owner 조직의 admin. 설정·AI 설정 변경 가능 | 역할 분기 |
+| `member` | `member@dev.test` | 공통(member) | 문의 처리 가능, `/admin/ai` 읽기 전용, 구독자 삭제 처리 버튼 없음 | 역할 분기 |
+| `viewer` | `viewer@dev.test` | 공통(viewer) | `inquiries`·`newsletter_subscribers` 0행(05장 4절), `/admin/ai` 접근 거부 | 개인정보 차단 확인 |
+| `outsider` | `outsider@dev.test` | `signup_app=site`로 생성 → 훅: `bootstrap_app_for_org` → `provision_site(<자기 조직>, 'outsider-dev', ...)` | 자기 조직 owner, 자기 사이트 1개. owner 조직의 문의·구독자·AI 문서 0행 | 교차 테넌트 RLS 거부 |
+| `no_app` | `no_app@dev.test` | `signup_app` 없이 생성. 훅 없음 | 모듈러·모놀리스 모두 `entitled=false`(invite 앱은 모놀리스 단일 앱 자동 부트스트랩도 건너뜀). `finishLogin`이 `/admin/no-access` | 초대받지 않은 Google 계정 상황(B단계 B-1의 invite 분기)을 A에서 미리 검증 |
+| `suspended` | `suspended@dev.test` | 공통: 생성 후 service_role로 `status=suspended`(훅: owner와 같이 엔타이틀먼트 부여) | 403 | 차단 확인 |
+| `ops` | `ops@dev.test` | 공통: 생성 후 service_role로 `platform_role=platform_admin` | 이 제품에는 플랫폼 관리자 화면이 없다. 초대·`provision_site`는 화면이 아니라 서버 스크립트(SI-06-028)이므로 `ops`로 콘솔 권한이 늘지 않음을 확인 | 권한 상승 없음 확인 |
+| `pending` | - | 만들지 않는다 | 해당 없음(approval 앱 전용) | - |
+
+| 항목 | 내용 |
+|---|---|
+| 샘플 데이터(제안) | 훅이 `owner` 사이트에 service_role `submit_inquiry`로 문의 3건(new 2, spam 1)과 `subscribe_newsletter` 1건을 넣는다. RLS 스모크(`viewer` 0행, `outsider` 0행)와 콘솔 화면 개발이 빈 목록이 아닌 상태에서 시작하게 한다. 이름·이메일은 `*.test` 가짜 값만 |
+| 멱등 | 이미 있는 이메일은 건너뛰고 역할·상태만 맞춘다. `provision_site`는 slug가 이미 있으면 건너뛴다. 샘플 문의는 `source_path='/dev-seed'`로 표시해 다시 넣지 않는다 |
+| 모놀리스/모듈러 차이 | 공통 표의 `no_app`은 모놀리스에서 `entitled=true`지만 이 제품은 invite 앱이라 두 형태 모두 `false`다. 그 밖의 페르소나 결과는 같다. 모듈러 통합 DB에서 여러 앱을 시드할 때(`--app site --app <다른 앱>`)도 `site`는 위 훅 경로만 쓴다 |
+| 기존 문장과의 관계 | 8장 표 "가입" 행의 모놀리스 자동 엔타이틀먼트(2026-10-12 스모크)는 invite 강제(2026-10-13 코어 반영) 이전 기록이다. 현재 동작은 4장 끝 문단과 이 절이 맞다 |
