@@ -11,7 +11,7 @@
 | 3 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 1.1절 "불일치와 구현 기준", 금지 패턴(`07_SOURCE_MIGRATION.md` 4절) |
 | 4 | DB 작업이면 `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/2300_docs.sql`(정본)과 `supabase/monolith/` |
 | 1-AI | AI·음성 작업이면 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
-| 3-UI | 화면 작업이면 `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`, `DESIGN_PRINCIPLES.md`, 랜딩이면 `HERO_3D.md` |
+| 3-UI | 화면 작업이면 `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-docs 절, 랜딩이면 `HERO_3D.md` |
 
 ## 2. 절대 규칙
 
