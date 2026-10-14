@@ -29,7 +29,7 @@ insert into public.plans (app_id, code, name, description, price_krw, billing_in
    '{"news_staff_max": 30, "news_custom_domains": 3, "news_newsletter_monthly": 100000, "news_storage_gb": 200, "news_print_pdf": true, "news_regional_editions": true, "news_reader_fee_bps": 0, "news_api": true, "news_support_reports": true, "ai_monthly_credits": 4000, "theming_level": 2}',
    false, true, 3),
   ('news', 'news_enterprise', '엔터프라이즈', '전용 DB(판매 모델 B), SLA. 계약 금액 별도', 0, 'month', 10000, 0, false,
-   '{"news_staff_max": 200, "news_custom_domains": 10, "news_newsletter_monthly": 500000, "news_storage_gb": 1000, "news_print_pdf": true, "news_regional_editions": true, "news_reader_fee_bps": 0, "news_api": true, "news_support_reports": true, "ai_monthly_credits": 10000, "theming_level": 3}',
+   '{"news_staff_max": 200, "news_custom_domains": 5, "news_newsletter_monthly": 500000, "news_storage_gb": 1000, "news_print_pdf": true, "news_regional_editions": true, "news_reader_fee_bps": 0, "news_api": true, "news_support_reports": true, "ai_monthly_credits": 10000, "theming_level": 3}',
    false, false, 4)
 on conflict (app_id, code) do update
   set name = excluded.name, description = excluded.description, price_krw = excluded.price_krw,

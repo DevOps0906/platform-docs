@@ -122,6 +122,6 @@
 | MQ-2 | 이벤트 outbox 표를 둘지 | 1차는 잡 enqueue + 주기 재조정(02장 4절과 같음). 유실이 문제 되면 `news.event_outbox` 추가 | 전 모듈 |
 | MQ-3 | 금칙어·댓글 기본값 등 M5 설정이 M1 표(`newspapers.banned_words`, `newspapers.comments_enabled`, 05장 SQL)에 있다 | 쓰기는 M1 매체·설정 RPC로만, 해석(금칙어 매칭·댓글 허용 판정)은 M5. 추출 때 M5 설정 표로 분리 | M1, M5 |
 | MQ-4 | `ads` 공용 스키마 번호 범위 | 추출 시점에 결정(지금 정하지 않음) | M3 |
-| MQ-5 | 장 사이 이름 불일치: 이 폴더는 05장 SQL에 맞췄다. 04장과 다른 곳은 오류 코드 번호(04장 7절 NW001~NW021 vs 05장 NW001~NW015), 기사 반려 상태(`rejected` 표기 vs 반려 = `draft`), 댓글 보류(`held` vs `hidden`), 경조사 종류(`appointment`·`activity` vs `personnel`·`people`), 정정 종류(`reply` vs `rebuttal`), 독자 결제 RPC(`record_reader_payment` vs `record_donation`·`record_membership`), 푸시 RPC(`save_push_subscription` vs `register_`·`revoke_push_subscription`), 뉴스레터 상태(`suppressed`·`expired` 없음) | 05장을 정본으로 04장·02장을 맞춘다 | 전 모듈 |
+| MQ-5 | 장 사이 이름 불일치 | 해결(2026-10-15): 02·04장을 05장 SQL(오류 코드 NW001~NW015, 반려 = `draft`, 댓글 `hidden`, 경조사 `personnel`·`people`, 정정 `rebuttal`, `record_donation`·`record_membership`, `register_`·`revoke_push_subscription`)에 맞췄다 | 전 모듈 |
 | MQ-6 | 검색 필터(섹션·지역·기간)가 `news.search_articles` 인자에 없음 | 인자 추가(변경 제안) 또는 1차는 필터 없이 | M8 |
 | MQ-7 | 대시보드 "유입" 지표에 필요한 유입 분류 컬럼이 `article_view_hourly`에 없음 | 1차 미제공, 필요 시 버킷 키 확장 | M8 |

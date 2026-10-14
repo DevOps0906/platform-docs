@@ -198,7 +198,7 @@
 | `news.newsletter_send` | `{ issue_id }` | `{ batches, recipients, skipped_no_consent }` | "1,200/5,000명 발송" |
 | `news.newsletter_batch` | `{ issue_id, subscription_ids: uuid[](≤500) }` | `{ sent, failed, suppressed }` | - |
 | `news.push_send` | `{ article_id, title, topic: 'breaking' }` | `{ sent, gone_revoked }` | - |
-| `news.reconsent` | `{ before: date }` | `{ mailed, expired }`(`issue_newsletter_reconfirm`) | - |
+| `news.reconsent` | `{ before: date }` | `{ mailed, unsubscribed }`(`issue_newsletter_reconfirm`) | - |
 | `news.import_run` / `news.import_batch` | `{ source, url?, upload_path?, mapping, dry_run }` / `{ run_job_id, items: [{ legacy_url, legacy_id }] }` | `{ total, batches }` / `{ imported, failed: [{ legacy_url, code }] }` | "300/1,200건 가져옴" |
 | `news.media_fetch` / `news.media_derive` | `{ media_id, source_url? }` / `{ media_id }` | `{ variants: [{ width, path }] }` | - |
 | `news.export` | `{ kind: 'all'\|'readers', reason? }` | `{ storage_path, bytes, expires_at }` | "기사 내보내는 중" |

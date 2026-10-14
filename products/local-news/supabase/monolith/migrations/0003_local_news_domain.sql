@@ -2,7 +2,7 @@
 -- local-news 모놀리스 0003_local_news_domain.sql
 -- 원본: docs/products/_supabase-modular/migrations/2500_news.sql 의 변환본(직접 수정 금지. 원본을 고친 뒤 다시 변환한다).
 -- 변환: DB_CONVENTIONS.md 12장 + products/local-news/05_DATA_MODEL.md 8장
---   python3 to_monolith.py 2500_news.sql 0003_local_news_domain.sql (스크립트를 저장소로 옮기는 일은 06장 DB 작업. 그전까지는 05_DATA_MODEL.md 8장 규칙대로 손으로 재현할 수 있다)
+--   python3 -I docs/products/local-news/supabase/tools/to_monolith.py docs/products/_supabase-modular/migrations/2500_news.sql docs/products/local-news/supabase/monolith/migrations/0003_local_news_domain.sql
 --   (a) create schema·기본 권한·core.apps 등록 제거 (b) core. -> public. (c) news. -> public.
 --   (d) 플랜·AI 라우팅 기본값은 seed.sql (e) 함수 권한은 이름 목록으로만 회수(코어 함수 권한 보존)
 -- 선행: 0001_core_lite.sql(SECTION 6-A, 9 제거본), 0002_tenant_theming.sql

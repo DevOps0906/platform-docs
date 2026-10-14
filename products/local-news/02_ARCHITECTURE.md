@@ -142,7 +142,7 @@ COMMON_MODULES_ROADMAP과의 관계: M4는 `notify`(0100), M5 일부는 `support
 | `news.newsletter_send` | `news.newsletter` | TS. 부모: 수신자 확정(확인 완료·동의 유효·월 한도) → 500명 단위 자식 잡 | 0 | 0(부모 재시도 없음) | 해당 없음. 월 한도 초과는 enqueue 전 409 |
 | `news.newsletter_batch` | `news.newsletter` | TS. 메일 제공자 배치 API, 수신자별 해지 토큰 | 0 | 3회(제공자 429·5xx만) | 해당 없음 |
 | `news.push_send` | `news.newsletter` | TS. VAPID 서명, 404·410 응답 구독은 삭제 | 0 | 2회 | 해당 없음 |
-| `news.reconsent` | `news.newsletter` | TS(월 1회). 동의 2년 도래 구독자에게 재확인 메일, 30일 무응답이면 `expired` | 0 | 3회 | 해당 없음 |
+| `news.reconsent` | `news.newsletter` | TS(월 1회). 동의 2년 도래 구독자에게 재확인 메일, 30일 무응답이면 구독 해지(`unsubscribed`, 사유 재확인 무응답) | 0 | 3회 | 해당 없음 |
 | `news.import_run` | `news.ingest` | TS. 부모: RSS·CSV·XML·사이트맵 소스 목록화 → 100건 단위 자식 | 0 | 0 | 해당 없음. 이관 비용은 플랜(Standard 1회 무료, D-10) |
 | `news.import_batch` | `news.ingest` | TS. 기사 변환·sanitize·`legacy_url` 기록(리디렉션 맵) | 0 | 3회 | 해당 없음 |
 | `news.media_fetch` | `news.ingest` | TS. 원격 이미지 내려받기(허용 호스트·사설 IP 차단·10MB 상한) → 파생본 생성 | 0 | 3회 | 해당 없음 |
@@ -452,6 +452,6 @@ proxy는 문자열 판별과 헤더·재작성만 하고 DB 호출은 서버 컴
 | `news_starter` | 1 | L1(로고·색·서체 프리셋·파비콘·OG), 서브도메인만 |
 | `news_standard` | 2 | L1 + 커스텀 도메인(`news_custom_domains`=1) |
 | `news_pro` | 2 | L1 + 커스텀 도메인 3 |
-| `news_enterprise` | 3 | L2 + 슬롯(L3, 홈 전용 블록 등 건별). seed의 `news_custom_domains`=10은 MT 코어 상한 5개(TM004)를 넘으므로 코어 상한 조정 요청 또는 seed 5로 낮춤(05장·06장 6절에서 결정). 전용 DB는 판매 모델 B |
+| `news_enterprise` | 3 | L2 + 슬롯(L3, 홈 전용 블록 등 건별). seed의 `news_custom_domains`=5로 MT 코어 상한(조직당 5개, TM004)에 맞췄다. 더 필요하면 코어 상한 조정을 요청한다(06장 6절). 전용 DB는 판매 모델 B |
 
 커스텀 도메인 개수는 `news_custom_domains`를 Route Handler가 MT 코어 상한(조직당 5개, TM004)보다 먼저 검사한다(04장 2.2절 `/api/tenant/*` 행). 엔터프라이즈 10개는 위 표의 결정 전까지 5개로 동작한다.

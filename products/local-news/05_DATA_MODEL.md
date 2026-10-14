@@ -464,7 +464,7 @@ AI·음성(`AI_ARCHITECTURE.md` 9장 "제품 AI 표는 꼭 필요할 때만"): �
 |---|---|---|
 | 코어 | `migrations/0000~0009` + Theming `0011`(제안 staged) | `0001_core_lite.sql`: `MONOLITH_CORE_LITE.sql` 복사, [선택] 절 중 SECTION 6-A(oauth_states, 외부 OAuth 연동 없음)·9(affiliate, video·blog 전용)만 제거(제거 사유 주석, `0001_core_lite.sql:1840`, `:2322`). 유지: 3(Toss, 신문사 플랫폼 구독), 4(크레딧, AI 월 크레딧), 6-B(신문사 Toss 가맹 키), 6-C(레이트 리밋), 7(잡), 8(Storage), 11(AI), 12(음성) |
 | 화이트라벨 | Theming 0011 을 코어 확장으로 적용 | `0002_tenant_theming.sql` = 0011 의 `core.`→`public.` 변환본(`Multi-tenant_Theming/04_DATA_MODEL.md` 9장. 그 장의 예시 번호 0003 대신 브리프의 0002 를 썼다) |
-| 제품 SQL | `2500_news.sql`(정본) | `0003_local_news_domain.sql` = 정본 변환(변환 스크립트 `to_monolith.py`: create schema·기본 권한·apps 등록 제거, `core.`·`news.`→`public.`, `@@MODULAR_ONLY` 구간 제거, 함수 권한 루프의 스키마 이름만 public). 직접 수정 금지 |
+| 제품 SQL | `2500_news.sql`(정본) | `0003_local_news_domain.sql` = 정본 변환(변환 스크립트 `docs/products/local-news/supabase/tools/to_monolith.py`: create schema·기본 권한·apps 등록 제거, `core.`·`news.`→`public.`, `@@MODULAR_ONLY` 구간 제거, 함수 권한 루프의 스키마 이름만 public). 직접 수정 금지 |
 | 함수 권한 회수 | 이름 목록 + 목록 누락 검사 | 같은 이름 목록(누락 검사는 public 에 코어 함수가 있어 제외). 코어 함수 권한 보존(스모크: 발행인 `session_context` 정상) |
 | 플랜·AI 라우팅 | 조각 14절(`on conflict do nothing`, 라우팅은 upsert). 모듈러 `seed.sql`에는 news 행이 아직 없다(코어 요청, 06장 6절) | `seed.sql`(upsert) |
 | 앱 행 | `('news', …, schema_name 'news', 'invite')` | `('news', …, schema_name 'public', 'invite')`. invite 라 단일 앱 자동 부트스트랩도 일어나지 않는다 |
@@ -492,7 +492,7 @@ seed 플랜(모두 제안, 정본 후보 01장 4절, VAT 별도, 무제한 값 �
 | news_starter | 99,000 | 300 | 3 | 0 | 5,000 | 10 | N | N | 300(3%) | N | N | 1 | |
 | news_standard | 199,000 | 1,500 | 10 | 1 | 30,000 | 50 | N | N | 0 | N | N | 2 | |
 | news_pro | 390,000 | 4,000 | 30 | 3 | 100,000 | 200 | Y | Y | 0 | Y | Y | 2 | |
-| news_enterprise | 계약(0) | 10,000 | 200 | 10 | 500,000 | 1,000 | Y | Y | 0 | Y | Y | 3 | is_active=false(가격표 비노출, 운영자 부여) |
+| news_enterprise | 계약(0) | 10,000 | 200 | 5 | 500,000 | 1,000 | Y | Y | 0 | Y | Y | 3 | is_active=false(가격표 비노출, 운영자 부여) |
 
 AI 라우팅 기본값(org null, app news, 조각:5187-5203 = seed): `news.draft`·`news.assistant`(llm, auto, anthropic → openai → google → oss-llm), `news.alt_text`(llm, auto, anthropic → google → openai → oss-llm), `news.headline`·`news.summary`·`news.proofread`(llm, auto, oss-llm → anthropic → openai), `news.moderation`(llm, open_source, oss-llm, 강제), `news.knowledge`(embedding, open_source, oss-embed), `news.tts`(tts, auto, elevenlabs → oss-voice), `news.stt`(stt, open_source, oss-voice, 강제), `wiki.query`·`wiki.ingest`·`wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제).
 

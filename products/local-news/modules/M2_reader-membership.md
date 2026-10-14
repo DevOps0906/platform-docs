@@ -28,7 +28,7 @@
 | 구분 | 내용 |
 |---|---|
 | 소유 표 | `readers`, `membership_tiers`, `memberships`, `donations`, `paywall_rules` |
-| 소유 RPC | `news.ensure_reader`, `news.set_paywall_rule`, `news.upsert_membership_tier`, `news.set_reader_status`(편집국 차단), `news.record_donation`·`news.record_membership`(service, 05장 SQL. 04장의 `news.record_reader_payment` 제안과 이름 맞춤 필요), `news.withdraw_reader`(05장 SQL), 페이월 판정은 서버 함수 |
+| 소유 RPC | `news.ensure_reader`, `news.set_paywall_rule`, `news.upsert_membership_tier`, `news.set_reader_status`(편집국 차단), `news.record_donation`·`news.record_membership`(service, 05장 SQL), `news.withdraw_reader`(05장 SQL), 페이월 판정은 서버 함수 |
 | 쓰는 코어 | auth(`session_context`, 로그인 단계), webhooks(`receiveWebhook`, 수신 경로 `/api/webhooks/toss/[org_id]`, `docs/products/local-news/04_API.md` 5절), encrypted_credentials(신문사 Toss 시크릿 키·독자 빌링키), jobs(정기 결제 잡), audit |
 | 쓰는 모듈 | M1 `articles.is_premium`·`type` 읽기(페이월 판정) |
 | 소비자 | M5(댓글 작성자 = 독자 행), M4(구독자 연결), M8(독자 수·후원 합계 리포트), 독자 화면(내 계정, 후원 페이지) |
