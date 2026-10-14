@@ -34,6 +34,7 @@ Price_Plans/
 | astro-ai | 제품 SaaS | [`astro-ai/PRICE_PLAN.md`](astro-ai/PRICE_PLAN.md) | 초안 | `products/astro-ai/01_PRD.md` 4장 |
 | flora-publishing | 제품 SaaS | [`flora-publishing/PRICE_PLAN.md`](flora-publishing/PRICE_PLAN.md) | 초안 | `products/flora-publishing/01_PRD.md` 4장 |
 | live-poll | 제품 SaaS | [`live-poll/PRICE_PLAN.md`](live-poll/PRICE_PLAN.md) | 초안 | `products/live-poll/01_PRD.md` 4장 |
+| local-news | 제품 SaaS(멀티테넌트) | [`local-news/PRICE_PLAN.md`](local-news/PRICE_PLAN.md) | 초안 | `products/local-news/01_PRD.md` 4장 |
 | microweb-studio | 제품 SaaS + 대행 | [`microweb-studio/PRICE_PLAN.md`](microweb-studio/PRICE_PLAN.md) | 초안 | `products/microweb-studio/01_PRD.md` 4장 |
 | nomad-blog | 제품 SaaS | [`nomad-blog/PRICE_PLAN.md`](nomad-blog/PRICE_PLAN.md) | 초안 | `products/nomad-blog/01_PRD.md` 4장 |
 | nomad-commerce | 제품 SaaS | [`nomad-commerce/PRICE_PLAN.md`](nomad-commerce/PRICE_PLAN.md) | 초안 | `products/nomad-commerce/01_PRD.md` 4장 |

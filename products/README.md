@@ -23,6 +23,7 @@
 | `website-floria/` | 단독 | WebSite | `site` | 2200 |
 | `nomad-docs/` (NOMAD Docs) | 신설 | 없음(설계 이식: flora-publishing, flora, SellingDocs, FortuneDocs) | `docs` | 2300 |
 | `arch-studio/` (Arch Studio, 가칭) | 신설(설치형 데스크톱 + 시리얼 라이선스) | 없음(설계 이식: nomad-docs, flora-publishing, `_platform-core` AI 계층) | `arch`(제안) | 2400(제안) |
+| `local-news/` (로컬뉴스 클라우드, 가칭) | 신설(멀티테넌트 SaaS, 화이트라벨) | 없음(설계 이식: `Multi-tenant_Theming`, `_platform-core`, 언론사 디자인 벤치마크) | `news` | 2500 |
 
 ## 제품 폴더 표준 구성
 | 파일 | 내용 |
@@ -105,6 +106,7 @@
 | 3 | nomad-video, nomad-blog, nomad-commerce | affiliate·SNS 업로더·잡 워커를 공유한다 |
 | 4 | microweb-studio, live-poll, toon-factory | 독립 도메인이다 |
 | 5 | admin-suite, stock-dashboard | 의료정보·금융 규제 확인이 먼저 필요하다 |
+| 6 | local-news | 코어 요청 R-1~R-10(독자 인증, Theming 승격)이 먼저 필요하다 |
 
 ## 남은 코어 과제
 
@@ -245,3 +247,11 @@ PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`)
 각 제품 반영 위치는 `AUTH_ROADMAP.md` 10장 그대로다: 01장 2절·가입 FR·6절·8절(인증 결정), 02장 9절, 03장 7절, 04장 8절, 05장 10절(시드 페르소나), 06장 8절, 07장 6절(복사 금지), `CLAUDE.md` "인증 단계 규칙", 개발 안내서 19장. 네이버를 서버 브리지로 붙이게 되면 코어 `staged/0010_core_auth_identity_links.sql`을 한 번만 적용한다(각 제품 06장 코어 요청).
 
 같은 날 flora-publishing은 "FLORA 개편"(에이전트 실행 계층 `agent_tasks`, 운영 콘솔, 디자인 레이어 3종, PB-06-059~065)을 따로 반영했다. 이 개편은 flora 전용이고 다른 제품에는 넣지 않았다.
+
+## local-news 추가 (2026-10-15)
+
+15번째 제품 `local-news/`(로컬뉴스 클라우드, 가칭)를 추가했다. 여러 지역신문사가 구독하는 멀티테넌트 SaaS이고, 공통모듈 8개(M1~M8)의 기획서는 `local-news/modules/`, 개발서는 `../develop/local-news/modules/`에 있다. 위 합계 표에는 넣지 않았다(표 작성 이후 추가).
+
+| 제품 | 06장 작업 | A(Mock) | B(Google) | C1 카카오 | C2 네이버 | RLS 스모크(모놀리스 / 모듈러) | 문서 경로 검사(참조 / 누락) |
+|---|---|---|---|---|---|---|---|
+| local-news | 56 | NW-06-004, 023 | NW-06-052(편집국), 053(독자) | NW-06-054(독자 P1, 편집국 P2 선택) | NW-06-055(같음) | 314/314 / 314/314 | 477 / 0 |
