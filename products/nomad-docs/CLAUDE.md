@@ -134,7 +134,7 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 |---|---|
 | 2026-10-13 | Phase 2 `shorts_agency` 패키지(DC-F-046, DC-06-060). 효과 엔진 단가 토큰 `catalog:<key>` 추가(결정성 규칙 동일: 설정에서만 읽는다). content 프로젝트에서 성과 보장 문구는 `L-NO-GUARANTEE` error |
 | 2026-10-14 | 교차검증 "반드시 고칠 것" SQL 반영(`06_AGENT_PLAN.md` 1.2.4절 반영 현황), n8n만 사용(Make 제외), CRM형 워크스페이스(DC-F-047, DC-06-061), 생성 진행 애니메이션(DC-F-048, DC-06-062), 3D 영상 히어로(DC-F-049, DC-06-045 확장), RLS 스모크 105항목 |
-| 2026-10-14 | 인증 단계(확정 결정 22): DC-06-014를 Stage A로, DC-06-063(B)·064(C1)·065(C2) 추가, 01장 D-18~D-20, 07장 6절. 아래 "인증 단계 규칙" 절 |
+| 2026-10-14 | 인증 단계(확정 결정 22): DC-06-014를 Stage A로, DC-06-063(B)·064(C1)·065(C2) 추가, 01장 D-18~D-22, 07장 6절. 아래 "인증 단계 규칙" 절 |
 
 ## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
 
@@ -147,7 +147,8 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 | 단계 분기 위치 | `AUTH_MODE`·제공자 목록을 읽는 코드는 `web/src/lib/auth/`, `web/src/app/(auth)/`, `web/src/app/auth/`, `web/src/app/api/dev/login/`에만. 기능 코드·`proxy.ts`·worker·api·`tpl/`·`int/`는 `requireSession('docs')`·`session_context`만 쓴다 |
 | 페르소나 사용법 | `supabase start` → `supabase db reset` → `node scripts/dev/seed-users.mjs --app docs`(제품 훅 포함) → `/login` 개발용 패널. 페르소나 키: owner, admin, member, viewer, outsider, no_app, suspended, ops, pro(05장 10절). 권한 확인은 페르소나를 바꿔 로그인해서 한다 |
 | E2E | Playwright `globalSetup`이 페르소나마다(`no_app` 제외) `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다. 온보딩 E2E는 `no_app` 첫 로그인으로 돌린다. Google·카카오·네이버 실로그인은 자동화하지 않고 사람이 수동 점검표로 확인한다 |
-| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, 가짜 사용자 객체·가짜 세션, 원격 Supabase에 개발 계정 만들기, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·출력·로그에 두기, 인증 모듈 밖 `AUTH_MODE` 참조, 페르소나 이메일로 권한 분기, `next` 무검증 리다이렉트, 이메일 일치만으로 계정 자동 합치기(브리지), HubSpot 연동 OAuth를 로그인에 재사용 |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, 가짜 사용자 객체·가짜 세션, 원격 Supabase에 개발 계정 만들기, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·출력·로그에 두기, 인증 모듈 밖 `AUTH_MODE` 참조, 페르소나 이메일로 권한 분기, `next` 무검증 리다이렉트, 이메일 일치만으로 계정 자동 합치기(브리지), HubSpot 연동 OAuth를 로그인에 재사용, 로그인용 Google OAuth 클라이언트를 `GOOGLE_API_KEY`(ai-service LLM) 프로젝트·연동 OAuth 자격증명과 공유(01장 D-22), Google 사용자의 `email_confirmed_at`을 콜백에서 임의로 채우기(D-21) |
 | 단계 전환 | 에이전트가 단계를 스스로 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한 뒤에 B·C 작업을 시작한다. C2 경로(`supabase_custom` 또는 `bridge`)는 스파이크 결과를 `[DECISION]`으로 남긴다 |
 | 소유 경로 | 014: `web/src/lib/auth/`, `web/src/app/api/dev/login/`, `web/src/components/dev-auth/`, `scripts/dev/`, `web/src/app/(auth)/login/`(A 구성), `web/src/app/onboarding/company/`. 063: `web/src/app/(auth)/`(014에서 이어 받음), `web/src/app/auth/callback/`, `web/src/app/onboarding/terms/`, `web/src/features/onboarding-terms/`, `web/src/app/api/terms/`, `web/src/lib/auth/onboarding.ts`(이어 받음). 064: `web/src/features/login-methods/`, `web/src/lib/auth/providers/kakao.ts`. 065: `web/src/app/auth/naver/`(브리지만), `web/src/lib/auth/providers/naver.ts`, `scripts/auth/`. 배지 장착(레이아웃)·`db:seed-users` 스크립트·Playwright `globalSetup` 등록은 DC-06-004에, `/app/settings/login-methods` 장착은 DC-06-038에 1줄 요청 |
-| 이 제품의 B·C 작업 | B: DC-06-063(W7 맨 앞). C1: DC-06-064, C2: DC-06-065(W8, G2 후). 남은 결정: 01장 8.1절 D-18(카카오 이메일), D-19(네이버 경로), D-20(이메일 가입 유지) |
+| 이 제품의 B·C 작업 | B: DC-06-063(W7 맨 앞). C1: DC-06-064, C2: DC-06-065(W8, G2 후). 남은 결정: 01장 8.1절 D-18(카카오 이메일), D-19(네이버 경로), D-20(이메일 가입 유지), D-21(Google 사용자 `email_confirmed_at` 판정), D-22(로그인 Google 클라이언트 분리) |
+| "mock" 단어 구분 | 2장 "mock 금지"(실패를 성공처럼 반환)와 7장 "mock 폴백"은 LLM·렌더·연동 장애를 가짜 성공 응답으로 숨기는 것을 금지한다. 이 절의 Mock 로그인은 로컬 시드 계정으로 실제 Supabase JWT를 받는 개발 수단이라 그 금지에 해당하지 않는다. 반대로 Mock 로그인이 허용된다고 LLM 가짜 성공 응답을 만들지 않는다 |
