@@ -33,7 +33,7 @@
 | nomad-docs (NOMAD Docs) | 체크리스트로 계약서·요구사항정의서 등 실무 문서 자동 생성, CRM형 작업 공간 | `products/nomad-docs/` | `develop/nomad-docs/` |
 
 공용: `products/_platform-core/`(인증·조직·크레딧·결제·잡·AI·음성 규격), `products/_design-guide/`
-(디자인 시스템, 3D 히어로), `products/_supabase-modular/`(통합 DB: `core` + 제품 스키마).
+(디자인 시스템, 3D 히어로, Awwwards·Dribbble 레퍼런스), `products/_supabase-modular/`(통합 DB: `core` + 제품 스키마).
 
 제품별 상세 설명(무엇을 하는 서비스인지, 주 사용자, DB 스키마, 작업 수)은 [`develop/README.md`](develop/README.md)에 모아 두었고, 각 폴더를 열면 그 폴더의 README가 함께 보입니다.
 
