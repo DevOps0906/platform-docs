@@ -35,12 +35,13 @@ REVIEWS = {
     'study-note': ['study-note-organizer-codex-01.md'],
     'website-floria': ['WebSite.md'],
     'nomad-docs': ['SellingDocs.md', 'flora.md', 'FortuneDocs.md'],
+    'local-news': [],  # 신규 기획(원본·리뷰 없음, 2026-10-15)
 }
 APP_ID = {
     'astro-ai': 'astro', 'flora-publishing': 'publishing', 'nomad-video': 'video', 'nomad-blog': 'blog',
     'nomad-commerce': 'commerce', 'microweb-studio': 'microweb', 'admin-suite': 'erp, hms, sms', 'live-poll': 'poll',
     'stock-dashboard': 'stock', 'toon-factory': 'toon', 'study-note': 'notes', 'website-floria': 'site',
-    'nomad-docs': 'docs',
+    'nomad-docs': 'docs', 'local-news': 'news',
 }
 
 PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
@@ -82,7 +83,17 @@ def plan(prod):
         items.append((f'{P}/_design-guide/{f}', f'docs/file/03-설계/디자인/{f}', f'DOC-DSN-{i:03d}', f'디자인 기준: {f[:-3]}', '03-설계'))
     for f, did in EXTRA_DESIGN_DOCS:
         items.append((f'{P}/_design-guide/{f}', f'docs/file/03-설계/디자인/{f}', did, f'디자인 기준: {f[:-3]}', '03-설계'))
+    # 제품 공통모듈 기획서(선택, 2026-10-15 local-news부터): products/<제품>/modules/*.md → docs/file/03-설계/모듈/
+    mod_dir = f'{P}/{prod}/modules'
+    if os.path.isdir(mod_dir):
+        for i, f in enumerate(sorted(x for x in os.listdir(mod_dir) if x.endswith('.md')), 1):
+            items.append((f'{mod_dir}/{f}', f'docs/file/03-설계/모듈/{f}', f'DOC-MOD-{i:03d}', f'공통모듈 기획: {f[:-3]}', '03-설계'))
     refs =[(f'{P}/00_MERGE_ANALYSIS.md', 'docs/reference/00_MERGE_ANALYSIS.md')]
+    # 제품 조사 자료(선택): products/<제품>/research/*.md → docs/reference/research/
+    res_dir = f'{P}/{prod}/research'
+    if os.path.isdir(res_dir):
+        for f in sorted(x for x in os.listdir(res_dir) if x.endswith('.md')):
+            refs.append((f'{res_dir}/{f}', f'docs/reference/research/{f}'))
     for r in REVIEWS[prod]:
         refs.append((f'{PLATFORM}/docs/reviews/{r}', f'docs/reference/reviews/{r}'))
     mapping = {}
