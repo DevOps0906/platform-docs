@@ -9,7 +9,7 @@
 | `/` | 랜딩 | 공개 | - | P0 |
 | `/pricing` | 가격 | 공개 | - | P0 |
 | `/legal/terms`, `/legal/privacy`, `/legal/ai-notice` | 약관·처리방침·AI 고지 | 공개 | - | P0 |
-| `/login`, `/auth/callback` | 로그인 | 공개 | - | P0 |
+| `/login`, `/auth/callback` | 로그인. 단계별(7절): A 개발용 페르소나 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B Google 버튼 + 이메일 폼(가입·재설정 포함), C 카카오·네이버 버튼. `/auth/callback`은 B부터 | 공개 | - | P0(A·B), C는 P1 |
 | `/dashboard` | 대시보드(KPI, 환율, 최근 작업) | 멤버 | 전 플랜 | P0 |
 | `/products` | 상품DB 목록 | 멤버 | 전 플랜 | P0 |
 | `/products/new`, `/products/[id]` | 수동 등록·편집 | owner/admin/member | 전 플랜 | P0 |
@@ -42,7 +42,7 @@
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | `/` | "무료로 시작" | `/login` 이동 | - |
-| 2 | `/login` | Google/Kakao 또는 이메일 | `signUp(..., data.signup_app='commerce')` → 가입 트리거가 조직·free 엔타이틀먼트·크레딧 지급 | 콜백 오류 → 로그인 화면에 원인 문구 |
+| 2 | `/login` | A: 개발용 패널에서 페르소나 선택. B: Google 또는 이메일(C 이후 카카오·네이버 추가) | 이메일은 `signUp(..., data.signup_app='commerce')` → 가입 트리거가 조직·free 엔타이틀먼트·크레딧 지급. Google·카카오·네이버는 `/auth/callback`의 `finishLogin`이 `bootstrap_app_for_org('commerce')` 1회(7절) | 콜백 오류 → 로그인 화면에 원인 문구(`error=callback`, `state`, `email_in_use`) |
 | 3 | `/dashboard` | 첫 방문 | `session_context('commerce')`. 빈 상태 카드 "첫 상품을 가져오세요" + AI 처리 방식 안내 띠(`/onboarding/ai`로 이동. 건너뛰면 국내 오픈소스 AI만 사용) | `entitled=false`(다른 앱으로 가입한 계정) → `bootstrap_app_for_org('commerce')` 후 새로고침 |
 | 4 | `/sourcing` | 아마존 URL 붙여넣기 | ASIN 추출 → 1크레딧 차감 → `import.amazon` 잡 | URL에서 ASIN 없음 → 입력 아래 오류. 크레딧 부족 → 402 패널 |
 | 5 | `/products` | 상품 선택 → "상세페이지 만들기" | 생성 모달(유형 자동 추천, 10슬롯 기본) → 9크레딧 차감 → `detail_pages` waiting | 플랜 밖 유형/15슬롯 → 잠금 표시 + 업그레이드 링크 |
@@ -403,3 +403,28 @@ ASCII(상품DB):
 | 채팅 | 메시지 목록 `aria-live="polite"`(스트리밍은 완료 때 한 번 읽음), 출처 칩 키보드 접근, 375px에서 전체 화면 시트 |
 | 음성 | 음성은 텍스트 입력의 대안이고 모든 기능은 음성 없이 쓸 수 있다. 녹음 중 상태를 텍스트로도 표시. 내레이션 플레이어는 스페이스(재생/정지), 좌우 화살표(10초) |
 | 출시 전 | `DESIGN_PRINCIPLES.md` 7단계 체크리스트 12항목 |
+
+## 7. 로그인 화면 단계별 구성 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 5.2절, 7장. 로그인 뒤 화면(대시보드 이후)은 단계와 무관하게 같다.
+
+| 단계 | `/login` 구성 | `/auth/callback` | 비고 |
+|---|---|---|---|
+| A(MVP 개발, 로컬) | "개발용 로그인" 패널: 페르소나 버튼(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, 05장 10절), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼은 렌더하지 않는다 | 없음(`POST /api/dev/login`이 세션 쿠키를 설정하고 `next` 또는 `/dashboard`로 이동) | 모든 화면 상단에 고정 배지 `MOCK AUTH · 로컬 전용`. `isMockAuthAllowed()`가 거짓이면 패널·배지 코드를 렌더하지 않는다(서버 컴포넌트 분기) |
+| B(공개 베타 전) | "Google로 계속하기" 버튼 + 이메일 폼(로그인/가입 탭, 비밀번호 재설정 링크). 하단에 이용약관·개인정보처리방침 링크 | `finishLogin` 후 `/dashboard`(또는 화이트리스트 `next`) | Google은 가입과 로그인이 같은 버튼. 이메일 가입 화면·인증 메일 안내·비밀번호 재설정 화면은 B단계에 만든다 |
+| C1·C2(G2 후) | B 구성 + "카카오로 계속하기"(카카오 디자인 가이드 색·문구, 미확인: 최신판 확인), "네이버로 계속하기"(검수 통과 전 운영에서 숨김) | 카카오·`custom:naver`는 같은 콜백. 브리지면 `/auth/naver/start` → `/auth/naver/callback` | 버튼 순서는 Google, 카카오, 네이버, 이메일(제안) |
+
+오류 상태(로그인 화면 상단 오류 띠, 쿼리 `error`로 표시):
+
+| 코드 | 원인 | 문구 |
+|---|---|---|
+| `error=callback` | 코드 없음·재사용·만료, 코드 교환 실패 | "로그인을 완료하지 못했습니다. 다시 시도해 주세요" |
+| `error=state` | (C2 브리지) state 불일치·없음·만료 | "로그인 요청이 만료됐습니다. 처음부터 다시 시도해 주세요" |
+| `error=email_in_use` | (C2 브리지) 같은 이메일의 다른 방법 가입자 | "이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정에서 네이버를 연결하세요" |
+| 403 suspended | 정지 계정 | "이용이 정지된 계정입니다. 고객센터로 문의하세요"(제안) |
+
+commerce는 open 앱이라 `/no-access`(초대제 안내)와 `/pending`(승인제)을 쓰지 않는다. `entitled=false`는 콜백이 부트스트랩으로 메운다.
+
+첫 OAuth 로그인 뒤 약관 동의: 제품 온보딩 첫 단계에 둔다. 순서는 `/onboarding/terms`(제안: 이용약관·개인정보처리방침 필수 동의, 마케팅 수신 선택) → `/onboarding/ai`(AI 처리 방식, 1절 표). 이메일 가입자는 가입 폼에서 같은 동의를 받으므로 이 단계를 건너뛴다. 동의 기록 방식(감사 행 또는 별도 저장)은 CM-06-058에서 정한다(코어에 공용 약관 동의 표 없음, 미확인).
+
+C단계 "설정 → 로그인 방법"(`/settings/login`, 제안 경로, P1): 연결된 제공자 목록(Google, 카카오, 네이버, 이메일), 연결(`linkIdentity`, 브리지 네이버는 로그인 상태에서 연결), 해제(남는 로그인 수단이 1개 이상일 때만). 감사 `auth.identity_link`·`auth.identity_unlink`(`AUTH_ROADMAP.md` 7.3절). 역할 접근은 본인(모든 멤버).

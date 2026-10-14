@@ -39,7 +39,7 @@
 
 | 디렉토리 | 내용 | 소유 작업 |
 |---|---|---|
-| `src/proxy.ts`, `src/lib/supabase/`, 루트 설정 | 골격 | ST-06-006 |
+| `src/proxy.ts`, `src/lib/supabase/`, 루트 설정, `src/lib/auth/`, `src/app/login/`, `src/app/api/dev/`, `scripts/dev/seed-users.mjs` | 골격, 인증 모듈·Mock 로그인(Stage A). Google·콜백은 `src/components/auth/`, `src/app/auth/`(ST-06-052) | ST-06-006, 052 |
 | `src/lib/security/` | 마스킹, HMAC, vault 래퍼 | ST-06-007 |
 | `src/lib/broker/` | 어댑터 계약, Mock, 실증권사 | ST-06-008, 014 |
 | `src/lib/quotes/` | SSE, zustand 스토어 | ST-06-016 |
@@ -107,3 +107,20 @@
 ## 7. 금지 패턴
 
 07장 4절 요약: 크레딧 RPC 권한 미회수, 비원자 차감, 웹훅 서명 미검증, 토큰 평문·0키 폴백, 세션 없는 워커, `FOR ALL` 정책, 프로필 없으면 admin, 정책 자기참조, 공개 AI 프록시, `.env` 커밋, 한글 `\b` 금칙어, 증권사 키 클라이언트 노출, 계좌번호 로그, 샘플 무표시, AI의 주문 직접 생성, Vercel 장시간 SSE, `EventSource` AI 스트리밍, 시세 재배포, raise 뒤 상태 기록 기대, 스크래핑, GEO/JSON-LD 성과 노출, Context로 시세 관리, 검사 없는 AI 텍스트 노출, 보유 내역의 AI 전송, LLM 키를 Next.js·워커에 두기, Dify에서 모델 답변 생성, 임의 텍스트 TTS, 3D 장면의 수익 약속 표현.
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 이 제품 적용은 `01_PRD.md` 8.1절, `02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `06_AGENT_PLAN.md` 8절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 **Stage A(Mock 로그인)**. 로컬 Supabase 시드 페르소나로 실제 JWT를 받는다. Google(B)은 G1 뒤 ST-06-052, 카카오·네이버(C)는 G2 뒤 ST-06-053·054(P2 선택, 01_PRD D-19) |
+| 바뀌지 않는 것 | 초대 토큰 흐름(ST-F-001: sha256 저장, 14일 만료, `redeem_beta_invite`, 이메일 일치 `ST031`), `beta_access` 게이트, `requireSession('stock')`, `session_context`, RLS `has_stock_access`. 단계 전환은 로그인 버튼과 콜백만 바꾼다 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/`, `src/app/api/dev/`, `src/components/auth/`(초대 화면의 로그인 버튼)에만. 기능 코드·`proxy.ts`·Route Handler에 `if (mock)`·페르소나 이메일 분기 금지 |
+| invite 앱 콜백 | `finishLogin`에서 `bootstrap_app_for_org`를 부르지 않는다. 엔타이틀먼트는 초대 수락만 만든다. `entitled=false`면 `/no-access`(초대 계속 중이면 `/invite/continue`) |
+| 페르소나 사용 | `supabase db reset` → `node scripts/dev/seed-users.mjs --app stock`(로컬 호스트가 아니면 exit 1) → `/login` 개발용 패널. 초대 수락 `owner`, 동의 전 `fresh_beta`, 미수락 `invitee`(시드가 초대 링크 출력), `beta_revoked`, `outsider`, `no_app`, `admin`/`member`/`viewer`, `suspended`, `ops` |
+| E2E | Playwright `globalSetup`이 페르소나별로 `/api/dev/login`을 불러 `storageState`를 저장한다. 실제 Google 로그인은 자동화하지 않는다(수동 점검표, B-5) |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, `dev-user` 우회, 인증 모듈 밖 `AUTH_MODE` 참조, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`나 배포 환경에 두기, 원격 Supabase에 시드 실행, 콜백 `next` 무검증, 초대 토큰 원문을 OAuth `redirectTo`·로그에 싣기 |
+| MockBroker 구분 | 인증 Mock(`AUTH_MODE=mock`)과 증권사 `MockBroker`(`broker='mock'`, "샘플 데이터" 배지)는 다른 개념이다. 서로의 스위치를 참조하지 않고, 인증 단계 전환이 샘플 연결에 영향을 주지 않는다 |
+| 단계 전환 | 사람(대표님)이 G1(`AUTH_ROADMAP.md:173-184`)·G2(`:221-229`)를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 남긴 뒤에만 다음 단계 작업을 시작한다. 에이전트가 스스로 단계를 올리지 않는다 |
+| 이 제품의 작업 ID | A: ST-06-006(인증 모듈·Mock·가드·`finishLogin`), ST-06-009(시드 제품 훅). B: ST-06-052(P0, W7 맨 앞). C1: ST-06-053(P2). C2: ST-06-054(P2) |

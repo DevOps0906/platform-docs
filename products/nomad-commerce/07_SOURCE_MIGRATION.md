@@ -16,7 +16,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 OpenRouter �
 | `app/api/generate/*`(6개) | 부분 | 이식(재작성) | `apps/nomad-commerce/app/api/ai/`, `app/api/detail-pages/` | `docs/reviews/sellingstudio.md:37` |
 | `app/api/webhook/fal` | 부분 | 재작성 | `apps/nomad-commerce/app/api/webhooks/fal/` | `:38` |
 | `app/api/crawl/url` | 부분 | 재작성(안전 fetch) | `app/api/ai/benchmark/` | `:39` |
-| `app/api/auth/callback` | 동작 | 이식 + next 화이트리스트 | `app/(auth)/callback/` | `:40` |
+| `app/api/auth/callback` | 동작 | 이식 + next 화이트리스트(B단계 `finishLogin`, `AUTH_ROADMAP.md` 3.2절) | `app/auth/callback/`(URL `/auth/callback`, CM-06-058. 06장 8.1절) | `:40` |
 | `app/api/credits/{use,status}` | 부분 | 폐기(core 크레딧) | - | `:36` |
 | `components/studio/StudioNewForm.tsx`(2,919줄) | 동작 | 참고(입력 5종, 프리셋 18종, 엑셀 업로드) → 분해 | `components/detail/`, `components/products/` | `:45`, `StudioNewForm.tsx:531-548,618` |
 | `components/studio/StudioViewer.tsx` | 동작 | 이식(Realtime 카드 뷰어) | `components/detail/` | `:20` |
@@ -93,7 +93,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 OpenRouter �
 | 9 | v1 인증 3벌, `pages/`, `contexts/`, `lib/actions`, `lib/media`, `lib/commerce`, 설정 폼 2벌 | 죽은 코드 약 4,500줄 | 분석:860 |
 | 10 | v1 `reactflow` v11 + CDN CSS | @xyflow v12로 재작성 | 분석:861 |
 | 11 | v1 `schema.sql`, `main.html`, `structer.zip`, `CLAUDE_v0.md` | 구 문서·시안 | 분석:862 |
-| 12 | CM 모의 인증·쿠키 권한(`mock-login`, `nomad_role`, `nomad_plan`) | 권한 위조 | 분석:863 |
+| 12 | CM 모의 인증·쿠키 권한(`mock-login`, `nomad_role`, `nomad_plan`) | 권한 위조. 허용되는 Mock은 AUTH_ROADMAP 2장(로컬 시드 계정으로 실제 Supabase JWT, 배포 환경 404, CM-06-007)뿐이다 | 분석:863, `docs/products/_platform-core/AUTH_ROADMAP.md:30` |
 | 13 | CM `globalThis` 잡, `mock-market-accounts`, `CustomProcessingNode`, 로그아웃 3중 | 서버리스 비호환, 죽은 코드 | 분석:864 |
 | 14 | CM `execute-flow` HTTP 자기 호출, `tableName` insert, `raw_html`, 정규식 아마존 파싱, exchangerate.host | 보안·동작 결함 | 분석:865 |
 | 15 | SS `/api/credits/use` 분리 차감, 클라이언트 `selling_pages` insert, `USING(true)` 정책 | 과금 우회, 무결성 붕괴 | 분석:866 |
@@ -122,7 +122,7 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 목록 밖이라
 | 읽고-빼고-쓰기 비원자 차감 | `docs/reviews/sellingstudio.md:59`, SECURITY_BASELINE 14장 | 음수 잔액 | core `consume_credits` |
 | 요청 바디로 플랜·모델 결정 | `sellingstudio/app/api/generate/images/route.ts:15,33-34` | 비용 폭증 | `features.image_quality` |
 | 웹훅 무서명, `USING(true) WITH CHECK(true)` | `docs/reviews/sellingstudio.md:61` | 타인 데이터 변조 | 서명·멱등, 정책 없음 + guard |
-| 쿠키 기반 역할·플랜 | `nomad-ai-commerce/middleware.ts:5-8` | 권한 위조 | `session_context` |
+| 쿠키 기반 역할·플랜(`mock-login`, `nomad_role`, `nomad_plan`, `mock-auth`) | `nomad-ai-commerce/middleware.ts:5-8` | 권한 위조, 프로덕션 노출 | `session_context`. 허용되는 Mock은 AUTH_ROADMAP 2장(로컬 시드 계정 실제 로그인, `isMockAuthAllowed()` 가드). CI 금지 문자열(CM-06-036) |
 | 인증 없는 키 반환 API, 평문 키 | `docs/reviews/nomad-ai-commerce.md:60` | 전 계정 탈취 | vault + 마스킹 |
 | 사용자 URL 직접 fetch, 원문 HTML 저장 | `docs/reviews/nomad-ai-commerce.md:59`, `docs/reviews/sellingstudio.md:64` | SSRF | ASIN만 추출, 안전 fetch |
 | 요청 바디 테이블 이름 | `docs/reviews/nomad-ai-commerce.md:63` | 임의 테이블 쓰기 | 고정 테이블 |
@@ -139,7 +139,7 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 목록 밖이라
 | AI 생성 후기·평점 배너 | `Nomad-AI-Factory_V.2/DETAIL_PAGE_SYSTEM.md:37-59` | 기만 광고 | 생성 금지 |
 | JSON-LD `brand` 하드코딩 | `docs/reviews/Nomad-AI-Factory_V.2.md:59` | 허위 정보 | 상품 브랜드(Phase 2) |
 | Capacitor dev 서버 로드, cleartext | `sellingstudio/capacitor.config.ts:5-15` | 배포 불가·평문 | 원격 셸(Phase 2) |
-| 콜백 `next` 미검증, Host 헤더 origin | `docs/reviews/sellingstudio.md:64` | 오픈 리다이렉트 | 화이트리스트 + env origin |
+| 콜백 `next` 미검증, Host 헤더 origin | `docs/reviews/sellingstudio.md:64` | 오픈 리다이렉트 | 화이트리스트 + env origin(`finishLogin` 5번, `AUTH_ROADMAP.md` 3.2절, B-2) |
 | 실키 `.env` 커밋, 0키 폴백, 빈 JWT secret | SECURITY_BASELINE 14장 | 키 유출 | env 검증 기동 실패 |
 | LLM·음성 키를 브라우저·Vercel·워커에 두기 | `docs/products/_platform-core/SECURITY_BASELINE.md:284`, 02장 머리 표 | 키 유출, 비용 남용 | LLM 키는 FastAPI 전용, ElevenLabs 키와 토큰 개인키는 Next.js 서버 전용 |
 | 브라우저에서 Dify·FastAPI·제공자 직접 호출 | `docs/products/_platform-core/SECURITY_BASELINE.md:299` | 인증·과금 우회 | `/api/ai/*`, `/api/voice/*` |

@@ -6,7 +6,8 @@
 |---|---|
 | 주 사용자 | 쿠팡·스마트스토어 국내 셀러 |
 | DB 스키마(모듈러 번호) | `commerce`(1400) |
-| 개발 작업 수 | 57개(`products/nomad-commerce/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 60개(`products/nomad-commerce/06_AGENT_PLAN.md`, 인증 단계 B·C 작업 3개 포함) |
+| 로그인 | 인증 단계(확정 결정 22): MVP 개발은 Mock(로컬 시드 계정) → G1 후 Google + 이메일(공개 베타 전) → G2 후 카카오·네이버. 안내서 13장 |
 | 기획서 | [`products/nomad-commerce/`](../../products/nomad-commerce/) |
 
 ## 이 폴더의 파일

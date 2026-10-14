@@ -6,7 +6,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·가입·세션 작업이면 `AUTH_ROADMAP.md`(8절) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장, `DB_CONVENTIONS.md` 14장(pgvector) |
 | 2 | 이 폴더 `01_PRD.md`(특히 4장 요금, 6장 법·금지 문구, 6.7절 AI 규칙), `02_ARCHITECTURE.md`, `04_API.md`, `05_DATA_MODEL.md` |
 | 3 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 소유 디렉토리 |
@@ -122,7 +122,7 @@
 | sanitize 없는 `dangerouslySetInnerHTML` | 서버 렌더 + sanitize |
 | 사용자 지정 URL 무검사 fetch | 공인 https, 리다이렉트 제한 |
 | 대시보드 더미 배열, 난수 지표 | 실데이터 또는 빈 상태 |
-| Mock 로그인, 기본 역할 admin | `requireSession`, 프로필 없으면 로그아웃 |
+| 쿠키 역할 Mock(`mock-auth`, `nomad_role`, `nomad_plan`), 기본 역할 admin | `requireSession`, 프로필 없으면 로그아웃. 허용 Mock은 `AUTH_ROADMAP.md` 2장(로컬 시드 계정, 8절) |
 | LLM·음성 키를 브라우저·Vercel·워커에 두기 | 서버 전용 키(FastAPI, Next.js 서버) |
 | 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·채널 정보 | `/api/ai/*`, `/api/voice/*`, 대화 매핑 |
 | 채널 비밀·세션 쿠키·제휴 키를 AI 입력에 넣기 | 입력 스키마에 필드 없음 |
@@ -130,3 +130,18 @@
 | 클라이언트 텍스트 그대로 TTS, 녹음 원본 저장 | DB 메시지만 낭독, `store_audio=false` |
 | 토큰 밖 3D 색, 3D 안 글자, 종이비행기·파티클 | 03장 4.6절 |
 | "Tailwind"만 적은 지시(v3 혼입) | Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
+
+## 8. 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(이하 AUTH_ROADMAP), 보안 규칙은 `SECURITY_BASELINE.md` 17장이다.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 A(Mock). 로그인은 로컬 Supabase 시드 계정 원클릭 로그인뿐이고 Google·카카오·네이버 콘솔 설정과 버튼을 만들지 않는다. B·C 전환은 아래 게이트 기록이 있을 때만 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/`, `src/app/auth/`(콜백, C2 브리지), `src/app/api/dev/`에만. 기능 코드·워커·`apps/api`에 `if (mock)` 금지(BL-06-032가 CI로 막음). 권한은 `session_context`로만 판단하고 페르소나 이메일로 분기하지 않는다 |
+| 페르소나 사용법 | `supabase start` → `supabase db reset` → `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` → `node scripts/dev/seed-users.mjs --app blog`(제품 훅 `seed-users.blog.mjs` 포함) → `/login` 개발용 패널. 페르소나: `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, blog 행 `owner_pro`(05장 10절) |
+| E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다(BL-06-029, 037). 실제 Google 로그인은 자동화하지 않는다(B-5) |
+| 금지 패턴 | 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock(`mock-auth`, `nomad_role`, `nomad_plan`, `dev-user`), `NEXT_PUBLIC_` 비밀번호, 원격 DB에 시드 계정 생성, 판정 거짓인데 조용히 live 전환, 콜백 `next` 무검증, 이메일 일치만으로 계정 합치기, `listUsers` 전체 조회로 사용자 찾기 |
+| 채널 로그인과 혼동 금지 | 네이버·티스토리 채널 연결(Playwright 게시·브랜드커넥트, `encrypted_credentials`)은 사용자 로그인과 별개다. 로그인 작업(057~059)은 채널 코드(`src/server/channels/`, `workers/blog-worker/src/channels/`)를 건드리지 않고, 채널 작업은 `src/lib/auth/`를 건드리지 않는다 |
+| 단계 전환 | G1(AUTH_ROADMAP 4장)·G2(6장)는 사람(대표님)이 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한다. 에이전트가 스스로 판정하지 않는다. C2 경로도 `[DECISION]`(스파이크 결과) |
+| 이 제품의 작업 ID | A: BL-06-004(W1). B: BL-06-057(P0, G1 후, W6 맨 앞). C1: BL-06-058(P1, G2 후, W7). C2: BL-06-059(P1, G2 후, W7, 네이버 블로거 비중으로 검수 신청 먼저) |

@@ -14,7 +14,7 @@
 | `/newsletter/confirm` | 구독 확인(토큰 검증 후 버튼 1개) | 누구나(토큰 필요) | 해당 없음 | P0 |
 | `/newsletter/unsubscribe` | 구독 해지(토큰 검증 후 버튼 1개) | 누구나(토큰 필요) | 해당 없음 | P0 |
 | `not-found` | 헤더/푸터 유지 404 | 누구나 | 해당 없음 | P0 |
-| `/admin/login` | 운영자 로그인(가입 링크 없음) | 비로그인 | 해당 없음 | P0 |
+| `/admin/login` | 운영자 로그인(가입 링크 없음). 단계별: A 개발용 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B "Google로 계속하기" + 이메일·비밀번호 폼(초대 메일 수락 후), C 제외. 화면 콜백 `/auth/callback`(B), 초대받지 않은 계정 `/admin/no-access`(B) — 7절 | 비로그인 | 해당 없음 | P0 |
 | `/admin` | 문의 목록으로 리다이렉트. 등록된 사이트가 없으면 "초대가 필요합니다" 안내 | owner, admin, member | `app_entitlements` 활성 + 등록된 사이트 1개 이상 | P0 |
 | `/admin/inquiries` | 문의 목록(상태/종류 필터) | owner, admin, member | 같음 | P0 |
 | `/admin/inquiries/[id]` | 문의 상세, 상태 변경, 메모, 삭제(owner/admin) | owner, admin, member(삭제는 owner/admin) | 같음 | P0 |
@@ -57,7 +57,7 @@ viewer 역할은 콘솔에서 `/admin/settings`의 읽기 전용 화면 외에�
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | 이메일 | 플랫폼 관리자가 보낸 초대 메일의 링크 클릭 | Auth Admin `inviteUserByEmail`(메타데이터 `signup_app=site`)로 만든 사용자. 가입 트리거가 프로필, 개인 조직, owner 멤버십을 만든다(invite 앱이라 엔타이틀먼트는 만들지 않고 운영자가 service_role로 `site` 엔타이틀먼트를 부트스트랩한다) | 만료된 초대: 관리자에게 재발송 요청 |
-| 2 | `/admin/login` | 비밀번호 설정 후 로그인 | `session_context('site')` 호출. 프로필이 없으면 로그아웃(기본 admin 금지) | `status='pending'/'suspended'`: 안내 페이지 |
+| 2 | `/admin/login` | 비밀번호 설정 후 로그인(Stage B. 초대받은 이메일과 같은 Google 계정으로도 로그인 가능. Stage A 로컬 개발은 개발용 패널의 페르소나) | `session_context('site')` 호출. 프로필이 없으면 로그아웃(기본 admin 금지) | `status='pending'/'suspended'`: 안내 페이지. 다른 이메일의 Google 계정: `/admin/no-access`(7절) |
 | 3 | `/admin` | 최초 진입 | 조직에 등록된 사이트가 없으면 "등록된 사이트가 없습니다. 담당자가 사이트를 등록하면 문의가 여기에 표시됩니다." | 이 화면에 문의 폼이나 가입 링크는 없다 |
 | 4 | 담당자 작업 | (플랫폼 관리자) `provision_site` 호출 | service_role RPC로 `sites` 행 생성, 감사 로그 | 엔타이틀먼트 없는 조직은 42501 |
 | 5 | `/admin/inquiries` | 첫 문의 확인 | RLS로 자기 조직 문의만 조회 | 0건: "아직 접수된 문의가 없습니다. 사이트의 문의 폼 주소를 확인하세요." |
@@ -481,3 +481,34 @@ reduced-motion이면 0~4단계 없이 정지 이미지만 보인다. 연출은 �
 | 상담 패널 | 패널이 열리면 포커스가 입력으로 이동하고 ESC로 닫으면 상담 버튼으로 돌아온다. 메시지 목록은 `aria-live="polite"`. 375px에서는 전체 화면 시트이고 가로 스크롤이 없다 |
 | 음성 | 마이크 버튼은 `aria-pressed`와 남은 시간 텍스트를 제공하고, 모든 기능은 음성 없이도 쓸 수 있다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`) |
 | 3D | 캔버스 `aria-hidden`, 연출은 reduced-motion에서 끄고, 시점 이동은 사용자가 끌 수 있다. 제목·CTA는 3D 로딩 전에 보이고 키보드로 쓸 수 있다 |
+
+## 7. 운영자 로그인 화면의 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 로그인 화면은 운영 콘솔 `/admin/login` 하나다. 공개 사이트·상담 위젯·뉴스레터 화면은 단계와 무관하며 로그인 버튼을 추가하지 않는다.
+
+### 7.1 `/admin/login` 단계별 구성
+
+| 단계 | 구성 | 렌더 조건 |
+|---|---|---|
+| A Mock | "개발용 로그인" 패널: 페르소나 버튼 목록(05장 10절: 공통 + 사이트 등록 완료 `owner`·미완료 `site_pending`), 현재 로그인 페르소나, 로그아웃. 모든 화면(공개 사이트 포함) 상단에 고정 배지 `MOCK AUTH · 로컬 전용`. 실제 제공자 버튼은 렌더하지 않는다 | `isMockAuthAllowed()`가 참일 때만, 서버 컴포넌트에서 분기(`AUTH_ROADMAP.md` 2.4절). 거짓이면 패널 코드 자체가 없다 |
+| B Google | "Google로 계속하기" 버튼(`prompt=select_account`) + 이메일·비밀번호 폼(초대 메일로 비밀번호를 설정한 운영자, 01장 D-20). 가입 링크·가입 폼 없음. 비밀번호 재설정 링크(초대받은 계정만 의미 있음) | `AUTH_PROVIDERS`에 `google`, `email` |
+| C 카카오·네이버 | 제외(운영자 전용 콘솔). 버튼 없음 | - |
+
+초대 메일 수락 화면(비밀번호 설정)은 B단계에서 만든다. A단계에서는 시드 계정이 이미 인증 완료 상태라 이 화면이 필요 없다(`AUTH_ROADMAP.md` 2.5절).
+
+### 7.2 콜백과 오류 상태
+
+| 상황 | 화면 | 문구 방향 |
+|---|---|---|
+| `/admin/login?error=callback` | 로그인 화면 상단 오류 띠 | "로그인을 마치지 못했습니다. 다시 시도해 주세요." 코드·토큰을 화면에 보이지 않는다 |
+| `error=state` | 해당 없음 | C2 브리지 전용(제외) |
+| `error=email_in_use` | 해당 없음 | C2 브리지 전용(제외) |
+| `/admin/no-access`(엔타이틀먼트 없음) | 콘솔 레이아웃 없이 안내 1장 + 로그아웃 버튼 | "초대받은 이메일로 로그인하세요. 초대를 받지 않았다면 담당자에게 요청하세요." 다른 Google 계정으로 들어온 경우가 대부분이다(`AUTH_ROADMAP.md` 5.2절) |
+| 엔타이틀먼트 있음 + 사이트 미등록 | 기존 `/admin` "등록된 사이트가 없습니다" 안내(2.3절 3단계) | 문구 유지 |
+| pending·suspended | 기존 안내 페이지(2.3절 2단계) | 문구 유지 |
+
+### 7.3 첫 로그인 뒤 약관 동의 위치
+
+이 제품은 운영자 이용약관을 MVP에 두지 않는다(01장 6절 약관/고지 행). 그래서 첫 Google 로그인 뒤 별도 약관 단계를 만들지 않고, 첫 진입은 기존 2.3절 3단계(`/admin`)다. 운영자 이용약관이 생기면 그 동의 화면을 `/admin` 최초 진입 앞 첫 단계로 둔다(제안, `AUTH_ROADMAP.md` 5.2절 가입 화면 행).
+
+"설정 → 로그인 방법"(계정 연결, `AUTH_ROADMAP.md` 7.3절)은 C단계 기능이라 이 제품에서는 만들지 않는다.

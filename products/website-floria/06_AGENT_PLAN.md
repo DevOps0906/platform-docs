@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 약어 `SI`(site). 작업 ID `SI-06-###`. 앱 루트 `apps/website-floria/`(아래 경로는 이 루트 기준, `supabase/`, `archive/`, `apps/api/`, `infra/`, `worker/`는 저장소 루트).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(SI-06-033~048)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고 내용이 바뀐 기존 작업은 005(디자인 시스템 2단계로 확대), 001·002·003·004·008~011·014·015·020·023~027(수용 기준과 선행 보강)이다. 작업 수 48개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 여기에는 기존 연계 사이트 P2 작업 3개와 AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 16개가 들어 있고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(SI-06-033~048)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고 내용이 바뀐 기존 작업은 005(디자인 시스템 2단계로 확대), 001·002·003·004·008~011·014·015·020·023~027(수용 기준과 선행 보강)이다. 작업 수 48개(2026-10-14 인증 단계 B 작업 SI-06-049 추가로 49개, 8절)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 여기에는 기존 연계 사이트 P2 작업 3개와 AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 16개가 들어 있고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
 
 ## 1. 원칙과 소유 경계
 
@@ -45,16 +45,16 @@
 | SI-06-016 | `POST /api/inquiries`: Origin, 크기, Turnstile, IP 해시 레이트 리밋, zod, RPC 호출, 오류 매핑 | `src/app/api/inquiries/`, `src/lib/forms/` | 002, 003 | P0 | M | Opus | 04장 2절 오류 표와 일치. 5회/시간 초과 429+Retry-After. Turnstile 실패 403. 허용 목록 밖 Origin 403. service_role 키가 클라이언트 번들에 없음 | 리뷰 5장 #11, 04장 |
 | SI-06-017 | 뉴스레터 API(subscribe/confirm/unsubscribe), HMAC 토큰, 확인 메일, List-Unsubscribe | `src/app/api/newsletter/`, `src/lib/newsletter/`, `src/lib/mail/` | 002, 003 | P0 | M | Opus | 구독 응답이 가입 여부와 무관하게 동일. 만료 토큰 410. 같은 토큰 2회 확정 멱등. 해지 토큰은 만료 없음 | 5장 #11, 04장 |
 | SI-06-018 | 문의 알림 워커 | `worker/notify/` | 003, 017 | P1 | S | Opus | 접수 후 2분 이내 1통. 중복 0. `notify_email`이 없으면 건너뜀. 메일 본문에 개인정보 없음 | 01장 SI-F-009 |
-| SI-06-019 | 콘솔 인증과 서버 가드(`requireSession`, 사이트 등록 게이트, 프로필 없음 → 로그아웃) | `src/lib/auth/`, `src/app/(console)/admin/(auth)/`, `src/app/(console)/admin/layout.tsx` | 002, 003 | P0 | M | Fable | 비로그인 401, 프로필 없음 로그아웃, 사이트 없는 조직은 안내만, viewer는 문의 접근 거부. 클라이언트 가드에 의존하지 않고 서버에서 검사. 기본 역할 admin 없음 | `SECURITY_BASELINE.md` 11장 |
+| SI-06-019 | 콘솔 인증 Stage A(확정 결정 22): 인증 모듈 경계(`AUTH_ROADMAP.md` 3.1절 `getAuthConfig`·`isMockAuthAllowed`·`listLoginOptions`·`finishLogin`), Mock 로그인(`POST /api/dev/login`, `/admin/login` 개발용 패널, `MOCK AUTH · 로컬 전용` 배지), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.site.mjs`(05장 10절, `provision_site` 완료·미완료 운영자), 가드(env zod, 404, 서버 컴포넌트 분기)와 서버 가드(`requireSession`, 사이트 등록 게이트, 프로필 없음 → 로그아웃). 초대 메일 수락·비밀번호 설정·재설정 화면은 Stage B(SI-06-049)로 옮김 | `src/lib/auth/`(`oauth/` 제외), `src/app/(console)/admin/(auth)/login/`, `src/app/(console)/admin/layout.tsx`, `src/app/api/dev/login/`, `scripts/dev/` | 002, 003 | P0 | M | Fable | 비로그인 401, 프로필 없음 로그아웃, viewer는 문의 접근 거부, 서버에서 검사, 기본 역할 admin 없음. Mock 기준: `owner` 페르소나 로그인 → `entitled=true`·사이트 1행·`/admin/inquiries`, `site_pending` → "등록된 사이트가 없습니다"만, `no_app` → `/admin/no-access`, `outsider`로 owner 조직 문의·구독자 0행, `AUTH_MODE=mock VERCEL_ENV=production npm run build` 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404·개발용 패널 없음, 시드 스크립트는 원격 URL이면 exit 1·2회 실행 멱등, `DEV_SEED_PASSWORD`가 번들에 0 | `SECURITY_BASELINE.md` 11장, `AUTH_ROADMAP.md` 2장, 3.1~3.2절, 9장 |
 | SI-06-020 | 콘솔 문의 목록, 상세, 상태 변경, 삭제 | `src/app/(console)/admin/inquiries/` | 019, 035 | P0 | M | Sonnet | 03장 3.3~3.4. 전이 위반은 안내 문구. 목록은 컬럼 명시 select, 25건 페이지. `source_path`가 `/consult`인 문의에 "상담에서" 배지 | 01장 SI-F-008 |
 | SI-06-021 | 콘솔 구독자 목록, 삭제 요청 처리 | `src/app/(console)/admin/subscribers/` | 019, 035 | P1 | S | Sonnet | `erase_subscriber` 후 이메일이 "삭제됨" 표시. member는 처리 버튼 없음 | SI-F-012 |
 | SI-06-022 | 콘솔 설정(알림 이메일, 접수 on/off, 동의 버전) | `src/app/(console)/admin/settings/` | 019, 035 | P1 | S | Sonnet | owner/admin만 변경. 동의 버전 변경 경고 표시 | SI-F-013 |
 | SI-06-023 | 개인정보처리방침, 동의 문구, 푸터 사업자 정보, AI 고지문(법무 검토 게이트 포함) | `src/app/(site)/privacy/`, `src/content/legal.ts`(SI-06-006과 협의: 파일만 분리), `src/content/ai-notice.ts` | 006 | P0 | S | Sonnet | 수집 항목, 목적, 보존, 위탁·국외 이전(사업자 확정 후), 거부 권리 포함. AI 상담·음성 항목(질문 마스킹 저장, 30일 보존, 방문자 쿠키, 제3자·국외 이전은 운영자 동의 시, Dify 로그 30일, 음성 원본 미저장)과 상담 시작 고지문·음성 처리 고지문·국외 이전 고지문의 문구와 버전 상수(02장 8절 환경변수와 같은 값), AI 생성 표시 문구. 법무 확인 체크리스트(01장 6절)가 PR에 첨부 | 01장 6절 |
-| SI-06-024 | CI 품질 게이트: lint, tsc, build, Lighthouse 예산, `check-assets`, `check-budget`, `check-repo`(중첩 .git, LFS, dist-only) | `.github/workflows/website-floria.yml`, `scripts/check-budget.mjs`, `scripts/check-repo.mjs` | 001, 007 | P0 | M | Opus | LCP ≤ 2.5s, 첫 화면 전송 ≤ 2MB. 영상 10MB 초과, `autoplay`+`preload="auto"`, 외부 CDN 문자열, 중첩 `.git` 발견 시 실패. 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 초과와 정지 이미지 150KB 초과 시 실패, 위젯·3D의 외부 모델/이미지 요청 0 | 리뷰 #1, #2, #3, #5, #6, #8, 5장 #15, HERO_3D 2절 |
-| SI-06-025 | e2e: 뷰포트 4종, 링크 크롤, 문의/구독 폼 흐름, JSON-LD 검증, 상담 흐름 | `tests/e2e/` | 008, 009, 010, 011, 014, 015, 016, 017, 045, 046 | P0 | M | Opus | 375/768/1024/1440px에서 scrollWidth ≤ clientWidth(상담 패널 연 상태 포함). 내부 링크 404 0건. 문의 제출→접수번호, 4번째 제출 429. 구독 확인 흐름 통과. 상담 1턴(목 제공자) → 문의 전환 → 접수번호(`source_path` `/consult`), 쿠키 없는 컨텍스트에서 대화 이어 쓰기 404, 스위치 off면 위젯 DOM 없음, 3D 4상태(풀, 모바일 단순판, 정지 이미지, reduced-motion) 렌더 확인 | 리뷰 #4, #7, 5장 #3 |
+| SI-06-024 | CI 품질 게이트: lint, tsc, build, Lighthouse 예산, `check-assets`, `check-budget`, `check-repo`(중첩 .git, LFS, dist-only) | `.github/workflows/website-floria.yml`, `scripts/check-budget.mjs`, `scripts/check-repo.mjs` | 001, 007 | P0 | M | Opus | LCP ≤ 2.5s, 첫 화면 전송 ≤ 2MB. 영상 10MB 초과, `autoplay`+`preload="auto"`, 외부 CDN 문자열, 중첩 `.git` 발견 시 실패. 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 초과와 정지 이미지 150KB 초과 시 실패, 위젯·3D의 외부 모델/이미지 요청 0. 인증 금지 문자열 검사(쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈 밖의 `AUTH_MODE` 참조) 0건, `AUTH_MODE=mock VERCEL_ENV=production npm run build` 실패 확인 | 리뷰 #1, #2, #3, #5, #6, #8, 5장 #15, HERO_3D 2절, `AUTH_ROADMAP.md` 2.4절, 9장 |
+| SI-06-025 | e2e: 뷰포트 4종, 링크 크롤, 문의/구독 폼 흐름, JSON-LD 검증, 상담 흐름 | `tests/e2e/` | 008, 009, 010, 011, 014, 015, 016, 017, 019, 020, 045, 046 | P0 | M | Opus | 375/768/1024/1440px에서 scrollWidth ≤ clientWidth(상담 패널 연 상태 포함). 내부 링크 404 0건. 문의 제출→접수번호, 4번째 제출 429. 구독 확인 흐름 통과. 상담 1턴(목 제공자) → 문의 전환 → 접수번호(`source_path` `/consult`), 쿠키 없는 컨텍스트에서 대화 이어 쓰기 404, 스위치 off면 위젯 DOM 없음, 3D 4상태(풀, 모바일 단순판, 정지 이미지, reduced-motion) 렌더 확인. 콘솔 흐름은 Mock 페르소나 storageState로 실행(`globalSetup`이 `/api/dev/login`으로 `owner`·`site_pending`·`viewer` 상태 저장): owner 문의 상태 변경, site_pending 안내만, viewer 문의 거부 | 리뷰 #4, #7, 5장 #3, `AUTH_ROADMAP.md` 2.1절 |
 | SI-06-026 | API·가드 통합 테스트(Vitest+로컬 Supabase) | `tests/api/` | 016, 017, 019, 037 | P0 | M | Opus | 04장 오류 표의 모든 코드 재현(2.2절 AI 코드: `ai_disabled`, `ai_turn_limit`, `ai_rate_limited`, `ai_budget_exhausted`, `voice_notice_required`, `consent_version_mismatch` 포함). 허니팟은 200이지만 행 0. 콘솔 권한(viewer/member/owner) 매트릭스 | 04장 7절 |
 | SI-06-027 | pg_cron 등록, 퍼지 런북 | `supabase/ops/` | 003 | P1 | S | Opus | 매일 03:30 KST `purge_expired` 등록. 같은 스케줄에 30일 지난 방문자 상담 대화(`ai_conversations`, 메시지는 cascade)와 만료 `voice_sessions` 정리 등록(코어 요청 12 전까지 직접 DELETE). 만료 데이터 0건 확인 쿼리 | SI-F-021, 01장 5장 상담 기록 보존 |
-| SI-06-028 | 사이트 등록 스크립트와 초대 온보딩 절차 | `scripts/provision-site.mjs`, `docs-ops/ONBOARDING.md`(앱 내부 운영 문서) | 003 | P0 | S | Opus | 초대 메일 → 로그인 → `provision_site` → 콘솔에 사이트 표시. 엔타이틀먼트 없는 조직은 거부 | SI-F-020 |
+| SI-06-028 | 사이트 등록 스크립트와 초대 온보딩 절차 | `scripts/provision-site.mjs`, `docs-ops/ONBOARDING.md`(앱 내부 운영 문서) | 003 | P0 | S | Opus | 초대(`inviteUserByEmail`) → service_role 엔타이틀먼트 부트스트랩 → `provision_site` → 콘솔에 사이트 표시. Stage A에서는 로컬 초대로 만든 사용자와 시드 페르소나 로그인으로 확인하고, 초대 메일 링크 → 비밀번호 설정 → 로그인 실경로는 SI-06-049(Stage B)에서 확인. 엔타이틀먼트 없는 조직은 거부 | SI-F-020, `AUTH_ROADMAP.md` 2.5절 |
 | SI-06-029 | 원본 정리와 아카이브: Floria_Neo 카피 추출 후 보관, `.vite` 캐시, Biz_Website dist 보관, Lucury 저장소 경계 결정 절차 | `archive/`(저장소 루트), 07장 절차 | 006 | P1 | S | Opus | `archive/WebSite-*`에 원본 이동 계획서 작성, 중첩 `.git` 처리 방식(서브모듈 또는 제거) 결정 기록. 실행은 사용자 승인 후(git 쓰기 포함) | 리뷰 #5, #8, #34, 5장 #5 |
 | SI-06-030 | 연계: Lucury 영상 1080p 트랜스코딩, 프레임 WebP 재추출·점진 로드, 저장소 경계 | 별도 저장소 `Lucury Website`(이 앱 밖) | 016 | P2 | L | Opus | 초기 전송 10MB 이하, 프레임 총합 4MB 이하, 로더 없이 첫 프레임 표시, CTA를 폼 백엔드로 연결 | 리뷰 #1, #2, 5장 #1, #5, #6 |
 | SI-06-031 | 연계: Flora Sentiment(NEO_02) 라우팅 보강, 코드 정리, 폼 백엔드 연결 | 별도 저장소 `Floria_NEO_02`(이 앱 밖) | 016 | P2 | M | Opus | 미정의 라우트 0, `*` NotFound, `vercel.json` rewrites, 폼 3곳이 `/api/inquiries` 호출 | 리뷰 #7, #24, 5장 #10, #13 |
@@ -76,7 +76,7 @@
 | SI-06-047 | 3D 히어로: 온실 구조물(PC·태블릿 풀 3D, 모바일 단순판, 정지 이미지 대체, 성능 예산) | `src/components/hero3d/`, `public/hero/` | 035, 008 | P0 | L | Sonnet | `HERO_3D.md` 4절 수용 기준 전부(기기 3종 동작, 3D 번들+에셋 1MB/300KB, LCP 2.5초, 로딩 전 저사양 판정과 `deviceMemory` 없는 Safari·Firefox 분기, 런타임 강등, 3D 전 HTML 사용 가능, 스크린샷 3종 고문 검토), 토큰 밖 3D 색 0, 금색·잎 일러스트 패턴·별 파티클 0, 연출은 로드 때 1회 약 3초. 장착은 008 파일에 1줄 요청 | 01장 SI-F-030, 03장 4.8절 |
 | SI-06-048 | AI·음성 보안·라우팅 회귀 테스트(서명 토큰, 대화 매핑, 방문자 쿠키 결합, 국외 동의 필터, 강제 오픈소스, 방문자 한도·사이트 상한, 라우팅 seed 스냅샷) | `apps/api/tests/site/security/`, `tests/ai/`, `scripts/ai-routing/` | 036, 037, 043, 044, 046 | P0 | M | Fable | `resolve_ai_route` 스냅샷(기능 8행 × 동의 유/무)이 02장 5.1절과 일치, 위조·만료·재사용 토큰 401, 쿠키 없는/다른 쿠키 대화 이어 쓰기 404, 미동의 조직 상용 호출 0(상담·음성·임베딩·위키), 한도 초과 429, 스위치 off 404, 상담이 `site.inquiries`에 쓴 행 0, 모든 호출 `ai_usage` 기록, CI 실패 시 머지 차단 | SECURITY_BASELINE 16장 |
 
-작업 수 48. 테스트 대응: SI-06-002/003 → 026·004, 005~012 → 025·024, 014/015 → 025, 016/017 → 026, 019/020 → 004·026, 023 → 법무 체크리스트, 028 → 026. AI·음성·3D(2026-10-13): 036 → 048, 037 → 026·048, 038 → 026, 039 → 040, 040 → 043, 041 → 026, 042 → 025, 043·044 → 평가셋·048, 045 → 025, 046 → 048, 047 → 024·025, 033~035 → 디자인 시스템 4단계 검증.
+작업 수 49(2026-10-14 인증 단계 B 1개 추가, C1·C2는 제외 제품이라 없음, 8절). 테스트 대응: 049 → `tests/auth/`(자체 콜백 단위 테스트)·025(Mock E2E 계속 녹색)·수동 점검표(B-5), SI-06-002/003 → 026·004, 005~012 → 025·024, 014/015 → 025, 016/017 → 026, 019/020 → 004·026, 023 → 법무 체크리스트, 028 → 026. AI·음성·3D(2026-10-13): 036 → 048, 037 → 026·048, 038 → 026, 039 → 040, 040 → 043, 041 → 026, 042 → 025, 043·044 → 평가셋·048, 045 → 025, 046 → 048, 047 → 024·025, 033~035 → 디자인 시스템 4단계 검증.
 
 ## 3. 웨이브(병렬 실행 순서)
 
@@ -89,21 +89,21 @@
 | W3 | 012, 013, 014, 015, 018, 020, 021, 022, 029, 037, 040, 047 | 12 | W2 해당 선행 완료 | SEO, 접근성, 폼 UI, 알림, 콘솔 화면, 아카이브 계획, AI 게이트, RAG 색인, 3D 히어로 |
 | W4 | 026, 038, 041, 043, 045 | 5 | W3 해당 선행 완료 | 통합 테스트, 콘솔 AI 설정, 위키 운영, 상담 그래프, 상담 위젯 |
 | W5 | 042, 044, 046 | 3 | W4 해당 선행 완료 | 공개 지식 페이지, Dify 채팅, 음성 상담 |
-| W6 | 025, 048 | 2 | W5 완료 | e2e 전체, AI 보안 회귀. **MVP 출시 조건** |
-| W7 | 030, 031, 032 | 3 | MVP 출시 후 | 연계 사이트(P2) |
+| W6 | 049(G1 통과 후 먼저), 025, 048 | 3 | W5 완료. 049는 G1(`AUTH_ROADMAP.md` 4장), 025·048은 049 완료 후 마감 | 인증 Stage B(Google + 초대 메일), e2e 전체, AI 보안 회귀. **MVP 출시(공개 베타) 조건** |
+| W7 | 030, 031, 032 | 3 | MVP 출시 후 | 연계 사이트(P2). 인증 C1·C2는 제외라 G2 후 작업 없음 |
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 5 | 10.6% | 11 / 85 = 12.9% |
-| Opus | 23 | 48.9% | 42 / 85 = 49.4% |
-| Sonnet | 18 | 38.3% | 31 / 85 = 36.5% |
-| Haiku | 1 | 2.1% | 1 / 85 = 1.2% |
+| Fable | 6 | 12.5% | 13 / 87 = 14.9% |
+| Opus | 23 | 47.9% | 42 / 87 = 48.3% |
+| Sonnet | 18 | 37.5% | 31 / 87 = 35.6% |
+| Haiku | 1 | 2.1% | 1 / 87 = 1.1% |
 
-비율은 모델 작업 47개 기준이다. 사람 작업 1개(SI-06-034, M)는 비율에서 뺐다. 2026-10-13 이전(32개)은 Fable 6.3%, Opus 50.0%, Sonnet 40.6%, Haiku 3.1%였다.
+비율은 모델 작업 48개 기준이다. 사람 작업 1개(SI-06-034, M)는 비율에서 뺐다. 2026-10-14 인증 B(SI-06-049, Fable M) 추가 전(모델 47개)은 Fable 10.6%, Opus 48.9%, Sonnet 38.3%, Haiku 2.1%였다. 2026-10-13 이전(32개)은 Fable 6.3%, Opus 50.0%, Sonnet 40.6%, Haiku 3.1%였다.
 
-Opus가 큰 이유: 이 제품의 비 UI 작업이 API, 게이트, 그래프, RAG, 테스트, 연계 사이트 L 작업이기 때문이다. Fable은 권한·RLS(004, 019)와 AI 보안 경계(서명 토큰 검증 036, AI 게이트의 쿠키 결합·한도·마스킹 037, AI 회귀 048)를 맡는다. 그래프·RAG·Dify·음성·위키 운영 구현은 Opus, 상담 위젯·공개 지식 페이지·3D 히어로·지식 원고는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
+Opus가 큰 이유: 이 제품의 비 UI 작업이 API, 게이트, 그래프, RAG, 테스트, 연계 사이트 L 작업이기 때문이다. Fable은 권한·RLS(004, 019 인증 Stage A, 049 인증 Stage B)와 AI 보안 경계(서명 토큰 검증 036, AI 게이트의 쿠키 결합·한도·마스킹 037, AI 회귀 048)를 맡는다. 그래프·RAG·Dify·음성·위키 운영 구현은 Opus, 상담 위젯·공개 지식 페이지·3D 히어로·지식 원고는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -158,4 +158,29 @@ Opus가 큰 이유: 이 제품의 비 UI 작업이 API, 게이트, 그래프, RA
 | AI·음성 | `pytest apps/api` 통과, SI-06-048 녹색, 그래프 평가셋(금지 규칙 40문항·인젝션 10문장)을 상용·오픈소스 경로 모두 통과, 대화 평가셋 30문항 금지 문구 0, 검색 평가셋 재현율@6 0.8 이상, 상담이 `site.*`에 쓴 행 0 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준, 디자인 시스템 4단계(SI-06-035) 완료, `tailwind.config.js`·hex 하드코딩 0 |
 | 법무 | 01장 6절 법무 확인 체크리스트 완료(AI·음성 개인정보와 대화 규칙 포함), 열린 결정 D-1~D-3, D-6, D-7, D-10~D-12, D-14 확정 |
-| 작업 | 06장 2절 P0 전부 완료(W0~W6). P1은 출시 후 2주 안. P2(W7)는 별도 일정 |
+| 작업 | 06장 2절 P0 전부 완료(W0~W6), 8절 인증 Stage B(SI-06-049, P0, 테스트 `tests/auth/`·025·수동 점검표)와 G1 `[DECISION]` 포함. P1은 출시 후 2주 안. P2(W7)는 별도 일정 |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 9장. 이 제품은 8장 매트릭스에서 C1·C2가 "제외"라 C 작업을 만들지 않는다(01장 8.1절: 운영자 전용 콘솔, 초대 메일+Google로 충분). 기존 인증 작업 SI-06-019는 Stage A로 범위를 바꿨고(2절 행), 새 작업은 B 1개다.
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| SI-06-049 | Stage B: Google OAuth 전환 + 초대 메일 화면. `/admin/login`의 "Google로 계속하기"·이메일 폼, 초대 메일 수락(비밀번호 설정)·비밀번호 재설정 화면, `/auth/callback`(`finishLogin` 3.2절 전체, invite 앱이라 `bootstrap_app_for_org` 호출 없음), `/admin/no-access` 안내, 배포 체크리스트(Google·Supabase 대시보드·`AUTH_PROVIDERS=google,email`) | `src/lib/auth/oauth/`, `src/app/(console)/admin/(auth)/login/providers/`, `src/app/(console)/admin/(auth)/accept-invite/`, `src/app/(console)/admin/(auth)/reset-password/`, `src/app/(console)/admin/(auth)/no-access/`(콘솔 가드 레이아웃 밖), `src/app/auth/callback/`, `tests/auth/`, `docs-ops/AUTH_DEPLOY_CHECKLIST.md`. 변경 요청: `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`(003), `docs-ops/ONBOARDING.md` 초대 절차 문구(028) | 019, 028, 035, 그리고 G1 | P0 | M | Fable | `AUTH_ROADMAP.md` 5.3절 그대로: B-1 새 Google 계정 첫 로그인 → invite 앱이므로 `entitled=false`이고 `/admin/no-access`(초대받은 이메일과 같은 Google 계정은 기존 사용자로 로그인되어 콘솔 진입, 크레딧 원장 행 0 유지). B-2 `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` → `/admin`. B-3 `code` 없음·재사용·만료 → `/admin/login?error=callback`, 서버 오류 로그에 토큰·코드 없음. B-4 배포 빌드(`VERCEL_ENV=production`)에서 `/api/dev/login` 404, 로그인 화면에 개발용 패널 없음, `AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(SI-06-025 콘솔 흐름) 계속 녹색, Google 실로그인은 사람이 수동 점검표(데스크톱·모바일 각 1회, 초대받은 계정·초대받지 않은 계정)로 확인하고 task `log.md`에 기록. B-6 운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS` 값이 배포 체크리스트와 일치. 제품 추가: 초대 메일 링크 → 비밀번호 설정 → 로그인 → `site_pending`과 같은 안내 → `provision_site` 후 문의 목록(SI-06-028 실경로), 공개 사이트·상담 위젯에 로그인 버튼 0 | `AUTH_ROADMAP.md` 5장, 3.2절, 9장, 01장 SI-F-020 |
+
+| 항목 | 내용 |
+|---|---|
+| 게이트 G1 | `AUTH_ROADMAP.md` 4장 6개 조건. 이 제품 해석: (1) W0~W5 P0 완료(049·025·048 제외) (2) 핵심 플로우 E2E(문의 접수, 구독, 상담 → 문의 전환, 콘솔 문의 처리) Mock 페르소나로 녹색 (3) SI-06-004 RLS 스모크와 `outsider` 거부 (4) 결제 E2E 해당 없음 (5) 단계 분기 코드가 인증 모듈 밖 0건(SI-06-024) (6) Google Cloud 프로젝트·OAuth 동의 화면(개인정보처리방침 `/privacy` URL 포함)·웹 클라이언트·운영 Supabase 프로젝트 준비. 판정은 사람이 하고 task `log.md`에 `[DECISION] G1 통과` |
+| 웨이브 | 049는 W6(마지막 기능 웨이브 W5 다음, 공개 베타 직전 통합·E2E 웨이브)의 맨 앞. 025·048은 049 완료 후 마감한다(3절 W6 행) |
+| 게이트 G2와 C | 해당 없음. C1 카카오·C2 네이버는 제외라 G2 이후 작업이 없다. 재검토 조건은 01장 D-21 |
+| Stage A 웨이브 | SI-06-019는 W2 그대로. 그보다 앞 웨이브(W0~W1, 003의 DB 적용)는 시드 스크립트 없이 SQL·단위 테스트로 검증한다(`AUTH_ROADMAP.md` 9장 A 작업 행) |
+| 환경 검증 위치 | 인증 env zod 검증은 `src/lib/auth/`(019)가 하고 `src/lib/env.ts`(002)에는 호출 1줄을 요청한다(1절 공유 파일 규칙) |
+| 공용 모듈 요청 | 없음. 브리지 경로를 쓰지 않으므로 `staged/0010_core_auth_identity_links.sql` 적용 요청도 없다 |
+
+인증 단계 반영으로 생긴 문서 간 정리(기존 줄은 그대로 두고 여기에 기록):
+
+| 위치 | 내용 |
+|---|---|
+| 2절 SI-06-025 선행 | 콘솔 흐름을 Mock storageState로 돌리므로 019, 020을 선행에 더했다(W6라 웨이브 변화 없음) |
+| 2절 SI-06-019 소유 | `src/app/(console)/admin/(auth)/`에서 `login/`만 019가 갖고, 같은 폴더의 `login/providers/`·`accept-invite/`·`reset-password/`는 049가 갖는다 |
+| 05장 8장 "가입" 행 | 모놀리스 자동 엔타이틀먼트는 invite 강제 이전 스모크 기록이다. 현재 기대값은 05장 10절(`no_app` 두 형태 모두 `entitled=false`) |

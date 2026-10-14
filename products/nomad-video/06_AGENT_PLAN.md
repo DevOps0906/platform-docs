@@ -2,14 +2,14 @@
 
 작업 ID는 `VID-06-###`(DB_CONVENTIONS 1장 SQLSTATE 접두사 `VD`의 작업 약어). 모델 기준은 `docs/products/_platform-core/DOC_TEMPLATE.md` 1장: Fable(결제, 권한, RLS, 데이터 모델), Opus(기능 구현, API 연동, 테스트 설계), Sonnet(UI, 메인페이지, 컴포넌트, 문서), Haiku(보일러플레이트, 린트/타입, 문구, 반복 체크).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(VID-06-041~056)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(사용량 기록), 016(대본·TTS 이관), 036(디자인 시스템 2단계 토큰), 004·023·028·035·038(선행 추가), 001·003·005·021·039(수용 기준 보강)이다. 작업 수 56개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 기존 40개가 이미 한도를 넘었고(Track A~F 전부 MVP, 확정 결정 7) AI·음성·3D·디자인 시스템이 MVP에 들어와 작업 하나를 더 합칠 수 없어 분리했다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(VID-06-041~056)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(사용량 기록), 016(대본·TTS 이관), 036(디자인 시스템 2단계 토큰), 004·023·028·035·038(선행 추가), 001·003·005·021·039(수용 기준 보강)이다. 작업 수 56개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 기존 40개가 이미 한도를 넘었고(Track A~F 전부 MVP, 확정 결정 7) AI·음성·3D·디자인 시스템이 MVP에 들어와 작업 하나를 더 합칠 수 없어 분리했다. 이후 2026-10-13 2차 개정으로 클립·브랜드커넥트·대행 6개(057~062)가, 2026-10-14 인증 단계(확정 결정 22)로 3개(063~065, 8절)가 더해져 지금은 65개(모델 작업 64, 사람 1)이고, 004는 Stage A 범위로 바뀌었다.
 
 ## 1. 원칙과 소유 경계
 
 | 원칙 | 내용 |
 |---|---|
 | 디렉토리 단위 소유 | 한 작업은 아래 표의 디렉토리만 만든다·고친다. 다른 작업의 디렉토리를 고쳐야 하면 그 작업 소유자에게 요청 작업을 남긴다 |
-| 공용 파일 | `apps/nomad-video/src/lib/**`(env, core 래퍼)은 VID-06-003, `src/server/billing/**`(게이팅·단가)는 VID-06-005만 수정. 다른 작업은 import만 |
+| 공용 파일 | `apps/nomad-video/src/lib/**`(env, core 래퍼)은 VID-06-003, `src/server/billing/**`(게이팅·단가)는 VID-06-005만 수정. 다른 작업은 import만. 예외: `src/lib/auth/**`(인증 모듈 경계)는 004(Stage A) → 063(B) → 064·065(C) 순서로 이어 받는다(8절, 동시 쓰기 없음) |
 | 코어 | `_platform-core`, `_supabase-modular`의 다른 파일, 공용 패키지(`packages/core-*`) 수정 금지. 필요하면 6절 코어 요청 |
 | DB | 스키마 변경은 VID-06-001(Fable)만. 모놀리스는 변환 스크립트로만 생성 |
 | 테스트 | 모든 P0 작업은 3절 웨이브 표의 테스트 작업(002, 007, 037, 038, 055) 중 하나에 대응한다 |
@@ -40,10 +40,10 @@
 | VID-06-001 | 1200 조각 적용, 모놀리스 변환 스크립트, 타입 생성(`--schema core,video`) | `supabase/migrations/1200_video.sql`, `supabase/monolith/**`, `scripts/mono-convert.mjs`, `apps/nomad-video/src/types/supabase.ts` | 없음 | P0 | M | Fable(데이터 모델) | `supabase db reset` 성공, 체커 OK(모듈러·모놀리스), 타입 파일에 26개 테이블(2026-10-13 대행 4개 포함), 11절 AI 라우팅 17행과 체인 검사 DO 블록 통과 | 05장, SM 작업 6, BS 작업 1·11·14 |
 | VID-06-002 | RLS/권한 회귀 테스트(PGlite + 로컬 Supabase) | `supabase/tests/**` | 001 | P0 | M | Fable(RLS) | 05장 9절 65항목 + 2026-10-13 클립·대행 33항목 + SECURITY_BASELINE 15장이 CI에서 통과, 실패 시 머지 불가 | SM 작업 1·15, BS 작업 1, YSM 작업 6 |
 | VID-06-003 | 앱 골격: `proxy.ts` 공개 경로 배열, `lib/env.ts`(zod), 코어 클라이언트 3계층 연결, `requireSession`, enqueue 전용 lazy Redis 모듈, 응답 봉투 | `apps/nomad-video/src/proxy.ts`, `src/lib/**`, `package.json` | 001 | P0 | M | Opus(골격·연동) | 비로그인 `/dashboard` 302, `/landing/x` 200, env 누락 시 기동 실패, `x-internal-call` 문자열 0건, 02장 8절 AI 변수(`AI_TOKEN_PRIVATE_KEY` 등)는 Next.js 서버 범위만 검증하고 `NEXT_PUBLIC_`에 비밀 0 | SM 작업 3·4·8·10·12, BS 작업 5·7·13, YSM 작업 9 |
-| VID-06-004 | 로그인·가입·온보딩 화면(`signup_app='video'`, 프로필 없으면 로그아웃) | `src/app/(auth)/**`, `src/components/auth/**` | 003, 044 | P0 | S | Sonnet(UI) | 가입 직후 Starter 100크레딧 표시, Mock 로그인 없음, 네이버 로그인 없음 | SM 작업 4, BS 작업 4, YSM 작업 5 |
+| VID-06-004 | 인증 Stage A(2026-10-14 범위 변경, 확정 결정 22): 인증 모듈 경계(`src/lib/auth/`: `getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`), Mock 로그인(`POST /api/dev/login`, `/login` 개발용 패널, 모든 화면 상단 배지 `MOCK AUTH · 로컬 전용`), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.video.mjs`(05장 10절 페르소나, Advanced 팀 `adv_owner`·`adv_member` 포함), 가드(env zod 기동 실패, 배포 빌드에서 `/api/dev/login` 404, 패널 미렌더), `finishLogin`(`session_context` → 필요 시 `bootstrap_app_for_org` → 상태 분기 → `next` 화이트리스트, 프로필 없으면 로그아웃). 이메일 가입·메일 인증·비밀번호 재설정 화면은 Stage B(063)로 옮겼다 | `src/app/(auth)/**`, `src/components/auth/**`, `src/lib/auth/**`(003 소유 `src/lib/`의 예외), `src/app/api/dev/login/**`, `scripts/dev/**`. 배지의 대시보드 셸 장착은 028 파일에, `.env.example`·env 스키마 항목·`package.json` 스크립트 `db:seed-users`는 003 파일에 1줄 요청 | 003, 044 | P0 | M | Opus(인증 모듈·Mock 가드) | `owner` 페르소나 로그인 → `session_context('video')` `entitled=true`, `plan_code=starter`, `credit_balance=100`(시드 2회 실행 뒤에도 가입 원장 1행), `adv_owner` → `plan_code=advanced`·`features.agency=true`, `adv_member` → 같은 조직 role `member`, `outsider`로 owner 조직 제품 테이블 0행·쓰기 42501, `no_app`(모듈러) 첫 진입 부트스트랩 1회 후 `entitled=true`, `suspended` 403, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404·개발용 패널 미렌더, 원격 Supabase URL이면 시드 스크립트 exit 1, 쿠키·localStorage 역할/플랜 0, 네이버 로그인 없음(C2 전) | SM 작업 4, BS 작업 4, YSM 작업 5, `AUTH_ROADMAP.md` 2장·9장 |
 | VID-06-005 | 플랜 게이팅·단가표(`priceOf`)·크레딧 래퍼(consume→enqueue→환불, 부분 환불) | `src/server/billing/**` | 003 | P0 | M | Fable(과금·권한) | 01장 4절 단가와 일치하는 단위 테스트, Starter Track B 403 VD009, 동시 50요청 음수 0, AI 단가(01장 4.1절)와 `src/server/ai-pricing.ts`(046) 값이 같은지 비교하는 테스트 | BS 작업 2, 01장 VD-F-003/091 |
 | VID-06-006 | 결제: 주문 선저장, confirm, 빌링키, 해지, Advanced 할인 팩 판정, PM001 운영 알림·취소 | `src/app/api/billing/**`, `src/server/payments/**`, `src/app/billing/**` | 005 | P0 | L | Fable(결제) | 금액 위조 PM001 + `fail_payment_order` 호출 + 취소 호출, 같은 결제 2회 멱등, 비Advanced의 adv 팩 403 | SM 작업 2, BS 작업 3, 01장 VD-F-090 |
-| VID-06-007 | 결제 E2E(Toss 테스트 키): 구독, 크레딧팩, 실패 복귀 | `tests/e2e/billing/**` | 006 | P0 | M | Opus(테스트 설계) | 3시나리오 통과, 원장·엔타이틀먼트 기대값 일치 | SM 작업 2, DOC_TEMPLATE 필수 |
+| VID-06-007 | 결제 E2E(Toss 테스트 키): 구독, 크레딧팩, 실패 복귀 | `tests/e2e/billing/**` | 006 | P0 | M | Opus(테스트 설계) | 3시나리오 통과, 원장·엔타이틀먼트 기대값 일치. Mock `owner` 페르소나 storageState로 실행 | SM 작업 2, DOC_TEMPLATE 필수 |
 | VID-06-008 | 채널 OAuth 연결·콜백·역할 변경·해제(코어 oauth, 자격증명 vault), 다채널 위험 동의 | `src/app/api/channels/**`, `src/server/channels/**` | 003, 001 | P0 | M | Fable(OAuth·권한) | state 재사용 OA001, Starter 2번째 채널 VD003, 오류 원문을 쿼리스트링에 싣지 않음, 토큰 평문 0 | SM 작업 4, BS 작업 8, YSM 작업 4·10·13 |
 | VID-06-009 | sns-uploader YouTube: resumable 스트리밍, 고정 댓글, 쿼터, 대체 채널 선택, 재예약 | `packages/sns-uploader/src/{youtube,registry.ts,types.ts}` | 008 | P0 | L | Opus(API 연동) | 1GB 파일 업로드 시 RSS 512MB 이하, 쿼터 초과 시 대체 채널 또는 `run_after` 재예약 | SM 작업 12 |
 | VID-06-010 | sns-uploader Meta(IG Reels, Threads)·TikTok 어댑터 | `packages/sns-uploader/src/{meta,tiktok}/**` | 009 | P1 | M | Opus(API 연동) | 샌드박스 계정 업로드 성공, 토큰 만료 시 credentials error + 재연결 요청 | 01장 VD-F-071 |
@@ -80,8 +80,8 @@
 | VID-06-035 | 마케팅 랜딩·요금·약관 페이지(frontend-design 절차, MASTER.md) | `src/app/(marketing)/**`, `src/app/legal/**`, `design-system/nomad-video/**` | 036, 044, 054 | P0 | M | Sonnet(메인페이지) | 03장 4절 체크(4.5절 3D 히어로는 054의 `Hero3D`를 장착), 금지 문구 0, DESIGN_PRINCIPLES 7단계 체크리스트 통과 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/products/_design-guide/REFERENCES.md:16-23`). | 03장 4절 |
 | VID-06-036 | 디자인 시스템 2단계 토큰: 토큰 파일(라이트 랜딩·다크 대시보드, 트랙 범례), i18n 문구 키 | `src/styles/tokens.css`, `src/i18n/**` | 003, 041 | P0 | S | Haiku(보일러플레이트) | 하드코딩 hex 0(lint 규칙), 03장 3.2절 의미 기반 토큰 이름, `tailwind.config.js` 0 | BS 작업 15 |
 | VID-06-037 | 파이프라인 통합 테스트(가짜 제공자, Python 워커 로컬, 부분 환불) | `tests/integration/pipeline/**` | 015, 013, 016 | P0 | M | Opus(테스트 설계) | Track A~F 각 1시나리오 통과, drift 0 | SM 작업 15, YSM 작업 15 |
-| VID-06-038 | 사용자 플로우 E2E(webapp-testing): 가입→첫 생성, 업로드 WARN, Track B 랜딩, Track F | `tests/e2e/flows/**` | 029~034, 051, 053 | P0 | M | Opus(테스트 설계) | 03장 2절 6개 플로우 + AI 3개 플로우(2.7 채팅, 2.8 음성, 2.9 엔진 선택) 통과, 뷰포트 4종 스크린샷 | 03장 2절 |
-| VID-06-039 | CI(tsc, eslint, build, pytest, SQL 체커, RLS 스모크), 린트·타입 정리, 로거, sanitize | `.github/workflows/nomad-video.yml`, `apps/nomad-video/eslint.config.mjs` | 001 | P0 | S | Haiku(린트·설정) | CI 녹색, `console.log` 0, `dangerouslySetInnerHTML` 0, `pytest apps/api`·`ruff` 포함, 비밀 검사에 AI 키 패턴 추가 | SM 작업 5·14·15, BS 작업 14 |
+| VID-06-038 | 사용자 플로우 E2E(webapp-testing): 가입→첫 생성, 업로드 WARN, Track B 랜딩, Track F | `tests/e2e/flows/**` | 029~034, 051, 053 | P0 | M | Opus(테스트 설계) | 03장 2절 6개 플로우 + AI 3개 플로우(2.7 채팅, 2.8 음성, 2.9 엔진 선택) 통과, 뷰포트 4종 스크린샷. Mock 페르소나 storageState로 실행(`globalSetup`이 `/api/dev/login`으로 `owner`, `adv_owner`, `viewer`, `outsider` 상태 저장), 063 완료 후 재실행(B-5) | 03장 2절 |
+| VID-06-039 | CI(tsc, eslint, build, pytest, SQL 체커, RLS 스모크), 린트·타입 정리, 로거, sanitize | `.github/workflows/nomad-video.yml`, `apps/nomad-video/eslint.config.mjs` | 001 | P0 | S | Haiku(린트·설정) | CI 녹색, `console.log` 0, `dangerouslySetInnerHTML` 0, `pytest apps/api`·`ruff` 포함, 비밀 검사에 AI 키 패턴 추가. 인증 금지 문자열 검사(`AUTH_ROADMAP.md` 9장): 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈(`src/lib/auth/`, `src/app/(auth)/`, `src/app/auth/`, `src/app/api/dev/login/`) 밖의 `AUTH_MODE` 참조가 있으면 실패. `AUTH_MODE=mock VERCEL_ENV=production` 빌드가 실패하는지 확인하는 잡 | SM 작업 5·14·15, BS 작업 14 |
 | VID-06-040 | 원본 정리 체크리스트: YSM 태그(사용자 승인 후), `.gitignore`(pyc, .venv, tsbuildinfo), 잔여물 삭제, 노출 키 재발급 목록 | `archive/README-nomad-video.md`, 루트 `.gitignore`의 해당 줄 | 없음 | P1 | S | Haiku(반복 체크) | 07장 5절 표 전 항목 완료 표시 | SM 작업 13, YSM 작업 1·2·3 |
 | VID-06-041 | 디자인 시스템 1단계: 레퍼런스 확정(앱 화면 Primer + 보조 Atlassian, 채팅은 Astryx 패턴 확인 D-19, 랜딩은 HERO_3D), 가져올 것과 안 가져올 것 | `docs/file/03-설계/디자인/DESIGN.md`(1절 "레퍼런스와 방향") | 없음 | P0 | S | Sonnet(문서) | 03장 3.2절의 주 레퍼런스·가져올 것·안 가져올 것이 1절 표로 있다. Astryx 존재·라이선스 확인 결과와 미확인 시 대체안(Primer + shadcn/ui) 기록(01장 D-19). 고문(Fable) 검토 기록 시각 레퍼런스: `03_SCREENS_UX.md` 4.1절 표(랜딩은 Awwwards, 앱 화면은 Dribbble. 후보는 `docs/products/_design-guide/REFERENCES.md:80` nomad-video 절)를 DESIGN.md 1절에 옮기고, 각 링크를 브라우저로 열어 본 결과(열림/교체)를 적는다(`docs/products/_design-guide/DESIGN_PRINCIPLES.md:29-38`). | DESIGN_SYSTEM 4장 1단계, 9절 |
 | VID-06-042 | 디자인 시스템 2단계(컴포넌트): 036 토큰 위에서 기본 컴포넌트·배리언트(03장 3.2절 표)와 `/dev/components` 미리보기. 컴포넌트 1개 단위로 지시 | `apps/nomad-video/src/components/ui/**`, `src/app/dev/components/**`, `docs/file/03-설계/디자인/COMPONENTS.md`(초안) | 036 | P0 | M | Sonnet(컴포넌트) | 03장 3.2절 기본 컴포넌트 전부가 라이트/다크로 `/dev/components`에 보인다. 컴포넌트마다 `DESIGN_SYSTEM.md` 8장 지시 템플릿(대상, 근거, 버전, 배리언트, 수치, 금지, 검증) 기록. hex 직접 사용 0, `tailwind.config.js` 0, 프로덕션 빌드에 `/dev/components` 미포함 | DESIGN_SYSTEM 4장 2단계 |
@@ -112,25 +112,25 @@
 | W4 | 007, 010, 016, 017, 018, 019, 020, 027, 035, 047, 052 | 11 | 006, 015, 046 | 결제 E2E, 생산 API 전부, 스케줄러, 랜딩, RAG 색인, 음성 대화·STT 편입 |
 | W5 | 021, 024, 026, 029, 030, 031, 048, 049, 050, 051, 053 | 11 | W4 | 업로드 API, 레이더, 분석, 화면, 위키, 대본 그래프, Dify 채팅, 채팅 패널, 제품 음성 기능 |
 | W6 | 032, 033, 034, 037, 056 | 5 | 021, 024, 049 | 업로드·수익화·레이더 화면, 통합 테스트, 대본 기획 UI |
-| W7 | 038, 055 | 2 | W6 | 사용자 플로우 E2E, AI 보안 회귀. MVP 출시 조건 |
-| W8(2026-10-13 추가) | 057, 058, 059, 060 → 061, 062 | 4 → 2 | W7(057은 009, 059는 blog 브랜드커넥트 어댑터) | 네이버 클립 업로더·동의, 브랜드커넥트 클립, 대행 고객·승인·리포트. 002에 클립·대행 33항목 편입 |
+| W7 | 063(G1 통과 후 먼저), 038, 055 | 1 + 2 | W6. 063은 G1 통과(`[DECISION] G1 통과`) 후 시작하고 038·055의 공개 베타 마무리 재실행은 063 완료를 기다린다. G1 근거인 Mock 핵심 플로우는 038이 W6 종료 직후 로컬에서 먼저 녹색으로 만든다(8.2절) | 인증 Stage B(Google + 이메일), 사용자 플로우 E2E, AI 보안 회귀. MVP 출시(공개 베타) 조건 |
+| W8(2026-10-13 추가) | 057, 058, 059, 060 → 061, 062, 064·065(G2 통과 후) | 4 → 2, 인증 2 | W7(057은 009, 059는 blog 브랜드커넥트 어댑터, 064·065는 G2 통과 `[DECISION] G2 통과`, 둘은 병렬 가능) | 네이버 클립 업로더·동의, 브랜드커넥트 클립, 대행 고객·승인·리포트, 인증 Stage C(카카오 C1, 네이버 C2). 002에 클립·대행 33항목 편입 |
 
 034(레이더·분석·크레딧·결제 화면)는 선행 024와 같은 웨이브에 있던 것을 W6으로 옮겼다(2026-10-13 정리).
 
-P0 작업과 테스트 작업 대응: DB·권한(001, 003, 005, 008) → 002 / 결제(006) → 007 / 워커·생산·업로드(009, 011~021, 025, 027) → 037 / 화면·공개 페이지(004, 023, 028~036, 042, 054, 056) → 038 / AI·음성(045~053) → 055 / 디자인 시스템(041~044)은 043(사람 검토) / 039는 전체 게이트.
+P0 작업과 테스트 작업 대응: DB·권한(001, 003, 005, 008) → 002 / 결제(006) → 007 / 워커·생산·업로드(009, 011~021, 025, 027) → 037 / 화면·공개 페이지(023, 028~036, 042, 054, 056) → 038 / 인증 Stage A(004) → 038(Mock storageState)·002(`outsider`)·039(금지 문자열·배포 빌드 검사) / 인증 Stage B(063) → 콜백 단위 테스트(B-2, B-3)·배포 빌드 검사(B-4)·038 재실행(B-5)·Google 실로그인 수동 점검표 / AI·음성(045~053) → 055 / 디자인 시스템(041~044)은 043(사람 검토) / 039는 전체 게이트.
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 9 | 16.4% | 21/111 = 18.9% |
-| Opus | 28 | 50.9% | 58/111 = 52.3% |
-| Sonnet | 15 | 27.3% | 29/111 = 26.1% |
-| Haiku | 3 | 5.5% | 3/111 = 2.7% |
+| Fable | 12 | 18.8% | 27/129 = 20.9% |
+| Opus | 33 | 51.6% | 68/129 = 52.7% |
+| Sonnet | 16 | 25.0% | 31/129 = 24.0% |
+| Haiku | 3 | 4.7% | 3/129 = 2.3% |
 
-비율은 모델 작업 55개 기준이다. 사람 작업 1개(VID-06-043, M)는 비율에서 뺐다. 2026-10-13 이전(40개)은 Fable 15.0%, Opus 52.5%, Sonnet 25.0%, Haiku 7.5%였다.
+비율은 모델 작업 64개 기준이다(2026-10-14: 2절 61개 + 8절 인증 3개, 004는 Sonnet S → Opus M). 사람 작업 1개(VID-06-043, M)는 비율에서 뺐다. 2026-10-14 직전 표는 W8 작업 6개(057~062)가 빠진 55개 기준(Fable 16.4%, Opus 50.9%, Sonnet 27.3%, Haiku 5.5%)이었고, 61개로 다시 세면 Fable 10(16.4%), Opus 31(50.8%), Sonnet 17(27.9%), Haiku 3(4.9%), 규모 가중 23·65·32·3 / 123이었다(8.5절). 2026-10-13 이전(40개)은 Fable 15.0%, Opus 52.5%, Sonnet 25.0%, Haiku 7.5%였다.
 
-Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, OAuth에 더해 AI 보안 경계(서명 토큰 검증 045, AI 게이트의 선차감·정산·동의 046, AI 회귀 055)를 맡는다. 그래프·RAG·위키·Dify·음성 구현은 Opus, 채팅 패널·대본 기획 UI·3D 히어로·디자인 시스템 컴포넌트는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
+Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, OAuth에 더해 AI 보안 경계(서명 토큰 검증 045, AI 게이트의 선차감·정산·동의 046, AI 회귀 055)와 인증 단계의 세션 발급 경계(Stage B 063, Stage C2 네이버 065)를 맡는다. Stage A(004)와 C1 카카오(064)는 Opus다. 그래프·RAG·위키·Dify·음성 구현은 Opus, 채팅 패널·대본 기획 UI·3D 히어로·디자인 시스템 컴포넌트는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -170,7 +170,7 @@ Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, OAuth에 더해
 | YSM 2 | `.gitignore`, 잔여물 삭제 | 040 |
 | YSM 3 | 키 점검·교체 | 040 |
 | YSM 4 | OAuth state 재구현 | 코어 0004 + 008 |
-| YSM 5 | 네이버 로그인 naver_id 매핑 | 004(MVP 제외 확인) + 6절 코어 요청 |
+| YSM 5 | 네이버 로그인 naver_id 매핑 | 004(Stage A에서 네이버 로그인 없음 확인) → 065(Stage C2, G2 후, 이메일 자동 병합 금지) + 6절·8.3절 코어 요청 |
 | YSM 6 | 태스크 소유권 검증 | 002, 017 |
 | YSM 7 | 모델 허용 목록, LLM 단일화 | 016 |
 | YSM 8 | 인증 의존성 블로킹 제거 | 011(FastAPI 폐기, Python은 service_role 워커만) |
@@ -193,7 +193,7 @@ AI·음성·3D·디자인 시스템 작업(041~056)은 리뷰 작업이 아니�
 | `storage` 대용량 미디어 버킷을 코어 표준으로 정의할지 결정 | 0005 | 제품 조각이 `video-media`(5GB, 서버 쓰기만)를 만든다 |
 | `confirm_payment_order` 금액 불일치 시 failed 기록(롤백되지 않게) | 0003 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 이를 별도 호출하고 운영 알림·취소 |
 | `adjust_credits`(환불 시 팩 크레딧 음수 조정) | 0003 | CORE_SPEC 5.4 제안과 같음 |
-| 네이버 로그인(Phase 2): 로그인 상태에서만 identity 연결, 이메일 자동 병합 금지 | core auth | YSM #3 |
+| 네이버 로그인(결정 22로 Stage C2, VID-06-065): 로그인 상태에서만 identity 연결, 이메일 자동 병합 금지. 브리지 경로 채택 시 코어 `staged/0010_core_auth_identity_links.sql` 적용(8.3절 R-V11) | core auth | YSM #3, `AUTH_ROADMAP.md` 7.2.3절 |
 | features 키 `max_concurrent_productions` 추가 | seed | 현재 서버 상수(01장 5절) |
 | automation-core 캔버스 실행 엔진(Phase 2) | packages/automation-core | `video.workflows` 저장만 MVP |
 | 브랜드커넥트 범용화(`target_url`, `target_kind`, `source_app`, 9인자 RPC, `brandconnect.apply` payload `source_app`) | 0006, CORE_SPEC 13장 | 해결(2026-10-13 코어 반영): video 클립 캠페인 지원(VD-F-063) |
@@ -226,7 +226,61 @@ AI·음성 요청(2026-10-13, 01장 D-13~D-22와 연결):
 | RLS 스모크 | VID-06-002 전 항목 통과(현재 기획 단계 65/65) |
 | 결제 E2E | VID-06-007 통과 |
 | 파이프라인 | VID-06-037 Track A~F 통과, 원장 drift 0 |
-| 사용자 플로우 | VID-06-038 통과(AI 플로우 3개 포함), DESIGN_PRINCIPLES 7단계 체크리스트 |
+| 사용자 플로우 | VID-06-038 통과(AI 플로우 3개 포함, Mock 페르소나 storageState), DESIGN_PRINCIPLES 7단계 체크리스트. 공개 베타 전 인증 Stage B: VID-06-063 수용 기준 B-1~B-6 통과(B-5 Google 실로그인 수동 점검표를 task `log.md`에 기록) |
 | AI·음성 | `pytest apps/api` 통과, VID-06-055 녹색, 금지 문구 평가셋 30문항(대본 그래프)·채팅 평가셋 30문항 위반 0, RAG 평가셋 40문항 재현율 기준 충족, 같은 목소리 강제 실패 테스트 통과, 파이프라인 STT 국외 제공자 호출 0 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준(VID-06-054), 디자인 시스템 4단계(VID-06-044) 완료, `tailwind.config.js`·hex 하드코딩 0 |
-| 작업 | 2절 56개 완료(사람 작업 043 포함, P1·P2 작업은 기존 규칙대로 출시 후 가능), 리뷰 "높음" 26건 차단 설계 구현 확인 |
+| 작업 | 2절 62개 + 8절 인증 3개 = 65개 중 P0 전부 완료(사람 작업 043 포함, P1·P2 작업은 기존 규칙대로 출시 후 가능, 인증 C1·C2 064·065는 G2 후), 리뷰 "높음" 26건 차단 설계 구현 확인 |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 9장(작업 계획 반영 규칙)과 8장 nomad-video 행(open, 크리에이터, A 추가 페르소나 "Advanced 팀 멤버", B Google + 이메일, C1 P1, C2 P1)이다. Stage A는 기존 VID-06-004가 맡는다(2절 행에서 범위 변경). 아래 3개가 새 작업이다. ID는 2절 최대 번호 VID-06-062 다음부터다(2절 표는 번호 순이 아니라 W8 작업 057~062가 010 뒤에 있다).
+
+여기서 말하는 로그인은 사용자 계정 로그인이다. 채널 연결 OAuth(VID-06-008, `core.oauth_states`)와 네이버 클립 업로드용 브라우저 로그인 세션(VID-06-057, Playwright)은 이 작업들의 범위가 아니며 서로 코드를 import하지 않는다(07장 6절).
+
+### 8.1 작업 목록 (2절과 같은 열)
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| VID-06-063 | 인증 Stage B: Google OAuth 전환 + 이메일 가입·메일 인증·비밀번호 재설정 화면, `/auth/callback`(`finishLogin` 3.2절 전체), OAuth 첫 로그인 약관 동의(온보딩 첫 단계, 03장 7.3절), 배포 env(`AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`)와 배포 체크리스트(Google 콘솔·Supabase Providers·Redirect URLs), 로그인용 Google 클라이언트와 채널용 YouTube 클라이언트 분리(01장 D-29) | `src/app/(auth)/**`(004에서 이어 받음: login B 구성, signup, reset-password, verify), `src/app/auth/callback/**`, `src/lib/auth/**`(제공자 목록, `finishLogin` 완성), `src/app/onboarding/terms/**`, `src/app/api/onboarding/terms/**`(046 소유 `onboarding` 중 `terms/` 하위만), `docs/nomad-video/ops/auth-checklist.md`(제안). `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`는 001 소유 파일에 요청, `/onboarding/terms` → `/onboarding/ai` 순서 연결은 046 파일에 1줄 요청 | 004, 008, 046, 038(Mock 녹색), 진입 조건 G1(`[DECISION] G1 통과`) | P0 | M | Fable(세션 발급·권한 경계) | `AUTH_ROADMAP.md` 5.3절 그대로: B-1 새 Google 계정 첫 로그인 → `session_context('video')`가 `entitled=true`, `plan_code=starter`, 가입 크레딧 100이 1회만 지급(재로그인 3회 뒤에도 원장 행 수 같음). B-2 `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` → `/dashboard`. B-3 `code` 없음·재사용·만료 → `/login?error=callback`, 서버 오류 로그에 토큰·코드 없음. B-4 배포 빌드(`VERCEL_ENV=production`)에서 `/api/dev/login` 404, 로그인 화면에 개발용 패널 없음, `AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(038) 계속 녹색, Google 실로그인은 사람이 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)로 확인하고 task `log.md`에 기록. B-6 운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS` 값이 배포 체크리스트와 일치. video 추가: 같은 이메일의 이메일 가입자가 Google로 로그인하면 같은 `user_id`이고 가입 원장 추가 0, OAuth 첫 로그인은 약관 동의 → `/onboarding/ai` → `/dashboard`, 이메일 가입자는 약관 단계 생략, 채널 연결 OAuth(008) 회귀 테스트 녹색(로그인 클라이언트 변경이 채널 연결에 영향 없음) | `AUTH_ROADMAP.md` 5장, 9장, 01장 VD-F-001·D-28·D-29 |
+| VID-06-064 | 인증 Stage C1: 카카오 로그인(Supabase 기본 제공자 `kakao`), 카카오 버튼, 설정 → 로그인 방법(연결·해제, 03장 7.4절) | `src/lib/auth/providers/kakao.ts`(제안), `src/components/auth/`의 카카오 버튼, `src/app/(dashboard)/dashboard/settings/login-methods/**`(설정 메뉴 링크 1줄은 034 파일에 요청). `supabase/config.toml`의 `[auth.external.kakao]`와 `[auth] enable_manual_linking`은 001 소유 파일에 요청 | 063, 진입 조건 G2(`[DECISION] G2 통과`), 01장 D-26 확정 | P1 | S | Opus | `AUTH_ROADMAP.md` 7.1.3절 그대로: C1-1 새 카카오 계정 첫 로그인 → B-1과 같은 결과(엔타이틀먼트·크레딧 1회). C1-2 비즈 앱(a)이면 Google로 가입한 같은 이메일 사용자가 카카오로 로그인 → 같은 `user_id`(Supabase 자동 연결은 제공자가 이메일 인증을 확인한 경우에만, 미확인이면 수동 연결 7.3절). C1-3 (b)면 이메일 없는 사용자가 결제(VD-F-090) 전 연락 이메일 입력 화면을 본다. C1-4 표시 이름은 카카오 닉네임, 없으면 `user` 규칙. C1-5 카카오 버튼은 카카오 디자인 가이드의 색·문구(미확인: 최신판 확인 후 반영). 로그인 방법 화면: 마지막 수단 해제 불가, 감사 `auth.identity_link`·`auth.identity_unlink` | `AUTH_ROADMAP.md` 7.1절, 7.3절, 8장 |
+| VID-06-065 | 인증 Stage C2: 네이버 로그인(스파이크 0.5일 → `custom:naver` 또는 서버 브리지), 네이버 버튼, 로그인 방법 화면의 네이버 행, 네이버 검수 자료 | `src/lib/auth/providers/naver.ts`(제안), `scripts/auth/register-naver-provider.mjs`(제안), 브리지 경로일 때만 `src/app/auth/naver/**`(start, callback), `docs/nomad-video/ops/naver-review/`(검수 캡처, 제안). 로그인 방법 화면의 네이버 행은 064 파일에 요청 | 063(064와 병렬 가능, 로그인 방법 화면 행은 064 완료 후), 진입 조건 G2, 브리지면 8.3절 R-V11 적용 후 | P1 | M | Fable(브리지는 세션 발급 경로) | `AUTH_ROADMAP.md` 7.2.4절 그대로: C2-1 스파이크 결과가 `[DECISION]`으로 기록되고 `NAVER_AUTH_PATH`가 그 값이다(01장 D-27). C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과. C2-3 같은 네이버 계정 재로그인 5회 → 같은 `user_id`, 사용자 수 증가 0. C2-4 (브리지) state 변조·재사용·쿠키 없음 → 거부, 세션 미생성. 다른 브라우저에서 받은 콜백 URL 재생 → 거부. C2-5 (브리지) 같은 이메일의 Google 가입자가 네이버로 처음 로그인 → `email_in_use` 안내, 새 사용자 0. C2-6 네이버 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않는다. video 추가: 네이버 클립 채널 연결(057)의 `CredentialVault`(provider `naver`) 행과 로그인 identity가 섞이지 않는다(같은 네이버 계정으로 로그인과 클립 연결을 모두 해도 `channels`·`encrypted_credentials` 행 수 변화 없음), `naver-login.ts`를 import하지 않음 | `AUTH_ROADMAP.md` 7.2절, 8장, 01장 D-5 해소 |
+
+### 8.2 게이트와 웨이브
+
+| 게이트·웨이브 | 작업 | 진입 조건 | 판정 |
+|---|---|---|---|
+| Stage A | VID-06-004(W3, 2절 범위 변경) | 003, 044. 004보다 앞 웨이브(W0~W2, W1-D)의 작업은 시드 스크립트 없이 SQL·단위 테스트(002의 PGlite·로컬 Supabase 스모크)로 검증한다. W4 이후 화면·API 작업은 Mock 페르소나로 로그인해 개발한다 | - |
+| G1 | - | `AUTH_ROADMAP.md` 4장. video 기준: (1) 2절 MVP P0 기능 작업 완료(인증 B·C 작업과 공개 베타 직전 통합 작업 038·055 제외), (2) 핵심 플로우 E2E(038)가 Mock 페르소나 storageState로 로컬 녹색, (3) RLS 스모크(002) 전 항목 + `outsider` 교차 테넌트 거부, (4) 결제 E2E(007, Toss 테스트 키) 녹색, (5) 단계 분기 코드가 인증 모듈 밖 0건(039 CI), (6) Google Cloud 프로젝트·OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL, 승인된 도메인)·로그인용 웹 클라이언트 ID·운영 Supabase 프로젝트 준비(`AUTH_ROADMAP.md` 5.1절) | 사람(대표님)이 task `log.md`에 `[DECISION] G1 통과` |
+| Stage B | VID-06-063 | W7의 맨 앞(마지막 기능 웨이브 W6 다음, 공개 베타 직전 통합·E2E 웨이브). 038·055의 공개 베타 마무리 재실행은 063 완료를 기다린다 | - |
+| G2 | - | `AUTH_ROADMAP.md` 6장: Google 실로그인 공개 베타 운영 2주(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안), open 앱 신규 가입자 중 `entitled=false` 0, 카카오 디벨로퍼스 앱·비즈 앱 전환(01장 D-26), 네이버 애플리케이션 등록·검수 자료 준비·C2 스파이크 결과 기록 | 사람이 `[DECISION] G2 통과` |
+| Stage C | VID-06-064, VID-06-065 | W8(MVP 출시 후 웨이브), G2 통과 후. 064·065 병렬 가능. 네이버 검수 기간 때문에 065의 신청 자료 준비는 G2 직후 시작 | - |
+
+### 8.3 코어 요청 (6절 표에 이어서)
+
+| ID | 대상 | 요청 | 이유 | 그때까지의 우회 |
+|---|---|---|---|---|
+| R-V11 | `_platform-core` | C2 스파이크가 실패해 브리지 경로를 택하면 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`(`core.auth_identity_links`) 적용. 코어는 한 번만 적용하고 모든 제품이 쓴다 | 브리지 로그인은 네이버 고유 id로 사용자를 찾는다. `core.oauth_states`는 로그인 전 사용자·조직이 없어 브리지 state에 쓸 수 없다(`AUTH_ROADMAP.md` 7.2.3절) | `custom:naver` 스파이크가 통과하면 요청하지 않는다 |
+
+### 8.4 기존 문서와 달라진 점
+
+| 항목 | 이전 | 지금 | 반영 |
+|---|---|---|---|
+| VID-06-004 범위·모델 | 로그인·가입·온보딩 화면, Sonnet(UI) S, 수용 기준 "Mock 로그인 없음" | Stage A(인증 모듈 경계, Mock 로그인, 시드, 가드, `finishLogin`), Opus M. "Mock 로그인 없음"은 "쿠키 역할 Mock 금지, 로컬 시드 계정만"으로 바뀜. 이메일 가입·재설정 화면은 063 | 2절 004 행, 01장 VD-F-002 |
+| 004의 Stage A 시점 | W3(디자인 시스템 044 뒤) | 그대로 W3. 004가 디자인 시스템 4단계(사람 검토 043 포함) 뒤라서 Mock 로그인이 W3까지 늦다. W1~W2 API 작업은 SQL·단위 테스트로 검증하고, 일찍 Mock이 필요하면 004의 비화면 부분(`src/lib/auth/`, `/api/dev/login`, 시드 스크립트)을 044 전에 먼저 끝내고 패널만 044 뒤에 붙이는 분할을 제안한다(사용자 결정 필요) | 이 표 |
+| `src/lib/` 소유 | 003 단독 | `src/lib/auth/**`는 004 → 063 → 064·065 순서(직렬, 064·065가 병렬이면 `providers/kakao.ts`·`providers/naver.ts`로 파일을 나눈다) | 1절 공용 파일 행 |
+| `src/app/onboarding/` 소유 | 046 단독 | `terms/` 하위만 063 | 8.1절 063 행 |
+| 01장 D-5 네이버 로그인 | 열린 결정, MVP 제외 → Phase 2 | 결정 22로 C2 확정(065). 카카오 이메일 D-26, 네이버 경로 D-27, 이메일 가입 유지 D-28, 로그인/채널 Google 클라이언트 분리 D-29를 01장 8.1절에 새로 둠 | 01장 8절 D-5 행, 8.1절 |
+| 038 수용 기준 | E2E 로그인 방식 미정 | Mock 페르소나 storageState(`owner`, `adv_owner`, `viewer`, `outsider`), 063 후 재실행 | 2절 038 행 |
+| 039 수용 기준 | "Mock 로그인" 금지 검사는 없었다(07장·CLAUDE.md 금지 패턴에만 있음) | `AUTH_ROADMAP.md` 9장 CI 금지 문자열 + 배포 빌드 검사 | 2절 039 행, CLAUDE.md 인증 단계 절 |
+| 작업 수 | 2절 62개(4절 비율은 55개 기준으로 W8 6개 미반영, 7절 "56개"도 W8 미반영) | 65개(모델 작업 64, 사람 1). 4절 비율과 7절 작업 수를 함께 고쳤다 | 1행 머리말, 4절, 7절 |
+
+### 8.5 모델 비율 변화
+
+| 모델 | 이전(2절 61개 모델 작업 다시 셈) | 지금(64개) | 규모 가중 이전 → 지금 |
+|---|---|---|---|
+| Fable | 10(16.4%) | 12(18.8%) | 23/123(18.7%) → 27/129(20.9%) |
+| Opus | 31(50.8%) | 33(51.6%) | 65/123(52.8%) → 68/129(52.7%) |
+| Sonnet | 17(27.9%) | 16(25.0%) | 32/123(26.0%) → 31/129(24.0%) |
+| Haiku | 3(4.9%) | 3(4.7%) | 3/123(2.4%) → 3/129(2.3%) |
+
+변화 요인: 신규 063(Fable M), 064(Opus S), 065(Fable M), 기존 004 Sonnet S → Opus M.

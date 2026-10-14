@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 작업 ID는 `ST-06-###`. 앱 루트는 `apps/stock-dashboard/`(아래 경로는 이 루트 기준). 모델 기준은 `docs/products/_platform-core/DOC_TEMPLATE.md` 1장. 리뷰는 이 제품의 주 담당을 Fable로 권했다(`docs/reviews/Stock_Trader_nomad.md:139`). 이번 계획은 키 보관, RLS, 시세 워커, 결제, 주문처럼 실수 비용이 큰 작업만 Fable에 두고 나머지는 Opus/Sonnet/Haiku로 내렸다.
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 17개(ST-06-035~051)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 011(디자인 시스템 2단계), 021(진단을 그래프 경유로), 010·017·018·020·022·023·024·028(선행에 037 추가), 001·002·003·005·025·026(수용 기준 보강)이다. 작업 수 51개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다. 유사투자자문업 법률 의견(01_PRD D-3)이 아직 없으므로 AI 작업의 수용 기준은 모두 "사실 요약만, 투자 권유 금지 검사 필수"를 전제로 쓴다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 17개(ST-06-035~051)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 011(디자인 시스템 2단계), 021(진단을 그래프 경유로), 010·017·018·020·022·023·024·028(선행에 037 추가), 001·002·003·005·025·026(수용 기준 보강)이다. 작업 수 51개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다(2026-10-14 인증 단계 작업 3개 ST-06-052~054를 8절에 더해 54개, 확정 결정 22). AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다. 유사투자자문업 법률 의견(01_PRD D-3)이 아직 없으므로 AI 작업의 수용 기준은 모두 "사실 요약만, 투자 권유 금지 검사 필수"를 전제로 쓴다.
 
 ## 1. 원칙과 소유 경계
 
@@ -30,10 +30,10 @@
 | ST-06-003 | RLS/권한 회귀 테스트(필수) | `supabase/tests/` | 001 | P0 | M | Fable | 05장 4.1 표 75항목 + 추가 5항목(advice_check CHECK, kind 확장, voice_processing) 자동화, 모듈러·모놀리스 둘 다 0 실패, CI 필수 단계. 이유: 권한 | `SECURITY_BASELINE.md` 15장 |
 | ST-06-004 | 증권사 API spike: 후보 3곳의 토큰, 잔고, 체결, 시세 WS, 모의투자, 호출 한도, 약관 | `spikes/broker/`, `docs/spike/broker.md` | 없음 | P0 | M | Opus | 결과표(항목 x 증권사, 확인/불가/미확인)와 1곳 선정 근거, 약관 원문 인용. 실키는 커밋하지 않음 | 리뷰 5장 #2, 리뷰 #5 |
 | ST-06-005 | 법률 검토 패키지: 질의서(투자자문/유사투자자문과 AI 요약·브리핑 범위, 마이데이터, 시세 재배포, 국외 이전, 공시·뉴스 데이터 이용), 고지·약관·처리방침 초안 | `docs/legal/` | 없음 | P0 | S | Sonnet | 01_PRD 6장 표의 "미확인" 항목이 질의서에 모두 있음, 고지 문안 버전 `2026-10-12`. `docs/legal/data-sources.md`에 소스(DART, KIND, 뉴스)별 약관 URL·확인일·확인자·`terms_ref` 칸이 있다(01_PRD D-10) | 리뷰 5장 #1, 리뷰 #3·#4 |
-| ST-06-006 | 앱 골격: Next 16.2.9, Supabase 클라이언트 3종, `proxy.ts`(세션·베타·동의 리다이렉트), env 검증 | `package.json`, `next.config.ts`, `src/app/layout.tsx`, `src/proxy.ts`, `src/lib/supabase/`, `src/lib/env.ts` | 001 | P0 | M | Opus | 필수 env 누락 시 기동 실패, 비로그인 `/dashboard` → `/login`, 베타 없음 → 안내, 미동의 → `/onboarding/disclaimer` | 리뷰 5장 #3 |
+| ST-06-006 | 앱 골격 + 인증 Stage A(2026-10-14): Next 16.2.9, Supabase 클라이언트 3종, `proxy.ts`(세션·베타·동의 리다이렉트), env 검증, 인증 모듈 경계 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`), Mock 로그인(`POST /api/dev/login`·`/api/dev/logout`, `/login` 개발용 패널, 상단 `MOCK AUTH · 로컬 전용` 배지), 공통 시드 `scripts/dev/seed-users.mjs`(`db:seed-users`, 제품 훅 호출), 가드, `/no-access`. 이메일 가입·비밀번호 재설정 화면과 Google은 ST-06-052(Stage B)로 옮겼다 | `package.json`, `next.config.ts`, `src/app/layout.tsx`, `src/proxy.ts`, `src/lib/supabase/`, `src/lib/env.ts`, `src/lib/auth/`, `src/app/login/`, `src/app/no-access/`, `src/app/api/dev/`, `scripts/dev/seed-users.mjs` | 001 | P0 | M | Opus | 필수 env 누락 시 기동 실패, 비로그인 `/dashboard` → `/login`, 베타 없음 → `/no-access`, 미동의 → `/onboarding/disclaimer`. Stage A: `no_app` 페르소나 로그인 → `entitled=false` → `/no-access`, 본인 `bootstrap_app_for_org('stock')` 42501, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404·로그인 화면에 개발용 패널 없음, Supabase 호스트가 로컬이 아니면 Mock 기동 실패·시드 exit 1, 인증 모듈 밖 `AUTH_MODE` 참조 0(CI grep), 쿠키·localStorage 역할/플랜 쓰기 0, `finishLogin` 단위 테스트(`next=//evil.com` → 기본 경로). invite 앱이라 `owner`의 `entitled=true`는 ST-06-009 훅 뒤에 확인한다 | 리뷰 5장 #3, AUTH_ROADMAP 2장·3.1~3.2절 |
 | ST-06-007 | 보안 유틸: 계좌 마스킹·HMAC, vault 래퍼(server-only), 로그 마스킹, 키 미설정 기동 실패 | `src/lib/security/` | 006 | P0 | M | Fable | 단위 테스트: 마스킹 결과가 CHECK 통과, 로그 출력에 키·계좌 원문 0건, `CREDENTIALS_KEY` 없으면 throw. 이유: 보안 핵심 | 리뷰 5장 #5, 리뷰 #1 |
 | ST-06-008 | `BrokerAdapter` 계약, `MockBroker`(샘플 배지 데이터), 어댑터 계약 테스트 스위트 | `src/lib/broker/core/`, `src/lib/broker/mock/` | 004 | P0 | S | Opus | Mock이 계약 스위트 통과, 모든 DTO에 `isSample` | 리뷰 5장 #6, 리뷰 #9 |
-| ST-06-009 | 베타 초대·수락: 발급 API(토큰 1회 노출), 수락 API(3장 시퀀스), `/invite/[token]` | `src/app/api/beta/`, `src/app/api/admin/beta/`, `src/app/invite/` | 006, 007 | P0 | M | Fable | 다른 이메일 수락 403, 재사용 400, 수락 뒤 플랜 beta·크레딧 300, 재호출 시 크레딧 중복 없음. 이유: 엔타이틀먼트 변경 | 01_PRD ST-F-001, 리뷰 #4 |
+| ST-06-009 | 베타 초대·수락: 발급 API(토큰 1회 노출), 수락 API(3장 시퀀스), `/invite/[token]`(A단계는 개발용 패널 로그인 후 수락), 시드 제품 훅(Stage A 페르소나: 초대 수락·미수락, 05장 10절) | `src/app/api/beta/`, `src/app/api/admin/beta/`, `src/app/invite/`(`continue/` 제외), `scripts/dev/seed-users.stock.mjs` | 006, 007 | P0 | M | Fable | 다른 이메일 수락 403, 재사용 400, 수락 뒤 플랜 beta·크레딧 300, 재호출 시 크레딧 중복 없음. Stage A: `owner` 페르소나 로그인 → `entitled=true`·beta·잔액 300, `outsider`로 `owner` 조직 도메인 행 0행, `invitee` → `/no-access`이고 시드가 출력한 링크로 수락 → beta, `beta_revoked` → 403 `ST_BETA`, 시드 2회 실행 시 초대·크레딧 중복 0. 이유: 엔타이틀먼트 변경 | 01_PRD ST-F-001, 리뷰 #4, AUTH_ROADMAP 2.2절 |
 | ST-06-010 | 고지 동의와 법적 페이지(AI 처리 방식 단계는 ST-06-039의 `src/app/onboarding/ai/`) | `src/app/onboarding/disclaimer/`, `src/app/legal/`, `src/app/api/consents/` | 005, 006, 037 | P0 | S | Sonnet | 동의 2종 기록, 버전 변경 시 재동의 화면 | ST-F-002 |
 | ST-06-011 | 디자인 시스템 2단계: Tailwind CSS v4 토큰(`tokens.css` `@theme`, 라이트/다크), 기본 컴포넌트와 배리언트, 미리보기 `/dev/components`, AppShell, 장 시간 바 | `src/styles/`, `src/components/ui/`, `src/components/shell/`, `src/app/dev/components/` | 006, 035 | P0 | M | Sonnet | 03장 4.3절 토큰만 사용(하드코딩 hex 0), 03장 3.8절 기본 컴포넌트 전부 라이트/다크 미리보기, `tailwind.config.js`·v3 문법 0, Tailwind 4.x 고정, 컴포넌트는 `--color-up`/`--color-down` 의미 토큰만 참조(D-5 미결), `COMPONENTS.md` 배리언트 표 초안, 장 시간 바가 `market_calendar`로 구간 표시, 375px 깨짐 없음, 대비 4.5:1 | 리뷰 5장 #3, 03장 4절, DESIGN_SYSTEM 4장 2단계 |
 | ST-06-012 | 증권사 연결 API와 화면 | `src/app/api/connections/`, `src/app/(app)/settings/connections/` | 007, 008 | P0 | M | Opus | 상한 초과 409, live는 플래그 꺼짐 시 403, 키 오류 시 `error` 행, 응답·로그에 키 없음 | ST-F-003, ST-F-004 |
@@ -49,9 +49,9 @@
 | ST-06-022 | AI 진단 화면과 이력 | `src/app/(app)/ai/`(compare 제외), `src/components/ai/` | 011, 021, 037 | P1 | S | Sonnet | 고지·AI 배지·모델명·기준 시각 표시, 매수/매도 버튼 없음, 진행 3단계(근거 → 작성 → 검사) 표시, 검사 차단 시 환불 안내 | 리뷰 5장 #12 |
 | ST-06-023 | 초대 전용 랜딩 `/` | `src/app/(marketing)/` | 011, 037, 050 | P1 | S | Sonnet | noindex, 03장 안 A, 금지 문구 점검 통과, 히어로에 ST-06-050 장착, 히어로 영역에 `%`·수익 관련 단어 0 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/products/_design-guide/REFERENCES.md:16-23`). | 03장 4절 |
 | ST-06-024 | 운영자 화면(초대, 베타 회수, 동기화 오류, 전역 킬 스위치) | `src/app/(admin)/`, `src/app/api/admin/kill-switch/` | 009, 037 | P1 | S | Sonnet | platform_admin 외 403, 모든 쓰기 audit | ST-F-012 |
-| ST-06-025 | E2E 테스트: 초대 → 가입 → 동의 → mock 연결 → 대시보드 → 진단, 베타 없는 계정 차단, AI 채팅 조언 거절, 요약 근거 없음 환불, 브리핑 낭독은 검사 통과분만 | `tests/e2e/` | 009, 012, 017, 021, 047, 049 | P0 | M | Opus | Playwright 시나리오 9개 통과(정상 1, 차단 5, AI 3: 조언 요청 거절, 근거 없음 환불, 브리핑 낭독) | 7절 |
+| ST-06-025 | E2E 테스트: 초대 → 가입 → 동의 → mock 연결 → 대시보드 → 진단, 베타 없는 계정 차단, AI 채팅 조언 거절, 요약 근거 없음 환불, 브리핑 낭독은 검사 통과분만 | `tests/e2e/` | 009, 012, 017, 021, 047, 049 | P0 | M | Opus | Playwright 시나리오 9개 통과(정상 1, 차단 5, AI 3: 조언 요청 거절, 근거 없음 환불, 브리핑 낭독). Mock 페르소나 storageState로 실행(`globalSetup`이 `/api/dev/login`으로 페르소나별 저장, 초대 수락 시나리오는 `invitee`의 시드 초대 링크). 같은 시나리오가 G1 증거이고 ST-06-052 뒤 다시 녹색(B-5) | 7절, AUTH_ROADMAP 2.1·5.3절 |
 | ST-06-026 | 금칙어 사전(한국어 경계 처리)과 카피 점검 체크리스트 | `src/content/` | 005 | P0 | S | Haiku | 01_PRD 6.6 표의 예시 문구가 사전에 모두 걸림, 정상 상태 설명 문구 오탐 0. `banned.json`(언어 중립, 카테고리 7종: 권유, 가격 제시, 보장·단정, 시점 지시, 평가 어휘, 인용 목표주가, 비교 우위)을 FastAPI가 복사해 읽을 수 있고 `version`을 가진다 | 01_PRD 6.6 |
-| ST-06-027 | 개발 문서와 `.env.example` 정리 | `.env.example`, `README.md`(앱 루트) | 006 | P1 | S | Haiku | 02장 8절 변수 전부, 실값 없음 | 리뷰 5장 #15 |
+| ST-06-027 | 개발 문서와 `.env.example` 정리 | `.env.example`, `README.md`(앱 루트) | 006 | P1 | S | Haiku | 02장 8절 변수와 9절 인증 단계 변수 전부(`AUTH_MODE` 로컬 기본 `mock`, `DEV_SEED_PASSWORD`는 로컬 전용 표시), 실값 없음 | 리뷰 5장 #15 |
 | ST-06-028 | 계정 설정: 동의 이력, 내 데이터 내려받기, 탈퇴 | `src/app/(app)/settings/account/`, `src/app/api/me/` | 010, 037 | P1 | S | Sonnet | JSON에 키·계좌 원문 없음, 탈퇴 시 조직 soft delete | 01_PRD 6.2 |
 | ST-06-029 | (P2) AI 아이디어, 성과 배치 `idea-eval-v1`, 내부 리더보드 | `workers/stock-jobs/src/eval/`, `src/app/api/ai/ideas/`, `src/app/api/leaderboard/`, `src/app/(app)/leaderboard/` | 021, 019, 045 | P2 | M | Opus | 규칙 단위 테스트(다음 개장일 시가, 정지 종목), n<20 순위 미표시 | 리뷰 5장 #13, ST-F-013 |
 | ST-06-030 | (P2) AI 3사 비교 | `src/lib/ai/compare/`, `src/app/api/ai/compare/`, `src/app/(app)/ai/compare/` | 021, 045 | P2 | M | Opus | 모델명 하드코딩 0, 한 모델 실패 시 부분 환불 | ST-F-014, 리뷰 #16 |
@@ -89,8 +89,8 @@
 | W4 | 014, 016, 019, 020, 021, 024, 028, 043, 046, 047 | 10 | W3 | 실어댑터, 시세 스토어, 배치, 일지, AI 진단 라우트, 운영자, 계정, 위키 운영, Dify 채팅, 채팅 패널 |
 | W5 | 017, 022, 023, 044, 048 | 5 | W4 | 대시보드, 진단 화면, 랜딩, 위키 화면, 음성 질의 |
 | W6 | 018, 049 | 2 | 017·048 완료 | 종목 상세 모달, 리서치 요약·브리핑·낭독 |
-| W7 | 025, 051 | 2 | W6 | E2E, AI 보안 회귀 → **MVP 완료** |
-| W8(P2) | 029, 030, 031 | 3 | MVP + 법률 의견(031) | 아이디어/리더보드, 3사 비교, 결제 |
+| W7 | 052(G1 통과 후 먼저), 025, 051 | 3 | W6 + G1(052) | Google 로그인 전환(Stage B), E2E, AI 보안 회귀 → **MVP 완료**(초대 베타 공개) |
+| W8(P2) | 029, 030, 031, 053·054(G2 통과 후, 선택) | 5 | MVP + 법률 의견(031), 053·054는 G2 + 01_PRD D-19 | 아이디어/리더보드, 3사 비교, 결제, 카카오·네이버 로그인 |
 | W9(P3) | 032 | 1 | 사용자 결정(01_PRD D-4) | 주문 모듈 |
 | W10(P3) | 033, 034 | 2 | 032 완료 | 주문 UI, 안전장치 테스트 |
 
@@ -98,13 +98,13 @@
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 12 (001, 003, 007, 009, 015, 031, 032, 034, 038, 039, 040, 051) | 24.0% | 27/93 = 29.0% |
-| Opus | 19 (004, 006, 008, 012, 013, 014, 016, 019, 021, 025, 029, 030, 037, 041, 043, 045, 046, 048, 049) | 38.0% | 39/93 = 41.9% |
-| Sonnet | 16 (005, 010, 011, 017, 018, 020, 022, 023, 024, 028, 033, 035, 042, 044, 047, 050) | 32.0% | 24/93 = 25.8% |
-| Haiku | 3 (002, 026, 027) | 6.0% | 3/93 = 3.2% |
-| 합계 | 50 | 100% | 93 |
+| Fable | 14 (001, 003, 007, 009, 015, 031, 032, 034, 038, 039, 040, 051, 052, 054) | 26.4% | 31/98 = 31.6% |
+| Opus | 20 (004, 006, 008, 012, 013, 014, 016, 019, 021, 025, 029, 030, 037, 041, 043, 045, 046, 048, 049, 053) | 37.7% | 40/98 = 40.8% |
+| Sonnet | 16 (005, 010, 011, 017, 018, 020, 022, 023, 024, 028, 033, 035, 042, 044, 047, 050) | 30.2% | 24/98 = 24.5% |
+| Haiku | 3 (002, 026, 027) | 5.7% | 3/98 = 3.1% |
+| 합계 | 53 | 100% | 98 |
 
-비율은 모델 작업 50개 기준이다. 사람 작업 1개(ST-06-036, M)는 비율에서 뺐다. 2026-10-13 이전(34개)은 Fable 23.5%, Opus 35.3%, Sonnet 32.4%, Haiku 8.8%였다. 새 Fable 작업(038, 039, 040, 051)은 서명 토큰·조직 격리, 선차감·동의 경계, 투자 권유 금지 검사, AI 보안 회귀처럼 법과 돈이 걸린 경계다. 그래프·RAG·Dify·음성 구현은 Opus, 채팅 패널·위키 화면·3D 히어로·해설집 원고는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
+비율은 모델 작업 53개 기준이다(2026-10-14 인증 단계 052 Fable M, 053 Opus S, 054 Fable M 추가. 그 전 50개 기준은 Fable 24.0%, Opus 38.0%, Sonnet 32.0%, Haiku 6.0%, 가중 29.0/41.9/25.8/3.2%). 사람 작업 1개(ST-06-036, M)는 비율에서 뺐다. 2026-10-13 이전(34개)은 Fable 23.5%, Opus 35.3%, Sonnet 32.4%, Haiku 8.8%였다. 새 Fable 작업(038, 039, 040, 051)은 서명 토큰·조직 격리, 선차감·동의 경계, 투자 권유 금지 검사, AI 보안 회귀처럼 법과 돈이 걸린 경계다. 그래프·RAG·Dify·음성 구현은 Opus, 채팅 패널·위키 화면·3D 히어로·해설집 원고는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -167,11 +167,11 @@ P0 작업과 테스트 대응:
 
 | P0 작업 | 대응 테스트 |
 |---|---|
-| 001, 009 | 003(RLS), 025(E2E) |
+| 001, 009, 052 | 003(RLS), 025(E2E, Mock storageState. 052 뒤 재실행 B-5), 052 콜백 단위 테스트(B-2, B-3)와 Google 수동 점검표(B-5) |
 | 002 | 002 자체 CI 비교 |
 | 004 | 008 계약 스위트(실서버 실행은 014) |
 | 005, 010 | 025(동의 리다이렉트) |
-| 006, 011, 017 | 025 |
+| 006, 011, 017 | 025, 006 Mock 가드 검사(`AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, live `/api/dev/login` 404) |
 | 007 | 007 단위 테스트 |
 | 008 | 계약 스위트 |
 | 012, 013 | 025 + 013 통합 테스트(중복 체결) |
@@ -185,3 +185,29 @@ P0 작업과 테스트 대응:
 | 042, 043 | 043 규칙 사전 검사, ingest 테스트 |
 | 045, 046 | 045·046 평가셋, 051 |
 | 047, 048, 049 | 025(AI 3종), 051 |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 9장. 기존 인증 작업은 ST-06-006(앱 골격 + 인증 모듈·Mock 로그인·가드·`finishLogin`)과 ST-06-009(초대·수락 + 시드 제품 훅)이고, 둘 다 같은 행 안에서 Stage A 범위로 바꿨다(웨이브 W1, W3 그대로). W1~W2 작업(001~003, 008, 026, 038, 040~042 등)은 시드 스크립트 없이 SQL·단위 테스트로 검증한다. 이 제품은 invite 앱이라 C1·C2는 P2 선택이다(`AUTH_ROADMAP.md:333`).
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| ST-06-052 | Stage B: Google OAuth 전환 + 이메일·초대 화면. `/login`에 "Google로 계속하기"와 이메일+비밀번호 폼, `/invite/[token]`의 "Google로 계속하기"(초대 쿠키 → OAuth → `/invite/continue` → 수락), 이메일 가입(초대 화면 안)·비밀번호 재설정 화면, `/auth/callback`(`finishLogin` 전체), 온보딩 첫 단계 약관 동의, 배포 체크리스트 | `src/components/auth/`, `src/app/auth/`, `src/app/invite/continue/`, `docs/ops/auth-checklist.md`. 예외: `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`만(001 소유 파일). `/login` 페이지(006), `/invite/[token]` 페이지(009), `/onboarding/disclaimer`(010)에는 `src/components/auth/` 컴포넌트 장착 1줄씩 요청 | 006, 009, 010 + G1(`[DECISION] G1 통과`) | P0 | M | Fable | AUTH_ROADMAP 5.3 B-1~B-6 그대로: B-1 새 Google 계정 첫 로그인 → invite 앱이라 `entitled=false`·`/no-access`, 같은 계정이 초대 링크로 들어오면 수락 → beta·300 크레딧 1회(재로그인 3회 뒤에도 원장 행 수 같음). B-2 `next=//evil.com`·`https://evil.com`·`/\evil.com` → 기본 경로. B-3 `code` 없음·재사용·만료 → `/login?error=callback`, 로그에 토큰·코드 0. B-4 `VERCEL_ENV=production` 빌드에서 `/api/dev/login` 404·개발용 패널 없음·`AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(ST-06-025) 계속 녹색, Google 실로그인은 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)를 task `log.md`에. B-6 운영 대시보드 Google 설정·Redirect URLs·`AUTH_PROVIDERS=google,email`이 체크리스트와 일치. 제품 추가: 초대 이메일과 다른 Google 계정 → `ST031` + "초대받은 이메일로 로그인하세요", 새 사용자 엔타이틀먼트 0. 초대 토큰 원문이 리디렉트 URL·서버 로그에 0(D-23). 이유: 세션 발급·엔타이틀먼트 경계 | 01_PRD ST-F-001·8.1절, AUTH_ROADMAP 5장, 02장 9절, 03장 7절, 04장 8절 |
+| ST-06-053 | Stage C1: 카카오 로그인(P2 선택). `kakao` 제공자 버튼(`/login`, `/invite/[token]`), config, 이메일 정책(01_PRD D-20 (a) 권장), 초대 수락 시 이메일 일치 유지 | `src/components/auth/kakao/`, `supabase/config.toml`의 `[auth.external.kakao]`만 | 052 + G2 + 01_PRD D-19 | P2 | S | Opus | AUTH_ROADMAP 7.1.3 C1-1~C1-5 그대로(C1-1의 "B-1과 같은 결과"는 이 제품에서 `entitled=false` → 초대 수락 후 beta). 이메일 없는 카카오 계정은 초대 수락 화면에서 "초대받은 이메일이 있는 계정으로 로그인하세요", 엔타이틀먼트 0. 운영 `AUTH_PROVIDERS`에 `kakao`는 콘솔 설정 확인 후에만 | 01_PRD 8.1절, AUTH_ROADMAP 7.1절 |
+| ST-06-054 | Stage C2: 네이버 로그인(P2 선택). 스파이크(0.5일) → `custom:naver` 또는 서버 브리지, 등록 스크립트, 브리지면 `/auth/naver/start`·`/auth/naver/callback`, 설정 → 로그인 방법(연결·해제, AUTH_ROADMAP 7.3절) | `src/components/auth/naver/`, `src/app/auth/naver/`, `scripts/auth/register-naver-provider.mjs`, `src/app/(app)/settings/account/login-methods/`(028 화면에 장착 1줄 요청) | 052 + G2 + 01_PRD D-19 | P2 | M | Fable | AUTH_ROADMAP 7.2.4 C2-1~C2-6 그대로: C2-1 스파이크 결과 `[DECISION]`과 `NAVER_AUTH_PATH` 일치, C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과(이 제품은 초대 수락 전 `entitled=false`), C2-3 재로그인 5회 같은 `user_id`, C2-4 (브리지) state 변조·재사용·쿠키 없음·다른 브라우저 재생 거부, C2-5 (브리지) 같은 이메일 Google 가입자 → `email_in_use`·새 사용자 0, C2-6 검수 통과 전 운영 `AUTH_PROVIDERS`에 `naver` 없음. 이유: 브리지는 세션 발급 경로 | 01_PRD 8.1절, AUTH_ROADMAP 7.2·7.3절 |
+
+게이트와 웨이브(3절 표에도 반영):
+
+| 게이트 | 판정 | 다음 작업 |
+|---|---|---|
+| G1 | 사람(대표님)이 `AUTH_ROADMAP.md:177-184` 6항목을 확인하고 task `log.md`에 `[DECISION] G1 통과`. 이 제품의 항목 1은 W0~W6 P0 기능 작업 완료, 항목 2는 ST-06-025 시나리오를 Mock storageState로 실행한 결과, 항목 4(결제)는 MVP에 결제가 없어 해당 없음, 항목 6은 Google 콘솔·운영 Supabase 준비 + ST-06-005 약관·처리방침 URL | W7 맨 앞 ST-06-052, 이어서 025 최종·051 |
+| G2 | 사람이 `AUTH_ROADMAP.md:223-229` 확인(초대 베타 Google 실사용 2주, 콜백 오류율 1% 미만 등 제안값). 항목 3은 open 앱 기준이라 이 제품은 "초대 수락자 중 `entitled=false` 0"으로 읽는다 | W8 ST-06-053·054(01_PRD D-19에서 착수를 정한 경우만) |
+
+| 항목 | 기록 |
+|---|---|
+| 작업 수 | 51 → 54(모델 작업 50 → 53). 4절 표를 다시 계산했다 |
+| 불일치 1: G1과 E2E 순서 | AUTH_ROADMAP은 G1에 "핵심 플로우 E2E 녹색"을 요구하고 B 작업을 통합·E2E 웨이브 맨 앞에 둔다. 이 제품의 E2E(025)는 W7이라, W7 시작 때 025 담당이 시나리오를 먼저 Mock으로 실행해 G1 증거로 쓰고, 052 완료 뒤 같은 시나리오를 다시 녹색으로 만들어 025를 닫는다(B-5) |
+| 불일치 2: 약관 동의 기록 | 첫 OAuth 로그인 뒤 약관 동의를 온보딩 첫 단계에 두지만 `consents.kind`(`1900_stock.sql:567`)에 약관 kind가 없다. 선택지 (a) 투자 고지 동의 화면에서 이용약관·처리방침 동의를 함께 받고 `investment_disclaimer` 같은 버전으로 묶어 기록(스키마 변경 없음, 제안) (b) kind 추가(스키마 변경, ST-06-001·003 갱신). 052 착수 전 결정 |
+| 불일치 3: 매직링크 | 03장 1절 `/login`은 매직링크를 적었고 AUTH_ROADMAP 1장은 범위 밖으로 둔다. 01_PRD D-22로 남겼다(이 작업에서 기존 표기를 지우지 않음) |
+| 코어 요청(조건부) R-12 | ST-06-054가 브리지 경로를 택하면 코어 담당에게 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql` 적용을 요청한다(코어 1회 적용, 이 제품은 모놀리스라 변환본 반영도 함께 요청) |
+| MockBroker | 인증 Mock(Stage A)과 증권사 `MockBroker`(ST-06-008, 샘플 연결)는 다른 개념이다. 인증 단계 전환은 `MockBroker`와 "샘플 데이터" 배지에 영향을 주지 않는다 |

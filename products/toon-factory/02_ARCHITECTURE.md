@@ -41,7 +41,7 @@
 ```
 apps/toon/
   src/app/(marketing)/        랜딩, 가격
-  src/app/(auth)/             로그인, 가입, 비밀번호
+  src/app/(auth)/             로그인, 가입, 비밀번호, auth/callback/(B). 개발용 로그인은 src/app/api/dev/login/(A, 로컬 전용), 단계 분기 코드는 src/lib/auth/(10절)
   src/app/(legal)/            약관, 처리방침, AI 정책, 에셋 이용 허락
   src/app/app/                로그인 후 화면(작품, 콘티, 라이브러리, 내보내기, 결제, 설정, 온보딩)
   src/app/editor/[episodeId]/ 에디터 페이지(dynamic import, ssr:false)
@@ -139,7 +139,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 세션, 가입(`signup_app='toon'`), `requireSession('toon')` | `src/proxy.ts`, 모든 Route Handler 진입부 | `SHARED_MODULES.md:46-72` |
+| auth | 세션, 가입(`signup_app='toon'`), `requireSession('toon')`. 인증 단계(A Mock → B Google·이메일 → C 카카오·네이버)는 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`)에 둔다. 단계 분기(`AUTH_MODE`, 제공자 목록)는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`만 읽는다(10절) | `src/proxy.ts`, 모든 Route Handler 진입부, `src/lib/auth/` | `SHARED_MODULES.md:46-72`, `docs/products/_platform-core/AUTH_ROADMAP.md` 3.1절 |
 | org | 개인 조직 1개만 노출 | 세션 | 팀 기능 없음 |
 | credits | 콘티 3, 대사 1, 배경 4/장, MP4 3 선차감. AI·음성(채팅 턴, STT, TTS, 위키 갱신)은 선차감 후 정산 | `src/app/api/*`, `api/ai/chat`, `api/voice/*`, `api/internal/ai-settle` (service_role) | `priceOf('toon', action)` 단가표는 `src/lib/server/pricing.ts`, AI 단가는 `src/lib/server/ai/ai-pricing.ts` |
 | toss | Pro 구독(빌링키), 크레딧팩(일반결제) | `src/app/api/billing/*`, `services/toon-worker/src/schedules/` | `SHARED_MODULES.md:127-151` |
@@ -155,7 +155,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 | storage | `exports` 버킷, 서명 URL | 내보내기, 다운로드 | 제품 버킷 3개는 05장 2.5절 |
 | audit | 다운로드, AI 가시 표기 해제, 카탈로그 공개, 에셋 보관 | 각 Route Handler, `toon.archive_user_asset` | `SHARED_MODULES.md:386-400` |
 | jobs | 10개 job_type | 4절 | Realtime은 `core.jobs` 구독 |
-| oauth, affiliate, automation-core, sns uploader, weasyprint | 사용 안 함 | - | sns uploader는 Phase 3 |
+| oauth, affiliate, automation-core, sns uploader, weasyprint | 사용 안 함 | - | sns uploader는 Phase 3. oauth는 외부 연동 토큰 모듈(`core.oauth_states`)이고 로그인 OAuth(Google·카카오·네이버)는 auth 모듈 소관이다(10절) |
 
 ## 4. 잡과 워커
 
@@ -335,3 +335,52 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 | 브랜디드 툰 | `toon.sponsorships`(RLS 멤버 쓰기) + 상태 트리거 + `decide_sponsorship`(owner/admin). 콘티·대사 그래프 입력에 협찬 `key_messages`를 넣고 `banned_terms`를 compliance 금지어에 더한다(조직·작품 범위, 규칙 파일 수정 없음). 렌더 워커는 내보내기 행의 문구만 넣는다 |
 | SNS 직접 업로드(Phase 2) | toon은 video 스키마에 쓰지 않는다. 코어에 공용 업로더 진입점(요청: 06장 6절 13)이 생기면 `upload.<platform>` 잡을 요청하고, 채널 연결·토큰은 코어 `encrypted_credentials`를 쓴다. `naver_clip` 어댑터는 Playwright이고 위험 고지·동의 기록 없이는 잡을 만들지 않는다 |
 | 숏툰 모션(Phase 2) | 렌더 워커 `export.mp4`에 모션 타임라인(컷별 팬·줌 키프레임, 말풍선 등장 시각, 자막 트랙)을 추가. TTS 클립 길이(TN-F-058)로 자막 타이밍을 맞춘다 |
+
+## 10. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`다. 이 절은 toon에 맞춘 배치만 적는다. 세션(실제 Supabase JWT), `session_context`, `requireSession('toon')`, RLS는 모든 단계에서 같다(AUTH_ROADMAP 0장 불변 조건).
+
+### 10.1 단계표 (toon 기준)
+
+| 단계 | 켜지는 로그인 | 진입 게이트 | 우선순위 | 작업(06장) |
+|---|---|---|---|---|
+| A | 로컬 시드 계정(페르소나) 원클릭 로그인. `/login` 개발용 패널 + 상단 `MOCK AUTH · 로컬 전용` 배지 | W0부터 | P0 | TN-06-004(인증 모듈 경계, `finishLogin`, 가드), TN-06-027(개발용 패널, 시드 스크립트) |
+| B | Google + 이메일(01장 TN-F-040). 배포 환경 `AUTH_MODE=live` | G1 | P0 | TN-06-067 |
+| C1 | 카카오(`kakao`) | G2 | P1 | TN-06-068 |
+| C2 | 네이버(`custom:naver` 또는 브리지, 01장 D23) | G2 | P1 | TN-06-069 |
+
+### 10.2 코드 배치
+
+| 위치 | 내용 | 단계 |
+|---|---|---|
+| `apps/toon/src/lib/auth/` | `getAuthConfig()`(env zod, 잘못된 조합이면 기동 실패), `isMockAuthAllowed()`, `listLoginOptions('toon')`, `finishLogin('toon', next)`(AUTH_ROADMAP 3.1·3.2절). 단계 분기는 이 폴더, 로그인 화면, `/auth/callback`, `/api/dev/login`에만 있다. 기능 코드·워커·`apps/api`에 `AUTH_MODE` 참조 0(CI 검사) | A~C |
+| `apps/toon/src/app/api/dev/login/` | `POST /api/dev/login`. 판정이 거짓이면 404 | A |
+| `apps/toon/src/app/(auth)/auth/callback/` | 코드 교환 → `finishLogin`(04장 8절) | B, C |
+| `apps/toon/src/app/(auth)/auth/naver/` | 네이버 브리지 start·callback(D23이 브리지일 때만) | C2 |
+| `scripts/dev/seed-users.mjs` + `scripts/dev/seed-users.toon.mjs`(저장소 루트, `package.json` 스크립트 `db:seed-users`) | 공통 페르소나 생성 + toon 훅(05장 10절). Supabase 호스트가 루프백이 아니면 exit 1 | A |
+| `services/toon-worker/`, `apps/api/` | 변경 없음. 워커는 service_role, FastAPI는 서명 토큰으로 인증하므로 로그인 단계와 무관하다 | - |
+
+### 10.3 환경변수 (AUTH_ROADMAP 3.3절 중 toon 해당분)
+
+| 변수 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버). 워커·`apps/api`에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값은 `mock` |
+| `AUTH_PROVIDERS` | B·C | web | live 모드에서 로그인 수단 0개면 기동 실패. B: `google,email`, C1 뒤 `kakao` 추가, C2 검수 통과 뒤 `naver` 추가 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web(로컬), 시드 스크립트. 배포 환경에 넣지 않는다 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(web·워커·`apps/api` env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web. 32바이트 이상 | 브리지 경로면 기동 실패 |
+| `NEXT_PUBLIC_APP_URL` | B·C | web(공개) | 콜백 `redirectTo`·`next` origin 고정에 쓴다(AUTH_ROADMAP 3.2절 5번). 8절 표에 없던 변수이며 없으면 기동 실패(제안) |
+
+### 10.4 배포 토폴로지 메모 (외부 콘솔)
+
+| 콘솔 | 단계 | 설정 | 비고 |
+|---|---|---|---|
+| Google Cloud | B | OAuth 동의 화면(External, 범위 `openid`·`email`·`profile`), 웹 클라이언트 ID. 리디렉션 URI는 Supabase 콜백 `https://<project-ref>.supabase.co/auth/v1/callback`(로컬 `http://127.0.0.1:54321/auth/v1/callback`) | 앱 도메인이 아니라 Supabase 콜백. 동의 화면 로고·처리방침·약관 URL은 `/legal/*`(03장 1절) |
+| Supabase 대시보드 | B·C | Providers(Google, Kakao), URL Configuration(Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`, Vercel 미리보기 도메인은 명시 등록) | 와일드카드 지양 |
+| 카카오 디벨로퍼스 | C1 | 앱, REST API 키, Client Secret, Redirect URI = Supabase 콜백, 동의항목 `profile_nickname`·`profile_image`·(비즈 앱) `account_email` | 01장 D22 |
+| 네이버 개발자 센터 | C2 | 애플리케이션 등록, 검수(로그인 버튼부터 가입 완료까지 캡처) | 브리지면 콜백은 앱 `/auth/naver/callback`(Vercel) |
+
+웹(Vercel)만 로그인 콜백을 받는다. 워커(Railway)와 `apps/api`(Railway)는 로그인 제공자와 통신하지 않는다. 이 제품에는 로그인 없는 사용자 흐름이 없어 단계와 무관한 공개 흐름 메모는 해당 없음(랜딩·요금·약관은 정적 공개 페이지).

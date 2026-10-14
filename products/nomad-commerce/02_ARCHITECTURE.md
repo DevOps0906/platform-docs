@@ -61,7 +61,7 @@
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 로그인, `requireSession('commerce')`, `session_context` | `apps/nomad-commerce/proxy.ts`, Route Handler 진입부 | SHARED_MODULES 2장 |
+| auth | 로그인, `requireSession('commerce')`, `session_context`. 인증 단계 모듈 `apps/nomad-commerce/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`). 단계 분기(`AUTH_MODE`, 제공자 목록)는 여기·로그인 화면·콜백 라우트만 | `apps/nomad-commerce/proxy.ts`, Route Handler 진입부, `app/(auth)/` | SHARED_MODULES 2장, `AUTH_ROADMAP.md` 3.1절, 9절 |
 | org | 개인 조직(1인 1워크스페이스). 멤버 초대 화면은 MVP에 없음 | 레이아웃 | 3장 |
 | credits | 선차감, 환불, `withCredits`, AI·음성 선차감과 정산 | `app/api/detail-pages/`, `app/api/ai/`, `app/api/voice/`, `app/api/internal/ai-settle`, 워커 실패 경로 | 4장. 단가는 `packages/commerce-domain`(정액)과 `lib/ai/pricing.ts`(AI 변동분)가 주입 |
 | toss | 구독 빌링키, 크레딧팩 | `app/api/billing/` | 5장 |
@@ -232,7 +232,7 @@ FastAPI는 DB 쓰기를 `ai_runs`·`ai_run_steps`·`ai_usage`에만 한다. `det
 |---|---|---|---|---|
 | `docs/reviews/Nomad-AI-Factory_V.2.md` 3장 #1 | `docs/reviews/Nomad-AI-Factory_V.2.md:44` | 80~240초 생성을 Route Handler SSE 안에서 동기 실행, 큐는 브라우저 Zustand | Route Handler는 차감·저장·대기 등록만 하고 800ms 안에 반환. `detail_pages`(waiting) → 디스패처 → `core.jobs` → Node 워커 컨테이너(Puppeteer/Sharp, 텍스트 단계는 FastAPI 그래프 호출). 진행률은 `core.jobs`와 `detail_page_slots` Realtime. SSE와 Zustand 큐 루프 없음. Vercel에 Puppeteer 없음. AI 호출은 Next.js → FastAPI 서명 토큰 경로 하나 | 4절, CM-06-010, CM-06-012, CM-06-013 |
 | `docs/reviews/Nomad-AI-Factory_V.2.md` 3장 #7 | `docs/reviews/Nomad-AI-Factory_V.2.md:50` | 슬롯 정의 3벌, 15장이 실제 18슬롯, `MANDATORY_SLOTS`가 educational 기본값과 모순 | 18슬롯 정본, 필수 T-1·L-3(01장 CM-F-020). `packages/commerce-domain` 단일 상수 + DB CHECK(`detail_pages_slots_check`, `slot_code` CHECK). 유형별 기본값이 필수를 포함하는지 단위 테스트 | CM-06-006, 05장 2절 |
-| `docs/reviews/nomad-ai-commerce.md` 3장 #4 | `docs/reviews/nomad-ai-commerce.md:61` | 미들웨어(모의 세션 허용)와 레이아웃(Supabase만 인정)이 달라 로그인 불가 | 판정 경로를 `requireSession` 하나로: `proxy.ts`와 서버 레이아웃이 같은 `session_context`를 쓴다. 모의 로그인 경로 없음. 소셜 로그인 실제 연결 E2E | CM-06-007, CM-06-035 |
+| `docs/reviews/nomad-ai-commerce.md` 3장 #4 | `docs/reviews/nomad-ai-commerce.md:61` | 미들웨어(모의 세션 허용)와 레이아웃(Supabase만 인정)이 달라 로그인 불가 | 판정 경로를 `requireSession` 하나로: `proxy.ts`와 서버 레이아웃이 같은 `session_context`를 쓴다. 쿠키 역할 모의 세션 없음. 개발용 로그인은 로컬 시드 계정의 실제 Supabase JWT만(`AUTH_ROADMAP.md` 2장, 배포 환경 404). 핵심 플로우 E2E는 Mock 페르소나로, Google 실로그인은 B단계 수동 점검(B-5) | CM-06-007, CM-06-035, CM-06-058 |
 | `docs/reviews/nomad-ai-commerce.md` 3장 #5 | `docs/reviews/nomad-ai-commerce.md:62` | 워크플로우 엔진이 `default` 노드에서 실패, 엣지 무시 | MVP에 캔버스 없음. Phase 2는 core automation-core(엣지 필수, 위상 정렬, 미등록 노드 거부)에 commerce 노드만 등록 | CM-06-039, SHARED_MODULES 12장 |
 | `docs/reviews/sellingstudio.md` 3장 #5 | `docs/reviews/sellingstudio.md:62` | Capacitor가 dev 서버를 평문으로 로드, 배포 불가 | MVP 제외(확정 결정 9). Phase 2: 배포 HTTPS URL 원격 셸, `CAP_SERVER_URL` 환경 분리, `cleartext`·`allowMixedContent`·외부 와일드카드 제거. 웹 MVP에는 `lib/capacitor`를 이식하지 않음 | CM-06-040, 07장 |
 
@@ -287,3 +287,46 @@ AI 호출 경로: 브라우저 → Next.js `/api/ai/*`·`/api/voice/*` → (Dify
 마켓 키는 환경변수에 두지 않는다(V.2의 `COUPANG_ACCESS_KEY`, `NAVER_COMMERCE_CLIENT_ID` 단일 값 폐기, `Nomad-AI-Factory_V.2/CLAUDE.md:217-219`).
 
 AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/products/_platform-core/SECURITY_BASELINE.md:284`). 기존 `OPENROUTER_API_KEY`는 워커·Route Handler에서 제거하고 FastAPI 전용으로 옮겼다.
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 이 절은 commerce(`commerce`, open 앱)에 적용한 값만 적는다. 세션·RLS·`requireSession`은 단계와 무관하게 같다(같은 문서 0장 불변 조건).
+
+| 단계 | 언제 | 켜지는 로그인 | 진입 게이트 | 작업 |
+|---|---|---|---|---|
+| A | W0부터 MVP 기능이 모두 동작할 때까지(W1~W6) | 로컬 시드 페르소나 원클릭 로그인(`/api/dev/login`). 실제 제공자 버튼 없음 | - | CM-06-007(Stage A 범위) |
+| B | G1 통과 후, 공개 베타 전 | Google + 이메일(가입·인증 메일·비밀번호 재설정) | G1(`AUTH_ROADMAP.md` 4장) | CM-06-058(P0) |
+| C1 | G2 통과 후 | 카카오(Supabase 기본 제공자 `kakao`). 기존 MVP 카카오를 이 단계로 옮겼다 | G2(같은 문서 6장) | CM-06-059(P1) |
+| C2 | G2 통과 후(C1과 병렬, 검수 신청은 G2 직후) | 네이버(`custom:naver` 또는 서버 브리지, 스파이크로 결정) | G2 | CM-06-060(P1) |
+
+| 규칙 | 내용 |
+|---|---|
+| 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `apps/nomad-commerce/lib/auth/`, `app/(auth)/login/`, `app/(auth)/callback/`(B단계), `app/api/dev/login/`(A단계)에만 둔다. 기능 코드·워커·FastAPI에 `if (mock)` 없음(CI grep) |
+| 콜백 | `finishLogin('commerce', next)`: 코드 교환 → `session_context('commerce')` → `entitled=false`면 open 앱이므로 `bootstrap_app_for_org('commerce')` 1회 → 상태 분기 → `next` 화이트리스트(기본 `/dashboard`). Mock 로그인도 같은 함수를 거친다(`AUTH_ROADMAP.md` 3.2절) |
+| 워커·FastAPI | 단계와 무관하다. 워커는 service_role과 잡 토큰, FastAPI는 서명 토큰만 본다. 서명 토큰의 `sub`·`org`는 로그인 방식과 상관없이 `session_context`에서 채운다 |
+
+환경변수(02장 8절에 더한다, `AUTH_ROADMAP.md` 3.3절):
+
+| 변수 | 단계 | 위치(web / 워커 / ai-service) | 누락 시 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web 서버만. 로컬 `.env.example` 기본값 `mock`, 배포는 `live` | `live`. `mock`인데 `isMockAuthAllowed()`가 거짓이면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web 서버만. B `google,email`, C1 뒤 `google,email,kakao`, C2 검수 통과 뒤 `naver` 추가 | live에서 로그인 수단 0개면 기동 실패 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web 서버, `scripts/dev/seed-users.mjs`. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱·워커·ai-service env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web 서버 | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web 서버, 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+워커(`services/commerce-worker`)와 ai-service(`apps/api`)에는 위 변수를 하나도 두지 않는다.
+
+배포 토폴로지 메모(7절에 더한다):
+
+| 외부 콘솔 | 단계 | 설정 | 리디렉션 URI |
+|---|---|---|---|
+| Google Cloud 콘솔(OAuth 동의 화면 External, 범위 `openid`·`email`·`profile`, 웹 클라이언트 ID) | B | `AUTH_ROADMAP.md` 5.1절. 동의 화면에 개인정보처리방침·이용약관 URL(`/legal/privacy`, `/legal/terms`) | `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` |
+| Supabase 대시보드 Authentication | B·C | Providers(Google, Kakao), URL Configuration: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(미리보기 도메인은 명시 등록) | - |
+| 카카오 디벨로퍼스 | C1 | `AUTH_ROADMAP.md` 7.1.1절. 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email`(01장 D-18) | Supabase 콜백(위와 같음) |
+| 네이버 개발자센터 | C2 | 애플리케이션 등록, 검수(로그인 버튼부터 가입 완료까지 캡처). 검수 전에는 운영 `AUTH_PROVIDERS`에 넣지 않음 | `supabase_custom`이면 Supabase 콜백, 브리지면 `https://<도메인>/auth/naver/callback` |
+
+commerce에는 로그인 없는 사용자 흐름(하객·청중·방문자 같은)이 없다. 공개 화면(랜딩, 가격, 법적 문서, 공개 위키 `/wiki`)은 로그인 없이 읽기만 하며 단계와 무관하다.

@@ -109,3 +109,15 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 PRD 3.3의 �
 | 2 | 원본에 키나 `.env`가 없음을 확인했다(문서 2개뿐). 키 재발급 대상 없음 |
 | 3 | spike(ST-06-004)에서 발급한 증권사 테스트 키는 spike 종료 시 폐기·재발급하고 저장소에 남기지 않는다 |
 | 4 | zip 중복 없음(원본 폴더에 파일 2개) |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+이 제품 원본에는 인증 코드가 없다(문서 2개뿐). 아래는 다른 원본에서 확인된 인증 Mock 결함이 Stage A 구현에 섞이지 않게 4절 표에 더하는 행이다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT 발급, 원격 DB·배포 환경 차단)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`mock-auth.ts`, `mock-login`, 쿠키 `nomad_role`·`nomad_plan`, localStorage 역할·플랜) | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96` | 권한 위조, 프로덕션 노출. RLS·엔타이틀먼트·`beta_access`가 Mock 단계에서 검증되지 않는다 | AUTH_ROADMAP 2장 시드 페르소나 + `isMockAuthAllowed()` 가드(ST-06-006), CI 금지 문자열 |
+| OAuth 콜백 `next` 무검증 리디렉트 | `AUTH_ROADMAP.md:140` | 오픈 리디렉트 | `finishLogin`의 `next` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음, origin 고정) |
+| 기능 코드의 `if (AUTH_MODE === 'mock')`·페르소나 이메일 분기 | `AUTH_ROADMAP.md:23`, `:104` | 단계 전환 때 기능 코드가 바뀌고, 배포 환경 동작이 Mock과 달라진다 | 분기는 `src/lib/auth/`·로그인 화면·콜백만, 권한은 `session_context`만 |
+| 초대 토큰 원문을 OAuth `redirectTo`·로그에 싣기 | 01_PRD D-23(제안) | 토큰이 인증 서버·프록시 로그에 남아 재사용될 수 있다 | 서명 쿠키 `stock_invite` + `/invite/continue` |
+| 인증 Mock과 증권사 `MockBroker` 혼용(예: `AUTH_MODE=mock`일 때만 샘플 연결 허용, 또는 그 반대) | 이 제품 고유(제안) | 두 Mock은 목적이 다르다. 인증 Mock은 배포 환경에서 없어야 하고, `MockBroker` 샘플 연결은 배포 환경에서도 사용자 선택으로 남는다 | 서로의 스위치를 참조하지 않는다(`02_ARCHITECTURE.md` 9절) |

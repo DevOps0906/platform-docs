@@ -36,10 +36,12 @@ D:\WorkSpace\DEV\toon-factory\                            베이스를 복사해
 | 4 | project-profile 작성 | 6 |
 | 5 | 로컬 DB 기동과 SQL 적용 | 7 |
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
-| 7 | 작업(54개)을 task로 변환 | 9 |
+| 7 | 작업(69개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
-| - | AI 계층, 개발 위키, 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
-| - | 체크리스트 | 18 |
+| - | AI 계층, 개발 위키 | 11, 12 |
+| - | 인증 단계: Mock → Google → 카카오·네이버(로컬 Mock 실행 순서, 게이트 G1·G2) | 13 |
+| - | 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 14~18 |
+| - | 체크리스트 | 19 |
 
 ## 1. 개요
 
@@ -49,7 +51,7 @@ D:\WorkSpace\DEV\toon-factory\                            베이스를 복사해
 | 통합 원본 | 단독 제품. 기획 문서 3개만 있는 `D:\WorkSpace\platform\Toon-Factory\`와 참고 코드(Shorts Maker의 FFmpeg 모듈, BlogStudio 골격, sellingstudio의 fal 기준 구현) |
 | 모듈러 앱 id / 스키마 | `toon` / `toon` (통합 DB를 쓸 때) |
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(`public` 스키마, 기획서 D7) |
-| 개발 근거 | `docs/file/`의 산출물 24개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
+| 개발 근거 | `docs/file/`의 산출물 25개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
 | AI 범위 | 작품 설정 위키(캐릭터 바이블)와 설정 RAG, 콘티 그래프 `toon.storyboard`, 보조 그래프 2개, 창작 어시스턴트 채팅(Dify), 음성 대화, 대사 음성 미리듣기, MP4 음성 입히기 |
 
 ## 2. 사전 준비
@@ -129,7 +131,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/toon-factory/03_SCREENS_UX.md` | `docs/file/03-설계/03_SCREENS_UX.md` | DOC-DES-002 | 화면설계서 |
 | `docs/products/toon-factory/04_API.md` | `docs/file/03-설계/04_API.md` | DOC-DES-003 | 인터페이스설계서 |
 | `docs/products/toon-factory/05_DATA_MODEL.md` | `docs/file/03-설계/05_DATA_MODEL.md` | DOC-DES-004 | 데이터설계서 |
-| `docs/products/_platform-core/` 8개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~008 | 공용 코어 명세 |
+| `docs/products/_platform-core/` 9개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE, AUTH_ROADMAP) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(DOC-CORE-009 `AUTH_ROADMAP.md` = 인증 단계, 2026-10-14) |
 | `docs/products/_design-guide/` 5개(DESIGN_PRINCIPLES, DESIGN_SYSTEM, HERO_3D, SKILLS, REFERENCES) | `docs/file/03-설계/디자인/` | DOC-DSN-001~005 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md 초기 템플릿 | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 디자인 토큰, 컴포넌트 명세 |
 | `docs/products/_design-guide/DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-008 | 앱 화면 구조 패턴(A~O). `03_SCREENS_UX.md` 화면 표의 `패턴` 열과 화면 작업 지시(`DESIGN_SYSTEM.md` 10장)가 이 코드를 쓴다 |
@@ -141,7 +143,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/toon-factory/supabase/monolith/migrations/0002_toon_domain.sql` | `supabase/migrations/20261013000002_toon_domain.sql` | - | DB |
 | `docs/products/toon-factory/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB |
 | `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
-| (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 24개 |
+| (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 25개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 채팅 앱 설정 |
 
 **문서 경로 보정**
@@ -186,12 +188,12 @@ D:\WorkSpace\DEV\toon-factory\
 │   │   ├── 00_MERGE_ANALYSIS.md      [묶음]
 │   │   └── reviews\Toon-Factory.md, NOMAD_Shorts_Maker.md, Nomad-BlogStudio.md, sellingstudio.md   [묶음]
 │   ├── file\
-│   │   ├── _index.md                 [묶음] 산출물 등록부 완성본(24개)
+│   │   ├── _index.md                 [묶음] 산출물 등록부 완성본(25개)
 │   │   ├── README.md  _sources\      [베이스]
 │   │   ├── 01-관리\README.md, 06_AGENT_PLAN.md          [묶음]
 │   │   ├── 02-요구사항\01_PRD.md                         [묶음]
 │   │   ├── 03-설계\02~05 *.md                            [묶음]
-│   │   │   ├── 공용코어\ 8개                              [묶음]
+│   │   │   ├── 공용코어\ 9개(AUTH_ROADMAP 포함)            [묶음]
 │   │   │   └── 디자인\ 5개 + DESIGN.md, COMPONENTS.md     [묶음]
 │   │   └── 04-구현\CLAUDE.md, 07_SOURCE_MIGRATION.md     [묶음]
 │   └── wiki\WIKI_SCHEMA.md, index.md, log.md, sources\  [묶음] 개발 위키
@@ -240,7 +242,7 @@ D:\WorkSpace\DEV\toon-factory\
 
 ## 8. 6단계: 착수 전 결정 확정
 
-`docs/file/02-요구사항/01_PRD.md` 8절의 결정 17개(D1~D17)를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 권고와 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
+`docs/file/02-요구사항/01_PRD.md` 8절의 결정 21개(D1~D21)와 8.1절 인증 단계 결정 3개(D22~D24)를 확정합니다. 아래 표는 착수 전에 필요한 D1~D17과 인증 결정이며, D18~D21(네이버 클립 업로드, 광고주 외부 검토 링크, 가상인물 표시 문구, 브랜디드 툰 플랜)은 01_PRD 8절 권고대로 진행하고 해당 작업 착수 전에 확인합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 권고와 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
 
 | ID | 결정 | 확정 시점 |
 |---|---|---|
@@ -261,6 +263,9 @@ D:\WorkSpace\DEV\toon-factory\
 | D15 | 채팅 화면 레퍼런스 Astryx 확인 | 디자인 시스템 1단계(TN-06-041) 전 |
 | D16 | 영상 음성의 AI 가시 표기 방식 | 영상 음성(TN-06-055) 전, 법무 확인 |
 | D17 | 워커의 그래프 호출 인증(잡 토큰) | 콘티 API(TN-06-014) 전 |
+| D22 | 카카오 이메일 정책(비즈 앱 `account_email` 필수 권장) | G2 판정 전(TN-06-068 착수 전) |
+| D23 | 네이버 로그인 경로(`custom:naver` 또는 브리지) | TN-06-069 스파이크 결과로 |
+| D24 | 이메일+비밀번호 가입 유지(기존 결정 유지 권고) | G1 판정 전(TN-06-067 착수 전) |
 
 **산출물 승인 절차**
 1. 결정 결과를 해당 산출물에 반영하는 task를 만듭니다.
@@ -271,31 +276,32 @@ D:\WorkSpace\DEV\toon-factory\
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 TN-06-001~059, 모두 59개입니다. 그중 TN-06-042는 사람이 하는 디자인 비주얼 검토입니다.
+작업은 TN-06-001~069, 모두 69개입니다(2026-10-13 2차 보강 060~066, 2026-10-14 인증 단계 067~069 포함). 그중 TN-06-042는 사람이 하는 디자인 비주얼 검토입니다. 인증 Stage A는 기존 TN-06-004·027이 맡고, B·C는 새 작업 067~069입니다(13장).
 
 | 웨이브 | 작업 ID | 진입 조건 | 산출물 |
 |---|---|---|---|
-| W0 | 001, 003, 004, 005, 033, 041, 058 | 없음 | DB 적용·타입, 변환 스크립트, 앱·워커 골격, 문서 스키마, 디자인 레퍼런스(1단계), 생성 규칙 사전 |
+| W0 | 001, 003, 004, 005, 033, 041, 058 | 없음 | DB 적용·타입, 변환 스크립트, 앱·워커 골격(인증 Stage A: Mock 로그인·시드·가드 포함), 문서 스키마, 디자인 레퍼런스(1단계), 생성 규칙 사전 |
 | W1 | 002, 006, 007, 010, 012, 028, 037, 044 | W0 | RLS 테스트, 렌더러, 스토어, 레이아웃, 카탈로그 CLI, 법적 페이지, 서버 공통, AI 서비스 설치 |
 | W1-D | 034 → 042 → 043(직렬) | 004, 041 | 디자인 시스템 2~4단계(토큰·기본 컴포넌트, 사람 검토, 정답 확정). 화면 작업의 진입 조건 |
 | W2 | 008, 009, 011, 013, 016, 018, 022, 045 | W1, 화면은 043 | 에디터, 카탈로그·내보내기·결제 API, 콘티 변환, AI 게이트 |
 | W3 | 019, 021, 023, 024, 026, 027, 036, 046, 052, 056, 059 | W2, 화면은 043 | 이미지 렌더 워커, 내보내기 화면, 스케줄, 결제 화면, 랜딩, 온보딩, 플랫폼 규격, 설정 RAG, 채팅 시트, 3D 히어로, AI 온보딩 |
 | W4 | 020, 025, 029, 031, 047, 049, 050, 053 | W3 | MP4, 결제 E2E, 에디터 테스트, 린트, 설정 위키 운영, 콘티 그래프, 보조 그래프, 음성 대화 |
 | W5 | 014, 015, 017, 035, 048, 051, 054, 055 | W4 | AI 콘티·배경·대사 API(그래프 연결), 콘티 화면, 설정 위키 화면, Dify 채팅, 대사 미리듣기, MP4 음성 |
-| W6 | 030, 032, 057 | W5 | 핵심 E2E, 내 에셋, AI 보안·라우팅 회귀. **MVP 출시 조건** |
-| W7 | 038 → 039, 040 | MVP 출시 | Phase 2·3 |
+| W5-B | 060(W0에서 시작 가능), 061, 062, 063, 064 | 060은 001·002 뒤, 나머지는 W5 | 프리셋·협찬 DB, 로그라인, 프리셋 화면, 브랜디드 툰, 표시 렌더 |
+| W6 | 067(G1 통과 후 먼저), 030, 032, 057 | W5·W5-B, 067은 G1 | Stage B Google·이메일 로그인, 핵심 E2E, 내 에셋, AI 보안·라우팅 회귀. **MVP 출시 조건** |
+| W7 | 038 → 039, 040, 065, 066, 068·069(G2 통과 후) | MVP 출시, 068·069는 G2 | Phase 2·3, 카카오·네이버 로그인 |
 
 ### 9.2 모델과 에이전트 매핑 (주 Opus, 부 Sonnet, 고문 Fable)
 
 | 06장 권장 모델 | 작업 성격 | 베이스에서 맡는 쪽 |
 |---|---|---|
-| Fable | 결제, 권한, RLS, 데이터 모델, AI 보안 설계(TN-06-001, 002, 005, 022, 023, 038, 044, 045, 057) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`(Sonnet), 리뷰는 `review-expert` |
-| Opus | 렌더러, 스토어, API, 그래프, RAG·위키, 음성, 테스트 설계(27개) | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
-| Sonnet | UI, 랜딩, 컴포넌트, 3D 히어로, 규칙 사전, 문서(18개) | `nextjs-expert`(Sonnet), 문서는 오케스트레이터 |
+| Fable | 결제, 권한, RLS, 데이터 모델, AI 보안 설계, 인증 경계(TN-06-001, 002, 005, 022, 023, 038, 044, 045, 057, 060, 067, 069) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`(Sonnet), 리뷰는 `review-expert` |
+| Opus | 렌더러, 스토어, API, 그래프, RAG·위키, 음성, 브랜디드 툰, 카카오 로그인, 테스트 설계(33개) | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
+| Sonnet | UI, 랜딩, 컴포넌트, 3D 히어로, 규칙 사전, 프리셋, 문서(19개) | `nextjs-expert`(Sonnet), 문서는 오케스트레이터 |
 | Haiku | 보일러플레이트, 린트·타입 정리, 반복 체크(003, 028, 031, 033) | 오케스트레이터가 직접 처리(베이스에 Haiku 워커 없음) |
 | 사람 | 디자인 비주얼 검토(TN-06-042) | 사용자 |
 
-모델 비율(58개): Fable 9(15.5%), Opus 27(46.6%), Sonnet 18(31.0%), Haiku 4(6.9%). 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(Fable), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다.
+모델 비율(68개, 2026-10-14): Fable 12(17.6%), Opus 33(48.5%), Sonnet 19(27.9%), Haiku 4(5.9%). 규모 가중(S=1, M=2, L=3, 합 135): Fable 18.5%, Opus 54.8%, Sonnet 23.7%, Haiku 3.0%. 이전(58개)은 Fable 15.5%, Opus 46.6%, Sonnet 31.0%, Haiku 6.9%였습니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(Fable), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다.
 
 ### 9.3 task 폴더 만들기
 
@@ -392,13 +398,159 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 - 위키는 산출물을 대체하지 않습니다. 충돌하면 `docs/file/`이 정본입니다.
 - 키·토큰 값과 개인정보는 위키에 쓰지 않습니다.
-- 초기 페이지(`sources/*.md` 24개)는 setup 시 함께 들어옵니다.
+- 초기 페이지(`sources/*.md` 25개)는 setup 시 함께 들어옵니다.
 
-## 13. 메인 디자인과 디자인 시스템
+## 13. 인증 단계: Mock → Google → 카카오·네이버
 
-디자인 작업 순서: 13.3 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009, 확정 결정 22). 제품 적용은 `docs/file/02-요구사항/01_PRD.md` 8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 10절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
 
-### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
+처음 개발할 때는 외부 로그인 설정 없이 Mock으로 MVP 기능을 끝내고, 기능이 다 돌면 Google, 그다음 카카오·네이버를 붙입니다. Mock도 로컬 Supabase에 실제로 로그인하므로(가짜 쿠키 없음) 단계를 바꿀 때 권한·RLS·크레딧 코드는 그대로이고 로그인 버튼만 늘어납니다.
+
+### 13.1 단계 요약
+
+| 단계 | 언제 | 켜지는 로그인 | 다음 단계 게이트 | 이 제품 작업 |
+|---|---|---|---|---|
+| A Mock | W0부터 MVP 기능이 다 돌 때까지 | 로컬 시드 계정(페르소나) 원클릭. 상단 `MOCK AUTH · 로컬 전용` 배지 | G1 | TN-06-004(모듈 경계, Mock, 시드, 가드, `finishLogin`), TN-06-027(개발용 패널) |
+| B Google | G1 통과 후, 공개 베타 전 | Google + 이메일(가입, 메일 인증, 비밀번호 재설정) | G2 | TN-06-067(P0, Fable, M, W6 맨 앞) |
+| C1 카카오 | G2 통과 후 | 카카오 추가 | 7.1.3절 기준 | TN-06-068(P1, Opus, S, W7) |
+| C2 네이버 | G2 통과 후(C1과 병렬) | 네이버 추가(스파이크로 경로 결정) | 7.2.4절 기준 | TN-06-069(P1, Fable, M, W7) |
+
+### 13.2 Stage A 로컬 실행 순서
+
+| 순서 | 명령·작업 | 확인 |
+|---|---|---|
+| 1 | `supabase start` | 로컬 Supabase 기동(`http://127.0.0.1:54321`) |
+| 2 | `supabase db reset` | 마이그레이션·seed 적용(7절) |
+| 3 | `apps/toon/.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD=<로컬 전용 임의 값>`, `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321` 등 로컬 값 | `.env.local`은 커밋하지 않습니다. `DEV_SEED_PASSWORD`는 `NEXT_PUBLIC_*`로 만들지 않습니다 |
+| 4 | `node scripts/dev/seed-users.mjs --app toon`(또는 `pnpm db:seed-users`) | 페르소나·이메일·조직 id·플랜·잔액 표가 출력됩니다(비밀번호는 출력 안 함). Supabase 주소가 원격이면 즉시 종료합니다 |
+| 5 | `pnpm dev` → `http://localhost:3000/login` | "개발용 로그인" 패널에서 `owner` 클릭 → `/app/onboarding`. 상단에 `MOCK AUTH · 로컬 전용` 배지 |
+| 6 | E2E | `pnpm test:e2e`. Playwright `globalSetup`이 페르소나별 `storageState`를 만듭니다 |
+
+페르소나(정본 `05_DATA_MODEL.md` 10절): `owner`(free, 10크레딧, 국외 이전 동의), `admin`·`member`·`viewer`(owner 조직), `outsider`(다른 조직, 미동의), `no_app`(첫 진입 부트스트랩 확인), `suspended`, `ops`(카탈로그 운영), `pro_owner`(Pro, 워터마크 해제·MP4·협찬), `low_credit`(잔액 1, 402 확인).
+
+이 문서의 개발 방식은 단독 Supabase(`public`, 모놀리스)라 `no_app`도 가입 트리거가 바로 부트스트랩합니다. 모듈러 통합 DB로 바꾸면 `no_app`으로 콜백의 `bootstrap_app_for_org` 경로를 확인합니다.
+
+### 13.3 G1 체크리스트 (사람이 판정)
+
+| # | 조건 | 확인 방법 |
+|---|---|---|
+| 1 | `06_AGENT_PLAN.md` 2절의 MVP P0 기능 작업 완료(TN-06-067과 W6 통합 작업 제외) | task 상태 |
+| 2 | 핵심 플로우 E2E 녹색(Mock 페르소나 `storageState`) | `npx playwright test tests/e2e/flows` |
+| 3 | RLS 스모크 전 항목 통과, `outsider` 교차 테넌트 거부 | `pnpm test:rls`(TN-06-002, 060) |
+| 4 | 결제 E2E 녹색(Toss 테스트 키) | `npx playwright test tests/e2e/billing`(TN-06-025) |
+| 5 | 단계 분기 코드가 인증 모듈 밖에 0건 | CI 금지 패턴 검사(TN-06-031) |
+| 6 | 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, `/legal/privacy`·`/legal/terms` URL, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트 | 13.4절 |
+
+판정 결과는 TN-06-067 task `log.md`에 `[DECISION] G1 통과`로 남깁니다. 결정 D24(이메일 가입 유지, 기본 유지)도 이때 확인합니다.
+
+### 13.4 Stage B 외부 설정 순서 (사람, AUTH_ROADMAP 5.1절)
+
+| 순서 | 할 일 | 비고 |
+|---|---|---|
+| 1 | Google Cloud 콘솔 → OAuth 동의 화면: 사용자 유형 External, 범위 `openid`, `email`, `profile`만 | 게시 상태 "테스트"에서는 등록한 테스트 사용자만 로그인됩니다 |
+| 2 | 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션). 승인된 리디렉션 URI = `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 앱 도메인이 아니라 Supabase 콜백입니다 |
+| 3 | Supabase 대시보드 → Authentication → Providers → Google 사용, 클라이언트 ID·시크릿 입력. 로컬은 `supabase/config.toml` `[auth.external.google]`에 `env(GOOGLE_CLIENT_ID)` | 키는 앱(Vercel) env에 넣지 않습니다 |
+| 4 | Authentication → URL Configuration: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록) | 와일드카드 지양 |
+| 5 | Vercel env: `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`, `NEXT_PUBLIC_APP_URL` | `DEV_SEED_PASSWORD`는 넣지 않습니다 |
+| 6 | 동의 화면을 "프로덕션"으로 게시 | 공개 베타 전 |
+
+TN-06-067 수용 기준 B-1~B-6(`06_AGENT_PLAN.md` 8.1절). Google 실로그인은 자동화하지 않고 사람이 데스크톱·모바일 각 1회, 신규·기존 계정으로 확인해 `log.md`에 남깁니다.
+
+### 13.5 G2 체크리스트 (사람이 판정)
+
+| # | 조건 | 확인 방법 |
+|---|---|---|
+| 1 | Google 실로그인으로 공개 베타 2주 운영(제안) | 운영 기간 |
+| 2 | 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안) | 감사 `auth.login`, 오류 로그 |
+| 3 | 신규 가입자 중 `entitled=false`로 남은 사용자 0 | AUTH_ROADMAP 6장 3번 쿼리(모놀리스는 `core.`를 `public.`으로) |
+| 4 | 카카오 디벨로퍼스 앱 생성, 이메일이 필요하면 비즈 앱 전환(결정 D22) | 13.6절 |
+| 5 | 네이버 애플리케이션 등록, 검수 자료(로그인 버튼부터 가입 완료까지 캡처) 준비 | 13.7절 |
+
+판정 결과는 `[DECISION] G2 통과`로 남깁니다.
+
+### 13.6 C1 카카오 설정 (사람, AUTH_ROADMAP 7.1.1절)
+
+| 순서 | 할 일 |
+|---|---|
+| 1 | 카카오 디벨로퍼스 앱 생성 → REST API 키 = `client_id` |
+| 2 | 카카오 로그인 Client Secret 활성 → `client_secret` |
+| 3 | Redirect URI = Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://localhost:54321/auth/v1/callback`) |
+| 4 | 카카오 로그인 활성, 동의항목 `profile_nickname`, `profile_image`, (비즈 앱이면) `account_email` |
+| 5 | Supabase → Providers → Kakao 사용. 이메일을 못 받으면 "Allow users without an email"(D22 (b)일 때만) |
+| 6 | Vercel `AUTH_PROVIDERS`에 `kakao` 추가 |
+
+수용 기준 C1-1~C1-5는 TN-06-068 행에 있습니다.
+
+### 13.7 C2 네이버 스파이크와 검수 (AUTH_ROADMAP 7.2.2~7.2.4절)
+
+| 단계 | 할 일 | 통과 기준 |
+|---|---|---|
+| 1 | 운영과 분리한 Supabase 프로젝트에 `scripts/auth/register-naver-provider.mjs`로 `custom:naver` 등록(`provider_type: 'oauth2'`, authorize `https://nid.naver.com/oauth2.0/authorize`, token `https://nid.naver.com/oauth2.0/token`, 사용자 정보 `https://openapi.naver.com/v1/nid/me`) | 등록 성공 |
+| 2 | 네이버 "개발 중" 상태 + 등록한 테스트 아이디로 `signInWithOAuth({ provider: 'custom:naver' })` | 사용자 1명, `identities[].provider = 'custom:naver'` |
+| 3 | `auth.users.email`이 채워졌는지, 재로그인이 같은 사용자인지 | 둘 다 참이면 `NAVER_AUTH_PATH=supabase_custom` |
+| 4 | 실패하면 브리지 경로. 코어 요청(`06_AGENT_PLAN.md` 8.3절 5번: `staged/0010_core_auth_identity_links.sql` 적용) 후 진행 | `[DECISION]`과 `NAVER_AUTH_PATH` 기록(D23) |
+| 5 | 검수 신청(로그인 버튼부터 가입 완료까지 캡처). 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않습니다 | 검수 통과 |
+
+로컬 CLI가 커스텀 제공자를 지원하는지는 미확인입니다. 지원하지 않으면 로컬은 Mock·Google·카카오로 개발하고 네이버는 스테이징 프로젝트에서 확인합니다.
+
+### 13.8 단계 전환 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
+
+```
+D:/WorkSpace/DEV/toon-factory/docs/file 의 모든 파일(프로젝트 산출물)을 최대한 자세히 읽고 분석한다.
+(이미 읽은 파일은 skip. docs/file/_index.md 가 없으면 deliverable-first 스킬 절차로 산출물부터 추출한다.)
+
+[요구사항]
+TN-06-067: 인증 Stage B(Google OAuth + 이메일 가입·재설정 + 온보딩 약관 단계)를 구현한다.
+진입 조건 = tasks/TN-06-067-*/log.md 에 사람이 남긴 [DECISION] G1 통과 가 있다(없으면 시작하지 않고 보고만 한다).
+완료 조건 = ① docs/file/03-설계/공용코어/AUTH_ROADMAP.md 5.3절 B-1~B-6 충족
+② Mock E2E(tests/e2e/flows)가 그대로 녹색 ③ /api/dev/login 이 AUTH_MODE=live 빌드에서 404
+④ src/lib/auth/·로그인 화면·/auth/callback·/api/dev/login 밖에 AUTH_MODE 참조 0
+⑤ docs/file/01-관리/06_AGENT_PLAN.md 의 TN-06-067 수용 기준 충족.
+Google 실로그인 수동 점검(데스크톱·모바일, 신규·기존 계정)은 사람이 한다. 점검표만 log.md 에 만든다.
+
+[작업의 특성]
+권한 경계 작업. 원격 Supabase 대시보드·Google 콘솔 설정은 사람이 한다(13.4절). 원격 db push 금지.
+작업 대상 경로: apps/toon/src/app/(auth)/, apps/toon/src/app/onboarding/terms/, apps/toon/src/lib/auth/oauth/
+
+이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
+승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
+
+main worker 는 claude-main 이 진행한다.
+main worker 의 서브 에이전트는 nextjs-expert 가 진행한다.
+review role worker 는 claude-reviewer 가 진행한다.
+review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
+```
+
+C1·C2도 같은 형식으로, 진입 조건을 `[DECISION] G2 통과`, 완료 조건을 AUTH_ROADMAP 7.1.3절(C1-1~C1-5) 또는 7.2.4절(C2-1~C2-6)로 바꿔 요청합니다. TN-06-067·069의 권장 모델은 Fable이므로 착수 전 계획을 `plan-challenger`(고문)가 검토합니다(9.2절).
+
+task 폴더의 baseline에는 아래를 넣습니다.
+
+```yaml
+baseline:
+  - id: DOC-CORE-009
+    path: docs/file/03-설계/공용코어/AUTH_ROADMAP.md
+  - id: DOC-REQ-001
+    path: docs/file/02-요구사항/01_PRD.md      # TN-F-040, 8.1절
+  - id: DOC-DES-003
+    path: docs/file/03-설계/04_API.md          # 8절 인증 경로
+  - id: DOC-MGT-002
+    path: docs/file/01-관리/06_AGENT_PLAN.md   # 8절 TN-06-067~069
+```
+
+### 13.9 이 제품의 인증 작업 ID
+
+| 단계 | 작업 | 우선순위 | 웨이브 | 게이트 |
+|---|---|---|---|---|
+| A | TN-06-004, TN-06-027 | P0 | W0, W3 | 없음 |
+| B | TN-06-067 | P0 | W6 맨 앞 | G1 |
+| C1 | TN-06-068 | P1 | W7 | G2 |
+| C2 | TN-06-069 | P1 | W7 | G2 |
+
+## 14. 메인 디자인과 디자인 시스템
+
+디자인 작업 순서: 14.3 시각 레퍼런스(Awwwards·Dribbble) → 14.1 디자인 시스템 → 14.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
+### 14.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
 
 주 레퍼런스는 Atlassian(회차·컷 관리, 상태 배지, 권한, 드래그 앤 드롭), 보조는 Primer(밀도)입니다. 채팅·음성·위키 화면은 Astryx 패턴(미확인, D15)입니다.
 
@@ -413,7 +565,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
 - 이전 계획의 `design-system/toon-factory/MASTER.md`는 만들지 않습니다(정답이 두 곳이 되지 않게).
 
-### 13.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
+### 14.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
 
 | 기기 | 구성 |
 |---|---|
@@ -426,7 +578,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 금지: 보라/핑크 그라디언트, 만화 효과음 글자·말풍선을 UI 장식으로 쓰기, 토큰 밖 3D 색
 - 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(TN-06-056, 026)
 
-### 13.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+### 14.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
 
 화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
 
@@ -448,7 +600,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
 - 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
 - Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
-- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 14.1 디자인 시스템 → 14.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
 - 화면·랜딩 task의 `task.md` baseline에는 아래 3개를 넣습니다. 06장의 레퍼런스 확정 task와 랜딩 task 수용 기준에도 같은 레퍼런스 확인이 들어 있습니다.
 
 ```yaml
@@ -463,7 +615,7 @@ baseline:
 
 - 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
 
-## 14. 원본 이식
+## 15. 원본 이식
 
 정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
 
@@ -472,7 +624,7 @@ baseline:
 - 리뷰 "높음" 6건의 차단 설계는 `02_ARCHITECTURE.md` 6절(#5, #6)과 `05_DATA_MODEL.md` 7절(#1~#4)에 있습니다. 해당 task의 리뷰 단계에서 차단 여부를 확인합니다.
 - 07장의 "폐기" 항목(FFmpeg.wasm 브라우저 렌더, LoRA, 자동 누끼, 브라우저·Vercel의 LLM·음성 키 직접 사용, `enable_safety_checker: false`)은 옮기지 않습니다.
 
-## 15. 공용 모듈 경계
+## 16. 공용 모듈 경계
 
 | 항목 | 규칙 |
 |---|---|
@@ -481,13 +633,13 @@ baseline:
 | 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 9) |
 | 남은 코어 과제 | `adjust_credits` 미구현(요청 3), 잡 토큰 패턴 표준화(요청 8), ai-service 사용자 조직 위키 저장 API(요청 10), core-voice 대체 금지 일반화(요청 11) 등. `docs/file/01-관리/06_AGENT_PLAN.md` 6절 코어 요청을 참고합니다 |
 
-## 16. 검증과 완료 정의
+## 17. 검증과 완료 정의
 
 - task 완료 = `06_AGENT_PLAN.md`의 수용 기준 충족 + 리뷰 추적성 표에 끊긴 곳 없음 + `gate.sh`·`scope_check.sh` 통과
 - 커밋 전에 `bash _shared/check-invariants.sh`가 PASS여야 합니다.
 - MVP 완료는 `06_AGENT_PLAN.md` 7절 완료 정의를 따릅니다.
 
-## 17. 위험과 주의
+## 18. 위험과 주의
 
 | 위험 | 대응 |
 |---|---|
@@ -500,7 +652,7 @@ baseline:
 | 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 platform에서 다시 묶으려면 `build_root.py`를 실행합니다 |
 | AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
 
-## 18. 체크리스트
+## 19. 체크리스트
 
 - [ ] 2절 도구 설치 확인(Git Bash, jq, Python, Node·pnpm, uv, Supabase CLI, Docker)
 - [ ] setup 스크립트 dry-run으로 할 일 확인
@@ -508,11 +660,14 @@ baseline:
 - [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
 - [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 상용만)
 - [ ] `supabase start` → `supabase db reset` 성공(7절)
-- [ ] 결정 D1~D17 확정, 산출물 "승인" 전환(8절)
+- [ ] 결정 D1~D17 확정, 산출물 "승인" 전환(8절). D22~D24는 G1·G2 전에
 - [ ] W0 task 생성과 진행(9절)
-- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
-- [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
+- [ ] 인증 Stage A 로컬 실행 확인: `supabase db reset` → 시드 → `/login` 개발용 패널(13.2)
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(14.3)
+- [ ] 디자인 시스템 1~4단계 완료(14.1). 사람 비주얼 검토 포함
+- [ ] G1 판정(13.3) → TN-06-067 Google·이메일 로그인 → B-1~B-6
 - [ ] W1~W6 진행, AI 보안 회귀(TN-06-057) 통과, MVP 출시 조건 충족
+- [ ] 공개 베타 2주 뒤 G2 판정(13.5) → 카카오(TN-06-068)·네이버(TN-06-069)
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

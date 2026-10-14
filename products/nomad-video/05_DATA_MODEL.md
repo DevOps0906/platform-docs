@@ -307,7 +307,7 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | SM #2 | `src/app/api/webhooks/toss/route.ts:19-51` | 서명 없으면 통과, orderId 파싱으로 플랜·크레딧 변경 | 코어 webhooks "서명 없으면 거부", 지급은 confirm 경로만(CORE_SPEC 6장). 웹훅 핸들러는 상태 동기화만 | VID-06-006, 025 |
 | SM #4 | `src/app/api/posts/[id]/publish/route.ts:23-30` | `x-internal-call` 헤더 하나로 인증 우회 | 내부 HTTP 호출 금지, 함수 직접 호출. 예약 발행은 워커 크론(service_role)이 수행. 공개 라우트에 내부 헤더 분기 없음(CLAUDE.md 7장) | VID-06-003, 027 |
 | SM #5 | `src/app/api/channels/oauth/route.ts:16-18` | OAuth state(base64 JSON)를 신뢰해 타 조직에 채널 연결 | `core.create_oauth_state`(멤버십 확인) → 콜백 `consume_oauth_state`가 org/user 확정. 채널 INSERT는 그 org로만, `check_refs`·`enforce_channel_limit` | VID-06-008 |
-| SM #6 | `src/app/dashboard/layout.tsx:4-14`, `src/lib/mock-auth.ts` | 대시보드 세션 확인 없음, Mock 로그인 노출 | `proxy.ts` + 레이아웃 서버 가드(`session_context`), Mock 로그인 파일 미이식. 모든 데이터는 RLS(스모크 B 0행) | VID-06-003, 004 |
+| SM #6 | `src/app/dashboard/layout.tsx:4-14`, `src/lib/mock-auth.ts` | 대시보드 세션 확인 없음, Mock 로그인 노출 | `proxy.ts` + 레이아웃 서버 가드(`session_context`), Mock 로그인 파일 미이식(쿠키 역할 Mock 금지). 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(실제 JWT, `isMockAuthAllowed()` 거짓이면 `/api/dev/login` 404, 배포 빌드에서 `AUTH_MODE=mock`이면 빌드 실패, 10절 페르소나). 모든 데이터는 RLS(스모크 B 0행) | VID-06-003, 004(Stage A), 039(CI 금지 문자열) |
 | SM #7 | `src/lib/crypto.ts:4` | 암호화 키 없으면 0키 폴백 | 토큰은 `core.encrypted_credentials`, 키는 `CREDENTIALS_KEY_V<n>` 없으면 기동 실패(02장 8절) | VID-06-003, 008 |
 | SM #8 | `src/lib/supabase/server.ts:4-48` | 웹훅/cron/워커가 쿠키 anon 클라이언트로 RLS에 막혀 무동작 | 3계층 클라이언트(`createAdminClient`는 서버·워커 전용), 모든 쓰기 error 검사. 사용자 쓰기 정책 없는 테이블은 guard 트리거라 실수 시 조용히 0행이 아니라 42501로 드러남 | VID-06-003, 015 |
 | `docs/reviews/Nomad-BlogStudio.md` 3장 #1 | `001_initial_schema.sql:286-287` | `org_members` FOR ALL로 타 조직 자가 가입 | 코어 `org_members`는 정책 없음 + guard(`migrations/0001_core_identity.sql:90`). 제품 정책은 `FOR ALL` 금지, 헬퍼만 사용 | VID-06-001, 002 |
@@ -320,7 +320,7 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | BS #8 | `src/lib/billing/credits.ts:22-73` | 비원자 차감, 오류 무시 | 코어 `consume_credits` 원자 차감(FOR UPDATE), 멱등 키. 클라이언트 오류는 throw로 전파 | VID-06-005 |
 | BS #9 | `src/app/(auth)/signup/page.tsx:21-25` | 가입 시 조직 미생성 | 코어 `handle_new_user` + `signup_app='video'` 부트스트랩. 스모크: 가입 직후 조직·엔타이틀먼트 확인 | VID-06-004 |
 | `docs/reviews/Youtube_shots_Maker.md` 3장 #2 | `[5f6d262] backend/routers/oauth.py:76-92` | state 서명 없음, user_id 신뢰 | SM #5와 같은 코어 OAuth state. FastAPI 라우터 미이식 | VID-06-008 |
-| YSM #3 | `[5f6d262] app/api/auth/naver/callback/route.ts:54-86` | 네이버 이메일로 기존 계정에 자동 로그인 | MVP는 네이버 로그인 없음(이메일+Google). Phase 2에 로그인 상태에서만 명시적 연결(코어 요청), 이메일 자동 병합 금지 | 01장 8절 D-5, 06장 6절 |
+| YSM #3 | `[5f6d262] app/api/auth/naver/callback/route.ts:54-86` | 네이버 이메일로 기존 계정에 자동 로그인 | MVP는 네이버 로그인 없음(A Mock, B 이메일+Google). 네이버는 결정 22로 Stage C2(G2 후): `custom:naver` 또는 브리지, 브리지면 네이버 고유 id(`auth_identity_links`)로만 찾고 같은 이메일 기존 사용자는 `email_in_use`로 거부, 연결은 로그인 상태에서만. 이메일 자동 병합 금지 | 01장 8절 D-5·8.1절 D-27, 06장 8절 VID-06-065 |
 | YSM #4 | `[5f6d262] backend/routers/studio.py:306-340` | task_id 소유권 미확인 | 진행·결과 조회는 `core.jobs` RLS(조직 멤버만) + `productions` RLS. API는 세션 org와 행 org를 대조, 불일치 404. 스모크: B 제품 테이블 0행 | VID-06-002, 017 |
 
 ## 8. 모놀리스와 모듈러의 차이
@@ -349,3 +349,28 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | `supabase/monolith/seed.sql` | apps, 플랜 4(AI 키 포함), 팩 8, 대가성 문구 8, AI 라우팅 기본값 17행 + 체인 검사 | 체커 OK(`--vector mono`), 반복 적용 OK |
 | RLS 스모크(06장 VID-06-002가 저장소로 옮김) | B 비멤버 21개 테이블 0행, 쓰기·RPC 42501, 자기 권한 상승 42501, 공개 RPC, 게이트(VD002/VD003/VD004/VD007/VD011/22023/23514) | 모듈러 65/65, 모놀리스 65/65 |
 | 2026-10-13 추가 행동 검사(클립·대행) | 클립 동의 없음 VD015, 다른 조직 동의 42501, 구버전 동의 VD015, 동의 컬럼 직접 수정 42501, 클립 제휴 업로드 제목·해시태그 문구 누락 23514, 고객 생성(agency) / 다른 조직 고객 0행·42501, status 직접 수정 42501, 고객 승인 전 예약 VD016, 승인 요청 RPC authenticated 42501, `token_hash` 조회 42501, 두 번 결정 VD008, 리포트 월 첫날 CHECK 23514, 사용자 리포트 INSERT 42501, YouTube 기존 문구 규칙 유지 23514 | 모듈러 33/33, 모놀리스 33/33(PGlite, VID-06-002에 편입) |
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경은 없다(코어·`video` 조각 그대로). 인증 단계는 로그인 수단만 바꾸고 `profiles`·`org_members`·`app_entitlements`·RLS는 그대로다. C2에서 브리지 경로를 택할 때만 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`을 참조하며 video 조각은 바꾸지 않는다.
+
+시드는 `scripts/dev/seed-users.mjs --app video`(공통, `AUTH_ROADMAP.md` 2.3절)가 공통 페르소나를 만든 뒤 제품 훅 `scripts/dev/seed-users.video.mjs`가 아래 제품 행을 더한다. 로컬 Supabase(`127.0.0.1`·`localhost`)가 아니면 즉시 종료한다. 이메일은 `.test` 도메인(제안), 비밀번호는 `DEV_SEED_PASSWORD`(출력 금지).
+
+| 키 | 이메일 | 만드는 방법(RPC/서비스 경로) | 기대 `session_context('video')` | 쓰임 |
+|---|---|---|---|---|
+| `owner` | `owner@dev.test` | `auth.admin.createUser(user_metadata.signup_app='video')` → 가입 트리거 `core.handle_new_user` → `on_signup_app_bootstrap` | 개인 조직 owner, `entitled=true`, `plan_code=starter`, `credit_balance=100`(가입 크레딧 1회, 멱등 키 `signup:<org>:video`) | 기본 사용자. VD-F-001 수용 기준 |
+| `admin`, `member`, `viewer` | `admin@dev.test` 등 | 생성 후 `owner`로 로그인한 클라이언트가 `core.invite_member(owner_org, uid, role)` → 각 사용자가 `core.accept_invite(owner_org)` | owner 조직의 해당 역할, Starter | 역할 분기(owner/admin만 채널 연결·클립 동의, viewer 읽기 전용). Starter의 `team_members=1`은 서버 판정만이라 시드가 넘어서지만 역할 검사용이다. 팀 상한 검사는 `adv_*`로 한다 |
+| `outsider` | `outsider@dev.test` | `signup_app='video'`로 생성(다른 개인 조직) | 자기 조직 owner, Starter | 교차 테넌트 RLS 거부(9절 스모크 B와 같은 기대: 제품 테이블 0행, 쓰기 42501) |
+| `no_app` | `no_app@dev.test` | `signup_app` 없이 생성 | 모듈러: `entitled=false`, 첫 진입에서 `bootstrap_app_for_org('video')` 후 Starter. 모놀리스: apps 1행이라 가입 트리거가 자동 부트스트랩해 처음부터 `entitled=true` | OAuth 첫 로그인 경로(`finishLogin` 3번)를 A단계에서 검증(모듈러) |
+| `suspended` | `suspended@dev.test` | 생성 후 service_role로 `core.profiles.status='suspended'` | 403 | 차단 확인 |
+| `ops` | `ops@dev.test` | 생성 후 service_role로 `platform_role='platform_admin'` | 운영자 | 운영자 컬렉션(`VIDEO_KNOWLEDGE_ORG_ID`) 관리, 운영 화면 |
+| `adv_owner`(제품 행) | `adv_owner@dev.test` | `signup_app='video'`로 생성 → service_role이 그 조직의 `core.subscriptions.plan_id`와 `core.app_entitlements.plan_id`를 `advanced` 플랜으로 갱신(`source='manual'`, 결제 경로가 아님) → 필요하면 `core.grant_credits`(service_role, 멱등 키 `dev-seed:<org>:video:advanced`)로 월 크레딧 5,000 지급(제안) | 조직 owner, `plan_code=advanced`, `features.agency=true`, `team_members=5`, `max_channels=40` | Advanced 게이팅(VD-F-092 팀, VD-F-120~126 대행, Track D/F `org_has_feature`), 결제 E2E와 분리된 플랜 상태 |
+| `adv_member`(제품 행) | `adv_member@dev.test` | `signup_app='video'`로 생성 → `adv_owner`로 로그인한 클라이언트가 `core.invite_member(adv_org, uid, 'member')` → 본인이 `core.accept_invite(adv_org)` | `adv_owner` 조직의 member, `plan_code=advanced` | Advanced 팀 멤버 화면, member가 클립 동의(403)·고객 생성(42501)을 못 하는지, 팀 상한(5인) 서버 판정 |
+
+`pending` 페르소나는 만들지 않는다(video는 open 앱이라 승인 대기가 없다). 대행 고객·고객 채널·채널 연결 같은 도메인 데이터는 시드하지 않고 각 테스트가 만든다(제안: 시드는 로그인 주체만 책임진다). 채널 연결 OAuth 토큰과 네이버 클립 세션은 시드 대상이 아니다(사용자 로그인과 별개, `CredentialVault`).
+
+| 항목 | 모듈러 | 모놀리스 |
+|---|---|---|
+| `no_app` | `signup_app` 없으면 엔타이틀먼트 없음 → 첫 진입·콜백에서 `bootstrap_app_for_org` | apps 1행이면 가입 트리거가 자동 부트스트랩(`supabase/monolith/migrations/0001_core_lite.sql:38`) → `no_app`도 `entitled=true`. 기대값만 다르고 코드는 같다 |
+| 함수 이름 | `core.invite_member`, `core.accept_invite`, `core.bootstrap_app_for_org` | `public.` 같은 이름 |
+| `--app` 여러 개 | 통합 DB에서 다른 앱과 함께 시드할 수 있다(두 번째 앱부터 `bootstrap_app_for_org`) | 해당 없음 |

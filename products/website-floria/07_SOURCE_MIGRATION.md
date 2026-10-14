@@ -121,3 +121,13 @@ AI 관련 원본 자산(2026-10-13 점검): 원본에는 AI 기능이 없다. AI
 | 5 | `WebSite/.vite` 삭제, `.gitignore`의 `dist/`, zip 규칙 점검 |
 | 6 | 키 재발급: 원본에서 `.env`가 발견되지 않아 해당 없음. 단 구현 에이전트가 이동 전에 각 폴더의 `.env*`, `.zip`을 한 번 더 확인한다 |
 | 7 | zip 중복 정리: 리뷰가 `.gitignore:40`의 zip 제외를 언급(`:267`). 저장소 안 zip을 찾아 한 사본만 남긴다 |
+
+## 6. 인증 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+이 제품의 원본(WebSite 5개 사이트)에는 로그인 코드가 없다. 그래도 다른 제품 원본이나 예제에서 아래 패턴을 가져오지 않는다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT 로그인, 원격 DB·배포 환경 차단)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`lib/mock-auth.ts` 프로덕션 노출, `mock-login`, `nomad_role`·`nomad_plan` 쿠키 권한) | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`(`AUTH_ROADMAP.md` 1장 인용) | 권한 위조, 프로덕션 노출 | `AUTH_ROADMAP.md` 2장 Mock(`/api/dev/login`, 시드 페르소나, 05장 10절). CI 금지 문자열(SI-06-024) |
+| 콜백 `next` 무검증 리다이렉트 | `AUTH_ROADMAP.md` 3.2절 5번 | 오픈 리다이렉트 | `/`로 시작하고 `//`·`@`·`\` 없는 경로만, 아니면 `/admin`(SI-06-049 B-2) |
+| 기능 코드의 `if (mock)`·페르소나 이메일 분기 | `AUTH_ROADMAP.md` 0장 불변 조건, 2.5절 | 배포 환경과 다른 권한 경로 | 권한은 `session_context`로만, 단계 분기는 `src/lib/auth/`·로그인 화면·콜백만 |

@@ -74,3 +74,20 @@
 ## 7. 금지 패턴
 
 07장 4절 요약: 이벤트마다 전체 재조회, 훅 중복 호출로 채널 중복, 연결 상태 미표시, `as any`, RLS 자기참조/`USING(true)`, 프로필 없으면 admin, 실키 `.env` 커밋, `FOR ALL` 정책, 한글 `\b` 금칙어, 공개 채널 메시지 신뢰, 레이트 리밋 히트 뒤 raise, IP 원문 저장, Supabase 익명 로그인 사용(코어 요청 해결 전). AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·브로드캐스터에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·개인정보, 청중 원문 상용 전송, AI 결과만으로 질문 숨김, 클라이언트 텍스트 그대로 TTS, 오디오·변환 텍스트 저장·로그, 투표 경로에서 AI 호출, 한도 없는 청중 음성 경로, 토큰 밖 3D 색, "Tailwind"만 적은 지시(v3 혼입).
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`, 제품 적용 01장 8.1절, 02장 9절, 03장 7절, 04장 8절, 05장 10절, 06장 8절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 A(Mock 로그인). 로그인하는 사람은 진행자뿐이다 |
+| 단계 순서 | A Mock(LP-06-003) → G1 → B Google + 이메일(LP-06-049, P0, 공개 베타 필수) → G2 → C1 카카오(LP-06-050, P1), C2 네이버(LP-06-051, P1) |
+| 로그인 없는 흐름 | 청중(코드·QR 입장, 참가자 토큰 쿠키)과 OBS 오버레이(키)는 단계와 무관하다. 단계 전환 때 `/api/p/*`, `/api/overlay/*`, `(participant)`, `overlay`, `lib/realtime-auth`를 바꾸지 않고 로그인 버튼을 추가하지 않는다. Mock 단계에서도 그대로 동작한다 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH` 참조는 `src/lib/auth/`, `src/app/(auth)/`, `src/app/auth/callback/`(C2 브리지면 `src/app/auth/naver/`), `src/app/api/dev/login/`에만. 기능 코드에 `if (mock)`, 페르소나 이메일 분기 금지. 권한은 `session_context('poll')`만 |
+| 페르소나 사용 | `supabase start` → `supabase db reset` → `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` → `pnpm db:seed-users`(= `node scripts/dev/seed-users.mjs --app poll`, 제품 훅 `seed-users.poll.mjs`) → `/login` 개발용 패널. 진행자 시나리오는 `host`(행사 A live, B draft), 공동 진행자는 `cohost`(host 조직 member), 교차 테넌트는 `outsider`, 읽기 전용은 `viewer`, 첫 진입 부트스트랩은 `no_app`(05장 10절) |
+| E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState` 저장. 청중은 페르소나 없이 `/api/p/join`. 실제 Google·카카오·네이버 로그인은 자동화하지 않는다(수동 점검표) |
+| 금지 패턴 | 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock(`mock-auth`, `nomad_role`, `nomad_plan`, `dev-user`), 원격 Supabase를 가리키는 Mock, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`나 로그에 두기, 콜백 `next` 무검증, 이메일 일치만으로 외부 계정 합치기, `listUsers` 전체 조회로 사용자 찾기, 네이버 검수 전 운영 `AUTH_PROVIDERS`에 `naver` |
+| 가드 | `isMockAuthAllowed()` = `AUTH_MODE=mock` + Supabase 호스트 루프백 + `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 없음. 거짓이면 `/api/dev/login` 404, 개발용 패널 미렌더, `AUTH_MODE=mock`이면 기동 실패. CI에서 `AUTH_MODE=mock VERCEL_ENV=production` 빌드가 실패해야 한다 |
+| 단계 전환 | 에이전트가 스스로 단계를 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한 뒤에만 LP-06-049 / 050·051을 시작한다. C2 경로도 `[DECISION]`(01장 D20) |
+| 이 제품 작업 ID | A: LP-06-003. B: LP-06-049. C1: LP-06-050. C2: LP-06-051 |

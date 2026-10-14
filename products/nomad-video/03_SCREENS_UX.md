@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | `/` | 마케팅 랜딩 | 공개 | - | P0 |
 | `/pricing` | 요금 | 공개 | - | P0 |
-| `/login`, `/signup` | 인증 | 공개 | - | P0 |
+| `/login`, `/signup`, `/auth/callback` | 인증. 단계별 표시(7절): A 개발용 로그인 패널 + 상단 `MOCK AUTH · 로컬 전용` 배지(`/signup` 없음), B Google 버튼 + 이메일 폼(`/signup`·비밀번호 재설정은 B에서 생김), C 카카오·네이버 버튼. `/auth/callback`은 B부터 | 공개 | - | P0 |
 | `/legal/terms`, `/legal/privacy` | 약관, 개인정보처리방침 | 공개 | - | P0 |
 | `/landing/[slug]` | Track B 공개 랜딩 | 공개 | 소유 조직 Basic+ | P0 |
 | `/lb/[handle]` | 링크인바이오 | 공개 | 전 플랜 | P0 |
@@ -53,7 +53,7 @@
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | `/signup` | 이메일·비밀번호 또는 Google | `signUp(options.data.signup_app='video')` → 코어 트리거가 개인 조직, Starter, 100크레딧 | 이메일 미인증 → 인증 안내 |
+| 1 | `/signup`(B부터. A는 `/login` 개발용 패널의 `owner` 페르소나) | 이메일·비밀번호 또는 Google(C에서 카카오·네이버 추가) | 이메일: `signUp(options.data.signup_app='video')` → 코어 트리거가 개인 조직, Starter, 100크레딧. OAuth: `/auth/callback`의 `finishLogin`이 `bootstrap_app_for_org('video')` 1회 | 이메일 미인증 → 인증 안내, 콜백 실패 → `/login?error=callback`(7절) |
 | 2 | `/dashboard` | 첫 진입 | `session_context('video')`. `entitled=false`면 `bootstrap_app_for_org` | 프로필 없음 → 로그아웃(기본 admin 금지) |
 | 3 | `/dashboard/channels` | YouTube 1채널 연결, 역할·언어 선택, 다채널 위험 고지 동의 | OAuth state 발급 → 콜백에서 state 소비 → 토큰 암호화 → `channels` INSERT | OA001 → "연결을 다시 시작하세요" |
 | 4 | `/dashboard/sources` | 도우인 URL 붙여넣기, 권리 근거 선택 | 허용 목록 검사 → 1크레딧 → `source.download` | 도메인 거부 422, 크레딧 부족 402 |
@@ -456,3 +456,36 @@ reduced-motion이면 0~4단계 없이 정지 이미지만 보인다. 생성 건�
 | 3D 히어로 | 캔버스 `aria-hidden`, reduced-motion 정지 이미지, [흐름 멈춤] 토글, 3D 로딩 전에 제목·CTA 사용 가능, 단계 레이블은 HTML |
 | 채팅 | 메시지 목록 `aria-live="polite"`(스트리밍은 완료 때 한 번 읽음), 출처 칩 키보드 접근, 375px에서 전체 화면 시트 |
 | 음성 | 음성은 텍스트 입력의 대안이고 모든 기능은 음성 없이 쓸 수 있다. 녹음 중 상태를 텍스트로도 표시. 샘플·읽어 주기 플레이어는 스페이스(재생/정지) |
+
+## 7. 로그인 화면 단계별 구성 (2026-10-14 추가, 확정 결정 22)
+
+정본: `docs/products/_platform-core/AUTH_ROADMAP.md` 2.1절, 3.2절, 5.2절, 7장. 로그인 뒤 화면(`/dashboard/**`, `/onboarding/ai`)은 단계와 무관하게 같다. 여기서 말하는 로그인은 사용자 계정 로그인이며, 채널 연결(`/dashboard/channels`의 YouTube·Meta·TikTok OAuth, 네이버 클립 브라우저 로그인 창)은 단계와 상관없이 2.1절·2.2.1절 그대로다.
+
+### 7.1 `/login` 구성
+
+| 단계 | 구성 | 표시 조건 |
+|---|---|---|
+| A | "개발용 로그인" 패널: 페르소나 버튼 목록(라벨 예 "owner · Starter 개인 조직", "adv_owner · Advanced 팀 owner", "adv_member · Advanced 팀 member", "outsider · 다른 조직", "no_app · video 엔타이틀먼트 없음"), 현재 로그인 페르소나, 로그아웃. 모든 화면 상단에 고정 배지 `MOCK AUTH · 로컬 전용`(대시보드 셸 포함, 경고색 토큰). 제공자 버튼·이메일 폼·`/signup` 링크 없음 | 서버 컴포넌트에서 `isMockAuthAllowed()`가 참일 때만 렌더. 거짓이면 패널 코드 자체를 내보내지 않는다 |
+| B | "Google로 계속하기" 버튼(`prompt: 'select_account'`) + 이메일·비밀번호 폼(01장 D-28) + "비밀번호를 잊으셨나요" + `/signup` 링크. OAuth는 가입과 로그인이 같은 버튼이라 `/signup`에도 같은 Google 버튼 | `AUTH_PROVIDERS`에 `google`, `email` |
+| C | B 구성 + "카카오로 계속하기"(C1, 카카오 디자인 가이드 색·문구, 가이드 최신판은 미확인), "네이버로 계속하기"(C2) | `AUTH_PROVIDERS`에 `kakao`, `naver`. 네이버는 검수 통과 전 운영에 노출하지 않는다 |
+
+버튼 순서(제안): Google, 카카오, 네이버, 구분선, 이메일 폼. `next` 쿼리는 그대로 전달하고 서버가 화이트리스트로 검사한다.
+
+### 7.2 오류 상태
+
+| 쿼리·화면 | 원인 | 표시 |
+|---|---|---|
+| `/login?error=callback` | 콜백 `code` 없음·재사용·만료, 코드 교환 실패 | "로그인을 마치지 못했습니다. 다시 시도해 주세요." 토큰·코드·원문 오류는 표시하지 않는다 |
+| `/login?error=state` | (C2 브리지) state 쿠키 없음·불일치·만료 | "로그인 요청이 만료되었습니다. 처음부터 다시 시도해 주세요." |
+| `/login?error=email_in_use` | (C2 브리지) 같은 이메일로 이미 다른 방법으로 가입함 | "이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정에서 네이버를 연결하세요." |
+| 프로필 없음 | 콜백 2단계 실패 | 로그아웃 후 `/login`(기본 admin 금지) |
+| 403 정지 | `status=suspended` | "이용이 정지된 계정입니다. 고객센터로 문의하세요." |
+| `/no-access` | video는 open 앱이라 해당 없음. `no_app` 페르소나는 첫 진입 부트스트랩(2.1절 2단계)으로 엔타이틀먼트를 얻는다 | - |
+
+### 7.3 첫 OAuth 로그인 뒤 약관 동의
+
+OAuth는 가입 화면을 거치지 않으므로 약관·개인정보처리방침 동의를 제품 온보딩의 첫 단계에서 받는다. 순서: `/auth/callback` → (첫 로그인이고 약관 동의 기록이 없으면) 온보딩 첫 단계 "약관 동의"(이용약관, 개인정보처리방침, 만 14세 이상 확인, 01장 6절) → `/onboarding/ai`(AI 처리 방식, 2.7절) → `/dashboard`. 동의 기록 위치(감사 기록 또는 프로필 메타데이터)는 VID-06-063에서 정한다(제안: `write_audit`, action `terms.accept`, 약관 버전을 메타데이터에). 이메일 가입은 `/signup` 폼에서 동의를 받으므로 이 단계를 건너뛴다. Stage A 시드 계정은 동의한 상태로 본다.
+
+### 7.4 설정 → 로그인 방법 (C단계, P1)
+
+`/dashboard/settings/login-methods`(제안 경로): 연결된 로그인 수단(Google, 카카오, 네이버, 이메일) 목록, 연결·해제. 연결은 로그인 상태에서 `linkIdentity`(브리지 네이버는 서버 경로), 해제는 남는 로그인 수단이 1개 이상일 때만. 역할 접근은 본인(전 역할), 플랜 접근은 전 플랜. 이 화면은 채널 연결(`/dashboard/channels`)과 다른 화면이며 서로 링크하지 않는다(사용자가 "네이버 연결"을 혼동하지 않게 문구를 "네이버 아이디로 로그인 연결"로 쓴다, 제안).

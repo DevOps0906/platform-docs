@@ -4,7 +4,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·가입·콜백 작업이면 `AUTH_ROADMAP.md`(이 파일 끝 "인증 단계 규칙" 절) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장, `DB_CONVENTIONS.md` 14장(pgvector) |
 | 2 | 이 폴더 `01_PRD.md`(Track A~F, 단가, 금지 문구) → `02_ARCHITECTURE.md` → `05_DATA_MODEL.md` → `04_API.md` → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md`(자기 작업 행) → `07_SOURCE_MIGRATION.md` |
 | 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-video 절, 랜딩이면 `HERO_3D.md` |
@@ -111,4 +111,21 @@
 
 ## 7. 금지 패턴
 
-07장 4절 요약: 크레딧 RPC 권한 미회수, 비원자 차감, 웹훅 서명 선택 검증·orderId 파싱, `Date.now()` customerKey, OAuth state 신뢰, 토큰 평문·0키 폴백, 세션 없는 anon 클라이언트, `FOR ALL` 정책, `x-internal-call`·자기 HTTP 호출, Mock 로그인, `/landing` 보호, 이메일 자동 계정 병합, task 소유권 미검증, 자유 모델명, 예외 원문 노출, 타임아웃 없는 하위 프로세스, yt-dlp 인자 주입, sanitize 없는 HTML, 난수 지표, 미검증 마케팅 수치, 운영자 이메일 하드코딩, 실키 `.env` 커밋, mock 응답으로 장애 숨기기. AI·디자인(2026-10-13): LLM·음성 키를 브라우저·미디어 워커에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·개인정보, LLM이 대가성 문구를 쓰거나 지우기, 근거 없는 수치·가상 후기 생성, 원본 오디오를 국외 STT로 보내기, 내레이션 도중 제공자 대체, 클라이언트 임의 텍스트 TTS(샘플 100자 예외), FastAPI에 미디어 처리 넣기, OpenAI TTS 백업 부활, 3D 재질에 토큰 밖 색·3D 안 숫자, "Tailwind로"만 지시해 v3 설정 생성.
+07장 4절 요약: 크레딧 RPC 권한 미회수, 비원자 차감, 웹훅 서명 선택 검증·orderId 파싱, `Date.now()` customerKey, OAuth state 신뢰, 토큰 평문·0키 폴백, 세션 없는 anon 클라이언트, `FOR ALL` 정책, `x-internal-call`·자기 HTTP 호출, 쿠키·localStorage 역할 Mock 로그인(허용되는 Mock은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정뿐), `/landing` 보호, 이메일 자동 계정 병합, task 소유권 미검증, 자유 모델명, 예외 원문 노출, 타임아웃 없는 하위 프로세스, yt-dlp 인자 주입, sanitize 없는 HTML, 난수 지표, 미검증 마케팅 수치, 운영자 이메일 하드코딩, 실키 `.env` 커밋, mock 응답으로 장애 숨기기. AI·디자인(2026-10-13): LLM·음성 키를 브라우저·미디어 워커에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·개인정보, LLM이 대가성 문구를 쓰거나 지우기, 근거 없는 수치·가상 후기 생성, 원본 오디오를 국외 STT로 보내기, 내레이션 도중 제공자 대체, 클라이언트 임의 텍스트 TTS(샘플 100자 예외), FastAPI에 미디어 처리 넣기, OpenAI TTS 백업 부활, 3D 재질에 토큰 밖 색·3D 안 숫자, "Tailwind로"만 지시해 v3 설정 생성.
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본: `docs/products/_platform-core/AUTH_ROADMAP.md`. 이 제품 문서의 반영 위치: 01장 9절(범위)·8.1절(D-26~D-29), 02장 9절, 03장 7절, 04장 8절, 05장 10절, 06장 8절, 07장 6절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 **Stage A(Mock)**. 단계는 사람이 바꾼다. 에이전트가 스스로 B·C로 넘어가지 않는다 |
+| 이 제품의 작업 | A: VID-06-004(W3). B: VID-06-063(G1 후, W7 맨 앞, P0, Fable). C1: VID-06-064(G2 후, W8, P1, Opus). C2: VID-06-065(G2 후, W8, P1, Fable) |
+| 세션 | 모든 단계에서 실제 Supabase JWT. `requireSession('video')`·`proxy.ts`·레이아웃 가드·RLS는 단계와 무관하게 같은 코드 |
+| 단계 분기 위치 | `AUTH_MODE`·제공자 목록은 `src/lib/auth/`, `src/app/(auth)/`, `src/app/auth/`, `src/app/api/dev/login/`에서만 읽는다. 기능 코드·오케스트레이터·미디어 워커·`apps/api`에 `if (mock)`이나 페르소나 이메일 분기를 넣지 않는다(039 CI가 실패시킴) |
+| 페르소나 사용 | 로컬: `supabase start` → `supabase db reset` → `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` → `node scripts/dev/seed-users.mjs --app video` → `/login` 개발용 패널. 페르소나: `owner`(Starter), `admin`, `member`, `viewer`, `outsider`(교차 테넌트), `no_app`, `suspended`, `ops`, `adv_owner`·`adv_member`(Advanced 팀, 대행·팀·Track D/F 확인). 상세는 05장 10절 |
+| E2E | Playwright `globalSetup`이 `/api/dev/login`으로 페르소나별 `storageState`를 저장하고 테스트는 필요한 상태로 시작한다(007, 038). Google·카카오·네이버 실로그인은 자동화하지 않고 사람이 수동 점검표로 확인 |
+| 금지 패턴 | 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock(`mock-auth.ts`, `nomad_role`, `nomad_plan`, `dev-user`), 원격 Supabase에 시드 계정 생성, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·로그에 노출, `AUTH_MODE=mock`에서 조용히 live로 전환, 콜백 `next` 무검증, 이메일 일치만으로 계정 자동 병합, `listUsers` 전체 조회로 사용자 찾기 |
+| 혼동 금지 | 채널 연결 OAuth(YouTube·Meta·TikTok, `core.oauth_states`, VID-06-008)와 네이버 클립 Playwright 로그인 세션(VID-06-057, `CredentialVault` provider `naver`)은 사용자 로그인이 아니다. 인증 단계와 무관하게 그대로 두고, 로그인 코드와 서로 import하지 않는다. 로그인용 Google 클라이언트와 채널용 YouTube 클라이언트는 분리한다(01장 D-29) |
+| 단계 전환 | G1(`AUTH_ROADMAP.md` 4장)·G2(6장)는 사람(대표님)이 판정하고 task `log.md`에 `[DECISION] G1 통과`·`[DECISION] G2 통과`로 남긴다. 네이버 경로(스파이크 결과)도 `[DECISION]`으로 기록하고 `NAVER_AUTH_PATH`에 같은 값을 넣는다 |
+| 로그인 없는 흐름 | `/landing/[slug]`, `/lb/[handle]`, `/r/[code]`, `/review/[token]`에는 로그인 버튼을 추가하지 않는다 |

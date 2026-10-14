@@ -85,7 +85,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 CA의 Anthrop
 | SM 플랜 정의 3벌 | blog 플랜은 `core.plans` 한 곳(01장 4장) | `:666` |
 | SM 결제 두 번째 경로(웹훅 orderId 파싱) | 위조 요청만 통과 | `:667` |
 | `x-internal-call` 우회, `fetch(APP_URL+'/api/…')` 자기 호출 | 인증 우회. CA 큐 프로세서와 발행 라우트에 있었음 | `:668`, `NOMAD Shorts Maker/src/skill/schedule-engine/queue-processor.ts:62-66` |
-| Mock 로그인(`lib/mock-auth.ts`) | 프로덕션 노출 | `:669` |
+| Mock 로그인(`lib/mock-auth.ts`, 쿠키 역할 Mock) | 프로덕션 노출. 쿠키 역할 Mock 금지, 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 시드 계정의 실제 JWT, BL-06-004) | `:669` |
 | LLM 클라이언트 3종, YSM Anthropic 직접 호출 | gateway 하나 | `:670` |
 | Python 워커가 BullMQ 프로토콜을 흉내 내는 방식 | blog는 Python 워커 없음 | `:671` |
 | 플레이보드 난수 성장률, 대시보드 더미 배열 | 가짜 지표. blog 대시보드도 실데이터만 | `:672` |
@@ -144,7 +144,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 CA의 Anthrop
 | 사용자 지정 사이트 URL로 서버 fetch(SSRF) | `NOMAD Shorts Maker/src/app/api/accounts/[id]/connect/route.ts:41`, `:53` | 내부망 접근 | 공인 https만, 리다이렉트 제한 |
 | cron 다음 실행을 서버 로컬 시간대로 계산 | `NOMAD Shorts Maker/src/skill/schedule-engine/cron-handler.ts:17-41` | KST/UTC 경계 오류 | KST 명시(Phase 2) |
 | 태스크 결과 IDOR | `docs/reviews/Youtube_shots_Maker.md:85` | 타인 원고 노출 | core.jobs RLS |
-| 네이버 이메일 자동 병합 | `:84` | 계정 탈취 | 미도입, 명시적 연결 |
+| 네이버 이메일 자동 병합 | `:84` | 계정 탈취 | 자동 병합 금지. 네이버 로그인은 C2(BL-06-059)에서 네이버 고유 id 매핑 + 로그인 상태의 명시적 연결만, 같은 이메일이면 `email_in_use`(`AUTH_ROADMAP.md` 7.2.3절) |
 | 예외 원문을 응답·URL로 노출 | `:88` | 내부 정보 누출 | 응답 봉투 사용자 문구 |
 | 실키 `.env` 방치 | `:89` | 키 유출 | BL-06-035 |
 | `user_plans FOR ALL`, 클라이언트 플랜 판정 | `SECURITY_BASELINE.md` 14장 | 셀프 업그레이드 | 엔타이틀먼트 서버 판정 |
@@ -171,3 +171,13 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 CA의 Anthrop
 | 4 | Shorts Maker: CA 부분(`src/skill/**`, `src/components/posts/*`, `001_initial.sql`, `src/taste/content-automator`)은 video 저장소 정리 시 `archive/content-automator`로 이동(video 계획과 조율) | video 담당 + 사용자 |
 | 5 | `files.zip` 등 중복 압축본은 내용 동일 확인 후 삭제 | 사용자 |
 | 6 | 이식 완료 파일 목록과 원본 커밋 해시를 `docs/migration/`에 기록(BL-06-033) | - |
+
+## 6. 인증 단계 관련 복사 금지 보충 (2026-10-14, 확정 결정 22)
+
+4절에 쿠키 역할 Mock(`lib/mock-auth.ts`) 행은 있으나 아래 두 항목은 없어 여기에 둔다. 정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.4절, 3.2절이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키·localStorage에 역할·플랜을 적는 Mock(`nomad_role`, `nomad_plan`, `dev-user` 우회) | `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`(같은 계열 원본), `docs/products/_platform-core/SECURITY_BASELINE.md` 17장 | 권한 위조, 프로덕션 노출 | 허용 Mock은 AUTH_ROADMAP 2장(로컬 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 거짓이면 404). CI 금지 문자열(BL-06-032) |
+| 로그인 콜백 `next` 무검증 리다이렉트 | AUTH_ROADMAP 3.2절 5번 | 오픈 리다이렉트 | `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin `NEXT_PUBLIC_APP_URL` 고정(BL-06-057 B-2) |
+| YSM `app/api/auth/naver/*`의 로그인 흐름(1.2절 폐기 행) | `docs/reviews/Youtube_shots_Maker.md:84` | 이메일만으로 매직 링크, `listUsers` 1페이지 | C2(BL-06-059)는 새로 구현하고 이 코드를 참고하지 않는다. 블로그 게시용 네이버 로그인(`naver-login.ts`, 2절)은 사용자 로그인과 별개로 그대로 이식 대상이다 |
