@@ -6,7 +6,8 @@
 |---|---|
 | 주 사용자 | 강연자, 행사 진행자, 방송인과 청중 |
 | DB 스키마(모듈러 번호) | `poll`(1800) |
-| 개발 작업 수 | 48개(`products/live-poll/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 51개(`products/live-poll/06_AGENT_PLAN.md`, 2026-10-14 인증 단계 작업 LP-06-049~051 포함) |
+| 인증 단계 | 진행자만 로그인: Mock(개발) → Google + 이메일(공개 베타 전) → 카카오·네이버(G2 후). 청중·OBS 오버레이는 로그인 없음(`live-poll_develop.md` 13절) |
 | 기획서 | [`products/live-poll/`](../../products/live-poll/) |
 
 ## 이 폴더의 파일

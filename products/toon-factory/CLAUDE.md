@@ -88,3 +88,18 @@
 ## 7. 금지 패턴
 
 07장 4절 요약: 클라이언트 결과물 렌더, 공개 버킷 프리미엄 에셋, Fabric `toObject` 저장, 스톡 변형 카탈로그, fal 안전 필터 끄기, 키 없을 때 placeholder, 크레딧 RPC 직접 호출, 웹훅 서명 생략, `customerKey = Date.now()`, 셀프 플랜 변경 정책, localStorage 잠금 해제, 프로필 없으면 admin, 정책 안 `org_members` 직접 조회, org_id 없는 FK, 사용자 파일명 경로, `.env` 커밋. AI·음성·3D·디자인(07장 4절 추가분): LLM·음성 키 배치 위반, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰, 국외 이전 동의 없는 상용 AI·fal 호출, AI의 문서·위키 직접 수정, 작품 간 설정 컬렉션 혼합, 임의 텍스트 TTS, 영상 음성 도중 제공자 대체, 보이스 복제, AI 표시 회피, 3D 재질 토큰 밖 색, `tailwind.config.js`와 버전 없는 "Tailwind".
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`, 이 제품 적용은 01장 8.1절, 02장 10절, 03장 7절, 04장 8절, 05장 10절, 06장 8절이다.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 Stage A(Mock). 로컬 `.env.local`은 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD`. 배포 환경은 항상 `AUTH_MODE=live` |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `apps/toon/src/lib/auth/`, 로그인 화면(`src/app/(auth)/login/`), `/auth/callback`, `/api/dev/login`, (C2 브리지) `/auth/naver/*`에만 둔다. 기능 코드·워커·`apps/api`에 `if (mock)` 금지 |
+| 세션 | 모든 단계에서 실제 Supabase JWT. `requireSession('toon')`, `session_context`, RLS는 단계와 무관하게 같다. 로그인 직후 처리는 `finishLogin('toon', next)` 하나(Mock 포함) |
+| 페르소나 | `supabase db reset` → `pnpm db:seed-users`(= `node scripts/dev/seed-users.mjs --app toon`, 제품 훅 `seed-users.toon.mjs`). 키: `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, `pro_owner`, `low_credit`(05장 10절). 권한 분기는 `session_context`로만, 페르소나 이메일로 분기 금지 |
+| E2E | Playwright `globalSetup`이 `/api/dev/login`으로 페르소나별 `storageState`를 저장하고 각 테스트는 그 상태로 시작한다. 실제 Google·카카오·네이버 로그인은 자동화하지 않는다(사람 수동 점검표) |
+| 금지 패턴 | 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈 밖 `AUTH_MODE` 참조(CI 실패, TN-06-031), 원격 Supabase에 시드 계정 생성, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·브라우저 번들에 넣기, 콜백 `next` 무검증, 제공자 토큰 저장, 이메일 일치만으로 계정 합치기(07장 6절) |
+| 단계 전환 | 에이전트가 스스로 단계를 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한 뒤에만 B·C 작업을 시작한다. 네이버 경로도 스파이크 뒤 `[DECISION]`으로 기록 |
+| 이 제품의 작업 | A: TN-06-004(모듈 경계, Mock, 시드, 가드, `finishLogin`), TN-06-027(개발용 패널). B: TN-06-067(P0, W6 맨 앞, G1 후). C1: TN-06-068(P1, W7, G2 후). C2: TN-06-069(P1, W7, G2 후) |

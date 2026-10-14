@@ -8,8 +8,8 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 진행자 인증 | `requireSession('poll')`(`SHARED_MODULES.md` 2장). 진행자 쓰기는 대부분 브라우저에서 RLS(문항/선택지 draft 편집, 행사 제목/설정)와 authenticated RPC로 직접 한다. Route Handler는 CSV, 오버레이 키처럼 서버 처리가 필요한 것만 |
-| 청중 인증 | Supabase 세션 없음. Route Handler가 쿠키 `lp_pt_<eventId>`(httpOnly, Secure, SameSite=Lax, 7일)의 참가자 토큰(32바이트 base64url)을 읽어 service_role RPC에 넘긴다. 토큰이 없으면 `/api/p/join`만 허용 |
+| 진행자 인증 | `requireSession('poll')`(`SHARED_MODULES.md` 2장). 세션은 모든 인증 단계(A Mock, B Google·이메일, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(8절, `docs/products/_platform-core/AUTH_ROADMAP.md` 0장). 진행자 쓰기는 대부분 브라우저에서 RLS(문항/선택지 draft 편집, 행사 제목/설정)와 authenticated RPC로 직접 한다. Route Handler는 CSV, 오버레이 키처럼 서버 처리가 필요한 것만 |
+| 청중 인증 | Supabase 세션 없음(인증 단계와 무관, Mock 단계에서도 같다). Route Handler가 쿠키 `lp_pt_<eventId>`(httpOnly, Secure, SameSite=Lax, 7일)의 참가자 토큰(32바이트 base64url)을 읽어 service_role RPC에 넘긴다. 토큰이 없으면 `/api/p/join`만 허용 |
 | IP | `x-forwarded-for` 첫 값(Vercel이 설정)을 `HMAC-SHA256(POLL_IP_HMAC_SECRET, yyyy-mm-dd + ip)` hex로 바꿔 `p_ip_hash`로만 넘긴다. 원문 IP는 로그에도 남기지 않는다 |
 | 멱등 | 투표는 서버 unique가 멱등을 보장한다(재시도 안전, 두 번째는 PL005). 행사 생성은 클라이언트 `request_id`를 받아 Route Handler 없이 RPC를 쓰므로 버튼 중복 클릭은 UI에서 막는다(제안: 필요하면 `idempotency_key` 컬럼 추가) |
 | 크레딧 | 투표·일반 질문·입장·오버레이 경로는 없음. AI·음성 경로(`/api/ai/*`, `/api/voice/*`, `/api/p/voice-question`)만 2.1절 표대로 선차감·정산 |
@@ -250,3 +250,22 @@ SSE `/api/ai/qna-assist` 이벤트: `event: progress` `data: {"node":"moderate"}
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 `expected_version` 불일치 | 409 |
 | 앱 코드 `CONSENT_VERSION_MISMATCH` | 고지문 버전 불일치 | 409 |
 | 앱 코드 `RATE_LIMITED` | 레이트 리밋(PL429와 같은 의미, AI 경로) | 429 + `Retry-After` |
+
+## 8. 인증 단계 라우트 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 3.2절, 7.2.3절. 아래 라우트는 진행자 로그인에만 쓰인다. 청중 경로(`/api/p/*`, 참가자 토큰 쿠키)와 오버레이 경로(`/api/overlay/*`, 오버레이 키)는 인증 단계와 무관하며 이 절의 라우트를 거치지 않는다.
+
+| 메서드 경로 | 단계 | 입력 | 출력 | 처리 | 오류 |
+|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | `{ persona: string, next?: string }`(persona는 05장 10절 키 목록 화이트리스트) | 303 → `finishLogin` 결과 경로 | `isMockAuthAllowed()` 확인 → 쿠키 세션용 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('poll', next)`. 레이트 리밋 대상 아님(로컬 전용) | 판정이 거짓이면 404(존재 자체를 숨김). 알 수 없는 persona 400. 시드 안 된 계정 401 + "`db:seed-users`를 먼저 실행하세요" |
+| `GET /auth/callback?code&next` | B부터(C 재사용) | `code`(PKCE), `next` | 302 | `finishLogin('poll', next)`: (1) `exchangeCodeForSession` (2) `session_context('poll')` 1회 (3) `entitled=false`이면 poll은 open 앱이므로 `rpc('bootstrap_app_for_org', { p_app_id: 'poll' })` 1회 후 재조회(크레딧 멱등) (4) `status` 분기: suspended → 403(pending은 approval 앱 전용이라 poll에는 없다) (5) 첫 로그인이고 베타 약관 동의 기록이 없으면 `/onboarding`(기록 방식은 LP-06-049에서 정한다. 제안: `core.write_audit` `terms.accept`에 약관 버전), 아니면 `next` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음, origin `NEXT_PUBLIC_APP_URL` 고정) 또는 기본 `/events` (6) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login`. `next=//evil.com` → `/events` |
+| `GET /auth/naver/start?next=` | C2 브리지 경로만 | `next` | 302 → 네이버 authorize | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 서명 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 저장. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 429 |
+| `GET /auth/naver/callback?code&state` | C2 브리지 경로만 | `code`, `state` | 302 | 쿠키 state 상수 시간 비교·삭제 → 서버 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(코어 `staged/0010_core_auth_identity_links.sql`)로 사용자 찾기·생성 → `generateLink`+`verifyOtp`로 세션 → `finishLogin('poll', next)`. 네이버 토큰 저장 안 함 | `/login?error=state`(불일치·없음·만료), `/login?error=email_in_use`(같은 이메일 기존 사용자, 자동 연결 안 함), `/login?error=callback` |
+
+`supabase_custom` 경로를 채택하면(01장 D20) 네이버도 `/auth/callback`을 그대로 쓰고 브리지 라우트 2개는 만들지 않는다.
+
+| 오류 코드 | 의미 | HTTP / 이동 |
+|---|---|---|
+| `error=callback` | OAuth 코드 교환 실패(없음·재사용·만료) | `/login?error=callback` |
+| `error=state` | 브리지 state 불일치·없음·만료 | `/login?error=state` |
+| `error=email_in_use` | 브리지: 같은 이메일의 다른 방법 가입자 존재 | `/login?error=email_in_use` |

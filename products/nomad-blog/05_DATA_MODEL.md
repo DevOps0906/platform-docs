@@ -217,7 +217,7 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | 같은 리뷰 #5 | `:82` | OAuth 콜백이 state의 orgId를 신뢰, 세션·CSRF 검증 없음 | 리뷰 #5 → 차단 설계: OAuth가 필요한 채널(Phase 2 인스타그램)은 `create_oauth_state`/`consume_oauth_state`만 사용. 네이버·티스토리·워드프레스 연결은 로그인 세션의 owner/admin이 직접 하는 서버 라우트이고 org는 세션에서만 얻는다. 채널 행 쓰기는 service_role + guard | 2.1절, BL-06-009 |
 | 같은 리뷰 #7 | `:84` | `ENCRYPTION_KEY` 없으면 0키로 암호화(사실상 평문). CA는 세션 쿠키를 평문 저장(`NOMAD Shorts Maker/src/app/api/accounts/[id]/connect/route.ts:30`) | 리뷰 #7 → 차단 설계: blog 테이블에 비밀 컬럼이 없다(세션 쿠키 포함 전부 `encrypted_credentials.ciphertext`). 키는 `CREDENTIALS_KEY_V<n>`, 누락 시 웹·워커 기동 실패. 스모크: 사용자 `encrypted_credentials` SELECT 42501 | 2.1절, 02장 8절, BL-06-009 |
 | `docs/reviews/Youtube_shots_Maker.md` 3장 #2 | `docs/reviews/Youtube_shots_Maker.md:83` | OAuth state가 서명 없는 base64 JSON, user_id 신뢰 | 리뷰 #2 → 차단 설계: YSM OAuth 라우터를 이식하지 않는다. OAuth는 코어 `oauth_states`(32바이트 난수, 1회 소비, 10분 TTL, 멤버십 확인) | BL-06-009 |
-| 같은 리뷰 #3 | `:84` | 네이버 로그인 시 이메일만으로 기존 계정에 매직 링크 발급, `listUsers` 1페이지 | 리뷰 #3 → 차단 설계: MVP에 네이버 소셜 로그인을 넣지 않는다. 도입 시 이메일 자동 병합 금지, `naver_id` 매핑과 로그인 상태에서의 명시적 연결만(01장 8절 #12). 블로그 채널용 네이버 자격증명은 로그인 신원과 무관하며 조직 데이터로만 저장 | BL-06-004 |
+| 같은 리뷰 #3 | `:84` | 네이버 로그인 시 이메일만으로 기존 계정에 매직 링크 발급, `listUsers` 1페이지 | 리뷰 #3 → 차단 설계: MVP에 네이버 소셜 로그인을 넣지 않는다. 확정 결정 22로 C2(G2 후, BL-06-059)에서 도입하며 이메일 자동 병합 금지, 네이버 고유 id 매핑과 로그인 상태에서의 명시적 연결만(01장 8.1절, `AUTH_ROADMAP.md` 7.2.3절 5c). 블로그 채널용 네이버 자격증명은 로그인 신원과 무관하며 조직 데이터로만 저장 | BL-06-004, BL-06-059 |
 | 같은 리뷰 #4 | `:85` | 태스크 결과 조회가 소유권 미확인(IDOR) | 리뷰 #4 → 차단 설계: 잡 진행·결과는 `core.jobs` RLS(멤버만, `migrations/0005_core_jobs_storage.sql:51-54`)로만 읽고, 발행 행·매핑도 멤버+엔타이틀먼트 SELECT 정책. task id 기반 조회 API를 만들지 않는다. 스모크: 타 조직 사용자 jobs/발행 0행 | 4절, BL-06-027 |
 
 ## 8. 모놀리스와 모듈러의 차이
@@ -266,3 +266,41 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | RLS 스모크(모놀리스) | 67항목 통과, 0 실패(엔타이틀먼트 없는 사용자 C 2항목은 단일 앱이라 제외) |
 
 스모크 주요 항목: 다른 조직 사용자 B가 A의 posts/channel_accounts/post_affiliate_links/post_publications/affiliate_links/jobs 0행, A 조직에 원고 INSERT 42501, UPDATE·DELETE 0행, 발행 UPDATE·매핑 DELETE 42501, 제품 RPC 7개 42501, `upsert_affiliate_disclosure`·`consent_brandconnect_risk`·`create_brandconnect_application`(A) 42501, 자기 엔타이틀먼트·구독·지갑·역할·platform_role 변경 42501, `grant_credits`/`consume_credits`/원장 INSERT 42501, 채널 계정 INSERT 42501, `encrypted_credentials` SELECT 42501, 자기 조직 원고 INSERT 성공(양성 대조). A: status·compliance 컬럼 직접 변경 42501, 콘텐츠 변경 시 version 증가와 검사 무효화, 워커 잠금 RPC 42501. 서비스: 동의 없음 BL005, 미검사 BL003, 진행 중 중복 23505, 문구 없이 publishing 23514, 잘못된 전이 22023, 타 조직 링크 매핑 42501, 잠금 2중 획득 false, 취소 시 core 잡 canceled, 원고 집계 상태 계산, 공유 자격증명 해제 시 암호문 유지. 엔타이틀먼트 없는 조직(C) 원고 INSERT 42501. 스크립트는 BL-06-027이 `supabase/tests/`로 옮긴다.
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음. 인증 단계는 코어 계약(`core.profiles`, `org_members`, `app_entitlements`, `session_context`) 위에서 동작하고 blog 스키마는 바뀌지 않는다. C2에서 브리지 경로를 택하면 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`을 참조만 한다(06장 6.2절 요청). 정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(이하 AUTH_ROADMAP) 2.2·2.3절이다.
+
+시드는 `scripts/dev/seed-users.mjs --app blog`(공통 행) 뒤에 제품 훅 `scripts/dev/seed-users.blog.mjs`(blog 행)를 실행한다. 둘 다 Supabase 호스트가 `127.0.0.1`·`localhost`가 아니면 즉시 종료하고, 멱등이다(이미 있는 이메일은 건너뛰고 상태만 맞춤). 계정은 `auth.admin.createUser(..., email_confirm: true, user_metadata: { signup_app: 'blog' })`로 만들어 실제 가입 트리거(`migrations/0001_core_identity.sql:113`)를 탄다.
+
+### 10.1 공통 페르소나 (AUTH_ROADMAP 2.2절, blog 기대값)
+
+| 키 | 만드는 방법 | 기대 `session_context('blog')` | blog에서의 쓰임 |
+|---|---|---|---|
+| `owner` | `signup_app='blog'`. 이어서 owner 세션으로 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack: true, p_notice_version: AI_CROSS_BORDER_NOTICE_VERSION })`(`migrations/0008_core_ai.sql:553`) | 개인 조직 owner, `entitled=true`, `plan_code='free'`, `credit_balance=20`(01장 BL-F-001) | 기본 사용자. 원고 생성·검사·워드프레스 발행 E2E(BL-06-037), AI 기능(국외 이전 동의 완료 상태) |
+| `admin` | 생성 후 owner 세션이 `invite_member(owner_org, admin, 'admin')` → admin 세션이 `accept_invite` | owner 조직 admin | 위험 동의·채널 연결·대가성 문구 편집(owner/admin) 양성 대조 |
+| `member` | 같은 방법(member) | owner 조직 member | 동의 버튼 403(BL-F-031), 채널 연결 403, 원고 작성 허용 |
+| `viewer` | 같은 방법(viewer) | owner 조직 viewer | 에디터 읽기 전용, 발행 요청 403 |
+| `outsider` | `signup_app='blog'`(다른 개인 조직). 국외 이전 선택 안 함(`ai_org_settings` 행 없음) | 자기 조직 owner, Free | 교차 테넌트: owner 조직의 posts·channel_accounts·post_publications·`ai_conversations`·`wiki_pages` 0행, 다른 조직 `post_id`로 채팅 403. AI 버튼 잠김 → `/onboarding/ai` 이동 |
+| `no_app` | `signup_app` 없이 생성 | 모듈러: `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('blog')` 1회 후 `entitled=true`, 크레딧 20(재로그인해도 1회). 모놀리스: 앱 행 1개라 가입 트리거가 이미 부트스트랩해 처음부터 `entitled=true`(AUTH_ROADMAP 3.2절) | OAuth 첫 로그인 경로(B-1)의 A단계 사전 검증(모듈러) |
+| `suspended` | 생성 후 service_role로 `status=suspended` | 403 | 정지 안내 화면 |
+| `ops` | 생성 후 service_role로 `platform_role=platform_admin` | 운영자 | 운영 화면(있을 때) |
+| `pending` | 만들지 않음 | - | blog는 open 앱(approval 아님) |
+
+Free 플랜 `team_members=1`(`1300_blog.sql:38`)은 설정 > 멤버 초대 라우트(BL-06-027)의 서버 판정이고 코어 `invite_member`(`migrations/0004_core_security.sql:317`)는 플랜 한도를 보지 않는다. 시드는 RPC를 직접 불러 Free 조직에 admin·member·viewer를 만든다. 이것은 개발 데이터일 뿐이며 제품 초대 라우트의 Free 403 검사는 별도 테스트로 한다.
+
+### 10.2 blog 도메인 페르소나 (제품 훅 `seed-users.blog.mjs`)
+
+| 키 | 이메일 | 만드는 방법(실제 RPC·서비스 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|---|
+| `owner_pro` | `owner_pro@dev.test` | `signup_app='blog'`로 생성 → service_role로 `core.app_entitlements`의 plan을 `pro`로 바꾸고 `source='manual'`(제안: Toss 결제 경로는 결제 E2E BL-06-029가 검증하므로 시드는 직접 갱신) → `grant_credits(org, 300, 'blog', 'dev_seed_pro', 'plan', p_idempotency_key => 'dev:pro:<org>', p_reset_plan_bucket => true)`(이월 없음, 01장 4.1절) → owner 세션 `set_ai_cross_border_ack(true)` | `plan_code='pro'`, `credit_balance=300`(Free 월 20을 만료 처리 후 Pro 월 300, 01장 BL-F-004와 같은 값), 브랜드커넥트·예약 발행·고품질·제휴 자동 삽입·위키 사용 가능 | 캘린더·예약 발행, 브랜드커넥트 동의 화면, 위키(Pro 이상), 고품질 모드 게이팅 양성 대조 |
+
+시드가 만들지 않는 것: 블로그 채널 계정(`blog.channel_accounts`)과 네이버·티스토리 자격증명, 브랜드커넥트 계정·동의, 제휴 계정·키. 블로그 게시용 네이버 계정은 사용자 로그인 신원과 무관한 조직 데이터(7절 YSM #3 행)이고 실제 비밀이 필요하므로 페르소나에 섞지 않는다. 발행 테스트는 로컬 WordPress 컨테이너와 녹화 픽스처(BL-06-030)를 쓰고, 테스트가 필요한 채널 행은 각 테스트가 service_role로 만들고 지운다.
+
+### 10.3 모놀리스와 모듈러 차이
+
+| 항목 | 모듈러(`core` 스키마) | 모놀리스(`public`, 이번 개발 기본) |
+|---|---|---|
+| `no_app` | `entitled=false`로 시작, `finishLogin` 부트스트랩 1회 | 가입 트리거가 자동 부트스트랩(`MONOLITH_CORE_LITE.sql` 머리말 b항), `bootstrap_app_for_org` 호출은 무동작. 같은 코드 |
+| `--app` | 통합 DB면 여러 번 줄 수 있음(두 번째 앱부터 `bootstrap_app_for_org`) | `--app blog` 하나 |
+| RPC 이름 | `core.invite_member` 등 | `public.` 같은 이름(05장 8절) |

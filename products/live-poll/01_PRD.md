@@ -24,7 +24,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
-| 진행자 가입/로그인(이메일, Google), 베타 가입 | MVP | `CORE_SPEC.md` 2.2, seed `poll` status beta |
+| 진행자 가입/로그인, 베타 가입. 인증 단계(확정 결정 22): MVP 개발은 Mock(Stage A, 로컬 시드 계정), 공개 베타 전 Google(+이메일)(Stage B, P0), 카카오·네이버는 G2 후(Stage C, 카카오 P1·네이버 P1). 청중(코드·QR 입장)과 OBS 오버레이(키)는 로그인이 없고 단계와 무관하다 | MVP(A·B), C는 G2 후 | `CORE_SPEC.md` 2.2, seed `poll` status beta, `docs/products/_platform-core/AUTH_ROADMAP.md` 0장, 8장 |
 | 행사 생성, 6자리 코드, QR, 상태 제어(대기/진행/종료) | MVP | 원본 PRD:18-19, 분석:1254, :1262 |
 | 문항: 단일 선택, 복수 선택, 평점 | MVP | 리뷰:43(#5). 리뷰 축소안은 단일 선택만 두었으나 같은 테이블 구조로 추가 비용이 작아 포함(제안) |
 | 청중 입장(닉네임 또는 익명), 무새로고침 전환 | MVP | 원본 PRD:23-24 |
@@ -56,7 +56,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| LP-F-001 | 진행자 가입 | 신규 | 이메일+비밀번호 또는 Google. 가입 폼은 `signup_app='poll'`. 베타 약관 동의 체크 필수 | 가입 직후 `session_context('poll')`의 `entitled=true`, `plan_code='free'` | `SHARED_MODULES.md` 2장 |
+| LP-F-001 | 진행자 가입 | 신규 | 단계로 켠다(8.1절, `docs/products/_platform-core/AUTH_ROADMAP.md`). A(MVP 개발): 로컬 시드 계정 Mock 로그인만(AUTH_ROADMAP 2장, 배포 환경에서 `/api/dev/login` 404). 쿠키 역할 Mock 금지. B(공개 베타 전, P0): 이메일+비밀번호 또는 Google. 이메일 가입 폼은 `signup_app='poll'`, Google 첫 로그인은 콜백 `finishLogin`이 엔타이틀먼트를 보장. 베타 약관 동의는 이메일 가입 폼 체크 또는 OAuth 첫 로그인 직후 `/onboarding` 첫 단계에서 필수. C(G2 후): 카카오(P1), 네이버(P1) | A: `owner` 페르소나 로그인 직후 `session_context('poll')`의 `entitled=true`, `plan_code='free'`. B: AUTH_ROADMAP 5.3절 B-1~B-6. C: 7.1.3절 C1-1~C1-5, 7.2.4절 C2-1~C2-6 | `SHARED_MODULES.md` 2장, AUTH_ROADMAP 2장, 5.3, 7.1.3, 7.2.4절 |
 | LP-F-002 | 행사 생성 | 유지 | 제목 1~120자, 설명 0~500자. 코드는 서버가 암호학적 난수 6자리로 만든다. archived가 아닌 행사끼리 코드가 겹치지 않는다. 조직당 시간당 30건 | 생성 즉시 6자리 코드와 QR이 보인다. 31번째 생성은 PL429 | 조각:538, :700 |
 | LP-F-003 | 행사 상태 제어 | 유지 | draft(준비) → live(진행, 청중 대기실 열림) → ended(종료) → archived. ended → live 재개는 종료 24시간 이내. 동시 live 행사 수는 플랜 한도(free 1) | 허용되지 않은 전이는 PL011. live 2개째는 PL012 | 원본 PRD:19, 조각:734 |
 | LP-F-004 | 문항 편집 | 디벨롭 | 단일 선택/복수 선택(최대 선택 수 1~10)/평점(2~10점). 제목 1~200자, 선택지 2~10개, 선택지 1~120자. draft 문항만 편집. 열린 뒤에는 내용 고정 | 열린 문항의 제목 변경은 0행 갱신. 선택지 1개로 열기는 PL007 | 리뷰:43, 조각:316 |
@@ -198,7 +198,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 
 | 항목 | 내용 |
 |---|---|
-| 개인정보: 진행자 | 이메일, 표시 이름(코어 `profiles`). 목적: 계정과 결제. 보존: 탈퇴 후 조직 soft delete → 30일 → `purge_organization`(`SECURITY_BASELINE.md` 12장) |
+| 개인정보: 진행자 | 이메일, 표시 이름(코어 `profiles`). 로그인 제공자 식별자(단계별, `docs/products/_platform-core/AUTH_ROADMAP.md` 5.2, 7.1.1, 7.2.3절): B Google 계정 식별자·이름·프로필 이미지 URL, C1 카카오 계정 식별자·닉네임·프로필 이미지(비즈 앱이면 이메일), C2 네이버 고유 id·이메일·이름·프로필 이미지 URL(브리지 경로면 `core.auth_identity_links`에 제공자 id 저장). 청중은 로그인하지 않으므로 해당 없음. 목적: 계정과 결제. 보존: 탈퇴 후 조직 soft delete → 30일 → `purge_organization`(`SECURITY_BASELINE.md` 12장) |
 | 개인정보: 청중 | 닉네임(선택), 투표 내용, 질문 본문, 참가자 토큰의 sha256. 원문 IP는 저장하지 않는다. IP는 Route Handler에서 HMAC-SHA256(서버 비밀 `POLL_IP_HMAC_SECRET` + 날짜)으로 바꿔 레이트 리밋 키에만 쓰고, 버킷은 1일 뒤 `purge_rate_limit_buckets`로 지운다(리뷰:42, :56). 보존: 종료 후 플랜 보존 기간이 지나면 참가자 행을 지우고 투표와 질문이 함께 지워진다. 확정 집계에는 개인 식별자가 없다 |
 | 암호화 대상 | 평문 비밀 컬럼 없음. 참가자 토큰, 오버레이 키, 입장 비밀번호는 해시만(`SECURITY_BASELINE.md` 12장) |
 | 삭제 절차 | 행사 삭제 → soft delete → 7일 → 물리 삭제. 청중 개인 삭제 요청은 진행자 콘솔의 참가자 목록에서 해당 닉네임 행 삭제(Phase 2, service_role 경로, 감사 기록) |
@@ -281,3 +281,28 @@ AI 금지 문구(6장 금지 문구에 더해 AI 출력에 적용):
 | D16 | 오픈소스 STT·TTS 모델, ElevenLabs 데이터 보관 | 공용 서버 결정(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:52-72`) | 오픈소스 보이스 1종과 ElevenLabs 보이스 1종을 환경변수로 고정. ElevenLabs 입력 보관·학습 사용·제로 리텐션은 계약으로 구현 시 확인하고 처리방침에 반영 |
 | D17 | 디자인 시스템 레퍼런스 사용 범위 | 진행자 콘솔 Atlassian(주) + Primer(보조) 패턴. 채팅 위젯은 Astryx 패턴(존재·라이선스 미확인) | Atlassian·Primer는 공개 문서의 패턴·토큰 체계만 참고하고 라이브러리를 설치하지 않는다. Astryx는 확인 전까지 미확인으로 두고 실패 시 Primer + shadcn/ui 패턴. 확인은 LP-06-033에서 기록(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`) |
 | D18 | 랜딩 3D 장면의 데이터 | A) 시뮬레이션 값(현재) / B) 실제 공개 샘플 행사 데이터 | A. 운영 수치를 3D에 쓰지 않는다(6장 금지 문구). 시연 값임을 화면에 표시 |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`이고 `docs/products/00_MERGE_ANALYSIS.md:30` 확정 결정 22를 이 제품에 적용한다. 단계 표기만 더했고 기존 결정(이메일 로그인 유지, open 가입 정책, 청중 무로그인 D2, OBS 오버레이 키)은 바꾸지 않았다.
+
+| 단계 | 진행자 로그인 | 진입 게이트 | 우선순위 | 근거 |
+|---|---|---|---|---|
+| A(MVP 개발) | 로컬 Supabase 시드 계정(페르소나) 원클릭 Mock. 실제 JWT. 배포 환경 차단 | W0부터 | P0 | AUTH_ROADMAP 2장 |
+| B(공개 베타 전) | Google + 이메일(LP-F-001의 기존 범위) | G1(AUTH_ROADMAP 4장) | P0 | AUTH_ROADMAP 5장, 8장 live-poll 행 |
+| C1 | 카카오 | G2(AUTH_ROADMAP 6장) | P1 | AUTH_ROADMAP 7.1절, 8장 |
+| C2 | 네이버 | G2 | P1 | AUTH_ROADMAP 7.2절, 8장 |
+
+| 대상 | 단계와의 관계 |
+|---|---|
+| 청중(참가자) | 로그인하지 않는다. `/join`, `/e/<code>`, QR로 입장하고 서버 발급 참가자 토큰(httpOnly 쿠키, D2)으로 식별한다. A·B·C 어느 단계에서도 같은 코드이며 청중 화면에 로그인 버튼을 추가하지 않는다(AUTH_ROADMAP 8장 마지막 문단). 참가자 토큰은 Supabase Auth를 쓰지 않으므로 Mock 단계에서도 그대로 동작한다(로컬 Supabase + service_role RPC `join_event`, 시드 페르소나와 무관) |
+| OBS 오버레이 | 로그인 없이 오버레이 키로만(LP-F-012). 단계와 무관하고 Mock 단계에서도 그대로 동작한다 |
+| 발표 화면 | 진행자 세션(LP-F-011). 단계별 로그인 수단만 다르고 `requireSession('poll')`은 같다 |
+
+열린 결정(인증 단계):
+
+| # | 갈림길 | 선택지 | 권고 |
+|---|---|---|---|
+| D19 | 카카오 이메일 정책(C1) | (a) 비즈 앱 전환 후 `account_email` 필수 동의 / (b) 이메일 없이 허용(온보딩에서 연락 이메일 별도 입력) | (a). AUTH_ROADMAP 7.1.2절 권장. Phase 2 결제 영수증·알림과 Google 계정 연결이 이메일 기준이다. (b)는 비즈 앱 전환 전 임시로만 |
+| D20 | 네이버 경로(C2) | `supabase_custom`(`custom:naver`) / `bridge`(서버 브리지 + 코어 `staged/0010_core_auth_identity_links.sql`) | C2 작업 첫 단계 스파이크(AUTH_ROADMAP 7.2.2절, 0.5일) 결과로 결정하고 `NAVER_AUTH_PATH`와 task `log.md` `[DECISION]`에 기록 |
+| D21 | 이메일+비밀번호 가입 유지(open 가입 제품) | A) 유지(현재 LP-F-001) / B) Google·카카오·네이버만 | A. 기존 결정(LP-F-001)을 바꾸지 않는다. 회사 메일 계정으로 가입하려는 진행자(1장 사내 교육 담당)를 위해 유지(제안). 이메일 가입·비밀번호 재설정 화면은 B단계에서 구현 |

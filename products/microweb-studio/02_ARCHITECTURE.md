@@ -72,7 +72,7 @@ apps/microweb-studio/
 | engine | content JSON → React. 데이터 소스를 모른다 | 없음 |
 | showroom | 정적 데이터 + `templates`/`portfolio_items` 읽기, 문의 제출 | engine(미리보기), server |
 | public-site | `site_publications` 읽기(anon 키), 방명록/RSVP/축하말 제출 | engine, server |
-| studio | 사이트/리드/주문 CRUD(사용자 세션 + RPC), 업로드, 게시 요청 | engine, server, core-auth |
+| studio | 사이트/리드/주문 CRUD(사용자 세션 + RPC), 업로드, 게시 요청. 인증 단계를 모른다(`AUTH_MODE` 참조 0, 9절) | engine, server, core-auth(`src/lib/auth/`) |
 | server | service_role 호출을 한곳에 모은다. `createAdminClient`는 여기서만 import | core-db, core-billing, core-ai, core-jobs |
 | worker | 이미지 처리와 게시 파일 복사, 만료/정리 스케줄 | core-jobs, storage |
 | ai-gateway(`src/app/api/ai`, `src/server/ai`) | 대화 매핑, 서명 토큰 발급, 턴 선차감·정산 | core-ai, core-credits |
@@ -94,7 +94,7 @@ AI 모듈 경계(`docs/products/_platform-core/AI_ARCHITECTURE.md:5-14`를 인�
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 운영자 로그인, `requireSession('microweb')` | `src/app/studio/layout.tsx`, `api/studio/*` | 공개 가입 끔(초대제) |
+| auth | 운영자 로그인, `requireSession('microweb')`. 단계(A Mock → B Google + 초대 메일 → C 카카오·네이버 선택) 분기는 `src/lib/auth/`(`AUTH_ROADMAP.md` 3.1절)·로그인 화면·콜백만(9절) | `src/app/studio/layout.tsx`, `api/studio/*`, `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`(A, 로컬 전용) | 공개 가입 끔(초대제) |
 | org | 개인 조직, 역할(owner/admin/member) | RPC 내부 `has_org_role` | 1인 1워크스페이스 |
 | credits | 셀프 발행 차감·환불(Phase 2) | `api/studio/sites/[id]/publish` | 대행 모드는 쓰지 않음 |
 | toss | 크레딧팩 결제(Phase 2) | `api/billing/*` | `confirm_payment_order` 결함 회피(4장) |
@@ -264,3 +264,44 @@ AI 모듈 경계(`docs/products/_platform-core/AI_ARCHITECTURE.md:5-14`를 인�
 | 금지 | `GOOGLE_CLOUD_PROJECT`, `PROXY_HEADER` 등 원본 Vertex 변수. AI 관련 변수에 `NEXT_PUBLIC_` 접두사(`NEXT_PUBLIC_HERO3D_ENABLED` 제외) | - | 존재하면 CI 경고 |
 
 AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(EdDSA, `docs/products/_platform-core/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 이 절은 microweb(`signup_policy='invite'`)에 적용되는 값만 정한다. 세션·조직·엔타이틀먼트 계약과 RLS는 단계와 무관하게 같다(`AUTH_ROADMAP.md` 0장 불변 조건).
+
+| 단계 | 언제 | 켜지는 로그인 | microweb 특이점 | 작업 |
+|---|---|---|---|---|
+| A Mock | W0부터 G1까지 | 로컬 Supabase 시드 페르소나 원클릭(`POST /api/dev/login`) | 공통 페르소나 + `studio_denied`(허용 목록 없음). 페르소나 계정의 엔타이틀먼트는 시드 훅이 service_role `bootstrap_app_for_org`로 만든다(invite 앱이라 가입 트리거가 만들지 않음, 05장 10절) | MW-06-003 |
+| B Google + 초대 메일 | G1 통과 후, 공개 베타 전 | Google, 초대 메일 링크 | 콜백은 `bootstrap_app_for_org`를 부르지 않는다. 초대 이메일과 다른 Google 계정은 `entitled=false` → `/no-access`. 엔타이틀먼트가 있어도 `studio_access`가 없으면 `/pending`(2차 게이트 유지) | MW-06-054 |
+| C1 카카오 | G2 통과 후, P2 선택 | `kakao` | 이메일 정책 01장 D-20(권고 비즈 앱 (a)) | MW-06-055 |
+| C2 네이버 | G2 통과 후, P2 선택 | `custom:naver` 또는 브리지 | 경로 01장 D-21(스파이크) | MW-06-056 |
+
+| 규칙 | 내용 | 근거 |
+|---|---|---|
+| 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`를 읽는 코드는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`(C2 브리지면 `src/app/auth/naver/`)에만 둔다. engine, showroom, public-site, studio, server, worker, `apps/api`에서 `if (mock)` 금지 | `AUTH_ROADMAP.md` 0장, 9장 CI 검사 |
+| 세션 | 모든 단계에서 실제 Supabase JWT. `requireSession('microweb')` → `studio_access` 확인 경로는 단계와 무관하게 같다. Mock도 로그인 직후 `finishLogin`(콜백 2~5번)을 거친다 | `AUTH_ROADMAP.md` 3.2절 |
+| 콜백 분기(invite) | 코드 교환 → `session_context('microweb')` → `entitled=false`면 `/no-access`(초대 이메일 안내, 부트스트랩 호출 없음) → pending `/pending`, suspended 403 → `next` 화이트리스트(기본 `/studio`) → 감사 `auth.login` | `AUTH_ROADMAP.md` 3.2절 3번, 5.2절 "초대제 앱" |
+| 초대 부여 | 엔타이틀먼트와 `studio_access`는 운영자 관리자 라우트(MW-06-026)가 service_role로 만든다. 로그인 경로는 권한을 만들지 않는다 | 05장 4절 |
+| 워커·FastAPI | 인증 단계와 무관(서비스 키·서명 토큰). 로그인 관련 env를 두지 않는다 | 2절 AI 모듈 경계 |
+
+환경변수(`AUTH_ROADMAP.md` 3.3절 중 이 제품 해당분, 8절 표에 더한다):
+
+| 변수 | 단계 | 배치 | 누락 시 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버). 워커·`apps/api`에는 두지 않음 | `live`. 로컬 `.env.example` 기본값은 `mock` |
+| `AUTH_PROVIDERS` | B·C | web | live에서 로그인 수단 0개면 기동 실패. 운영 B단계 값 `google,email`(email = 초대 메일 링크) |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web, `scripts/dev/seed-users.mjs`. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱 env 아님) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | C1(선택) | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2(선택) | `supabase_custom`: 등록 스크립트만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2(선택) | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web, 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+| 외부 콘솔 | 배포 토폴로지 메모 |
+|---|---|
+| Google Cloud(B) | OAuth 동의 화면(External, 기본 범위만), 웹 클라이언트 ID. 승인된 리디렉션 URI는 앱 도메인이 아니라 Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback`). Supabase Redirect URLs에 `https://<도메인>/auth/callback`(미리보기 도메인 명시 등록) (`AUTH_ROADMAP.md` 5.1절) |
+| 카카오 디벨로퍼스(C1, 선택) | REST API 키, Client Secret, Redirect URI = Supabase 콜백. 공유·지도용 `NEXT_PUBLIC_KAKAO_JS_KEY`(JS 키, 7절 도메인 등록)와 같은 앱을 쓸지는 미확인(구현 시 확인) |
+| 네이버 개발자센터(C2, 선택) | 애플리케이션 등록, 검수 전 "개발 중" 상태. 브리지 경로면 콜백은 앱 도메인 `/auth/naver/callback` |
+| Vercel | 배포 env는 `AUTH_MODE=live`. `VERCEL_ENV`가 있으면 Mock 판정이 항상 거짓(`AUTH_ROADMAP.md` 2.4절) |
+
+로그인 없는 사용자 흐름(하객 `/i/*`, 고객 시안 `/p/*`, 쇼룸 `/`·`/contact`)은 단계와 무관하다. 이 경로의 미들웨어·레이아웃은 세션을 요구하지 않고 로그인 버튼을 두지 않는다(`AUTH_ROADMAP.md:339`).

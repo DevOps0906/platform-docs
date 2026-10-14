@@ -32,7 +32,7 @@
 
 | 모듈 | 디렉토리 | 책임 | 의존 |
 |---|---|---|---|
-| 셸·인증 | `src/proxy.ts`, `src/lib/supabase/`, `src/components/shell/` | 세션 갱신, 라우트 보호, `session_context`, 고지 동의 확인 | packages/core-db |
+| 셸·인증 | `src/proxy.ts`, `src/lib/supabase/`, `src/components/shell/`, `src/lib/auth/`(2026-10-14) | 세션 갱신, 라우트 보호, `session_context`, 고지 동의 확인. 인증 단계 분기(`AUTH_MODE`, 제공자 목록, `isMockAuthAllowed`, `finishLogin`)는 `src/lib/auth/`·로그인 화면·`/auth/callback`·`/api/dev/login`에만 둔다(9절) | packages/core-db, packages/core-auth |
 | 보안 유틸 | `src/lib/security/` | 계좌번호 마스킹·HMAC, 로그 마스킹, 자격증명 vault 호출 래퍼(server-only) | packages/core-auth |
 | 브로커 | `src/lib/broker/` (`core/`, `mock/`, `<broker>/`) | `BrokerAdapter` 계약과 구현. UI는 어댑터 결과 타입만 본다 | 보안 유틸 |
 | 시세 클라이언트 | `src/lib/quotes/` | SSE 구독, 재연결, zustand 스토어, 지연 배지 판정 | 없음(브라우저) |
@@ -86,7 +86,7 @@ export interface BrokerAdapter {
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 세션, `requireSession('stock')`, 가입 `signup_app='stock'` | `src/proxy.ts`, 모든 Route Handler | 프로필 없으면 로그아웃(`SHARED_MODULES.md:53`) |
+| auth | 세션, `requireSession('stock')`, 가입 `signup_app='stock'`. 로그인 단계 A(Mock)·B(Google)·C(카카오·네이버)는 `src/lib/auth/`만 안다(9절) | `src/proxy.ts`, 모든 Route Handler | 프로필 없으면 로그아웃(`SHARED_MODULES.md:53`). 세션은 모든 단계에서 실제 Supabase JWT |
 | org | 개인 조직 1개 운영 | 세션 컨텍스트 | 멤버 초대 화면 없음(1인 1워크스페이스, 확정 결정 5) |
 | credits | AI 진단·요약·브리핑 정액 선차감, 채팅·음성 선차감·정산, 환불 | `src/app/api/ai/`, `src/app/api/voice/`, `src/app/api/internal/ai-settle` | `withCredits` 래퍼. 단가는 `src/server/ai-pricing.ts` |
 | toss | Phase 2 pro 플랜 | `src/app/api/billing/` | 법률 검토 통과 후 |
@@ -294,3 +294,46 @@ AI 진단·리서치 요약·브리핑 생성은 `core.jobs` 잡이 아니다. 1
 | `APP_BASE_URL` | 초대 링크 생성 | 비공개 | 기동 실패 |
 
 AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/products/_platform-core/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`이고 이 절은 stock 적용만 적는다. 세션·조직·엔타이틀먼트 계약과 초대 수락 시퀀스(`04_API.md` 3절)는 단계와 무관하게 같다. 바뀌는 것은 "누가 어떤 수단으로 Supabase Auth 세션을 얻는가"뿐이다.
+
+| 단계 | 이 제품의 로그인 | 진입 게이트 | 작업 |
+|---|---|---|---|
+| A(MVP 개발) | 로컬 Supabase 시드 페르소나 원클릭(`POST /api/dev/login` → `signInWithPassword`). 초대 수락(`owner`)·미수락(`invitee`) 페르소나 포함(`05_DATA_MODEL.md` 10절) | 없음(W0부터) | ST-06-006(가드·인증 모듈), ST-06-009(시드 훅) |
+| B(초대 베타 공개 전, P0) | `/invite/[token]`에서 "Google로 계속하기" 또는 이메일 가입·로그인, `/login`은 Google + 이메일. 배포 환경에서 Mock 차단 | G1(`AUTH_ROADMAP.md:173-184`) | ST-06-052 |
+| C1 카카오, C2 네이버(P2 선택) | Supabase `kakao`, `custom:naver` 또는 서버 브리지 | G2(`AUTH_ROADMAP.md:221-229`) + 01_PRD D-19 | ST-06-053, ST-06-054 |
+
+| 규칙 | 내용 |
+|---|---|
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`, `/invite/[token]`의 로그인 버튼 영역에만 둔다. 기능 코드·`proxy.ts`·`requireSession`에 `if (mock)` 금지(CI grep) |
+| invite 앱 콜백 | `finishLogin`은 invite 앱이므로 `bootstrap_app_for_org`를 부르지 않는다(`AUTH_ROADMAP.md:138`). 엔타이틀먼트는 초대 수락(`POST /api/beta/redeem`)만 만든다. `entitled=false`면 `/no-access`, 단 `next`가 `/invite/` 경로면 그 화면으로 돌려보내 수락을 이어 간다 |
+| 초대 이메일 불일치 | Google 계정 이메일이 초대 이메일과 다르면 수락이 `ST031`. 새 사용자는 엔타이틀먼트 없이 남고 `/no-access`에서 "초대받은 이메일로 로그인하세요"(`AUTH_ROADMAP.md:206`) |
+| MockBroker와 구분 | 인증 Mock(`AUTH_MODE=mock`, 시드 페르소나)과 증권사 Mock(`MockBroker`, `broker='mock'` 연결, "샘플 데이터" 배지, 2절)은 다른 개념이다. 인증 Mock은 배포 환경에서 404이고, `MockBroker`는 배포 환경에서도 사용자가 고르는 샘플 연결로 남는다. 서로의 스위치를 참조하지 않는다 |
+
+환경변수(8절에 더함, `AUTH_ROADMAP.md:147-160`):
+
+| 변수 | 단계 | 배치 | 누락 시 동작 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버) | `live`. 로컬 `.env.example` 기본값은 `mock`. `mock`인데 `isMockAuthAllowed()`가 거짓이면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web | live에서 로그인 수단 0개면 기동 실패. B 운영값 `google,email`. C는 검수·설정 후 `kakao`, `naver` 추가 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web, `scripts/dev/seed-users.mjs` | Mock 모드 기동 실패. 배포 환경에 넣지 않는다 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만 | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`면 등록 스크립트만, `bridge`면 web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH`, `AUTH_BRIDGE_SECRET` | C2(브리지는 시크릿 필수) | web | 기본 `supabase_custom`. 브리지인데 시크릿 없으면 기동 실패 |
+| `INVITE_CONTINUE_SECRET` | B | web | OAuth 왕복 중 초대 토큰 쿠키 HMAC(01_PRD D-23, 제안). 없으면 기동 실패 |
+
+워커(`quote-relay`, `stock-jobs`)와 FastAPI(`apps/api`)에는 인증 단계 변수를 두지 않는다. 이들은 서명 토큰·내부 키·service_role로만 동작하고 사용자 로그인 수단을 알 필요가 없다.
+
+외부 콘솔과 배포 토폴로지(7절에 더함):
+
+| 콘솔 | 단계 | 리디렉션 URI | 메모 |
+|---|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트) | B | `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 범위 `openid`, `email`, `profile`만. 앱 이름·개인정보처리방침·약관 URL(`/legal/*`)이 필요하므로 ST-06-005 문안이 먼저 |
+| Supabase 대시보드(단독 프로젝트) | B·C | Redirect URLs = `https://<도메인>/auth/callback`(미리보기 도메인 명시) | 모놀리스 전용 프로젝트 1개(README 5절). 다른 제품과 콘솔을 공유하지 않는다 |
+| 카카오 디벨로퍼스 | C1(선택) | Supabase 콜백 | 비즈 앱 전환 후 `account_email`(01_PRD D-20) |
+| 네이버 개발자센터 | C2(선택) | `supabase_custom`면 Supabase 콜백, 브리지면 `https://<도메인>/auth/naver/callback` | 검수 통과 전 운영 `AUTH_PROVIDERS`에 넣지 않는다 |
+
+로그인 없는 사용자 흐름은 이 제품에 없다(하객·청중 같은 비로그인 이용자 없음). 공개 화면 `/`, `/legal/*`는 단계와 무관하게 그대로이며 `/`의 "로그인" 링크만 단계별 `/login`으로 간다.

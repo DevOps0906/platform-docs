@@ -8,7 +8,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 인증 | 모든 `/api/notes/*`는 `requireSession('notes')`로 시작한다(`SHARED_MODULES.md` 2장). 미로그인 401, `pending`/`suspended` 403, `entitled=false` 402. 정리 실행 계열은 추가로 이메일 인증 필수(미인증 403 `email_not_verified`) |
+| 인증 | 모든 `/api/notes/*`는 `requireSession('notes')`로 시작한다(`SHARED_MODULES.md` 2장). 미로그인 401, `pending`/`suspended` 403, `entitled=false` 402. 정리 실행 계열은 추가로 이메일 인증 필수(미인증 403 `email_not_verified`). 세션은 모든 인증 단계(A Mock, B Google·이메일, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(확정 결정 22, 8절) |
 | 멱등 | 클라이언트가 실행마다 UUID `request_id`를 보낸다. 서버는 `consume:notes:<request_id>`, `job:notes:<request_id>`로 쓴다(`DB_CONVENTIONS.md:215`). 같은 `request_id`는 같은 실행을 돌려준다 |
 | 크레딧 선차감 위치 | Route Handler가 아니라 DB 함수 `notes.start_run` 안(service_role 호출). 차감, 실행 생성, 잡 생성이 한 트랜잭션 |
 | 응답 봉투 | 성공 `{ "ok": true, "data": ... }`, 실패 `{ "ok": false, "error": { "code": "...", "message": "한국어 문장", "retryable": bool } }` |
@@ -248,3 +248,29 @@
 | FastAPI `AI_TOKEN_INVALID` | 서명, `aud`, scope, 만료, `jti` 재사용 | 401 | |
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 저장 시 `expected_version`이 현재 버전과 다름(`docs/products/_platform-core/LLM_WIKI.md:31`) | 409 | "다른 곳에서 먼저 수정되었습니다" |
 | `JB002` | 이미 실행 중인 잡 취소 | 409 | "이미 정리를 시작해 취소할 수 없습니다" |
+
+## 8. 인증 단계 Route Handler (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 3.2절, 7.2.3절이다. 아래 경로는 `/api/notes/*`가 아니므로 1절의 `requireSession('notes')` 규칙 대상이 아니다(로그인 전 경로). 단계 분기(`AUTH_MODE`, 제공자 목록)를 읽는 Route Handler는 이 절의 경로뿐이다.
+
+| 메서드 경로 | 단계 | 입력 | 처리 | 출력 | 오류 | 작업 |
+|---|---|---|---|---|---|---|
+| POST `/api/dev/login` | A(로컬 전용) | `{ persona: 'owner' \| 'admin' \| 'member' \| 'viewer' \| 'outsider' \| 'no_app' \| 'suspended' \| 'ops' \| 'unverified' \| 'low_credit', next?: string }`(zod, 05장 10절 키만) | `isMockAuthAllowed()` 확인 → 쿠키 세션 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('notes', next)` | 303 → 반환 경로 | 판정 거짓이면 404(존재 자체를 숨긴다). 시드 안 된 페르소나 400 "시드 스크립트를 먼저 실행하세요". 레이트 리밋 대상 아님(로컬 전용) | NT-06-006 |
+| POST `/api/dev/logout` | A(로컬 전용) | 없음 | `signOut` | 303 → `/login` | 판정 거짓이면 404 | NT-06-006 |
+| GET `/auth/callback` | B·C | `code`, `next?`, `error?` | `finishLogin` 앞에 코드 교환: (1) `exchangeCodeForSession`(PKCE, `@supabase/ssr`) (2) `session_context('notes')` 1회 (3) `entitled=false`이고 앱 `signup_policy`가 open이므로 `rpc('bootstrap_app_for_org', { p_app_id: 'notes' })` 1회 후 재조회(모놀리스는 가입 트리거가 자동 부트스트랩해 아무 일 없음) (4) `status` 분기(suspended 403) (5) 약관 동의 기록이 없으면 `/onboarding/terms`(03장 7.3절) (6) `next`가 `/`로 시작하고 `//`·`@`·`\`가 없을 때만, 아니면 `/app`. origin은 `NEXT_PUBLIC_APP_URL` 고정 (7) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | 302 | `/login?error=callback`(코드 없음·재사용·만료·교환 실패), 프로필 없음 → 로그아웃 후 `/login` | NT-06-053 |
+| POST `/api/onboarding/terms` | B·C(A 페르소나도 거친다) | `{ terms_version, privacy_version, age_over_14: true }` | `requireSession('notes')`(이메일 인증 불필요) → `write_audit('notes_consent.terms')`(제안) | `{ ok }` → 클라이언트가 `/onboarding/ai`로 | 400 `age_over_14` 누락, 409 `CONSENT_VERSION_MISMATCH` | NT-06-053 |
+| GET `/auth/naver/start` | C2 브리지 경로만 | `next?` | 32바이트 state를 HMAC(`AUTH_BRIDGE_SECRET`) HttpOnly·Secure·SameSite=Lax 쿠키(10분)에 넣고 네이버 authorize로 302. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 302 | 429 | NT-06-055 |
+| GET `/auth/naver/callback` | C2 브리지 경로만 | `code`, `state` | 쿠키 state 상수 시간 비교·삭제 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links` 조회 → 연결 있으면 매직링크 `verifyOtp`로 세션, 없으면 새 사용자 생성 + 링크 행, 같은 이메일 다른 사용자면 거부 → `finishLogin` | 302 | `/login?error=state`, `/login?error=email_in_use`, `/login?error=callback` | NT-06-055 |
+
+`/auth/naver/*`는 C2 스파이크(`AUTH_ROADMAP.md` 7.2.2절)가 `custom:naver`를 택하면 만들지 않는다(그때는 `/auth/callback` 하나로 끝난다). 네이버 토큰은 저장하지 않는다.
+
+### 8.1 인증 오류 코드
+
+| 코드 | 위치 | HTTP/동작 | 사용자 문구 |
+|---|---|---|---|
+| (없음, 404) | `/api/dev/*`에서 `isMockAuthAllowed()` 거짓 | 404 | - |
+| `DEV_PERSONA_NOT_SEEDED` | `/api/dev/login` | 400 | "시드 스크립트를 먼저 실행하세요"(로컬 전용) |
+| `error=callback` | `/auth/callback`, `/auth/naver/callback` | 302 → `/login?error=callback` | 03장 7.2절 |
+| `error=state` | `/auth/naver/callback`(브리지) | 302 → `/login?error=state` | 03장 7.2절 |
+| `error=email_in_use` | `/auth/naver/callback`(브리지) | 302 → `/login?error=email_in_use` | 03장 7.2절 |
+| `email_not_verified` | 기존 1절(정리 실행 계열) | 403 | 단계와 무관하게 같다 |

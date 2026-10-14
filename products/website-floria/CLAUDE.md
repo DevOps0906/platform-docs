@@ -64,3 +64,17 @@ AI·3D(2026-10-13): `apps/api/`(036 공용 설치, 040 `products/site/knowledge.
 ## 7. 금지 패턴
 
 07장 4절 요약: 가상 후기·미검증 수치·가짜 연락처, 외부 CDN/임시 이미지 URL, `href="#"`과 미정의 라우트, 인라인 grid, 영상 autoplay+preload auto와 전량 프리로드 로더, 중첩 `.git`/LFS, 프로필 없으면 admin, 오류를 성공으로 위장, CORS `*`, 서명 없는 토큰. AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·개인정보, 대화 id만으로 이어 쓰기, 한도 없는 익명 AI 호출, AI 응답의 후기·평점·미검증 수치·가짜 연락처·가격 약속, 임의 텍스트 TTS, 토큰 밖 3D 색·금색·별 파티클, "Tailwind"만 적은 지시(v3 혼입).
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 로그인하는 사람은 초대받은 운영자뿐이고, 방문자(문의·뉴스레터·AI 상담·`/guide`)는 단계와 무관하게 로그인하지 않는다. 그 화면에 로그인 버튼을 추가하지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 **Stage A(Mock)**. `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD`. Stage B(Google + 초대 메일)는 G1 통과 후. C1 카카오·C2 네이버는 이 제품에서 제외(운영자 전용 콘솔) |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`를 읽는 코드는 `src/lib/auth/`, `/admin/login` 화면, `src/app/auth/callback/`, `src/app/api/dev/login/`에만 둔다. 콘솔 화면·공개 사이트·AI 게이트·워커에 `if (mock)` 금지. 권한은 `session_context('site')`로만 |
+| 페르소나 사용법 | `supabase start` → `supabase db reset` → `node scripts/dev/seed-users.mjs --app site`(제품 훅 `seed-users.site.mjs`가 엔타이틀먼트 부트스트랩과 `provision_site`) → `/admin/login` 개발용 패널. 페르소나: `owner`(사이트 등록 완료), `site_pending`(사이트 미등록), `admin`, `member`, `viewer`, `outsider`, `no_app`(초대 안 받음 → `/admin/no-access`), `suspended`, `ops`(05장 10절) |
+| E2E | Playwright `globalSetup`이 `/api/dev/login`으로 페르소나별 `storageState`를 저장하고 콘솔 테스트는 그 상태로 시작한다(SI-06-025). 실제 Google 로그인은 자동화하지 않는다 |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, `dev-user` 우회, 원격 DB에 시드 계정 생성, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`나 번들에 넣기, 콜백 `next` 무검증, invite 앱 콜백에서 `bootstrap_app_for_org` 호출, 가입 폼·가입 링크 추가 |
+| 단계 전환 | 사람(대표님)이 G1(`AUTH_ROADMAP.md` 4장)을 판정하고 task `log.md`에 `[DECISION] G1 통과`를 남긴 뒤에만 B 작업을 시작한다. 에이전트가 스스로 단계를 올리지 않는다. G2·C단계는 이 제품에 없다 |
+| 작업 ID | Stage A: SI-06-019(기존 작업 범위 변경). Stage B: SI-06-049(P0, W6 맨 앞). C: 없음(제외) |

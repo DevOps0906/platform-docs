@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 스튜디오 라우트는 `requireSession('microweb', {roles})`(`SHARED_MODULES.md` 2장) + `studio_access` 확인. 공개 라우트는 무인증이며 쓰기는 service_role 전용 DB 함수만 부른다 |
+| 인증 | 스튜디오 라우트는 `requireSession('microweb', {roles})`(`SHARED_MODULES.md` 2장) + `studio_access` 확인. 공개 라우트는 무인증이며 쓰기는 service_role 전용 DB 함수만 부른다. 세션은 모든 인증 단계(A Mock, B Google + 초대 메일, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(8절) |
 | 읽기 | 사용자 세션 클라이언트(RLS). 하객 페이지는 anon 키. service_role은 `src/server/`에서만 |
 | 멱등 | 쓰기 요청은 `request_id`(UUID) 헤더 `Idempotency-Key`. 크레딧 `consume:microweb:<request_id>`, 잡 `job:microweb:<request_id>` |
 | 크레딧 | 셀프 모드 첫 게시만 라우트에서 선차감. 실패 시 잡 환불 또는 라우트 `refund_credits` |
@@ -218,3 +218,26 @@
 | 앱 코드 `VOICE_UNAVAILABLE` | 하객 음성 STT 실패(오픈소스 서버 장애, 상용으로 대체하지 않음) | 503 |
 | 앱 코드 `VOICE_TOKEN_INVALID` | `voice_token` 서명·만료·방문자·slug 불일치 | 403 |
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 `expected_version` 불일치 | 409 |
+
+## 8. 인증 라우트 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 3.2절, 7.2.3절. 응답 봉투는 1절과 같다(리다이렉트 라우트 제외). 단계 분기 코드는 이 라우트들과 `src/lib/auth/`, 로그인 화면에만 둔다.
+
+| 메서드 경로 | 단계 | 역할 | 입력 | 출력 | 처리 | 오류 |
+|---|---|---|---|---|---|---|
+| POST `/api/dev/login` | A(로컬 전용) | 누구나(로컬) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'studio_denied', next? }` | 302 `next` 또는 `/studio` | `isMockAuthAllowed()`(`AUTH_MODE=mock`, Supabase 호스트 `127.0.0.1`/`localhost`, `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 비어 있음) → 쿠키 세션 서버 클라이언트 `signInWithPassword(<persona>@dev.test, DEV_SEED_PASSWORD)` → `finishLogin('microweb', next)` | 판정 거짓이면 404(존재를 숨김). 모르는 페르소나 400. 레이트 리밋 대상 아님 |
+| POST `/api/dev/logout` | A(로컬 전용) | 로그인 사용자 | - | 302 `/login` | 같은 판정 후 `signOut` | 판정 거짓이면 404 |
+| GET `/auth/callback` | B·C1·C2(`custom:naver`) | 누구나 | `code`, `next?`, `error?` | 302 | `finishLogin('microweb', next)`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('microweb')` 1회 (3) invite 앱이라 `bootstrap_app_for_org`를 호출하지 않는다. `entitled=false`면 `/no-access` (4) pending `/pending`, suspended `/403` (5) 엔타이틀먼트가 있어도 `studio_access` 없으면 `/pending`(기존 가드) (6) `next`가 `/`로 시작하고 `//`·`@`·`\`가 없을 때만 그 경로, 아니면 `/studio`. origin은 `NEXT_PUBLIC_APP_URL` 고정 (7) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login` |
+| GET `/auth/naver/start` | C2 브리지 경로만 | 누구나 | `next?` | 302 네이버 authorize | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 넣음. `rate_limit_hit('auth:naver:<ip 해시>',10,600)` | 429 |
+| GET `/auth/naver/callback` | C2 브리지 경로만 | 누구나 | `code`, `state` | 302 | 쿠키 state 상수 시간 비교 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(네이버 id) 조회 → 연결 있음: magiclink `verifyOtp`로 세션 / 연결·같은 이메일 없음: `createUser` + 링크 행 / 같은 이메일 있음: 자동 연결 안 함 → 위 `finishLogin`. 네이버 토큰은 저장하지 않는다 | `state` 불일치·없음·만료 → `/login?error=state`, `/login?error=email_in_use`, `/login?error=callback` |
+
+| 오류·리다이렉트 코드 | 의미 | 단계 |
+|---|---|---|
+| `/login?error=callback` | 코드 교환 실패(없음, 재사용, 만료) | B, C |
+| `/login?error=state` | 브리지 state 불일치·만료 | C2 브리지 |
+| `/login?error=email_in_use` | 같은 이메일의 다른 가입 수단이 있어 네이버를 자동 연결하지 않음 | C2 브리지 |
+| `/no-access` | `entitled=false`(초대받지 않은 이메일로 로그인) | B, C |
+| `/pending` | `studio_access` 없음 | A, B, C |
+| 404 `/api/dev/*` | Mock 판정 거짓(배포 환경, 원격 DB) | A 가드 |
+
+초대 메일 발송·`studio_access` 부여는 2절 "관리자(platform_admin, service)" 행과 MW-06-026이 소유하며 인증 단계와 무관하다. 로그인 레이트 리밋(01장 5절 "로그인 IP 10/10분")은 B단계 이후의 Supabase Auth 경로와 브리지 시작 라우트에 적용하고 `/api/dev/login`에는 적용하지 않는다.

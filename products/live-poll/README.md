@@ -38,7 +38,7 @@
 | `03_SCREENS_UX.md` | 화면 목록, 플로우, 진행자 콘솔/발표 화면/오버레이/청중 화면 명세, AI 패널·음성·위키 화면, 디자인 시스템, 랜딩 디자인 방향과 3D 히어로 |
 | `04_API.md` | Route Handler(AI·음성 포함), RPC, 브로드캐스트 메시지 계약, FastAPI·Dify 계약, 오류 코드(PL###, AI·음성 코드) |
 | `05_DATA_MODEL.md` | 테이블 9개(제품 전용 AI 표 없음과 그 이유), 상태 전이, RLS, 리뷰 높음 #3, #4 차단 설계, 모놀리스와 모듈러의 차이 |
-| `06_AGENT_PLAN.md` | 작업 48개(AI·음성·3D·디자인 시스템 16개 포함, LP-06-###), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `06_AGENT_PLAN.md` | 작업 51개(AI·음성·3D·디자인 시스템 16개, 인증 단계 B·C 3개 포함, LP-06-###), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 폐기 목록, 복사 금지 결함 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `MONOLITH_CORE_LITE.sql` 사본. SECTION 6-A, 6-B, 9를 이유 주석과 함께 지웠다(4, 7, 8은 AI 계층 때문에 복원) |

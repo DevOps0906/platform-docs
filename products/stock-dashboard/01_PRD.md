@@ -24,7 +24,7 @@
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
-| 초대제 가입, 베타 접근 게이트 | MVP | 과제 지시(초대제 베타), `docs/products/_supabase-modular/seed.sql:22`(signup_policy invite, beta) |
+| 초대제 가입, 베타 접근 게이트. 로그인 단계(2026-10-14): MVP 개발은 Mock(Stage A, 로컬 시드 페르소나), 공개 베타 전 Google(+초대 링크·이메일)(Stage B, P0), 카카오·네이버는 G2 후(Stage C, P2 선택) | MVP(로그인 B까지), C는 G2 후 | 과제 지시(초대제 베타), `docs/products/_supabase-modular/seed.sql:22`(signup_policy invite, beta), 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`), `docs/products/_platform-core/AUTH_ROADMAP.md:333` |
 | 투자 고지와 동의 기록 | MVP | `docs/reviews/Stock_Trader_nomad.md:41`(면책 고지 없음) |
 | 증권사 1곳 모의투자 계좌 연결, `BrokerAdapter` + `MockBroker` | MVP | `docs/products/00_MERGE_ANALYSIS.md:1276`, `docs/reviews/Stock_Trader_nomad.md:70`, `:101` |
 | 키 암호화 보관, 계좌번호 마스킹 | MVP | `docs/products/00_MERGE_ANALYSIS.md:1284`, `docs/reviews/Stock_Trader_nomad.md:79-80` |
@@ -62,7 +62,7 @@ ID 접두사 `ST`는 `DB_CONVENTIONS.md` 1장 SQLSTATE 접두사다(`docs/produc
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| ST-F-001 | 초대제 가입과 베타 게이트 | 신규 | 운영자가 이메일로 초대를 발급한다. 토큰 원문은 링크로 1회만 보여 주고 DB에는 sha256만 저장한다. 초대는 14일 뒤 만료(제안: 2주면 수신 확인에 충분). 수락하면 개인 조직에 `beta_access`가 생기고 플랜이 default → beta로 바뀐다. 모든 도메인 RLS는 `has_stock_access(org)` = 멤버 + 엔타이틀먼트 + 베타 활성 | 초대 없이 `signup_app='stock'`으로 가입하거나 `bootstrap_app_for_org('stock')`를 호출해도 도메인 테이블이 0행이다(스모크 테스트 C 사용자). 다른 이메일 계정으로 수락하면 `ST031`. 사용한 초대 재사용은 `ST030`. 베타 회수 즉시 본인 데이터도 0행 | 코어가 `invite` 정책을 강제하지 않음(`docs/products/_supabase-modular/migrations/0003_core_credits.sql:400-402`는 approval만 처리) |
+| ST-F-001 | 초대제 가입과 베타 게이트 | 신규 | 운영자가 이메일로 초대를 발급한다. 토큰 원문은 링크로 1회만 보여 주고 DB에는 sha256만 저장한다. 초대는 14일 뒤 만료(제안: 2주면 수신 확인에 충분). 수락하면 개인 조직에 `beta_access`가 생기고 플랜이 default → beta로 바뀐다. 모든 도메인 RLS는 `has_stock_access(org)` = 멤버 + 엔타이틀먼트 + 베타 활성. 로그인 단계(2026-10-14, 확정 결정 22): 초대 토큰 흐름(sha256 저장, 14일 만료, 수락 시퀀스)은 단계와 무관하게 그대로다. Stage A(MVP 개발)는 로컬 시드 페르소나(초대 수락·미수락 포함, `05_DATA_MODEL.md` 10절)로 로그인하고, Stage B(공개 베타 전, P0)는 "초대 링크 수락 + Google로 계속하기"(+기존 이메일 가입·로그인), Stage C(카카오·네이버)는 G2 후 P2 선택. 쿠키 역할 Mock 금지, 개발용 로그인은 AUTH_ROADMAP 2장의 로컬 시드 계정만(배포 환경 404). 단계 분기는 `src/lib/auth/`·로그인 화면·콜백만 | 초대 없이 `signup_app='stock'`으로 가입하거나 `bootstrap_app_for_org('stock')`를 호출해도 도메인 테이블이 0행이다(스모크 테스트 C 사용자). 다른 이메일 계정으로 수락하면 `ST031`. 사용한 초대 재사용은 `ST030`. 베타 회수 즉시 본인 데이터도 0행. A: `owner`(초대 수락) 페르소나 로그인 → `/onboarding/disclaimer` 또는 `/dashboard`, `invitee`(초대 미수락)·`no_app` → `/no-access`(초대 링크 안내), `invitee`가 시드가 출력한 초대 링크로 수락 → beta. B: AUTH_ROADMAP 5.3 B-1~B-6(invite 앱이라 초대 링크 없이 Google 첫 로그인은 `entitled=false` → `/no-access`, `/invite/[token]`에서 Google로 로그인하면 콜백이 그 화면으로 돌아와 수락 → beta·300 크레딧), 초대 이메일과 다른 Google 계정이면 `ST031` + "초대받은 이메일로 로그인하세요". C(선택): 7.1.3 C1-1~C1-5, 7.2.4 C2-1~C2-6 | 코어가 `invite` 정책을 강제하지 않음(`docs/products/_supabase-modular/migrations/0003_core_credits.sql:400-402`는 approval만 처리) |
 | ST-F-002 | 투자 고지와 동의 | 신규 | 첫 진입 시 투자 고지(정보 제공 목적, 투자 권유 아님, 손실 책임은 본인, 필수)와 AI 국외 이전 동의(선택, ST-F-029)를 받는다. 동의는 `consents`에 버전별로 남는다. 고지 문구가 바뀌면 버전을 올리고 재동의 전까지 AI 기능과 연결 추가를 막는다. 국외 이전에 동의하지 않아도 사용할 수 있고, 이때 AI·음성은 국내 오픈소스 제공자만 쓴다 | 동의 전 `/dashboard` 접근 시 `/onboarding/disclaimer`로 이동한다. 동의 행은 UPDATE/DELETE가 `ST000`으로 거부된다. 고지 버전이 `2026-10-12`에서 `2026-11-01`로 바뀌면 다음 요청에서 재동의 화면이 나온다. 국외 이전 동의를 거부하고 고지만 동의한 계정으로 AI를 쓰면 `ai_usage`의 제공자가 전부 오픈소스다 | `docs/reviews/Stock_Trader_nomad.md:41` |
 | ST-F-003 | 증권사 연결 | 디벨롭 | `BrokerAdapter`(getBalance, getHoldings, getExecutions, subscribeQuotes)를 구현한 어댑터만 쓴다. MVP는 `mock`과 spike에서 고른 증권사 1곳의 모의투자 환경. 연결 수는 플랜 `broker_connections_max`(beta 2). 실계좌(live) 연결은 서버 플래그 `BROKER_LIVE_READ_ENABLED=false`로 막는다 | 연결 생성 시 토큰 발급 테스트에 실패하면 행이 `error`로 남고 사용자에게 원인 코드가 보인다. `mock` 연결은 즉시 `active`이고 화면에 "샘플 데이터" 배지가 붙는다. 세 번째 연결 시도는 409 | `docs/reviews/Stock_Trader_nomad.md:70`, `:101`, `:121` |
 | ST-F-004 | 키 보관과 마스킹 | 신규 | app key/secret, 접근 토큰은 `encrypted_credentials`(AES-256-GCM, `key_version`)에만 저장한다. 계좌번호는 `account_masked`(숫자 5자리 이상 연속 금지 CHECK)와 HMAC-SHA256 해시만 저장한다. 키는 브라우저로 내려가지 않고 로그·오류·감사에 남지 않는다. ID/비밀번호, 공동인증서는 받지 않는다 | `50123456-01` 같은 원문 계좌번호 INSERT는 `23514`. 브라우저 번들에서 `CREDENTIALS_KEY`, `appSecret` 문자열 검색 결과 0건. 사용자 세션의 `encrypted_credentials` SELECT는 `42501` | `docs/reviews/Stock_Trader_nomad.md:39`, `:59`, `:79-80` |
@@ -244,7 +244,7 @@ AI 키 5개는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/se
 
 | 항목 | 내용 |
 |---|---|
-| 수집 항목 | 이메일, 표시 이름(코어 프로필), 증권사 API 키·접근 토큰(암호문), 계좌번호 마스킹 값과 HMAC 해시, 잔고·보유·체결 내역, 매매 메모, 동의 기록, AI 진단 입력 요약과 결과 |
+| 수집 항목 | 이메일, 표시 이름(코어 프로필), 로그인 제공자 식별자(단계별, 2026-10-14: B Google 계정 식별자·이름·프로필 이미지 URL, C를 켜면 카카오 회원번호·닉네임·프로필 이미지·(비즈 앱이면) 이메일, 네이버 고유 id·이메일·이름. 제공자 토큰은 저장하지 않음, `docs/products/_platform-core/AUTH_ROADMAP.md:208`, `:292`), 증권사 API 키·접근 토큰(암호문), 계좌번호 마스킹 값과 HMAC 해시, 잔고·보유·체결 내역, 매매 메모, 동의 기록, AI 진단 입력 요약과 결과 |
 | 목적 | 본인 계좌 조회 화면 제공, 매매 일지, AI 진단, 보안 감사 |
 | 성격 | 잔고·체결 내역은 신용정보법상 개인신용정보에 해당할 수 있어(미확인) 민감 정보 수준으로 다룬다 |
 | 암호화 대상 | API 키·토큰(`encrypted_credentials.ciphertext`, AES-256-GCM, `SECURITY_BASELINE.md` 5장). 계좌번호 원문은 저장하지 않는다(HMAC 키 `ACCOUNT_HASH_KEY`) |
@@ -360,3 +360,21 @@ AI 출력은 서버 금칙어 검사(정규식 사전, 한글 경계 처리)와 
 | D-16 | 위키 공개 범위 | (a) 로그인한 베타 사용자만 (b) 공개(SEO) | (a). 공개 랜딩을 법률 검토 뒤로 미룬 것과 일관 |
 | D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 뒤 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). ST-06-035에서 확인 결과를 기록 |
 | D-18 | 랜딩 3D 지형의 데이터 | (a) 고정 시드 샘플 + "샘플 데이터" 배지 (b) 실제 시세·시장 데이터 | (a). (b)는 시세 재배포 제한(6.1절)과 수익 약속 오인 위험 때문에 법률·약관 확인 뒤 |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`)와 정본 `docs/products/_platform-core/AUTH_ROADMAP.md`를 이 제품에 적용한 결과다. 이 제품은 invite 앱이라 B단계 로그인은 "초대 링크 수락 + Google"(+기존 이메일)이고, 카카오·네이버(C)는 P2 선택이다(`AUTH_ROADMAP.md:333`). 기존 결정(초대제, ST-F-001 초대 토큰 흐름, `beta_access` 게이트, 1인 1워크스페이스)은 바꾸지 않았다.
+
+| 단계 | 언제 | 로그인 수단 | 이 제품에서 바뀌는 것 |
+|---|---|---|---|
+| A | W0부터 G1까지(MVP 개발) | 로컬 시드 페르소나 원클릭(`POST /api/dev/login`). 초대 수락·미수락 페르소나 포함 | 개발용 패널과 `MOCK AUTH · 로컬 전용` 배지. 초대 토큰 발급·수락 RPC는 실제 경로 그대로 |
+| B | G1 통과 후, 초대 베타 공개 전(P0) | `/invite/[token]`에서 "Google로 계속하기" 또는 기존 이메일 가입·로그인. `/login`은 Google + 이메일 | 초대 이메일과 다른 Google 계정이면 `ST031` + "초대받은 이메일로 로그인하세요" |
+| C1, C2 | G2 통과 후(P2 선택) | 카카오, 네이버 | 초대 수락 규칙(이메일 일치) 그대로. 이메일 없는 카카오 계정은 초대를 수락할 수 없다 |
+
+| ID | 결정 사항 | 선택지 | 권고 |
+|---|---|---|---|
+| D-19 | C단계(카카오·네이버) 착수 시점 | (a) G2 직후 착수 (b) 작업(ST-06-053, 054)은 P2 선택으로 계획에 두고 착수는 사용자 판단 | (b)(제안: 초대 30명 안팎(D-7)이고 초대 수락이 이메일 일치를 요구하므로 초대 베타 동안은 Google·이메일로 충분하다). 공개 전환(D-3 법률 의견 이후) 때 다시 판단 |
+| D-20 | 카카오 이메일 정책(C1을 켤 때) | (a) 비즈 앱 전환 후 `account_email` 필수 (b) 이메일 없이 허용 | (a)(`AUTH_ROADMAP.md:249`). 이 제품은 초대 수락에 이메일 일치가 필요하므로 (b)로는 초대를 수락할 수 없다 |
+| D-21 | 네이버 경로(C2를 켤 때) | `supabase_custom`(`custom:naver`) / 서버 브리지 | C2 첫 단계 스파이크(`AUTH_ROADMAP.md:275-284`) 결과로 정하고 `[DECISION]`으로 기록 |
+| D-22 | 매직링크 유지 | (a) 03장 1절 `/login` 표기대로 B단계 이메일 수단에 포함 (b) 제외(이메일+비밀번호만) | 미결. AUTH_ROADMAP 1장은 매직링크를 로드맵 범위 밖(다른 제품의 연기 결정, `docs/products/00_MERGE_ANALYSIS.md:317`)으로 두지만 이 제품의 기존 화면 표기를 바꾸지 않았다. 무료 크레딧 반복 수령 문제(연기 사유)는 초대제라 해당하지 않는다. ST-06-052 착수 전 확정 |
+| D-23 | OAuth 왕복 중 초대 토큰 보관 | (a) `next=/invite/<token>` (b) HttpOnly·SameSite=Lax 쿠키(10분)에 두고 `next=/invite/continue` | (b)(제안: 토큰이 리디렉트 URL·인증 서버 로그에 남지 않게). 쿠키는 HttpOnly·Secure·HMAC 서명이고 수락 직후 삭제한다 |

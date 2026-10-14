@@ -319,3 +319,23 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 | `ai_reports` research·briefing 성공 저장(advice_check.passed=true) | 허용 |
 | `output.advice_check` 없는 성공 저장, `passed=false`, 가격 키(`target_price`) | `23514` |
 | `consents` kind `voice_processing` | 허용, 미지 kind `23514` |
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경은 없다(코어 계약·`1900_stock.sql` 그대로). 정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.2~2.3절이고, 이 절은 stock 제품 훅(`scripts/dev/seed-users.stock.mjs`)이 공통 페르소나에 더하는 것과 invite 앱이라 달라지는 기대 결과를 적는다. 실행은 `supabase db reset` 뒤 `node scripts/dev/seed-users.mjs --app stock`(로컬 Supabase 호스트가 아니면 exit 1). 계정 생성은 `auth.admin.createUser`(가입 트리거 경유), 초대·수락은 실제 경로(service INSERT `beta_invites` + 04장 3절 수락 시퀀스를 수행하는 ST-06-009의 서버 함수)로 한다. 시드는 증권사 연결을 만들지 않는다(`MockBroker` 샘플 연결은 화면의 "샘플 데이터로 둘러보기"로 만든다. 인증 Mock과 다른 개념이다).
+
+invite 앱 차이: 가입 트리거는 stock 엔타이틀먼트를 만들지 않는다(`docs/products/_supabase-modular/migrations/0001_core_identity.sql:152`, 모놀리스 `supabase/monolith/migrations/0001_core_lite.sql:264-269`). 그래서 공통 표의 "`signup_app=<app>`으로 생성 → `entitled=true`"는 이 제품에서 "생성 → 초대 발급 → 수락"이 되어야 성립한다.
+
+| 키 | 이메일 | 만드는 방법(RPC/서비스 경로) | 기대 `session_context('stock')`와 결과 | 쓰임 |
+|---|---|---|---|---|
+| `owner` | `owner@dev.test` | 생성 → service INSERT `beta_invites`(sha256, 14일) → 수락 시퀀스(`redeem_beta_invite` → 플랜 beta → 300 크레딧) → 본인 세션 `record_consent('investment_disclaimer', DISCLAIMER_VERSION)` | 개인 조직 owner, `entitled=true`, 플랜 beta, 잔액 300, `beta_access.status='active'`. 로그인 → `/dashboard` | 기본 사용자(스모크 A) |
+| `fresh_beta` | `fresh_beta@dev.test` | `owner`와 같되 고지 동의 없음 | `entitled=true`, beta. 로그인 → `/onboarding/disclaimer`, API 428 `ST_CONSENT` | 온보딩·동의 리다이렉트 |
+| `invitee` | `invitee@dev.test` | 생성 → service INSERT `beta_invites`(issued). 수락하지 않는다. 시드가 초대 링크(`APP_BASE_URL/invite/<token>`)를 1회 출력 | `entitled=false`, `beta_access` 없음. 로그인 → `/no-access`. 출력된 링크로 수락 → beta·300 크레딧(크레딧 1회) | 초대 미수락, 수락 플로우 E2E |
+| `beta_revoked` | `beta_revoked@dev.test` | `owner`와 같게 만든 뒤 service `stock.revoke_beta_access` | `entitled=true`, `beta_access.status='revoked'`. 도메인 테이블 0행, API 403 `ST_BETA` | 베타 회수 즉시 차단(ST-F-001) |
+| `outsider` | `outsider@dev.test` | `owner`와 같은 방법(별도 개인 조직, 수락·동의 완료) | 자기 조직 owner, beta. `owner` 조직 행 SELECT 0행, 복합 FK `23503` | 교차 테넌트 RLS(스모크 B). `invitee`의 초대 링크로 수락 시도 → `ST031` |
+| `no_app` | `no_app@dev.test` | `signup_app` 없이 생성 | 모듈러·모놀리스 모두 `entitled=false`(invite 앱은 모놀리스 자동 부트스트랩에서도 제외). 로그인 → `/no-access`. 본인 `bootstrap_app_for_org('stock')` 호출은 `42501` | 초대 없는 계정(스모크 C) |
+| `admin`, `member`, `viewer` | `admin@dev.test` 등 | 생성 → `owner`가 `invite_member(role)` → 각자 `accept_invite` | `owner` 조직의 해당 역할, beta 접근은 조직 단위로 공유 | 역할 분기만(연결 추가·해제 owner/admin, 메모 삭제 owner/admin). 제품 화면에는 멤버 초대가 없다(1인 1워크스페이스, 확정 결정 5) |
+| `suspended` | `suspended@dev.test` | `owner`와 같게 만든 뒤 service로 `status=suspended` | 403 | 차단 |
+| `ops` | `ops@dev.test` | 생성 후 service로 `platform_role=platform_admin`(엔타이틀먼트 없음) | 운영자. `/admin/beta`, `/admin/ops`, `/admin/wiki` 접근, 도메인 화면은 `/no-access` | 초대 발급 E2E(발급 → 링크 1회 표시) |
+
+`pending` 페르소나는 approval 앱 전용이라 만들지 않는다. 만료 초대 검증용으로 `expired@dev.test` 초대 행(`expires_at`을 과거로, service UPDATE)을 함께 넣는다(계정 없음. 수락 시 410). 멱등: 같은 이메일의 issued 초대가 이미 있으면 새로 발급하지 않고(`beta_invites_open_email_uniq`), 수락된 페르소나는 다시 수락하지 않는다(월 지급 멱등 키로 크레딧 1회). 출력에 비밀번호는 넣지 않는다.

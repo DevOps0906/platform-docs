@@ -84,7 +84,7 @@ STT 두 경로(01장 VD-F-105, D-13):
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 가입(`signup_app='video'`), 세션, `requireSession` | `proxy.ts`, 레이아웃, 모든 Route Handler | 기본 역할 admin 금지 |
+| auth | 가입(`signup_app='video'`), 세션, `requireSession`, 로그인 단계(`src/lib/auth/`: `getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`. 단계 분기는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`만, 9절) | `proxy.ts`, 레이아웃, 모든 Route Handler | 기본 역할 admin 금지. 기능 코드에서 `AUTH_MODE` 참조 금지(확정 결정 22) |
 | org | 1인 1워크스페이스, Advanced 멤버 초대 | `src/server/team` 대신 코어 RPC 직접 | `team_members` 상한은 서버 판정 |
 | credits | 생성·업로드·검사 선차감, 실패 환불, 부분 환불 | `src/server/*` | 멱등 키 `consume:video:<request_id>` |
 | toss | 구독, 크레딧팩, 빌링키 | `src/server/billing`, orchestrator cron | `confirm_payment_order` PM001 시 별도 호출로 `fail_payment_order`(service_role)를 불러 주문을 failed로 남기고 운영 알림 + Toss 취소를 수행 |
@@ -281,7 +281,7 @@ STT 두 경로(01장 VD-F-105, D-13):
 | `UPSTASH_REDIS_URL` | BullMQ | 비공개 | 워커·enqueue 기동 실패 |
 | `CREDENTIALS_KEY_V<n>`, `CREDENTIALS_KEY_VERSION` | 토큰 AES-256-GCM | 비공개 | 기동 실패(0키 폴백 금지) |
 | `TOSS_CLIENT_KEY` / `TOSS_SECRET_KEY`, `TOSS_WEBHOOK_SECRET` | 결제 | 클라이언트 키만 공개 | 기동 실패 |
-| `GOOGLE_CLIENT_ID/SECRET`, `META_APP_ID/SECRET`, `TIKTOK_CLIENT_KEY/SECRET` | 채널 OAuth | 비공개 | 해당 플랫폼 연결 비활성 + 경고 |
+| `GOOGLE_CLIENT_ID/SECRET`, `META_APP_ID/SECRET`, `TIKTOK_CLIENT_KEY/SECRET` | 채널 OAuth(사용자 로그인용 Google 클라이언트와 별개, 9절·01장 D-29) | 비공개 | 해당 플랫폼 연결 비활성 + 경고 |
 | `NAVER_CLIP_UPLOAD_ENABLED`, `PLAYWRIGHT_BROWSERS_PATH` | 네이버 클립 업로더 스위치(셀렉터 장애 시 끔), 브라우저 경로 | 비공개(오케스트레이터) | 기본 false. false면 `naver_clip` 업로드 예약 거부 + 대시보드 경고 |
 | `CLIENT_REVIEW_BASE_URL`, `CLIENT_REVIEW_TTL_HOURS` | 고객 승인 링크 주소, 기본 유효시간(72) | 비공개(Next.js 서버) | 대행 승인 요청 비활성 |
 | `MAIL_FROM_AGENCY` | 승인 요청·리포트 메일 발신 주소(코어 메일 모듈) | 비공개 | 승인 메일 발송 실패 → 링크 복사만 |
@@ -308,3 +308,50 @@ STT 두 경로(01장 VD-F-105, D-13):
 | `WORKER_ID`, `MEDIA_QUEUE`(Python) | 워커 식별 | 비공개 | 기동 실패 |
 
 모든 env는 `src/lib/env.ts`(zod)와 Python `settings.py`(pydantic)에서 기동 시 검증한다(SM #20, BS #18). AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/products/_platform-core/SECURITY_BASELINE.md:278`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본: `docs/products/_platform-core/AUTH_ROADMAP.md`. 세션·조직·엔타이틀먼트 계약(`CORE_SPEC.md` 2장)은 바뀌지 않는다. 세션은 모든 단계에서 실제 Supabase JWT이고, `requireSession('video')`·`proxy.ts`·레이아웃 가드·RLS는 단계와 무관하게 같은 코드다(`AUTH_ROADMAP.md` 0장 불변 조건).
+
+### 9.1 단계표 (이 제품 기준)
+
+| 단계 | 켜지는 로그인 | 진입 게이트 | 이 제품 작업 | 바뀌는 코드 |
+|---|---|---|---|---|
+| A | 로컬 시드 페르소나 원클릭(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops` + 제품 행 `adv_owner`, `adv_member`, 05장 10절). `pending`은 video가 open 앱이라 만들지 않는다 | 없음(W0부터) | VID-06-004 | `src/lib/auth/`, `src/app/(auth)/login`의 개발용 패널, `src/app/api/dev/login`, `scripts/dev/seed-users.mjs` + `scripts/dev/seed-users.video.mjs` |
+| B | Google + 이메일(01장 D-28) | G1 | VID-06-063 | 로그인 화면 제공자 버튼·이메일 폼, `src/app/auth/callback`, 온보딩 약관 단계 |
+| C1 | 카카오 | G2 | VID-06-064 | 로그인 화면 버튼, `AUTH_PROVIDERS`에 `kakao` |
+| C2 | 네이버(`custom:naver` 또는 브리지, 01장 D-27) | G2 | VID-06-065 | 로그인 화면 버튼, (브리지) `src/app/auth/naver/**` |
+
+단계 분기(`AUTH_MODE`, 제공자 목록)를 읽는 곳은 `src/lib/auth/`, `src/app/(auth)/**`, `src/app/auth/**`, `src/app/api/dev/login/**`뿐이다. 기능 코드·워커(오케스트레이터, 미디어 워커)·FastAPI에는 인증 단계 개념이 없다. FastAPI와 음성 서버가 검증하는 EdDSA 서명 토큰(2절)은 사용자 세션에서 Next.js가 발급하므로 Mock 페르소나 세션에서도 같은 경로로 동작한다.
+
+혼동 금지: 채널 연결 OAuth(YouTube·Meta·TikTok, `core.create_oauth_state`/`consume_oauth_state`, 콜백 `/api/channels/callback/[platform]`)와 네이버 클립 업로드용 네이버 로그인 세션(Playwright, `CredentialVault` provider `naver`)은 사용자 로그인과 별개다. 경로·클라이언트·저장소가 다르고 단계 전환의 영향을 받지 않는다. C2의 네이버 "로그인"(사용자 계정)과 네이버 클립 "채널 연결"은 서로 다른 네이버 애플리케이션 등록·동의 항목을 쓴다(제안: 같은 애플리케이션으로 둘 수 있는지는 미확인).
+
+### 9.2 환경변수 (`AUTH_ROADMAP.md` 3.3절 중 이 제품 해당분)
+
+| 이름 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버). 오케스트레이터·미디어 워커·`apps/api`에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값은 `mock` |
+| `AUTH_PROVIDERS` | B·C | web | 빈 목록이면 live 모드에서 기동 실패. 운영 값: B `google,email`, C1 뒤 `google,email,kakao`, C2 검수 통과 뒤 `naver` 추가(`AUTH_ROADMAP.md` 7.2.4절 C2-6) |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web 서버, 시드 스크립트. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`(로그인용) | B | 로컬 `supabase/config.toml`의 `env()`, 원격은 Supabase 대시보드에만. 앱 env에 넣지 않는다 | 로컬 Google 버튼 비활성. 8절 채널 OAuth용 같은 이름 변수와 충돌 주의(01장 D-29) |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 위와 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`이면 등록 스크립트만(앱 env 불필요), `bridge`면 web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web. 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+`src/lib/env.ts`(zod)가 위 조합을 기동 시 검증한다. `AUTH_MODE=mock`인데 `isMockAuthAllowed()`가 거짓(원격 Supabase, `VERCEL_ENV` 또는 `RAILWAY_ENVIRONMENT` 있음)이면 기동 실패하고 조용히 live로 바꾸지 않는다(`AUTH_ROADMAP.md` 2.4절). video의 오케스트레이터는 Railway에서 돌지만 `AUTH_MODE`를 읽지 않으므로 영향이 없다.
+
+### 9.3 외부 콘솔과 배포 토폴로지 메모
+
+| 콘솔 | 단계 | 리디렉션 URI | 메모 |
+|---|---|---|---|
+| Google Cloud(로그인용 OAuth 클라이언트) | B | `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 앱 도메인이 아니라 Supabase 콜백. 범위는 `openid`, `email`, `profile`만. 채널 연결용 YouTube 클라이언트(리디렉션 `NEXT_PUBLIC_APP_URL/api/channels/callback/youtube`)와 따로 둔다(01장 D-29) |
+| 카카오 디벨로퍼스 | C1 | Supabase 콜백(위와 같음, 로컬 `http://localhost:54321/auth/v1/callback`) | 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email`(01장 D-26) |
+| 네이버 개발자센터 | C2 | `custom:naver`면 Supabase 콜백, 브리지면 `NEXT_PUBLIC_APP_URL/auth/naver/callback` | 검수 전 "개발중" 상태에서는 등록한 테스트 아이디만 로그인. 네이버 클립 업로드(VD-F-075)는 이 애플리케이션을 쓰지 않는다 |
+| Supabase 대시보드 | B·C | Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록, 와일드카드 지양) | 제공자 설정과 `AUTH_PROVIDERS` 값을 배포 체크리스트에서 함께 확인(`AUTH_ROADMAP.md` 5.3절 B-6) |
+
+7절 배포 토폴로지에서 바뀌는 구성 요소는 없다. 로그인 콜백은 Vercel 웹(Next.js) 안의 `/auth/callback`이고, Railway 워커와 FastAPI는 로그인 경로에 없다.
+
+### 9.4 로그인 없는 흐름
+
+공개 랜딩(`/landing/[slug]`), 링크인바이오(`/lb/[handle]`), 단축 링크(`/r/[code]`), 결제 복귀 외 공개 경로, 대행 고객의 승인 화면(`/review/[token]`, 토큰 해시 검증, VD-F-123)은 단계와 무관하다. `proxy.ts` 공개 경로 배열에 `/auth/callback`(B), `/api/dev/login`(A, 판정이 거짓이면 404)을 더할 뿐 이 화면들에 로그인 버튼을 추가하지 않는다.

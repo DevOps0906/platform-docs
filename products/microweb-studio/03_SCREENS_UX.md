@@ -15,14 +15,14 @@
 | `/contact` | 견적 문의 | 누구나 | - | P0 |
 | `/i/[slug]` | 하객 공개 페이지 | 누구나(게시 중만) | - | P0 |
 | `/p/[token]` | 고객 시안 확인 | 토큰 소지자 | - | P0 |
-| `/login` | 운영자 로그인(초대 메일 링크) | 초대받은 사용자 | - | P0 |
+| `/login` | 운영자 로그인(초대 메일 링크). 단계별(7절): A 개발용 패널(페르소나 버튼, 로컬 전용), B Google 버튼 + 초대 메일 경로, `/auth/callback`(B, 화면 없음), C 카카오·네이버 버튼(P2 선택) | 초대받은 사용자 | - | P0 |
 | `/studio` | 대시보드(오늘 할 일: 새 문의, 승인 대기, 만료 임박) | owner/admin/member + studio_access | free | P0 |
 | `/studio/sites`, `/studio/sites/new`, `/studio/sites/[id]` | 사이트 목록, 생성, 편집기 | 같음 | free | P0 |
 | `/studio/sites/[id]/guests` | 방명록 관리, RSVP 표와 CSV | 같음(삭제 owner/admin) | free | P0 |
 | `/studio/leads`, `/studio/leads/[id]` | 문의 목록, 상세 | 같음 | free | P0 |
 | `/studio/orders` | 제작 주문 장부 | owner/admin 쓰기, member 읽기 | free | P0 |
 | `/studio/billing` | 크레딧 잔액, 팩 구매(Phase 2) | owner/admin | self_service | P2 |
-| `/pending`, `/403` | 접근 안내(허용 목록 없음) | 로그인 사용자 | - | P0 |
+| `/pending`, `/403`, `/no-access` | 접근 안내(`/pending` 허용 목록 없음, `/no-access` 엔타이틀먼트 없음 = 초대받지 않은 이메일로 로그인, 7절) | 로그인 사용자 | - | P0 |
 | `/studio/onboarding/ai` | AI 처리 방식 선택(국외 이전 동의) | owner/admin | free | P0 |
 | `/studio/settings/ai` | AI 처리 방식 변경·철회, AI 사용량 | owner/admin | free | P1 |
 | (편집기 패널) AI 문구 제안 | 문구·구성 제안 실행, 3안 비교, 적용 | member 이상 | `features.ai_copy` | P0 |
@@ -38,7 +38,7 @@
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | (메일) | 운영자가 초대 메일 링크를 연다 | Supabase Auth 초대 → `auth.users` INSERT(`signup_app='microweb'`) → 개인 조직, 엔타이틀먼트(free) | 링크 만료 → `/login`에서 재요청 |
+| 1 | (메일) | 운영자가 초대 메일 링크를 연다(Stage B부터. Stage A 개발은 `/login` 개발용 패널의 `owner` 페르소나) | Supabase Auth 초대 → `auth.users` INSERT(`signup_app='microweb'`) → 개인 조직. invite 앱이라 가입 트리거는 엔타이틀먼트를 만들지 않고 초대 라우트(MW-06-026)가 service_role로 엔타이틀먼트(free)와 `studio_access`를 부여(05장 4절) | 링크 만료 → `/login`에서 재요청. 초대 이메일과 다른 Google 계정 → `/no-access` |
 | 2 | `/studio` | 첫 진입 | `session_context('microweb')` + `studio_access` 확인 | 허용 목록 없음 → `/pending` "초대 확인 중입니다" |
 | 3 | `/studio/leads/[id]` | 문의를 연락함/견적으로 바꾼다 | `set_lead_status` | 허용되지 않은 전이 → 토스트 |
 | 4 | `/studio/orders` | 주문 생성 → 입금 확인 후 "결제 확인" | `create_order` → `transition_order('paid', method, ref)` | 참조에 긴 숫자열 → "카드번호는 적지 마세요" |
@@ -408,7 +408,7 @@ UUPM 초안: `search.py "wedding invitation mobile micro website builder" --desi
 | 잡 진행률 | 업로드 썸네일 위 진행 바(`core.jobs` Realtime), 게시 버튼 "게시 중 40%" |
 | 크레딧 부족(402, Phase 2) | "크레딧이 12 부족합니다. 30 크레딧 팩을 사면 바로 게시합니다" |
 | 권한 부족(403) | "이 작업은 소유자와 관리자만 할 수 있습니다" |
-| 초대 미완료 | `/pending` "스튜디오 이용 승인을 기다리고 있습니다" |
+| 초대 미완료 | `/pending` "스튜디오 이용 승인을 기다리고 있습니다". 초대받지 않은 이메일로 로그인(엔타이틀먼트 없음)은 `/no-access`(7절) |
 | 게시 실패 | "게시하지 못했습니다(사진 처리 오류). 이전 공개본은 그대로입니다. 크레딧을 돌려드렸습니다" |
 | 하객 쓰기 제한 | 429 "잠시 후 다시 남겨 주세요", spam "링크는 남길 수 없습니다" |
 | 만료 페이지 | 410 "공개 기간이 끝난 페이지입니다" |
@@ -447,3 +447,27 @@ UUPM 초안: `search.py "wedding invitation mobile micro website builder" --desi
 | 채팅 | 메시지 목록 `aria-live="polite"`(스트리밍은 완료 때 한 번 읽음), 출처 칩 키보드 접근, 375px에서 전체 화면 시트 |
 | 음성 | 음성은 텍스트 입력의 대안이고 모든 기능은 음성 없이 쓸 수 있다. 녹음 중 상태를 텍스트로도 표시. 하객 음성 남기기는 "글로 남기기"가 항상 먼저 보이고, 고지 모달은 키보드 포커스 트랩과 Esc 닫기를 지원 |
 | 인사말 음성 플레이어 | 재생/정지 버튼은 대상 라벨("인사말 음성 듣기"), 자동 재생 없음, 자막(인사말 본문)이 같은 블록에 보임 |
+
+## 7. 로그인 화면 단계별 구성 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.1절, 5.2절, 7장. 로그인 화면은 스튜디오 디자인 시스템(3.2절)을 쓴다. 하객 페이지(`/i/*`), 고객 시안(`/p/*`), 쇼룸은 단계와 무관하게 로그인 버튼이 없다.
+
+| 단계 | `/login` 구성 | 비고 |
+|---|---|---|
+| A Mock(로컬 전용) | 상단 고정 배지 `MOCK AUTH · 로컬 전용`(스튜디오 모든 화면), "개발용 로그인" 패널: 페르소나 버튼(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, `studio_denied`, 05장 10절), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼 없음 | Mock 판정이 거짓이면 패널 코드를 렌더하지 않는다(서버 컴포넌트 분기). `pending` 페르소나는 approval 앱 전용이라 없다 |
+| B Google + 초대 메일 | 제목 "Microweb Studio 운영자 로그인", "Google로 계속하기" 버튼, 초대 메일 안내("초대 메일의 링크로 처음 로그인하세요. Google로 로그인할 때는 초대받은 이메일과 같은 계정을 고르세요"). 공개 가입 링크 없음(초대제) | 이메일+비밀번호 가입 폼을 새로 두지 않는다(초대 메일 수락 경로만) |
+| C 카카오·네이버(P2 선택) | Google 아래 카카오·네이버 버튼(01장 D-19로 켤 때만). 카카오 버튼은 카카오 디자인 가이드의 색·문구(미확인, 최신판 확인 후) | 네이버는 검수 통과 전 운영에 노출하지 않는다 |
+
+| 오류·안내 상태 | 화면 | 문구(제안) |
+|---|---|---|
+| `error=callback`(코드 없음·재사용·만료) | `/login` 상단 오류 띠 | "로그인을 마치지 못했습니다. 다시 시도해 주세요" |
+| `error=state`(C2 브리지 state 불일치) | `/login` 상단 오류 띠 | "로그인 요청이 만료되었습니다. 처음부터 다시 시도해 주세요" |
+| `error=email_in_use`(C2 브리지, 같은 이메일의 다른 가입 수단 존재) | `/login` 상단 오류 띠 | "이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정에서 네이버를 연결하세요" |
+| 엔타이틀먼트 없음(초대받지 않은 이메일) | `/no-access` | "이 계정은 초대받지 않았습니다. 초대받은 이메일로 로그인하세요." + 현재 로그인 이메일 표시 + [다른 계정으로 로그인](로그아웃 후 `/login`) + 운영자 문의 안내 |
+| 허용 목록 없음 | `/pending` | 5절 "초대 미완료"와 같음 |
+| 정지 계정 | `/403` | "이용이 정지된 계정입니다" |
+
+| 항목 | 위치 |
+|---|---|
+| 첫 OAuth 로그인 뒤 약관 동의 | 스튜디오 온보딩 첫 단계(`/studio/onboarding/terms`, 제안). 그다음 기존 AI 처리 방식 선택(`/studio/onboarding/ai`). 초대 메일 경로로 처음 로그인한 경우도 같은 순서 |
+| 설정 → 로그인 방법(C단계, P2 선택) | `/studio/settings/login`: 연결된 제공자 목록, 연결·해제(남는 로그인 수단이 1개 이상일 때만 해제), 감사 `auth.identity_link`/`auth.identity_unlink`(`AUTH_ROADMAP.md` 7.3절). C단계를 켜지 않으면 화면을 만들지 않는다 |

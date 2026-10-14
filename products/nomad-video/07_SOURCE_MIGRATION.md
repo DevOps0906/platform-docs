@@ -83,7 +83,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 LLM 클라이
 | 7 | SM 플랜 정의 3벌(`lib/plans.ts`, 테마 plans, 웹훅 `PLAN_CREDITS`) | `core.plans` + PRD_pricing 하나로 | MA:666 |
 | 8 | SM 결제 두 번째 경로(웹훅 orderId 파싱) | 정상 결제는 실패, 위조만 통과 | MA:667 |
 | 9 | `x-internal-call` 우회, `fetch(APP_URL+'/api/…')` 자기 호출 | 인증 우회 | MA:668 |
-| 10 | Mock 로그인(`lib/mock-auth.ts`) | 프로덕션 노출 | MA:669 |
+| 10 | Mock 로그인(`lib/mock-auth.ts`) | 프로덕션 노출. 허용되는 Mock은 `AUTH_ROADMAP.md` 2장 | MA:669 |
 | 11 | LLM 클라이언트 3종, YSM Anthropic 직접 호출 | 공용 게이트웨이 하나 | MA:670 |
 | 12 | Python 워커가 BullMQ 프로토콜을 흉내 내는 방식 | 큐 경쟁·충돌. Python은 `core.jobs`만 | MA:671 |
 | 13 | 플레이보드 난수 성장률, 대시보드 더미 배열 | 가짜 지표 저장 | MA:672 |
@@ -120,9 +120,9 @@ SECURITY_BASELINE 14장 중 해당 항목 + 제품 고유 결함.
 | 세션 없는 백그라운드 작업이 anon 클라이언트 사용 | SM `src/lib/supabase/server.ts` | 조용한 실패 | admin 클라이언트 + guard 트리거 |
 | `org_members FOR ALL`, 멤버 UPDATE로 잔액·플랜 수정 | BS `001_initial_schema.sql:226-287` | 테넌트 붕괴, 셀프 업그레이드 | 코어 정책, 제품 테이블에 잔액·플랜 없음 |
 | `x-internal-call` 헤더 우회 | SM `posts/[id]/publish/route.ts:23-30` | 인증 우회 | 함수 직접 호출 |
-| Mock 로그인 상시 노출 | SM `src/lib/mock-auth.ts` | 인증 우회 | 없음 |
+| Mock 로그인 상시 노출 | SM `src/lib/mock-auth.ts` | 인증 우회 | 이 파일은 옮기지 않는다. 허용되는 Mock은 `AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT, 원격·배포 차단)뿐(확정 결정 22) |
 | `/landing` 보호 | BS `middleware.ts:32` | 수익 경로 차단 | 공개 경로 배열 |
-| 네이버 이메일 자동 병합, `listUsers()` 1페이지 | YSM `app/api/auth/naver/callback/route.ts:54-86` | 계정 탈취 | MVP 제외, 명시적 연결 |
+| 네이버 이메일 자동 병합, `listUsers()` 1페이지 | YSM `app/api/auth/naver/callback/route.ts:54-86` | 계정 탈취 | MVP 제외, C2(G2 후, VID-06-065)에서 네이버 고유 id 기준·로그인 상태 명시적 연결(`AUTH_ROADMAP.md` 7.2.3절) |
 | task_id 소유권 미검증 | YSM `backend/routers/studio.py:306-340` | IDOR | `core.jobs` RLS + org 대조 |
 | 자유 문자열 모델명 | YSM `backend/models/script.py:87` | 비용 남용 | 허용 목록 |
 | 예외 원문을 쿼리스트링으로 노출 | YSM `backend/routers/oauth.py:296-299` | 내부 정보 누출 | 오류 코드만 |
@@ -159,3 +159,15 @@ git 쓰기 명령은 사용자 승인 후 개발 단계에서 수행한다(이 �
 | 5 | SM `files.zip`, `taste-skill-shorts-factory*.ts` 3종, `_add`/`_pricing`/`_complete` 문서는 아카이브에만 남김 | VID-06-040 |
 | 6 | 정리 커밋과 기능 커밋 분리 규칙을 CLAUDE.md에 둔다(YSM #1 재발 방지) | 이 폴더 CLAUDE.md 2장 |
 | 7 | AI 인프라 연결: 공용 Dify에 `video-chat` 앱 등록과 내부 키 발급, 운영자 지식 조직 생성(`VIDEO_KNOWLEDGE_ORG_ID`), 공용 음성 서버 보이스 목록 확정 | VID-06-050, 사용자(R-V7, R-V10) |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+4절 표에 없는 인증 패턴을 여기 둔다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 404)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키·localStorage에 역할·플랜을 적는 Mock(`nomad_role`, `nomad_plan`, `mock-login`, `dev-user`) | 이 제품 원본에서는 확인하지 않았다. 같은 계열 원본의 전례: `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`, `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88` | 권한 위조, 프로덕션 노출 | `AUTH_ROADMAP.md` 2장 시드 페르소나 + `session_context` |
+| 로그인 콜백의 `next`·`redirect` 무검증 리다이렉트 | 이 제품 원본의 사용자 로그인 콜백은 리뷰에 없다(미확인). YSM 네이버 콜백(`[5f6d262] app/api/auth/naver/callback/route.ts`)은 4절에서 이미 폐기 | 오픈 리다이렉트 | `next`는 `/`로 시작하고 `//`·`@`·`\` 없을 때만, origin은 `NEXT_PUBLIC_APP_URL` 고정(`AUTH_ROADMAP.md` 3.2절 5번) |
+| 기능 코드의 `if (mock)`, 페르소나 이메일로 권한 분기 | 신규 위험 | 배포 경로와 개발 경로가 갈라져 테스트가 의미를 잃음 | 단계 분기는 `src/lib/auth/`·로그인 화면·콜백·`/api/dev/login`만(CI 검사, 06장 VID-06-039) |
+| 채널 연결 OAuth 코드(`oauth-manager`, `core.oauth_states`)를 사용자 로그인 콜백에 재사용 | SM `src/lib/channels/oauth-manager.ts`(2절 이식 대상) | 채널 state는 로그인한 사용자·조직이 전제라 로그인 전에 쓸 수 없고, 두 흐름의 토큰 저장 규칙이 다르다 | 사용자 로그인은 Supabase Auth(`signInWithOAuth`) + `/auth/callback`, 채널은 기존 코어 oauth 모듈. 서로 import하지 않는다 |
+| 네이버 클립 Playwright 로그인(`naver-login.ts`)을 사용자 네이버 로그인(C2)에 재사용 | SM `src/skill/playwright-engine/naver-login.ts`(1.1절 이식 대상, 클립 어댑터 전용) | 브라우저 세션 자동화는 계정 로그인 수단이 아니다. 네이버 정책 위험이 사용자 로그인으로 번진다 | C2는 `custom:naver` 또는 서버 브리지(`AUTH_ROADMAP.md` 7.2절) |

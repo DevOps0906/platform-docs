@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | Route Handler/Server Action 첫 줄 `requireSession(appId)`(`SHARED_MODULES.md` 2장) → `requireRole(appId, roles)`(admin-kit). 앱 역할은 `<app>.my_role(org)` 결과 |
+| 인증 | Route Handler/Server Action 첫 줄 `requireSession(appId)`(`SHARED_MODULES.md` 2장) → `requireRole(appId, roles)`(admin-kit). 앱 역할은 `<app>.my_role(org)` 결과. 세션은 모든 인증 단계(A Mock, B Google·이메일, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`·`requireRole`은 같다(8절, `AUTH_ROADMAP.md` 0장) |
 | 2차 검사 | 모든 쓰기 RPC가 DB 안에서 `is_service_caller()` 또는 역할 헬퍼로 다시 검사한다. 앱 검사를 생략해도 데이터는 열리지 않는다 |
 | 호출 주체 | 도메인 쓰기는 사용자 세션 클라이언트로 RPC 호출(감사 행위자 = 사용자). service_role은 프로비저닝, `approve_profile`, Auth Admin 초대, 스케줄에만 |
 | 멱등 | 판매는 `request_id`(클라이언트 UUID, 8~100자) 필수. 입출고는 선택. 같은 키 재호출은 기존 행 반환 |
@@ -28,7 +28,7 @@
 
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 호출하는 코어 RPC | 오류 |
 |---|---|---|---|---|---|---|
-| `POST /api/auth/callback` | 공개 | `code` | 302 역할 홈 | - | `session_context` | 프로필 없음 → 로그아웃 |
+| `GET /auth/callback`(Stage B부터, 8.2절. 이전 표기 `POST /api/auth/callback`을 `AUTH_ROADMAP.md` 3.2절에 맞춰 정정) | 공개 | `code`, `next?` | 302 역할 홈, `/pending`, `/invite/accept`, `/no-access` | - | `session_context`, (erp 새 사용자만) `bootstrap_app_for_org` | 프로필 없음 → 로그아웃, `/login?error=callback` |
 | `POST /api/erp/join` | 로그인(pending 포함) | `{ joinCode: /^[A-Z2-9]{8}$/, name: 1..80, message?: ..500 }` | join_request | - | (`erp.request_join`) | P0002, ER005, 429 |
 | `POST /api/erp/join-requests/:id/decide` | master_admin, `max_members` | `{ approve: boolean, erpRole, departmentId?, note? }` | join_request | - | `erp.decide_join_request` → 승인 시 service_role `approve_profile(user)` | 42501, ER002, 402(한도) |
 | `POST /api/erp/products/:id/image` | master_admin, inventory_manager, `storage_mb` | `{ mime: jpeg/png/webp, size <= 5MB }` | 서명 업로드 URL, path | - | storage 정책 | 413, 415 |
@@ -266,3 +266,43 @@ AI·음성 코어 RPC 인용(제품 AI RPC는 새로 만들지 않는다): `set_
 | 코어 코드 | `CORE_SPEC.md` 15장 매핑 | - |
 
 SQLSTATE 접두사: erp `ER`, sms `SM`은 `DB_CONVENTIONS.md` 1장 제안을 따른다. hms `HM`은 그 표에 없어 이 문서가 새로 정했다(제안).
+
+## 8. 인증 단계 라우트 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(Mock), 3.2절(콜백), 7.2.3절(네이버 브리지)이다. 구현은 `packages/admin-kit/src/auth/`의 팩토리이고 앱 폴더에는 얇은 re-export만 둔다(02장 9.2절). 세 앱이 같은 경로를 쓴다.
+
+### 8.1 `POST /api/dev/login` (Stage A, 로컬 전용)
+
+| 항목 | 내용 |
+|---|---|
+| 입력 | `{ persona: string, next?: string }`. `persona`는 공통 페르소나 + 그 앱의 페르소나 키(05장 10절) 중 하나(zod enum) |
+| 판정 | `isMockAuthAllowed()`(`AUTH_MODE=mock`, Supabase 호스트가 `127.0.0.1`·`localhost`, `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 없음)가 거짓이면 **404**(존재를 숨긴다). 레이트 리밋 없음 |
+| 처리 | 쿠키 세션 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin(appId, next)`(8.2절 2~5번) |
+| 출력 | 302(또는 `{ ok: true, data: { redirect } }`) |
+| 오류 | 404(판정 거짓), 400 `22023`(모르는 페르소나), 401(시드 계정 없음: "`node scripts/dev/seed-users.mjs --app <app>`를 먼저 실행하세요") |
+| 금지 | 쿠키에 역할·플랜을 쓰지 않는다. 비밀번호를 응답·로그에 남기지 않는다 |
+
+### 8.2 `GET /auth/callback` (Stage B에서 완성, C 재사용) = `finishLogin`
+
+| 순서 | 처리 | admin-suite 특이점 | 실패 |
+|---|---|---|---|
+| 1 | `exchangeCodeForSession(code)`(PKCE) | - | `/login?error=callback` |
+| 2 | 사용자의 활성 기관 멤버십 조회 → `session_context(app, 기관 org)` 1회. 기관 멤버십이 없으면 `session_context(app)`(개인 조직) | admin-suite의 권한은 운영자가 만든 기관 조직에 있다(05장 1절) | 프로필 없음 → 로그아웃 후 `/login?error=no_profile` |
+| 3 | erp: 활성 기관 멤버십이 없고 개인 조직 `entitled=false`면 `rpc('bootstrap_app_for_org', { p_app_id: 'erp' })` 1회(approval → 프로필 pending) 후 다시 조회. sms·hms(invite): 호출하지 않는다 | 이미 활성인 기관 구성원에게 호출하지 않는다: 호출하면 `on_signup_app_bootstrap`이 프로필을 pending으로 바꾼다(`docs/products/_supabase-modular/migrations/0003_core_credits.sql:400-402`). 모놀리스 erp는 앱 행이 1개라 가입 트리거가 이미 부트스트랩하므로 이 단계는 아무 일도 하지 않는다 | - |
+| 4 | 상태 분기: pending → `/pending`(약관 동의 먼저, 03장 7.3절), suspended → 403, sms·hms에 `invited` 도메인 행이 있으면 `/invite/accept`, 기관 엔타이틀먼트 없음 → `/no-access` | - | - |
+| 5 | `next`가 `/`로 시작하고 `//`·`@`·`\`가 없을 때만 그 경로, 아니면 역할 홈(`access.ts`). origin은 `NEXT_PUBLIC_APP_URL` 고정 | - | `next=//evil.com` → 역할 홈 |
+| 6 | 감사 `auth.login`(provider, 첫 로그인 여부). 토큰·코드 미기록 | hms는 `phi_access_log` 대상이 아니다(환자 데이터 접근 아님) | - |
+
+### 8.3 `GET /auth/naver/start`, `GET /auth/naver/callback` (C2 브리지 경로 채택 시만, erp·sms)
+
+01장 D-24가 "도입"이고 D-23이 (b) 브리지일 때만 만든다. hms에는 없다(404). 처리 순서·보안 규칙은 `AUTH_ROADMAP.md` 7.2.3절 그대로다: state는 HttpOnly·Secure·SameSite=Lax 서명 쿠키(`AUTH_BRIDGE_SECRET`, 10분), 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분, 사용자는 `core.auth_identity_links`(코어 요청 R-15)의 `(naver, response.id)`로만 찾고, 같은 이메일 사용자가 있으면 자동 연결하지 않고 `email_in_use`, 세션 발급 뒤 8.2절 2~6번.
+
+### 8.4 인증 단계 오류 코드
+
+| 코드 | 의미 | HTTP / 이동 |
+|---|---|---|
+| `error=callback` | 코드 없음·재사용·만료, 교환 실패 | 302 `/login?error=callback` |
+| `error=state` | 브리지 state 불일치·없음·만료 | 302 `/login?error=state` |
+| `error=email_in_use` | 브리지: 같은 이메일의 다른 방법 가입자 | 302 `/login?error=email_in_use` |
+| `error=no_profile` | 프로필 없음 | 로그아웃 후 302 |
+| `/api/dev/login` 404 | Mock 허용 판정 거짓(배포 환경 포함) | 404 |

@@ -8,7 +8,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 인증 | 공개 API 3종은 로그인 없음. 콘솔은 `requireSession('site')`(401 미로그인, 403 pending/suspended, 402 대신 403 엔타이틀먼트 없음)(`SHARED_MODULES.md` 2장) |
+| 인증 | 공개 API 3종은 로그인 없음. 콘솔은 `requireSession('site')`(401 미로그인, 403 pending/suspended, 402 대신 403 엔타이틀먼트 없음)(`SHARED_MODULES.md` 2장). 세션은 모든 인증 단계(A Mock, B Google)에서 실제 Supabase JWT이고 `requireSession`은 같다(8절) |
 | 쓰기 경로 | 방문자 쓰기는 Route Handler가 service_role로 `site.*` RPC를 호출한다. 브라우저의 직접 RPC 호출은 설계에서 제외(DB는 방어 2선으로 `submit_inquiry`만 anon에 연다). AI 상담은 `site.*`에 쓰지 않고 `core.ai_*`에만 쓴다(문의 전환은 방문자가 기존 `POST /api/inquiries`로 직접 제출) |
 | AI·음성 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자는 Route Handler가 부른다(`docs/products/_platform-core/SECURITY_BASELINE.md:299`) |
 | 방문자 식별 | 서명된 쿠키 `__Host-site_vid`(HttpOnly, Secure, SameSite=Lax)를 `/api/ai/conversations`가 발급한다. `visitor_key = sha256(쿠키 값)`만 DB에 저장하고, 매 턴 쿠키와 대화의 `visitor_key`가 같아야 한다. 대화 id만으로는 이어 쓸 수 없다 |
@@ -200,3 +200,21 @@ AI·음성 코드(2026-10-13). 이 제품의 `error.code`는 소문자 snake_cas
 | `wiki_version_conflict` | 위키 저장 시 `expected_version`이 현재 버전과 다름(`docs/products/_platform-core/LLM_WIKI.md:31`) | 409 |
 | `internal_key_invalid` | 워커 키 또는 Dify 내부 키 불일치 | 401 |
 | FastAPI `ai_token_invalid` | 서명, `aud`, scope, 만료, `jti` 재사용 | 401 |
+
+## 8. 인증 단계 엔드포인트 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장, 3.2절. 이 제품은 C단계를 제외하므로 네이버 브리지 경로(`/auth/naver/*`)가 없다.
+
+| 메서드 경로 | 단계 | 입력 | 출력 | 동작 | 오류 |
+|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | `{ persona: string, next?: string }`. persona는 05장 10절 키 목록(zod enum) | 303 → `next`(화이트리스트) 또는 `/admin` | `isMockAuthAllowed()` 확인 → 쿠키 세션용 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('site', next)` | 판정이 거짓이면 404(존재 자체를 숨김). 모르는 persona 400 `invalid_input`. 레이트 리밋 대상 아님(로컬 전용) |
+| `GET /auth/callback` | B | `code`, `next?` | 302 | `finishLogin('site', next)`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('site')` 1회 (3) invite 앱이므로 `bootstrap_app_for_org`를 호출하지 않는다. `entitled=false`면 `/admin/no-access` (4) pending → 안내, suspended → 403 (5) `next`가 `/`로 시작하고 `//`·`@`·`\`가 없을 때만 그 경로, 아니면 `/admin`. origin은 `NEXT_PUBLIC_SITE_URL` 고정 (6) 감사 `auth.login`(provider, 첫 로그인 여부. 토큰·코드 미기록) | 코드 없음·재사용·만료 → `/admin/login?error=callback`. 프로필 없음 → 로그아웃 후 `/admin/login` |
+| `GET /auth/naver/start`, `GET /auth/naver/callback` | C2 | - | - | 만들지 않는다(C 제외) | - |
+
+| 오류 코드(쿼리) | 의미 | 위치 |
+|---|---|---|
+| `error=callback` | 콜백 코드 교환 실패 | `/admin/login` |
+| `error=state`, `error=email_in_use` | C2 브리지 전용 | 해당 없음 |
+| `/admin/no-access` | 로그인은 됐으나 `site` 엔타이틀먼트 없음(초대받지 않은 이메일) | 콘솔 |
+
+`finishLogin`은 `/api/dev/login`과 `/auth/callback`이 같이 쓴다. 그래서 A단계의 `site_pending`(엔타이틀먼트 있음, 사이트 없음)·`no_app`(엔타이틀먼트 없음) 페르소나로 B단계 분기를 미리 검증한다. 콘솔 변경은 계속 서버 액션 + 사용자 세션 클라이언트(2절 끝 문단)이며 단계와 무관하다.

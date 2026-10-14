@@ -99,7 +99,7 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 폐기 목록(�
 | 장애를 고정 문구로 숨김 | `premium-wedding-invitation/frontend/services/gemini.ts:27-30` | 실패를 숨김(`SECURITY_BASELINE.md` 11장) | 오류 표시 + 직접 입력 |
 | 누구나 보이는 삭제 버튼, 검증 없는 insert, `Date.now()` id | `frontend/components/Guestbook.tsx:53-63` | 타인 글 삭제, 타입 불일치 | 운영자 RPC, DB 기본 uuid |
 | 가짜 SRI, placeholder 키 | `frontend/index.html:20` | 스크립트 차단 | 공식 SRI, env |
-| 비밀번호 우회('1234'), 역할 직접 선택 로그인 | `webcraft-agency-simulator/frontend/pages/AdminDashboard.tsx:90`, `Login.tsx:12-26` | 권한 우회 | core auth + `studio_access` |
+| 비밀번호 우회('1234'), 역할 직접 선택 로그인 | `webcraft-agency-simulator/frontend/pages/AdminDashboard.tsx:90`, `Login.tsx:12-26` | 권한 우회 | core auth + `studio_access`. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT, 배포 환경 404)뿐이다(6절) |
 | 클라이언트 판정만의 권한 | 위와 같음 | `SECURITY_BASELINE.md` 11장 | 서버 `requireSession` + RLS |
 | `latest` 버전, tsconfig 없음/strict false | 세 원본 package.json | 재현 불가 | lockfile, strict |
 | 미검증 수치·할인 표기 | `components/Hero.tsx:38-48`, `constants.ts:142` | 표시광고 위반 소지 | 01장 6절 |
@@ -126,3 +126,14 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 폐기 목록(�
 | 3 | 루트의 같은 이름 `.zip` 사본은 원본과 동일 여부 확인 후 하나만 보관(이번 작업에서는 읽지 않음) | MW-06-034 |
 | 4 | nexus `models.ts`는 카탈로그 SQL로 옮겨졌으므로 아카이브만. 벤토 메모는 운영 문서로 | MW-06-035 |
 | 5 | WebSite 저장소는 그대로 두고 포트폴리오에 링크·스크린샷만(고객 동의 후 published) | MW-06-024 |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+세 원본에는 쿠키 역할 Mock이나 OAuth 콜백 코드가 없다(webcraft의 역할 직접 선택 로그인은 4절 행). 아래는 다른 원본에서 확인된 결함이며 이 제품에도 들이지 않는다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키에 역할·플랜을 적는 Mock 로그인(`mock-auth.ts`, `nomad_role`, `nomad_plan`, `mock-login`) | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96` | 권한 위조, 프로덕션 노출 | `AUTH_ROADMAP.md` 2장 Mock(로컬 시드 페르소나 + `signInWithPassword`, 실제 JWT, `isMockAuthAllowed()` 거짓이면 404). CI 금지 문자열(06장 MW-06-034) |
+| 콜백 `next` 무검증 리다이렉트 | `AUTH_ROADMAP.md` 3.2절 5번 | 오픈 리다이렉트(`next=//evil.com`) | `/`로 시작하고 `//`·`@`·`\`가 없을 때만, 아니면 `/studio`. origin은 `NEXT_PUBLIC_APP_URL` 고정(04장 8절) |
+| 기능 코드의 `if (mock)`·페르소나 이메일 분기 | `AUTH_ROADMAP.md` 0장, 2.5절 | 단계 전환 때 권한 경로가 달라진다 | 단계 분기는 `src/lib/auth/`·로그인 화면·콜백만, 권한은 `session_context` + `studio_access` |
+| 이메일 일치만으로 계정 자동 병합(브리지) | `AUTH_ROADMAP.md` 7.2.3절 5c | 계정 탈취 경로 | `email_in_use` 안내 후 로그인 상태에서 수동 연결 |

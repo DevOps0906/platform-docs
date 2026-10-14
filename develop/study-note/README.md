@@ -6,7 +6,8 @@
 |---|---|
 | 주 사용자 | IT 교육·부트캠프 수강생, 강사, 회의를 정리하는 직장인 |
 | DB 스키마(모듈러 번호) | `notes`(2100) |
-| 개발 작업 수 | 52개(`products/study-note/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 55개(`products/study-note/06_AGENT_PLAN.md`, 인증 단계 B·C1·C2 NT-06-053~055 포함) |
+| 인증 단계 | 개발은 Mock 로그인(Stage A, 로컬 시드 계정)으로 시작 → G1 후 Google(+이메일) → G2 후 카카오·네이버. 첫 제품이라 Stage A 시드 스크립트를 처음 실전 검증한다([`study-note_develop.md`](study-note_develop.md) 13장) |
 | 기획서 | [`products/study-note/`](../../products/study-note/) |
 | 참고 | 범위가 작아 공용 코어를 먼저 실전 검증하는 제품으로 권장됩니다. |
 
