@@ -289,3 +289,63 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 | AI 기본값(2026-10-13) | `1600_erp.sql` 7절(라우팅 8행, 플랜 AI 키, `ai-docs` 버킷, 체인 검사), `1700_sms.sql` 7절(같음), 모놀리스 `erp/seed.sql`, `sms/seed.sql`(같은 8행 + 플랜 features), `hms/seed.sql`(7행 + contract features + 버킷 + `hms-%` 검사) |
 
 검증 결과(2026-10-12, PGlite): 모듈러(0000~0007 + seed + 1600 + 1700) OK, 모놀리스 erp/sms/hms 각 OK. 2026-10-13 AI 기본값 추가 후 재검증(`check.mjs --vector`, 모듈러는 0000~0009 + seed + 1600 + 1700): 모듈러 OK, 모놀리스 erp/sms/hms 각 OK, 마지막 파일 2회 반복 적용 OK, 라우팅 행 수 erp 8·sms 8·hms 7, 미동의 조직 `resolve_ai_route`는 erp·sms가 `oss-llm`/`oss-embed`/`oss-voice`, hms는 모든 기능에서 `hms-llm`/`hms-embed`/`hms-voice`(force_open_source true). RLS 스모크: 모듈러 92/92, 모놀리스 erp 21/21, sms 19/19, hms 52/52 통과. erp/sms 스키마에서 anon이 EXECUTE 가능한 함수 0개.
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경은 없다(코어 계약 그대로). 이 절은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.2절 공통 페르소나를 admin-suite에 맞춰 옮기고 도메인 역할 행을 더한다. 시드는 `scripts/dev/seed-users.mjs --app <erp|sms|hms>`가 공통 행을 만든 뒤 앱 훅 `scripts/dev/seed-users.<app>.mjs`를 실행한다(ADM-06-007 소유). 앱마다 로컬 Supabase 프로젝트가 따로라(02장 7절, 개발 폴더 기준) 앱 하나씩 실행한다. 이메일은 모두 `<키>@dev.test`(예약 TLD, 실제 메일 없음), 비밀번호는 `DEV_SEED_PASSWORD`, 출력에 비밀번호를 쓰지 않는다. Supabase 호스트가 루프백이 아니면 즉시 종료한다.
+
+**공통 페르소나를 그대로 쓰지 않는 이유**: admin-suite는 사용자가 조직을 만들 수 없고(01장 3.5절) 권한이 개인 조직이 아니라 운영자가 만든 기관 조직에 있다. 그래서 `owner`·`outsider`는 `signup_app` 가입이 아니라 운영자 프로비저닝 경로(service_role: 조직 생성 → owner 멤버십 → `app_entitlements(source=manual)` → `<app>.register_workspace` → `approve_profile`, 03장 2.1절)를 그대로 재현해 만든다. 나머지 역할은 owner 세션으로 실제 도메인 RPC를 호출해 만든다. service_role 직접 갱신은 `approve_profile`(이 제품의 실제 승인 경로, 04장 2절), `suspended`, `ops`뿐이다. 기대 결과의 `session_context`는 기관 조직 기준(`session_context(app, 기관 org)`)이고, 플랜은 erp·sms `default`, hms `contract`, 크레딧 잔액은 0(크레딧 미사용)이다.
+
+### 10.1 공통 페르소나 (세 앱 공통, 앱마다 만듦)
+
+| 키 | 만드는 방법(실제 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|
+| `owner` | 프로비저닝 재현: 기관 조직 "개발 기관 A" + owner 멤버십 + manual 엔타이틀먼트 + `register_workspace` + `approve_profile`. erp는 이어서 `erp.get_join_code`로 가입 코드를 읽어 훅이 다음 행에 쓴다 | `org.role=owner`, `entitled=true`, `my_role`: erp `master_admin`, sms `admin`, hms `admin` | 관리자 화면, 승인·초대 주체 |
+| `admin` | owner 세션 `invite_member(org, user, 'admin')` → 본인 `accept_invite`. erp 모놀리스는 앱 행이 1개라 `signup_app` 없이 만든 계정도 가입 트리거가 pending으로 만들므로 `approve_profile`(viewer도 같음) | `org.role=admin`, `my_role`은 owner와 같은 관리자 역할 | 관리자 역할이 owner 전용 동작(소유권 이전)과 구분되는지 |
+| `member` | 앱의 기본 도메인 역할(10.2~10.4절 표의 `member` 행) | 같은 표 | 역할 분기 |
+| `viewer` | owner 세션 `invite_member(org, user, 'viewer')` → `accept_invite`(erp는 이어서 `approve_profile`). 도메인 행(employees·members·staff_profiles)은 만들지 않는다 | `entitled=true`이지만 `my_role` null → `/no-access`(02장 6절, `Hospital.md` 3장 #3 차단 설계) | "멤버십만 있고 도메인 역할 없음" 차단 |
+| `outsider` | 프로비저닝 재현으로 다른 기관 조직 "개발 기관 B"의 owner | 자기 기관 owner. 기관 A의 도메인 행 0행, 기관 A org id로 RPC 호출 시 42501 | 교차 테넌트 RLS 거부. hms는 운영에서 병원마다 프로젝트가 따로지만 로컬 프로젝트 안의 조직 격리도 검증한다 |
+| `no_app` | `signup_app` 없이 `auth.admin.createUser` | 10.5절(모놀리스/모듈러 차이) | 첫 진입 분기 |
+| `pending` | erp만. `signup_app='erp'`로 생성, 가입 요청 없음 | 프로필 `status=pending` → `/pending` 가입 코드 입력 단계 | 승인제 첫 화면 |
+| `suspended` | `member`와 같이 만든 뒤 service_role로 `profiles.status=suspended` | 403 | 차단 |
+| `ops` | 생성 후 service_role로 `platform_role=platform_admin` | 이 제품에 운영자 화면은 없다(프로비저닝은 CLI, 02장 7절). 기관 멤버십이 없으면 `/no-access` | 선택(제안). `approve_profile`의 platform_admin 경로 단위 테스트용 |
+
+### 10.2 erp 도메인 페르소나 (approval, 가입 코드)
+
+| 키 | 만드는 방법(실제 RPC 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|
+| `member`(= staff) | `signup_app='erp'` 생성(pending) → 본인 `erp.request_join(<owner 조직 가입 코드>, 이름)` → owner `erp.decide_join_request(approve, 'staff')` → service `approve_profile` → 본인 `accept_invite` | `my_role=staff`, 대시보드만, `/inventory` 403, `employees`는 본인 행만 | 일반 직원 |
+| `inventory_manager` | 같은 경로, 역할 `inventory_manager` | 재고 등록·입출고·조정 가능, `/sales` 403 | 재고 화면 |
+| `sales_manager` | 같은 경로, 역할 `sales_manager` | 판매 가능, 입출고는 OUT만(D-3), 재고 차감은 `record_sale`로 성공 | 판매·동시성 |
+| `join_requested`(가입 코드 대기자) | `signup_app='erp'` 생성 → `request_join` 까지만 | 프로필 pending, `join_requests.status=pending`, `/pending`에 "승인 대기", 도메인 SELECT 0행 | KIT-F-005 승인 전 차단, 승인 화면 목록 |
+| `join_rejected` | `request_join` → owner `decide_join_request(reject, note)` | `/pending`에 거절 사유, 재신청 가능 | 거절 분기 |
+
+### 10.3 sms 도메인 페르소나 (invite)
+
+훅은 먼저 owner 세션으로 학급 "1-1"(학년 1)과 과목 1개를 만든다(`sms.classes`, `sms.subjects`는 admin 직접 쓰기, 4.2절).
+
+| 키 | 만드는 방법(실제 RPC 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|
+| `member`(= teacher) | 생성 → owner `sms.invite_school_member(org, user, 'teacher', 이름)` → 본인 `sms.accept_school_invite(org)` | `my_role=teacher`, 출석 체크 가능, 과목 조회만, AI 질의 가능 | 교사 |
+| `student` | 같은 경로, `student` + 학급 "1-1" + 학번 | `my_role=student`, `/student/dashboard`, 다른 학생 출석 0행, `/api/ai/*`·`/api/voice/*` 403 | 학생 화면, 미성년자 노출 범위 |
+| `invited`(초대 대기) | 초대까지만(수락 안 함) | `members.status=invited`, `has_access=false`, `/invite/accept`로 이동 | 초대 수락 흐름 |
+
+### 10.4 hms 도메인 페르소나 (invite, 로컬 hms 프로젝트만)
+
+환자 데이터는 이 스크립트가 만들지 않는다(개발 환경에 실제 환자 데이터 금지, 개발 안내서 7절). 화면 개발용 가상 환자는 도메인 작업의 별도 픽스처가 만든다.
+
+| 키 | 만드는 방법(실제 RPC 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|
+| `member`(= staff, 원무) | 생성 → owner(병원 admin) `invite_staff(org, user, 'staff', 이름)` → 본인 `accept_staff_invite(org)` | `my_role=staff`, 접수·예약 가능, `get_patient_chart` 42501 | 원무 |
+| `doctor` | 같은 경로, `doctor` + 진료과 | `my_role=doctor`, 차트·진료기록 가능, 본인 가용 토글만 | 진료 |
+| `lab_tech` | 같은 경로, `lab_tech` | `/patients` 403, 검사 작업 목록만 | 최소 권한 |
+| `invited`(초대 대기) | 초대까지만 | `staff_profiles.status=invited`, `/invite/accept` | 초대 수락 흐름 |
+
+### 10.5 모놀리스와 모듈러 차이 (`no_app`)
+
+| 형태 | erp | sms | hms |
+|---|---|---|---|
+| 모놀리스(개발 기본, 앱별 단독 프로젝트) | 앱 행이 1개라 가입 트리거가 개인 조직을 자동 부트스트랩하고 approval이라 프로필 pending → `/pending` | invite라 트리거가 부트스트랩하지 않음 → `entitled=false` → `/no-access` | 같음(`/no-access`) |
+| 모듈러 통합 DB(erp·sms) | `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('erp')` 1회 → pending → `/pending`(04장 8.2절 3번 검증) | `/no-access`(invite라 부트스트랩하지 않음) | 해당 없음(통합 DB 제외) |
+
+모듈러 통합 DB에서 `--app erp --app sms`를 함께 주면 두 훅을 차례로 실행하고 기관 조직을 앱마다 프로비저닝한다. admin-suite의 기관 엔타이틀먼트는 manual이므로 두 번째 앱에 `bootstrap_app_for_org`를 쓰지 않는다(`AUTH_ROADMAP.md` 2.3절 "모듈러 통합 DB" 행과 다른 점).

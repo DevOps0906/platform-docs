@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 모든 `/api/**`(웹훅, `/r` 제외)는 진입부에서 `requireSession('blog', { roles })`. 미로그인 401, pending/suspended 403, `entitled=false` 402 |
+| 인증 | 모든 `/api/**`(웹훅, `/r`, `/api/dev/login` 제외)는 진입부에서 `requireSession('blog', { roles })`. 미로그인 401, pending/suspended 403, `entitled=false` 402. 세션은 모든 인증 단계(A Mock·B Google·C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(8절, 확정 결정 22) |
 | 입력 검증 | zod 스키마. 실패 422 + 필드 오류 |
 | 멱등 | 생성·발행·지원 요청은 클라이언트 UUID `request_id` 필수. 키: `consume:blog:<request_id>`, `job:blog:<request_id>`, 발행 행 `idempotency_key = pub:<request_id>:<channel_account_id>` |
 | 크레딧 선차감 | Route Handler에서 service_role로 `consume_credits` → `enqueue_job(p_credit_ledger_id)` 또는 동기 호출(`withCredits`). 사용자 RPC 안에서 차감하지 않는다(`DB_CONVENTIONS.md` 11장). AI·음성의 선차감·정산은 2.1절의 라우트에서만 한다 |
@@ -219,3 +219,24 @@ export interface ChannelPublisher {
 | `WIKI_VERSION_CONFLICT` | 위키 저장 시 `expected_version`이 현재 버전과 다름(`docs/file/03-설계/공용코어/LLM_WIKI.md:31`) | 409 |
 | `INTERNAL_KEY_INVALID` | 워커 키 또는 Dify 내부 키 불일치 | 401 |
 | FastAPI `AI_TOKEN_INVALID` | 서명, `aud`, scope, 만료, `jti` 재사용 | 401 |
+
+## 8. 인증 단계 라우트 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(이하 AUTH_ROADMAP) 2장, 3.2절, 7.2.3절이다. 아래 라우트는 `src/lib/auth/`의 `getAuthConfig`, `isMockAuthAllowed`, `finishLogin`만 쓰고, 기능 라우트(2절)는 단계를 모른다. 블로그 채널 연결(2절 `/api/channels`, 네이버·티스토리 Playwright 로그인)은 이 절과 무관하다.
+
+| 메서드 경로 | 단계 | 입력 | 처리 | 출력 | 오류 |
+|---|---|---|---|---|---|
+| POST `/api/dev/login` | A(로컬 전용) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'owner_pro', next? }`(zod, 목록 밖 422) | `isMockAuthAllowed()` 거짓이면 404(존재 자체를 숨김) → 쿠키 세션용 서버 클라이언트로 `signInWithPassword(<persona>@dev.test, DEV_SEED_PASSWORD)` → `finishLogin('blog', next)`(AUTH_ROADMAP 3.2절 2~5번, 아래 콜백 행의 (2)~(7). 시드 페르소나는 이메일 제공자 계정이라 (5) 약관 단계를 건너뛴다) | 303 → 반환 경로(`/dashboard` 기본) | 404(판정 거짓), 401 `DEV_PERSONA_MISSING`(시드 안 됨), 422. 레이트 리밋 대상 아님(로컬 전용) |
+| POST `/api/dev/logout` | A | `{}` | 판정 거짓이면 404, `signOut` | 303 → `/login` | 404 |
+| GET `/auth/callback` | B·C(C1 카카오, C2 `custom:naver` 포함) | `?code&next` | `finishLogin`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('blog')` 1회 (3) `entitled=false`면 `rpc('bootstrap_app_for_org', { p_app_id: 'blog' })` 1회 후 재조회(blog는 open. 모놀리스는 트리거가 이미 부트스트랩해 무동작) (4) pending → `/pending`, suspended → 403 화면 (5) OAuth 제공자 첫 로그인이고 약관 미동의면 `/onboarding/terms`(03장 7.3절. 이메일 가입자는 가입 폼에서 동의해 건너뜀) (6) `next` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음, origin `NEXT_PUBLIC_APP_URL` 고정) 아니면 `/dashboard` (7) 감사 `auth.login {provider, first_login}` | 302 | `/login?error=callback`(코드 없음·재사용·만료), 프로필 없음 → 로그아웃 후 `/login` |
+| GET `/auth/naver/start` | C2 브리지 경로만(`NAVER_AUTH_PATH=bridge`) | `?next` | 32바이트 state → HttpOnly·Secure·SameSite=Lax 서명 쿠키(`AUTH_BRIDGE_SECRET`, 10분) → 네이버 authorize 302. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 302 | 429 |
+| GET `/auth/naver/callback` | C2 브리지 경로만 | `?code&state` | 쿠키 state 상수 시간 비교 후 삭제 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(provider `naver`, `response.id`) 조회 → 있으면 매직링크 `verifyOtp`로 세션, 없고 같은 이메일 사용자도 없으면 `auth.admin.createUser` + 링크 행 → `finishLogin`. 네이버 토큰은 저장하지 않음 | 302 | `/login?error=state`(불일치·없음·만료), `/login?error=email_in_use`(같은 이메일의 다른 가입자, 자동 병합 금지), `/login?error=callback` |
+| POST `/auth/link/naver`(제안) | C2 브리지, 설정 → 로그인 방법 | 로그인 세션 | 브리지 1~3번 후 링크 행 INSERT. 이미 다른 사용자에 연결된 네이버 id면 거부 | 302 → `/settings/login-methods` | 409 `IDENTITY_IN_USE` |
+
+`supabase_custom` 경로(C2)와 카카오(C1)는 브라우저 `signInWithOAuth({ provider: 'custom:naver' \| 'kakao', options: { redirectTo: <APP_URL>/auth/callback?next=... } })`로 시작하고 같은 `/auth/callback`을 쓴다. Google(B)은 `queryParams: { prompt: 'select_account' }`를 더한다(AUTH_ROADMAP 5.2절).
+
+| 오류 코드 | 의미 | HTTP |
+|---|---|---|
+| `DEV_PERSONA_MISSING` | 개발용 페르소나 계정이 로컬 DB에 없음(시드 스크립트 미실행) | 401 |
+| `IDENTITY_IN_USE` | 그 네이버 id가 이미 다른 사용자에 연결됨 | 409 |
+| 쿼리 `error=callback`, `error=state`, `error=email_in_use` | 03장 7.2절 문구 | 302 리다이렉트 |

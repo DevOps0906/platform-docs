@@ -316,3 +316,24 @@ PM001 처리: `core.confirm_payment_order`는 금액 불일치 시 `PM001`을 �
 | RLS 스모크 추가 항목(TN-06-060) | `sponsorships` 4정책(조직 격리, viewer 포함 멤버 쓰기, owner/admin 삭제), `decide_sponsorship` 역할 검사 |
 
 AI 기능별 기본값 행(정본 02장 5.1절): `toon.storyboard`, `toon.dialogue`, `chat`(llm, auto, anthropic → openai → google → oss-llm), `toon.consistency`, `toon.prompt_en`, `wiki.query`, `wiki.ingest`, `wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `toon.knowledge`(embedding, open_source, oss-embed), `voice_chat` stt(auto, oss-voice → elevenlabs), `voice_chat` tts·`dialogue_voice` tts(auto, elevenlabs → oss-voice), `video_voice` tts(auto, elevenlabs → oss-voice, 작업 중 대체 금지는 음성 어댑터가 강제).
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음. 인증 단계는 코어 계약(`session_context`, RLS)을 그대로 쓰고 toon 표·정책·함수를 바꾸지 않는다. 네이버 브리지 경로를 택해도 코어 보류 마이그레이션(`D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`)을 참조만 한다(01장 D23).
+
+시드는 `scripts/dev/seed-users.mjs --app toon`(공통, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.3절)이 공통 페르소나를 만든 뒤 제품 훅 `scripts/dev/seed-users.toon.mjs`가 아래 toon 행을 맞춘다. 로컬 Supabase(`127.0.0.1`·`localhost`)에서만 실행하고, 실제 가입 트리거와 RPC 경로를 탄다. 이메일은 `.test` 도메인(실제 메일 없음).
+
+| 키 | 이메일 | 만드는 방법(RPC/서비스 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|---|
+| `owner` | `owner@dev.test` | 공통(`signup_app=toon`으로 `auth.admin.createUser`) + 훅: owner 세션으로 `set_ai_cross_border_ack(org, true, <고지문 버전>)` | `entitled=true`, plan `free`, 잔액 10, 국외 이전 동의 있음 | 기본 사용자, 템플릿 → PNG 내보내기, AI 배경 |
+| `admin`, `member`, `viewer` | 공통 | owner 세션 `invite_member` → 본인 `accept_invite` | owner 조직의 각 역할. toon 화면에 팀 관리 UI는 없지만(02장 3절 org 행) 역할 판정·RLS는 같다 | 협찬 승인 `decide_sponsorship`(owner/admin만), viewer 에디터 읽기 전용 |
+| `outsider` | 공통 | 공통(다른 개인 조직). 훅은 동의를 넣지 않는다 | 자기 조직 owner, free, 국외 이전 미동의 | 교차 테넌트 RLS 0행, 다른 조직 컷 TTS 404, AI 배경 403 `TN007` |
+| `no_app` | 공통 | `signup_app` 없이 생성 | 모듈러: `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('toon')` 1회 → free·10크레딧. 모놀리스: 앱 행 1개라 가입 트리거가 이미 부트스트랩(`entitled=true`) | 첫 진입 부트스트랩(모듈러), 재로그인 3회 뒤 원장 행 수 같음 |
+| `suspended` | 공통 | 생성 후 service_role로 `status=suspended` | 403 | 차단 |
+| `ops` | 공통 | 생성 후 service_role로 `platform_role=platform_admin` | 운영자 | `/admin/catalog` 검증·공개(TN-F-044) |
+| `pro_owner`(toon) | `pro_owner@dev.test` | `signup_app=toon` 생성 → service_role로 `core.payment_orders`(kind `subscription`, plan `pro`) INSERT → `core.confirm_payment_order(order_id, 'dev_<uuid>', 14900)`(가짜 결제키, 로컬 전용, 제안) | plan `pro`, `features.watermark=false`, `sponsorship=true`. 잔액 기대값 300(Pro는 이월 없음이라 free 10은 plan 버킷 리셋으로 소멸). 확인 필요: 가입과 승인이 같은 날이면 월 지급 멱등 키 `monthly:<sub>:<기간 시작일>`이 가입 때 키와 같아 300 지급이 건너뛰어질 수 있다(`D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0003_core_credits.sql:621-626`, `:382-433`). 시드가 이 현상을 드러내면 06장 8.3절 코어 요청으로 처리 | 워터마크 해제, MP4·음성, 브랜디드 툰, Pro 에셋 서명 URL |
+| `low_credit`(toon) | `low_credit@dev.test` | `signup_app=toon` 생성 → service_role `consume_credits(org, 9, 'toon', 'dev_seed', ..., 'dev:low_credit:<org>')`(멱등 키) | plan `free`, 잔액 1 | 402 `CR001` "크레딧이 2 부족합니다"(콘티 3, TN-F-043) |
+
+approval 앱 전용 `pending` 페르소나는 toon이 공개 가입이라 만들지 않는다. 멱등: 두 번 실행해도 가입·월 크레딧(`signup:<org>:toon`, `monthly:<sub>:<기간>`)과 `low_credit` 차감이 한 번만 일어난다. 원격 Supabase를 가리키면 스크립트가 exit 1로 끝나므로 이 행들은 운영 DB에 생기지 않는다.
+
+모놀리스/모듈러 차이(8절에 더함): 모놀리스(`public`, 개발 폴더 기본 구조)는 `no_app`도 가입 트리거가 자동 부트스트랩하므로 `finishLogin`의 부트스트랩 호출이 무동작이고, 모듈러는 `no_app`으로 그 경로를 검증한다. RPC 이름은 같고 스키마 접두사만 `core.` / `public.`이다.

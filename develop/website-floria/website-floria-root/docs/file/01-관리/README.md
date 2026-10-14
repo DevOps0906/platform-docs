@@ -48,7 +48,7 @@
 | `03_SCREENS_UX.md` | 화면 목록, 사용자 플로우, 화면별 명세(상담·음성·위키·콘솔 AI), 디자인 시스템 항목, 메인페이지 디자인 방향(레퍼런스, 토큰, 와이어프레임, 3D 히어로) |
 | `04_API.md` | Route Handler(공개 4개 + AI·음성·관리), `site` 스키마 RPC 11개, 토큰 규격, FastAPI·Dify 계약, 오류 코드 |
 | `05_DATA_MODEL.md` | 테이블 3개(제품 AI 테이블 없음, 코어 AI 테이블 참조), 상태 전이, RLS, 인덱스, 모놀리스/모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 48개(AI·음성·3D·디자인 시스템 16개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `06_AGENT_PLAN.md` | 작업 49개(AI·음성·3D·디자인 시스템 16개, 인증 Stage B 1개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 이식/폐기 자산, 복사 금지 결함, 아카이브 절차 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `D:/WorkSpace/platform/docs/products/_platform-core/MONOLITH_CORE_LITE.sql` 복사본. [선택] 7개 절만 주석과 함께 제거 |

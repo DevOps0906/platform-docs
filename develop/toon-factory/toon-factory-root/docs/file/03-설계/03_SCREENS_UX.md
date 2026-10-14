@@ -10,7 +10,7 @@
 |---|---|---|---|---|
 | `/` | 랜딩 | 누구나 | - | P0 |
 | `/pricing` | 요금 | 누구나 | - | P0 |
-| `/login`, `/signup`, `/reset` | 인증 | 비로그인 | - | P0 |
+| `/login`, `/signup`, `/reset`, `/auth/callback` | 인증. 단계별(7절): A `/login` 개발용 패널만(로컬 전용, `/signup`·`/reset`은 B에서 구현), B Google 버튼 + 이메일 폼·`/signup`·`/reset`·`/auth/callback`, C 카카오·네이버 버튼 추가 | 비로그인 | - | P0(A·B), P1(C) |
 | `/legal/terms`, `/legal/privacy`, `/legal/ai`, `/legal/asset-license` | 약관, 처리방침, AI 이용 고지, 에셋 이용 허락 | 누구나 | - | P0 |
 | `/app` | 작품 목록 | member 이상 | free, pro | P0 |
 | `/app/onboarding` | 템플릿 3종 선택(첫 진입) | owner | free, pro | P0 |
@@ -27,7 +27,7 @@
 | `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
 | `/app/exports` | 내보내기 기록과 다운로드 | member 이상 | free, pro | P0 |
 | `/app/billing`, `/app/billing/success`, `/app/billing/fail` | 플랜, 크레딧팩, 결제 결과 | owner, admin | - | P0 |
-| `/app/settings` | 프로필, 계정 삭제 | owner | - | P1 |
+| `/app/settings` | 프로필, 계정 삭제. C단계부터 "로그인 방법"(연결된 제공자, 연결·해제, 7.4절) | owner(로그인 방법은 본인) | - | P1 |
 | `/admin/catalog` | 팩/캐릭터/에셋 목록, 라이선스 검증, 공개 | platform_admin | - | P0 |
 
 ## 2. 사용자 플로우
@@ -36,7 +36,7 @@
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | `/signup` | 이메일·비밀번호 또는 Google, 만 14세 이상 확인 | `signUp({ options.data.signup_app: 'toon' })` → 가입 트리거가 free 구독, 엔타이틀먼트, 10크레딧 지급 | 이미 가입한 이메일 → 로그인 안내 |
+| 1 | `/signup` | 이메일·비밀번호 또는 Google, 만 14세 이상 확인(Google은 첫 로그인 뒤 온보딩 약관 단계에서, 7절). Stage A는 `/login` 개발용 패널의 `owner` 페르소나로 대신한다 | 이메일: `signUp({ options.data.signup_app: 'toon' })` → 가입 트리거가 free 구독, 엔타이틀먼트, 10크레딧 지급. Google: `/auth/callback` → `finishLogin`(필요 시 `bootstrap_app_for_org('toon')` 1회) | 이미 가입한 이메일 → 로그인 안내. 콜백 실패 → `/login?error=callback` |
 | 1-2 | `/onboarding/ai` | "AI 처리 방식" 선택: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 나중에 설정에서 바꿀 수 있다 | 사용자 세션 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack, p_notice_version })`(고지문 버전은 서버 상수와 같아야 함) | 버전 불일치 409 → 새 고지문 표시. 건너뛰기 = 미동의(오픈소스만) |
 | 2 | `/app/onboarding` | 템플릿 3종 중 선택 | 작품 1개 + 1화 + 컷(템플릿 문서) 생성(RLS, 사용자 세션) | 엔타이틀먼트 없음(다른 앱으로 가입한 SSO 사용자) → `bootstrap_app_for_org('toon')` 호출 후 재시도 |
 | 3 | `/editor/[id]` | 말풍선 문구 수정, 표정 교체 | 자동 저장 | 저장 충돌 `TN409` → 배너 |
@@ -459,3 +459,35 @@
 | 모션 | `prefers-reduced-motion` 존중(3D 히어로는 정지 이미지, 채팅 스트리밍은 즉시 표시) |
 | 채팅·음성 | 채팅 시트는 `aria-live="polite"`, 마이크 버튼은 키보드(Space 누르고 있기/토글)로 조작, 모든 음성 기능은 텍스트 대안이 있다 |
 | 3D | 캔버스 `aria-hidden`, [움직임 멈춤] 키보드 조작 가능, 제목·CTA는 3D 전에 보이고 Tab 순서에 있다 |
+
+## 7. 인증 단계별 화면 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장(A), 5.2절(B), 7장(C)이다. 로그인 뒤 화면(1절 표의 `/app/*`, `/editor/*`)은 단계와 무관하게 같다.
+
+### 7.1 로그인 화면 구성
+
+| 단계 | `/login` | `/signup`, `/reset` | 공통 표시 |
+|---|---|---|---|
+| A | "개발용 로그인" 패널: 페르소나 버튼 목록(05장 10절: `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, toon 추가 `pro_owner`, `low_credit`), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼 없음. 판정(`isMockAuthAllowed`)이 거짓이면 패널을 렌더하지 않는다(서버 컴포넌트 분기) | 구현하지 않음(B 작업으로 이동). 접근 시 `/login` | 모든 화면 상단 고정 배지 `MOCK AUTH · 로컬 전용`(토큰 색 경고 계열, 키보드 포커스 대상 아님, 스크린리더 텍스트 동일) |
+| B | "Google로 계속하기" 버튼(`prompt: 'select_account'`) + 이메일·비밀번호 폼(01장 TN-F-040). 버튼 순서: Google → 구분선 "또는 이메일로" → 이메일 폼 | 이메일 가입(만 14세 이상 확인, 약관 동의), 메일 인증 안내, 비밀번호 재설정 | 배지 없음 |
+| C1·C2 | B 구성 위에 "카카오로 계속하기"(C1), "네이버로 계속하기"(C2) 버튼. 순서 Google → 카카오 → 네이버 → 이메일 폼(제안). 카카오·네이버 버튼 색·문구는 각 사 디자인 가이드(미확인, 구현 시 최신판 확인. AUTH_ROADMAP C1-5) | B와 같음 | `AUTH_PROVIDERS`에 없는 제공자 버튼은 렌더하지 않는다 |
+
+### 7.2 첫 OAuth 로그인 뒤 약관 동의 위치
+
+OAuth는 가입과 로그인이 같은 버튼이라 가입 폼의 약관 동의·만 14세 확인(01장 6.6절)을 받을 자리가 없다. 첫 로그인 직후 온보딩 첫 단계 `/onboarding/terms`(제안, 01장 8.1절)에서 이용약관·개인정보처리방침·생성형 AI 사용 사전 고지(01장 6.2절) 동의와 만 14세 이상 확인을 받는다. 순서는 `/onboarding/terms` → `/onboarding/ai`(국외 이전, 2.1절 1-2) → `/app/onboarding`(템플릿). 동의 전에는 `/app/*` 진입 시 `/onboarding/terms`로 보낸다. 14세 미만 선택 시 "만 14세 미만은 가입할 수 없습니다" 안내 후 계정 삭제 요청 경로로 보낸다(처리 방식은 법무 확인, 제안). 이메일 가입자는 가입 폼에서 이미 받았으므로 이 단계를 건너뛴다.
+
+### 7.3 오류 상태
+
+| 상황 | 표시 | 단계 |
+|---|---|---|
+| `/login?error=callback`(코드 없음·재사용·만료, 교환 실패) | "로그인을 마치지 못했습니다. 다시 시도해 주세요." + 제공자 버튼 유지 | B·C |
+| `/login?error=state`(네이버 브리지 state 불일치·만료) | "로그인 요청이 만료되었습니다. 처음부터 다시 시도해 주세요." | C2(브리지) |
+| `/login?error=email_in_use`(네이버 브리지, 같은 이메일 기존 가입자) | "이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정 → 로그인 방법에서 네이버를 연결하세요." | C2(브리지) |
+| 프로필 없는 세션 | 로그아웃 후 `/login`(안내 없음) | A~C |
+| suspended | 403 화면 "이용이 제한된 계정입니다" + 문의 경로 | A~C |
+| `/no-access`(invite 앱 안내) | 이 제품은 공개 가입이라 해당 없음. `entitled=false`면 콜백이 부트스트랩한다 | - |
+| 개발용 로그인 실패(로컬, 시드 미실행) | 패널 안 "시드 계정이 없습니다. `pnpm db:seed-users`를 실행하세요" | A |
+
+### 7.4 설정 → 로그인 방법 (C단계, P1)
+
+`/app/settings`의 "로그인 방법" 구역(AUTH_ROADMAP 7.3절). 연결된 제공자 목록(Google, 카카오, 네이버, 이메일), 각 행의 연결·해제 버튼. 해제는 남는 로그인 수단이 1개 이상일 때만 활성화하고, 비활성 사유를 툴팁이 아니라 행 안 텍스트로 보인다("마지막 로그인 방법은 해제할 수 없습니다"). 연결은 로그인 상태에서 `linkIdentity`(네이버 브리지는 브리지 연결 흐름). 감사 `auth.identity_link`, `auth.identity_unlink`. 작업은 TN-06-068(카카오 연결)과 TN-06-069(네이버 연결)가 나눠 소유한다(06장 8절).

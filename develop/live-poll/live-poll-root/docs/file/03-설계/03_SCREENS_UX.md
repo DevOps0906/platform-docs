@@ -8,18 +8,19 @@
 |---|---|---|---|---|
 | `/` | 랜딩 | 누구나 | - | P0 |
 | `/pricing` | 가격(베타 무료 + Phase 2 예고) | 누구나 | - | P1 |
-| `/login`, `/signup` | 진행자 로그인/베타 가입 | 누구나 | - | P0 |
+| `/login`, `/signup`, `/auth/callback` | 진행자 로그인/베타 가입. 인증 단계별 구성(7절): A 개발용 로그인 패널(페르소나 버튼, `/signup`은 `/login`으로 이동), B Google 버튼 + 이메일 폼, C 카카오·네이버 버튼 추가. `/auth/callback`은 B부터 OAuth 콜백(화면 없음, 이동만) | 누구나 | - | P0 |
 | `/events` | 행사 목록 | owner/admin/member/viewer | 모든 플랜 | P0 |
 | `/events/new` | 행사 만들기 | owner/admin/member | 모든 플랜 | P0 |
 | `/events/[id]/edit` | 행사 편집(문항, 선택지, 설정) | owner/admin/member | 모든 플랜 | P0 |
 | `/events/[id]/live` | 진행자 콘솔(진행, 결과, Q&A 모더레이션, 참가자) | owner/admin/member | 모든 플랜 | P0 |
 | `/events/[id]/results` | 결과 보존 화면 + CSV | owner/admin/member/viewer | `export_csv` | P1 |
 | `/settings` | 금칙어, 계정 | owner/admin | 모든 플랜 | P1 |
+| `/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제). C단계부터(7.4절) | 로그인한 진행자 본인(역할 무관) | 모든 플랜 | P1 |
 | `/present/[id]` | 발표 화면(전체화면) | 진행자 세션 | 모든 플랜 | P0 |
 | `/overlay/[id]?k=` | OBS 오버레이 | 오버레이 키 | `overlay` | P0 |
 | `/join` | 코드 입력 | 청중 | - | P0 |
 | `/e/[code]` | 청중 화면(입장 → 대기 → 투표 → 결과, Q&A 탭, 음성 질문 마이크) | 청중(참가자 쿠키) | `voice_question`(음성 마이크) | P0 |
-| `/onboarding` | AI 처리 방식 선택(국외 이전 동의) | owner/admin | 모든 플랜 | P0 |
+| `/onboarding` | AI 처리 방식 선택(국외 이전 동의). B단계부터 OAuth 첫 로그인이면 첫 단계에 베타 약관 동의(7절) | owner/admin | 모든 플랜 | P0 |
 | `/events/[id]/materials` | 행사 자료 업로드·색인 상태 | owner/admin/member | `materials_max_docs`, `materials_max_mb` | P1 |
 | `/wiki`, `/wiki/[...slug]` | 행사 위키 목록·페이지·이력·점검(진행자 전용) | owner/admin/member(편집), viewer(읽기) | `event_wiki` | P1 |
 | (패널) 어시스턴트 | 진행자 콘솔·편집 화면의 오른쪽 시트. 별도 경로 없음 | owner/admin/member | `ai_chat` | P0 |
@@ -34,7 +35,7 @@
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | `/signup` | 이메일/Google, 베타 약관 동의 | `signUp({options:{data:{signup_app:'poll'}}})` → 코어 트리거가 개인 조직 + free 엔타이틀먼트 | 이메일 중복 → 로그인 안내 |
+| 1 | `/signup` | 이메일/Google, 베타 약관 동의(A단계는 `/login` 개발용 패널에서 페르소나 선택, B부터 이 화면. 7절) | `signUp({options:{data:{signup_app:'poll'}}})` → 코어 트리거가 개인 조직 + free 엔타이틀먼트. Google은 `/auth/callback`의 `finishLogin`이 `bootstrap_app_for_org('poll')` 1회 | 이메일 중복 → 로그인 안내 |
 | 2 | `/onboarding` | "AI 처리 방식" 선택: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 건너뛰면 국내 오픈소스만 | 동의하면 `POST /api/onboarding/ai-consent` → 사용자 세션으로 `rpc('set_ai_cross_border_ack')`. 가입 크레딧 100 지급은 부트스트랩이 처리 | 409 고지문 버전 불일치 → 최신 고지문 재표시 |
 | 2-1 | `/events` | 첫 진입 | `session_context('poll')`. 기존 다른 제품 사용자면 `bootstrap_app_for_org('poll')` | 프로필 없음 → 로그아웃(기본 admin 금지) |
 | 3 | `/events/new` | 제목 입력 → 만들기 | `rpc create_event` → 코드 발급 | PL429, PL012 → 한도 안내 |
@@ -415,3 +416,44 @@ Q&A AI 정리 패널 와이어프레임(콘솔 오른쪽 Q&A 열 안):
 | AI 패널 | 어시스턴트 시트는 포커스 트랩과 Esc 닫기, 스트리밍 영역 `aria-live="polite"`(문장 단위), 크레딧 변화는 별도 `aria-live` 없이 텍스트로. Q&A AI 패널의 라벨은 색만이 아니라 아이콘 + 텍스트 |
 | 음성 | 음성은 텍스트 입력의 대안이다. 모든 기능이 음성 없이 동작한다. 마이크 버튼은 누르고 말하기와 토글 두 방식, 녹음 중 상태는 시각 + 텍스트("녹음 중 12초") |
 | 3D | 캔버스 `aria-hidden`, 자동 움직임은 멈춤 버튼 제공, reduced-motion이면 정지 이미지 |
+
+## 7. 인증 단계별 로그인 화면 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`. 이 제품에서 로그인 화면을 쓰는 사람은 진행자(Phase 2 공동 진행자 포함)뿐이다. 청중 화면(`/join`, `/e/[code]`, QR), 발표 화면의 청중 노출부, OBS 오버레이(`/overlay/[id]?k=`)에는 어느 단계에서도 로그인 버튼을 두지 않는다. 이 화면들은 단계와 무관하며 Mock 단계에서도 지금 설계 그대로 동작한다(청중은 참가자 토큰, 오버레이는 키).
+
+### 7.1 로그인 화면 단계별 구성
+
+| 단계 | `/login` 구성 | `/signup` | 비고 |
+|---|---|---|---|
+| A(MVP 개발) | "개발용 로그인" 패널: 페르소나 버튼 목록(공통 `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops` + 이 제품 `host`, `cohost`, 05장 10절), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼과 이메일 폼은 렌더하지 않는다 | `/login`으로 이동 | 모든 화면(진행자·청중·발표·오버레이 포함) 상단 고정 배지 `MOCK AUTH · 로컬 전용`(AUTH_ROADMAP 2.1절). 로컬 전용이므로 Mock 상태의 오버레이를 실제 방송에 쓰지 않는다 |
+| B(공개 베타 전) | "Google로 계속하기" 버튼 + 이메일·비밀번호 폼(01장 LP-F-001, D21), 비밀번호 재설정 링크 | 이메일 가입 폼 + 베타 약관 체크 + "Google로 계속하기" | 배포 환경에서 개발용 패널·배지 없음(판정 거짓이면 서버 컴포넌트가 렌더하지 않는다) |
+| C(G2 후) | B + "카카오로 계속하기"(C1), "네이버로 계속하기"(C2, 검수 통과 뒤) | B + 같은 버튼 | 카카오·네이버 버튼 색·문구는 각 디자인 가이드(미확인: 최신판 확인 후 반영, AUTH_ROADMAP C1-5) |
+
+### 7.2 오류 상태
+
+| 코드(쿼리) | 화면 | 문구(제안) |
+|---|---|---|
+| `/login?error=callback` | 로그인 상단 오류 띠 | "로그인을 마치지 못했습니다. 다시 시도해 주세요" |
+| `/login?error=state` | 같음(C2 브리지 경로만) | "로그인 요청이 만료됐습니다. 처음부터 다시 시도해 주세요" |
+| `/login?error=email_in_use` | 같음(C2 브리지 경로만) | "이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정에서 네이버를 연결하세요" |
+| 프로필 없음 | 로그아웃 후 `/login` | 별도 문구 없음(기본 admin 금지) |
+| suspended | 403 화면 | "이용이 제한된 계정입니다" |
+| `/no-access` | 해당 없음 | live-poll은 open 가입 정책이라 invite 앱의 `/no-access` 안내를 쓰지 않는다. 엔타이틀먼트는 콜백이 `bootstrap_app_for_org('poll')`로 만든다 |
+
+### 7.3 첫 OAuth 로그인 뒤 약관 동의
+
+| 항목 | 내용 |
+|---|---|
+| 위치 | 제품 온보딩 `/onboarding`의 첫 단계(베타 약관·개인정보처리방침 동의) → 두 번째 단계 "AI 처리 방식"(LP-F-034) |
+| 대상 | B·C단계 OAuth(Google·카카오·네이버) 첫 로그인. 이메일 가입자는 가입 폼에서 이미 동의했으므로 건너뛴다 |
+| 미동의 | `/events` 등 진행자 화면 진입 차단, `/onboarding`으로 이동(서버 가드). 동의 기록 방식은 LP-06-049에서 정한다(제안: `core.write_audit` `terms.accept`에 약관 버전, 음성 고지 `voice.notice_ack`와 같은 방식, 06장 8.3절 R-10) |
+| A단계 | 약관 단계와 그 서버 가드는 아직 없다(B에서 LP-06-049가 추가). `/onboarding`의 "AI 처리 방식" 단계(LP-06-037)는 A단계에서 Mock 페르소나로 구현·검증한다. 049가 약관 가드를 켤 때 시드 훅(`seed-users.poll.mjs`)이 페르소나의 동의 기록을 만들게 해(003 파일에 1줄 요청) Mock E2E가 약관 단계에서 멈추지 않게 한다 |
+
+### 7.4 설정 → 로그인 방법 (C단계, P1)
+
+| 항목 | 내용 |
+|---|---|
+| 위치 | `/settings/login-methods`(설정 화면의 "로그인 방법" 탭). `/settings`의 다른 탭은 owner/admin 전용이지만 이 탭은 로그인한 모든 진행자 본인(member·viewer 포함)이 쓴다. 소유는 LP-06-050(06장 8.1절) |
+| 표시 | 연결된 제공자 목록(Google, 이메일, 카카오, 네이버), 연결·해제 버튼 |
+| 해제 | 남는 로그인 수단이 1개 이상일 때만 버튼 활성 |
+| 감사 | `auth.identity_link`, `auth.identity_unlink`(AUTH_ROADMAP 7.3절) |

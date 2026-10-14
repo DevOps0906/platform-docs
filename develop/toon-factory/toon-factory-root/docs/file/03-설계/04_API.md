@@ -8,7 +8,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 모든 Route Handler는 진입부에서 `requireSession('toon')`(`SHARED_MODULES.md:46-72`). 미로그인 401, pending/suspended 403, 엔타이틀먼트 없음 402 |
+| 인증 | 모든 Route Handler는 진입부에서 `requireSession('toon')`(`SHARED_MODULES.md:46-72`). 미로그인 401, pending/suspended 403, 엔타이틀먼트 없음 402. 세션은 모든 인증 단계(A Mock, B Google·이메일, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다. 단계별 로그인 경로는 8절 |
 | 콘텐츠 CRUD | 작품, 캐스트, 회차, 컷은 브라우저가 `supabase.schema('toon')`로 직접 읽고 쓴다(RLS + 한도 트리거). 서버가 콘텐츠를 대신 쓸 때도 사용자 세션 클라이언트를 써서 RLS와 한도를 그대로 적용한다. service_role로 콘텐츠를 쓰는 것은 운영 도구뿐 |
 | 서버 전용 | 크레딧, 잡 등록, 서명 URL, 내보내기 행, AI 생성 행, 결제는 Route Handler(service_role) |
 | 멱등 | 유료·비동기 요청 본문에 클라이언트 UUID `requestId`. 키: `consume:toon:<requestId>`, `job:toon:<requestId>`(`CORE_SPEC.md:185-194`). `toon.generations.request_id`, `toon.exports.request_id` 유일 |
@@ -250,3 +250,25 @@ AI·음성용 제품 함수는 없다. 코어 `set_ai_cross_border_ack`는 온�
 | 앱 코드 `EXPORT_VOICE_FAILED` | 영상 음성 준비 실패(선차감 환불 완료, 대체 안 함) | Route Handler | 502 |
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 `expected_version` 불일치 | FastAPI 경유 | 409 |
 | 코어 코드 | `42501`→403, `CR001`→402, `P0002`→404, `22023`/`JB002`/`SB001`→409, `PM001`/`PM409`→409 + 알림 | `CORE_SPEC.md:397-418` | - |
+
+## 8. 인증 단계 경로 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.1·2.4·3.2·7.2.3절이다. 아래 경로는 `requireSession` 대상이 아니다(로그인 전 경로). 나머지 Route Handler(2절)는 단계와 무관하게 그대로다.
+
+| 메서드 경로 | 단계 | 입력 | 출력 | 처리 | 오류 |
+|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'pro_owner'\|'low_credit', next?: string }`(zod, 05장 10절 키만) | 303 → `finishLogin` 결과 경로 | `isMockAuthAllowed()` 확인 → 쿠키 세션 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('toon', next)`(아래 콜백 2~5번) | 판정 거짓이면 404(존재 숨김). 시드 없음 401 + 패널 안내. 레이트 리밋 대상 아님(로컬 전용) |
+| `GET /auth/callback?code&next` | B·C(Google, 카카오, `custom:naver`) | 쿼리 | 302 | `finishLogin`: (1) `exchangeCodeForSession`(PKCE) → (2) `session_context('toon')` 1회 → (3) `entitled=false`이고 toon `signup_policy='open'`이므로 `rpc('bootstrap_app_for_org', { p_app_id: 'toon' })` 1회 후 재조회(모놀리스는 트리거가 이미 부트스트랩해 무동작) → (4) pending → `/pending`(toon은 open이라 발생 안 함), suspended → 403 → (5) 첫 로그인이고 약관 미동의면 `/onboarding/terms`, 아니면 `next` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음) 또는 `/app`. origin은 `NEXT_PUBLIC_APP_URL` 고정 → (6) 감사 `auth.login`(provider, 첫 로그인 여부). 토큰·코드는 로그에 남기지 않는다 | `/login?error=callback`(code 없음·재사용·만료), 프로필 없음 → 로그아웃 후 `/login` |
+| `GET /auth/naver/start?next=` | C2(브리지 경로 채택 시만, 01장 D23) | 쿼리 | 302 네이버 authorize | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 서명 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 넣음. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 429 |
+| `GET /auth/naver/callback?code&state` | C2(브리지) | 쿼리 | 302 | 쿠키 state 상수 시간 비교 후 삭제 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(코어 보류 마이그레이션)로 사용자 조회 → 있으면 magiclink `verifyOtp`로 세션, 없고 같은 이메일 사용자도 없으면 `createUser` + 링크 행, 같은 이메일 사용자가 있으면 자동 연결 안 함 → `finishLogin`. 네이버 토큰은 저장하지 않는다 | `/login?error=state`, `/login?error=email_in_use`, `/login?error=callback` |
+
+Mock 로그인도 `finishLogin`을 거치므로 `no_app` 페르소나로 3번(부트스트랩) 경로를 A단계에서 검증한다(모듈러). 로그인 방법 연결·해제(C단계, 03장 7.4절)는 브라우저 `linkIdentity`·`unlinkIdentity` + 서버 감사 기록이며 새 Route Handler는 네이버 브리지 연결(`/auth/naver/start?link=1`, 로그인 상태 필수)뿐이다.
+
+오류 코드(7절 표에 더하는 앱 코드)
+
+| 코드 | 의미 | HTTP/처리 |
+|---|---|---|
+| `error=callback` | 코드 교환 실패, code 없음·재사용·만료 | 302 `/login?error=callback` |
+| `error=state` | 네이버 브리지 state 불일치·없음·만료 | 302 `/login?error=state` |
+| `error=email_in_use` | 네이버 브리지 첫 로그인인데 같은 이메일 기존 사용자 | 302 `/login?error=email_in_use` |
+| `/api/dev/login` 404 | Mock 판정 거짓(배포 환경, 원격 DB, `AUTH_MODE≠mock`) | 404 |

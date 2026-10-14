@@ -23,6 +23,7 @@
 - 17. affiliate
 - 18. 제품이 지킬 공통 규칙
 - 19. AI 계층 모듈 (2026-10-13 추가)
+- 20. auth providers: 로그인 단계 (2026-10-14 추가, 확정 결정 22)
 
 ## 출처
 - `docs/file/03-설계/공용코어/SHARED_MODULES.md`

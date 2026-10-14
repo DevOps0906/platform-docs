@@ -8,7 +8,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 모든 Route Handler는 `requireSession('stock')`(`SHARED_MODULES.md:68`). 추가로 `beta_access` 활성과 최신 고지 동의를 확인한다(없으면 403 `ST_BETA` / 428 `ST_CONSENT`) |
+| 인증 | 모든 Route Handler는 `requireSession('stock')`(`SHARED_MODULES.md:68`). 추가로 `beta_access` 활성과 최신 고지 동의를 확인한다(없으면 403 `ST_BETA` / 428 `ST_CONSENT`). 세션은 모든 인증 단계(A Mock, B Google, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(인증 경로는 8절) |
 | 읽기 | 사용자 세션 클라이언트 + RLS(`has_stock_access`). 서버가 org_id 필터를 따로 믿지 않는다 |
 | 쓰기 | 제품 RPC(사용자용 5개) 또는 service_role(`createAdminClient`). service_role 사용 지점은 아래 표의 "service" 표시 행뿐 |
 | 멱등 | 클라이언트가 요청마다 UUID `request_id`를 보낸다. 크레딧 `consume:stock:<request_id>`, 잡 `job:stock:<request_id>`, 주문은 `client_order_id` |
@@ -232,3 +232,29 @@ PM001 처리: `confirm_payment_order`는 금액 불일치(`PM001`) 때 raise하�
 | 코어 | `42501` → 403, `CR001` → 402(선차감 부족, 잔액·필요량 포함), `P0002` → 404, `PM001/PM409` → 409 + 알림(`CORE_SPEC.md:418`) | - |
 
 주문의 한도 위반, 킬 스위치, 시세 지연, 확인 만료는 오류 코드가 아니라 200 응답의 `status`(`blocked`/`expired`)와 `block_reason`으로 돌려준다.
+
+## 8. 인증 경로 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.1, 2.4, 3.2, 7.2.3절. 이 경로들은 `src/app/api/dev/`, `src/app/auth/`, `src/app/invite/continue/`에 있고 인증 단계 분기는 `src/lib/auth/`만 한다(`02_ARCHITECTURE.md` 9절). 초대 발급·수락 API(2절 `POST /api/beta/invites`, `POST /api/beta/redeem`)와 수락 서버 시퀀스(3절)는 바뀌지 않는다.
+
+| 메서드 경로 | 단계 | 인증 | 입력 | 처리 | 출력 | 오류 |
+|---|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | 없음 | `{ persona, next? }`(persona는 `05_DATA_MODEL.md` 10절 키 목록 zod enum) | `isMockAuthAllowed()`(AUTH_MODE=mock + Supabase 호스트 127.0.0.1/localhost + `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 비어 있음) 거짓이면 404 → 서버 클라이언트 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('stock', next)` | 303 → 이동 경로 | 404(판정 거짓, 존재를 숨김), 400(모르는 persona). 레이트 리밋 대상 아님 |
+| `POST /api/dev/logout` | A(로컬 전용) | 세션 | - | 판정 거짓이면 404, `signOut` | 303 `/login` | 404 |
+| `GET /auth/callback` | B·C | 없음(OAuth 코드) | `?code&next` | `finishLogin('stock', next)`: ① `exchangeCodeForSession` ② `session_context('stock')` 1회(프로필 없음 → 로그아웃 후 `/login`) ③ invite 앱이므로 `bootstrap_app_for_org`를 부르지 않는다 ④ `status` suspended → 403. `entitled=false`면 `next`가 `/invite/continue`일 때만 그대로, 아니면 `/no-access` ⑤ `next` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음, origin `NEXT_PUBLIC_APP_URL` 고정) ⑥ 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 미기록) | 302 → 이동 경로 | `/login?error=callback`(코드 없음·재사용·만료) |
+| `GET /invite/continue` | B·C | 세션 | 쿠키 `stock_invite`(HMAC `INVITE_CONTINUE_SECRET`, 10분, 01_PRD D-23 제안) | 쿠키 검증·삭제 → 2절 `POST /api/beta/redeem`과 같은 서버 함수(3절 시퀀스) | 302 `/onboarding/disclaimer` | 쿠키 없음·만료 → `/no-access`, `ST031` → `/no-access?error=invite_email`, `ST030`·만료 → `/no-access?error=invite_invalid`("초대가 만료되었거나 이미 사용되었습니다. 운영자에게 재발급을 요청하세요") |
+| `GET /auth/naver/start` | C2(브리지 경로 채택 시만) | 없음 | `?next` | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분) → 네이버 authorize 302. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 302 | 429 |
+| `GET /auth/naver/callback` | C2(브리지만) | 없음 | `?code&state` | state 상수 시간 비교 → 토큰 교환 → `/v1/nid/me` → `core.auth_identity_links` 조회 → 세션 발급(`AUTH_ROADMAP.md:286-299`) → `finishLogin` | 302 | `/login?error=state`, `/login?error=email_in_use` |
+
+`/invite/[token]`에서 Google을 누르면 서버 액션이 토큰을 검증(존재·미사용·미만료만, 이메일 일치는 수락 때)한 뒤 `stock_invite` 쿠키를 굽고 `signInWithOAuth({ provider: 'google', options: { redirectTo: <APP_URL>/auth/callback?next=/invite/continue } })`로 보낸다. 초대 토큰 원문은 리디렉트 URL에 넣지 않는다(제안).
+
+오류 코드(7절에 더함):
+
+| 코드 | 의미 | HTTP / 이동 |
+|---|---|---|
+| `error=callback` | 콜백 코드 없음·재사용·만료·교환 실패 | 302 `/login?error=callback` |
+| `error=state` | 브리지 state 불일치·없음·만료(C2) | 302 `/login?error=state` |
+| `error=email_in_use` | 브리지에서 같은 이메일의 다른 수단 가입자(C2) | 302 `/login?error=email_in_use` |
+| `error=invite_email` | OAuth 계정 이메일이 초대 이메일과 다름(`ST031`) | 302 `/no-access?error=invite_email` |
+| `error=invite_invalid` | 이어 가기 중 초대가 이미 사용됨(`ST030`) 또는 만료(`redeem_beta_invite` null) | 302 `/no-access?error=invite_invalid` |
+| 404(dev) | `/api/dev/*`를 Mock 판정이 거짓인 환경에서 호출 | 404(본문 없음) |

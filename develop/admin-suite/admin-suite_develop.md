@@ -1,6 +1,6 @@
 # admin-suite(Admin Suite: ERP, HMS, SMS) 개발 방법
 
-작성일 2026-10-13. 이 문서는 `D:\WorkSpace\platform\docs\products\`의 통합 기획을 멀티에이전트 베이스(`D:\WorkSpace\DEV\MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겨 admin-suite 개발을 시작하는 방법을 처음부터 끝까지 안내합니다. 근거는 `경로:줄`로 표시하고, 근거가 없는 값은 "제안"으로, 확인하지 못한 값은 "구현 시 확인"으로 표시합니다.
+작성일 2026-10-13, 2026-10-14 개정(인증 단계 19장, 확정 결정 22). 이 문서는 `D:\WorkSpace\platform\docs\products\`의 통합 기획을 멀티에이전트 베이스(`D:\WorkSpace\DEV\MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겨 admin-suite 개발을 시작하는 방법을 처음부터 끝까지 안내합니다. 근거는 `경로:줄`로 표시하고, 근거가 없는 값은 "제안"으로, 확인하지 못한 값은 "구현 시 확인"으로 표시합니다.
 
 ## 0. 한눈에 보기
 
@@ -36,10 +36,11 @@ D:\WorkSpace\DEV\admin-suite\                          베이스를 복사해 �
 | 4 | project-profile 작성 | 6 |
 | 5 | 로컬 DB 3개(erp, hms, sms)와 SQL 적용 | 7 |
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
-| 7 | 작업(57개)을 task로 변환 | 9 |
+| 7 | 작업(60개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
 | - | AI 계층(hms 전용 구성 포함), 개발 위키, 디자인 시스템, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
 | - | 체크리스트 | 18 |
+| - | 인증 단계(Mock → Google·이메일 → 카카오·네이버) | 19 |
 
 ## 1. 개요
 
@@ -131,7 +132,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/admin-suite/03_SCREENS_UX.md` | `docs/file/03-설계/03_SCREENS_UX.md` | DOC-DES-002 | 화면설계서 |
 | `docs/products/admin-suite/04_API.md` | `docs/file/03-설계/04_API.md` | DOC-DES-003 | 인터페이스설계서 |
 | `docs/products/admin-suite/05_DATA_MODEL.md` | `docs/file/03-설계/05_DATA_MODEL.md` | DOC-DES-004 | 데이터설계서 |
-| `docs/products/_platform-core/` 8개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~008 | 공용 코어 명세 |
+| `docs/products/_platform-core/` 9개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE, AUTH_ROADMAP) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(DOC-CORE-009 `AUTH_ROADMAP.md`는 2026-10-14 인증 단계, 19장) |
 | `docs/products/_design-guide/` 5개(DESIGN_PRINCIPLES, DESIGN_SYSTEM, HERO_3D, SKILLS, REFERENCES) | `docs/file/03-설계/디자인/` | DOC-DSN-001~005 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md 초기 템플릿 | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 디자인 토큰, 컴포넌트 명세 |
 | `docs/products/_design-guide/DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-008 | 앱 화면 구조 패턴(A~O). `03_SCREENS_UX.md` 화면 표의 `패턴` 열과 화면 작업 지시(`DESIGN_SYSTEM.md` 10장)가 이 코드를 쓴다 |
@@ -233,7 +234,7 @@ D:\WorkSpace\DEV\admin-suite\
 
 ## 8. 6단계: 착수 전 결정 확정
 
-`docs/file/02-요구사항/01_PRD.md` 8절의 결정 20개를 확정합니다. 기획은 각 항목의 "권고"를 가정으로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
+`docs/file/02-요구사항/01_PRD.md` 8절의 결정 20개와 8.1절 인증 단계 결정 4개(D-21~D-24)를 확정합니다. 기획은 각 항목의 "권고"를 가정으로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
 
 | ID | 결정 | 확정 시점 |
 |---|---|---|
@@ -257,6 +258,10 @@ D:\WorkSpace\DEV\admin-suite\
 | D-18 | 채팅 위젯 레퍼런스 Astryx(존재·라이선스 확인) | 디자인 시스템 1단계(ADM-06-041) 전 |
 | D-19 | hms 음성 모델과 진료 구술(한국어 의료 용어 STT, TTS 라이선스 확인) | hms 음성·서버 작업(ADM-06-054, 055) 전 |
 | D-20 | 위키 대상 컬렉션 범위(코어 RLS 개정 R-14 이전에는 구성원 전원 공개 컬렉션만) | 위키 운영(ADM-06-050) 전, R-14 상태 확인 |
+| D-21 | hms Google 로그인(이메일·초대 메일만 권고, 병원 정책 확인 전 끔) | 병원별 출시 전(ADM-06-058) |
+| D-22 | 카카오 로그인 이메일 정책(erp, sms, 비즈 앱 `account_email` 필수 권고) | C1 착수 전(D-24가 "도입"일 때만) |
+| D-23 | 네이버 로그인 경로(`custom:naver` 또는 서버 브리지, 스파이크로 결정) | C2 스파이크 직후(D-24가 "도입"일 때만) |
+| D-24 | erp·sms Stage C(카카오·네이버) 도입 여부(미정, P2 선택) | G2 판정 때(19.5절) |
 
 **산출물 승인 절차**
 1. 결정 결과를 해당 산출물에 반영하는 task를 만듭니다.
@@ -267,7 +272,7 @@ D:\WorkSpace\DEV\admin-suite\
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 ADM-06-001~057, 모두 57개입니다. 그중 ADM-06-043은 사람이 하는 디자인 비주얼 검토입니다.
+작업은 ADM-06-001~060, 모두 60개입니다. 그중 ADM-06-043은 사람이 하는 디자인 비주얼 검토입니다. ADM-06-058~060은 2026-10-14에 추가한 인증 단계 작업이고(19장, `06_AGENT_PLAN.md` 8절), 기존 ADM-06-007은 Stage A(Mock 로그인) 범위를 더했습니다. 059·060은 계획에 넣어 두고 D-24가 "도입"일 때만 실행합니다.
 
 | 웨이브 | 작업 ID | 진입 조건 | 산출물 |
 |---|---|---|---|
@@ -278,7 +283,8 @@ D:\WorkSpace\DEV\admin-suite\
 | W3 | 011, 012, 020, 028, 033, 040, 046, 047, 050, 051 | 007, 009, 044 | 가입 흐름, 앱 셸 3개, 로그인 화면, AI 게이트(erp·sms, hms), 위키 운영, 그래프 `admin.assistant` |
 | W4 | 014, 015, 016, 022, 023, 029, 030, 048, 052, 056 | W3 | 앱 P0 화면, Dify 앱, 채팅 위젯, AI 평가셋 |
 | W5 | 017, 018, 024, 025, 026, 031, 013, 053, 054 | W4 | 대시보드, 인사, 캘린더, 대기열, 검사, 출석, 결제, 업무 음성(erp·sms), hms 음성 |
-| W6 | 019, 027, 032, 035, 036, 057 | W5 | 잔여 화면, E2E, 결제 E2E, AI 보안·격리 회귀. **MVP 출시 조건** |
+| W6 | 058(G1 통과 후 먼저), 019, 027, 032, 035, 036, 057 | W5. 058은 `[DECISION] G1 통과` 후, 035·057의 B 구성 재실행은 058 완료 후 | Google·이메일·초대 메일 로그인 전환(Stage B), 잔여 화면, E2E, 결제 E2E, AI 보안·격리 회귀. **MVP 출시 조건** |
+| W7 | 059, 060(G2 통과 후, D-24 "도입"일 때만) | MVP 출시 후 | 카카오·네이버 로그인(erp·sms만) |
 
 같은 웨이브 안에서도 선행 작업 열이 우선합니다(예: 024 → 025, 030 → 031). 3D 히어로 작업은 없습니다.
 
@@ -286,13 +292,13 @@ D:\WorkSpace\DEV\admin-suite\
 
 | 06장 권장 모델 | 작업 수 | 작업 성격 | 베이스에서 맡는 쪽 |
 |---|---|---|---|
-| Fable | 12 | 권한, RLS, 데이터 모델, AI 보안 경계(서명 토큰, 게이트, hms 격리) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`·`fastapi-expert`(Sonnet), 리뷰는 `review-expert` |
-| Opus | 29 | 기능 구현, API 연동, 그래프, RAG, 위키, 음성, 테스트 설계 | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
+| Fable | 14 | 권한, RLS, 데이터 모델, AI 보안 경계(서명 토큰, 게이트, hms 격리), 인증 세션 경로(Stage A·B, 네이버 브리지) | 오케스트레이터(Opus)가 설계하고 `plan-challenger`(고문, Fable)가 착수 전 계획을 검토. 구현은 `supabase-expert`·`fastapi-expert`(Sonnet), 리뷰는 `review-expert` |
+| Opus | 30 | 기능 구현, 카카오 로그인, API 연동, 그래프, RAG, 위키, 음성, 테스트 설계 | `claude-main`(Opus)이 설계 → `fastapi-expert`·`nextjs-expert`(Sonnet)가 구현 |
 | Sonnet | 11 | UI, 디자인 토큰·컴포넌트, 채팅 위젯, 문서 | `nextjs-expert`(Sonnet), 문서는 오케스트레이터 |
 | Haiku | 4 | 보일러플레이트, 린트·타입 정리 | 오케스트레이터가 직접 처리(베이스에 Haiku 워커 없음) |
 | 사람 | 1 | 디자인 비주얼 검토(ADM-06-043) | 사용자 |
 
-작업 수 56개 기준 비율은 Fable 21.4%, Opus 51.8%, Sonnet 19.6%, Haiku 7.1%(규모 가중 24.8 / 55.4 / 15.8 / 4.0%)입니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(Fable), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다.
+모델 작업 59개 기준 비율은 Fable 23.7%, Opus 50.8%, Sonnet 18.6%, Haiku 6.8%(규모 가중 27.4 / 53.8 / 15.1 / 3.8%)입니다. 리뷰는 `claude-reviewer`(Sonnet), `plan-challenger`(Fable), `review-expert`(Sonnet)가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다.
 
 ### 9.3 task 폴더 만들기
 
@@ -353,7 +359,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 6 | 개발 위키 갱신(12절) | `llm-wiki` 스킬 |
 | 7 | 완료: task status `done`, 웨이브의 모든 task가 끝나면 다음 웨이브 | - |
 
-- **MVP 출시 조건**: W6까지 완료, AI 보안·격리 회귀(ADM-06-057) 통과, `06_AGENT_PLAN.md` 7절 완료 정의를 충족해야 합니다.
+- **MVP 출시 조건**: W6까지 완료(인증 Stage B ADM-06-058 포함, 19장), AI 보안·격리 회귀(ADM-06-057) 통과, `06_AGENT_PLAN.md` 7절 완료 정의를 충족해야 합니다.
 - 구현이 산출물과 달라지면 코드를 조용히 맞추지 말고 산출물 갱신 task를 따로 만듭니다(베이스 `orchestrator-rules.md` §4.5).
 - 앱 화면 task는 ADM-06-044(디자인 시스템 4단계)가 끝난 뒤에 시작합니다.
 
@@ -513,12 +519,139 @@ baseline:
 - [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
 - [ ] 공용 인프라 준비(erp, sms): Dify, 오픈소스 음성·LLM 서버(또는 임시로 상용만). hms: 전용 서버 또는 목 서버 계획
 - [ ] 앱별 로컬 Supabase 기동과 `db reset` 성공(7절): erp, hms, sms
-- [ ] 결정 D-1~D-20 확정, 산출물 "승인" 전환(8절)
+- [ ] 결정 D-1~D-20 확정, 산출물 "승인" 전환(8절). 인증 결정 D-21~D-24는 19장 시점에
 - [ ] W0 task 생성과 진행(9절)
 - [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
-- [ ] W1~W6 진행, AI 보안·격리 회귀 통과, MVP 출시 조건 충족
+- [ ] 앱별 로컬 시드 페르소나 생성과 Mock 로그인 확인(19.2절)
+- [ ] W1~W5 진행 → G1 판정(19.3절) → W6(Stage B 058 먼저), AI 보안·격리 회귀 통과, MVP 출시 조건 충족
+- [ ] 첫 기관 배포 후 G2 판정과 D-24 결정(19.5절)
 - [ ] 코어 요청 R-14 상태 확인
+
+## 19. 인증 단계: Mock → Google → 카카오·네이버
+
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(확정 결정 22, 2026-10-14). 제품 반영: `docs/file/02-요구사항/01_PRD.md` KIT-F-005·006·8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
+
+처음에는 Mock 로그인으로 세 앱의 MVP 기능을 완성하고, 기능이 안정되면 Google·이메일·초대 메일 로그인을 붙이고, 그것이 안정되고 고객 기관이 원하면 erp·sms에 카카오·네이버를 붙입니다. 세션은 처음부터 실제 Supabase JWT이므로 단계가 바뀌어도 `createAdminProxy`·`requireRole`·RLS 코드는 바뀌지 않습니다. admin-suite는 권한이 운영자가 만든 기관 조직에 있어 `finishLogin`이 활성 기관 멤버십을 먼저 찾습니다(`02_ARCHITECTURE.md` 9.2절).
+
+### 19.1 단계 요약
+
+| 단계 | 언제 | erp | sms | hms | 작업 | 끝나는 조건 |
+|---|---|---|---|---|---|---|
+| A Mock | W2부터 W5까지(MVP 기능 개발) | 시드 페르소나 원클릭 로그인. 상단 배지 `MOCK AUTH · 로컬 전용` | 같음 | 같음(로컬 hms 프로젝트만) | ADM-06-007(W2) | G1(19.3절) |
+| B | G1 통과 후, 첫 기관 배포 전(W6 맨 앞) | Google + 이메일 가입·메일 인증·재설정 | Google + 초대 메일(비밀번호 설정) | 초대 메일 + 이메일만(D-21) | ADM-06-058(P0, Fable, M) | G2(19.5절) |
+| C1 카카오 | G2 통과 + D-24 "도입"(W7) | 카카오 | 카카오 | 제외 | ADM-06-059(P2, Opus, S) | `AUTH_ROADMAP.md` 7.1.3절 |
+| C2 네이버 | G2 통과 + D-24 "도입"(W7, C1과 병렬) | 네이버(`custom:naver` 또는 브리지) | 같음 | 제외 | ADM-06-060(P2, Fable, M) | `AUTH_ROADMAP.md` 7.2.4절 |
+
+### 19.2 Stage A 로컬 실행 순서 (앱 하나씩)
+
+| 순서 | 명령·행동 | 설명 |
+|---|---|---|
+| 1 | `supabase --workdir <앱 프로젝트 폴더> start` | 7절의 앱별 로컬 Supabase. 필요한 앱만 켭니다 |
+| 2 | `supabase --workdir <앱 프로젝트 폴더> db reset` | 마이그레이션과 seed 적용(7절) |
+| 3 | `apps/<app>/.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD=<임의의 긴 값>` | 커밋하지 않습니다. `NEXT_PUBLIC_*`에 넣지 않습니다. Supabase URL이 로컬이 아니면 앱이 기동하지 않습니다 |
+| 4 | `node scripts/dev/seed-users.mjs --app <app>`(`<app>`은 erp, sms, hms 중 하나, 그 앱 프로젝트의 `SUPABASE_URL`로) | 공통 페르소나(owner, admin, member, viewer, outsider, no_app, suspended, ops)와 앱 훅(erp `pending`·`inventory_manager`·`sales_manager`·`join_requested`·`join_rejected`, sms `student`·`invited`, hms `doctor`·`lab_tech`·`invited`)을 만듭니다. owner·outsider는 운영자 프로비저닝 경로(7절 CLI와 같은 순서)로 기관 조직 "개발 기관 A·B"를 만듭니다. 원격 URL이면 즉시 종료, 두 번 실행해도 사용자 수 같음, 비밀번호는 출력하지 않습니다. hms 훅은 환자 데이터를 만들지 않습니다 |
+| 5 | `pnpm --filter <app> dev` 후 `/login` | 개발용 패널에서 페르소나 버튼을 누르면 역할 홈(`access.ts`). erp `pending`은 `/pending`, sms·hms `invited`는 `/invite/accept`, `viewer`·`no_app`(sms·hms)은 `/no-access` |
+| 6 | E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장합니다(ADM-06-035) |
+
+페르소나별 기대 결과는 `docs/file/03-설계/05_DATA_MODEL.md` 10절입니다. 권한 분기는 페르소나를 바꿔 로그인해서 확인하고, 기능 코드에서 페르소나 이메일로 분기하지 않습니다. erp·sms를 모듈러 통합 DB로 개발하면 `--app erp --app sms`를 한 번에 줄 수 있습니다(`05_DATA_MODEL.md` 10.5절).
+
+### 19.3 G1 체크리스트 (사람이 판정)
+
+- [ ] `06_AGENT_PLAN.md` 2절 MVP P0 기능 작업 완료(W5까지. 인증 B·C 작업과 W6의 035·057 출시 마무리 제외)
+- [ ] 역할×경로 E2E(ADM-06-035)가 세 앱 Mock 페르소나로 로컬 녹색
+- [ ] RLS 스모크(ADM-06-034) 전 항목 통과, `outsider` 교차 테넌트 거부(세 앱)
+- [ ] 결제 E2E는 Phase 2(ADM-06-013·036)라 G1 조건에서 뺍니다(`06_AGENT_PLAN.md` 8.2절)
+- [ ] CI: 인증 모듈 밖 `AUTH_MODE`·`AUTH_PROVIDERS` 참조 0, `mock-auth`·쿠키 역할 0(ADM-06-039 린트), `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패(ADM-06-007 빌드 시 env 검사)
+- [ ] 외부 준비(erp·sms): Google Cloud 프로젝트, OAuth 동의 화면(앱 이름은 D-9, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL, 승인된 도메인), 웹 클라이언트 ID, 첫 기관 배포용 Supabase 프로젝트. hms: 병원 Supabase 프로젝트의 Email 제공자와 초대 메일 템플릿만
+- [ ] 결과를 ADM-06-058 task `log.md`에 `[DECISION] G1 통과`로 기록
+
+### 19.4 Stage B 외부 설정 순서 (`AUTH_ROADMAP.md` 5.1절)
+
+| 순서 | 할 일 | 비고 |
+|---|---|---|
+| 1 | Google Cloud 콘솔 → OAuth 동의 화면: 사용자 유형 External, 범위 `openid`, `email`, `profile`만 | erp·sms만. 게시 상태 "테스트"에서는 등록한 테스트 사용자만 로그인됩니다 |
+| 2 | 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션). 승인된 리디렉션 URI = `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬은 그 앱 프로젝트의 API 포트 `/auth/v1/callback` | 앱 도메인이 아니라 Supabase 콜백입니다. 고객사별 모놀리스로 가면 프로젝트마다 URI가 늘어납니다(`02_ARCHITECTURE.md` 9.4절) |
+| 3 | Supabase 대시보드 → Authentication → Providers → Google 사용(erp·sms 프로젝트). 로컬은 `config.toml` `[auth.external.google]`의 `env(GOOGLE_CLIENT_ID)` | 앱 env에는 넣지 않습니다. hms 병원 프로젝트는 Email만 켭니다(D-21) |
+| 4 | Authentication → URL Configuration: Site URL = 앱 운영 도메인, Redirect URLs = `https://<앱 도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록) | 프로젝트마다. 와일드카드 지양 |
+| 5 | 초대 메일 템플릿(sms·hms)과 확인 메일 템플릿(erp)의 링크가 `/auth/callback`을 거치는지 확인 | 초대 메일의 비밀번호 설정 후 `/invite/accept` |
+| 6 | 동의 화면을 "프로덕션"으로 게시 | 첫 기관 배포 전 |
+| 7 | 배포 env: `AUTH_MODE=live`, `AUTH_PROVIDERS` erp·sms `google,email`, hms `email` | 배포 체크리스트(B-6). hms는 `email` 외 값이면 기동 실패 |
+| 8 | 수동 점검표: erp·sms Google 데스크톱·모바일 각 1회(신규·기존 계정), 세 앱 초대 메일 수락 1회 | 결과를 task `log.md`에(B-5). 실제 Google 로그인은 자동화하지 않습니다 |
+
+### 19.5 G2 체크리스트 (사람이 판정)
+
+- [ ] 첫 기관 배포 후 Google·이메일 실로그인 운영 2주(제안)
+- [ ] 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안, 감사 `auth.login`과 오류 로그)
+- [ ] erp OAuth·이메일 신규 사용자 중 pending 프로필 없이 남은 사용자 0, sms·hms 초대 수락 실패(링크 만료 제외) 0(open 앱용 `entitled=false` 조건 대신, `06_AGENT_PLAN.md` 8.2절)
+- [ ] D-24 결정: 고객 기관 요청이 있으면 "도입", 없으면 "도입하지 않음"(059·060 취소)
+- [ ] "도입"이면 카카오 디벨로퍼스 앱 생성과 이메일 정책 D-22(비즈 앱 전환 권장), 네이버 애플리케이션 등록과 검수 자료 준비
+- [ ] 결과를 `[DECISION] G2 통과`, `[DECISION] D-24 ...`로 기록
+
+### 19.6 C1 카카오 설정 (erp·sms, `AUTH_ROADMAP.md` 7.1.1절)
+
+| 순서 | 할 일 |
+|---|---|
+| 1 | 카카오 디벨로퍼스 앱 생성 → REST API 키 = `client_id` |
+| 2 | 카카오 로그인 Client Secret 활성 → `client_secret` |
+| 3 | Redirect URI = erp·sms Supabase 프로젝트 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`). hms 병원 프로젝트는 등록하지 않습니다 |
+| 4 | 카카오 로그인 활성, 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email`(D-22 (a) 권장: 초대·가입 승인이 이메일 기준) |
+| 5 | Supabase → Providers → Kakao 사용(로컬 `[auth.external.kakao]`) |
+| 6 | 배포 env `AUTH_PROVIDERS=google,email,kakao`(erp·sms), 설정 → 로그인 방법 화면 확인(`03_SCREENS_UX.md` 7.4절) |
+
+### 19.7 C2 네이버 스파이크와 검수 (erp·sms, `AUTH_ROADMAP.md` 7.2.2절)
+
+| 단계 | 할 일 | 통과 기준 |
+|---|---|---|
+| 1 | 운영과 분리한 Supabase 프로젝트에 관리자 API로 `custom:naver` 등록(`provider_type: 'oauth2'`, authorize·token·`/v1/nid/me` 엔드포인트). 등록은 `scripts/auth/register-naver-provider.mjs`(제안)로 남깁니다 | 등록 성공 |
+| 2 | 네이버 "개발 중" 상태 + 등록한 테스트 아이디로 `signInWithOAuth({ provider: 'custom:naver' })` | 로그인 성공, `identities[].provider = 'custom:naver'` |
+| 3 | `auth.users.email`이 채워졌는지, 재로그인이 같은 사용자인지 | 둘 다 참이면 `supabase_custom` 채택 |
+| 4 | 실패하면 브리지 경로(`04_API.md` 8.3절 `/auth/naver/start`·`/auth/naver/callback`)를 택하고 코어 요청 R-15(`staged/0010_core_auth_identity_links.sql` 적용, 사람이 승인). 결과를 `NAVER_AUTH_PATH`와 `[DECISION]`(D-23)에 기록 | 기록 |
+| 5 | 네이버 검수 신청(로그인 버튼부터 가입 완료까지 화면 캡처). 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않습니다(C2-6) | 검수 통과 |
+
+로컬 Supabase CLI가 커스텀 제공자를 지원하는지는 미확인입니다. 지원하지 않으면 로컬은 Mock·Google·카카오로 개발하고 네이버는 스테이징 프로젝트에서 확인합니다.
+
+### 19.8 단계 전환 요청 프롬프트 예시 (G1 통과 후 Stage B)
+
+베이스 `_templates/dev-request-prompt.md` 형식을 따르며 9.4절 예시를 본떴습니다.
+
+```
+D:/WorkSpace/DEV/admin-suite/docs/file 의 모든 파일(프로젝트 산출물)을 최대한 자세히 읽고 분석한다.
+(이미 읽은 파일은 skip. 특히 docs/file/03-설계/공용코어/AUTH_ROADMAP.md 0·3·5장과 06_AGENT_PLAN.md 8절)
+
+[요구사항]
+ADM-06-058: 인증 Stage B로 전환한다. erp = Google + 이메일 가입·메일 인증·비밀번호 재설정, sms = Google + 초대 메일, hms = 초대 메일 + 이메일만.
+전제 = log.md 에 [DECISION] G1 통과 기록이 있다(없으면 시작하지 않고 보고).
+완료 조건 = ① 06_AGENT_PLAN.md 8.1절 058 수용 기준(AUTH_ROADMAP.md 5.3절 B-1~B-6의 앱별 해석)
+② /auth/callback 이 finishLogin(코드 교환 → 활성 기관 멤버십 → erp만 bootstrap_app_for_org 1회 → status 분기 → next 화이트리스트)을 거친다
+③ 첫 OAuth 로그인 약관 단계: erp /pending 첫 단계, sms·hms /invite/accept(03_SCREENS_UX.md 7.3절)
+④ hms 로그인 화면에 Google 버튼 0, AUTH_PROVIDERS 가 email 이 아니면 기동 실패
+⑤ Mock E2E(ADM-06-035)가 계속 녹색이고 세 앱 배포 빌드에서 /api/dev/login 404.
+
+[작업의 특성]
+권한 경계 작업. 단계 분기는 packages/admin-kit/src/auth/ 와 앱의 (auth)/, auth/callback/, api/dev/login/ 안에서만. Google 콘솔·Supabase 대시보드 설정은 사람이 하고(AUTH_ROADMAP.md 5.1절) 에이전트는 체크리스트만 만든다.
+작업 대상 경로: packages/admin-kit/src/auth/{callback,providers,terms}/, apps/{erp,sms,hms}/src/app/auth/callback/, apps/{erp,sms,hms}/src/app/(auth)/, supabase/<app>/config.toml(erp·sms Google 절), docs/admin-suite/ops/auth-checklist.md
+
+이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
+승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
+
+main worker 는 claude-main 이 진행한다.
+main worker 의 서브 에이전트는 nextjs-expert 가 진행한다.
+review role worker 는 claude-reviewer 가 진행한다.
+review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
+```
+
+C1·C2도 같은 형식으로 요청하되 전제를 `[DECISION] G2 통과`와 D-24 "도입"으로, 완료 조건을 `AUTH_ROADMAP.md` 7.1.3절(C1-1~C1-5) 또는 7.2.4절(C2-1~C2-6)로, 대상 앱을 erp·sms로 바꿉니다.
+
+### 19.9 이 제품의 인증 작업 ID
+
+| 단계 | 작업 | 우선순위·규모·모델 | 웨이브 |
+|---|---|---|---|
+| A | ADM-06-007(범위 추가: 인증 단계 모듈, Mock 로그인, 시드와 앱 훅 3개, `finishLogin` 기관 조직 분기) | P0, M, Fable | W2 |
+| A(화면) | ADM-06-014·022·029(로그인 화면 A 구성, 개발용 패널 장착) | P0, M, Opus | W4 |
+| B | ADM-06-058 | P0, M, Fable | W6 맨 앞(G1 후) |
+| C1 | ADM-06-059(erp·sms, D-24 "도입"일 때만) | P2, S, Opus | W7(G2 후) |
+| C2 | ADM-06-060(erp·sms, D-24 "도입"일 때만) | P2, M, Fable | W7(G2 후) |
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

@@ -209,3 +209,35 @@ RLS 스모크(모듈러 87/87, 모놀리스 87/87 통과) 주요 항목: B가 A 
 | `site_assets` | kind `voice` + mp3 OK(EXIF 없이 ready OK), voice + 이미지 mime 거부, hero + mp3 거부, hero ready EXIF 없음 거부 |
 
 RLS 스모크(기존 87항목)에 위 항목을 더한 목록은 MW-06-030이 `supabase/tests/`로 옮길 때 확정한다.
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경은 없다(코어 계약 그대로). 정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.2~2.3절. 공통 스크립트 `scripts/dev/seed-users.mjs --app microweb`이 공통 행을 만든 뒤 제품 훅 `scripts/dev/seed-users.microweb.mjs`가 아래 microweb 행을 처리한다(MW-06-003 소유). 대상 Supabase가 `127.0.0.1`/`localhost`가 아니면 즉시 종료하고, 이메일은 `<key>@dev.test`, 비밀번호는 `DEV_SEED_PASSWORD`다.
+
+invite 앱 특이점: 가입 트리거는 `signup_app='microweb'`이어도 엔타이틀먼트를 만들지 않는다(`D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0001_core_identity.sql:149-155`, 모놀리스도 apps 1행 자동 선택 뒤 같은 검사를 한다 `supabase/monolith/migrations/0001_core_lite.sql:260-266`). 그래서 공통 행의 "`signup_app=<app>`으로 생성 → `entitled=true`"가 이 제품에서는 성립하지 않고, 훅이 운영자 초대 경로(MW-06-026)와 같은 service_role 호출로 권한을 만든다.
+
+### 10.1 공통 페르소나와 제품 훅 행 (AUTH_ROADMAP 2.2절·8장 microweb 행: `studio_access` 허용·미허용)
+
+invite 앱이라 공통 행도 훅이 권한을 만들므로 한 표에 적는다. 제품 행은 `studio_denied`(미허용)이고 `owner`가 허용 쪽 기준 페르소나다.
+
+| 키 | 만드는 방법(RPC/서비스 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|
+| `owner` | 공통 생성 후 훅: service_role `core.bootstrap_app_for_org('microweb', <owner 개인 조직>)`(`0003_core_credits.sql:440`) + service INSERT `microweb.studio_access(org_id, mode='agency', max_active_sites=3, granted_by=ops)`. 출력된 조직 id를 `.env.local`의 `MICROWEB_STUDIO_ORG_ID`에 넣는다(문의 `create_lead`는 agency 허용 목록 조직만 받는다, `1500_microweb.sql:1233`) | `session_context('microweb')` `entitled=true`, plan `free`, `has_studio_access=true`. `/studio` 진입, `create_site` 성공 | 기본 운영자(studio_access 허용) |
+| `admin`, `member`, `viewer` | 공통: owner 세션으로 `core.invite_member(owner_org, uid, role)`, 각자 `core.accept_invite(owner_org)`(`0004_core_security.sql:317`, `:353`). 엔타이틀먼트·허용 목록은 owner 조직 것을 쓴다 | `session_context('microweb', <owner_org>)`에서 해당 역할, `has_studio_access(owner_org)=true`. member는 방명록 삭제 버튼 없음, viewer는 쓰기 RPC 42501 | 역할 분기 |
+| `outsider` | 공통 생성 후 훅: 자기 개인 조직에 `bootstrap_app_for_org` + `studio_access`(agency) | 자기 조직에서는 `/studio` 사용 가능. owner 조직 sites·leads·production_orders 0행, owner 조직 대상 RPC 42501 | 교차 테넌트 RLS 거부 |
+| `studio_denied` | 훅: 생성 후 `bootstrap_app_for_org`만, `studio_access` 행 없음 | `entitled=true`이지만 `has_studio_access=false`. `/studio` → `/pending`, sites 0행, `create_site` 42501(MW-F-024 수용 기준) | studio_access 미허용(2차 게이트) |
+| `no_app` | 공통(`signup_app` 없이 생성). 훅은 아무것도 하지 않는다 | 모듈러·모놀리스 모두 `entitled=false`(invite 앱은 자동 부트스트랩 안 됨). 로그인 직후 `finishLogin`이 `/no-access`, `bootstrap_app_for_org` 호출 0 | 초대받지 않은 이메일로 로그인한 경우(B단계 `/no-access`)를 A단계에서 미리 검증 |
+| `suspended` | 공통: service_role로 `status=suspended`. 훅이 `owner`처럼 권한을 먼저 부여 | 403 | 차단 확인 |
+| `ops` | 공통: service_role로 `platform_role=platform_admin` | `/studio/admin/*`, `POST /api/admin/invites`·`/access` 허용(다른 페르소나는 403) | 운영자 초대·허용 목록 관리(MW-06-026), 지식·위키 관리 |
+| `pending` | 만들지 않는다(approval 앱 전용) | - | - |
+| 하객·시안·쇼룸 방문자 | 만들지 않는다. Supabase Auth 사용자가 아니다 | E2E는 페르소나 없이 `/i/[slug]`, `/p/[token]`, `/contact`를 연다(F2, F3, F8) | 로그인 없는 흐름(02장 9.5절) |
+
+### 10.2 규칙과 모놀리스·모듈러 차이
+
+| 규칙 | 내용 |
+|---|---|
+| 약관 동의 | A단계에는 약관 단계가 없다. B에서 MW-06-054가 약관 가드와 기록 방식(03장 7절)을 정하면 이 훅이 페르소나마다 동의 기록을 만든다(054가 003 소유 훅에 1줄 요청) |
+| 멱등 | 이미 있는 이메일은 건너뛰고 역할·상태·`studio_access`만 맞춘다. `bootstrap_app_for_org`는 구독·엔타이틀먼트를 `on conflict do nothing`으로 만들고 free 플랜은 가입·월 크레딧이 0이라 원장 행이 생기지 않는다 |
+| 모놀리스/모듈러 차이 | 모듈러 `--app microweb`과 모놀리스(`public` 스키마, `bootstrap_app_for_org`는 `public.`)는 같은 훅 순서를 쓴다. 차이는 함수 스키마 접두사(`SUPABASE_DB_SCHEMA`)뿐이고, `no_app`이 모놀리스에서도 `entitled=false`인 점이 공통 표(`AUTH_ROADMAP.md:59`)와 다르다(invite 검사 때문) |
+| 셀프서비스(Phase 2) | `studio_access.mode='self_service'` 페르소나(`owner_self`, 제안)는 MW-06-027 착수 때 훅에 더한다 |
+| 브리지 경로(C2) | 네이버 브리지를 택하면 코어 `core.auth_identity_links`(`D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`)를 참조만 한다. 제품 표는 만들지 않는다 |

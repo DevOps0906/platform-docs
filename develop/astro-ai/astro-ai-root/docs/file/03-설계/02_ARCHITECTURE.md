@@ -48,7 +48,7 @@
 | `packages/astro-report/prompts/`, `schema/`, `rules/` | 리포트 계약 | 장별 프롬프트, 현대적 재해석 사전, 출력 zod 스키마, 금지 표현 규칙. 프롬프트와 규칙은 언어 중립 파일(md, json)로 두고 FastAPI가 빌드 때 복사해 같은 파일을 읽는다 | saju-engine 타입 |
 | `packages/astro-report/templates/`, `theme/` | 리포트 HTML | 책자 HTML 조립(escape), 오행 SVG 차트, `ThemeConfig → CSS 변수` 변환기 | prompts/schema |
 | `apps/astro-ai/src/app/(marketing)/` | 랜딩, 가격, 샘플, 법적 페이지, `/llms.txt` | SSR 공개 페이지 | saju-engine(데모 UI) |
-| `apps/astro-ai/src/app/(auth)/` | 로그인, 가입, 콜백 | Supabase Auth, `signup_app='astro'` | core-db |
+| `apps/astro-ai/src/app/(auth)/`, `src/lib/auth/` | 로그인, 가입, 콜백, 인증 모듈 | Supabase Auth, `signup_app='astro'`. 인증 단계(A Mock, B Google + 이메일, C1 카카오, C2 네이버) 분기는 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`)·로그인 화면·콜백 라우트에만 둔다(9절, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 3.1절) | core-db |
 | `apps/astro-ai/src/app/dashboard/` | 사용자 대시보드 | 홈, 보관함, 리딩 시작, 리딩 상세, 히스토리, 크레딧, 설정 | components/* |
 | `apps/astro-ai/src/app/admin/` | 최소 어드민 | `platform_admin` 전용 화면 | api/admin |
 | `apps/astro-ai/src/app/api/` | Route Handler | 04장 2절. 하위 폴더별 소유가 다르다(06장 1절) | core-* 패키지, server/* |
@@ -88,7 +88,7 @@ AI 모듈 경계(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:5-14`를 �
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 세션, `requireSession('astro')`, 가입 `signup_app` | `proxy.ts`, 레이아웃, 모든 Route Handler 진입부 | 프로필 없으면 로그아웃(`docs/file/03-설계/공용코어/SHARED_MODULES.md:65`) |
+| auth | 세션, `requireSession('astro')`, 가입 `signup_app` | `proxy.ts`, 레이아웃, 모든 Route Handler 진입부 | 프로필 없으면 로그아웃(`docs/file/03-설계/공용코어/SHARED_MODULES.md:65`). 세션은 모든 인증 단계에서 실제 Supabase JWT라 `requireSession`은 단계와 무관하다(9절) |
 | org | 개인 조직 1개만 노출 | 대시보드 레이아웃 | 멤버 초대 화면 없음(1인 1워크스페이스) |
 | credits | 리딩·재생성 차감, 환영 크레딧 지급, 환불, AI·음성 선차감·정산 | `api/readings`, `api/readings/[id]/renders`, `api/auth/welcome`, `api/admin/*`, `api/ai/chat`, `api/voice/*`, `api/internal/ai-settle` | 단가는 `server/pricing.ts`, AI 단가는 `server/ai-pricing.ts`. 동기 실패 시 `refund_credits` |
 | toss | 크레딧팩 주문·승인·취소 | `api/billing/*`, `api/admin/refunds` | `confirm_payment_order` 금액 대조 |
@@ -256,3 +256,45 @@ AI 모듈 경계(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:5-14`를 �
 | `APP_BASE_URL` | successUrl, 이메일 링크 | 서버 전용 | 기동 실패 |
 
 AI 관련 변수는 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`다. 이 절은 astro 기준 적용만 적는다. 가입 정책은 open(일반 소비자), 로그인 없는 사용자 흐름은 비회원 Live Demo(`/api/demo/preview`, AS-F-024)와 공개 위키(`/wiki`)이며 단계와 무관하다. 그 화면에 로그인 버튼을 추가하지 않는다.
+
+### 9.1 단계표
+
+| 단계 | 켜지는 로그인 | 진입 조건 | astro 특이점 | 작업 |
+|---|---|---|---|---|
+| A | 로컬 Supabase 시드 계정 Mock 로그인(`/login` 개발용 패널) | W0부터 | 공통 페르소나 + `welcome_pending`(환영 크레딧 미지급 상태, 05장 10절). 쿠키 역할 Mock 금지 | AS-06-003 |
+| B | Google + 이메일(가입·메일 인증·비밀번호 재설정) | G1(`AUTH_ROADMAP.md` 4장) | 환영 크레딧 30은 이메일 인증 또는 Google 로그인 확인 뒤 `POST /api/auth/welcome`(AS-F-002, AS-06-009). OAuth 첫 로그인은 콜백이 `bootstrap_app_for_org` 1회 | AS-06-055(P0) |
+| C1 | 카카오(Supabase 기본 제공자 `kakao`) | G2(`AUTH_ROADMAP.md` 6장) | 카카오 로그인 확인 뒤에도 환영 크레딧 같은 규칙, 이메일 정책은 01장 D-19 | AS-06-056(P1) |
+| C2 | 네이버(`custom:naver` 또는 서버 브리지) | G2 | 네이버 로그인 확인 뒤에도 환영 크레딧 같은 규칙, 경로는 01장 D-20 | AS-06-057(P1) |
+
+불변 조건(`AUTH_ROADMAP.md` 0장): 세션은 항상 실제 Supabase JWT, 권한 판정은 `session_context` 하나, RLS는 `auth.uid()` 기준 그대로, 단계 분기는 인증 모듈 안에서만. 기능 코드(`src/app/api/*` 중 `auth/` 밖, 워커, `apps/api`)에 `AUTH_MODE`·제공자 분기가 있으면 CI 실패.
+
+### 9.2 환경변수 (`AUTH_ROADMAP.md` 3.3절 중 astro 해당분)
+
+| 이름 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버). 워커·`apps/api`에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값은 `mock` |
+| `AUTH_PROVIDERS` | B·C | web | live 모드에서 로그인 수단 0개면 기동 실패. 공개 베타 값 `google,email`, C 이후 `google,email,kakao,naver` |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web 서버 env, 시드 스크립트. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱 env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web. 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+8절의 `APP_BASE_URL`이 `AUTH_ROADMAP.md` 3.2절의 `NEXT_PUBLIC_APP_URL`(콜백 origin 고정) 역할을 겸할지는 구현 시 하나로 정한다(제안: 콜백 origin은 서버 전용 `APP_BASE_URL`을 읽고 공개 변수를 새로 두지 않는다). 기동 시 env 검증은 AS-06-032 `src/env.ts`가 하고, 인증 조합 검증(`getAuthConfig`)은 `src/lib/auth/`가 한다.
+
+### 9.3 외부 콘솔과 배포 토폴로지
+
+| 구성요소 | 단계 | 위치 | 통신 |
+|---|---|---|---|
+| Google Cloud OAuth 클라이언트 | B | 외부 콘솔(사람 설정, `AUTH_ROADMAP.md` 5.1절) | 브라우저 → Google → Supabase Auth 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`) → 앱 `/auth/callback` |
+| 카카오 디벨로퍼스 앱 | C1 | 외부 콘솔(7.1.1절) | 같은 흐름(Supabase 콜백) |
+| 네이버 개발자 센터 애플리케이션 | C2 | 외부 콘솔, 검수 필요(7.2.1절) | `supabase_custom`: Supabase 콜백. `bridge`: 앱 `/auth/naver/callback`(Vercel)에서 서버가 토큰 교환 |
+| Supabase Auth URL Configuration | B | 대시보드: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(미리보기 도메인은 명시 등록) | - |
+| 로컬 | A·B | `supabase/config.toml`(`D:/WorkSpace/platform/docs/products/_supabase-modular/config.toml.example`): A는 제공자 모두 `enabled = false`, B부터 Google | 시드 계정은 로컬 DB에만 |
+
+Vercel(web)만 인증 화면과 콜백을 가진다. `astro-worker`, `apps/api`, Dify는 사용자 로그인 경로가 없고 잡 토큰·서명 토큰(2절)으로만 인증하므로 단계 전환의 영향이 없다.

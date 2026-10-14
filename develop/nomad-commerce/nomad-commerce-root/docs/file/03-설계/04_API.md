@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 모든 `/api/*`(웹훅 제외) 첫 줄에서 `requireSession('commerce', { roles })`(SHARED_MODULES 2장). 미로그인 401, pending/suspended 403, `entitled=false` 402 |
+| 인증 | 모든 `/api/*`(웹훅, `/api/dev/login` 제외) 첫 줄에서 `requireSession('commerce', { roles })`(SHARED_MODULES 2장). 미로그인 401, pending/suspended 403, `entitled=false` 402. 세션은 모든 인증 단계(A Mock·B Google·C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(8절, `AUTH_ROADMAP.md` 0장) |
 | 역할 | 쓰기는 owner/admin/member, 계정·결제는 owner/admin. 역할 비교는 `ctx.org?.role`이 없으면 거부(SECURITY_BASELINE 2장) |
 | 플랜 | `core.entitled_plan_code` + `plans.features`(01장 4.4)만. 요청 바디의 plan/model 값은 무시 |
 | 멱등 | 클라이언트가 요청마다 UUID `request_id` 전송. 서버 키 `consume:commerce:<request_id>`, `job:commerce:<request_id>`(`CORE_SPEC.md` 4.4) |
@@ -252,3 +252,23 @@ type WikiLintResult    = { contradictions: string[]; stale: string[]; orphans: s
 | 앱 코드 `NARRATION_FAILED` | 내레이션 생성 실패(선차감 환불 완료) | 502 |
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 `expected_version` 불일치 | 409 |
 | 앱 코드 `INTERNAL_KEY_INVALID` | 워커 키 불일치 | 401 |
+
+## 8. 인증 단계 경로 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.4절, 3.2절, 7.2.3절. 이 경로들은 `requireSession` 앞단(로그인 자체)이라 1절 인증 규칙의 예외다. 단계 분기는 `apps/nomad-commerce/lib/auth/`에서만 한다.
+
+| 메서드 경로 | 단계 | 입력 | 동작 | 출력 | 오류 |
+|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'pro'\|'ai_consent', next? }`(제품 행 `pro`, `ai_consent`는 05장 10절) | `isMockAuthAllowed()`(`AUTH_MODE=mock`, Supabase 호스트 `127.0.0.1`·`localhost`, `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 비어 있음) 확인 → 서버 클라이언트로 `signInWithPassword(<persona>@dev.test, DEV_SEED_PASSWORD)` → 세션 쿠키 → `finishLogin('commerce', next)` | 302 `next`(화이트리스트) 또는 `/dashboard` | 판정 거짓이면 404(존재를 숨김), 모르는 페르소나 400, 시드 안 됨 409 "seed-users를 먼저 실행하세요"(제안) |
+| `GET /auth/callback` | B·C(Google, 카카오, `custom:naver`) | `code`, `next?` | `finishLogin`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('commerce')` 1회 (3) `entitled=false`면 open 앱이므로 `rpc('bootstrap_app_for_org', { p_app_id: 'commerce' })` 1회 후 재조회(가입·월 크레딧 멱등, `migrations/0003_core_credits.sql:440-461`) (4) suspended → 403 (4-1) OAuth 제공자 첫 로그인이고 약관 동의 기록이 없으면 `/onboarding/terms`(03장 7절, CM-06-058. 이메일 가입자와 Mock 시드 페르소나는 이메일 제공자라 건너뜀) (5) `next`가 `/`로 시작하고 `//`·`@`·`\` 없을 때만, 아니면 `/dashboard`, origin은 `NEXT_PUBLIC_APP_URL` (6) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | 302 | 코드 없음·재사용·만료 → `/login?error=callback`, 프로필 없음 → 로그아웃 후 `/login` |
+| `GET /auth/naver/start` | C2(브리지 경로 채택 시만) | `next?` | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 넣고 네이버 authorize로 302. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 302 | 429 |
+| `GET /auth/naver/callback` | C2(브리지만) | `code`, `state` | state 상수 시간 비교 후 쿠키 삭제 → 서버가 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(코어 `staged/0010_core_auth_identity_links.sql`)로 사용자 찾기 → 매직링크 `verifyOtp`로 세션 → `finishLogin`. 네이버 토큰은 저장하지 않는다 | 302 | `/login?error=state`, `/login?error=email_in_use`, `/login?error=callback` |
+
+| 오류 코드 | 의미 | 처리 |
+|---|---|---|
+| `error=callback` | OAuth 코드 교환 실패 | 로그인 화면 오류 띠(03장 7절), 서버 로그에 토큰·코드 없음 |
+| `error=state` | (브리지) state 변조·재사용·만료·쿠키 없음 | 세션 미생성 |
+| `error=email_in_use` | (브리지) 같은 이메일 다른 방법 가입자, 자동 연결하지 않음 | 03장 7절 문구 |
+| 404 `/api/dev/login` | 배포 환경·원격 DB·`AUTH_MODE=live` | 경로가 없는 것처럼 응답 |
+
+`/api/dev/login`은 레이트 리밋 대상이 아니다(로컬 전용). 빌드 검사: `AUTH_MODE=mock VERCEL_ENV=production pnpm -F nomad-commerce build`가 실패해야 하고, `AUTH_MODE=live` 빌드에서 `/api/dev/login`은 404다(`AUTH_ROADMAP.md` 2.4절).

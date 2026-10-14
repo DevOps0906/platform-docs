@@ -4,7 +4,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/file/03-설계/공용코어/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성), `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/file/03-설계/공용코어/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성), `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 1-AI | AI·음성 작업이면 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 2 | 이 폴더 `README.md`, `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` |
 | 3 | 맡은 작업의 SQL: `_supabase-modular/migrations/1600_erp.sql`, `1700_sms.sql`, `supabase/monolith/<app>/` |
@@ -80,3 +80,20 @@ pnpm test:ai
 ## 7. 금지 패턴
 
 `07_SOURCE_MIGRATION.md` 4절 요약: OVERRIDE 비밀번호·verify-admin, 프로필 없으면 admin, 클라이언트 PageGuard, 정책 안 자기참조 재귀와 `FOR ALL`, 브라우저 직접 update, 읽기-계산-쓰기 재고 차감, 가짜 상태·하드코딩 KPI, UTC 날짜 문자열, 루트 middleware, 빈 값 0 대체, 실 URL·키 노출, `.env` 커밋, `as any`. AI·디자인(2026-10-13): 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·역할·개인정보, 요청 본문 역할로 문서 접근 판정, 전체 컬렉션 검색 후 필터, `ai_runs`에 질문·답변 본문, 제한 컬렉션 위키 생성, hms의 상용·공용 서버·공용 Dify 사용과 장애 시 대체, 환자 식별정보의 AI 전송, 클라이언트 텍스트 그대로 TTS, `consume_credits` 호출, 3D 라이브러리 추가, "Tailwind로"만 적은 지시(v3 혼입).
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`, 이 제품 반영은 01장 2절·8.1절, 02장 9절, 03장 7절, 04장 8절, 05장 10절, 06장 8절, 07장 6절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 Stage A(Mock 로그인). 각 앱 로컬 `.env.local`은 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD`. 배포 환경(Vercel 미리보기, 병원 배포 포함)은 항상 `AUTH_MODE=live` |
+| 단계 순서 | A(Mock, ADM-06-007) → G1 → B(ADM-06-058, P0, 첫 기관 배포 필수: erp Google + 이메일 가입, sms Google + 초대 메일, hms 초대 메일 + 이메일만) → G2 → C1 카카오(ADM-06-059)·C2 네이버(ADM-06-060). C는 erp·sms만 P2 선택(01장 D-24), hms 제외 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`를 읽는 코드는 `packages/admin-kit/src/auth/`와 앱의 `src/app/api/dev/login/`, `src/app/auth/callback/`, `src/app/(auth)/`에만. 화면·서버 도메인 코드와 `apps/api`는 `requireSession(appId)`·`requireRole`·`session_context`만 쓴다 |
+| 기관 조직 | 권한은 운영자가 만든 기관 조직에 있다. `finishLogin`은 활성 기관 멤버십을 먼저 찾고, `bootstrap_app_for_org('erp')`는 erp에서 활성 기관 멤버십이 없는 새 사용자에게만 1회 부른다(활성 구성원에게 부르면 pending으로 강등된다, 04장 8.2절 3번). sms·hms는 부르지 않는다 |
+| 페르소나 사용법 | 앱마다 로컬 프로젝트가 따로다. `supabase start` → `supabase db reset` → `node scripts/dev/seed-users.mjs --app <app>`(`<app>`은 erp, sms, hms 중 하나, 앱 훅 포함) → `/login` 개발용 패널. 공통 키 owner, admin, member, viewer, outsider, no_app, suspended, ops, erp `pending`·`inventory_manager`·`sales_manager`·`join_requested`·`join_rejected`, sms `student`·`invited`, hms `doctor`·`lab_tech`·`invited`(05장 10절). hms 시드는 환자 데이터를 만들지 않는다 |
+| E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장한다(ADM-06-035). Google·카카오·네이버 실로그인과 초대 메일 수락은 자동화하지 않고 사람이 수동 점검표로 확인한다 |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, 로그인 화면 역할 선택, `mock-auth`, 가짜 사용자 객체·가짜 세션, 원격 Supabase에 개발 계정 만들기, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·출력·로그에 두기, 인증 모듈 밖 `AUTH_MODE` 참조, 페르소나 이메일로 권한 분기, `next` 무검증 리다이렉트, hms에 Google 켜기(D-21 (b) 확정 전), hms에 카카오·네이버 켜기(항상 금지), 이메일 일치만으로 계정 자동 합치기(브리지) |
+| 단계 전환 | 에이전트가 단계를 스스로 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한 뒤에 B·C 작업을 시작한다. C는 G2 때 D-24("도입")도 함께 기록돼야 시작하고, C2 경로(`supabase_custom` 또는 `bridge`)는 스파이크 결과를 `[DECISION]`으로 남긴다(D-23) |
+| 소유 경로 | 007: `packages/admin-kit/src/auth/`(아래 하위 제외), 앱 3개 `src/app/api/dev/login/`, `scripts/dev/`. 058: `packages/admin-kit/src/auth/{callback,providers,terms}/`, 앱 3개 `src/app/auth/callback/`, `src/app/(auth)/`(014·022·029에서 이어 받음). 059: `providers/kakao.ts`, `login-methods/`. 060: `providers/naver.ts`, erp·sms `src/app/auth/naver/`(브리지만), `scripts/auth/`. 개발용 패널 장착은 014·022·029, 배지 장착은 020·028·033, `db:seed-users` 스크립트 등록은 005에 1줄 요청 |
+| 남은 결정 | 01장 8.1절 D-21(hms Google), D-22(카카오 이메일), D-23(네이버 경로), D-24(erp·sms Stage C 도입 여부) |

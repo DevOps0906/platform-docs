@@ -49,7 +49,7 @@
 | 뉴스레터 서버 로직 | `src/lib/newsletter/`, `src/lib/mail/` | HMAC 토큰, 확인/해지 메일, 템플릿 | service_role 클라이언트 |
 | Supabase 클라이언트 | `src/lib/supabase/` | 브라우저/서버/관리자 3종. 관리자 클라이언트는 서버 전용 | 환경변수 |
 | 콘솔 | `src/app/(console)/admin/` | 로그인, 문의/구독자/설정 화면, 서버 가드 | 사용자 세션 클라이언트(RLS) |
-| 인증 가드 | `src/lib/auth/` | `requireSession`, 사이트 등록 여부 게이트 | `core.session_context` |
+| 인증 가드 | `src/lib/auth/` | `requireSession`, 사이트 등록 여부 게이트, 인증 단계 모듈(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`). 단계 분기(`AUTH_MODE`·제공자 목록)는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`만(9절) | `core.session_context` |
 | 알림 워커 | `worker/notify/` | 신규 문의 스캔, 메일 발송, `notified_at` 갱신 | service_role |
 | 스크립트 | `scripts/` | 이미지 변환, 자산/예산/링크/리포 무결성 검사, 사이트 등록 CLI | CI |
 | DB | `supabase/` | 마이그레이션(문서 폴더의 SQL을 복사), cron 등록 | - |
@@ -88,7 +88,7 @@
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 운영자 로그인, `session_context('site')` | `src/lib/auth/`, `proxy.ts` | 가입 폼은 두지 않는다. 초대 메일만 |
+| auth | 운영자 로그인, `session_context('site')` | `src/lib/auth/`, `proxy.ts` | 가입 폼은 두지 않는다. 초대 메일만. 인증 단계 A(Mock) → B(Google + 초대 메일), C 제외(9절) |
 | org | 조직 멤버십, 역할(owner/admin/member/viewer) | RLS 헬퍼, 콘솔 | viewer는 문의를 읽지 못한다(05장) |
 | audit | 상태 변경, 설정 변경, 삭제, 퍼지 기록 | RPC 안에서 `write_audit` | 개인정보 전문은 기록하지 않는다 |
 | webhooks | 사용하지 않음(MVP). 메일 사업자 바운스/신고 수신은 Phase 2 | - | 사업자 확정(D-6) 뒤 `webhook_events` 사용 |
@@ -255,3 +255,40 @@
 `.env`, `.env.local`은 커밋하지 않는다. `latest` 태그를 쓰지 않는다(`SECURITY_BASELINE.md:119`, `:210`).
 
 AI 관련 변수는 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. 공유 비밀키 방식(`AI_TOKEN_SECRET`)은 쓰지 않는다(EdDSA, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`다. 이 절은 이 제품에 해당하는 것만 옮긴다. 로그인하는 사람은 초대받은 운영자뿐이다.
+
+| 단계 | 운영자 로그인 | 진입 조건 | 이 제품 작업 |
+|---|---|---|---|
+| A Mock | `/admin/login`의 개발용 패널. 로컬 Supabase 시드 계정으로 실제 JWT 로그인(`AUTH_ROADMAP.md` 2장). 쿠키 역할 Mock 금지 | W0부터 | SI-06-019(Stage A로 범위 변경) |
+| B Google | Google + 초대 메일 수락(비밀번호 설정). 배포 환경에서 Mock 차단 | G1 | SI-06-049(신규, P0) |
+| C1 카카오, C2 네이버 | 제외(운영자 전용 콘솔, 초대 메일+Google로 충분) | - | 없음 |
+
+| 불변 조건 | 이 제품에서 |
+|---|---|
+| 세션은 항상 실제 Supabase JWT | `requireSession('site')`(2장 인증 가드)와 사이트 등록 게이트는 A·B 같은 코드 |
+| 권한 판정은 `session_context` 하나 | 콘솔 레이아웃 가드, `proxy.ts`, 서버 액션 모두 같다 |
+| 단계 분기 위치 | `src/lib/auth/`, `src/app/(console)/admin/(auth)/login/`(로그인 화면), `src/app/auth/callback/`, `src/app/api/dev/login/`만. 콘솔 화면·공개 사이트·AI 게이트에 `AUTH_MODE` 참조 0(CI 검사, SI-06-024) |
+| invite 앱 콜백 | `finishLogin`은 `bootstrap_app_for_org`를 부르지 않는다(invite 앱은 비 service 호출자 42501, `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0003_core_credits.sql:458-461`). `entitled=false`면 `/admin/no-access`, 엔타이틀먼트는 있고 사이트가 없으면 기존 "초대가 필요합니다" 안내(03장 2.3) |
+
+### 9.1 환경변수 (`AUTH_ROADMAP.md` 3.3절 중 이 제품 해당분)
+
+| 이름 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B | web(Next.js 서버). 워커·ai-service 불필요 | `live`. 로컬 `.env.example` 기본값은 `mock` |
+| `AUTH_PROVIDERS` | B | web. 운영 값 `google,email`(이메일은 초대 메일 수락·비밀번호 로그인) | live 모드에서 로그인 수단 0개면 기동 실패 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web, 시드 스크립트. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱 env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_*`, `NAVER_*`, `NAVER_AUTH_PATH`, `AUTH_BRIDGE_SECRET` | C | 해당 없음(C 제외) | - |
+
+### 9.2 배포 토폴로지 메모
+
+| 외부 콘솔 | 이 제품 | 비고 |
+|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트) | B단계. 승인된 리디렉션 URI는 Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`), 앱 Redirect URLs는 `https://<도메인>/auth/callback` | `AUTH_ROADMAP.md` 5.1절. 모놀리스(전용 프로젝트) 배포면 고객사 Supabase 프로젝트마다 대시보드 설정이 따로 필요하다 |
+| 카카오 디벨로퍼스, 네이버 개발자센터 | 사용하지 않음 | C 제외 |
+| Supabase Auth 초대 메일 | A·B 공통 경로(`inviteUserByEmail`, SI-06-028). A단계 로컬에서는 시드 스크립트가 대신 계정을 만든다 | 메일 사업자(D-6)와 별개로 Supabase Auth SMTP 설정이 필요한지는 미확인 |
+
+방문자 흐름(공개 페이지, `/api/inquiries`, `/api/newsletter/*`, `/api/ai/*`, `/api/voice/*`, `/guide`)은 단계와 무관하다. 이 화면에 로그인 버튼을 추가하지 않는다(`AUTH_ROADMAP.md` 8장 표 아래 문단).

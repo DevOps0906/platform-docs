@@ -29,7 +29,7 @@
 ```
 packages/admin-kit/            공유 코어(앱 비의존). 도메인 테이블 이름을 모른다.
   src/supabase/                 _platform-core 클라이언트 재수출 + 앱 스키마 선택(SUPABASE_DB_SCHEMA)
-  src/auth/                     createAdminProxy, requireSession 래퍼, requireRole, defineAccess(역할→페이지)
+  src/auth/                     createAdminProxy, requireSession 래퍼, requireRole, defineAccess(역할→페이지), 인증 단계(AUTH_MODE·제공자 목록·Mock 판정·finishLogin. AUTH_ROADMAP의 src/lib/auth/에 해당, 9절)
   src/members/                  승인제/초대제 화면 조각과 서버 함수(앱이 RPC 이름을 주입)
   src/date/                     kstDayRange, kstMonthRange, formatKst
   src/realtime/                 useRealtimeTable
@@ -70,7 +70,7 @@ infra/hms-ai/                  hms 전용 AI 서버 배포 정의(FastAPI, hms-l
 
 | 공용 모듈(`SHARED_MODULES.md`) | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 클라이언트 3종, `session_context`, `requireSession` | `packages/admin-kit/src/supabase`, `src/auth` | admin-kit는 래핑만 |
+| auth | 클라이언트 3종, `session_context`, `requireSession`, 인증 단계(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`) | `packages/admin-kit/src/supabase`, `src/auth`(`AUTH_ROADMAP.md` 3.1절의 `src/lib/auth/`에 해당하는 위치. 단계 분기는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`만, 9절) | admin-kit는 래핑만. 세션은 모든 단계에서 실제 Supabase JWT |
 | org | `invite_member`, `accept_invite`, `change_member_role`, `remove_member`, `transfer_ownership`, `approve_profile` | 도메인 RPC 내부, admin-kit members | 도메인 역할은 앱 스키마 테이블(`CORE_SPEC.md` 1.1) |
 | audit | `write_audit`(도메인 RPC 내부), 감사 로그 화면 | 도메인 SQL, `src/audit` | |
 | storage | 상품 이미지 `org-files/<org>/erp/product/<uuid>` | `apps/erp/src/server/images.ts` | erp만 |
@@ -256,3 +256,52 @@ hms에는 `dify.aux` 행이 없다(Dify 미사용). 그래프와 노드는 5.2�
 | `VOYAGE_API_KEY` | 상용 임베딩 | 사용하지 않음(플랫폼 기본값 호환용). **hms: 존재하면 기동 실패** | - |
 
 AI 관련 변수는 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:160`의 목록을 따르며 모두 서버 전용이다(`NEXT_PUBLIC_` 접두사 없음). 3D 히어로 변수(`NEXT_PUBLIC_HERO3D_ENABLED`)는 만들지 않는다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(0장 단계·불변 조건, 2장 Mock, 3장 공통 구조, 8장 admin-suite 행)다. 이 절은 admin-suite에 맞춘 단계표, 모듈 위치, 환경변수, 외부 콘솔 배치만 정한다. 단계가 바뀌어도 세션(실제 Supabase JWT), `session_context`, `createAdminProxy`, RLS는 그대로다.
+
+### 9.1 단계표 (이 제품 기준)
+
+| 단계 | erp(approval, 가입 코드) | sms(invite) | hms(invite, 별도 모놀리스 DB) | 진입 게이트 | 작업 |
+|---|---|---|---|---|---|
+| A | 로컬 시드 페르소나 Mock 로그인(05장 10절). 실제 제공자 버튼 없음 | 같음 | 같음(로컬 hms 프로젝트만) | 없음(W2부터) | ADM-06-007 |
+| B | Google + 이메일 가입·메일 인증·비밀번호 재설정. OAuth 첫 로그인은 콜백이 pending을 만들고 `/pending` | Google + 초대 메일(비밀번호 설정) | 초대 메일 + 이메일 로그인만. Google은 01장 D-21 확정 전 끔(제안) | G1(06장 8.2절) | ADM-06-058 |
+| C1 카카오 | P2 선택(01장 D-24) | P2 선택 | 제외(의료정보 격리) | G2 + D-24 | ADM-06-059 |
+| C2 네이버 | P2 선택 | P2 선택 | 제외 | G2 + D-24 | ADM-06-060 |
+
+로그인 없는 사용자 흐름은 이 제품에 없다(모든 사용자가 기관 직원·학생이다).
+
+### 9.2 모듈 위치와 분기 규칙
+
+| 항목 | 위치 | 규칙 |
+|---|---|---|
+| 인증 단계 모듈 | `packages/admin-kit/src/auth/`(`AUTH_ROADMAP.md` 3.1절의 `src/lib/auth/`에 해당) | `getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions(appId)`, `finishLogin(appId, next)`, 개발용 로그인 핸들러 팩토리, 개발용 패널·`MOCK AUTH · 로컬 전용` 배지 서버 컴포넌트. 앱 이름을 모른다(앱이 `appId`와 정책을 주입) |
+| 앱 쪽 파일 | `apps/<app>/src/app/api/dev/login/route.ts`(A), `apps/<app>/src/app/auth/callback/route.ts`(B), 로그인 화면 `apps/<app>/src/app/(auth)/login/` | admin-kit 팩토리의 얇은 re-export. 이 세 곳과 admin-kit `src/auth/` 밖에서 `AUTH_MODE`·`AUTH_PROVIDERS`를 읽지 않는다(CI, ADM-06-039) |
+| 기관 조직 선택 | `finishLogin` | admin-suite의 권한은 개인 조직이 아니라 운영자가 만든 기관 조직에 있다(05장 1절). `finishLogin`은 `session_context(app)`(개인 조직) 대신 사용자의 활성 기관 멤버십을 찾아 `session_context(app, 기관 org)`로 분기한다. `bootstrap_app_for_org`는 erp에서 활성 기관 멤버십이 없는 새 사용자에게만 1회 호출한다(04장 8.2절. 기존 활성 구성원에게 호출하면 `on_signup_app_bootstrap`이 프로필을 pending으로 바꾼다, `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0003_core_credits.sql:400-402`) |
+| 시드 스크립트 | `scripts/dev/seed-users.mjs` + 앱 훅 `scripts/dev/seed-users.{erp,sms,hms}.mjs` | 앱마다 로컬 Supabase 프로젝트가 따로라(7절) `--app`을 앱 하나씩 주고 그 앱 프로젝트의 `SUPABASE_URL`로 실행한다. hms 훅은 hms 로컬 프로젝트에만 계정을 만든다 |
+
+### 9.3 환경변수 (`AUTH_ROADMAP.md` 3.3절 중 이 제품 해당분)
+
+배치 열의 "web"은 각 앱 Next.js 서버(Vercel 프로젝트, erp·sms 1개씩, hms 병원별)다. 워커는 없고(4절), AI 서비스(`apps/api`, `api-shared`·`api-hms`)에는 어떤 인증 단계 변수도 넣지 않는다(서명 토큰만 쓴다, 5절).
+
+| 이름 | 단계 | 배치 | erp | sms | hms | 없으면 |
+|---|---|---|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web | 로컬 `mock`, 배포 `live` | 같음 | 같음 | `live`. `mock`인데 Mock 허용 판정이 거짓이면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web | `google,email`(C 도입 시 `kakao`, `naver` 추가) | 같음 | `email`만(D-21 (b) 확정 시 `google` 추가). 그 밖의 값이면 기동 실패(제안, 5.5절 금지 변수 검사와 같은 방식) | live에서 로그인 수단 0개면 기동 실패 |
+| `DEV_SEED_PASSWORD` | A | web(로컬), 시드 스크립트 | 로컬만 | 로컬만 | 로컬만 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`, 원격은 Supabase 대시보드만(앱 env에 넣지 않음) | 사용 | 사용 | D-21 전 사용 안 함 | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | D-24 도입 시 | D-24 도입 시 | 사용 안 함 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트만. `bridge`: web 전용 | D-24 도입 시 | D-24 도입 시 | 사용 안 함 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | D-23 결과 | 같음 | 없음 | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지만 | web(32바이트 이상) | 브리지 채택 시 | 같음 | 없음 | 브리지 경로면 기동 실패 |
+| `NEXT_PUBLIC_APP_URL` | B·C | web | 콜백 origin 고정(`AUTH_ROADMAP.md` 3.2절 5번) | 같음 | 같음 | 기동 실패(제안) |
+
+### 9.4 외부 콘솔과 배포 토폴로지 메모
+
+| 콘솔 | 배치 | 메모 |
+|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트) | erp·sms용 | 승인된 리디렉션 URI는 앱 도메인이 아니라 각 Supabase 프로젝트의 `/auth/v1/callback`이다(`AUTH_ROADMAP.md` 5.1절). erp·sms가 모듈러 통합 DB 1개면 URI 1개, 고객사별 모놀리스(README 5절 2차)로 가면 프로젝트마다 URI가 늘어난다. 한 클라이언트에 여러 URI를 둘지 프로젝트별 클라이언트를 둘지는 구현 시 확인. 동의 화면 앱 이름은 01장 D-9(상표 확인 전 "Admin Suite ERP/School") |
+| Supabase Auth(프로젝트별) | erp, sms, 병원마다 hms | Providers와 URL Configuration(Site URL, Redirect URLs = 앱 `/auth/callback`)을 프로젝트마다 설정한다. hms 병원 프로젝트는 Email만 켠다(D-21 전) |
+| 카카오 디벨로퍼스, 네이버 개발자센터 | erp·sms(D-24 도입 시만) | hms 병원 프로젝트에는 등록하지 않는다. 네이버는 검수 통과 전 운영 `AUTH_PROVIDERS`에 넣지 않는다(`AUTH_ROADMAP.md` 7.2.4절 C2-6) |
+| 운영자 프로비저닝 CLI | 7절 | 단계와 무관하다. owner 초대 메일(비밀번호 설정)은 B단계 화면이 받는다. A단계 owner는 시드 훅이 같은 순서로 만든다 |

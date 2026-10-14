@@ -335,3 +335,29 @@ RLS 스모크 결과(사용자 A·B 서로 다른 조직, X는 엔타이틀먼�
 | 원장 drift | 0 | 0 |
 
 스모크 스크립트는 저장소 `supabase/tests/rls_smoke`로 옮기는 작업이 AS-06-002다. 금액 불일치 시 주문 failed 기록은 코어 `fail_payment_order`(2026-10-13 반영)를 `PM001` 처리에서 별도 호출로 쓴다(02장 6절 AA #7).
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음. 인증 단계는 코어 계약(`session_context`, RLS)을 그대로 쓰고, 이 제품은 표·컬럼·함수를 추가하지 않는다. C2에서 브리지 경로를 택하면 코어 보류 마이그레이션 `D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`(`core.auth_identity_links`)을 참조만 한다(06장 8절 R-14).
+
+시드는 `scripts/dev/seed-users.mjs --app astro`(공통, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.3절)가 공통 행을 만든 뒤 제품 훅 `scripts/dev/seed-users.astro.mjs`(제안)를 실행한다. `supabase db reset` 뒤 로컬에서만 실행하고(호스트가 루프백이 아니면 종료), 계정은 `auth.admin.createUser(..., email_confirm: true, user_metadata: { signup_app: 'astro', full_name })`로 만들어 실제 가입 트리거를 탄다. astro는 가입 크레딧이 0이고(`signup_credits=0`, 8절) 환영 크레딧 30은 인증 확인 뒤 서버가 지급하므로(01장 AS-F-002), 지급 여부를 훅이 페르소나별로 정한다.
+
+| 키 | 이메일 | 만드는 방법 | 기대 `session_context('astro')`와 잔액 | 쓰임 |
+|---|---|---|---|---|
+| `owner` | `owner@dev.test` | 공통 생성 후 훅이 service_role `grant_credits(org, 30, 'astro', 'welcome_credits', 'pack', 'signup', user_id, 'signup:<org>:astro')`(04장 2절 `POST /api/auth/welcome`과 같은 인자·멱등 키) | 개인 조직 owner, `entitled=true`, `plan_code='starter'`, 잔액 30, 원장 환영 행 1 | 기본 사용자, 리딩·채팅 E2E |
+| `admin`, `member`, `viewer` | `admin@dev.test` 등 | 공통(owner 조직에 `invite_member` → `accept_invite`) | owner 조직의 각 역할. 본인 개인 조직에는 환영 크레딧을 지급하지 않는다(잔액 0) | 코어 역할 분기 회귀. astro 화면은 owner 기준(03장 1절)이고 멤버 초대 화면이 없다(02장 3절 org 행) |
+| `outsider` | `outsider@dev.test` | 공통 생성 후 훅이 owner와 같은 방법으로 30 지급 | 자기 조직 owner, 잔액 30 | 교차 테넌트 거부: owner의 보관함·리딩·대화 0행, 다른 조직 `reading_id` 채팅 404 |
+| `no_app` | `no_app@dev.test` | 공통(`signup_app` 없음) | 모듈러: `entitled=false` → 첫 Mock 로그인에서 `finishLogin`이 `bootstrap_app_for_org` 1회 → `entitled=true` → 환영 크레딧 30(1회). 모놀리스: 트리거가 자동 부트스트랩해 처음부터 `entitled=true`, 잔액 0 → 첫 로그인 뒤 30 | 첫 진입 부트스트랩과 환영 크레딧이 한 번만 일어나는지 |
+| `suspended` | `suspended@dev.test` | 공통(service_role로 `status=suspended`) | 403 | 차단 확인 |
+| `ops` | `ops@dev.test` | 공통(service_role로 `platform_role=platform_admin`) | 운영자 | `/admin`, `/admin/wiki`, `/admin/knowledge` |
+| `welcome_pending` | `welcome_pending@dev.test` | `signup_app='astro'`, `email_confirm: true`로 생성하고 훅이 환영 크레딧을 지급하지 않는다(astro 추가 페르소나, `AUTH_ROADMAP.md` 8장) | `entitled=true`, `plan_code='starter'`, 잔액 0, 환영 원장 행 0. 첫 Mock 로그인 뒤 `finishLogin` 5번(04장 8절)이 지급해 잔액 30, 재로그인 3회 뒤에도 환영 원장 행 1 | 환영 크레딧 미지급 상태: "인증 확인 뒤 1회 지급"(AS-F-002) 경로를 Mock 단계에서 검증. B단계 B-1, C1-1, C2-2와 같은 기대값 |
+
+| 규칙 | 내용 |
+|---|---|
+| `pending` | astro는 open 앱이라 만들지 않는다(approval 앱만) |
+| 미인증 계정 | 로컬 `enable_confirmations = true`에서는 미인증 이메일의 비밀번호 로그인이 거부되므로(Supabase 동작, 미확인) "미인증 잔액 0" 기준은 Mock 페르소나가 아니라 AS-06-009의 서버 단위 테스트(`email_confirmed_at` null 사용자로 `/api/auth/welcome` 409)로 검사한다 |
+| 멱등 키 공유 | 환영 크레딧 키 `signup:<org>:astro`는 코어 가입 크레딧 키(`migrations/0003_core_credits.sql:426`, `on_signup_app_bootstrap`)와 같은 문자열이다. astro 플랜의 `signup_credits=0`이라 코어는 이 키로 원장 행을 만들지 않고(`> 0`일 때만 지급), 그래서 환영 지급이 막히지 않는다. 모놀리스·모듈러 seed 모두 0이며(01장 D-3), 이 값을 0보다 크게 바꾸면 환영 크레딧이 멱등 처리로 지급되지 않으니 D-3을 다시 정한다 |
+| IP 해시 보류와 반복 실행 | 같은 IP 해시 하루 3회 초과 보류(AS-F-002)는 실제로 지급할 때만 센다(제안: 멱등 키로 이미 지급된 조직이면 `rate_limit_hit`을 부르지 않는다). 로컬에서는 모든 페르소나가 같은 IP라, 먼저 세면 E2E를 반복할 때 `welcome_pending`·`no_app` 지급이 보류된다 |
+| 재시드 | 멱등: 이미 있는 이메일은 건너뛰고 역할·상태만 맞춘다. `welcome_pending`이 한 번 로그인해 30을 받은 뒤 미지급 상태로 되돌리려면 `supabase db reset` 후 다시 시드한다(원장은 append-only라 훅이 회수하지 않는다) |
+| 도메인 데이터 | 보관함 대상·리딩·대화는 시드하지 않는다(제안). E2E가 각 페르소나로 API를 호출해 만든다 |
+| 모놀리스/모듈러 | 이 개발은 단독 `public` 모놀리스(01장 D-9, `docs/develop/astro-ai/astro-ai_develop.md` 1절)라 `no_app`도 자동 부트스트랩되어 402 경로를 볼 수 없다. 402·부트스트랩 검증은 모듈러 통합 DB에서만 의미가 있다(`--app`을 여러 번 주면 두 번째 앱부터 `bootstrap_app_for_org`) |

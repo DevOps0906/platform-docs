@@ -156,7 +156,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 | RLS 정책 안 자기참조 재귀(42P17) | `SECURITY_BASELINE.md:230` | 전체 거부 또는 우회 | 정책은 `is_org_member`·`has_org_role`·`has_entitlement`·`current_org_ids`만, `org_members` 직접 조회 0(`05_DATA_MODEL.md:771`) |
 | 전역 n8n API 키 프록시 | `SECURITY_BASELINE.md:231`, 분석:145 | 테넌트 격리 붕괴 | 연결별 수신 토큰 + HMAC(DS-09) |
 | 인증 없는 공개 AI 프록시, CORS `*` | `SECURITY_BASELINE.md:232` | 키 도용, 비용 폭증 | `/api/ai/*`는 `requireSession` + 서명 토큰, ai-service는 토큰 없으면 401 |
-| 라우터 무인증(LLM/export/upload), `dev-user` 우회, 빈 JWT secret | `SECURITY_BASELINE.md:234`, `docs/reference/reviews/flora.md:68`, `:80` | 무료 사용, 데이터 접근 | 모든 Route Handler 래퍼(린트 검사), JWKS 없으면 ai-service 기동 실패 |
+| 라우터 무인증(LLM/export/upload), `dev-user` 우회, 빈 JWT secret | `SECURITY_BASELINE.md:234`, `docs/reference/reviews/flora.md:68`, `:80` | 무료 사용, 데이터 접근 | 모든 Route Handler 래퍼(린트 검사), JWKS 없으면 ai-service 기동 실패. 허용되는 Mock은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT, 배포 환경 404)뿐이다(6절) |
 | 실키가 든 `.env` 커밋 | `SECURITY_BASELINE.md:235`, `docs/reference/reviews/flora.md:79` | 키 유출 | `.gitignore`, CI 비밀 검사, 원천 `.env` 복사 금지(5절) |
 | 한글에 `\b` 경계 금지어 매칭 | `SECURITY_BASELINE.md:236` | 필터 무효 | compliance·`L-BANNED` 규칙은 한글 경계를 쓰지 않는 사전 매칭 + 단위 테스트(DC-06-021) |
 | 사용자 입력 파일명·label을 Storage 경로에 사용 | `docs/reference/reviews/flora.md:71` | 경로 조작 | 서버 생성 `<org_id>/docs/<purpose>/<uuid>.<ext>` + 첫 세그먼트 CHECK(`05_DATA_MODEL.md:871`), 원본 이름은 `original_name`만 |
@@ -198,3 +198,15 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 | 4 | 키 재발급은 필요 없다. 이 제품은 원천의 환경변수 파일을 복사하지 않고 모든 키를 새로 발급해 배포 플랫폼 비밀로만 둔다. 예외: 개발 중 원천의 `.env` 값을 실수로 복사·커밋했다면 해당 키(예: `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`)를 즉시 재발급하고 원천 소유 제품의 재발급 기록(`D:/WorkSpace/platform/docs/products/flora-publishing/07_SOURCE_MIGRATION.md:182`)에 함께 남긴다 | DC-06-007(CI 비밀 검사), 사람 |
 | 5 | zip 중복 정리 대상 없음(전용 원본 폴더가 없다) | 해당 없음 |
 | 6 | 공용 렌더 서비스·공용 Dify·GPU 서버·ai-service 원본은 소비만 한다. 운영 책임과 변경 요청은 코어 요청 C-1, C-10, C-11 | 사람(운영) |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+4절 표에 이어서 본다. 이 제품의 이식 원천에는 쿠키에 역할·플랜을 적는 Mock 로그인이 없지만, 다른 제품 원본에서 확인된 같은 결함을 이식·재발명하지 않도록 행을 둔다. 허용되는 Mock은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 404)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`mock-auth.ts`, `nomad_role`, `nomad_plan` 쿠키, localStorage 역할·플랜) | `D:/WorkSpace/platform/docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `D:/WorkSpace/platform/docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`(다른 제품 원본, AUTH_ROADMAP 1장) | 권한 위조, 프로덕션 노출 | AUTH_ROADMAP 2장 Mock 로그인(DC-06-014), CI 금지 문자열(DC-06-007) |
+| 콜백 `next` 무검증 연결(`${origin}${next}`) | `D:/WorkSpace/platform/docs/reviews/Flora-v2.md:71`(flora 계열 콜백. 이 제품은 sellingstudio 콜백을 참고만 한다, 1.3절) | `next=@evil.com` 외부 리다이렉트 | `finishLogin`의 화이트리스트(01장 DC-F-001, AUTH_ROADMAP 3.2절 5번) |
+| `SUPABASE_URL` 미설정 시 `dev-user` 반환 | `docs/reference/reviews/flora.md:80`(flora v1 `api/routers/auth.py`) | 환경변수 누락이 곧 인증 우회 | 기동 시 env 검증. `AUTH_MODE=mock`인데 판정이 거짓이면 기동 실패(AUTH_ROADMAP 2.4절) |
+| 기능 코드의 `if (mock)`·페르소나 이메일 분기 | AUTH_ROADMAP 0장 불변 조건, 2.5절 | 단계 전환 때 권한 경로가 달라짐 | 단계 분기는 `web/src/lib/auth/`·로그인 화면·콜백·`/api/dev/login`에만(02장 9.2절) |
+| HubSpot OAuth 연결 코드를 로그인 제공자로 재사용 | 02장 3절 oauth 행(연동용 `core.oauth_states`) | 연동 OAuth는 로그인한 사용자의 조직에 CRM을 붙이는 것이라 세션을 만들지 않는다. 섞으면 state 검증·리다이렉트 규칙이 달라진다 | 로그인은 Supabase Auth 제공자(Google·카카오·`custom:naver`) 또는 AUTH_ROADMAP 7.2.3절 브리지만 |

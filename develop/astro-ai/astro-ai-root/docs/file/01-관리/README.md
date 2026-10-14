@@ -10,6 +10,7 @@
 | MVP | 사주 + 타로 + 통합 리딩, 크레딧팩 일회 결제(확정 결정 7, `docs/reference/00_MERGE_ANALYSIS.md:16`) |
 | 플랜 정본 | Astro AI 단가표(확정 결정 8, `docs/reference/00_MERGE_ANALYSIS.md:17`, `Astro AI/기획안/공통/PRD.md:29-58`) |
 | 서비스명 | 신비로운AI, 폴더 `astro-ai`(확정 결정 10, `docs/reference/00_MERGE_ANALYSIS.md:19`) |
+| 로그인 단계 (2026-10-14) | MVP 개발은 Mock 로그인(Stage A, 로컬 시드 계정으로 실제 JWT) → G1 → 공개 베타 전 Google + 이메일(Stage B, P0) → G2 → 카카오(C1)·네이버(C2, 둘 다 P1). 환영 크레딧 30은 이메일 인증 또는 소셜 로그인 확인 뒤 같은 서버 함수가 1회 지급한다(AS-F-002). 정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` | 확정 결정 22(`docs/reference/00_MERGE_ANALYSIS.md:30`), 02장 9절 |
 
 ## 2. 통합 근거
 
@@ -33,14 +34,14 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구와 수용 기준, 크레딧 단가와 팩, 비기능 수치, 법·개인정보·금지 문구, KPI, 열린 결정 |
-| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅 기본값과 그래프 `astro.reading`, 리뷰 "높음" 결함 중 기술·아키텍처 항목의 차단 설계, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우, 화면별 명세, 메인페이지 디자인 방향(레퍼런스, 브리프, 토큰 플랜), 상태·오류·빈 화면 |
-| `04_API.md` | Route Handler, 제품 RPC, 잡 페이로드, 웹훅, 외부 API, 오류 코드 |
-| `05_DATA_MODEL.md` | `astro` 스키마 7개 테이블, 상태 전이, RLS, 보안·데이터 결함 차단 설계, 모놀리스와 모듈러 차이, 검증 결과 |
-| `06_AGENT_PLAN.md` | 작업 54개(AI·음성·3D·디자인 시스템 16개 포함), 소유 경계, 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
-| `07_SOURCE_MIGRATION.md` | 원본별 자산 분류, 폐기 목록과 사유, 복사 금지 결함, 아카이브 절차 |
-| `CLAUDE.md` | 개발 에이전트 지침 |
+| `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구와 수용 기준, 크레딧 단가와 팩, 비기능 수치, 법·개인정보·금지 문구, KPI, 열린 결정(D-1~D-18, 인증 단계 D-19~D-21은 8.1절) |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡과 워커, AI 라우팅 기본값과 그래프 `astro.reading`, 리뷰 "높음" 결함 중 기술·아키텍처 항목의 차단 설계, 배포, 환경변수, 인증 단계(9절: 단계표, 인증 env, 외부 콘솔) |
+| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우, 화면별 명세, 메인페이지 디자인 방향(레퍼런스, 브리프, 토큰 플랜), 상태·오류·빈 화면, 인증 단계별 로그인 화면·오류·약관 위치·로그인 방법(7절) |
+| `04_API.md` | Route Handler, 제품 RPC, 잡 페이로드, 웹훅, 외부 API, 오류 코드, 인증 단계 경로(8절: `/api/dev/login`, `/auth/callback`, 네이버 브리지) |
+| `05_DATA_MODEL.md` | `astro` 스키마 7개 테이블, 상태 전이, RLS, 보안·데이터 결함 차단 설계, 모놀리스와 모듈러 차이, 검증 결과, 개발용 시드 페르소나(10절, 스키마 변경 없음, `welcome_pending` 포함) |
+| `06_AGENT_PLAN.md` | 작업 57개(AI·음성·3D·디자인 시스템 16개, 인증 단계 3개(AS-06-055~057, 8절) 포함), 소유 경계, 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `07_SOURCE_MIGRATION.md` | 원본별 자산 분류, 폐기 목록과 사유, 복사 금지 결함, 아카이브 절차, 인증 단계 복사 금지(6절) |
+| `CLAUDE.md` | 개발 에이전트 지침, 인증 단계 규칙(8절) |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 `0001_core_lite.sql`(코어 축소판), `0002_astro_domain.sql`, `seed.sql` |
 | `../_supabase-modular/migrations/1100_astro.sql` | 통합 DB의 `astro` 스키마 조각(같은 도메인 모델) |
 

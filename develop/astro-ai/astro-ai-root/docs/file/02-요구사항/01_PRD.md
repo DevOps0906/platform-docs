@@ -22,7 +22,7 @@
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
-| 이메일 + Google 로그인 | MVP | `docs/reference/00_MERGE_ANALYSIS.md:313` |
+| 로그인(이메일 + Google, 이후 카카오·네이버) | MVP 개발은 Mock(Stage A, 로컬 시드 계정), 공개 베타 전 Google + 이메일(Stage B, P0), 카카오·네이버는 G2 후(Stage C, C1 카카오 P1, C2 네이버 P1). 단계 정의는 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 0장, 8장 | `docs/reference/00_MERGE_ANALYSIS.md:313`, `:30`(확정 결정 22) |
 | 프로필 보관함(본인, 가족, 지인) + 제3자 동의 | MVP | `docs/reference/00_MERGE_ANALYSIS.md:315` |
 | 만세력 엔진(로컬 절기 테이블) + 원국 프리뷰 + 대운 타임라인 | MVP | `docs/reference/00_MERGE_ANALYSIS.md:322-325` |
 | 사주 리딩, 타로 3카드 리딩, 통합 리딩 | MVP | 확정 결정 7, `docs/reference/00_MERGE_ANALYSIS.md:327-328` |
@@ -51,8 +51,8 @@
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| AS-F-001 | 가입/로그인 | 통합 | 이메일+비밀번호, Google OAuth(Supabase Auth). 가입 폼은 `signup_app='astro'`를 보낸다. 매직링크와 Apple은 넣지 않는다 | 가입 직후 `session_context('astro')`가 `entitled=true`, `plan_code='starter'`를 돌려준다 | `docs/file/03-설계/공용코어/CORE_SPEC.md:83`, `docs/reference/00_MERGE_ANALYSIS.md:313` |
-| AS-F-002 | 환영 크레딧 30 | 신규(공백 8) | 이메일 인증 완료 또는 Google 로그인 확인 뒤 서버가 `grant_credits(30, 멱등 키 signup:<org>:astro)`를 1회 호출한다(제안: 가입 트리거 시점은 이메일 인증 전이라 반복 수령을 막지 못함). 같은 IP 해시에서 하루 가입 3회 초과 시 지급 보류(제안) | 미인증 계정 잔액 0, 인증 후 30. 같은 조직에 2번 호출해도 원장 1행 | `AA/공통/PRD.md:31`, `docs/reference/reviews/FortuneDocs.md:51`, `docs/reference/00_MERGE_ANALYSIS.md:453` |
+| AS-F-001 | 가입/로그인 | 통합 | 이메일+비밀번호, Google OAuth(Supabase Auth). 가입 폼은 `signup_app='astro'`를 보낸다. 매직링크와 Apple은 넣지 않는다. 인증 단계(확정 결정 22): A(MVP 개발) 로컬 시드 계정 Mock 로그인만. 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(배포 환경 404). B(공개 베타 전, P0) Google + 이메일 가입·인증·비밀번호 재설정. C1 카카오, C2 네이버(G2 후, P1). OAuth 가입은 `signup_app`을 보낼 수 없어 콜백이 `bootstrap_app_for_org`를 1회 호출한다 | 가입 직후 `session_context('astro')`가 `entitled=true`, `plan_code='starter'`를 돌려준다. A: `owner` 페르소나 Mock 로그인으로 같은 결과. B: `AUTH_ROADMAP.md` 5.3절 B-1~B-6. C1: 7.1.3절 C1-1~C1-5. C2: 7.2.4절 C2-1~C2-6 | `docs/file/03-설계/공용코어/CORE_SPEC.md:83`, `docs/reference/00_MERGE_ANALYSIS.md:313`, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 8장 |
+| AS-F-002 | 환영 크레딧 30 | 신규(공백 8) | 이메일 인증 완료 또는 Google 로그인 확인 뒤 서버가 `grant_credits(30, 멱등 키 signup:<org>:astro)`를 1회 호출한다(제안: 가입 트리거 시점은 이메일 인증 전이라 반복 수령을 막지 못함). Stage C부터 카카오·네이버 로그인 확인 뒤에도 같은 규칙이다(2026-10-14, 확정 결정 22). 같은 IP 해시에서 하루 가입 3회 초과 시 지급 보류(제안) | 미인증 계정 잔액 0, 인증 후 30. 같은 조직에 2번 호출해도 원장 1행. Stage A: `welcome_pending` 페르소나(05장 10절) 첫 Mock 로그인 뒤 30, 재로그인 뒤에도 원장 1행 | `AA/공통/PRD.md:31`, `docs/reference/reviews/FortuneDocs.md:51`, `docs/reference/00_MERGE_ANALYSIS.md:453` |
 | AS-F-003 | 프로필 보관함 CRUD | 유지(FD) | 대상: 호칭(20자), 관계(본인/가족/연인/친구/기타), 성별(필수), 생년월일, 생시 또는 "모름", 양력/음력, 윤달, 자시 방식, 출생지(시·군 목록 → 경도). 조직당 본인 1명, 전체 20명(제안, `features.max_subjects`) | 21번째 등록은 409. 성별 없이 저장 불가. 본인 2명 등록 불가 | `FD/PRD.MD:50`, `:55`, `docs/reference/reviews/FortuneDocs.md:41-42` |
 | AS-F-004 | 제3자 정보 동의 | 신규(공백 6) | 관계가 본인이 아니면 "이 사람에게 정보 제공 동의를 받았거나 법정대리인입니다" 체크와 약관 버전을 저장(`subjects.third_party_consent_at`, `consents.kind='third_party_birth'`) | 체크 없이 가족 등록 시 400. DB 제약(`subjects_consent_check`)도 거부 | `docs/reference/reviews/FortuneDocs.md:50`, `docs/reference/00_MERGE_ANALYSIS.md:420` |
 | AS-F-005 | 생년월일시 암호화 | 디벨롭 | 이름과 생년월일시(원문 입력)는 서버에서 AES-256-GCM으로 암호화해 `*_ciphertext`에만 저장. 키는 환경변수 `ASTRO_PII_KEY_V<n>` | DB 덤프에 실명·생년월일 평문 0건. 사용자 세션으로 암호문 컬럼 SELECT 시 42501 | `AA/공통/PRD.md:117`, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:12장` |
@@ -140,7 +140,7 @@
 | 환불하지 않는 경우 | PDF까지 완료된 뒤 사용자가 내용에 불만이 있는 경우(어드민 판단으로 수동 지급만 가능) | 제안 |
 | 차감 순서 | plan 버킷 → pack 버킷(코어 규칙). MVP는 pack만 있다 | `docs/file/03-설계/공용코어/CORE_SPEC.md:173` |
 | 만료 | 팩 크레딧은 만료하지 않는다(제안: 유효기간을 두면 약관과 표시 의무가 늘어남) | 제안 |
-| 가입 크레딧 | 30, 조직당 1회, 이메일 인증 또는 Google 로그인 뒤 | AS-F-002 |
+| 가입 크레딧 | 30, 조직당 1회, 이메일 인증 또는 Google 로그인 뒤(Stage C부터 카카오·네이버 로그인 뒤 포함) | AS-F-002 |
 
 ### 4.5 결제 환불 규정 (제안, 법무 확인 필요)
 
@@ -234,7 +234,7 @@ AI 키 4개는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/se
 
 | 항목 | 내용 |
 |---|---|
-| 수집 항목(회원) | 이메일, 표시 이름, 로그인 제공자, 결제 내역(Toss 결제키, 금액. 카드번호는 받지 않음), 접속 IP 해시 |
+| 수집 항목(회원) | 이메일, 표시 이름, 로그인 제공자, 결제 내역(Toss 결제키, 금액. 카드번호는 받지 않음), 접속 IP 해시. 단계별 제공자 식별자(확정 결정 22): Stage B Google 계정 식별자·이름·프로필 이미지 URL, Stage C1 카카오 사용자 식별자·닉네임·프로필 이미지(비즈 앱이면 이메일), Stage C2 네이버 사용자 고유 id·이메일·이름(브리지 경로면 `core.auth_identity_links`에 저장). Stage A 시드 계정은 로컬 DB에만 있고 실제 개인정보가 아니다 |
 | 수집 항목(대상) | 호칭, 관계, 성별, 생년월일, 생시(선택), 양/음력, 윤달, 자시 방식, 출생 시·군(선택), 실명(선택, PDF 표지용) |
 | 목적 | 사주 원국 계산, 리포트 생성과 전달, 결제와 환불, 부정 이용 방지 |
 | 암호화 | `subjects.name_ciphertext`, `subjects.birth_ciphertext`, `readings.question_ciphertext`, `deliveries.recipient_ciphertext`(AES-256-GCM, `ASTRO_PII_KEY_V<n>`). 원국 스냅샷(`readings.chart`)은 렌더에 필요해 평문 jsonb로 두되 RLS와 대상 삭제 연쇄로 보호한다 |
@@ -249,7 +249,7 @@ AI 키 4개는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/se
 
 | 항목 | 내용 |
 |---|---|
-| 이용약관, 개인정보처리방침, 환불 규정 | `/legal/terms`, `/legal/privacy`, `/legal/refund`. 가입 화면에서 필수 동의 2개(`terms_required`, `privacy_required`) |
+| 이용약관, 개인정보처리방침, 환불 규정 | `/legal/terms`, `/legal/privacy`, `/legal/refund`. 가입 화면에서 필수 동의 2개(`terms_required`, `privacy_required`). OAuth(Google·카카오·네이버) 첫 로그인은 가입 화면을 거치지 않으므로 온보딩 첫 단계 `/onboarding/terms`(제안, `/onboarding/ai` 앞)에서 같은 2개를 받는다(`docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 5.2절) |
 | 점술 서비스 면책 | 모든 리포트 첫 장과 랜딩 하단: "이 리포트는 명리학과 타로의 전통 해석을 AI가 재구성한 참고용 콘텐츠이며 의료, 법률, 투자 판단을 대신하지 않습니다"(`docs/reference/reviews/Astro_AI.md:61`) |
 | AI 생성 표시 | PDF 판권면과 대시보드 결과 화면에 "AI가 생성한 해설". 채팅 답변마다 "AI가 생성한 답변", 낭독 음성 첫머리와 플레이어에 "AI가 생성한 음성입니다", 위키 페이지에 "AI가 정리하고 운영자가 검수한 문서". 다른 모델로 대체된 답변은 "다른 AI 모델로 답했습니다" 표시 |
 | 저작권 | 리포트는 사용자가 개인적으로 소장·공유할 수 있다. 상업적 재판매 금지. 테마 디자인과 템플릿의 저작권은 운영사에 있다 |
@@ -335,7 +335,7 @@ AI 대화 추가 규칙(6.4절에 더해 채팅·낭독에 적용):
 |---|---|---|---|
 | D-1 | 제품 정체성(B-5 #1) | (a) 30초 즉시 리딩 + 3채널 (b) 소장형 책 (c) 소장형 책자 + 이메일·대시보드 | (c). 랜딩 메시지와 PDF 보관 정책(AS-F-016)이 이 가정을 따른다 |
 | D-2 | LLM(B-5 #5) | (a) Claude 단일 (b) 3사 체인 (c) Claude + OpenRouter 폴백 | 닫힘(확정 결정 17, 2026-10-13): FastAPI 라우터 체인 Claude → ChatGPT → Gemini → 오픈소스. 기능별 기본값은 02장 5절 |
-| D-3 | 가입 크레딧 양과 지급 시점(B-5 #4) | (a) 30cr 가입 즉시 (b) 30cr 이메일 인증·Google 확인 뒤 (c) FD식 3cr | (b). 모놀리스 seed의 `signup_credits=0`과 `features.welcome_credits=30`이 이 가정이다. 모듈러 seed도 2026-10-13부터 같은 값이다 |
+| D-3 | 가입 크레딧 양과 지급 시점(B-5 #4) | (a) 30cr 가입 즉시 (b) 30cr 이메일 인증·Google 확인 뒤 (c) FD식 3cr | (b). Stage C의 카카오·네이버 로그인 확인 뒤도 같은 규칙(확정 결정 22). 모놀리스 seed의 `signup_credits=0`과 `features.welcome_credits=30`이 이 가정이다. 모듈러 seed도 2026-10-13부터 같은 값이다 |
 | D-4 | 만세력 데이터 소스(B-5 #6) | (a) KASI 실시간 (b) 로컬 절기 테이블 + KASI 검증 (c) 외부 라이브러리 | (b). 라이브러리를 쓰더라도 골든 테스트 통과가 조건 |
 | D-5 | 리포트·PDF 보관 기간 | (a) 계정 존속 기간 (b) 1년 (c) 원본 24시간 삭제 | (a). (c)는 다른 프로젝트 잔재(`docs/reference/reviews/Astro_AI.md:55`) |
 | D-6 | 결제 환불 규정 | 4.5절 초안 | 법무 확인 후 확정 |
@@ -351,3 +351,13 @@ AI 대화 추가 규칙(6.4절에 더해 채팅·낭독에 적용):
 | D-16 | 낭독 보이스와 ElevenLabs 데이터 보관 | (a) ElevenLabs 기본 보이스 1종 + 오픈소스 보이스 1종 고정 (b) 사용자 선택. ElevenLabs 입력 보관·학습 사용·제로 리텐션 옵션 여부 | (a). 보이스 id는 환경변수(02장 8절). 오픈소스 보이스는 `VOICE_ARCHITECTURE.md` 4.1절 후보 중 코드·가중치 라이선스와 한국어 낭독 품질을 확인해 고른다(`docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:63-73`). 생성 음성의 상업 이용 조건과 데이터 보관 조건은 ElevenLabs 계약으로 구현 시 확인하고 처리방침에 반영(`:81-83`) |
 | D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md:11`). AS-06-039에서 확인 결과를 기록 |
 | D-18 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트(02장 4절) (b) FastAPI가 잡을 직접 소비하고 렌더도 Python으로 (c) 워커에 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 R-8 |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+확정 결정 22(`docs/reference/00_MERGE_ANALYSIS.md:30`)로 로그인은 A Mock → G1 → B Google + 이메일 → G2 → C1 카카오, C2 네이버 순서로 켠다(`docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 0장, 8장 astro-ai 행). 단계 순서와 우선순위(B P0, C1·C2 P1)는 확정이고, 아래 3개가 남은 결정이다. 이 기획에는 기존 카카오 로그인 열린 결정이 없었다(카카오 알림톡은 로그인과 무관한 Phase 2 발송 기능, 2절).
+
+| ID | 결정 | 선택지 | 권고와 이 기획의 가정 | 확정 시점 |
+|---|---|---|---|---|
+| D-19 | 카카오 로그인 이메일 정책 | (a) 비즈 앱 전환 후 `account_email` 필수 동의 (b) 이메일 없이 허용, 결제·발송 전 연락 이메일 입력 | (a)(`AUTH_ROADMAP.md` 7.1.2절 권장). astro는 PDF 이메일 발송(AS-F-017)과 결제 영수증이 이메일에 기대고, Google·이메일 가입자와 같은 사람을 한 계정으로 묶어야 환영 크레딧 중복 수령(AS-F-002)을 줄일 수 있다. (b)는 비즈 앱 전환 전 임시로만 | G2 판정 전(C1 착수 전) |
+| D-20 | 네이버 로그인 경로 | (a) Supabase 커스텀 OAuth2 `custom:naver` (b) 서버 브리지 + 코어 `staged/0010_core_auth_identity_links.sql` | C2 작업 첫 단계 스파이크(`AUTH_ROADMAP.md` 7.2.2절, 0.5일) 결과로 정한다. 결과는 task `log.md` `[DECISION]`과 `NAVER_AUTH_PATH`에 남긴다. 브리지면 06장 8절의 코어 요청 R-14 | C2 스파이크 직후 |
+| D-21 | 이메일+비밀번호 가입 유지 | (a) 유지(Stage B에 Google과 함께 켠다) (b) 빼고 소셜 로그인만 | (a). 기존 결정(AS-F-001, `docs/reference/00_MERGE_ANALYSIS.md:313`)을 바꾸지 않는다. 이메일 인증 완료가 환영 크레딧 지급 조건(AS-F-002)이라 이메일 경로가 남아 있어야 소셜 계정이 없는 사용자도 크레딧을 받는다 | G1 판정 전(B 착수 전) |

@@ -40,6 +40,8 @@
 
 채팅 패널은 경로가 아니라 에디터·위저드 오른쪽 시트다(3.1절). 설정집은 에디터 사이드의 "설정집" 탭에서도 열린다.
 
+화면 구조 패턴(2026-10-14, `docs/products/_design-guide/DASHBOARD_PATTERNS.md` 7절 flora-publishing 행을 이 제품에서 확정): 모든 앱 화면은 A(앱 셸). `/dashboard`는 "오늘 처리할 일"(원고 단계별 다음 행동), `/dashboard/books`는 B(리스트-상세), 위저드 `/books/[id]/wizard`와 `/dashboard/books/new`는 I(위저드·단계형), 제작 단계 보드(챕터·소제목 상태)는 D(칸반), `/books/[id]/editor`는 J(에디터 + 미리보기), `/dashboard/agents`·`/admin/jobs`·실행 추적은 N(작업·실행 모니터), `/dashboard/settings`·`/dashboard/billing`은 H(설정). 화면 작업 지시는 `DESIGN_SYSTEM.md` 10장 형식으로 이 패턴 코드를 함께 적는다.
+
 사이드바(대시보드, 2026-10-14): 홈, 내 책, AI 에이전트, 페르소나, 사용량·결제, 설정. 검수 대기 항목이 있으면 "AI 에이전트" 옆에 개수 배지. v2 사이드바의 오디오북·자동화 메뉴는 뺀다(v2 DESIGN 4.2절, 확정 결정 7). 교육·강의 메뉴는 없다(01장 2절).
 
 ## 2. 사용자 플로우

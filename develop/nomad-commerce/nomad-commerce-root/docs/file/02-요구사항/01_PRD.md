@@ -22,7 +22,7 @@
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
-| 이메일 + Google/Kakao 로그인, 1인 1워크스페이스 | MVP | 확정 결정 5, 분석:760 |
+| 로그인(인증 단계, 확정 결정 22): MVP 개발은 Mock(Stage A, 로컬 시드 계정), 공개 베타 전 Google + 이메일(Stage B, P0), 카카오(C1)·네이버(C2)는 G2 후(Stage C, 둘 다 P1. 카카오는 MVP에서 C1으로 이동). 1인 1워크스페이스 | MVP(A 개발, B 공개 베타 필수), C는 G2 후 | 확정 결정 5·22, 분석:760, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 0장·8장 |
 | 아마존 ASIN/URL 가져오기(서드파티 상품 데이터 API, 직접 스크래핑 금지) | MVP | 분석:775, `docs/reference/reviews/Nomad-AI-Factory_V.2.md:123` |
 | 엑셀 가져오기 2종(오너클랜, 자유 양식 + 컬럼 매핑) | MVP | 분석:777 |
 | 엑셀 도매꾹·온채널·아마존 CSV 파서 | Phase 2 | 분석:777 "MVP는 2종" |
@@ -70,7 +70,7 @@
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| CM-F-001 | 로그인/가입 | 유지(SS) | Supabase Auth 이메일 + Google + Kakao. 가입 시 `signup_app='commerce'`. 콜백 `next`는 `/`로 시작하는 내부 경로만, origin은 `NEXT_PUBLIC_APP_URL` 고정 | `next=//evil.com`이면 `/dashboard`로 보낸다. 가입 직후 `session_context('commerce').entitled=true`, plan_code `free` | 분석:760, `docs/reference/reviews/sellingstudio.md:64` |
+| CM-F-001 | 로그인/가입 | 유지(SS) + 단계화 | 인증 단계(확정 결정 22): A(MVP 개발) 로컬 시드 페르소나 Mock 로그인(실제 Supabase JWT. 쿠키 역할 Mock 금지, 개발용 로그인은 AUTH_ROADMAP 2장의 로컬 시드 계정만, 배포 환경 404) → G1 → B(공개 베타 전, P0) Supabase Auth Google + 이메일(이메일 가입 시 `signup_app='commerce'`, Google 첫 로그인은 콜백이 `bootstrap_app_for_org('commerce')` 1회) → G2 → C1 카카오(P1, 기존 MVP 카카오를 옮김)·C2 네이버(P1). 콜백 `next`는 `/`로 시작하는 내부 경로만, origin은 `NEXT_PUBLIC_APP_URL` 고정 | A: `owner` 페르소나 로그인 직후 `session_context('commerce').entitled=true`, plan_code `free`, `next=//evil.com`이면 `/dashboard`. B: `AUTH_ROADMAP.md` 5.3절 B-1~B-6. C: 7.1.3절 C1-1~C1-5, 7.2.4절 C2-1~C2-6 | 분석:760, `docs/reference/reviews/sellingstudio.md:64`, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2·5·7장 |
 | CM-F-002 | 역할·플랜 판정 | 디벨롭 | 역할은 `core.org_members.role`, 플랜은 `core.entitled_plan_code`. 쿠키·요청 바디로 판정하지 않는다 | 쿠키 `nomad_role=SUPER_ADMIN`을 넣어도 관리자 화면 403 | 분석:761, `docs/reference/reviews/nomad-ai-commerce.md:58` |
 | CM-F-003 | 크레딧 과금 | 통합+디벨롭 | 모든 유료 작업은 서버가 `consume_credits` 선차감 → 작업 → 실패 시 환불. 단가는 4.2절 | 잔액 8에서 10슬롯(9) 요청 시 402, 잡 0건. 실패 잡은 원장에 refund 행 1개 | 분석:762, `docs/file/03-설계/공용코어/CORE_SPEC.md` 4.3 |
 | CM-F-004 | 플랜 한도 DB 집행 | 신규 | 상품 수, 마켓 계정 슬롯, 마켓 API 허용, 엑셀 내보내기를 트리거가 강제(`05_DATA_MODEL.md` 2장) | Free 조직의 31번째 상품 INSERT는 CM002. 브라우저에서 직접 INSERT해도 같다 | `docs/reference/reviews/Nomad-AI-Factory_V.2.md:45` |
@@ -315,7 +315,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `shorts_narration`
 
 | 항목 | 내용 |
 |---|---|
-| 개인정보 | 수집: 이메일, 이름, 결제 요약(카드 마스킹), 셀러 사업자 연락처·반품지 주소(템플릿), 마켓 계정 식별자. 목적: 서비스 제공·결제·마켓 등록. 보존: 탈퇴 후 30일 유예 뒤 purge(`SECURITY_BASELINE.md` 12장), 결제기록은 전자상거래법상 5년. 암호화: 마켓 API 키·시크릿(`encrypted_credentials`), 빌링키(`billing_keys`). 삭제: 조직 soft delete → 30일 → `purge_organization` |
+| 개인정보 | 수집: 이메일, 이름, 결제 요약(카드 마스킹), 셀러 사업자 연락처·반품지 주소(템플릿), 마켓 계정 식별자, 로그인 제공자 식별자(인증 단계별: B Google 계정 식별자·이름·프로필 이미지 URL, C1 카카오 계정 식별자·닉네임·프로필 이미지(비즈 앱이면 이메일), C2 네이버 고유 id·이메일·이름. `AUTH_ROADMAP.md` 5.2절, 7.1.1절, 7.2.3절). 목적: 서비스 제공·결제·마켓 등록. 보존: 탈퇴 후 30일 유예 뒤 purge(`SECURITY_BASELINE.md` 12장), 결제기록은 전자상거래법상 5년. 암호화: 마켓 API 키·시크릿(`encrypted_credentials`), 빌링키(`billing_keys`). 삭제: 조직 soft delete → 30일 → `purge_organization` |
 | 제3자 제공 | 상품 정보·이미지·카피·채팅 메시지를 상용 AI 제공자(LLM: Anthropic, OpenAI, Google, OpenRouter / 음성: ElevenLabs)에는 국외 이전에 동의한 조직의 요청에만 보낸다(6.1절). 이미지 생성은 fal에 보낸다(라우팅 체인 밖, D-15). 그 밖에 아마존 상품 데이터 공급자, 쿠팡·네이버(업로드)로 보낸다. 오픈소스 LLM·임베딩·음성 서버와 Dify는 운영사가 자체 운영한다(서버 위치·위탁 여부 구현 시 확인). 개인정보는 보내지 않는다(반품지 주소는 마켓 업로드 시에만 해당 마켓으로). 처리방침에 제공자 목록과 이전 국가 고지 |
 | 약관/고지 | 이용약관, 개인정보처리방침, "AI 생성물은 셀러가 검수 후 게시하며 게시 책임은 셀러에게 있다" 안내, 생성 이미지에 대한 권리(상업 이용 가능 여부는 fal 모델 약관 확인, 미확인) |
 | AI 생성 표시 | 결과물 화면과 다운로드에 "AI로 생성된 이미지 포함" 메타 표기. 상세페이지 본문 삽입 여부는 마켓 정책 확인 후(미확인, D-17). 채팅 답변마다 "AI가 생성한 답변", 내레이션 플레이어와 다운로드 화면에 "AI가 생성한 음성입니다"(파일 안에는 안내 음성을 넣지 않는다. 쇼츠에 게시할 때의 AI 음성 표시는 게시 채널 정책에 따라 셀러가 한다, 미확인), 위키 페이지에 "AI가 정리하고 운영자가 검수한 문서". 다른 모델로 대체된 답변은 "다른 AI 모델로 답했습니다" 표시 |
@@ -399,3 +399,13 @@ AI 대화 추가 규칙(6절 금지 문구에 더해 생성물·채팅·내레�
 | D-15 | 이미지 생성(fal)과 국외 이전 동의 | (a) fal은 라우팅 체인 밖의 처리 위탁으로 보고 이용약관·처리방침 고지로 처리(동의와 무관하게 사용) (b) 국외 이전 미동의 조직은 AI 씬 이미지 비활성(인포그래픽·법적고지 슬롯만 가능) (c) 국내 이미지 생성 오픈소스 서버 도입 | (a)(제안) + 법무 확인. 이미지 제공자는 `core.ai_providers`의 kind에 없어 `resolve_ai_route`가 걸러 내지 못한다 |
 | D-16 | Vision(이미지 분석)의 오픈소스 경로 | 오픈소스 멀티모달 모델을 공용 서버에서 서빙하는지 | 서빙하지 않으면 국외 이전 미동의 조직은 Vision을 끄고 수동 속성 입력을 안내한다(구현 시 확인) |
 | D-17 | AI 생성물 표시의 마켓 정책 | 쿠팡·스마트스토어가 AI 생성 이미지·문구의 표기를 요구하는지, 상세페이지 본문 삽입 여부 | 확인 전까지 결과 화면·다운로드 메타 표기만(미확인). 출시 2주 전까지 확인 |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`. 기존 MVP 카카오 로그인(2절 범위 표, CM-F-001)은 결정 22로 C1(G2 후, P1) 확정. 이메일 가입·로그인은 기존 결정대로 유지하고 B단계에서 Google과 함께 켠다.
+
+| ID | 항목 | 선택지 | 권고 | 확정 시점 |
+|---|---|---|---|---|
+| D-18 | 카카오 이메일 정책(`AUTH_ROADMAP.md` 7.1.2절) | (a) 비즈 앱 전환 후 `account_email` 필수 동의 (b) 이메일 없이 허용(온보딩에서 연락 이메일 별도 입력, Google 가입자와 계정이 갈라짐) | (a). 결제 영수증·소진 알림 메일(CM-F-006)과 계정 연결이 Google과 같아진다. (b)는 비즈 앱 전환 전 임시로만 | C1 작업 시작 전(G2 직후) |
+| D-19 | 네이버 로그인 경로(`AUTH_ROADMAP.md` 7.2.2절) | (a) Supabase 커스텀 OAuth2 `custom:naver` (b) 서버 브리지 + 코어 `staged/0010_core_auth_identity_links.sql` | 스파이크 결과로 결정(0.5일). 결과는 task `log.md` `[DECISION]`과 `NAVER_AUTH_PATH`에 기록 | C2 작업 첫 단계 |
+| D-20 | 이메일+비밀번호 가입 유지 여부(공개 가입 제품) | (a) 유지(B단계에서 Google과 함께) (b) Google·카카오·네이버만 | (a)(제안). 기존 PRD 범위(CM-F-001)를 바꾸지 않는다(`AUTH_ROADMAP.md` 1장 "이메일+비밀번호") | G1 판정 전 |

@@ -149,3 +149,17 @@ AI 계층·디자인 시스템 도입(2026-10-13)으로 생긴 추가 폐기. �
 | 3 | nested `.git`(Hospital, School)과 ERP `ERP_Website` gitlink 제거, 상위 저장소 하나로 추적 |
 | 4 | 키 재발급: 세 앱의 `.env.local`에 있던 Supabase anon key, Hospital `OVERRIDE_PASSWORD`는 폐기하고 새 프로젝트 키를 발급 |
 | 5 | `.pen` 디자인 파일은 `archive/design/`로 이동, 중복 사본 정리 |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+4절 표에 이어서 본다. 허용되는 Mock은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 404, 05장 10절 페르소나)뿐이다. 원본 3개의 로그인·콜백 코드는 이식하지 않고 admin-kit `src/auth/`(ADM-06-007, 058)로 새로 만든다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 로그인 화면의 역할 선택 UI와 클라이언트 역할 일치 검사(프로필이 없으면 고른 역할을 신뢰) | `Hospital/src/app/(auth)/login/page.tsx:66-76`(`docs/reference/reviews/Hospital.md:60`) | 사용자가 고른 역할로 홈·메뉴가 정해져 권한이 위조된다 | 역할은 DB(`my_role`)에서만. 개발 중 역할 전환은 Mock 페르소나를 바꿔 다시 로그인(05장 10절) |
+| 콜백 라우트에서 profiles를 직접 INSERT(Staff/Pending 기본값) | `ERP-Wesite/app/api/auth/callback/route.ts`(`docs/reference/reviews/ERP-Wesite.md:49`, 5장 #2) | 이메일 가입자는 콜백을 거치지 않아 프로필이 없고, 콜백 경로마다 기본 역할이 생긴다 | 코어 가입 트리거 + `finishLogin`의 `bootstrap_app_for_org('erp')`(활성 기관 구성원에게는 호출 0, 04장 8.2절 3번) |
+| `signUp`에 `full_name`·`signup_app` 미전달 | `ERP-Wesite/app/(auth)/login/page.tsx:49`(`docs/reference/reviews/ERP-Wesite.md:69`) | 프로필·엔타이틀먼트 누락 | ADM-06-058의 `signUp({ options: { data: { signup_app: 'erp', full_name } } })` |
+| UI 없는 OAuth 콜백 남겨 두기 | `Hospital/src/app/api/auth/callback/route.ts`(`docs/reference/reviews/Hospital.md:38`) | hms는 Google을 쓰지 않는데(01장 D-21) 열린 코드 교환 경로가 남는다 | hms 콜백은 058이 admin-kit 팩토리로 새로 두고 `AUTH_PROVIDERS=email` 외 값은 기동 실패(02장 9.3절) |
+| 쿠키 역할 Mock(`mock-auth.ts`, `nomad_role`, `nomad_plan` 쿠키, localStorage 역할·플랜) | `D:/WorkSpace/platform/docs/products/nomad-blog/07_SOURCE_MIGRATION.md`, `D:/WorkSpace/platform/docs/products/nomad-commerce/07_SOURCE_MIGRATION.md`(다른 제품 원본, `AUTH_ROADMAP.md` 1장) | 권한 위조, 프로덕션 노출. 이 제품 원본에는 없지만 재발명을 막으려고 둔다 | `AUTH_ROADMAP.md` 2장 Mock 로그인(ADM-06-007), CI 금지 문자열(ADM-06-039) |
+| 콜백 `next` 무검증 연결(`${origin}${next}`) | `AUTH_ROADMAP.md` 3.2절 5번 | 외부 리다이렉트 | `finishLogin` 화이트리스트(`/`로 시작, `//`·`@`·`\` 없음), origin은 `NEXT_PUBLIC_APP_URL` 고정 |
+| 기능 코드의 `if (mock)`·페르소나 이메일(`@dev.test`) 분기 | `AUTH_ROADMAP.md` 0장 불변 조건, 2.5절 | 단계 전환 때 권한 경로가 달라진다 | 단계 분기는 admin-kit `src/auth/`와 앱의 `api/dev/login/`·`auth/callback/`·`(auth)/`에만(02장 9.2절) |

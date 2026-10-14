@@ -37,13 +37,13 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase, 기능 요구와 수용 기준(AI·음성 MW-F-026~036), 요금과 AI·음성 단가, 비기능, 법/개인정보/금지 문구(하객 녹음 고지 포함), KPI, 열린 결정 D-1~D-18 |
-| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D·Tailwind CSS v4), 모듈 경계, 공용 모듈 사용, 잡, AI 라우팅 기본값 12행과 그래프 2개, 리뷰 "높음" 결함(구조) 차단 설계, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 플로우(F5~F9 AI·음성), 화면 명세, 디자인 시스템, 쇼룸 랜딩 3D 히어로와 청첩장 템플릿 디자인 방향 |
-| `04_API.md` | Route Handler, RPC, 잡 페이로드, 웹훅, 외부 API, 오류 코드 |
-| `05_DATA_MODEL.md` | `microweb` 스키마 10개 표(방명록 음성 연결 컬럼 2개 추가), 상태 전이, RLS, 리뷰 "높음" 결함(보안/데이터) 차단 설계, 모놀리스 차이 |
-| `06_AGENT_PLAN.md` | 작업 53개(AI·음성·3D·디자인 시스템 18개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
-| `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기, 복사 금지 결함, 노출된 `.env.local` 처리, 아카이브 |
+| `01_PRD.md` | 페르소나, MVP/Phase, 기능 요구와 수용 기준(AI·음성 MW-F-026~036), 요금과 AI·음성 단가, 비기능, 법/개인정보/금지 문구(하객 녹음 고지 포함), KPI, 열린 결정 D-1~D-21(D-19~21은 2026-10-14 인증 단계) |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D·Tailwind CSS v4), 모듈 경계, 공용 모듈 사용, 잡, AI 라우팅 기본값 12행과 그래프 2개, 리뷰 "높음" 결함(구조) 차단 설계, 배포, 환경변수, 인증 단계(9절: 초대받은 운영자만 로그인, 하객·시안·쇼룸은 단계와 무관) |
+| `03_SCREENS_UX.md` | 화면 목록, 플로우(F5~F9 AI·음성), 화면 명세, 디자인 시스템, 쇼룸 랜딩 3D 히어로와 청첩장 템플릿 디자인 방향, 단계별 로그인 화면·`/no-access`·초대 수락(7절) |
+| `04_API.md` | Route Handler, RPC, 잡 페이로드, 웹훅, 외부 API, 오류 코드, 인증 라우트(8절) |
+| `05_DATA_MODEL.md` | `microweb` 스키마 10개 표(방명록 음성 연결 컬럼 2개 추가), 상태 전이, RLS, 리뷰 "높음" 결함(보안/데이터) 차단 설계, 모놀리스 차이, 개발용 시드 페르소나(10절: `studio_access` 허용·미허용) |
+| `06_AGENT_PLAN.md` | 작업 56개(AI·음성·3D·디자인 시스템 18개, 인증 단계 B·C 3개(8절) 포함. Stage A는 기존 MW-06-003), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기, 복사 금지 결함(인증 단계 6절), 노출된 `.env.local` 처리, 아카이브 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | `0001_core_lite.sql`(6-A, 6-B, 9절 제거), `0002_microweb_domain.sql`, `seed.sql` |
 | 모듈러 조각 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1500_microweb.sql` |

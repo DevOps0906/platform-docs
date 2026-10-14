@@ -10,7 +10,7 @@
 | `/sample` | 샘플 리포트(PDF 첫 4쪽 이미지 + 목차) | 누구나 | - | P0 |
 | `/pricing` | 크레딧 단가와 팩(랜딩 앵커와 같은 컴포넌트) | 누구나 | - | P0 |
 | `/legal/terms`, `/legal/privacy`, `/legal/refund`, `/legal/disclaimer` | 법적 고지 | 누구나 | - | P0 |
-| `/login`, `/signup`, `/auth/callback`, `/auth/verify` | 인증, 이메일 인증 안내 | 비로그인 | - | P0 |
+| `/login`, `/signup`, `/auth/callback`, `/auth/verify` | 인증, 이메일 인증 안내. 단계별 표시(7절): A `/login` 개발용 패널만(`/signup`·`/auth/verify` 미구현), B Google 버튼 + 이메일 폼·`/signup`·`/auth/verify`·`/auth/callback`, C 카카오·네이버 버튼 추가 | 비로그인 | - | P0 |
 | `/dashboard` | 홈 | owner(본인) | starter 이상 | P0 |
 | `/dashboard/subjects`, `/dashboard/subjects/new`, `/dashboard/subjects/[id]` | 보관함 목록, 등록, 상세(원국·대운·리딩 목록) | owner | starter | P0 |
 | `/dashboard/readings/new` | 리딩 시작 스테퍼(종류 → 대상/카드 → 질문·테마 → 확인) | owner | starter, `features.readings` | P0 |
@@ -38,9 +38,9 @@
 
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
-| 1 | `/signup` | 이메일·비밀번호 또는 Google, 필수 동의 2개(국외 이전은 3-1단계에서 선택) | `signUp(options.data.signup_app='astro')` → 가입 트리거가 프로필, 개인 조직, starter 엔타이틀먼트 생성 | 레이트 리밋 초과 429 |
+| 1 | `/signup` | 이메일·비밀번호 또는 Google(C단계부터 카카오·네이버), 필수 동의 2개(국외 이전은 3-1단계에서 선택). Stage A에는 이 화면이 없고 `/login` 개발용 패널에서 페르소나로 로그인한다(7절) | `signUp(options.data.signup_app='astro')` → 가입 트리거가 프로필, 개인 조직, starter 엔타이틀먼트 생성 | 레이트 리밋 초과 429 |
 | 2 | `/auth/verify` | 메일 링크 클릭 | `/auth/callback` → 세션 생성 | 링크 만료 → 재발송 버튼 |
-| 3 | `/auth/callback` | - | 이메일 인증 또는 Google 확인 → `POST /api/auth/welcome` → `grant_credits(30, signup:<org>:astro)`, `consents` 3행 | 같은 IP 해시 하루 3회 초과 → 지급 보류 + 안내 |
+| 3 | `/auth/callback` | - | 이메일 인증 또는 Google 확인(C단계부터 카카오·네이버 확인 포함) → `POST /api/auth/welcome` → `grant_credits(30, signup:<org>:astro)`. 이메일 가입은 `/signup`에서 받은 동의를 `consents` 3행으로 기록한다. OAuth 첫 로그인은 동의를 받은 적이 없으므로 7.3절 `/onboarding/terms`가 기록한다 | 같은 IP 해시 하루 3회 초과 → 지급 보류 + 안내 |
 | 3-1 | `/onboarding/ai` | "상용 AI 사용(국외 이전 동의)" 또는 "국내 오픈소스만" 선택. 고지문(제공자, 이전 국가, 항목, 목적, 보유 기간) 펼쳐 보기 | `POST /api/onboarding/ai-consent` → 동의 시 `core.set_ai_cross_border_ack(org, true, 고지문 버전)` + `consents(overseas_transfer)`, 거부 시 `consents(overseas_transfer, granted=false)` | 선택 없이 닫으면 미동의(오픈소스)로 진행. 설정에서 언제든 변경 |
 | 4 | `/dashboard` | - | "본인 프로필을 먼저 등록하세요" 빈 상태 | - |
 
@@ -438,3 +438,36 @@ GEO: JSON-LD는 WebSite, Product(크레딧팩 4개 offers), FAQPage. `/llms.txt`
 | 3D 히어로 | 캔버스 `aria-hidden`, reduced-motion 정지 이미지, [회전 멈춤] 토글, 3D 로딩 전에 제목·입력·CTA 사용 가능 |
 | 채팅 | 메시지 목록 `aria-live="polite"`(스트리밍은 완료 때 한 번 읽음), 출처 칩 키보드 접근, 375px에서 전체 화면 시트 |
 | 음성 | 음성은 텍스트 입력의 대안이고 모든 기능은 음성 없이 쓸 수 있다. 녹음 중 상태를 텍스트로도 표시. 낭독 플레이어는 스페이스(재생/정지), 좌우 화살표(10초) |
+
+## 7. 인증 단계별 화면 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.1절, 3.2절, 5.2절, 7.3절이다. 비회원 화면(랜딩 Live Demo, `/wiki`)은 단계와 무관하고 로그인 버튼을 추가하지 않는다(랜딩 내비게이션의 기존 "로그인" 링크는 그대로 `/login`으로 간다).
+
+### 7.1 로그인 화면 단계별 구성
+
+| 단계 | `/login` | `/signup` | 공통 표시 |
+|---|---|---|---|
+| A(Mock, MVP 개발) | "개발용 로그인" 패널: 페르소나 버튼 목록(`owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, `welcome_pending`), 현재 로그인 페르소나, 로그아웃. 실제 제공자 버튼은 렌더하지 않는다. `isMockAuthAllowed()`가 거짓이면 패널 코드를 서버 컴포넌트에서 렌더하지 않는다 | 없음(B로 옮김) | 모든 화면 상단 고정 배지 `MOCK AUTH · 로컬 전용` |
+| B(공개 베타) | "Google로 계속하기" 버튼 + 이메일·비밀번호 폼(01장 AS-F-001, D-21), 비밀번호 재설정 링크 | 이메일 가입 폼 + 필수 동의 2개 + Google 버튼. `/auth/verify` 메일 인증 안내와 재발송 | 배지 없음. 배포 빌드에 개발용 패널 없음(B-4) |
+| C(G2 후) | B 구성 + 카카오 버튼(C1), 네이버 버튼(C2). 버튼 색·문구는 각 제공자 가이드(미확인: 최신판 확인 후 반영, C1-5) | 같은 버튼 추가 | 운영 `AUTH_PROVIDERS`에 없는 제공자 버튼은 렌더하지 않는다(네이버는 검수 통과 전 미노출, C2-6) |
+
+### 7.2 콜백과 오류 상태
+
+| 상황 | 화면 | 문구 예 |
+|---|---|---|
+| `error=callback`(코드 없음·재사용·만료) | `/login` 상단 오류 띠 + 다시 로그인 | 로그인을 마치지 못했습니다. 다시 시도해 주세요 |
+| `error=state`(C2 브리지 state 불일치·만료) | 같음 | 로그인 요청이 만료됐습니다. 처음부터 다시 시도해 주세요 |
+| `error=email_in_use`(C2 브리지, 같은 이메일의 다른 가입 수단) | 같음 + 기존 수단 로그인 안내 | 이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정에서 네이버를 연결하세요 |
+| 프로필 없음 | 로그아웃 후 `/login` | - |
+| suspended | 403 화면 | 이용이 제한된 계정입니다. 고객센터로 문의해 주세요 |
+| 환영 크레딧 보류(같은 IP 해시 하루 3회 초과) | 2.1절 3단계 안내 그대로 | 오늘 이 네트워크에서 가입이 많아 환영 크레딧 지급을 잠시 보류했습니다 |
+
+astro는 open 앱이라 invite 앱의 `/no-access` 안내와 approval 앱의 `/pending` 화면이 없다. `entitled=false`는 콜백이 `bootstrap_app_for_org`로 메우고, 그래도 남으면 5절 "엔타이틀먼트 없음" 안내를 보인다.
+
+### 7.3 첫 OAuth 로그인 뒤 약관 동의 위치
+
+OAuth(Google·카카오·네이버) 가입은 `/signup`을 거치지 않으므로 필수 동의 2개(01장 6.2절)를 온보딩 첫 단계 `/onboarding/terms`(제안)에서 받는다. 순서: `/auth/callback` → (약관 미동의면) `/onboarding/terms` → `/onboarding/ai`(2.1절 3-1단계) → `/dashboard`. 이메일 가입자는 `/signup`에서 이미 동의했으므로 `/onboarding/terms`를 건너뛴다. 판정은 "OAuth 제공자 로그인이고 `consents`에 `terms_required`·`privacy_required`가 없음"이다. Stage A 시드 페르소나는 이메일 제공자 계정이라 이 단계를 거치지 않는다. 환영 크레딧 지급(`POST /api/auth/welcome`과 같은 함수)은 약관 동의와 독립이며 로그인 확인 직후 1회다(04장 8절 콜백 5번).
+
+### 7.4 설정 → 로그인 방법 (C단계, P1)
+
+`/dashboard/settings`에 "로그인 방법" 항목: 연결된 제공자 목록(Google, 이메일, 카카오, 네이버), 연결·해제 버튼. 연결은 로그인 상태에서 `linkIdentity({ provider })`(Supabase 수동 연결), 브리지 네이버는 로그인 상태의 브리지 흐름 후 링크 행 추가. 해제는 남는 로그인 수단이 1개 이상일 때만 가능하고, 마지막 수단의 해제 버튼은 비활성 + "다른 로그인 방법을 먼저 연결하세요". 감사 `auth.identity_link`, `auth.identity_unlink`(`AUTH_ROADMAP.md` 7.3절). 계정 연결로 조직이 합쳐지지 않으므로 환영 크레딧은 추가 지급되지 않는다(같은 조직 멱등 키).

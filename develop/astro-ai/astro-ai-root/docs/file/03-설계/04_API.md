@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 진입부 `requireSession('astro')`(`docs/file/03-설계/공용코어/SHARED_MODULES.md:79-81`). 미로그인 401, pending/suspended 403, 엔타이틀먼트 없음 402. 어드민은 `platform_role='platform_admin'` 아니면 403 |
+| 인증 | 진입부 `requireSession('astro')`(`docs/file/03-설계/공용코어/SHARED_MODULES.md:79-81`). 미로그인 401, pending/suspended 403, 엔타이틀먼트 없음 402. 어드민은 `platform_role='platform_admin'` 아니면 403. 세션은 모든 인증 단계(A Mock, B Google + 이메일, C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다(8절) |
 | 조직 | 요청 본문의 `org_id`를 받지 않는다. 세션의 개인 조직(`ctx.org.id`)만 쓴다 |
 | 멱등 | 쓰기 요청은 클라이언트가 만든 UUID `request_id`를 보낸다. 차감 키 `consume:astro:<request_id>`, 잡 키 `job:astro:<request_id>`, 테이블 `request_id` 유일 |
 | 크레딧 선차감 위치 | 리딩은 `POST /api/readings`, `POST /api/readings/[id]/renders`의 Route Handler만. AI·음성은 `POST /api/ai/chat`, `POST /api/voice/stt`·`tts`·`narrations`(2.1절)와 정산 크론만. 사용자 RPC 안에서는 차감하지 않는다 |
@@ -25,7 +25,7 @@
 
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 코어 RPC | 오류 |
 |---|---|---|---|---|---|---|
-| `POST /api/auth/welcome` | 로그인 | 없음 | `{ granted: boolean, balance }` | +30(1회) | `grant_credits(org, features.welcome_credits, 'astro', 'welcome_credits', 'pack', 'signup', user_id, 'signup:<org>:astro')`, `rate_limit_hit('astro:signup:<ip_hash>', 3, 86400)` | 이메일 미인증 409, 보류 429 |
+| `POST /api/auth/welcome` | 로그인(이메일 인증 완료 또는 Google 확인, C단계부터 카카오·네이버 확인 포함) | 없음 | `{ granted: boolean, balance }` | +30(1회) | `grant_credits(org, features.welcome_credits, 'astro', 'welcome_credits', 'pack', 'signup', user_id, 'signup:<org>:astro')`, `rate_limit_hit('astro:signup:<ip_hash>', 3, 86400)` | 이메일 미인증 409, 보류 429 |
 | `GET /api/subjects` | owner | - | `[{ id, alias, relation, gender, day_pillar, birth_summary }]`(복호화 요약) | 0 | - | - |
 | `POST /api/subjects` | owner | `{ request_id, alias(1..20), relation, gender, birth_date, birth_time?, birth_time_unknown, calendar_type, is_leap_month, zi_hour_mode, birth_place_code?, real_name?, third_party_consent?: true, consent_version }` | `{ id }` | 0 | `write_audit('subject.create')` | 400 동의 누락, 409 상한(`max_subjects`)/본인 중복, 422 존재하지 않는 음력일 |
 | `GET /api/subjects/[id]` | owner | - | 복호화된 입력 + 원국(`chart`) | 0 | - | 404 |
@@ -218,3 +218,26 @@ FastAPI는 같은 Chapter 스키마를 pydantic으로 두고 워커가 zod로 �
 | 앱 코드 `INTERNAL_KEY_INVALID` | 워커 키 또는 Dify 내부 키 불일치 | 401 |
 | FastAPI `AI_TOKEN_INVALID` | 서명, `aud`, scope, 만료, `jti` 재사용 | 401 |
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 저장 시 `expected_version`이 현재 버전과 다름(`docs/file/03-설계/공용코어/LLM_WIKI.md:31`) | 409 |
+
+## 8. 인증 단계 경로 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장, 3.2절, 7.2.3절이다. 소유는 `src/lib/auth/`·`src/app/(auth)/`·`src/app/api/dev/`가 AS-06-003(A), 콜백 완성과 제공자 버튼이 AS-06-055(B), 카카오 AS-06-056(C1), 네이버 AS-06-057(C2)이다.
+
+| 메서드 경로 | 단계 | 입력 | 처리 | 출력 | 오류 |
+|---|---|---|---|---|---|
+| `POST /api/dev/login` | A(로컬 전용) | `{ persona, next? }`(zod 열거형: 공통 페르소나 + `welcome_pending`) | `isMockAuthAllowed()` 거짓이면 404(존재 자체를 숨김) → 쿠키 세션 서버 클라이언트로 `signInWithPassword(<persona>@dev.test, DEV_SEED_PASSWORD)` → `finishLogin('astro', next)`(아래 2~8번. 코드 교환 1번만 없다. 시드 계정은 `email_confirm: true`라 5번 환영 크레딧 조건을 만족하고, 이메일 제공자 계정이라 6번 약관 단계는 건너뛴다) | 303 → `next`(화이트리스트) 또는 `/dashboard` | 404(판정 거짓), 400 알 수 없는 페르소나, 401 시드 계정 없음(시드 스크립트 미실행 안내). 레이트 리밋 대상 아님 |
+| `GET /auth/callback` | B(C1·`custom:naver` 재사용) | `code`, `next?` | `finishLogin`: 1 `exchangeCodeForSession`(PKCE) → 2 `session_context('astro')` 1회 → 3 `entitled=false`면 `rpc('bootstrap_app_for_org', { p_app_id: 'astro' })` 1회 후 재조회(open 앱. 모놀리스는 무동작) → 4 status 분기(suspended 403) → 5 환영 크레딧: 로그인 수단이 확인된 경우(OAuth 제공자 또는 `email_confirmed_at` 있음) 서버가 `/api/auth/welcome`과 같은 함수(`src/server/welcome-credits.ts`)를 1회 호출(멱등 키 `signup:<org>:astro`, IP 해시 보류 규칙 동일) → 6 OAuth 제공자 로그인이고 약관 2종 동의 행이 없으면 `/onboarding/terms`(03장 7.3절) → 7 `next`가 `/`로 시작하고 `//`·`@`·`\` 없을 때만 그 경로, 아니면 `/dashboard`(origin 고정) → 8 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | 303 | `/login?error=callback`(코드 없음·재사용·만료), 프로필 없음 → 로그아웃 후 `/login` |
+| `GET /auth/naver/start` | C2 브리지 경로만 | `next?` | 32바이트 state → HttpOnly·Secure·SameSite=Lax 서명 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분) → 네이버 authorize로 302. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 302 | 429 |
+| `GET /auth/naver/callback` | C2 브리지 경로만 | `code`, `state` | 쿠키 state 상수 시간 비교 후 삭제 → 서버 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(provider `naver`, 네이버 고유 id) 조회 → 있으면 magiclink `generateLink` + `verifyOtp`로 세션 / 없고 같은 이메일 사용자 없으면 `createUser` + 링크 행 / 같은 이메일 사용자 있으면 거부 → `finishLogin` | 303 | `/login?error=state`, `/login?error=email_in_use`, `/login?error=callback`. 네이버 토큰·링크·코드는 저장·로그 금지 |
+
+`supabase_custom` 경로를 채택하면 네이버도 `GET /auth/callback`을 그대로 쓰고 위 두 브리지 경로는 만들지 않는다(01장 D-20).
+
+`POST /api/auth/welcome`(2절)은 그대로 둔다: 이메일 인증 직후 `/auth/verify` 복귀처럼 콜백을 거치지 않는 경우와 지급 보류 뒤 재시도에 쓴다. 콜백 5번과 같은 함수이므로 두 경로로 불려도 원장은 1행이다. 이메일 미인증이면 409(기존). Stage A 시드 계정은 `email_confirm: true`로 만들어 인증 완료 상태다.
+
+| 오류 코드 | 의미 | HTTP / 이동 |
+|---|---|---|
+| 쿼리 `error=callback` | 코드 교환 실패 | 303 `/login?error=callback` |
+| 쿼리 `error=state` | 브리지 state 불일치·없음·만료 | 303 `/login?error=state` |
+| 쿼리 `error=email_in_use` | 브리지에서 같은 이메일의 다른 가입 수단 존재(자동 연결 금지) | 303 `/login?error=email_in_use` |
+
+`/api/dev/login`은 Mock이 허용되지 않으면 오류 본문 없이 404만 돌려준다(별도 앱 오류 코드를 두지 않는다).
