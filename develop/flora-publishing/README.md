@@ -6,7 +6,9 @@
 |---|---|
 | 주 사용자 | 1인 작가·에세이스트, 크리에이터, 소규모 독립 출판사 |
 | DB 스키마(모듈러 번호) | `publishing`(1000) |
-| 개발 작업 수 | 55개(`products/flora-publishing/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 65개(`products/flora-publishing/06_AGENT_PLAN.md`, 인증 단계 작업 3개, 에이전트·운영 작업 7개 포함) |
+| 에이전트·운영 (2026-10-14, 검토용) | 기존 기능을 6개 에이전트로 묶는 실행·검수 계층(`agent_tasks`), 운영 콘솔, 디자인 레이어 3종. [`flora-publishing_develop.md`](flora-publishing_develop.md) 20장 |
+| 인증 단계 | 개발은 Mock 로그인(Stage A, 로컬 시드 계정)으로 시작 → G1 후 Google + 이메일(B) → G2 후 카카오·네이버(C). [`flora-publishing_develop.md`](flora-publishing_develop.md) 19장 |
 | 기획서 | [`products/flora-publishing/`](../../products/flora-publishing/) |
 
 ## 이 폴더의 파일

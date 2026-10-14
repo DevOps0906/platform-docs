@@ -2,6 +2,8 @@
 
 2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(책별 RAG, 책 설정집 위키, LangGraph 초안 그래프, Dify 글쓰기 도우미 채팅), 음성(받아쓰기, 채팅 음성, 원고 낭독·오디오북 미리듣기), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 새 기능 ID는 PB-F-044~056, 새 열린 결정은 D12~D19다.
 
+2026-10-14 FLORA 개편(검토용): 외부 제안서 "FLORA Publishing — UI/UX 및 AI 에이전트 통합 디자인 제안서"(ChatGPT 작성, 대표님 전달)를 기존 결정과 대조해 반영했다. 유지한 것: 교육 커리큘럼은 이 제품 범위가 아니다(2장 마지막 행), 랜딩은 실제 책 결과물 중심(기존 03장 4절 A안과 같은 방향), 기존 집필·출판 기능은 그대로 두고 에이전트는 그 위의 실행·검수 계층이다. 새로 넣은 것: 에이전트 실행 계층과 검수(PB-F-057, 058), 에이전트 작업 공간(PB-F-059), 에디터 AI 패널(PB-F-060), 운영 콘솔(PB-F-061), Phase 2 워크플로 빌더·콘텐츠 에이전트(PB-F-062, 063), 열린 결정 D23~D27. 제안서의 색·서체·헤드라인은 기존 확정 토큰과 충돌하므로 덮어쓰지 않고 D23~D25로 올렸다. 제품 표는 `publishing.agent_tasks` 1개만 더했다(05장 2.5절).
+
 작성일 2026-10-12. 근거 표기: 리뷰는 `docs/reviews/<이름>.md:줄`, 분석은 `docs/products/00_MERGE_ANALYSIS.md:줄`(아래 "분석:줄"로 줄임), 원본은 저장소 루트 기준 경로. 원본·리뷰에 근거가 없는 수치는 "제안"으로 표시하고 이유를 적었다.
 
 ## 1. 페르소나와 핵심 과제
@@ -24,7 +26,7 @@
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
-| 인증, 조직, 세션, 라우트 보호 | MVP | 확정 결정 5, `docs/reviews/Flora-v2.md:61-62` |
+| 인증, 조직, 세션, 라우트 보호 | MVP. 로그인은 단계로 켠다(2026-10-14): MVP 개발은 Mock(Stage A, 로컬 시드 계정), 공개 베타 전 Google(+이메일)(Stage B, P0), 카카오·네이버는 G2 후(Stage C, C1 카카오 P1, C2 네이버 P1) | 확정 결정 5, 22, `docs/reviews/Flora-v2.md:61-62`, `docs/products/_platform-core/AUTH_ROADMAP.md` 0장, 8장 |
 | 10단계 전자책 위저드(판형, 장르, 페르소나, 제목, 기획안, 목차, 집필, 표지, 책 정보, 완성) | MVP | 확정 결정 7, `Flora-v2/PRD.md:41-56` |
 | 원고 업로드 경로(txt, md, docx, pdf) | MVP | 분석:116-117. HWP는 열린 결정(8장) |
 | 전체 순차 생성(서버 잡) | MVP | 분석:98 |
@@ -44,6 +46,12 @@
 | 원고 낭독, 오디오북 미리듣기(TTS) | MVP(Basic) | 확정 결정 16, PB-F-052 |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, PB-F-044 |
 | 랜딩 3D 히어로(원고 낱장 → 제본 → 책장 넘김) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:82`, PB-F-055 |
+| 에이전트 실행 계층(작업 1건 = `agent_tasks` 1행, 6개 에이전트로 기존 기능 묶기)과 검수 대기함·실행 이력 | MVP(P0) | 2026-10-14 FLORA 개편, PB-F-057, PB-F-058. 관리자 실행 추적·재실행·원가 집계가 이 행을 기준으로 한다 |
+| 에이전트 작업 공간에서 새 작업 시작(에이전트 선택 → 범위 → 예상 크레딧 → 실행) | MVP(P1) | PB-F-059. 같은 동작은 위저드·에디터에서도 할 수 있으므로 P1 |
+| 에디터 3단 레이아웃(목차·원고·AI 패널)과 AI 패널 추가 동작 3종 | MVP(P1) | PB-F-060 |
+| 운영 콘솔(운영 홈, 작업 큐·실행 추적, 재실행, 원가, 사용자·권한, 출판 프로젝트, 설정 열람, 감사) | MVP(P1) | PB-F-061(PB-F-005 확장) |
+| 워크플로 빌더(React Flow 노드 캔버스, 고급 사용자), 운영자용 실행 그래프 보기 | Phase 2 | PB-F-062. 일반 작가가 노드 편집기를 배우지 않아도 책을 만들 수 있어야 하고, 작업형 에이전트가 안정된 뒤 붙인다(제안서 5절) |
+| 콘텐츠 에이전트(승인된 원고 → 소개문·홍보 글) | Phase 2 | PB-F-063. 외부 게시 기능이 MVP에 없고 책 소개 200자는 PB-F-022가 이미 만든다 |
 | 비로그인 AI 상담(랜딩 채팅) | Phase 2 | 제안: 비로그인 상담은 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/products/_platform-core/AI_ARCHITECTURE.md:130`) |
 | 공개 책 페이지 + Book JSON-LD + GEO 랜딩 메타 | Phase 2 | 분석:114, :159, :269-273 |
 | 번역 | Phase 2 | 분석:102 |
@@ -51,6 +59,7 @@
 | 오디오북 전권, 멀티보이스, 등장인물 추출, 보이스 클로닝 | Phase 2(TTS 엔진은 확정 결정 16으로 정해졌다. 미리듣기는 아래 MVP) | 분석:129-131, :245-249, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80` |
 | 판매·정산 | Phase 3 이후(결정 필요) | 분석:157, :269-273 |
 | 사진집, 룩북, AI 캔버스, n8n, Typst, DOC | 폐기 | 분석:138-142, :109-110. `07_SOURCE_MIGRATION.md` 3절 |
+| 교육 프로그램(주차별 커리큘럼, 강의, 멤버십) | 범위 제외(별도 사업) | 2026-10-14 대표님 결정(제안서 머리말): 이 제품은 교육 사이트가 아니라 작가가 직접 책을 만드는 SaaS다. 랜딩·화면에 주차·강의 구성을 넣지 않는다. 서비스가 활성화되고 운영 데이터가 쌓인 뒤 별도 수익화 모듈로 검토한다 |
 
 ## 3. 기능 요구사항과 수용 기준
 
@@ -58,11 +67,11 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| PB-F-001 | 가입/로그인 | 통합 | `@supabase/ssr` 브라우저 클라이언트의 `signInWithPassword`, `signUp({options:{data:{signup_app:'publishing'}}})`, Google OAuth. 이메일 인증 필수. 카카오는 열린 결정 | 가입 직후 `core.session_context('publishing')`이 `entitled=true`, `plan_code='free'`, `credit_balance=20`을 돌려준다. 로그인 후 `/dashboard`가 열리고 새로고침해도 유지된다 | 분석:74, `docs/reviews/Flora-v2.md:61`, `CORE_SPEC.md:70-80` |
-| PB-F-002 | 콜백 리다이렉트 검증 | 디벨롭 | `/auth/callback`의 `next`는 `/`로 시작하고 `//`, `@`, `\`가 없는 경로만 허용 | `next=@evil.com`, `next=//evil.com` 요청은 `/dashboard`로 보낸다 | `docs/reviews/Flora-v2.md:71`, `:141` |
+| PB-F-001 | 가입/로그인 | 통합 | 단계로 켠다(확정 결정 22, `docs/products/_platform-core/AUTH_ROADMAP.md`). Stage A(MVP 개발): 로컬 Supabase 시드 페르소나로 실제 JWT를 받는 Mock 로그인만(AUTH_ROADMAP 2장, `/login` 개발용 패널, 배포 환경에서 `/api/dev/login` 404). 쿠키 역할 Mock 금지, 개발용 로그인은 AUTH_ROADMAP 2장의 로컬 시드 계정만. Stage B(공개 베타 전, P0): Google OAuth + 이메일(`@supabase/ssr` 브라우저 클라이언트의 `signInWithPassword`, `signUp({options:{data:{signup_app:'publishing'}}})`, 이메일 인증 필수). OAuth 첫 로그인은 콜백 `finishLogin`이 `bootstrap_app_for_org('publishing')`를 1회 부른다. Stage C(G2 후): 카카오(C1, P1, D6 해소), 네이버(C2, P1) | Stage A: `owner` 페르소나 로그인 직후 `core.session_context('publishing')`이 `entitled=true`, `plan_code='free'`, `credit_balance=20`을 돌려준다. 로그인 후 `/dashboard`가 열리고 새로고침해도 유지된다. Stage B: 이메일 가입 직후와 새 Google 계정 첫 로그인 모두 같은 결과(재로그인 3회 뒤에도 가입 크레딧 1회)와 AUTH_ROADMAP 5.3절 B-1~B-6. Stage C: 7.1.3절 C1-1~C1-5, 7.2.4절 C2-1~C2-6 | 분석:74, `docs/reviews/Flora-v2.md:61`, `CORE_SPEC.md:70-80`, 확정 결정 22 |
+| PB-F-002 | 콜백 리다이렉트 검증 | 디벨롭 | `/auth/callback`의 `next`는 `/`로 시작하고 `//`, `@`, `\`가 없는 경로만 허용. 검증은 `finishLogin`(AUTH_ROADMAP 3.2절 5번) 한 곳에서 하고 Stage A `/api/dev/login`도 같은 함수를 거친다 | `next=@evil.com`, `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` 요청은 `/dashboard`로 보낸다(B-2) | `docs/reviews/Flora-v2.md:71`, `:141` |
 | PB-F-003 | API 인증 경계 | 디벨롭 | 모든 Route Handler는 `requireSession('publishing')`로 시작한다. 공개 예외는 `/api/waitlist`, `/api/webhooks/*`, `/health`뿐. FastAPI 엔진과 렌더 서비스는 공개 인터넷에서 호출되지 않고 내부 토큰을 요구한다 | 토큰 없이 LLM, 업로드, 내보내기 API를 호출하면 401. 엔진 내부 엔드포인트를 토큰 없이 호출하면 401 | `docs/reviews/Flora-v2.md:63`, `docs/reviews/flora.md:68`, `SHARED_MODULES.md:259` |
 | PB-F-004 | 대기자 명단 | 유지(v2) | 출시 전 랜딩에서 이메일 수집. 실제 수만 표시하고 시드 수치를 넣지 않는다. IP당 5회/시간(제안: 스팸 방지 최소치) | 같은 이메일 2회 등록은 200 + "이미 등록됨". 카운트 API는 `publishing.waitlist` 행 수와 같다 | 분석:79, `docs/reviews/flora.md:82` |
-| PB-F-005 | 운영자 화면 | 디벨롭 | `/admin`은 `profiles.platform_role='platform_admin'`만. 이메일 하드코딩 금지. 지표: 가입 수, 활성 책 수, 내보내기 수, 렌더 실패율, 크레딧 drift. 수동 크레딧 조정과 플랜 변경은 service_role 서버 경로 + 감사 로그 | 일반 사용자가 `/admin` 접근 시 404. 수동 조정 1건마다 `core.audit_log` 1행 | 분석:78, `docs/reviews/Flora-v2.md:89`, `SECURITY_BASELINE.md` 9장 |
+| PB-F-005 | 운영자 화면 | 디벨롭 | `/admin`은 `profiles.platform_role='platform_admin'`만. 이메일 하드코딩 금지. 지표: 가입 수, 활성 책 수, 내보내기 수, 렌더 실패율, 크레딧 drift. 수동 크레딧 조정과 플랜 변경은 service_role 서버 경로 + 감사 로그. 메뉴와 실행 추적·원가·재실행은 PB-F-061(2026-10-14 확장) | 일반 사용자가 `/admin` 접근 시 404. 수동 조정 1건마다 `core.audit_log` 1행 | 분석:78, `docs/reviews/Flora-v2.md:89`, `SECURITY_BASELINE.md` 9장 |
 | PB-F-006 | 위저드 10단계 | 통합 | v2 10단계 순서. 완료한 단계만 클릭 이동. 단계 진입 시 `books.current_step`, `step_state`를 2초 debounce로 저장 | 7단계에서 브라우저를 닫고 다시 열면 같은 책의 7단계가 열린다. `projectId='new'` 같은 공유 키가 없다 | `Flora-v2/PRD.md:41-56`, `docs/reviews/Flora-v2.md:79`, `Flora-v2/CLAUDE.md` "use-auto-save 2초" |
 | PB-F-007 | 판형 선택 + Auto-Fit | 통합 | 6종 키(A6, B6, A5, shinkuk, B5, A4_variant), 판형별 본문 pt·행간·여백 프리셋, Auto-Fit 미세조정(본문 ±1pt, 여백 ±5mm, 제안). 안쪽 여백 > 바깥 여백 3~5mm 규칙은 미세조정 후에도 강제 | 미세조정으로 안쪽 여백이 바깥+3mm 미만이 되면 슬라이더가 멈추고 안내 문구가 뜬다. 같은 설정이 미리보기와 PDF에 같게 반영된다 | 분석:86, `Flora-v2/PRD.md:476-485`, `flora/PRD.md:179-189` |
 | PB-F-008 | 장르 선택 | 유지 | 장르 8종(소설, 에세이, 시, 자기계발, 논픽션·비즈니스, IT·기술서, 동화, 판타지) | 선택한 장르가 `books.genre`에 저장되고 페르소나 탭 기본값이 된다 | `Flora-v2/PRD.md:65-68` |
@@ -73,7 +82,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 | PB-F-013 | AI 제목 추천 | 유지 | 장르+페르소나+기획 방향으로 후보 3~5개(제목, 부제, 추천 이유). 직접 입력 가능 | 1회 1크레딧. 응답이 JSON 스키마를 어기면 1회 재시도 후 실패 + 환불 | `Flora-v2/PRD.md:76-80` |
 | PB-F-014 | 기획안 3종 | 통합 | synopsis, logline, theme, characters + 입력 "타겟 독자", "강조 톤"(SD 6필드 중 2개). 탭 비교 후 1종 선택, 인라인 편집 | 선택본이 `books.plan_brief`에 저장된다. 1회 2크레딧 | 분석:94, `구현해야 할 프로젝트/SellingDocs/PRD.md:52` |
 | PB-F-015 | 목차 3종 + 편집 | 통합 | 챕터 수(1~20), 소제목 수(챕터당 1~10), 단락 수(소제목당 1~5) 설정 → 목차 3종 → 선택 후 드래그 정렬·인라인 편집. 플랜 한도: Free 챕터 3·소제목 합계 6·단락 3 | Free 사용자가 4번째 챕터를 추가하면 DB가 `PB002`를 내고 화면에 "Free는 챕터 3개까지" 안내. 1회 2크레딧 | `Flora-v2/PRD.md:88-93`, 분석:95, `flora-publisher/frontend/docs/prd/02_user_flow.md:31` |
-| PB-F-016 | 섹션 단건 집필 | 유지 | 소제목 1개를 스트리밍 생성(fetch POST + ReadableStream). 완료 시 서버가 sanitize 후 `sections.body_html` 저장 | 생성 중 연결이 끊겨도 서버가 끝까지 받아 저장하고, 다시 열면 본문이 보인다. fast 1크레딧, quality 2크레딧 | 분석:96, `docs/reviews/Flora-v2.md:105` |
+| PB-F-016 | 섹션 단건 집필 | 유지 | 소제목 1개를 스트리밍 생성(fetch POST + ReadableStream). 완료 시 서버가 sanitize 후 `sections.body_html` 저장. 2026-10-14: 본문이 이미 있는 소제목(`overwrite=true`)은 저장하지 않고 제안(Diff)으로만 돌려준다(PB-F-058) | 생성 중 연결이 끊겨도 서버가 끝까지 받아 저장하고, 다시 열면 본문이 보인다. fast 1크레딧, quality 2크레딧 | 분석:96, `docs/reviews/Flora-v2.md:105` |
 | PB-F-017 | 전체 순차 생성 | 디벨롭 | Basic 이상. 서버 잡이 챕터 단위로 그래프 `publishing.draft`(PB-F-047)를 실행하고 섹션 단위로 저장(2026-10-13). 책당 동시 3섹션, 섹션 재시도 3회(지수 백오프), 실패 섹션만 표시, 진행률은 Realtime. 이미 본문이 있는 섹션은 건너뛴다(덮어쓰기 옵션 별도). 취소 시 대기 섹션은 환불 | 15섹션 책에서 2개가 3회 실패하면 실행 상태 `partial`, 13개 저장, 2개 `failed`, 차감 = 성공 섹션분만(실패분 자동 환불). 취소 요청 후 60초 안에 새 섹션 생성이 멈춘다 | 분석:98, `flora-publisher/frontend/docs/prd/03_features.md:83-97`, `docs/reviews/Flora-v2.md:67`, `:122` |
 | PB-F-018 | 원고 에디터 + 마이크로 프롬프트 | 디벨롭 | Tiptap. 선택영역 플로팅 툴바(이어쓰기, 살붙이기, 다듬기, 직접 명령), `/` 명령, 결과 Diff 카드(삽입/대체/재생성/취소). 저장 HTML은 서버 sanitize(허용 태그 목록) | `<script>`, `on*` 속성, `javascript:` 링크가 저장 후 사라진다. 선택영역 2,000자 초과는 청크로 나뉜다. 1회 1크레딧 | 분석:99, `flora-publisher/frontend/docs/prd/03_features.md:110-131`, `docs/reviews/SellingDocs.md:55` |
 | PB-F-019 | 전체 다듬기 | 통합 | v1 "AI 고도화"를 대체. 원고 전체를 2,000자 청크로 나눠 순서대로 다듬고, 섹션별 Diff로 수락/거절. Basic 이상 | 3만 자 원고 → 15청크 처리, 마지막 1,000자만 처리되는 결함이 재현되지 않는다(청크 수 = 결과 수). 청크당 1크레딧 | 분석:100, `docs/reviews/flora.md:77` |
@@ -94,14 +103,14 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 | PB-F-034 | 플랜·크레딧 서버 강제 | 신규 | 모든 유료 동작은 코어 선차감-환불 시퀀스. 기능 게이팅은 `features`를 서버가 해석. 클라이언트 잠금은 UX 보조 | 브라우저 콘솔에서 `rpc('grant_credits')`, `update app_entitlements`가 42501. 잔액 부족은 402와 필요량 표시 | 분석:149, `CORE_SPEC.md:172-183` |
 | PB-F-035 | 결제 | 통합 | Toss 일반결제(크레딧팩, 첫 구독)와 빌링키 정기결제. 주문 선저장, 서버 confirm, 금액 대조, 웹훅은 보조 | 테스트 키로 팩 결제 → 원장 grant 1행. 같은 confirm 2회 → 지급 1회. 위조 웹훅 → 401 | 분석:151, `CORE_SPEC.md:210-233` |
 | PB-F-036 | 아웃바운드 웹훅 | 디벨롭(P1) | 사용자 등록 HTTPS URL(조직당 5개, 제안)로 `book.completed`, `export.succeeded`, `export.failed`를 HMAC 서명 POST. 비밀은 `core.encrypted_credentials`. 5회 실패 후 `failing`, 20회 연속 실패 시 `disabled`(제안) | 수신 측이 `X-Signature`로 검증 가능. 사설 IP·localhost URL 등록은 422 | 분석:139, `SHARED_MODULES.md:160-172` |
-| PB-F-037 | 랜딩 | 통합 | v2 랜딩 구조. 03장 4절 방향. 히어로는 3D(PB-F-055, 2026-10-13 사용자 결정으로 v1 히어로 연출 1회에서 변경). 금지 문구 통과 | 랜딩에 검증되지 않은 사용자 수·후기 0건 | 분석:158, `docs/reviews/flora.md:82` |
+| PB-F-037 | 랜딩 | 통합 | v2 랜딩 구조. 03장 4절 방향. 히어로는 3D(PB-F-055, 2026-10-13 사용자 결정으로 v1 히어로 연출 1회에서 변경). 금지 문구 통과. 2026-10-14: 섹션은 03장 8.3절 6개(히어로, 결과물 갤러리, 만드는 순서, AI 에이전트, 실제 제품 화면, 요금·FAQ). 결과물 갤러리의 표지·목차·내지는 실제 렌더 결과만 쓰고 고객 결과물이 없으면 "샘플"로 표시. 교육 과정·주차 표현 금지 | 랜딩에 검증되지 않은 사용자 수·후기 0건. 갤러리 항목마다 "샘플" 또는 실제 작가 동의 표시. FAQ에 무료 범위·생성 한도·지원 파일 형식·AI 데이터 처리(국외 이전, 학습 미사용) 4문항 이상 | 분석:158, `docs/reviews/flora.md:82` |
 | PB-F-038 | 탈퇴와 데이터 삭제 | 신규 | 설정 → 계정 삭제: 확인 문구 입력 → 조직 soft delete → 30일 유예 → `purge_organization`. 유예 중 로그인하면 복구 버튼. 내보내기 파일과 업로드는 즉시 삭제 예약 | 삭제 요청 후 30일 뒤 조직의 모든 publishing 행 0개, Storage 객체 0개 | 분석:217, `SECURITY_BASELINE.md` 12장 |
 | PB-F-039 | 법무 페이지 | 신규 | 이용약관, 개인정보처리방침, 환불 규정, AI 생성물 안내, 사업자 정보(통신판매업 신고) | 랜딩·결제 화면 하단에서 5개 페이지 모두 1클릭 | 분석:214 |
 | PB-F-040 | 공개 책 페이지 | 디벨롭(Phase 2) | 완성된 책만, owner/admin이 `set_book_visibility`로 켬. `/b/[slug]`에 표지·소개·목차·Book JSON-LD. 본문은 미리보기 1장까지만(제안: 판매 기능 결정 전 전문 공개 방지) | 미완성 책 공개 시 `PB009`. anon은 공개 컬럼만 조회 | 분석:114, :159, `docs/reviews/SellingDocs.md:52` |
 | PB-F-041 | 번역 | 유지(Phase 2) | 완성 원고를 영어·일본어로 번역해 별도 책으로 복제 | Phase 2 기획에서 단가 확정 | 분석:102 |
 | PB-F-042 | 오디오북 전권 | 디벨롭(Phase 2) | 전권 오디오북, 멀티보이스, 등장인물 추출. TTS 엔진은 확정 결정 16(ElevenLabs + 오픈소스)으로 정해졌고, MVP의 미리듣기는 PB-F-052가 맡는다. 산출물은 Storage + 서명 URL | 해당 없음(Phase 2) | 분석:129-131, :245-249 |
 | PB-F-043 | 운영 기반 | 디벨롭 | 필수 환경변수 누락 시 기동 실패, Dockerfile(pango, cairo, Noto CJK), CI(tsc, lint, build, pytest, SQL 체커, RLS 스모크) | 빈 `SUPABASE_JWT_SECRET`이나 `RENDER_SERVICE_TOKEN`으로 엔진이 기동하지 않는다. main 브랜치 CI 녹색 | 분석:160, :216, `docs/reviews/Flora-v2.md:132-133` |
-| PB-F-044 | AI 라우팅과 국외 이전 동의 | 신규 | 이메일 인증 직후 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 사용자 세션 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack, p_notice_version })`(owner)를 부르고 같은 시각·버전을 `core.audit_log`(`ai.consent.cross_border`)에 남긴다(제품 동의 표를 만들지 않음, 05장 6절·D16). 설정에서 언제든 철회한다. 기능별 기본 체인은 02장 5.1절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. 온보딩을 건너뛰면 미동의로 둔다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 감사 기록에 같게 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
+| PB-F-044 | AI 라우팅과 국외 이전 동의 | 신규 | 이메일 인증 직후(OAuth는 첫 로그인 직후 약관 동의 다음, Stage A는 페르소나 첫 로그인 직후) 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 사용자 세션 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack, p_notice_version })`(owner)를 부르고 같은 시각·버전을 `core.audit_log`(`ai.consent.cross_border`)에 남긴다(제품 동의 표를 만들지 않음, 05장 6절·D16). 설정에서 언제든 철회한다. 기능별 기본 체인은 02장 5.1절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. 온보딩을 건너뛰면 미동의로 둔다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 감사 기록에 같게 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | PB-F-045 | 책별 자료 RAG | 신규 | 책마다 RAG 컬렉션 `book-<book_id>`(kind `rag`, 임베딩 `oss-embed`)를 둔다. 색인 대상: (1) 이용자가 올린 참고 파일(txt, md, docx, pdf, 파일당 20MB, 책당 `features.rag_files_max`개) (2) 그 책의 원고(소제목 본문 스냅샷, 저장 뒤 바뀐 소제목만 재색인). 업로드는 PB-F-027과 같은 서명 업로드 + 엔진 파싱 후 정규화 md를 FastAPI `/rag/ingest`로 색인한다. 업로드 때 "개인정보 포함" 여부를 묻고 `ai_documents.contains_pii`와 책의 오픈소스 전용 스위치(PB-F-056)에 반영한다. 참고 파일 원문은 색인 뒤 24시간 안에 Storage에서 삭제하고 청크는 책과 함께 보관한다. 검색은 서버가 `match_ai_chunks`로 그 책 컬렉션만 조회한다 | 책 A의 질의가 책 B 컬렉션 청크를 돌려주지 않는다(다른 컬렉션 id 요청 42501). 평가셋 40문항(제안)에서 상위 8개 안 정답 청크 재현율 0.8 이상(제안). 한도 초과 업로드 403 `plan_limit`. 색인 실패 문서는 `failed` + 재시도 버튼, 환불 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107`, `docs/products/_platform-core/DB_CONVENTIONS.md:315-327` |
 | PB-F-046 | 책 설정집 위키 | 신규 | 책별 설정집(캐릭터 `entity`, 용어·세계관 `concept`, 문체·시점·시제 가이드와 타임라인 `topic`, 목차 `index`)을 이용자 조직의 `core.wiki_pages`에 slug `books/<book_id>/...`로 둔다(app `publishing`). 이용자가 "설정집 만들기"를 누르면 ingest가 원고·참고 파일에서 새 페이지를 `draft`로 제안하고, 이용자가 검토·수정해 `published`로 채택한 페이지만 일관성 검사와 채팅의 근거가 된다. 이용자가 고친 블록은 사람 소유로 표시해 ingest가 덮어쓰지 않고, 저장은 `expected_version` 낙관적 잠금, 문서 1건당 갱신 페이지는 5개까지. "설정집 점검"(lint: 모순, 낡음, 고아, 깨진 링크, 출처 없는 주장)은 이용자가 직접 실행한다. 설정집은 그 조직 구성원만 열람하고 공개 화면은 없다. 개인정보 포함 원고에서 만든 페이지는 `derived_from_pii=true`로 오픈소스만 쓴다 | 새 페이지는 `draft`. "출처" 절이 없는 페이지 채택 409. 사람 소유 블록 변경 0(테스트). `expected_version` 불일치 409 `WIKI_VERSION_CONFLICT`. 다른 책 slug 조회 404. `derived_from_pii` 페이지 처리의 상용 제공자 0. 책 영구 삭제 시 설정집 페이지·개정 이력 삭제 | `docs/products/_platform-core/LLM_WIKI.md:21-47` |
 | PB-F-047 | 초안 그래프 `publishing.draft` | 신규 | PB-F-017의 생성 엔진. FastAPI(`api/`) LangGraph 5노드: `outline`(목차·기획안·채택된 설정집·앞 챕터 요약으로 챕터 내 소제목별 개요, 라우팅 기능 `publishing.draft`) → `draft`(소제목별 초안, 동시 3, 페르소나 Taste·어조는 서버가 DB에서 합성해 주입) → `consistency`(채택된 설정집과 책 컬렉션 검색으로 캐릭터·용어·시제·시점 충돌을 검사하고 충돌 소제목만 메모를 붙여 1회 재작성) → `proofread`(맞춤법·문장 부호·반복 표현 교정, 의미 변경 금지) → `compliance`(마지막 노드, PB-F-054). 워커가 잡 토큰으로 챕터 단위 실행을 요청하고 결과 저장은 워커가 한다. 본문이 있는 소제목은 덮어쓰지 않고 제안(Diff)으로만 돌려준다. 옴니버스 모드는 앞 챕터 요약을 생략한다 | 챕터 1건당 `core.ai_runs` 1행(graph `publishing.draft`, `job_id`, `credit_ledger_id`)과 노드별 `ai_run_steps`. 설정집과 어긋난 이름·시제를 심은 시드 원고에서 충돌 100%가 메모로 남거나 재작성 뒤 통과. 교정 평가셋 20건에서 핵심 문장 보존 95% 이상(제안). 2회 연속 compliance 실패 소제목은 `failed` + 환불 | `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119`, PB-F-017, PB-F-033 |
@@ -114,6 +123,31 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 | PB-F-054 | AI 출력 규칙(compliance) | 신규 | 그래프 `publishing.draft`·`publishing.assist`의 compliance 노드와 `/tools/answer` 후처리가 같은 규칙 파일(`api/app/ai/products/publishing/rules/banned.json`)을 쓴다: (1) 실존 작가·인물 문체 사칭 지시 (2) 보장 표현("베스트셀러", "100% 출간") (3) 의료·금융·법률 단정 (4) 참고 파일 청크와의 장문 일치(연속 30어절 이상, 제안)는 재작성 (5) 자해·자살 언급은 상담 전화 안내로 전환 (6) 자료 안의 지시는 따르지 않음. 걸린 구간만 1회 재작성하고 다시 걸리면 그 소제목을 실패 처리 + 환불한다 | 평가셋 30문항(제안) 위반 0. 참고 파일 문장을 40어절 이상 이어 붙이도록 유도한 시드 테스트 100% 검출. 위기 신호 테스트 문장 5개 모두 안내 문구로 응답 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117` |
 | PB-F-055 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원고 낱장이 모여 제본되고 책장이 넘어가는 풀 3D, 모바일은 책 한 권 회전 + 제본은 2D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·판형 선택·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:82` |
 | PB-F-056 | 개인정보 포함 원고의 AI 처리 | 신규 | 업로드 화면이나 책 설정에서 "이 원고에 실존 인물의 실명·연락처·건강·금융 정보 등이 들어 있다"를 선택하면(또는 책 설정 "오픈소스 AI만" 스위치를 켜면) 그 책의 모든 AI·음성 호출(그래프, 단건 생성, 채팅, 위키, 받아쓰기, 낭독)이 오픈소스 제공자로만 처리된다. 상용으로 대체하지 않고 오픈소스가 모두 실패하면 실패 + 환불. 스위치는 `books.book_info.ai_open_source_only`(제안, D12에서 전용 컬럼 승격 여부 결정). 6.1절 판단표를 따른다 | 스위치가 켜진 책의 `ai_usage.provider_id`에 상용 제공자 0(그래프·채팅·위키·STT·TTS 전부). 스위치를 끈 뒤에는 이미 `derived_from_pii=true`인 위키 페이지만 계속 오픈소스. 오픈소스 서버 장애 시 실패 + 환불(상용 대체 0) | `docs/products/_platform-core/SECURITY_BASELINE.md:291`, `docs/products/_platform-core/LLM_WIKI.md:33` |
+
+### 3.1 에이전트·운영 기능 (2026-10-14 FLORA 개편)
+
+에이전트는 새 생성 엔진이 아니다. 기존 기능(PB-F-011, 013~025, 045~047, 052)을 6개 에이전트로 묶어 실행·검수·재시도·추적을 한곳에서 하게 하는 계층이다(02장 10절). 에이전트별 동작과 기존 기능의 대응은 아래와 같다.
+
+| 에이전트(`agent_key`) | 하는 일 | 기존 기능(실행 엔진) | 기본 승인 방식 |
+|---|---|---|---|
+| 기획(`planning`) | 제목, 기획안, 목차 제안, 페르소나 합성 | PB-F-011, 013~015(`publishing.assist`) | 목차는 저자가 고르고 구조를 저장해야 확정(구조 저장 = 승인) |
+| 자료(`research`) | 참고 파일 색인, 설정집 만들기·점검, 출처 정리 | PB-F-045, 046(`/rag/ingest`, `wiki_ingest`, `wiki_lint`) | 작업 단위 검수는 없다. 설정집 페이지마다 `draft` → 저자 채택(`published`)이 검수이고 채택한 것만 근거로 쓴다 |
+| 집필(`writing`) | 소제목 단건, 챕터 초안, 전체 순차 생성 | PB-F-016, 017, 047(`publishing.draft`, `publishing.assist`) | 본문이 있던 소제목은 제안으로만 오고 비교 후 승인(단건 생성의 덮어쓰기도 제안, PB-F-016). 빈 소제목은 "AI 초안 · 검토 전" 상태로 채운다(D26 (a) 기준) |
+| 편집(`editing`) | 이어쓰기·살붙이기·다듬기, 전체 다듬기, 사례·예시 제안, 문체·설정 확인, 출처 검토 | PB-F-018, 019, 060(`publishing.assist`) | 선택 영역 동작(스트리밍)은 그 자리의 Diff 카드가 검수다(작업 검수 대기 없음). 전체 다듬기(잡)는 검수 대기함에서 비교 후 반영 |
+| 출판(`publishing`) | 책 정보, 표지 3후보, PDF·ePub, 낭독 미리듣기 | PB-F-021, 022, 024, 025, 052(엔진·렌더·fal·TTS) | 작업 검수 없음. 내보내기 직전 확인 모달(쪽수, 워터마크, epubcheck 결과, 검토 전 AI 초안 수)이 최종 점검이고 다운로드를 막지 않는다 |
+| 콘텐츠(`content`) | 승인된 원고로 소개문·홍보 글 | Phase 2(PB-F-063) | 외부 게시 전 승인 |
+
+채팅(PB-F-049)·받아쓰기·읽어 주기(PB-F-050, 051)는 대화형이라 작업(`agent_tasks`)으로 기록하지 않는다. 대화 기록(`core.ai_conversations`)과 사용량(`core.ai_usage`)으로 추적한다.
+
+| ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
+|---|---|---|---|---|---|
+| PB-F-057 | 에이전트 실행 계층 | 신규 | 위 표의 작업형 동작(채팅·받아쓰기·읽어 주기 제외)은 요청 1건마다 서버가 `publishing.agent_tasks` 1행을 만든다(멱등 키 `(org_id, request_id)`, 크레딧 차감은 기존 멱등 키를 그대로 쓰고 모든 차감 행에 `ref_type='agent_task'`, `ref_id=<작업 id>`를 단다(챕터 초안처럼 소제목마다 여러 행이어도 같은 작업으로 묶인다). 행에는 에이전트·동작·범위 요약(id·개수만, 원고 본문 없음), 예상·실제 크레딧, 실제 실행의 `core.jobs.id`, `generation_runs.id`, `core.ai_runs.id`, 첫 차감 원장 id(표시용)를 잇는다. 실행 엔진·큐·그래프는 새로 만들지 않는다. 잡을 끝내는 쪽(워커·엔진·AI 서비스)이 같은 행의 상태를 갱신하고, 5분 주기 동기화가 누락을 고친다 | 01장 4.3·4.6절의 유료 작업형 동작마다 `agent_tasks` 정확히 1행, 그 작업의 차감·환불 원장이 모두 `ref_id=<작업 id>`로 조회되고 합계가 `credits_used`와 같다(E2E). 같은 `request_id` 재전송은 새 행 0. 잡이 끝나고 10분 넘게 `running`인 행 0, 차감 실패·중단으로 15분 넘게 `queued`인 행 0(동기화). 행에 원고 본문·프롬프트·키 0(스키마 검사) | 제안서 5절·6절, 02장 10절 |
+| PB-F-058 | 검수 대기함과 승인 기반 반영 | 신규 | 결과가 잡에 남는 원고 작업(챕터 초안·전체 순차 생성·전체 다듬기, 02장 10.1절)은 끝나면(성공·부분·취소) `approval_status='pending'`이 된다. 선택 영역 동작은 기존 Diff 카드가 검수라 대기함에 쌓지 않는다. 저자는 검수 대기함(에이전트 화면 탭, 에디터 AI 패널 "제안" 탭)에서 항목별로 비교하고 전부 승인·일부 승인·거부한다. 제안 반영은 기존 `PATCH sections`(revision 확인), 빈 소제목 AI 초안의 승인은 서버가 그 소제목을 사람 확인 상태(`gen_status='edited'`)로, 거부는 다시 빈 소제목으로 돌린다(그사이 사람이 고쳤으면 건드리지 않음). 결정은 RPC `decide_agent_task`(감사 `agent_task.decide`). 승인 전에는 사용자가 쓴 본문을 바꾸지 않는다. "검토 전" 표시는 소제목 자체(`gen_status='generated'`)로 판단하므로 대기가 만료(30일, `expired`)돼도 남고, 내보내기 직전에 그 수를 알려 준다(막지 않음) | 본문이 있던 소제목의 AI 결과(단건 생성 덮어쓰기 포함)가 승인 전 `sections.body_html`을 바꾸는 경우 0. 빈 소제목 AI 초안 거부 시 그 소제목 본문이 비고 사람이 고친 소제목은 그대로. 이미 결정한 작업에 다시 결정하면 409 `PB012`. 부분 승인 시 승인한 소제목만 revision+1. 내보내기 확인 모달에 "검토 전 AI 초안 N개" 표시 | 제안서 4절 "승인 전 자동 반영 금지", PB-F-018, PB-F-047 |
+| PB-F-059 | 에이전트 작업 공간 | 신규(P1) | `/dashboard/agents`: 탭 [에이전트](6개 목록, 각 에이전트가 하는 일·쓸 수 있는 동작·플랜 잠금), [검수 대기], [실행 이력](책·에이전트·상태 필터), [대화](기존 채팅 목록). 새 작업 폼은 책 → 동작 → 범위(챕터·소제목) → 모드 → 예상 크레딧·잔액 확인 → 실행. 작업 상세 `/dashboard/agents/tasks/[id]`는 타임라인(대기 → 실행 → 노드별 진행 → 완료), 결과 검수, 실패 원인과 환불 여부, 재시도 버튼 | 위저드·에디터에서 시작한 작업도 실행 이력에 같이 보인다. 실패·부분 실패·취소 작업만 재시도 버튼이 보이고 한 작업은 한 번만 재시도된다(같은 작업 두 번째 재시도는 409, 재시도 작업이 다시 실패하면 그 작업을 재시도. 최대 10회). 진행 중 작업의 재시도는 409 `PB013`. 재시도는 재시도 범위(실패분, 취소 작업이면 처리하지 못한 나머지까지)만 새로 차감하고, 원래 작업의 결과 없는 차감이 모두 환불됐는지 원장(`ref_id=<작업 id>`)으로 먼저 확인한다(02장 10.4절). 콘텐츠 에이전트는 "준비 중"으로 비활성 | 제안서 5절 ② Agent Workspace |
+| PB-F-060 | 에디터 3단 레이아웃과 AI 패널 | 디벨롭(P1) | 에디터를 좌 목차(장·절 이동, 소제목 상태 칩) · 중 원고(본문, 버전) · 우 AI 패널로 둔다. AI 패널 탭: [도우미](기존 채팅 PB-F-049), [제안](이 책의 검수 대기 항목, Diff 비교·적용·거부), [실행](이 책의 진행 중·최근 작업). 선택 영역 동작에 기존 3종(이어쓰기, 살붙이기, 다듬기) 외에 사례·예시 제안(`examples`), 문체·설정 확인(`style_check`: 채택된 설정집과 비교), 출처 검토(`source_check`: 사실 주장 문장에 출처가 있는지, 참고 파일과 장문 일치가 있는지)를 더한다. 화면 폭 1279px 이하에서는 목차와 AI 패널을 접고 시트로 연다 | 새 동작 3종은 각 1크레딧(01장 4.3절 보조 집필과 같음), `writing_assist`(Basic). 결과는 Diff 카드나 메모로만 오고 원고를 바로 바꾸지 않는다. 375·768·1024·1440px에서 원고 폭 최소 560px(1024px 이상) 유지 | 제안서 4절 "원고 편집기는 세 영역", PB-F-018 |
+| PB-F-061 | 운영 콘솔(Agent Operations) | 디벨롭(P1) | `/admin` 메뉴: 운영 홈(전체 사용자, 실행 중 작업, 기간 AI 원가, 미처리 실패 작업, 비용 경보, 최근 활동. 데이터가 없으면 숫자 대신 "—"와 연결 상태), 사용자·권한(가입 상태, 요금제, 계정 정지·복구, 플랫폼 역할), 출판 프로젝트(책 상태, 내보내기 실패, 저장 용량, 삭제 요청. 원고 본문은 보지 않는다), 에이전트·AI 운영(에이전트·동작별 실행 수, 성공률, p95 시간, 모델별 원가, 오류 코드 상위), 작업 큐·실행 이력(대기·실행·성공·실패·취소, 작업 id로 실행 추적: 요청 → `agent_tasks` → `core.jobs` → `ai_runs`·`ai_run_steps` → `ai_usage` → `credit_ledger`), 결제·크레딧·원가(결제, 원장, 기간·모델·에이전트·조직별 원가 대비 크레딧 매출, 환불), 플랫폼 설정(라우팅 기본값·플랜 features 열람만, 변경은 seed·마이그레이션), 감사 로그. 실패 작업 재실행은 원래 작업의 환불 원장을 확인한 뒤 새 작업(`origin='admin_retry'`)으로만 하고 이중 차감하지 않는다. 원고 열람은 기본 차단(D27) | 일반 사용자 `/admin/*` 404. 작업 id 하나로 추적 화면에 6단계가 모두 이어진다(누락 단계는 "기록 없음" 표시). 재실행 시 원래 작업이 환불되지 않았으면 409 `refund_missing`. 원가 표의 합계가 `core.ai_usage.cost_usd_micros` 합과 같다. 원가는 일반 사용자 화면·API 응답에 0. 프롬프트·키·토큰 값은 마스킹. 운영자 조회 1건마다 감사 `admin.view`(대상 종류·id) | 제안서 6절, PB-F-005, `SECURITY_BASELINE.md` 9장 |
+| PB-F-062 | 워크플로 빌더 | Phase 2 | 고급 사용자가 "목차 확정 → 장별 집필 → 편집 검수 → 출판 준비"를 노드로 잇고 승인 지점을 둔다(React Flow/XYFlow). 노드는 PB-F-057의 동작만 쓰고 새 실행 엔진을 만들지 않는다. 운영 콘솔에는 같은 캔버스로 `ai_run_steps` 실행 그래프와 실패 지점을 읽기 전용으로 보여 준다 | Phase 2 기획에서 확정 | 제안서 5절 ③ |
+| PB-F-063 | 콘텐츠 에이전트 | Phase 2 | 승인된 원고와 책 정보로 소개문, 목차 요약, 홍보 글 초안을 만든다. 외부 게시 전 저자 승인 | Phase 2 기획에서 확정 | 제안서 5절 표 |
 
 ## 4. 요금과 크레딧
 
@@ -145,6 +179,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 | 섹션 집필 fast | 1 | 소제목 1개 | 원고 생성의 기본 단위. SD 리뷰가 "단계별 단가 분리"를 요구(`docs/reviews/SellingDocs.md:72`) |
 | 섹션 집필 quality | 2 | 소제목 1개 | 상위 모델 비용 |
 | 이어쓰기/살붙이기/다듬기 | 1 | 선택영역 2,000자 청크 | 청크 단위로 비용 비례 |
+| 사례·예시 제안, 문체·설정 확인, 출처 검토(PB-F-060, 2026-10-14) | 1 | 선택영역 2,000자 청크 | 보조 집필과 같은 출력 규모 |
 | 전체 다듬기 | 1 | 2,000자 청크 | 위와 같음 |
 | 책 정보 생성 | 1 | 1회 | 짧은 출력 |
 | 페르소나 합성 | 3 | 1회 | 샘플 분석 + 합성 2단계 |
@@ -257,7 +292,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 
 | 항목 | 내용 |
 |---|---|
-| 개인정보 수집 항목 | 이메일, 표시 이름, 비밀번호 해시(Supabase Auth), Google 계정 식별자, 결제 정보(Toss가 보관, 우리는 주문 id·금액·카드사·마스킹 번호만), 원고와 생성물, 접속 IP 해시(레이트 리밋, 원문 저장 안 함), 대기자 이메일 |
+| 개인정보 수집 항목 | 이메일, 표시 이름, 비밀번호 해시(Supabase Auth), 로그인 제공자 식별자(단계별: Stage B부터 Google 계정 식별자·이름·프로필 이미지 URL, C1부터 카카오 사용자 식별자·닉네임·프로필 이미지·비즈 앱이면 이메일, C2부터 네이버 고유 id·이메일·이름. AUTH_ROADMAP 5.2, 7.1.1, 7.2.3절), 결제 정보(Toss가 보관, 우리는 주문 id·금액·카드사·마스킹 번호만), 원고와 생성물, 접속 IP 해시(레이트 리밋, 원문 저장 안 함), 대기자 이메일 |
 | 목적 | 계정 운영, 책 제작 기능 제공, 결제와 환불, 부정 사용 방지, 출시 알림(대기자, 마케팅 동의 시에만) |
 | 보존 | 회원 정보는 탈퇴 후 30일 유예 뒤 삭제. 결제 기록은 전자상거래법상 5년(미확인: 적용 조항은 법무 확인). 업로드 원본 24시간, 내보내기 파일 30일, 감사 로그 2년, 대기자 이메일은 출시 후 90일 또는 수신 거부 시 삭제(제안) |
 | 암호화 대상 | 아웃바운드 웹훅 서명 비밀은 `core.encrypted_credentials`(AES-256-GCM). 빌링키는 `core.billing_keys`. 원고는 Supabase 저장 암호화에 맡기고 컬럼 암호화는 하지 않는다(제안: 원고는 검색·렌더 대상이라 앱 계층 암호화 시 기능 손실) |
@@ -320,6 +355,9 @@ AI 대화 추가 규칙(PB-F-054의 근거):
 | 설정집 채택률 | "설정집 만들기"를 실행한 책의 50%가 `published` 페이지 1개 이상(제안) | `core.wiki_pages` slug `books/<id>/` | 3개월 |
 | 초안 그래프 성공률 | 소제목 98% 이상(제안) | `generation_runs`의 succeeded 소제목 / (succeeded + failed) | 월 |
 | 낭독 생성 성공률 | 98% 이상(제안) | `voice_jobs`(feature `narration`) succeeded / 전체 | 월 |
+| 검수 처리율(2026-10-14) | 대기 항목의 70% 이상이 7일 안에 결정(제안) | `agent_tasks`에서 `approval_status`가 pending을 거쳐 결정된 행 / pending이 된 행 | 월 |
+| 재시도 성공률 | 60% 이상(제안) | `retry_of`가 있는 행 중 `succeeded` 비율 | 월 |
+| AI 원가율(운영 지표) | 크레딧 매출 대비 AI 원가 40% 이하(제안) | `core.ai_usage.cost_usd_micros` 합(원화 환산) / 같은 기간 소비 크레딧 × 크레딧당 단가(4.2절) | 월 |
 
 근거: 첫 4개와 대기자 목표는 `Flora-v2/PRD.md:536-547`, 전환율은 v2 "프리 → 기본 8%"(`:539`)를 2단 플랜에 맞춰 옮김. 렌더 실패율·drift는 제안.
 
@@ -332,7 +370,7 @@ AI 대화 추가 규칙(PB-F-054의 근거):
 | D3 | 판형 프리셋 값 충돌(A5 v1 10.5pt/20mm vs v2 9.5pt/18mm) | (a) v2 값 (b) v1 값 (c) v2 키 + 실물 출력 테스트로 확정 | (c). 확정 전 임시값은 v2 값 | 분석:257-261 |
 | D4 | 업로드 형식 | (a) txt, md, docx, pdf, hwp (b) hwp 제외 (c) txt, md, docx만 | (b). DB CHECK도 hwp를 뺐다 | 분석:263-267, `docs/reviews/Flora-v2.md:76` |
 | D5 | 판매·유통 | (a) 없음 (b) 공개 책 페이지만(Phase 2) (c) 판매·정산 | (b) | 분석:269-273 |
-| D6 | 카카오 로그인 | (a) 이메일 + Google (b) 카카오 추가 | (a)로 시작 | 분석:275-279 |
+| D6 | 카카오 로그인 | (a) 이메일 + Google (b) 카카오 추가 | 닫힘(2026-10-14): 결정 22로 C1 확정. 공개 베타까지는 (a)(Stage B), 카카오는 G2 통과 후 C1(P1, PB-06-057). 카카오 이메일 정책은 8.1절 D20 | 분석:275-279, 확정 결정 22 |
 | D7 | LLM 전략 | 공용 LLM 게이트웨이가 "Anthropic + OpenRouter 폴백, 2모드 노출"로 이미 정해져 있다(`SHARED_MODULES.md:204`) | 닫힘(2026-10-13): 확정 결정 17. 기능별 체인은 02장 5.1절(Claude → ChatGPT → Gemini → 오픈소스). "빠름/고품질" 2모드는 모델 선택이 아니라 프롬프트·단가 모드로 남긴다 | 분석:251-255 |
 | D8 | 크레딧 단가·월 크레딧 | 4.3절 제안값 | 출시 전 실제 토큰 원가로 재산정 | 제안 |
 | D9 | Free의 업로드·전체 생성 허용 | (a) v2처럼 막음 (b) 크레딧이 비용을 막으므로 허용 | (a)로 시작(유료 전환 동기). 업로드 사용률 KPI가 목표 미달이면 (b) | `Flora-v2/PRD.md:313-314` |
@@ -346,3 +384,32 @@ AI 대화 추가 규칙(PB-F-054의 근거):
 | D17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). PB-06-039에서 확인 결과를 기록. 앱 화면의 주 레퍼런스는 Atlassian(03장 3.2절) |
 | D18 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트 `/api/internal/ai-token` (b) FastAPI가 잡을 직접 소비 (c) 워커에 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/products/_platform-core/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 R10 | astro-ai D-18 |
 | D19 | 무료 플랜의 AI 범위 | (a) Free도 채팅·받아쓰기·설정집(낭독·초안 그래프는 Basic) (b) 모든 AI를 Basic 이상으로 | (a)(제안). Free 월 20크레딧이 비용 상한이다. 전환 효과가 없거나 원가가 크면 (b) | 4.4절 |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`)로 로그인은 Mock(A) → Google(+이메일)(B) → 카카오(C1)·네이버(C2) 순서로 켠다. 단계 규격은 `docs/products/_platform-core/AUTH_ROADMAP.md`가 정본이고, 아래는 이 제품에서 닫아야 할 남은 결정이다. 기존 D6은 이 결정으로 닫혔다.
+
+| # | 항목 | 선택지 | 권고 | 닫는 시점 | 근거 |
+|---|---|---|---|---|---|
+| D20 | 카카오 이메일 정책(C1) | (a) 비즈 앱 전환 후 `account_email` 필수 동의 (b) 이메일 없이 허용(온보딩에서 연락 이메일 별도 입력, 같은 사람이 Google로 오면 다른 사용자) | (a). 영수증·알림 메일·계정 연결이 Google과 같아진다. 운영 주체의 사업자 정보로 비즈 앱 전환을 할 수 있는지는 미확인 | G2 판정 전(PB-06-057 착수 전) | AUTH_ROADMAP 7.1.2절 |
+| D21 | 네이버 연동 경로(C2) | (a) Supabase 커스텀 OAuth2 `custom:naver` (b) 서버 브리지 + 코어 `staged/0010_core_auth_identity_links.sql` | 스파이크 결과로 결정(PB-06-058 첫 단계, 0.5일). 결과는 `NAVER_AUTH_PATH`와 task `log.md` `[DECISION]`에 기록. (b)면 06장 8.3절 코어 요청 R15 | PB-06-058 스파이크 직후 | AUTH_ROADMAP 7.2.2, 7.2.3절 |
+| D22 | 이메일+비밀번호 가입 유지 여부(공개 가입 제품) | (a) 유지(Stage B에서 Google과 함께 켠다) (b) Google·카카오·네이버만 | (a). PB-F-001이 이메일 인증 필수 가입을 이미 정했고 이 결정은 그것을 바꾸지 않는다. 이메일 가입·메일 인증·비밀번호 재설정 화면은 Stage B 작업(PB-06-056)이 만든다 | G1 판정 전 | AUTH_ROADMAP 1장 "이메일+비밀번호" 행 |
+
+### 8.2 FLORA 개편 결정 (2026-10-14, 검토 대기)
+
+문서 본문(01장 3.1절, 02장 10절, 03장 8절, 06장 9절)은 각 결정의 **권고안을 가정**하고 썼다. 다른 선택지를 고르면 "영향" 열의 위치를 고친다. 외부 제안서(ChatGPT 작성)의 시각 방향은 "기존 토큰을 확인한 뒤 확정할 초안"이라고 스스로 밝히고 있다. 기존 03장 4.3절 토큰은 DP 1~5단계(레퍼런스, 브리프, 생성형 기본값 검토)와 3D 히어로 재질까지 묶여 확정됐으므로 덮어쓰지 않고 아래 결정으로 올린다.
+
+| # | 항목 | 선택지 | 권고 | 닫는 시점 | 근거 |
+|---|---|---|---|---|---|
+| D23 | 브랜드 팔레트 | (a) 기존 확정 토큰 유지: 청먹 #1C2B39, 교정지 #EEF1F4, 공정 시안 #00739E, 맞춤 마젠타 #B0225C(03장 4.3절) (b) 제안서 팔레트: 딥 포레스트 그린 #245B46, 뮤트 세이지 #8FAE98, 잉크 블랙 #202521, 쿨 뉴트럴 #F5F6F4, 경계선 #DDE2DD | (a). 교정지·재단선 어휘(03장 4.2절 브리프)와 3D 히어로 재질이 이 팔레트로 설계됐다. (b)의 녹색·세이지는 같은 포트폴리오의 보태닉 브랜드 website-floria와 인상이 겹치고, 이름(FLORA/Floria)까지 비슷해 브랜드 구분이 약해진다. 제안서에서 가져올 것은 색 값이 아니라 "포인트 색은 주요 행동·선택·진행에만" 규칙(03장 8.2절) | PB-06-041(사람 검토) | 03장 4.3절, 8.2절, 제안서 2절 |
+| D24 | 화면 서체 | (a) 전 화면 IBM Plex Sans KR(기존) (b) 전 화면 Pretendard(제안서) (c) 레이어별: 랜딩은 마루부리 + IBM Plex Sans KR 유지, 작업 공간·운영 콘솔은 Pretendard 후보 | (c). Pretendard는 한국어 UI의 습관적 기본값이라 랜딩 차별화에는 불리하지만(DP 생성형 기본값 12번), 정보 밀도가 높은 표·패널에서는 가독성 검증 사례가 많다. 041에서 실제 원고 편집기·운영 표 스크린샷 두 벌로 비교해 고른다. 출판 결과물 서체는 기존대로 Noto Serif/Sans CJK KR(제안서와 같음) | PB-06-041 | 03장 4.3절, 제안서 2절 |
+| D25 | 랜딩 헤드라인 | (a) "원고를 넣으면 이 판형의 인쇄용 PDF와 ePub이 됩니다"(기존, 결과를 말함) (b) "당신의 경험을, 한 권의 책으로."(제안서, 정서) | (a)를 히어로에, (b)를 결과물 갤러리 섹션 제목에 쓴다. 출시 전 대기자 랜딩에서 두 문구를 기간을 나눠 번갈아 걸고 대기자 등록 전환율로 고른다(제안: 각 2주, 방문 1,000 이상). 개발 없이 검증할 수 있는 가장 싼 실험이다 | 공개 베타 전 | DP 카피 규칙(`DESIGN_PRINCIPLES.md:190`), 제안서 3절 |
+| D26 | 빈 소제목의 AI 초안 반영 | (a) 바로 채우고 "AI 초안 · 검토 전" 표시, 내보내기 전에 수를 알림(기존 PB-F-017 동작 유지) (b) 빈 소제목도 제안으로만 두고 승인해야 원고가 됨 | (a). 사용자가 쓴 글은 어느 쪽이든 바뀌지 않는다. (b)는 15소제목 책에서 승인 클릭 15번을 강요해 전체 순차 생성의 가치를 깎는다. 제안서의 "승인 전 자동 반영 금지"는 본문이 있던 곳에 그대로 적용한다 | PB-06-059 착수 전 | PB-F-017, PB-F-058 |
+| D27 | 운영자의 원고 열람 | (a) 기본 차단. 이용자가 설정에서 "지원 요청을 위해 24시간 열람 허용"을 켠 책만 사유 입력 후 열람, 감사 `admin.manuscript_view` (b) 운영자가 사유 입력만으로 열람 + 감사 | (a). 원고는 이용자의 미발표 저작물이고 실존 인물 정보가 있을 수 있다(6.1절). 허용 기록은 `books.book_info.support_access_until`(이용자 쓰기 컬럼이라 이용자만 켤 수 있다, 제안). 법령상 제출 요구 등 예외 절차는 법무 확인 | PB-06-062 착수 전 | 제안서 6절 "개인정보 보호", `SECURITY_BASELINE.md` 9장 |
+
+| 결정 | 권고와 다르게 정하면 고칠 곳(영향) |
+|---|---|
+| D23·D24 | 03장 4.3절 토큰, 8.2절 레이어 표, 4.6절 3D 재질, `CLAUDE.md` 디자인 레이어 행 |
+| D25 | 03장 8.3절 섹션 1·2 문구, PB-06-024 수용 기준 |
+| D26 (b) | 01장 3.1절 집필 행·PB-F-058, 02장 10.1절 writing 행·10.3절 4단계, 03장 8.4·8.7절, PB-06-023·037·059 수용 기준(빈 소제목도 제안으로) |
+| D27 (b) | 01장 PB-F-061, 03장 8.6절 개인정보 규칙, 04장 9.3절 `manuscript-view`, PB-06-062 수용 기준 |

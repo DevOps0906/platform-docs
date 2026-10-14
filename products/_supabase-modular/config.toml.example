@@ -62,22 +62,29 @@ jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
 enable_signup = true
+# 계정 연결 화면(인증 Stage C, AUTH_ROADMAP.md 7.3절)에서 linkIdentity 를 쓸 때 true
+enable_manual_linking = false
 
 [auth.email]
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
 
-# 소셜 로그인: 이메일 + Google 은 전 제품 공통. Kakao 는 제품별 선택(기본 off).
+# 소셜 로그인은 단계로 켠다(확정 결정 22, docs/products/_platform-core/AUTH_ROADMAP.md 3.4절).
+#   Stage A(MVP 개발): 전부 false. 로그인은 scripts/dev/seed-users.mjs 시드 계정 + /api/dev/login(Mock).
+#   Stage B(G1 통과 후): google = true (+ 제품 PRD가 정한 이메일 로그인).
+#   Stage C1(G2 통과 후): kakao = true. 비즈 앱이 아니면 이메일 없는 사용자 허용 설정 필요(대시보드).
+#   Stage C2: 네이버는 기본 제공자가 없다. Supabase 커스텀 제공자 custom:naver 를 관리자 API로 등록하거나
+#             (로컬 CLI 지원 미확인) 서버 브리지를 쓴다. 이 파일에는 설정하지 않는다.
 [auth.external.google]
-enabled = true
+enabled = false  # Stage B 에서 true
 client_id = "env(GOOGLE_CLIENT_ID)"
 secret = "env(GOOGLE_CLIENT_SECRET)"
 redirect_uri = ""
 skip_nonce_check = false
 
 [auth.external.kakao]
-enabled = false
+enabled = false  # Stage C1 에서 true
 client_id = "env(KAKAO_CLIENT_ID)"
 secret = "env(KAKAO_CLIENT_SECRET)"
 redirect_uri = ""

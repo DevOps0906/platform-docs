@@ -55,7 +55,8 @@ PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
     ('07_SOURCE_MIGRATION.md', '04-구현', 'DOC-IMP-002', '원본 이식 계획'),
 ]
 CORE_DOCS = ['CORE_SPEC.md', 'SHARED_MODULES.md', 'SECURITY_BASELINE.md', 'DB_CONVENTIONS.md', 'DOC_TEMPLATE.md',
-             'AI_ARCHITECTURE.md', 'LLM_WIKI.md', 'VOICE_ARCHITECTURE.md']
+             'AI_ARCHITECTURE.md', 'LLM_WIKI.md', 'VOICE_ARCHITECTURE.md',
+             'AUTH_ROADMAP.md']  # DOC-CORE-009: 인증 단계(2026-10-14, 확정 결정 22). 순서를 바꾸면 기존 DOC-CORE ID가 바뀐다
 DESIGN_DOCS = ['DESIGN_PRINCIPLES.md', 'DESIGN_SYSTEM.md', 'HERO_3D.md', 'SKILLS.md', 'REFERENCES.md']
 
 
