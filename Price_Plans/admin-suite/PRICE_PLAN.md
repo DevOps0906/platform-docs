@@ -32,7 +32,7 @@
 
 ## 3. 원가 구조
 
-AI 원가 지표는 코어 seed 단가(`products/_supabase-modular/seed.sql:228-246`)와 PRD 4.1절 작업 원가표를 쓴다. 지표 1의 원화는 5~20원으로 가정한다(제안·미확인, `ai_usage` 실측으로 교체).
+AI 원가 지표는 코어 seed 단가(`products/_supabase-modular/seed.sql:243-262`)와 PRD 4.1절 작업 원가표를 쓴다. 지표 1의 원화는 5~20원으로 가정한다(제안·미확인, `ai_usage` 실측으로 교체).
 
 | 항목 | 원가 | 근거 |
 |---|---|---|

@@ -47,7 +47,7 @@ MVP는 크레딧팩 일회 결제만 판다. 연간 구독 20% 할인은 Phase 2
 |---|---|---|
 | 공용 인프라 | Vercel Pro $20 + Supabase Pro $25 = 월 약 $45(약 63,000원), 고객 수와 거의 무관 | [`../_common/COST_BASELINE.md`](../_common/COST_BASELINE.md) 1·2장 |
 | 오픈소스 LLM·음성 GPU 서버 | 미확인(공용 서버, 플랫폼 공동 부담) | `COST_BASELINE.md` 3장 |
-| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자(제안값, 원화 환산 미확인) | `products/_supabase-modular/seed.sql:228-246`(공용 원칙 인용 범위. 현재 파일에서 단가 행은 243-259) |
+| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, TTS ElevenLabs 5cr/천 자·오픈소스 1cr/천 자(제안값, 원화 환산 미확인) | `products/_supabase-modular/seed.sql:243-262`(공용 원칙 인용 범위. 현재 파일에서 단가 행은 243-259) |
 | 결제 수수료(Toss Payments 카드) | 3.4%(VAT 별도) = 결제액의 3.74%. 가입비 220,000원(1회), 연관리비 110,000원 | https://www.tosspayments.com/about/fee (확인일 2026-10-14) |
 | PDF 렌더·스토리지 | 공용 렌더 서비스, Supabase Storage 포함 범위(미확인) | PRD 4.4절 |
 

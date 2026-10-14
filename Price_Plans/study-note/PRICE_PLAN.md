@@ -41,7 +41,7 @@
 |---|---|---|
 | 공용 인프라 | Vercel Pro $20 + Supabase Pro $25 = 월 약 $45(약 63,000원) | [`../_common/COST_BASELINE.md`](../_common/COST_BASELINE.md) 1·2장 |
 | 오픈소스 STT·LLM GPU 서버 | 미확인(공용 서버, 강의 STT의 주 원가) | `COST_BASELINE.md` 3장 |
-| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, 오픈소스 임베딩 0.01cr/1k, STT 오픈소스 0.5cr/분, TTS 오픈소스 1cr/천 자(제안값, 원화 환산 미확인) | `products/_supabase-modular/seed.sql:228-246`(공용 원칙 인용 범위. 현재 파일에서 단가 행은 243-259) |
+| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, 오픈소스 임베딩 0.01cr/1k, STT 오픈소스 0.5cr/분, TTS 오픈소스 1cr/천 자(제안값, 원화 환산 미확인) | `products/_supabase-modular/seed.sql:243-262`(공용 원칙 인용 범위. 현재 파일에서 단가 행은 243-259) |
 | 일지 정리(OpenRouter 13종) | 원화 원가 미확인. 베타 2주 `cost_usd_micros` 실측 후 보정(PRD D-1) | PRD 4.3절 |
 | 결제 수수료(Toss Payments 카드) | 3.4%(VAT 별도) = 결제액의 3.74%. 가입비 220,000원, 연관리비 110,000원 | https://www.tosspayments.com/about/fee (확인일 2026-10-14) |
 

@@ -40,7 +40,7 @@
 
 | 항목 | 원가 | 근거 |
 |---|---|---|
-| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, 임베딩 오픈소스 0.01cr/1k, STT 오픈소스 0.5cr/분 | `products/_supabase-modular/seed.sql:228-246`(제안값) |
+| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, 임베딩 오픈소스 0.01cr/1k, STT 오픈소스 0.5cr/분 | `products/_supabase-modular/seed.sql:243-262`(제안값) |
 | 상용 LLM 실제 단가 | Claude Sonnet 5.5 입력 $2/MTok, 출력 $10/MTok(1k 입력 약 2.8원, 1k 출력 약 14원) | https://platform.claude.com/docs/en/about-claude/pricing (확인일 2026-10-14) |
 | 원가 지표 1cr의 원화 원가 | 약 2.8~3.5원(입력 2.8원/1cr, 출력 14원/4cr) | 위 두 줄로 계산(제안) |
 | hybrid 문서 1건(6cr) | 약 70원(입력 10k + 출력 3k 토큰 가정, 상용) | 제안. 크레딧당 약 11.7원 |

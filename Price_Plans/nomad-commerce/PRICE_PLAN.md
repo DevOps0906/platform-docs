@@ -43,7 +43,7 @@
 |---|---|---|
 | 상세페이지 10슬롯 1건 | 약 $0.13~0.23 = 180~330원(AI 씬 3장 flux-dev $0.075 / flux-pro $0.12 / ultra $0.18 + 누끼 + LLM 약 $0.05) | `products/nomad-commerce/01_PRD.md` 4.3절(이미지 단가는 sellingstudio PRD 인용, 2026-10-14 재확인 안 함: 미확인) |
 | 그래프 도입 후 LLM | 약 $0.06~0.08로 증가 가능(미확인) | PRD 4.3절 |
-| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT·TTS 경로별 | `products/_supabase-modular/seed.sql:228-246`(제안값) |
+| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT·TTS 경로별 | `products/_supabase-modular/seed.sql:243-262`(제안값) |
 | 상용 LLM 실제 단가 | Claude Sonnet 5.5 입력 $2/MTok·출력 $10/MTok(원가 지표 1cr = 약 2.8~3.5원) | https://platform.claude.com/docs/en/about-claude/pricing (확인일 2026-10-14) |
 | 아마존 상품 데이터 API | 건당 단가 미확인(1cr로 흡수) | PRD 4.2절 |
 | 공용 인프라 | 월 $45~55(약 6.3~7.7만원). 유료 30명이면 고객당 약 2,100~2,600원 | `../_common/COST_BASELINE.md` 2장 |

@@ -37,7 +37,7 @@
 | 공용 인프라 | Vercel Pro $20 + Supabase Pro $25 = 월 약 $45(약 63,000원) | [`../_common/COST_BASELINE.md`](../_common/COST_BASELINE.md) 1·2장 |
 | Supabase Realtime 동시 접속 | Pro 500 포함, 이후 1,000개당 $10(월 최고 동시 접속 기준) | https://supabase.com/pricing.md (확인일 2026-10-14) |
 | Supabase Realtime 메시지 | Pro 월 500만 포함, 이후 100만당 $2.50 | https://supabase.com/pricing.md (확인일 2026-10-14) |
-| AI 원가 지표 | 오픈소스 LLM 1k 입력 0.2cr·출력 0.5cr, 오픈소스 임베딩 0.01cr/1k, STT 오픈소스 0.5cr/분, 상용 LLM 1·4cr(제안값, 원화 환산 미확인). 청중 원문은 오픈소스 강제 | `products/_supabase-modular/seed.sql:228-246`(공용 원칙 인용 범위. 현재 파일에서 단가 행은 243-259) |
+| AI 원가 지표 | 오픈소스 LLM 1k 입력 0.2cr·출력 0.5cr, 오픈소스 임베딩 0.01cr/1k, STT 오픈소스 0.5cr/분, 상용 LLM 1·4cr(제안값, 원화 환산 미확인). 청중 원문은 오픈소스 강제 | `products/_supabase-modular/seed.sql:243-262`(공용 원칙 인용 범위. 현재 파일에서 단가 행은 243-259) |
 | 오픈소스 GPU 서버 | 미확인(공용 서버) | `COST_BASELINE.md` 3장 |
 | 결제 수수료(Toss Payments 카드) | 3.4%(VAT 별도) = 결제액의 3.74%. 가입비 220,000원, 연관리비 110,000원 | https://www.tosspayments.com/about/fee (확인일 2026-10-14) |
 

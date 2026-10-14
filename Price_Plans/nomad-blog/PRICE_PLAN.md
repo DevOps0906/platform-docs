@@ -40,7 +40,7 @@
 
 | 항목 | 원가 | 근거 |
 |---|---|---|
-| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/1천 자·오픈소스 1cr/1천 자 | `products/_supabase-modular/seed.sql:228-246`(제안값) |
+| AI 원가 지표 | 상용 LLM 1k 입력 1cr·출력 4cr, 오픈소스 0.2·0.5cr, STT ElevenLabs 3cr/분·오픈소스 0.5cr/분, TTS ElevenLabs 5cr/1천 자·오픈소스 1cr/1천 자 | `products/_supabase-modular/seed.sql:243-262`(제안값) |
 | 상용 LLM 실제 단가 | Claude Sonnet 5.5 입력 $2/MTok·출력 $10/MTok, Opus 5.5 입력 $4·출력 $20 | https://platform.claude.com/docs/en/about-claude/pricing (확인일 2026-10-14) |
 | AI 초안 빠름 1편(5cr) | 약 48원(입력 6k + 출력 2.2k 토큰, Sonnet 5.5 가정) → 크레딧당 9.6원 | 제안 |
 | AI 초안 고품질 1편(8cr) | 약 95원(같은 토큰, Opus 5.5 가정) → 크레딧당 11.9원 | 제안 |
