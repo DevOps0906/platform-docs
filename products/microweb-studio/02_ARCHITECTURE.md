@@ -73,6 +73,7 @@ apps/microweb-studio/
 | showroom | 정적 데이터 + `templates`/`portfolio_items` 읽기, 문의 제출 | engine(미리보기), server |
 | public-site | `site_publications` 읽기(anon 키), 방명록/RSVP/축하말 제출 | engine, server |
 | studio | 사이트/리드/주문 CRUD(사용자 세션 + RPC), 업로드, 게시 요청. 인증 단계를 모른다(`AUTH_MODE` 참조 0, 9절) | engine, server, core-auth(`src/lib/auth/`) |
+| auth(`src/lib/auth`, `src/app/login`, `src/app/auth`, `src/app/api/dev`, `src/proxy.ts`) | 운영자 로그인과 단계 분기(A Mock → B Google·초대 메일 → C 카카오·네이버). `AUTH_MODE`를 읽는 유일한 모듈(9.2절) | core-auth(`packages/core-auth/providers`) |
 | server | service_role 호출을 한곳에 모은다. `createAdminClient`는 여기서만 import | core-db, core-billing, core-ai, core-jobs |
 | worker | 이미지 처리와 게시 파일 복사, 만료/정리 스케줄 | core-jobs, storage |
 | ai-gateway(`src/app/api/ai`, `src/server/ai`) | 대화 매핑, 서명 토큰 발급, 턴 선차감·정산 | core-ai, core-credits |
@@ -267,41 +268,79 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 
 ## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
 
-정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 이 절은 microweb(`signup_policy='invite'`)에 적용되는 값만 정한다. 세션·조직·엔타이틀먼트 계약과 RLS는 단계와 무관하게 같다(`AUTH_ROADMAP.md` 0장 불변 조건).
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`. 이 절은 microweb(`signup_policy='invite'`)에 적용되는 값만 정한다. 세션·조직·엔타이틀먼트 계약과 RLS는 단계와 무관하게 같다(`AUTH_ROADMAP.md` 0장 불변 조건). 로그인하는 사람은 초대받은 운영자뿐이다.
+
+### 9.1 단계표
 
 | 단계 | 언제 | 켜지는 로그인 | microweb 특이점 | 작업 |
 |---|---|---|---|---|
-| A Mock | W0부터 G1까지 | 로컬 Supabase 시드 페르소나 원클릭(`POST /api/dev/login`) | 공통 페르소나 + `studio_denied`(허용 목록 없음). 페르소나 계정의 엔타이틀먼트는 시드 훅이 service_role `bootstrap_app_for_org`로 만든다(invite 앱이라 가입 트리거가 만들지 않음, 05장 10절) | MW-06-003 |
-| B Google + 초대 메일 | G1 통과 후, 공개 베타 전 | Google, 초대 메일 링크 | 콜백은 `bootstrap_app_for_org`를 부르지 않는다. 초대 이메일과 다른 Google 계정은 `entitled=false` → `/no-access`. 엔타이틀먼트가 있어도 `studio_access`가 없으면 `/pending`(2차 게이트 유지) | MW-06-054 |
+| A Mock | W0부터 G1까지 | 로컬 Supabase 시드 페르소나 원클릭(`POST /api/dev/login`) | 공통 페르소나 + `studio_denied`(허용 목록 없음). 페르소나 계정의 엔타이틀먼트는 시드 훅이 service_role `bootstrap_app_for_org`로, `studio_access`는 service INSERT로 만든다(invite 앱이라 가입 트리거가 만들지 않음, MW-06-026 초대 경로와 같은 결과, 05장 10절) | MW-06-003 |
+| B Google + 초대 메일 | G1 통과 후, 공개 베타 전 | Google, 초대 메일 링크(`/auth/invite`), 초대 수락 때 정한 비밀번호의 이메일 로그인 | 콜백은 `bootstrap_app_for_org`를 부르지 않는다. 초대 이메일과 다른 Google 계정은 `entitled=false` → `/no-access`. 엔타이틀먼트가 있어도 `studio_access`가 없으면 `/pending`(2차 게이트 유지) | MW-06-054 |
 | C1 카카오 | G2 통과 후, P2 선택 | `kakao` | 이메일 정책 01장 D-20(권고 비즈 앱 (a)) | MW-06-055 |
 | C2 네이버 | G2 통과 후, P2 선택 | `custom:naver` 또는 브리지 | 경로 01장 D-21(스파이크) | MW-06-056 |
 
+단계 전환은 사람(대표님)이 게이트를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 남긴 뒤에만 한다(06장 8.2절). C단계를 켤지는 G2 뒤 01장 D-19로 따로 정한다.
+
+### 9.2 코드 위치와 단계 분기 규칙
+
+| 위치 | 하는 일 | 단계 분기 허용 | 작업 |
+|---|---|---|---|
+| `src/lib/auth/` | `getAuthConfig()`(env zod 검증), `isMockAuthAllowed()`, `listLoginOptions('microweb')`, `finishLogin('microweb', next)` | 예 | 003 |
+| `src/app/login/` | `listLoginOptions` 결과로 개발용 패널(A), `providers/`의 Google 버튼·이메일 폼(B), 카카오·네이버 버튼(C) 렌더. 판정은 서버 컴포넌트 | 예 | 003, 054(`providers/`), 055·056(자기 제공자 폴더) |
+| `src/app/auth/callback/`, `src/app/auth/invite/` | 코드 교환·초대 토큰 검증 → `finishLogin` | 예 | 054 |
+| `src/app/api/dev/login/`, `src/app/api/dev/logout/` | Stage A Mock 로그인(로컬 전용, 판정 거짓이면 404) | 예 | 003 |
+| `src/app/auth/naver/`, `src/server/auth-bridge/` | C2 브리지 경로를 택한 경우만 | 예 | 056 |
+| 그 밖의 모든 코드(engine, showroom, public-site, studio, server, worker, `apps/api`) | `requireSession('microweb')` → `studio_access`만 쓴다. `AUTH_MODE`·페르소나 이메일로 분기하지 않는다(`if (mock)` 금지) | 아니오(CI grep, MW-06-003·034) | - |
+
+`finishLogin`은 `AUTH_ROADMAP.md` 3.2절 순서를 따르되 invite 앱이라 3번(부트스트랩)을 건너뛴다: `session_context('microweb')` → `entitled=false`면 `/no-access`(초대받은 이메일 안내) → suspended `/403` → `studio_access` 없으면 `/pending`(제품 2차 게이트) → B 이후 약관 미동의면 `/studio/onboarding/terms` → `next` 화이트리스트(기본 `/studio`) → 감사 `auth.login`. Mock 로그인도 같은 함수를 거치므로 `no_app`·`studio_denied` 페르소나로 A단계에서 이 분기를 검증한다.
+
 | 규칙 | 내용 | 근거 |
 |---|---|---|
-| 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`를 읽는 코드는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`(C2 브리지면 `src/app/auth/naver/`)에만 둔다. engine, showroom, public-site, studio, server, worker, `apps/api`에서 `if (mock)` 금지 | `AUTH_ROADMAP.md` 0장, 9장 CI 검사 |
 | 세션 | 모든 단계에서 실제 Supabase JWT. `requireSession('microweb')` → `studio_access` 확인 경로는 단계와 무관하게 같다. Mock도 로그인 직후 `finishLogin`(콜백 2~5번)을 거친다 | `AUTH_ROADMAP.md` 3.2절 |
-| 콜백 분기(invite) | 코드 교환 → `session_context('microweb')` → `entitled=false`면 `/no-access`(초대 이메일 안내, 부트스트랩 호출 없음) → pending `/pending`, suspended 403 → `next` 화이트리스트(기본 `/studio`) → 감사 `auth.login` | `AUTH_ROADMAP.md` 3.2절 3번, 5.2절 "초대제 앱" |
+| 콜백 분기(invite) | 위 문단 순서. `bootstrap_app_for_org`를 호출하지 않는다. 코어 `status=pending`은 approval 앱 전용이라 이 제품에 없고, `/pending`은 `studio_access` 없음 안내다 | `AUTH_ROADMAP.md` 3.2절 3번, 5.2절 "초대제 앱" |
 | 초대 부여 | 엔타이틀먼트와 `studio_access`는 운영자 관리자 라우트(MW-06-026)가 service_role로 만든다. 로그인 경로는 권한을 만들지 않는다 | 05장 4절 |
 | 워커·FastAPI | 인증 단계와 무관(서비스 키·서명 토큰). 로그인 관련 env를 두지 않는다 | 2절 AI 모듈 경계 |
 
-환경변수(`AUTH_ROADMAP.md` 3.3절 중 이 제품 해당분, 8절 표에 더한다):
+### 9.3 환경변수 (`AUTH_ROADMAP.md` 3.3절 중 이 제품 해당분, 8절 표에 더한다)
 
 | 변수 | 단계 | 배치 | 누락 시 |
 |---|---|---|---|
 | `AUTH_MODE` | A·B·C | web(Next.js 서버). 워커·`apps/api`에는 두지 않음 | `live`. 로컬 `.env.example` 기본값은 `mock` |
-| `AUTH_PROVIDERS` | B·C | web | live에서 로그인 수단 0개면 기동 실패. 운영 B단계 값 `google,email`(email = 초대 메일 링크) |
+| `AUTH_PROVIDERS` | B·C | web | live에서 로그인 수단 0개면 기동 실패. 운영 B단계 값 `google,email`(email = 초대 수락 때 정한 비밀번호의 이메일 로그인. 공개 가입은 Supabase에서 끈 상태). C를 켜면 `kakao`, 검수 통과 뒤 `naver` 추가 |
 | `DEV_SEED_PASSWORD` | A(로컬 전용) | web, `scripts/dev/seed-users.mjs`. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `NEXT_PUBLIC_APP_URL` | B·C | web | 콜백 origin과 `next` 검증 기준(`AUTH_ROADMAP.md` 3.2절 5번), 초대 메일 리디렉션 기준. 없으면 live 모드 기동 실패(제안) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`. 원격은 Supabase 대시보드에만(앱 env 아님) | 로컬 Google 버튼 비활성 |
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | C1(선택) | 같은 방식 | 카카오 버튼 비활성 |
 | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2(선택) | `supabase_custom`: 등록 스크립트만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
 | `NAVER_AUTH_PATH` | C2(선택) | web | `supabase_custom` |
 | `AUTH_BRIDGE_SECRET` | C2 브리지만 | web, 32바이트 이상 | 브리지 경로면 기동 실패 |
 
+### 9.4 외부 콘솔과 배포 토폴로지 (7절에 더한다)
+
 | 외부 콘솔 | 배포 토폴로지 메모 |
 |---|---|
+| Supabase 대시보드(B) | Authentication → 공개 가입 끔(초대제), Providers의 Google(C에서 Kakao·커스텀 `custom:naver`), URL Configuration(Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`, `/auth/invite`), Email Templates의 초대 메일 링크를 `/auth/invite?token_hash=...&type=invite`로(04장 8절, 구현 시 확인). 모듈러 통합 프로젝트면 다른 제품과 같은 대시보드라 Redirect URLs에 제품 도메인을 각각 등록한다 |
 | Google Cloud(B) | OAuth 동의 화면(External, 기본 범위만), 웹 클라이언트 ID. 승인된 리디렉션 URI는 앱 도메인이 아니라 Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback`). Supabase Redirect URLs에 `https://<도메인>/auth/callback`(미리보기 도메인 명시 등록) (`AUTH_ROADMAP.md` 5.1절) |
 | 카카오 디벨로퍼스(C1, 선택) | REST API 키, Client Secret, Redirect URI = Supabase 콜백. 공유·지도용 `NEXT_PUBLIC_KAKAO_JS_KEY`(JS 키, 7절 도메인 등록)와 같은 앱을 쓸지는 미확인(구현 시 확인) |
 | 네이버 개발자센터(C2, 선택) | 애플리케이션 등록, 검수 전 "개발 중" 상태. 브리지 경로면 콜백은 앱 도메인 `/auth/naver/callback` |
 | Vercel | 배포 env는 `AUTH_MODE=live`. `VERCEL_ENV`가 있으면 Mock 판정이 항상 거짓(`AUTH_ROADMAP.md` 2.4절) |
 
-로그인 없는 사용자 흐름(하객 `/i/*`, 고객 시안 `/p/*`, 쇼룸 `/`·`/contact`)은 단계와 무관하다. 이 경로의 미들웨어·레이아웃은 세션을 요구하지 않고 로그인 버튼을 두지 않는다(`AUTH_ROADMAP.md:339`).
+```
+브라우저(운영자) ──> web(Vercel) /login ──signInWithOAuth──> Google(·카카오·네이버 custom) ──> Supabase /auth/v1/callback
+                                                                                        │ code
+브라우저(운영자) <── 세션 쿠키 <── web /auth/callback(exchangeCodeForSession → finishLogin) <─┘
+초대 메일(MW-06-026 발송) ──> web /auth/invite(verifyOtp type invite → 비밀번호 설정 → finishLogin)
+(C2 브리지) web /auth/naver/start ──> 네이버 authorize ──> web /auth/naver/callback ──> 세션 발급 → finishLogin
+(A, 로컬) web /api/dev/login ──signInWithPassword(시드 계정)──> 로컬 Supabase(127.0.0.1:54321)
+(하객·시안·쇼룸, 모든 단계) web /i/*, /p/*, /api/public/* ──anon 키·service RPC──> Supabase (Auth 미사용)
+```
+
+### 9.5 로그인 없는 사용자 흐름
+
+| 흐름 | 식별 | 단계와의 관계 |
+|---|---|---|
+| 하객(`/i/[slug]`, `/api/public/[slug]/*`) | 없음(anon 키로 게시 스냅샷 읽기, 쓰기는 service 전용 RPC + IP 해시). 음성 방명록은 서명된 방문자 쿠키 | 단계와 무관. Mock 단계에서도 그대로 동작한다 |
+| 고객 시안(`/p/[token]`) | 시안 토큰 | 단계와 무관. 대행 고객은 계정이 없다(01장 2절 시안 확인 링크 행) |
+| 쇼룸(`/`, `/templates`, `/pricing`, `/simulator`, `/portfolio`, `/contact`) | 없음 | 단계와 무관. 헤더에 운영자 로그인 링크를 새로 넣지 않는다 |
+
+이 경로의 미들웨어·레이아웃은 세션을 요구하지 않고 로그인 버튼을 두지 않는다(`AUTH_ROADMAP.md:339`). B·C 작업은 `src/app/i/`, `src/app/p/`, `src/app/(showroom)/`, `src/app/api/public/`를 수정하지 않는다(06장 8절).

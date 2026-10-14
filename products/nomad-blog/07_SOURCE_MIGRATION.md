@@ -174,10 +174,11 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 CA의 Anthrop
 
 ## 6. 인증 단계 관련 복사 금지 보충 (2026-10-14, 확정 결정 22)
 
-4절에 쿠키 역할 Mock(`lib/mock-auth.ts`) 행은 있으나 아래 두 항목은 없어 여기에 둔다. 정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.4절, 3.2절이다.
+3.1절 폐기 행(`lib/mock-auth.ts`)과 4절에 이어서 본다. 원본의 Mock 로그인은 폐기이고 이식·참고 대상이 아니며, 아래 표의 복사 금지로만 남긴다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 404)뿐이다. 정본은 같은 문서 2.4절, 3.2절이다.
 
 | 패턴 | 출처 | 왜 금지 | 대체 |
 |---|---|---|---|
+| 원본 Mock 로그인 `lib/mock-auth.ts`(쿠키 역할 Mock) | 3.1절 폐기 행, `docs/reviews/NOMAD_Shorts_Maker.md:83`(3장 #6 "Mock 로그인 상시 노출", 02장 6절) | 프로덕션 노출, 권한 위조 | BL-06-004 Stage A Mock 로그인(AUTH_ROADMAP 2장). 파일·함수 이름 `mock-auth`도 쓰지 않는다(BL-06-032 금지 문자열) |
 | 쿠키·localStorage에 역할·플랜을 적는 Mock(`nomad_role`, `nomad_plan`, `dev-user` 우회) | `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`(같은 계열 원본), `docs/products/_platform-core/SECURITY_BASELINE.md` 17장 | 권한 위조, 프로덕션 노출 | 허용 Mock은 AUTH_ROADMAP 2장(로컬 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 거짓이면 404). CI 금지 문자열(BL-06-032) |
 | 로그인 콜백 `next` 무검증 리다이렉트 | AUTH_ROADMAP 3.2절 5번 | 오픈 리다이렉트 | `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin `NEXT_PUBLIC_APP_URL` 고정(BL-06-057 B-2) |
 | YSM `app/api/auth/naver/*`의 로그인 흐름(1.2절 폐기 행) | `docs/reviews/Youtube_shots_Maker.md:84` | 이메일만으로 매직 링크, `listUsers` 1페이지 | C2(BL-06-059)는 새로 구현하고 이 코드를 참고하지 않는다. 블로그 게시용 네이버 로그인(`naver-login.ts`, 2절)은 사용자 로그인과 별개로 그대로 이식 대상이다 |

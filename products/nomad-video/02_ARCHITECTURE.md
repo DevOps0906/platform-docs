@@ -354,4 +354,4 @@ STT 두 경로(01장 VD-F-105, D-13):
 
 ### 9.4 로그인 없는 흐름
 
-공개 랜딩(`/landing/[slug]`), 링크인바이오(`/lb/[handle]`), 단축 링크(`/r/[code]`), 결제 복귀 외 공개 경로, 대행 고객의 승인 화면(`/review/[token]`, 토큰 해시 검증, VD-F-123)은 단계와 무관하다. `proxy.ts` 공개 경로 배열에 `/auth/callback`(B), `/api/dev/login`(A, 판정이 거짓이면 404)을 더할 뿐 이 화면들에 로그인 버튼을 추가하지 않는다.
+공개 랜딩(`/landing/[slug]`), 링크인바이오(`/lb/[handle]`), 단축 링크(`/r/[code]`), 결제 복귀(`/billing/success|fail`), 대행 고객의 승인 화면(`/review/[token]`과 결정 API `POST /api/review/[token]`, 토큰 해시 검증, VD-F-123)은 단계와 무관하다. 고객사 담당자는 계정 없이 토큰 링크로만 승인하고(Supabase 세션 없음, service_role 서버 함수가 토큰 해시로 조회), 단계가 바뀌어도 이 흐름은 그대로다. `proxy.ts` 공개 경로 배열(01장 VD-F-002)에 `/login`, `/api/dev/login`(A, 판정이 거짓이면 404), `/auth/callback`(B), 브리지 채택 시 `/auth/naver/**`(C2)를 더할 뿐 이 화면들에 로그인 버튼을 추가하지 않는다.

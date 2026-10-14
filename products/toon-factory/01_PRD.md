@@ -434,7 +434,7 @@ AI 대화 규칙(6.3·6.5절에 더해 콘티·대사·채팅·TTS 입력 모두
 
 ### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
 
-정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`다. 이 제품은 공개 가입(`signup_policy='open'`, `docs/products/_supabase-modular/seed.sql:23`)이고 로그인하는 사람은 작가·마케터다(AUTH_ROADMAP 8장 toon 행). 기존 가입 수단(이메일 + Google, TN-F-040)과 만 14세 미만 가입 불가(6.6절)는 바꾸지 않고 켜는 시점만 단계로 나눈다. 로그인 없는 사용자 흐름은 이 제품에 없다(랜딩·요금·약관 페이지는 공개지만 로그인 버튼 외 인증 흐름이 없다).
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`다. 이 제품은 공개 가입(`signup_policy='open'`, `docs/products/_supabase-modular/seed.sql:23`)이고 로그인하는 사람은 작가·마케터다(AUTH_ROADMAP 8장 toon 행). 기존 가입 수단(이메일 + Google, TN-F-040)과 만 14세 미만 가입 불가(6.6절)는 바꾸지 않고 켜는 시점만 단계로 나눈다. 로그인 없는 사용자 흐름은 이 제품의 MVP에 없다(랜딩·요금·약관 페이지는 공개지만 로그인 버튼 외 인증 흐름이 없다). Phase 2 광고주 외부 검토 링크(D19 (a), 만료 토큰)가 생기면 그 화면은 단계와 무관하게 로그인 없이 둔다.
 
 범위 표(2절 범위 표에 로그인 행이 없어 여기에 둔다)
 

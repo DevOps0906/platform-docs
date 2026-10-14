@@ -301,7 +301,7 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 
 | 규칙 | 내용 |
 |---|---|
-| 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `apps/nomad-commerce/lib/auth/`, `app/(auth)/login/`, `app/(auth)/callback/`(B단계), `app/api/dev/login/`(A단계)에만 둔다. 기능 코드·워커·FastAPI에 `if (mock)` 없음(CI grep) |
+| 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `apps/nomad-commerce/lib/auth/`, `app/(auth)/login/`, `app/auth/callback/`(B단계, URL `/auth/callback`. 라우트 그룹 `(auth)` 아래가 아니다, 06장 8.1절), `app/api/dev/login/`(A단계), `app/auth/naver/`(C2 브리지만)에만 둔다. 기능 코드·워커·FastAPI에 `if (mock)` 없음(CI grep) |
 | 콜백 | `finishLogin('commerce', next)`: 코드 교환 → `session_context('commerce')` → `entitled=false`면 open 앱이므로 `bootstrap_app_for_org('commerce')` 1회 → 상태 분기 → `next` 화이트리스트(기본 `/dashboard`). Mock 로그인도 같은 함수를 거친다(`AUTH_ROADMAP.md` 3.2절) |
 | 워커·FastAPI | 단계와 무관하다. 워커는 service_role과 잡 토큰, FastAPI는 서명 토큰만 본다. 서명 토큰의 `sub`·`org`는 로그인 방식과 상관없이 `session_context`에서 채운다 |
 

@@ -39,6 +39,8 @@
 | `/dashboard/billing` | 플랜·결제·크레딧팩 | owner/admin | 전 플랜 | P0 |
 | `/dashboard/settings`, `/dashboard/settings/team` | 조직 설정, 팀 | owner/admin | 팀은 Advanced | P1 |
 | `/dashboard/automation` | 캔버스(저장만) | owner/admin/member | Advanced | P2 |
+| `/onboarding/terms` | 첫 OAuth 로그인 뒤 약관 동의(B부터, 7.3절). 이메일 가입자와 A 시드 계정은 건너뜀 | 본인 | 전 플랜 | P0 |
+| `/dashboard/settings/login-methods` | 로그인 방법 연결·해제(C부터, 7.4절) | 본인(전 역할) | 전 플랜 | P1 |
 | `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만), 외부 서비스(DeepL, fal, Suno) 고지 | owner/admin | 전 플랜 | P0 |
 | 채팅 패널(모든 `/dashboard/*` 오른쪽 시트), `/dashboard/chat` | AI 채널 코치(텍스트·음성), 대화 목록 | 전 역할(대화는 본인만) | `features.ai_chat` | P0 |
 | `/dashboard/wiki`, `/dashboard/wiki/[...slug]`, `/dashboard/wiki/lint` | 채널·브랜드 가이드 위키(목록·검색, 페이지, 변경 이력, 점검 결과), 가이드 문서 업로드 | 읽기 전 역할, 쓰기·게시 owner/admin | 전 플랜 | P0 |
@@ -484,7 +486,7 @@ reduced-motion이면 0~4단계 없이 정지 이미지만 보인다. 생성 건�
 
 ### 7.3 첫 OAuth 로그인 뒤 약관 동의
 
-OAuth는 가입 화면을 거치지 않으므로 약관·개인정보처리방침 동의를 제품 온보딩의 첫 단계에서 받는다. 순서: `/auth/callback` → (첫 로그인이고 약관 동의 기록이 없으면) 온보딩 첫 단계 "약관 동의"(이용약관, 개인정보처리방침, 만 14세 이상 확인, 01장 6절) → `/onboarding/ai`(AI 처리 방식, 2.7절) → `/dashboard`. 동의 기록 위치(감사 기록 또는 프로필 메타데이터)는 VID-06-063에서 정한다(제안: `write_audit`, action `terms.accept`, 약관 버전을 메타데이터에). 이메일 가입은 `/signup` 폼에서 동의를 받으므로 이 단계를 건너뛴다. Stage A 시드 계정은 동의한 상태로 본다.
+OAuth는 가입 화면을 거치지 않으므로 약관·개인정보처리방침 동의를 제품 온보딩의 첫 단계에서 받는다. 순서: `/auth/callback` → (첫 로그인이고 약관 동의 기록이 없으면) 온보딩 첫 단계 `/onboarding/terms` "약관 동의"(이용약관, 개인정보처리방침, 만 14세 이상 확인, 01장 6절) → `/onboarding/ai`(AI 처리 방식, 2.7절) → `/dashboard`. 동의 기록 위치(감사 기록 또는 프로필 메타데이터)는 VID-06-063에서 정한다(제안: `write_audit`, action `terms.accept`, 약관 버전을 메타데이터에). 이메일 가입은 `/signup` 폼에서 동의를 받으므로 이 단계를 건너뛴다. Stage A 시드 계정은 동의한 상태로 본다.
 
 ### 7.4 설정 → 로그인 방법 (C단계, P1)
 

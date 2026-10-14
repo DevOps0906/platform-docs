@@ -40,7 +40,7 @@
 |---|---|---|---|---|
 | 1 | `/signup` | 이메일·비밀번호 또는 Google(C단계부터 카카오·네이버), 필수 동의 2개(국외 이전은 3-1단계에서 선택). Stage A에는 이 화면이 없고 `/login` 개발용 패널에서 페르소나로 로그인한다(7절) | `signUp(options.data.signup_app='astro')` → 가입 트리거가 프로필, 개인 조직, starter 엔타이틀먼트 생성 | 레이트 리밋 초과 429 |
 | 2 | `/auth/verify` | 메일 링크 클릭 | `/auth/callback` → 세션 생성 | 링크 만료 → 재발송 버튼 |
-| 3 | `/auth/callback` | - | 이메일 인증 또는 Google 확인(C단계부터 카카오·네이버 확인 포함) → `POST /api/auth/welcome` → `grant_credits(30, signup:<org>:astro)`, `consents` 3행 | 같은 IP 해시 하루 3회 초과 → 지급 보류 + 안내 |
+| 3 | `/auth/callback` | - | 이메일 인증 또는 Google 확인(C단계부터 카카오·네이버 확인 포함) → `POST /api/auth/welcome` → `grant_credits(30, signup:<org>:astro)`. 이메일 가입은 `/signup`에서 받은 동의를 `consents` 3행으로 기록한다. OAuth 첫 로그인은 동의를 받은 적이 없으므로 7.3절 `/onboarding/terms`가 기록한다 | 같은 IP 해시 하루 3회 초과 → 지급 보류 + 안내 |
 | 3-1 | `/onboarding/ai` | "상용 AI 사용(국외 이전 동의)" 또는 "국내 오픈소스만" 선택. 고지문(제공자, 이전 국가, 항목, 목적, 보유 기간) 펼쳐 보기 | `POST /api/onboarding/ai-consent` → 동의 시 `core.set_ai_cross_border_ack(org, true, 고지문 버전)` + `consents(overseas_transfer)`, 거부 시 `consents(overseas_transfer, granted=false)` | 선택 없이 닫으면 미동의(오픈소스)로 진행. 설정에서 언제든 변경 |
 | 4 | `/dashboard` | - | "본인 프로필을 먼저 등록하세요" 빈 상태 | - |
 
@@ -466,7 +466,7 @@ astro는 open 앱이라 invite 앱의 `/no-access` 안내와 approval 앱의 `/p
 
 ### 7.3 첫 OAuth 로그인 뒤 약관 동의 위치
 
-OAuth(Google·카카오·네이버) 가입은 `/signup`을 거치지 않으므로 필수 동의 2개(01장 6.2절)를 온보딩 첫 단계 `/onboarding/terms`(제안)에서 받는다. 순서: `/auth/callback` → (약관 미동의면) `/onboarding/terms` → `/onboarding/ai`(2.1절 3-1단계) → `/dashboard`. 이메일 가입자는 `/signup`에서 이미 동의했으므로 `/onboarding/terms`를 건너뛴다. 환영 크레딧 지급(`POST /api/auth/welcome`)은 약관 동의와 독립이며 로그인 확인 직후 1회다.
+OAuth(Google·카카오·네이버) 가입은 `/signup`을 거치지 않으므로 필수 동의 2개(01장 6.2절)를 온보딩 첫 단계 `/onboarding/terms`(제안)에서 받는다. 순서: `/auth/callback` → (약관 미동의면) `/onboarding/terms` → `/onboarding/ai`(2.1절 3-1단계) → `/dashboard`. 이메일 가입자는 `/signup`에서 이미 동의했으므로 `/onboarding/terms`를 건너뛴다. 판정은 "OAuth 제공자 로그인이고 `consents`에 `terms_required`·`privacy_required`가 없음"이다. Stage A 시드 페르소나는 이메일 제공자 계정이라 이 단계를 거치지 않는다. 환영 크레딧 지급(`POST /api/auth/welcome`과 같은 함수)은 약관 동의와 독립이며 로그인 확인 직후 1회다(04장 8절 콜백 5번).
 
 ### 7.4 설정 → 로그인 방법 (C단계, P1)
 

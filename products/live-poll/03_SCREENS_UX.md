@@ -15,6 +15,7 @@
 | `/events/[id]/live` | 진행자 콘솔(진행, 결과, Q&A 모더레이션, 참가자) | owner/admin/member | 모든 플랜 | P0 |
 | `/events/[id]/results` | 결과 보존 화면 + CSV | owner/admin/member/viewer | `export_csv` | P1 |
 | `/settings` | 금칙어, 계정 | owner/admin | 모든 플랜 | P1 |
+| `/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제). C단계부터(7.4절) | 로그인한 진행자 본인(역할 무관) | 모든 플랜 | P1 |
 | `/present/[id]` | 발표 화면(전체화면) | 진행자 세션 | 모든 플랜 | P0 |
 | `/overlay/[id]?k=` | OBS 오버레이 | 오버레이 키 | `overlay` | P0 |
 | `/join` | 코드 입력 | 청중 | - | P0 |
@@ -445,14 +446,14 @@ Q&A AI 정리 패널 와이어프레임(콘솔 오른쪽 Q&A 열 안):
 |---|---|
 | 위치 | 제품 온보딩 `/onboarding`의 첫 단계(베타 약관·개인정보처리방침 동의) → 두 번째 단계 "AI 처리 방식"(LP-F-034) |
 | 대상 | B·C단계 OAuth(Google·카카오·네이버) 첫 로그인. 이메일 가입자는 가입 폼에서 이미 동의했으므로 건너뛴다 |
-| 미동의 | `/events` 등 진행자 화면 진입 차단, `/onboarding`으로 이동(서버 가드). 동의 기록 방식은 LP-06-049에서 정한다(제안: `core.write_audit` `terms.accept`에 약관 버전, 음성 고지 `voice.notice_ack`와 같은 방식) |
-| A단계 | 시드 페르소나는 동의 완료 상태로 만든다(시드 스크립트 훅). 온보딩 화면 자체는 A단계에서 구현·검증한다 |
+| 미동의 | `/events` 등 진행자 화면 진입 차단, `/onboarding`으로 이동(서버 가드). 동의 기록 방식은 LP-06-049에서 정한다(제안: `core.write_audit` `terms.accept`에 약관 버전, 음성 고지 `voice.notice_ack`와 같은 방식, 06장 8.3절 R-10) |
+| A단계 | 약관 단계와 그 서버 가드는 아직 없다(B에서 LP-06-049가 추가). `/onboarding`의 "AI 처리 방식" 단계(LP-06-037)는 A단계에서 Mock 페르소나로 구현·검증한다. 049가 약관 가드를 켤 때 시드 훅(`seed-users.poll.mjs`)이 페르소나의 동의 기록을 만들게 해(003 파일에 1줄 요청) Mock E2E가 약관 단계에서 멈추지 않게 한다 |
 
 ### 7.4 설정 → 로그인 방법 (C단계, P1)
 
 | 항목 | 내용 |
 |---|---|
-| 위치 | `/settings`의 "로그인 방법" 탭(owner/admin뿐 아니라 로그인한 모든 진행자 본인) |
+| 위치 | `/settings/login-methods`(설정 화면의 "로그인 방법" 탭). `/settings`의 다른 탭은 owner/admin 전용이지만 이 탭은 로그인한 모든 진행자 본인(member·viewer 포함)이 쓴다. 소유는 LP-06-050(06장 8.1절) |
 | 표시 | 연결된 제공자 목록(Google, 이메일, 카카오, 네이버), 연결·해제 버튼 |
 | 해제 | 남는 로그인 수단이 1개 이상일 때만 버튼 활성 |
 | 감사 | `auth.identity_link`, `auth.identity_unlink`(AUTH_ROADMAP 7.3절) |

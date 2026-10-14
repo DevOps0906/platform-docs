@@ -6,7 +6,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·가입·콜백 작업이면 `AUTH_ROADMAP.md`(이 파일 끝 "인증 단계 규칙" 절) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
 | 2 | 이 폴더 `01_PRD.md` → `02_ARCHITECTURE.md` → `05_DATA_MODEL.md` → `04_API.md` → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md`(자기 작업 행) → `07_SOURCE_MIGRATION.md` 4절 |
 | 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` toon-factory 절, 랜딩이면 `HERO_3D.md`. 디자인 정답은 코드(`tokens.css`, `components/ui/`)이고 문서는 `docs/file/03-설계/디자인/DESIGN.md`·`COMPONENTS.md` |
@@ -102,4 +102,5 @@
 | E2E | Playwright `globalSetup`이 `/api/dev/login`으로 페르소나별 `storageState`를 저장하고 각 테스트는 그 상태로 시작한다. 실제 Google·카카오·네이버 로그인은 자동화하지 않는다(사람 수동 점검표) |
 | 금지 패턴 | 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈 밖 `AUTH_MODE` 참조(CI 실패, TN-06-031), 원격 Supabase에 시드 계정 생성, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·브라우저 번들에 넣기, 콜백 `next` 무검증, 제공자 토큰 저장, 이메일 일치만으로 계정 합치기(07장 6절) |
 | 단계 전환 | 에이전트가 스스로 단계를 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한 뒤에만 B·C 작업을 시작한다. 네이버 경로도 스파이크 뒤 `[DECISION]`으로 기록 |
+| 소유 경로 | 004: `src/lib/auth/`, `src/app/api/dev/login/`, `scripts/dev/`, `src/proxy.ts`. 027: `(auth)/login/`. 067: `(auth)/signup/`·`reset/`·`auth/callback/`, `(auth)/login/providers/`(027에서), `src/lib/auth/oauth/`와 콜백 연결부(004에서 이어 받음), `onboarding/terms/`. 068: `oauth/kakao.ts`, `app/settings/login-methods/`. 069: `oauth/naver.ts`, `(auth)/auth/naver/`(브리지만), `scripts/auth/`. 다른 작업 파일은 1줄 요청(06장 8.1·8.4절) |
 | 이 제품의 작업 | A: TN-06-004(모듈 경계, Mock, 시드, 가드, `finishLogin`), TN-06-027(개발용 패널). B: TN-06-067(P0, W6 맨 앞, G1 후). C1: TN-06-068(P1, W7, G2 후). C2: TN-06-069(P1, W7, G2 후) |

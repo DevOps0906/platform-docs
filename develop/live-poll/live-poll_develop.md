@@ -38,10 +38,9 @@ D:\WorkSpace\DEV\live-poll\                            베이스를 복사해 �
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
 | 7 | 작업(51개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
-| - | AI 계층, 개발 위키 | 11~12 |
-| - | 인증 단계(Mock → Google → 카카오·네이버) | 13 |
-| - | 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 14~18 |
-| - | 체크리스트 | 19 |
+| - | AI 계층, 개발 위키, 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
+| - | 체크리스트 | 18 |
+| - | 인증 단계: Mock → Google → 카카오·네이버(진행자만 로그인. 7·9·10절과 함께 봅니다) | 19 |
 
 ## 1. 개요
 
@@ -52,7 +51,7 @@ D:\WorkSpace\DEV\live-poll\                            베이스를 복사해 �
 | 모듈러 앱 id / 스키마 | `poll` / `poll` (통합 DB를 쓸 때) |
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(`public` 스키마, 기획서 D6) |
 | 개발 근거 | `docs/file/`의 산출물 25개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
-| 인증 | 진행자만 로그인. 단계: A Mock(개발) → B Google + 이메일(공개 베타 전) → C 카카오·네이버(G2 후). 청중(코드·QR)과 OBS 오버레이(키)는 로그인 없음, 단계와 무관(13절) |
+| 인증 | 진행자만 로그인. 단계: A Mock(개발) → B Google + 이메일(공개 베타 전) → C 카카오·네이버(G2 후). 청중(코드·QR)과 OBS 오버레이(키)는 로그인 없음, 단계와 무관(19절) |
 | AI 범위 | 진행자 AI 어시스턴트(Dify), 행사 자료 RAG, 행사 위키, Q&A AI 정리 그래프 `poll.qna_assist`, 음성(진행자 음성 대화, 청중 음성 질문, 요약 읽어 주기). 청중 원문은 항상 오픈소스 모델 |
 
 이 문서는 "어떻게 시작하고 진행하는가"를 다룹니다. "무엇을 만드는가"는 묶음 안의 산출물(`docs/file/`)이 정본입니다.
@@ -275,7 +274,7 @@ D:\WorkSpace\DEV\live-poll\
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 LP-06-001~051, 모두 51개입니다. 그중 LP-06-034는 사람이 하는 디자인 비주얼 검토입니다. 2026-10-14 인증 단계(확정 결정 22)로 LP-06-003이 Stage A(Mock 로그인)로 바뀌고 LP-06-049(B), 050(C1), 051(C2)이 추가됐습니다(13절).
+작업은 LP-06-001~051, 모두 51개입니다. 그중 LP-06-034는 사람이 하는 디자인 비주얼 검토입니다. 2026-10-14 인증 단계(확정 결정 22)로 LP-06-003이 Stage A(Mock 로그인)로 바뀌고 LP-06-049(B), 050(C1), 051(C2)이 추가됐습니다(19절).
 
 | 웨이브 | 작업 ID | 진입 조건 | 산출물 |
 |---|---|---|---|
@@ -399,16 +398,138 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - 초기 페이지(`sources/*.md` 25개)는 setup 시 함께 들어옵니다.
 - 제품의 "행사 위키"(DB의 `core.wiki_pages`, LP-06-039)와는 다른 것입니다. 이 절은 개발용 위키입니다.
 
-## 13. 인증 단계: Mock → Google → 카카오·네이버
+## 13. 메인 디자인과 디자인 시스템
+
+디자인 작업 순서: 13.3 시각 레퍼런스(Awwwards·Dribbble) → 13.1 디자인 시스템 → 13.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
+
+### 13.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
+
+| 단계 | 작업 | 담당 |
+|---|---|---|
+| 1. 레퍼런스 확정 | 진행자 콘솔은 Atlassian(주)·Primer(보조), AI 패널은 Astryx 패턴(확인 후, D17), 랜딩은 HERO_3D | LP-06-033, 고문 검토 |
+| 2. 가진 것 위에서 시작 | 03장 토큰 플랜(객석 남색, 스크린 백색, 막대 청록, 응답 주황, 좌석 회색) + Tailwind CSS v4 `@theme` → `tokens.css`, 기본 컴포넌트, `/dev/components` | LP-06-023 |
+| 3. 비주얼은 사람이 | 라이트/다크, 상태, 크기 배리언트를 스크린샷으로 보고 사람이 수치를 고칩니다 | LP-06-034(사람) |
+| 4. 정답을 한 곳으로 | 코드(Tailwind v4 CSS + 컴포넌트)를 정답으로 확정하고 `DESIGN.md`, `COMPONENTS.md`를 코드 기준으로 맞춤 | LP-06-035 |
+
+- AI에게는 컴포넌트 1개 단위로 맡깁니다(`DESIGN_SYSTEM.md` 8장 템플릿). "알아서 만들어 줘"는 쓰지 않습니다.
+- 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
+- 화면 작업은 4단계(LP-06-035) 뒤에 시작합니다.
+
+### 13.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
+
+2026-10-13 사용자 결정(확정 결정 15)으로 CSS 막대 데모에서 3D 무대 장면으로 바뀌었습니다.
+
+| 기기 | 구성 |
+|---|---|
+| PC(1280px 이상), 태블릿(768~1279px) | 풀 3D: 무대 위에서 투표 시연이 들어올 때마다 막대와 구가 솟고 순위가 교대합니다 |
+| 모바일(767px 이하) | 가벼운 3D 자동 로드: 막대 3개 |
+| 대체 | WebGL 미지원·저사양(로드 전 판정)·동작 줄이기 설정이면 정지 렌더 이미지 |
+
+- 제목, 6자리 코드, 막대 라벨·숫자는 HTML로 3D 위에 겹칩니다. 값은 시연용이며 "시연 화면입니다"를 표시합니다.
+- 성능 예산(제안): PC·태블릿 1MB/60fps, 모바일 300KB/30fps, LCP 2.5초 이하
+- 금지: 이모지 반응 남발, 네온색, 보라/핑크 그라디언트, 큰 숫자 + 작은 라벨 히어로
+- 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(LP-06-047, 022)
+
+### 13.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
+
+화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
+
+| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
+|---|---|---|---|
+| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
+| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
+
+이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` live-poll 절(`:183`)에 있습니다.
+
+| 구분 | 출처 | URL | 참고 포인트 | 적용 화면 |
+|---|---|---|---|---|
+| 랜딩 | Awwwards (SWSH, Nominee) | https://www.awwwards.com/sites/swsh | 라이브 행사 중 참여와 행사 후 결과를 나눠 설명하는 구조 | 랜딩 |
+| 앱 | Dribbble (Fast Poll - Poll Results) | https://dribbble.com/shots/5451736-Fast-Poll-Poll-Results | 자동 갱신 결과, 숫자 애니메이션, 득표순 재정렬 | 발표 화면, 오버레이, 랜딩 히어로 데모 |
+| 앱 | Dribbble (Online poll result dashboard) | https://dribbble.com/shots/6227327-Online-poll-result-dashboard | 진행자가 보는 결과 대시보드 배치 | 진행자 콘솔 |
+| 앱 | Dribbble (Mobile design concept for a polling app) | https://dribbble.com/shots/24164744-Mobile-design-concept-for-a-polling-app | 모바일 선택지 크기와 제출 흐름 | 청중 화면 |
+
+- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
+- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
+- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
+- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 13.1 디자인 시스템 → 13.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
+- 화면·랜딩 task의 `task.md` baseline에는 아래 3개를 넣습니다. 06장의 레퍼런스 확정 task와 랜딩 task 수용 기준에도 같은 레퍼런스 확인이 들어 있습니다.
+
+```yaml
+baseline:
+  - id: DOC-DES-002
+    path: docs/file/03-설계/03_SCREENS_UX.md   # 4.1절 레퍼런스 표, 4.2 브리프, 4.3 토큰 플랜
+  - id: DOC-DSN-005
+    path: docs/file/03-설계/디자인/REFERENCES.md   # 이 제품 절, 복제 금지 규칙
+  - id: DOC-DSN-001
+    path: docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md   # 1단계 레퍼런스 수집, 7단계 체크리스트
+```
+
+- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
+
+## 14. 원본 이식
+
+정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
+
+- 원본(`D:\WorkSpace\platform\구현해야 할 프로젝트\Slido_Project\`)에는 코드가 없고 문서 2개뿐입니다. 이식은 요구사항·원칙을 새 기획서로 옮기는 것이며 복사할 코드가 없습니다. AI 계층은 원본에 없는 신규 기능입니다.
+- 리뷰 "높음" 4건의 차단 설계는 `02_ARCHITECTURE.md` 6절과 `05_DATA_MODEL.md` 7절에 있습니다. 해당 task의 리뷰 단계에서 차단 여부를 확인합니다.
+- 07장의 "폐기" 항목(Socket.io/FastAPI WebSocket, Redis 집계, 방 페이지 GEO)과 복사 금지 결함(전체 재조회, 채널 중복, 공개 채널 신뢰 등)은 옮기지 않습니다. 참고 자산(Hospital 실시간 훅)은 구조만 참고합니다. 인증 Mock은 07장 6절(쿠키 역할 Mock 금지)대로 19절의 로컬 시드 계정 방식만 씁니다.
+
+## 15. 공용 모듈 경계
+
+| 항목 | 규칙 |
+|---|---|
+| core 코드 위치 | `apps/web/src/core/`(인증, 조직, 결제, 크레딧, AI 게이트, 음성 어댑터), `apps/api/app/core/`, `apps/api/app/ai/`. 다음 제품에서 재사용하거나 공용 패키지로 뺄 수 있게 한곳에 모읍니다. 인증 단계 모듈은 `apps/web/src/lib/auth/`(기획서 `src/lib/auth/`)에 두고 그 밖에서 `AUTH_MODE`를 읽지 않습니다 |
+| 브로드캐스터 | `services/poll-broadcaster/`는 Railway에 올리는 별도 프로세스입니다. 투표 경로의 일부이므로 AI 코드를 import하지 않습니다 |
+| 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 R-5) |
+| 남은 코어 과제 | 모듈러 seed 반영(R-3), `rate_limit_peek`(R-2), ai-service 모델 키 해석·위키 편집(R-6), core-voice 방문자 컨텍스트(R-7), Dify 앱 생성(R-8), 네이버 브리지 채택 시 `auth_identity_links` 적용(R-9), 약관 동의 기록 표준(R-10). `docs/file/01-관리/06_AGENT_PLAN.md` 6절과 8.3절 참고 |
+
+## 16. 검증과 완료 정의
+
+- task 완료 = `06_AGENT_PLAN.md`의 수용 기준 충족 + 리뷰 추적성 표에 끊긴 곳 없음 + `gate.sh`·`scope_check.sh` 통과
+- 커밋 전에 `bash _shared/check-invariants.sh`가 PASS여야 합니다.
+- MVP 완료는 `06_AGENT_PLAN.md` 7절 완료 정의를 따릅니다.
+
+## 17. 위험과 주의
+
+| 위험 | 대응 |
+|---|---|
+| Supabase 프로젝트 비용 | 제품마다 프로젝트 1개입니다. 제품이 3~4개를 넘으면 통합 DB(모듈러) 전환을 검토합니다. 통합 DB SQL은 이미 있습니다(`D:\WorkSpace\platform\docs\products\_supabase-modular\`). Realtime 부하가 다른 제품에 영향을 주면 모놀리스로 분리합니다 |
+| Realtime 한도 | 플랜별 동시 접속·초당 메시지 한도는 미확인입니다. LP-06-027 부하 테스트로 확정하고 인원별 간격은 1810 마이그레이션으로 반영합니다. 청중 JWT 방식(사용자 정의 JWT 수용 여부)은 LP-06-011에서 확인합니다 |
+| 청중 음성 남용 | 익명 입력으로 진행자 지갑이 소진될 수 있습니다. 5중 한도 + 묶음 선차감 + 오픈소스 전용을 지키고 LP-06-048 시나리오를 통과해야 합니다. 남용이 보이면 D12(Turnstile)를 앞당깁니다 |
+| AI·음성 비용 | 크레딧 선차감과 정산, 기능별 라우팅, 오픈소스 우선·강제 기능으로 관리합니다. 운영 중 `core.ai_usage`로 원가를 확인해 단가(제안값)와 free 가입 크레딧 100(D8)을 확정합니다 |
+| 국외 이전과 개인정보 | 동의 전 국외 제공자 사용 금지, 청중 원문(질문·닉네임·음성)은 동의와 무관하게 상용 전송 금지(D9), 녹음 기본 미저장, IP 원문 미저장 |
+| 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만, LLM 키는 FastAPI에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
+| Mock 로그인 노출 | `AUTH_MODE=mock`이 배포에 들어가면 개발 계정 로그인이 열립니다. `isMockAuthAllowed()` 3조건, 기동 실패, `/api/dev/login` 404, CI 빌드 검사(19.1, LP-06-003)로 막고 단계 전환은 사람이 G1·G2를 판정한 뒤에만 합니다 |
+| 청중 화면에 로그인 유입 | 단계 전환 때 청중(`/join`, `/e/<code>`)·오버레이 화면에 로그인 버튼이나 세션 검사가 섞이면 무로그인 입장이 깨집니다. B·C task의 `write_scope`에서 `(participant)`, `overlay`, `api/p`, `api/overlay`, `lib/realtime-auth`를 빼고, LP-06-049 수용 기준(전환 전후 청중·오버레이 E2E 동일)으로 확인합니다 |
+| 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 platform에서 다시 묶으려면 `build_root.py`를 실행합니다 |
+| AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
+
+## 18. 체크리스트
+
+- [ ] 2절 도구 설치 확인(Git Bash, jq, Python, Node·pnpm, uv, Supabase CLI, Docker, k6)
+- [ ] setup 스크립트 dry-run으로 할 일 확인
+- [ ] setup 스크립트 실행, 무결성 점검 PASS
+- [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
+- [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 진행자 chat만 상용)
+- [ ] `supabase start` → `supabase db reset` 성공(7절)
+- [ ] 결정 D1~D21 확정(D19~D21은 해당 게이트 전), 산출물 "승인" 전환(8절)
+- [ ] W0 task 생성과 진행(9절)
+- [ ] Stage A: `seed-users.mjs --app poll` 실행, `/login` 개발용 패널로 `host`·`cohost` 로그인 확인(19.2)
+- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
+- [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
+- [ ] W1~W5 진행 → G1 판정(19.3) → W6(LP-06-049 먼저) → AI 보안 회귀 통과, MVP 출시 조건 충족
+- [ ] 공개 베타 2주 뒤 G2 판정(19.5) → LP-06-050·051(19.6, 19.7)
+
+## 19. 인증 단계: Mock → Google → 카카오·네이버
 
 정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009), 제품 적용은 `docs/file/02-요구사항/01_PRD.md` 8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙" 절. 확정 결정 22(`docs/reference/00_MERGE_ANALYSIS.md:30`)입니다.
 
-### 13.1 단계 요약
+### 19.1 단계 요약
 
 | 단계 | 로그인 | 언제 | 끝나는 조건 | 작업 |
 |---|---|---|---|---|
-| A | 로컬 Supabase 시드 계정 Mock 로그인(`/login` 개발용 패널, 상단 `MOCK AUTH · 로컬 전용` 배지) | W1(LP-06-003)부터 MVP 기능이 모두 동작할 때까지 | G1(13.3) | LP-06-003 |
-| B | Google + 이메일(가입·비밀번호 재설정) | G1 통과 후, 공개 베타 전(W6 맨 앞) | G2(13.5) | LP-06-049(P0, Fable, M) |
+| A | 로컬 Supabase 시드 계정 Mock 로그인(`/login` 개발용 패널, 상단 `MOCK AUTH · 로컬 전용` 배지) | W1(LP-06-003)부터 MVP 기능이 모두 동작할 때까지 | G1(19.3) | LP-06-003 |
+| B | Google + 이메일(가입·비밀번호 재설정) | G1 통과 후, 공개 베타 전(W6 맨 앞) | G2(19.5) | LP-06-049(P0, Fable, M) |
 | C1 | 카카오(Supabase 기본 제공자) | G2 통과 후(W7) | `AUTH_ROADMAP.md` 7.1.3절 | LP-06-050(P1, Opus, S) |
 | C2 | 네이버(스파이크 → `custom:naver` 또는 서버 브리지) | G2 통과 후(W7, 050과 병렬) | `AUTH_ROADMAP.md` 7.2.4절 | LP-06-051(P1, Fable, M) |
 
@@ -417,7 +538,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - **live-poll 특이점: 로그인하는 사람은 진행자뿐입니다.** 청중은 로그인 없이 6자리 코드·QR(`/join`, `/e/<code>`)로 들어오고 서버 발급 참가자 토큰(httpOnly 쿠키, 01장 D2)으로 식별됩니다. OBS 오버레이(`/overlay/<id>?k=`)는 오버레이 키로만 동작합니다. 이 두 흐름은 단계와 무관하며 단계 전환 때 바꾸지 않고 로그인 버튼도 추가하지 않습니다. 참가자 토큰은 Supabase Auth 사용자가 아니므로 Mock 단계에서도 그대로 동작합니다(로컬 Supabase + service_role RPC만 씀).
 - 제품 페르소나는 행사 진행자 `host`와 공동 진행자 `cohost` 두 개입니다. 공동 진행자 초대 화면은 Phase 2라서 `cohost`는 코어 `invite_member`·`accept_invite` RPC로만 만듭니다.
 
-### 13.2 Stage A 로컬 실행 순서
+### 19.2 Stage A 로컬 실행 순서
 
 | 순서 | 명령·동작 | 설명 |
 |---|---|---|
@@ -440,7 +561,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | `admin`·`member`, `no_app`, `suspended`, `ops` | 코어 공통(`AUTH_ROADMAP.md` 2.2절) | 역할 분기, 첫 진입 부트스트랩(이 개발은 단독 `public`이라 `no_app`도 자동 부트스트랩), 403 |
 | `pending` | 만들지 않음 | poll은 open 앱이라 승인 대기 상태가 없습니다 |
 
-### 13.3 게이트 G1 체크리스트 (사람이 판정)
+### 19.3 게이트 G1 체크리스트 (사람이 판정)
 
 - [ ] `06_AGENT_PLAN.md` 2절 MVP P0 기능 작업 완료(049~051과 공개 베타 직전 통합 작업 048 제외)
 - [ ] 핵심 플로우 E2E(LP-06-025) 녹색, Mock 페르소나 storageState
@@ -451,7 +572,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] 01장 D21(이메일 가입 유지) 확정
 - [ ] 판정 결과를 task `log.md`에 `[DECISION] G1 통과`로 기록
 
-### 13.4 Stage B 외부 설정 순서 (사람, `AUTH_ROADMAP.md` 5.1절)
+### 19.4 Stage B 외부 설정 순서 (사람, `AUTH_ROADMAP.md` 5.1절)
 
 | 순서 | 할 일 | 비고 |
 |---|---|---|
@@ -463,7 +584,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 6 | 동의 화면을 "프로덕션"으로 게시 | 공개 베타 전 |
 | 7 | Google 실로그인 수동 점검(데스크톱·모바일 각 1회, 신규·기존 계정): 신규 계정 `entitled=true`·free·가입 크레딧 100, 재로그인 뒤에도 원장 1행. 같은 시점에 청중 입장·투표·오버레이가 B 전환 전과 같게 동작하는지 확인 | 결과를 task `log.md`에(B-5) |
 
-### 13.5 게이트 G2 체크리스트 (사람이 판정)
+### 19.5 게이트 G2 체크리스트 (사람이 판정)
 
 - [ ] Google 실로그인으로 공개 베타 운영 2주(제안)
 - [ ] 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안)
@@ -472,7 +593,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] 네이버 애플리케이션 등록, 검수 신청 자료(로그인 버튼부터 가입 완료까지 화면 캡처) 준비
 - [ ] 판정 결과를 task `log.md`에 `[DECISION] G2 통과`로 기록
 
-### 13.6 C1 카카오 설정 (사람, `AUTH_ROADMAP.md` 7.1.1절)
+### 19.6 C1 카카오 설정 (사람, `AUTH_ROADMAP.md` 7.1.1절)
 
 | 순서 | 할 일 |
 |---|---|
@@ -483,19 +604,19 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 5 | Supabase → Providers → Kakao 사용. 이메일을 받지 못하는 설정이면 "Allow users without an email"을 켜고 C1-3(결제 전 연락 이메일 입력)을 구현 범위에 넣습니다 |
 | 6 | LP-06-050 완료 후 운영 `AUTH_PROVIDERS`에 `kakao` 추가. 수용 기준 C1-1: 새 카카오 계정 첫 로그인 뒤 B-1과 같은 결과 |
 
-### 13.7 C2 네이버 스파이크와 검수 (`AUTH_ROADMAP.md` 7.2.2절)
+### 19.7 C2 네이버 스파이크와 검수 (`AUTH_ROADMAP.md` 7.2.2절)
 
 | 순서 | 할 일 | 통과 기준 |
 |---|---|---|
 | 1 | 운영과 분리한 Supabase 프로젝트에 관리자 API로 `custom:naver` 등록(`scripts/auth/register-naver-provider.mjs`, OAuth2, 네이버 authorize·token·`/v1/nid/me`) | 등록 성공 |
 | 2 | 네이버 "개발 중" 상태 + 등록된 테스트 아이디로 `signInWithOAuth({ provider: 'custom:naver' })` | 로그인 성공, `identities[].provider = 'custom:naver'` |
 | 3 | `auth.users.email`이 채워졌는지, 재로그인이 같은 사용자로 매칭되는지 | 둘 다 참이면 `supabase_custom` |
-| 4 | 실패하면 서버 브리지 경로. 코어 `staged/0010_core_auth_identity_links.sql` 적용을 요청(06장 8절 R-9). 결과를 `[DECISION]`과 `NAVER_AUTH_PATH`에 기록(01장 D20) | 기록 |
+| 4 | 실패하면 서버 브리지 경로. 코어 `staged/0010_core_auth_identity_links.sql` 적용을 요청(06장 8.3절 R-9). 결과를 `[DECISION]`과 `NAVER_AUTH_PATH`에 기록(01장 D20) | 기록 |
 | 5 | 네이버 검수 신청(로그인 버튼부터 가입 완료까지 화면 캡처). 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않습니다(C2-6) | 검수 통과 |
 
 로컬 Supabase CLI가 커스텀 제공자를 지원하는지는 미확인입니다. 지원하지 않으면 로컬 개발은 Mock·Google·카카오로 하고 네이버는 스테이징 프로젝트에서 확인합니다.
 
-### 13.8 단계 전환 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
+### 19.8 단계 전환 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
 
 G1 통과를 `log.md`에 기록한 뒤 Stage B 작업을 요청하는 예시입니다(9.4절 형식). C1·C2도 작업 ID, 수용 기준 절(7.1.3절, 7.2.4절), 게이트(G2)만 바꿔 같은 형식으로 씁니다.
 
@@ -515,7 +636,8 @@ LP-06-049: 인증 Stage B(Google OAuth + 이메일 가입·로그인·비밀번�
 인증 경로 작업. 진입 조건 = log.md 의 [DECISION] G1 통과. 원격 Supabase 대시보드·Google 콘솔 설정은 하지 않고 사람 작업 목록으로 남긴다.
 Mock 로그인 코드는 지우지 않는다(로컬·E2E용). 기능 코드에 AUTH_MODE 분기를 추가하지 않는다.
 청중(app/(participant), api/p)·오버레이(app/overlay, api/overlay)·lib/realtime-auth 는 수정하지 않는다(로그인 없는 흐름, 단계와 무관).
-작업 대상 경로: apps/web/src/lib/auth/, apps/web/src/app/(auth)/, apps/web/src/app/auth/callback/, apps/web/src/app/onboarding/terms/, supabase/config.toml
+작업 대상 경로: apps/web/src/app/(auth)/(LP-06-003에서 이어 받음), apps/web/src/app/auth/callback/, apps/web/src/app/onboarding/terms/, supabase/config.toml 의 [auth.external.google] 절, docs/deploy/auth-checklist.md
+apps/web/src/lib/auth/(003 소유), /onboarding 단계 연결(037 소유), 시드 훅의 약관 동의 기록(003 소유 scripts/dev/)은 1줄 요청으로 처리한다.
 
 이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
 승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
@@ -526,7 +648,7 @@ review role worker 는 claude-reviewer 가 진행한다.
 review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
 ```
 
-### 13.9 이 제품의 인증 작업 ID
+### 19.9 이 제품의 인증 작업 ID
 
 | 단계 | 작업 | 우선순위 | 웨이브 | 모델 |
 |---|---|---|---|---|
@@ -535,127 +657,6 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | C1 | LP-06-050(카카오, 설정 → 로그인 방법) | P1 | W7(G2 후) | Opus |
 | C2 | LP-06-051(네이버 스파이크 → `custom:naver` 또는 브리지) | P1 | W7(G2 후) | Fable |
 | 관련 | LP-06-025(Mock storageState E2E, G1 근거), LP-06-026(RLS 회귀, `outsider`), LP-06-031(배포 env `AUTH_MODE=live`), LP-06-048(049 뒤 AI 보안 회귀) | P0/P1 | W5, W1, W4, W6 | - |
-
-## 14. 메인 디자인과 디자인 시스템
-
-디자인 작업 순서: 14.3 시각 레퍼런스(Awwwards·Dribbble) → 14.1 디자인 시스템 → 14.2 메인 히어로. 공통 절차 7단계는 `docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md`입니다.
-
-### 14.1 디자인 시스템 (정본: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`)
-
-| 단계 | 작업 | 담당 |
-|---|---|---|
-| 1. 레퍼런스 확정 | 진행자 콘솔은 Atlassian(주)·Primer(보조), AI 패널은 Astryx 패턴(확인 후, D17), 랜딩은 HERO_3D | LP-06-033, 고문 검토 |
-| 2. 가진 것 위에서 시작 | 03장 토큰 플랜(객석 남색, 스크린 백색, 막대 청록, 응답 주황, 좌석 회색) + Tailwind CSS v4 `@theme` → `tokens.css`, 기본 컴포넌트, `/dev/components` | LP-06-023 |
-| 3. 비주얼은 사람이 | 라이트/다크, 상태, 크기 배리언트를 스크린샷으로 보고 사람이 수치를 고칩니다 | LP-06-034(사람) |
-| 4. 정답을 한 곳으로 | 코드(Tailwind v4 CSS + 컴포넌트)를 정답으로 확정하고 `DESIGN.md`, `COMPONENTS.md`를 코드 기준으로 맞춤 | LP-06-035 |
-
-- AI에게는 컴포넌트 1개 단위로 맡깁니다(`DESIGN_SYSTEM.md` 8장 템플릿). "알아서 만들어 줘"는 쓰지 않습니다.
-- 지시에는 버전을 항상 적습니다. "Tailwind"가 아니라 "Tailwind CSS v4"라고 씁니다.
-- 화면 작업은 4단계(LP-06-035) 뒤에 시작합니다.
-
-### 14.2 메인 히어로 (정본: `HERO_3D.md`, `03_SCREENS_UX.md` 4.5)
-
-2026-10-13 사용자 결정(확정 결정 15)으로 CSS 막대 데모에서 3D 무대 장면으로 바뀌었습니다.
-
-| 기기 | 구성 |
-|---|---|
-| PC(1280px 이상), 태블릿(768~1279px) | 풀 3D: 무대 위에서 투표 시연이 들어올 때마다 막대와 구가 솟고 순위가 교대합니다 |
-| 모바일(767px 이하) | 가벼운 3D 자동 로드: 막대 3개 |
-| 대체 | WebGL 미지원·저사양(로드 전 판정)·동작 줄이기 설정이면 정지 렌더 이미지 |
-
-- 제목, 6자리 코드, 막대 라벨·숫자는 HTML로 3D 위에 겹칩니다. 값은 시연용이며 "시연 화면입니다"를 표시합니다.
-- 성능 예산(제안): PC·태블릿 1MB/60fps, 모바일 300KB/30fps, LCP 2.5초 이하
-- 금지: 이모지 반응 남발, 네온색, 보라/핑크 그라디언트, 큰 숫자 + 작은 라벨 히어로
-- 확인: 레퍼런스 대비 스크린샷 3종(PC·태블릿·모바일), 고문(Fable) 디자인 검토(LP-06-047, 022)
-
-### 14.3 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)
-
-화면 종류에 따라 레퍼런스 출처를 나눕니다(`DESIGN_PRINCIPLES.md` 1단계, "대시보드와 마케팅 페이지의 구분" 절).
-
-| 화면 | 주 레퍼런스 | 목록 | 가져오는 방식 |
-|---|---|---|---|
-| 메인페이지·랜딩 | Awwwards 수상작(SOTD → Honorable Mention → Nominee 순) | https://www.awwwards.com/websites/ | 기억에 남는 요소 하나(히어로 처리, 서체, 인터랙션 중 하나)만 가져오고 나머지는 조용히 둡니다 |
-| 앱 화면·대시보드 | Dribbble 샷 | https://dribbble.com/ | 정보 배치와 밀도를 가져옵니다. 상태색과 데이터가 주인공입니다 |
-
-이 제품이 고른 레퍼런스입니다(`03_SCREENS_UX.md` 4.1절 표 그대로). 후보 전체와 브리프 보조 표(기존 토큰, 피할 인상, UUPM 쿼리)는 `REFERENCES.md` live-poll 절(`:183`)에 있습니다.
-
-| 구분 | 출처 | URL | 참고 포인트 | 적용 화면 |
-|---|---|---|---|---|
-| 랜딩 | Awwwards (SWSH, Nominee) | https://www.awwwards.com/sites/swsh | 라이브 행사 중 참여와 행사 후 결과를 나눠 설명하는 구조 | 랜딩 |
-| 앱 | Dribbble (Fast Poll - Poll Results) | https://dribbble.com/shots/5451736-Fast-Poll-Poll-Results | 자동 갱신 결과, 숫자 애니메이션, 득표순 재정렬 | 발표 화면, 오버레이, 랜딩 히어로 데모 |
-| 앱 | Dribbble (Online poll result dashboard) | https://dribbble.com/shots/6227327-Online-poll-result-dashboard | 진행자가 보는 결과 대시보드 배치 | 진행자 콘솔 |
-| 앱 | Dribbble (Mobile design concept for a polling app) | https://dribbble.com/shots/24164744-Mobile-design-concept-for-a-polling-app | 모바일 선택지 크기와 제출 흐름 | 청중 화면 |
-
-- URL은 이 표와 `REFERENCES.md`에 있는 것만 씁니다. 새 레퍼런스가 필요하면 URL을 직접 열어 확인하고 `REFERENCES.md`에 먼저 추가한 뒤 씁니다.
-- 영감용이지 복제용이 아닙니다. 로고·사진·일러스트·아이콘·카피·폰트·색 조합 전체를 가져오지 않고, 레이아웃을 따라 그리지 않습니다. 구조(정보 배치, 위계, 리듬)만 참고하고 토큰은 제품 주제에서 다시 뽑습니다(`03_SCREENS_UX.md` 4.3절).
-- Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다(자동 확인이 막혀 있어 색인으로만 확인됨). 열리지 않으면 `REFERENCES.md`에서 지우고 다른 후보를 씁니다.
-- 순서: 레퍼런스(이 절) → 브리프(4.2절) → 토큰 플랜(4.3절) → 14.1 디자인 시스템 → 14.2 메인 히어로. AI에게 화면을 맡길 때 지시에 이 표의 행(제목과 "참고 포인트")을 적습니다.
-- 화면·랜딩 task의 `task.md` baseline에는 아래 3개를 넣습니다. 06장의 레퍼런스 확정 task와 랜딩 task 수용 기준에도 같은 레퍼런스 확인이 들어 있습니다.
-
-```yaml
-baseline:
-  - id: DOC-DES-002
-    path: docs/file/03-설계/03_SCREENS_UX.md   # 4.1절 레퍼런스 표, 4.2 브리프, 4.3 토큰 플랜
-  - id: DOC-DSN-005
-    path: docs/file/03-설계/디자인/REFERENCES.md   # 이 제품 절, 복제 금지 규칙
-  - id: DOC-DSN-001
-    path: docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md   # 1단계 레퍼런스 수집, 7단계 체크리스트
-```
-
-- 확인: 결과 스크린샷을 이 표의 "참고 포인트"와 나란히 놓고, 가져오지 않기로 한 요소(로고·카피·기본값 스타일)가 섞이지 않았는지 고문 디자인 검토에서 대조합니다.
-
-## 15. 원본 이식
-
-정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
-
-- 원본(`D:\WorkSpace\platform\구현해야 할 프로젝트\Slido_Project\`)에는 코드가 없고 문서 2개뿐입니다. 이식은 요구사항·원칙을 새 기획서로 옮기는 것이며 복사할 코드가 없습니다. AI 계층은 원본에 없는 신규 기능입니다.
-- 리뷰 "높음" 4건의 차단 설계는 `02_ARCHITECTURE.md` 6절과 `05_DATA_MODEL.md` 7절에 있습니다. 해당 task의 리뷰 단계에서 차단 여부를 확인합니다.
-- 07장의 "폐기" 항목(Socket.io/FastAPI WebSocket, Redis 집계, 방 페이지 GEO)과 복사 금지 결함(전체 재조회, 채널 중복, 공개 채널 신뢰 등)은 옮기지 않습니다. 참고 자산(Hospital 실시간 훅)은 구조만 참고합니다.
-
-## 16. 공용 모듈 경계
-
-| 항목 | 규칙 |
-|---|---|
-| core 코드 위치 | `apps/web/src/core/`(인증, 조직, 결제, 크레딧, AI 게이트, 음성 어댑터), `apps/api/app/core/`, `apps/api/app/ai/`. 다음 제품에서 재사용하거나 공용 패키지로 뺄 수 있게 한곳에 모읍니다 |
-| 브로드캐스터 | `services/poll-broadcaster/`는 Railway에 올리는 별도 프로세스입니다. 투표 경로의 일부이므로 AI 코드를 import하지 않습니다 |
-| 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 R-5) |
-| 남은 코어 과제 | 모듈러 seed 반영(R-3), `rate_limit_peek`(R-2), ai-service 모델 키 해석·위키 편집(R-6), core-voice 방문자 컨텍스트(R-7), Dify 앱 생성(R-8), 네이버 브리지 채택 시 `auth_identity_links` 적용(R-9), 약관 동의 기록 표준(R-10, 06장 8절). `docs/file/01-관리/06_AGENT_PLAN.md` 6절 참고 |
-
-## 17. 검증과 완료 정의
-
-- task 완료 = `06_AGENT_PLAN.md`의 수용 기준 충족 + 리뷰 추적성 표에 끊긴 곳 없음 + `gate.sh`·`scope_check.sh` 통과
-- 커밋 전에 `bash _shared/check-invariants.sh`가 PASS여야 합니다.
-- MVP 완료는 `06_AGENT_PLAN.md` 7절 완료 정의를 따릅니다.
-
-## 18. 위험과 주의
-
-| 위험 | 대응 |
-|---|---|
-| Supabase 프로젝트 비용 | 제품마다 프로젝트 1개입니다. 제품이 3~4개를 넘으면 통합 DB(모듈러) 전환을 검토합니다. 통합 DB SQL은 이미 있습니다(`D:\WorkSpace\platform\docs\products\_supabase-modular\`). Realtime 부하가 다른 제품에 영향을 주면 모놀리스로 분리합니다 |
-| Realtime 한도 | 플랜별 동시 접속·초당 메시지 한도는 미확인입니다. LP-06-027 부하 테스트로 확정하고 인원별 간격은 1810 마이그레이션으로 반영합니다. 청중 JWT 방식(사용자 정의 JWT 수용 여부)은 LP-06-011에서 확인합니다 |
-| 청중 음성 남용 | 익명 입력으로 진행자 지갑이 소진될 수 있습니다. 5중 한도 + 묶음 선차감 + 오픈소스 전용을 지키고 LP-06-048 시나리오를 통과해야 합니다. 남용이 보이면 D12(Turnstile)를 앞당깁니다 |
-| AI·음성 비용 | 크레딧 선차감과 정산, 기능별 라우팅, 오픈소스 우선·강제 기능으로 관리합니다. 운영 중 `core.ai_usage`로 원가를 확인해 단가(제안값)와 free 가입 크레딧 100(D8)을 확정합니다 |
-| 국외 이전과 개인정보 | 동의 전 국외 제공자 사용 금지, 청중 원문(질문·닉네임·음성)은 동의와 무관하게 상용 전송 금지(D9), 녹음 기본 미저장, IP 원문 미저장 |
-| 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만, LLM 키는 FastAPI에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
-| Mock 로그인 노출 | `AUTH_MODE=mock`이 배포에 들어가면 개발 계정 로그인이 열립니다. `isMockAuthAllowed()` 3조건, 기동 실패, `/api/dev/login` 404, CI 빌드 검사(13.1, LP-06-003)로 막고 단계 전환은 사람이 G1·G2를 판정한 뒤에만 합니다 |
-| 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 platform에서 다시 묶으려면 `build_root.py`를 실행합니다 |
-| AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
-
-## 19. 체크리스트
-
-- [ ] 2절 도구 설치 확인(Git Bash, jq, Python, Node·pnpm, uv, Supabase CLI, Docker, k6)
-- [ ] setup 스크립트 dry-run으로 할 일 확인
-- [ ] setup 스크립트 실행, 무결성 점검 PASS
-- [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
-- [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 진행자 chat만 상용)
-- [ ] `supabase start` → `supabase db reset` 성공(7절)
-- [ ] 결정 D1~D21 확정(D19~D21은 해당 게이트 전), 산출물 "승인" 전환(8절)
-- [ ] W0 task 생성과 진행(9절)
-- [ ] Stage A: `seed-users.mjs --app poll` 실행, `/login` 개발용 패널로 `host`·`cohost` 로그인 확인(13.2)
-- [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(14.3)
-- [ ] 디자인 시스템 1~4단계 완료(14.1). 사람 비주얼 검토 포함
-- [ ] W1~W5 진행 → G1 판정(13.3) → W6(LP-06-049 먼저) → AI 보안 회귀 통과, MVP 출시 조건 충족
-- [ ] 공개 베타 2주 뒤 G2 판정(13.5) → LP-06-050·051(13.6, 13.7)
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

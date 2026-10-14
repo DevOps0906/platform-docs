@@ -6,7 +6,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·세션·시드 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md` → `02_ARCHITECTURE.md` → `05_DATA_MODEL.md` → `04_API.md` → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md`(자기 작업 행) → `07_SOURCE_MIGRATION.md` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
 | 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-commerce 절, 랜딩이면 `HERO_3D.md` |
@@ -49,7 +49,7 @@
 | `services/commerce-worker/src/<영역>/handler.ts` | 워커 핸들러(자동 로드) | CM-06-012~024 |
 | `apps/api/` | 공용 ai-service와 설정 045, `app/ai/products/commerce/knowledge.py` 048, `wiki_config.py` 049, `app/ai/graphs/commerce_*.py`·`app/ai/compliance/commerce.py` 051, `app/ai/tools/commerce/` 052, `tests/commerce/security/` 057 | 045, 048, 049, 051, 052, 057 |
 | `apps/nomad-commerce/app/api/` AI·음성 | `ai/{conversations,chat}`·`internal`·`onboarding` 046, `ai/{names,autofill,benchmark,vision}` 011, `ai/voice-structure`·`voice`(narrations 제외) 054, `ai/shorts-script`·`voice/narrations` 055, `admin/{wiki,knowledge}` 049, `products/[id]/specs` 048 | 011, 046, 048, 049, 054, 055 |
-| `apps/nomad-commerce/` AI·3D 화면과 `lib/ai/` | `components/ai-chat`·`app/(app)/chat` 053, `components/voice` 054, `components/narration`·`app/(app)/narrations` 055, `components/hero3d`·`public/hero` 056, `app/(marketing)/wiki` 050, `app/admin/{wiki,knowledge}` 049, `app/(app)/settings/ai`·`app/onboarding`·`lib/ai/` 046(`rag-hooks.ts` 048) | 046, 049, 050, 053~056 |
+| `apps/nomad-commerce/` AI·3D 화면과 `lib/ai/` | `components/ai-chat`·`app/(app)/chat` 053, `components/voice` 054, `components/narration`·`app/(app)/narrations` 055, `components/hero3d`·`public/hero` 056, `app/(marketing)/wiki` 050, `app/admin/{wiki,knowledge}` 049, `app/(app)/settings/ai`·`app/onboarding`(`terms/`는 058)·`lib/ai/` 046(`rag-hooks.ts` 048) | 046, 049, 050, 053~056 |
 | `packages/commerce-compliance/rules/`, `fixtures/` / `packages/commerce-domain/schema/` | 언어 중립 규칙·테스트 벡터 / 그래프 출력 스키마 | 017 / 051 |
 | `content/knowledge/`, `scripts/knowledge/`, `scripts/ai-routing/`, `infra/dify/` | 규칙 원고 047, 색인 048, 라우팅 스냅샷 057, Dify DSL 052 | 047, 048, 052, 057 |
 | `apps/nomad-commerce/styles/tokens.css`, `components/ui/`, `app/dev/components/` / `docs/file/03-설계/디자인/` | 디자인 시스템 코드 / 문서 | 042 / 041(1절), 043(review, 사람), 044(2절 이후, COMPONENTS) |
@@ -116,4 +116,5 @@
 | 페르소나 | `supabase db reset` → `node scripts/dev/seed-users.mjs --app commerce`(로컬 Supabase 전용, 원격 URL이면 종료) → `/login` 개발용 패널. 키 `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops` + 제품 행 `pro`, `ai_consent`(제안, `05_DATA_MODEL.md` 10절). E2E는 Playwright `globalSetup`이 `/api/dev/login`으로 페르소나별 `storageState`를 저장해 쓴다(`tests/e2e/flows/`, CM-06-035) |
 | 금지 패턴 | 쿠키·localStorage에 역할·플랜 기록(`nomad_role`, `nomad_plan`, `mock-login`, `mock-auth`), `dev-user` 우회, 가짜 사용자 객체·가짜 세션 쿠키, 원격 DB에 시드 계정, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`에, 가드 없이 `/api/dev/login` 노출(판정 거짓이면 404), 콜백 `next` 무검증. CI(CM-06-036)가 grep으로 막고 `AUTH_MODE=mock VERCEL_ENV=production` 빌드가 실패해야 한다 |
 | 단계 전환 | 에이전트가 스스로 단계를 올리지 않는다. 사람(대표님)이 G1(A→B)·G2(B→C) 조건(`AUTH_ROADMAP.md` 4장, 6장)을 판정하고 task `log.md`에 `[DECISION] G1 통과`·`[DECISION] G2 통과`로 남긴 뒤에만 B·C 작업을 시작한다 |
+| 소유 경로 | 007: `lib/auth/`(`naver/` 제외), `app/(auth)/login/`, `app/api/dev/login/`, `proxy.ts`, `lib/session/`, `scripts/dev/`. 058: `components/auth/`(`kakao/` 제외), `app/auth/callback/`, `app/(auth)/{signup,reset-password}/`, `app/onboarding/terms/`. 059: `components/auth/kakao/`, `app/(app)/settings/login/`. 060: `lib/auth/naver/`, `app/auth/naver/`(브리지만), `scripts/auth/`. `finishLogin` 약관 단계 연결은 007 파일에, `supabase/config.toml` 제공자 블록은 001 파일에 1줄 요청(06장 8.1절) |
 | 이 제품의 작업 | A: CM-06-007(W1). B: CM-06-058(P0, Fable, W7 맨 앞, G1 후). C1: CM-06-059(P1, Opus, W8, G2 후). C2: CM-06-060(P1, Fable, W8, G2 후, 브리지면 코어 요청 R-9) |

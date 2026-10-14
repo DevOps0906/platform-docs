@@ -235,7 +235,7 @@ PM001 처리: `confirm_payment_order`는 금액 불일치(`PM001`) 때 raise하�
 
 ## 8. 인증 경로 (2026-10-14 추가, 확정 결정 22)
 
-정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.1, 2.4, 3.2, 7.2.3절. 이 경로들은 `src/app/api/dev/login/`, `src/app/auth/`, `src/app/invite/continue/`에 있고 인증 단계 분기는 `src/lib/auth/`만 한다(`02_ARCHITECTURE.md` 9절). 초대 발급·수락 API(2절 `POST /api/beta/invites`, `POST /api/beta/redeem`)와 수락 서버 시퀀스(3절)는 바뀌지 않는다.
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.1, 2.4, 3.2, 7.2.3절. 이 경로들은 `src/app/api/dev/`, `src/app/auth/`, `src/app/invite/continue/`에 있고 인증 단계 분기는 `src/lib/auth/`만 한다(`02_ARCHITECTURE.md` 9절). 초대 발급·수락 API(2절 `POST /api/beta/invites`, `POST /api/beta/redeem`)와 수락 서버 시퀀스(3절)는 바뀌지 않는다.
 
 | 메서드 경로 | 단계 | 인증 | 입력 | 처리 | 출력 | 오류 |
 |---|---|---|---|---|---|---|
@@ -256,4 +256,5 @@ PM001 처리: `confirm_payment_order`는 금액 불일치(`PM001`) 때 raise하�
 | `error=state` | 브리지 state 불일치·없음·만료(C2) | 302 `/login?error=state` |
 | `error=email_in_use` | 브리지에서 같은 이메일의 다른 수단 가입자(C2) | 302 `/login?error=email_in_use` |
 | `error=invite_email` | OAuth 계정 이메일이 초대 이메일과 다름(`ST031`) | 302 `/no-access?error=invite_email` |
+| `error=invite_invalid` | 이어 가기 중 초대가 이미 사용됨(`ST030`) 또는 만료(`redeem_beta_invite` null) | 302 `/no-access?error=invite_invalid` |
 | 404(dev) | `/api/dev/*`를 Mock 판정이 거짓인 환경에서 호출 | 404(본문 없음) |

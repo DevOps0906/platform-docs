@@ -7,7 +7,7 @@
 | 주 사용자 | 갤러리·기업 공간·하이엔드 고객(방문자), 스튜디오 운영자 |
 | DB 스키마(모듈러 번호) | `site`(2200) |
 | 개발 작업 수 | 49개(`products/website-floria/06_AGENT_PLAN.md`, 인증 Stage B SI-06-049 포함) |
-| 인증 단계 | Mock(Stage A, 개발 시작) → Google + 초대 메일(Stage B, 공개 베타 전). 카카오·네이버 제외(운영자 전용 콘솔). 방문자는 로그인 없음. 안내서 13장 |
+| 인증 단계 | Mock(Stage A, 개발 시작) → Google + 초대 메일(Stage B, 공개 베타 전). 카카오·네이버 제외(운영자 전용 콘솔). 방문자는 로그인 없음. 안내서 19장 |
 | 기획서 | [`products/website-floria/`](../../products/website-floria/) |
 | 참고 | 범위가 작아 공용 코어를 먼저 실전 검증하는 제품으로 권장됩니다. |
 

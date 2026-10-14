@@ -227,17 +227,19 @@
 |---|---|---|---|---|---|---|
 | POST `/api/dev/login` | A(로컬 전용) | 누구나(로컬) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'studio_denied', next? }` | 302 `next` 또는 `/studio` | `isMockAuthAllowed()`(`AUTH_MODE=mock`, Supabase 호스트 `127.0.0.1`/`localhost`, `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 비어 있음) → 쿠키 세션 서버 클라이언트 `signInWithPassword(<persona>@dev.test, DEV_SEED_PASSWORD)` → `finishLogin('microweb', next)` | 판정 거짓이면 404(존재를 숨김). 모르는 페르소나 400. 레이트 리밋 대상 아님 |
 | POST `/api/dev/logout` | A(로컬 전용) | 로그인 사용자 | - | 302 `/login` | 같은 판정 후 `signOut` | 판정 거짓이면 404 |
-| GET `/auth/callback` | B·C1·C2(`custom:naver`) | 누구나 | `code`, `next?`, `error?` | 302 | `finishLogin('microweb', next)`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('microweb')` 1회 (3) invite 앱이라 `bootstrap_app_for_org`를 호출하지 않는다. `entitled=false`면 `/no-access` (4) pending `/pending`, suspended `/403` (5) 엔타이틀먼트가 있어도 `studio_access` 없으면 `/pending`(기존 가드) (6) `next`가 `/`로 시작하고 `//`·`@`·`\`가 없을 때만 그 경로, 아니면 `/studio`. origin은 `NEXT_PUBLIC_APP_URL` 고정 (7) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login` |
+| GET `/auth/callback` | B·C1·C2(`custom:naver`) | 누구나 | `code`, `next?`, `error?` | 302 | `finishLogin('microweb', next)`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('microweb')` 1회 (3) invite 앱이라 `bootstrap_app_for_org`를 호출하지 않는다. `entitled=false`면 `/no-access` (4) `status`: suspended → `/403`(invite 앱이라 코어 `status=pending`은 없다) (5) 엔타이틀먼트가 있어도 `studio_access` 없으면 `/pending`(제품 2차 게이트, 기존 가드). 첫 로그인이고 약관 동의 기록이 없으면 `/studio/onboarding/terms`(03장 7절) (6) `next`가 `/`로 시작하고 `//`·`@`·`\`가 없을 때만 그 경로, 아니면 `/studio`. origin은 `NEXT_PUBLIC_APP_URL` 고정 (7) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login` |
+| GET `/auth/invite` | B부터 | 초대받은 사용자 | `token_hash`, `type=invite`, `next?` | 302 | 초대 메일 링크의 도착 경로(Supabase 대시보드 초대 메일 템플릿을 `{{ .SiteURL }}/auth/invite?token_hash={{ .TokenHash }}&type=invite`로 둔다, 제안·구현 시 확인). 서버 클라이언트 `verifyOtp({ type: 'invite', token_hash })`로 세션 → 비밀번호 설정 화면(건너뛰기 가능, Google만 쓸 운영자) → `finishLogin('microweb', next)`. 초대 발송과 권한 부여는 MW-06-026(2절 관리자 행)이 먼저 끝낸 상태다 | 만료·재사용 토큰 → `/login?error=invite_expired`. 토큰·이메일을 로그에 남기지 않는다 |
 | GET `/auth/naver/start` | C2 브리지 경로만 | 누구나 | `next?` | 302 네이버 authorize | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 넣음. `rate_limit_hit('auth:naver:<ip 해시>',10,600)` | 429 |
 | GET `/auth/naver/callback` | C2 브리지 경로만 | 누구나 | `code`, `state` | 302 | 쿠키 state 상수 시간 비교 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(네이버 id) 조회 → 연결 있음: magiclink `verifyOtp`로 세션 / 연결·같은 이메일 없음: `createUser` + 링크 행 / 같은 이메일 있음: 자동 연결 안 함 → 위 `finishLogin`. 네이버 토큰은 저장하지 않는다 | `state` 불일치·없음·만료 → `/login?error=state`, `/login?error=email_in_use`, `/login?error=callback` |
 
 | 오류·리다이렉트 코드 | 의미 | 단계 |
 |---|---|---|
 | `/login?error=callback` | 코드 교환 실패(없음, 재사용, 만료) | B, C |
+| `/login?error=invite_expired` | 초대 링크 만료·재사용 | B, C |
 | `/login?error=state` | 브리지 state 불일치·만료 | C2 브리지 |
 | `/login?error=email_in_use` | 같은 이메일의 다른 가입 수단이 있어 네이버를 자동 연결하지 않음 | C2 브리지 |
 | `/no-access` | `entitled=false`(초대받지 않은 이메일로 로그인) | B, C |
 | `/pending` | `studio_access` 없음 | A, B, C |
 | 404 `/api/dev/*` | Mock 판정 거짓(배포 환경, 원격 DB) | A 가드 |
 
-초대 메일 발송·`studio_access` 부여는 2절 "관리자(platform_admin, service)" 행과 MW-06-026이 소유하며 인증 단계와 무관하다. 로그인 레이트 리밋(01장 5절 "로그인 IP 10/10분")은 B단계 이후의 Supabase Auth 경로와 브리지 시작 라우트에 적용하고 `/api/dev/login`에는 적용하지 않는다.
+초대 메일 발송·`studio_access` 부여는 2절 "관리자(platform_admin, service)" 행과 MW-06-026이 소유하며 인증 단계와 무관하다. 로그인 레이트 리밋(01장 5절 "로그인 IP 10/10분")은 B단계 이후의 Supabase Auth 경로와 브리지 시작 라우트에 적용하고 `/api/dev/login`에는 적용하지 않는다. 하객·시안·문의 경로(`/api/public/*`, `/p/*`)는 인증 단계와 무관하며 이 절의 라우트를 거치지 않는다.

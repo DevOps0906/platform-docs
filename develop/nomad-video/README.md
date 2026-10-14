@@ -7,7 +7,7 @@
 | 주 사용자 | 숏폼 크리에이터, 커머스 운영자, 소규모 에이전시 |
 | DB 스키마(모듈러 번호) | `video`(1200) |
 | 개발 작업 수 | 65개(`products/nomad-video/06_AGENT_PLAN.md`, 인증 단계 작업 3개 포함) |
-| 로그인 | MVP 개발은 Mock(Stage A), 공개 베타 전 Google + 이메일(B), G2 후 카카오·네이버(C). 채널 연결 OAuth·네이버 클립 로그인과는 별개. [`nomad-video_develop.md`](nomad-video_develop.md) 13절 |
+| 로그인 | MVP 개발은 Mock(Stage A), 공개 베타 전 Google + 이메일(B), G2 후 카카오·네이버(C). 채널 연결 OAuth·네이버 클립 로그인과는 별개. [`nomad-video_develop.md`](nomad-video_develop.md) 19절 |
 | 기획서 | [`products/nomad-video/`](../../products/nomad-video/) |
 | 참고 | 쇼츠 대행 운영 설계는 `products/nomad-video/08_AGENCY_OPERATIONS.md`에 따로 있습니다. |
 

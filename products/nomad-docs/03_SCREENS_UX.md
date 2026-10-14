@@ -19,8 +19,9 @@
 | `/` | 메인페이지(랜딩, 동적 3D 히어로 + 3D 영상, DC-F-041, DC-F-049) | 누구나 | - | P0 |
 | `/pricing` | 요금(Free, Pro, 크레딧팩, 작업별 크레딧 표) | 누구나 | - | P0 |
 | `/legal/terms`, `/legal/privacy`, `/legal/ai-notice`, `/legal/contract-notice` | 이용약관, 개인정보처리방침, AI 처리 고지, 계약서 초안 고지(법률 자문 아님) | 누구나 | - | P0 |
-| `/signup`, `/login`, `/reset-password` | 가입, 로그인, 비밀번호 재설정(DC-F-001) | 비로그인 | - | P0 |
-| `/auth/callback` | 이메일 인증·OAuth 콜백 | - | - | P0 |
+| `/signup`, `/login`, `/reset-password` | 가입, 로그인, 비밀번호 재설정(DC-F-001). 단계별(7절): A는 `/login` 개발용 패널만(`/signup`, `/reset-password` 없음), B는 Google 버튼 + 이메일 폼·가입·재설정, C는 카카오·네이버 버튼 추가 | 비로그인 | - | P0 |
+| `/auth/callback` | 이메일 인증·OAuth 콜백(B부터, `finishLogin`. A는 `/api/dev/login`이 같은 함수를 거친다) | - | - | P0 |
+| `/onboarding/terms` | 약관 동의(OAuth 첫 로그인처럼 가입 폼을 거치지 않은 사용자, B부터, 7.3절) | 로그인 전원 | 전 플랜 | P0 |
 | `/onboarding/ai` | AI 처리 방식 선택과 국외 이전 동의(DC-F-025) | 로그인 owner(그 외 역할은 결과만 보기) | 전 플랜 | P0 |
 | `/onboarding/company` | 자사 정보 빠른 입력(`docs.parties` kind `self`, 문서번호 형식 기본값 확인) | 로그인 owner/admin | 전 플랜 | P0 |
 
@@ -70,6 +71,7 @@
 | `/app/settings/numbering` | 문서번호 형식과 연도별 현황 | owner/admin | 전 플랜 | P0 |
 | `/app/settings/ai` | AI 처리 방식 변경·철회(국외 이전) | owner | 전 플랜 | P0 |
 | `/app/settings/members` | 구성원 초대·역할(Phase 2 team) | owner/admin | `members_max` 2 이상(team) | P2 |
+| `/app/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제, C단계, 7.4절) | 본인(전 역할) | 전 플랜 | P1 |
 | `/app/billing`, `/app/billing/success`, `/app/billing/fail` | 잔액(plan/pack), 사용 내역, 크레딧팩, Pro 구독, Toss 복귀(DC-F-038) | owner(admin 읽기, 제안) | 전 플랜 | P0 |
 | 대화 상자(문서 생성 진입점) | 고위험 문서 고지 모달(DC-F-020) | owner/admin/member(동의는 조직 1회) | 전 플랜 | P0 |
 | `/app/account` | 계정, 데이터 내보내기, 계정·워크스페이스 삭제(DC-F-042) | 본인(워크스페이스 삭제는 owner) | 전 플랜 | P0 |
@@ -88,8 +90,8 @@
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | `/` | [무료로 문서 묶음 만들기] | `/signup` 이동 | - |
-| 2 | `/signup` | 이메일·비밀번호 또는 Google, 약관 동의 | `signUp({options:{data:{signup_app:'docs'}}})` → 개인 조직, Free 엔타이틀먼트, 가입 크레딧 50 | 이미 가입: "로그인하거나 비밀번호를 재설정하세요" |
-| 3 | `/auth/callback` → `/onboarding/ai` | 메일 링크 클릭 후 AI 처리 방식 선택(상용 AI 함께 사용 + 국외 이전 동의 / 국내 오픈소스만) | `rpc('set_ai_cross_border_ack')` + 감사 기록, 고지문 버전 저장(`docs/products/_platform-core/AI_ARCHITECTURE.md:86`) | 고지문 버전 불일치 409 → 최신 고지문 재표시. [나중에]는 미동의(오픈소스만)로 진행 |
+| 2 | `/signup`(Stage B부터. Stage A는 `/login` 개발용 패널의 `owner` 페르소나 버튼으로 바로 3단계의 `/onboarding/ai`) | 이메일·비밀번호 또는 Google, 약관 동의 | `signUp({options:{data:{signup_app:'docs'}}})` → 개인 조직, Free 엔타이틀먼트, 가입 크레딧 50 | 이미 가입: "로그인하거나 비밀번호를 재설정하세요" |
+| 3 | `/auth/callback` → (Google 첫 로그인이면 `/onboarding/terms`, 7.3절) → `/onboarding/ai` | 메일 링크 클릭(Google은 계정 선택 후 자동) 후 AI 처리 방식 선택(상용 AI 함께 사용 + 국외 이전 동의 / 국내 오픈소스만) | `rpc('set_ai_cross_border_ack')` + 감사 기록, 고지문 버전 저장(`docs/products/_platform-core/AI_ARCHITECTURE.md:86`) | 고지문 버전 불일치 409 → 최신 고지문 재표시. [나중에]는 미동의(오픈소스만)로 진행 |
 | 4 | `/onboarding/company` | 회사명, 사업자등록번호, 대표자, 주소, 연락처 입력(주민등록번호 입력란 없음) | `docs.parties`(kind `self`) INSERT, `docs.workspace_settings` 기본값(VAT 10%, 기본 일단가, 문서번호 형식) 확인 | 입력 lint: 13자리 주민번호 형식이 감지되면 저장 차단 "주민등록번호는 받지 않습니다" |
 | 5 | `/app/projects/new` | 프로젝트명, 유형(web/app/ai/mixed/other), 기간, 예산, 거래처(새로 입력 가능), 시작 방식 "체크리스트로 시작" | `docs.projects` INSERT(status `draft`), 거래처는 `docs.parties` kind `client` | Free 3번째 프로젝트: `DC006` → "Free는 프로젝트 2개까지입니다. 보관하거나 Pro로 바꾸세요" |
 | 6 | `/app/projects/[pid]/checklist?step=1` | 공통 프로필(group `profile`, `project_type`) 답변 | `docs.checklist_answers` upsert(source `user`), 오른쪽 효과 미리보기 갱신 | 필수 누락 표시(빨간 점 + "필수"), 다음 단계는 이동 가능하나 생성 단계에서 `DC004` |
@@ -1157,3 +1159,53 @@ HTTP 매핑은 설계 기준서 7장과 `docs/products/_platform-core/CORE_SPEC.
 | 모바일 지원 범위 | 767px 이하에서 지원: 대시보드, 체크리스트 마법사(효과 미리보기는 하단 시트로), 문서 읽기·검토(편집기는 읽기 전용 + "편집은 넓은 화면에서 할 수 있습니다", 제안), RFP 추출 검토(원문은 탭 전환), 회의 녹음, 채팅·음성, 확정 대화 상자, 내보내기 받기 |
 | 모바일 레이아웃 | 사이드바는 드로어, 채팅·상세 패널은 전체 화면 시트, 마법사 단계 표시는 "2/3" |
 | 3D 히어로 | 캔버스 `aria-hidden`, CTA·견적서 예시는 3D 로딩 전에 HTML로 사용 가능, [움직임 멈춤] 토글 |
+
+## 7. 로그인 화면의 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2.1, 5.2, 7.1, 7.2, 7.3절이다. 화면은 서버 컴포넌트가 `listLoginOptions('docs')`(02장 9.2절) 결과로만 그리며, 다른 화면은 단계를 모른다.
+
+### 7.1 단계별 로그인 화면 구성
+
+| 단계 | `/login` | `/signup`, `/reset-password` | 공통 표시 |
+|---|---|---|---|
+| A(Mock, 로컬 전용) | "개발용 로그인" 패널: 페르소나 버튼(owner, admin, member, viewer, outsider, no_app, suspended, ops, Pro 구독자 `pro`, 05장 10절), 현재 로그인 페르소나, 로그아웃. 버튼은 `POST /api/dev/login { persona, next }` 후 응답 경로로 이동. 제공자 버튼·이메일 폼 없음 | 렌더하지 않는다(404) | 모든 화면 상단 고정 배지 `MOCK AUTH · 로컬 전용`(대비 4.5:1, 닫기 없음). `isMockAuthAllowed()`가 거짓이면 패널·배지 코드를 렌더하지 않는다 |
+| B(Google + 이메일) | "Google로 계속하기" 버튼(위) + 구분선 + 이메일·비밀번호 폼(01장 DC-F-001, D-20) + "비밀번호를 잊으셨나요" 링크 | 이메일 가입(약관 동의 체크, 메일 인증 안내), 재설정 메일 요청·새 비밀번호 입력 | 배지 없음. OAuth는 가입과 로그인이 같은 버튼이라 `/signup`에도 같은 Google 버튼을 둔다 |
+| C1·C2(카카오·네이버) | B 구성 위에 "카카오로 계속하기"(C1), "네이버로 계속하기"(C2) 버튼을 더한다. 버튼은 `listLoginOptions`의 `oauth` 항목을 순서대로 그리는 같은 컴포넌트라 C 작업이 로그인 화면 파일을 고치지 않는다. 색·문구는 각 사의 디자인 가이드를 따른다(미확인: 최신판 확인 후 반영, C1-5). 운영에서 `AUTH_PROVIDERS`에 없는 제공자는 버튼을 숨긴다 | 같음 | 같음 |
+
+버튼 순서는 Google → 카카오 → 네이버 → 이메일 폼이다(제안: 공개 베타 사용자는 Google로 시작했으므로 위치를 바꾸지 않는다). 모든 버튼은 Lucide 아이콘이 아니라 제공자 로고 SVG를 쓰며 이모지는 쓰지 않는다(6절). 로그인 화면 레이아웃·토큰은 3.25절 디자인 시스템을 따르고 `--color-seal`(인주)은 쓰지 않는다.
+
+### 7.2 오류 상태
+
+| 쿼리·상황 | 단계 | 표시 위치 | 문구 |
+|---|---|---|---|
+| `/login?error=callback` | B·C | 로그인 폼 위 오류 띠 | 로그인을 끝내지 못했습니다. 다시 시도해 주세요 |
+| `/login?error=state` | C2 브리지 | 같음 | 로그인 요청이 만료되었거나 올바르지 않습니다. 처음부터 다시 시도해 주세요 |
+| `/login?error=email_in_use` | C2 브리지(C1 비즈 앱 자동 연결이 안 될 때도 같은 문구) | 같음 | 이미 다른 방법으로 가입한 이메일입니다. 그 방법으로 로그인한 뒤 설정에서 네이버를 연결하세요 |
+| 프로필 없음 | 전 단계 | 로그아웃 후 `/login` | 계정 정보를 불러오지 못했습니다. 다시 로그인해 주세요 |
+| `status=suspended` | 전 단계 | `/suspended` | 이용이 정지된 계정입니다. 문의처로 연락해 주세요 |
+| 이메일 인증 전 실행(403 `email_not_verified`) | B·C(이메일 가입자) | 실행 버튼 옆 띠 + [인증 메일 다시 보내기] | 메일 인증을 마치면 문서를 만들 수 있습니다 |
+| `/api/dev/login`이 404(배포 환경, 판정 거짓) | A 코드가 남은 B·C 배포 | 패널 자체가 없음 | - |
+| invite 앱 `/no-access` 안내 | 해당 없음 | - | docs는 open 앱이라 초대 메일·`/no-access`가 없다. 첫 OAuth 로그인은 `finishLogin`이 바로 엔타이틀먼트를 만든다. Phase 2 team 구성원 초대(`/app/settings/members`)는 이미 로그인한 사용자를 조직에 더하는 것이라 로그인 단계와 별개다 |
+
+### 7.3 첫 OAuth 로그인 뒤 약관 동의 위치
+
+OAuth는 가입 폼이 없으므로 약관 동의를 온보딩 첫 단계 `/onboarding/terms`에서 받는다. 온보딩 순서와 판정은 02장 9.6절이다.
+
+| 순서 | 화면 | 내용 | 누가 보는가 |
+|---|---|---|---|
+| 1 | `/onboarding/terms`(B부터) | 이용약관·개인정보처리방침(국외 이전 표 포함)·AI 생성물 안내 필수 동의, 만 14세 이상 확인(제안), 마케팅 수신 선택. 동의 기록은 감사 로그(제안: 행동 이름 `terms.accept`, 약관 버전 `DOCS_TERMS_VERSION` 포함). 계약서 초안 고지(3.22절)는 여기서 받지 않고 첫 계약서 생성 때 받는다 | 현재 약관 버전의 동의 기록이 없는 사용자. 이메일 가입자는 `/signup`에서 이미 동의했으므로 건너뛴다 |
+| 2 | `/onboarding/ai` | 2.1절 3단계 그대로 | 첫 로그인한 owner |
+| 3 | `/onboarding/company` | 2.1절 4단계 그대로 | 자사 정보가 빈 조직의 owner/admin |
+
+Stage A에는 1단계 화면이 없다. 시드 페르소나도 첫 로그인 때 02장 9.6절 판정을 그대로 따른다: 자기 조직 owner인 `owner`, `no_app`, `outsider`, `pro`는 `/onboarding/ai`부터 본다. 시드 훅은 `no_app`을 뺀 페르소나의 약관 동의 기록(B 이후 1단계를 건너뛰게)과 `outsider`·`pro` 조직의 자사 정보를 만들고, `owner` 조직의 자사 정보는 비워 둔다(05장 10.2절). 온보딩 E2E(DC-06-057 (a))는 `no_app`의 첫 로그인으로 돌리고, Playwright `globalSetup`은 `no_app`을 빼고 storageState를 만든다(globalSetup 로그인이 첫 로그인을 소비하기 때문이다).
+
+### 7.4 설정 → 로그인 방법 (C단계, P1)
+
+| 항목 | 내용 |
+|---|---|
+| 위치 | `/app/settings/login-methods`(설정 사이드 메뉴의 한 항목). 조직 설정이 아니라 본인 계정 설정이라 역할과 무관하게 본인만 본다 |
+| 구성 | 연결된 제공자 목록(Google, 카카오, 네이버, 이메일)과 연결 시각, 연결·해제 버튼 |
+| 연결 | 로그인 상태에서 `linkIdentity({ provider })`(Supabase 수동 연결, `[auth] enable_manual_linking = true`). 네이버 브리지는 `/auth/naver/start?link=1` 경로로 같은 사용자에 링크 행을 만든다(이미 다른 사용자에 연결된 네이버 id면 거부) |
+| 해제 | 남는 로그인 수단이 1개 이상일 때만 버튼 활성. 마지막 수단은 "다른 로그인 방법을 먼저 연결하세요" |
+| 감사 | `auth.identity_link`, `auth.identity_unlink` |
+| 단계 | C1 작업(DC-06-064)이 만들고 C2 작업(DC-06-065)이 네이버 행을 더한다. A·B 단계에서는 이 메뉴를 렌더하지 않는다 |

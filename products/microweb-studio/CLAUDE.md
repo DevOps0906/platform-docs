@@ -4,7 +4,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
 | 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저, 스튜디오), `DESIGN_PRINCIPLES.md`(공개 청첩장·쇼룸), `REFERENCES.md` microweb 절, 랜딩이면 `HERO_3D.md` |
@@ -55,6 +55,9 @@
 | `src/server` | service_role 서비스 계층 | 작업별 하위 폴더 |
 | `worker/` | `microweb.media` 워커 | 011, 012 |
 | `supabase/`, `scripts/db/` | DB(정본은 모듈러 조각) | 002, 030 |
+| `src/lib/auth`, `src/server/auth`, `src/proxy.ts`, `src/app/api/dev`, `src/app/login`(`providers/` 제외), `src/app/pending`, `src/app/no-access`, `scripts/dev` | 인증 Stage A(모듈 경계, Mock, 시드, 가드) | 003 |
+| `src/app/login/providers`, `src/app/login/reset-password`, `src/app/auth/callback`, `src/app/auth/invite`, `src/app/studio/onboarding/terms` | 인증 Stage B(Google, 초대 수락, 약관) | 054 |
+| `src/app/login/providers/kakao`, `src/app/studio/settings/login` / `src/app/login/providers/naver`, `src/app/auth/naver`, `src/server/auth-bridge`, `scripts/auth` | 인증 Stage C(P2 선택) | 055 / 056 |
 
 같은 파일을 두 작업이 만지지 않는다. 경계는 `06_AGENT_PLAN.md` 2장 표가 정본이다.
 
@@ -129,11 +132,12 @@
 | 지금 단계 | 개발 시작 시 Stage A(Mock). B(Google + 초대 메일)는 G1, C(카카오·네이버, P2 선택)는 G2 판정 뒤에만 시작한다 |
 | 단계 전환 | 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한다. 에이전트가 스스로 단계를 올리지 않는다 |
 | 이 제품의 작업 | A = MW-06-003(인증 모듈·Mock·시드·가드), B = MW-06-054(P0, W6 맨 앞), C1 = MW-06-055(P2 선택), C2 = MW-06-056(P2 선택). 06장 8절 |
-| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/api/dev/login/`(C2 브리지면 `src/app/auth/naver/`)에서만 읽는다. 기능 코드·워커·`apps/api`에 `if (mock)`, 페르소나 이메일 분기 금지 |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`는 `src/lib/auth/`, `src/app/login/`, `src/app/auth/callback/`, `src/app/auth/invite/`, `src/app/api/dev/`(C2 브리지면 `src/app/auth/naver/`)에서만 읽는다. 기능 코드·워커·`apps/api`에 `if (mock)`, 페르소나 이메일 분기 금지 |
 | 권한 판정 | 단계와 무관하게 `requireSession('microweb')` → `studio_access`. 엔타이틀먼트 없음은 `/no-access`(초대받은 이메일로 로그인 안내), 허용 목록 없음은 `/pending` |
 | 콜백(invite) | `finishLogin`은 `bootstrap_app_for_org`를 호출하지 않는다. 엔타이틀먼트·`studio_access`는 관리자 초대 라우트(MW-06-026)가 service_role로만 만든다 |
 | 로컬 시드 | `supabase start` → `supabase db reset` → `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` → `node scripts/dev/seed-users.mjs --app microweb`(제품 훅 `seed-users.microweb.mjs`, 05장 10절) → 출력된 owner 조직 id를 `MICROWEB_STUDIO_ORG_ID`에 → `/login` 개발용 패널 |
 | 페르소나 | `owner`(허용), `studio_denied`(엔타이틀먼트만, 허용 목록 없음), `admin`·`member`·`viewer`(owner 조직 역할), `outsider`(다른 조직), `no_app`(초대 안 됨 → `/no-access`), `suspended`, `ops`(platform_admin). `pending`은 없다 |
 | E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다(MW-06-032). 실제 Google 로그인은 자동화하지 않고 사람 수동 점검표로 확인한다(B-5) |
 | 금지 패턴 | 쿠키·localStorage에 역할·플랜 저장, `mock-auth`, `nomad_role`, `nomad_plan`, `dev-user` 우회, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·브라우저 번들에 두기, 원격 Supabase에 시드 실행, 배포 환경에서 `/api/dev/login` 응답(404여야 함), 콜백 `next` 무검증, 이메일 일치만으로 계정 자동 병합, 하객·시안·쇼룸 화면에 로그인 버튼 |
-| 배포 env | `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`(B). `AUTH_MODE=mock`이면 배포 빌드가 실패해야 한다 |
+| 배포 env | `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`(B. `email`은 초대 수락 때 비밀번호를 정한 운영자의 이메일 로그인이며 공개 가입 폼은 없다). `AUTH_MODE=mock`이면 배포 빌드가 실패해야 한다 |
+| 초대 메일 | 발송·`studio_access` 부여는 관리자 라우트(MW-06-026, service_role). 수락은 `/auth/invite`(MW-06-054, `verifyOtp` type invite → 비밀번호 설정 → `finishLogin`). 초대 이메일과 다른 Google 계정으로 로그인하면 엔타이틀먼트 없는 새 사용자라 `/no-access` |

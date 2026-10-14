@@ -344,7 +344,7 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 
 | 단계 | 켜지는 로그인 | 진입 게이트 | 우선순위 | 작업(06장) |
 |---|---|---|---|---|
-| A | 로컬 시드 계정(페르소나) 원클릭 로그인. `/login` 개발용 패널 + 상단 `MOCK AUTH · 로컬 전용` 배지 | W0부터 | P0 | TN-06-004(인증 모듈 경계, `finishLogin`, 가드), TN-06-027(개발용 패널, 시드 스크립트) |
+| A | 로컬 시드 계정(페르소나) 원클릭 로그인. `/login` 개발용 패널 + 상단 `MOCK AUTH · 로컬 전용` 배지 | W0부터 | P0 | TN-06-004(인증 모듈 경계, `finishLogin`, 가드, `/api/dev/login`, 시드 스크립트 `scripts/dev/`), TN-06-027(`/login` 개발용 패널) |
 | B | Google + 이메일(01장 TN-F-040). 배포 환경 `AUTH_MODE=live` | G1 | P0 | TN-06-067 |
 | C1 | 카카오(`kakao`) | G2 | P1 | TN-06-068 |
 | C2 | 네이버(`custom:naver` 또는 브리지, 01장 D23) | G2 | P1 | TN-06-069 |

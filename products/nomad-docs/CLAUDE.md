@@ -6,7 +6,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/`의 `CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/`의 `CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md`(기능 ID DC-F-###, 3.2절 효과 엔진, 3.4절 lint, 4장 단가·features) → `02_ARCHITECTURE.md`(모듈 경계, 잡, 라우팅) → `04_API.md`(계약, 오류 코드) → `05_DATA_MODEL.md`(테이블, RLS, 함수) |
 | 3 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 1.1절 "불일치와 구현 기준", 금지 패턴(`07_SOURCE_MIGRATION.md` 4절) |
 | 4 | DB 작업이면 `docs/products/_supabase-modular/migrations/2300_docs.sql`(정본)과 `supabase/monolith/` |
@@ -34,7 +34,7 @@
 | AI 경계 | 브라우저는 제품 Route Handler, `/api/ai/*`, `/api/voice/*`만 부른다. Dify·FastAPI·제공자·렌더 직접 호출 금지. Dify 입력은 `platform_conversation_id`, `project_id`만(토큰·org·문서 본문 금지) |
 | 강제 오픈소스 | `meeting_minutes`(STT), `docs.minutes`(LLM), `dify.aux`, `docs.knowledge`(임베딩)는 seed대로 오픈소스. 실패해도 상용으로 대체하지 않고 환불. 제공자·모델을 코드에 하드코딩하지 않고 `resolve_ai_route` 결과만 쓴다 |
 | 서버가 정본 | 플랜·형식·워터마크·문서 단계 판정은 서버(`docs.org_features`, DB 트리거). 클라이언트 잠금은 UX 보조 |
-| mock 금지 | 실패를 성공처럼 반환하지 않는다. 실패와 환불을 사용자에게 보여 준다 |
+| mock 금지 | 실패를 성공처럼 반환하지 않는다. 실패와 환불을 사용자에게 보여 준다. 인증 Mock은 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(배포 환경 404, 맨 끝 "인증 단계 규칙" 절) |
 
 ## 3. 디렉토리와 소유 경계
 
@@ -45,6 +45,7 @@
 | `supabase/`, `web/src/types/supabase.ts`, `scripts/nomad-docs/to-monolith.*` | SQL, 타입, 모놀리스 변환 | 001, 002 |
 | `supabase/tests/`, `scripts/nomad-docs/rls-runner.*` | RLS·권한 회귀 | 003 |
 | `web/` 루트 설정, `web/src/proxy.ts`, `web/src/lib/supabase/`, `web/src/lib/env.ts` | web 골격 | 004 |
+| `web/src/lib/auth/`, `web/src/app/api/dev/login/`, `web/src/components/dev-auth/`, `scripts/dev/`, `web/src/app/(auth)/`, `web/src/app/auth/`, `web/src/app/onboarding/{company,terms}/`, `web/src/app/api/terms/`, `web/src/features/{onboarding-terms,login-methods}/` | 인증 단계(맨 끝 "인증 단계 규칙" 절의 소유 경로) | 014, 063, 064, 065 |
 | `web/src/lib/server/{http,pricing,features,pii,totals,sanitize,ai,import,trace,catalog,events,kpi}/` | 서버 공용 코드 | 012, 013, 013, 015, 016, 028, 033, 037, 030, 049, 053, 050 |
 | `web/src/features/effects-engine/` | 효과 엔진 순수 함수 | 017 |
 | `web/src/app/api/<리소스>/` | Route Handler(리소스별 단일 소유) | 06장 2절 표 |
@@ -108,7 +109,8 @@
 | `node scripts/nomad-docs/to-monolith.mjs --check` | 불일치 0 |
 | `node scripts/nomad-docs/rls-runner.mjs --target mod` / `--target mono` | `rls_smoke.sql` 105항목 + 추가 항목 전부 통과(DC-06-003) |
 | `npx playwright test e2e/billing` | Toss 테스트 키 5개 시나리오(DC-06-048) |
-| `npx playwright test e2e/flows e2e/ai` | 핵심 플로우 5개(DC-06-057), AI 회귀(DC-06-058) |
+| `npx playwright test e2e/flows e2e/ai` | 핵심 플로우 5개(DC-06-057, Mock 페르소나 storageState로 로컬, 063 후 스테이징), AI 회귀(DC-06-058) |
+| `node scripts/dev/seed-users.mjs --app docs` | 로컬 시드 페르소나 생성(두 번 실행해도 크레딧 1회, 원격 URL이면 exit 1, DC-06-014) |
 
 P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN.md` 7절 표). DB나 RLS를 바꾼 PR은 RLS 러너 두 대상이 모두 통과해야 병합한다.
 
@@ -124,6 +126,7 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 | 런타임·배포 | Vercel·Route Handler에서 WeasyPrint 실행, async 안 동기 호출, mock 폴백, `.single()` 0행 500, step `if`의 `secrets`, Windows 폰트 경로, 실키 `.env` 커밋, `latest` 의존성, 빈 `CLAUDE.md` |
 | AI·음성 | LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자·렌더 직접 호출, Dify 입력에 토큰·org·본문, 무인증 AI 프록시, 회의 녹음·전사본의 상용 대체 전송, 임의 텍스트 TTS, 사람 소유 위키 블록 덮어쓰기, 전역 n8n 키 |
 | 디자인 | 토큰 밖 색(3D 재질 포함), hex 하드코딩, 이모지 아이콘, "Tailwind"만 적은 지시(v3 혼입), 가상 후기·허위 수치·법적 효력 보장 문구 |
+| 인증 단계 | 쿠키·localStorage 역할·플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 가짜 세션, 인증 모듈 밖 `AUTH_MODE` 참조, `next` 무검증 리다이렉트(07장 6절, 맨 끝 "인증 단계 규칙" 절) |
 
 변경 기록(장 구조는 `DOC_TEMPLATE.md` 2.9절 7장 그대로 두고 여기에 적는다):
 
@@ -131,3 +134,20 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 |---|---|
 | 2026-10-13 | Phase 2 `shorts_agency` 패키지(DC-F-046, DC-06-060). 효과 엔진 단가 토큰 `catalog:<key>` 추가(결정성 규칙 동일: 설정에서만 읽는다). content 프로젝트에서 성과 보장 문구는 `L-NO-GUARANTEE` error |
 | 2026-10-14 | 교차검증 "반드시 고칠 것" SQL 반영(`06_AGENT_PLAN.md` 1.2.4절 반영 현황), n8n만 사용(Make 제외), CRM형 워크스페이스(DC-F-047, DC-06-061), 생성 진행 애니메이션(DC-F-048, DC-06-062), 3D 영상 히어로(DC-F-049, DC-06-045 확장), RLS 스모크 105항목 |
+| 2026-10-14 | 인증 단계(확정 결정 22): DC-06-014를 Stage A로, DC-06-063(B)·064(C1)·065(C2) 추가, 01장 D-18~D-20, 07장 6절. 아래 "인증 단계 규칙" 절 |
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`, 이 제품 반영은 01장 DC-F-001·8.1절, 02장 9절, 03장 7절, 04장 8절, 05장 10절, 06장 8절, 07장 6절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 Stage A(Mock 로그인). 로컬 `.env.local`은 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD`. 배포 환경(Vercel 미리보기 포함)은 항상 `AUTH_MODE=live` |
+| 단계 순서 | A(Mock, DC-06-014) → G1 → B(Google + 이메일, DC-06-063, P0, 공개 베타 필수) → G2 → C1 카카오(DC-06-064, P1)·C2 네이버(DC-06-065, P1) |
+| 단계 분기 위치 | `AUTH_MODE`·제공자 목록을 읽는 코드는 `web/src/lib/auth/`, `web/src/app/(auth)/`, `web/src/app/auth/`, `web/src/app/api/dev/login/`에만. 기능 코드·`proxy.ts`·worker·api·`tpl/`·`int/`는 `requireSession('docs')`·`session_context`만 쓴다 |
+| 페르소나 사용법 | `supabase start` → `supabase db reset` → `node scripts/dev/seed-users.mjs --app docs`(제품 훅 포함) → `/login` 개발용 패널. 페르소나 키: owner, admin, member, viewer, outsider, no_app, suspended, ops, pro(05장 10절). 권한 확인은 페르소나를 바꿔 로그인해서 한다 |
+| E2E | Playwright `globalSetup`이 페르소나마다(`no_app` 제외) `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다. 온보딩 E2E는 `no_app` 첫 로그인으로 돌린다. Google·카카오·네이버 실로그인은 자동화하지 않고 사람이 수동 점검표로 확인한다 |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, 가짜 사용자 객체·가짜 세션, 원격 Supabase에 개발 계정 만들기, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·출력·로그에 두기, 인증 모듈 밖 `AUTH_MODE` 참조, 페르소나 이메일로 권한 분기, `next` 무검증 리다이렉트, 이메일 일치만으로 계정 자동 합치기(브리지), HubSpot 연동 OAuth를 로그인에 재사용 |
+| 단계 전환 | 에이전트가 단계를 스스로 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한 뒤에 B·C 작업을 시작한다. C2 경로(`supabase_custom` 또는 `bridge`)는 스파이크 결과를 `[DECISION]`으로 남긴다 |
+| 소유 경로 | 014: `web/src/lib/auth/`, `web/src/app/api/dev/login/`, `web/src/components/dev-auth/`, `scripts/dev/`, `web/src/app/(auth)/login/`(A 구성), `web/src/app/onboarding/company/`. 063: `web/src/app/(auth)/`(014에서 이어 받음), `web/src/app/auth/callback/`, `web/src/app/onboarding/terms/`, `web/src/features/onboarding-terms/`, `web/src/app/api/terms/`, `web/src/lib/auth/onboarding.ts`(이어 받음). 064: `web/src/features/login-methods/`, `web/src/lib/auth/providers/kakao.ts`. 065: `web/src/app/auth/naver/`(브리지만), `web/src/lib/auth/providers/naver.ts`, `scripts/auth/`. 배지 장착(레이아웃)·`db:seed-users` 스크립트·Playwright `globalSetup` 등록은 DC-06-004에, `/app/settings/login-methods` 장착은 DC-06-038에 1줄 요청 |
+| 이 제품의 B·C 작업 | B: DC-06-063(W7 맨 앞). C1: DC-06-064, C2: DC-06-065(W8, G2 후). 남은 결정: 01장 8.1절 D-18(카카오 이메일), D-19(네이버 경로), D-20(이메일 가입 유지) |

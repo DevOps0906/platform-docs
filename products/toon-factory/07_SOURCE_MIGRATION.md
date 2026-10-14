@@ -127,7 +127,7 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 "폐기" 목록 
 |---|---|---|---|
 | 쿠키·localStorage에 역할·플랜을 적는 Mock 로그인(`lib/mock-auth.ts`, `mock-login`, `nomad_role`, `nomad_plan` 쿠키) | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96` | 권한 위조, 프로덕션 노출 | AUTH_ROADMAP 2장: 로컬 시드 계정 + 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 `/api/dev/login` 404, CI 금지 문자열(06장 TN-06-031) |
 | 기능 코드의 `if (mock)`·`AUTH_MODE` 분기, 페르소나 이메일로 권한 분기 | AUTH_ROADMAP 0장 불변 조건, 2.5절 | Mock에서만 통과하는 권한 경로 | 단계 분기는 `src/lib/auth/`·로그인 화면·콜백·`/api/dev/login`만, 권한은 `session_context`로만 |
-| OAuth 콜백 `next` 무검증 리다이렉트, 요청 Host로 origin 조립 | AUTH_ROADMAP 3.2절 5번, `docs/products/_platform-core/SECURITY_BASELINE.md` 인증 단계 절 | 오픈 리다이렉트, 피싱 | `next`는 `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin은 `NEXT_PUBLIC_APP_URL` 고정 |
+| OAuth 콜백 `next` 무검증 리다이렉트, 요청 Host로 origin 조립 | AUTH_ROADMAP 3.2절 5번, `docs/products/_platform-core/SECURITY_BASELINE.md` 17장(인증 단계 보안 규칙) | 오픈 리다이렉트, 피싱 | `next`는 `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin은 `NEXT_PUBLIC_APP_URL` 고정 |
 | 서명 없는 base64 JSON OAuth state, state 안의 orgId 신뢰 | `docs/reviews/Nomad-BlogStudio.md:65`(YouTube 연동 콜백) | CSRF, 다른 조직 연결 | 로그인은 Supabase PKCE. 네이버 브리지는 HttpOnly 서명 쿠키 state + 상수 시간 비교 + 1회 사용(AUTH_ROADMAP 7.2.3절) |
 | 이메일 일치만으로 외부 로그인 계정을 기존 사용자에 합치기, `listUsers` 전체 조회로 사용자 찾기 | AUTH_ROADMAP 7.2.3절 | 계정 탈취, 페이지 누락으로 중복 계정 | 제공자 고유 id(`auth_identity_links`)로 찾고, 같은 이메일이면 `email_in_use` 안내 후 로그인 상태 수동 연결 |
 | 로그인 제공자 토큰 저장 | AUTH_ROADMAP 7.2.3절 3번 | 유출 시 외부 계정 접근 | 로그인에만 쓰고 버린다 |
