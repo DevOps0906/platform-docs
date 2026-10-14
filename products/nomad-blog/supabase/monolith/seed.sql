@@ -2,7 +2,7 @@
 -- nomad-blog 모놀리스 seed.sql
 -- 앱 1행(id = 'blog'), 플랜 3종(AI 키 포함), 크레딧팩 3종, 대가성 문구 기본값(blog_top 4행), AI·음성 라우팅 기본값 12행.
 -- 금액과 크레딧의 정본은 docs/products/nomad-blog/01_PRD.md 4장이다.
---   플랜 가격(0 / 29,000 / 99,000원)과 월 발행 수(10 / 50 / 무제한)는 NOMAD Shorts Maker/src/lib/plans.ts:18-71 기준,
+--   플랜 가격(0 / 29,000 / 99,000원)과 월 발행 수(10 / 50 / 300, Business는 2026-10-14 무제한 → 300건·채널 30개)는 NOMAD Shorts Maker/src/lib/plans.ts:18-71 기준,
 --   월 크레딧, 채널 수 일부, 크레딧팩 금액은 "제안"(01_PRD.md 4장에 이유).
 -- 반복 실행 가능(upsert).
 -- =====================================================================
@@ -20,7 +20,7 @@ insert into public.plans (app_id, code, name, price_krw, billing_interval, month
    '{"posts_per_month": 50, "max_channel_accounts": 10, "channel_types": ["naver","tistory","wordpress"], "ai_modes": ["fast","quality"], "affiliate": true, "affiliate_auto_insert": true, "brandconnect": true, "schedule": true, "automation": false, "team_members": 1, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dictation": true, "rag_documents": 100, "product_wiki": true}',
    false, true, 1),
   ('blog', 'business', 'Business', 99000, 'month', 1500, 0, false,
-   '{"posts_per_month": -1, "max_channel_accounts": -1, "channel_types": ["naver","tistory","wordpress","instagram"], "ai_modes": ["fast","quality"], "affiliate": true, "affiliate_auto_insert": true, "brandconnect": true, "schedule": true, "automation": true, "team_members": 5, "ai_chat": true, "ai_chat_turns_per_day": 500, "voice_chat": true, "dictation": true, "rag_documents": 1000, "product_wiki": true}',
+   '{"posts_per_month": 300, "max_channel_accounts": 30, "channel_types": ["naver","tistory","wordpress","instagram"], "ai_modes": ["fast","quality"], "affiliate": true, "affiliate_auto_insert": true, "brandconnect": true, "schedule": true, "automation": true, "team_members": 5, "ai_chat": true, "ai_chat_turns_per_day": 500, "voice_chat": true, "dictation": true, "rag_documents": 1000, "product_wiki": true}',
    false, true, 2)
 on conflict (app_id, code) do update
   set name = excluded.name, price_krw = excluded.price_krw, billing_interval = excluded.billing_interval,
@@ -29,8 +29,8 @@ on conflict (app_id, code) do update
 
 insert into public.credit_packs (app_id, code, name, credits, price_krw, is_active, sort_order) values
   ('blog', 'pack_100',  '100 크레딧',   100,  4900,  true, 1),
-  ('blog', 'pack_500',  '500 크레딧',   500,  19900, true, 2),
-  ('blog', 'pack_1500', '1,500 크레딧', 1500, 49000, true, 3)
+  ('blog', 'pack_500',  '500 크레딧',   500,  21900, true, 2),
+  ('blog', 'pack_1500', '1,500 크레딧', 1500, 63000, true, 3)
 on conflict (app_id, code) do update
   set name = excluded.name, credits = excluded.credits, price_krw = excluded.price_krw, is_active = excluded.is_active, sort_order = excluded.sort_order;
 

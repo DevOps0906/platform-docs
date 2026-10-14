@@ -12,7 +12,7 @@ insert into public.apps (id, name, schema_name, signup_policy, status) values
 on conflict (id) do update
   set name = excluded.name, signup_policy = excluded.signup_policy, status = excluded.status;
 
--- 플랜: Free(기본) + Basic(저가 구독). -1 = 무제한.
+-- 플랜: Free(기본) + Basic(저가 구독). -1(무제한)은 쓰지 않는다(2026-10-14, Price_Plans 무제한 금지): Basic 내보내기 월 100회, 책 100권.
 insert into public.plans (app_id, code, name, description, price_krw, billing_interval, monthly_credits, signup_credits,
                           carry_over, features, is_default, is_active, sort_order) values
   ('publishing', 'free', 'Free', '작은 책 한 권을 체험하는 무료 플랜', 0, 'month', 20, 0, false,
@@ -23,8 +23,8 @@ insert into public.plans (app_id, code, name, description, price_krw, billing_in
      "ai_chat": true, "ai_chat_turns_per_day": 50, "book_wiki": true, "rag_files_max": 3, "voice_dictation": true, "narration": false}'::jsonb,
    true, true, 0),
   ('publishing', 'basic', 'Basic', '워터마크 없이 책을 계속 만드는 월 구독', 9900, 'month', 200, 0, false,
-   '{"watermark": false, "exports_per_month": -1, "themes": ["basic", "pro"],
-     "max_books": -1, "max_chapters": 20, "max_sections": 200, "max_paragraphs": 5, "personas": 60,
+   '{"watermark": false, "exports_per_month": 100, "themes": ["basic", "pro"],
+     "max_books": 100, "max_chapters": 20, "max_sections": 200, "max_paragraphs": 5, "personas": 60,
      "write_all": true, "upload": true, "tone_slider": true, "writing_assist": true,
      "quality_mode": true, "persona_blend": true, "webhooks": true, "public_page": true,
      "ai_chat": true, "ai_chat_turns_per_day": 300, "book_wiki": true, "rag_files_max": 20, "voice_dictation": true, "narration": true}'::jsonb,

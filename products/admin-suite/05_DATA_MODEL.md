@@ -270,7 +270,7 @@ products 쓰기 정책 조건 근거: 상품은 콘텐츠 컬럼만 사용자 �
 | Realtime | `erp.products/inventory_moves/sales`, `sms.attendance` | 같은 테이블(public), hms `appointments`, `staff_profiles` | |
 | AI·음성 코어 | `0008_core_ai.sql`, `0009_core_voice.sql`(제공자·단가·플랫폼 기본 라우팅은 모듈러 `seed.sql`) | `0001_core_lite.sql` SECTION 11, 12(제공자·단가·플랫폼 기본 라우팅 포함). hms는 같은 절에서 공용 제공자를 비활성화하고 `hms-llm`, `hms-embed`, `hms-voice`만 활성(`0001_core_lite.sql:2020-2034`) | 세 모놀리스 모두 SECTION 11, 12 유지 |
 | AI 라우팅 기본값 | 조각 끝 7절(erp 8행, sms 8행) | `seed.sql` 끝(erp 8행, sms 8행, hms 7행) | 같은 값. hms는 모듈러 조각이 없다 |
-| 플랜 AI 키 | 조각 7절 병합 UPDATE(통합 `seed.sql` 반영은 06장 R-12) | `seed.sql` 플랜 삽입에 직접 | 키: `ai_assistant`, `ai_turns_per_day`, `ai_voice`, `ai_docs_max`, `ai_wiki` |
+| 플랜 AI 키 | 조각 7절 병합 UPDATE(통합 `seed.sql` 반영은 06장 R-12) | `seed.sql` 플랜 삽입에 직접 | 키: `ai_assistant`, `ai_turns_per_day`, `ai_turns_per_month`, `ai_commercial_turns_per_month`(erp·sms), `ai_voice`, `ai_docs_max`, `ai_wiki` |
 | `ai-docs` 버킷 | 조각 7절 | `seed.sql` 끝. sms, hms는 SECTION 8(Storage)을 제거했지만 `storage.buckets`는 Supabase 기본 제공이라 버킷 행만 넣는다 | 사용자 정책을 만들지 않는다 |
 | 체인 검사 | 조각 끝 DO 블록(제공자 행이 있을 때만) | `seed.sql` 끝 DO 블록. hms는 모든 체인 제공자가 `hms-%`인지 추가 검사 | 어긋나면 적용 실패 |
 | 크레딧 | 모듈러에는 크레딧 모듈이 있으나 사용하지 않음 | SECTION 4 제거(`consume_credits` 없음) | AI도 선차감하지 않는다(01장 4.1절) |

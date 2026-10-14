@@ -141,7 +141,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 |---|---|---|---|
 | auth | 세션, 가입(`signup_app='toon'`), `requireSession('toon')`. 인증 단계(A Mock → B Google·이메일 → C 카카오·네이버)는 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`)에 둔다. 단계 분기(`AUTH_MODE`, 제공자 목록)는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`만 읽는다(10절) | `src/proxy.ts`, 모든 Route Handler 진입부, `src/lib/auth/` | `SHARED_MODULES.md:46-72`, `docs/products/_platform-core/AUTH_ROADMAP.md` 3.1절 |
 | org | 개인 조직 1개만 노출 | 세션 | 팀 기능 없음 |
-| credits | 콘티 3, 대사 1, 배경 4/장, MP4 3 선차감. AI·음성(채팅 턴, STT, TTS, 위키 갱신)은 선차감 후 정산 | `src/app/api/*`, `api/ai/chat`, `api/voice/*`, `api/internal/ai-settle` (service_role) | `priceOf('toon', action)` 단가표는 `src/lib/server/pricing.ts`, AI 단가는 `src/lib/server/ai/ai-pricing.ts` |
+| credits | 콘티 3(오픈소스 경로) / 5(상용 경로, 2026-10-14), 대사 1, 배경 4/장, MP4 3 선차감. AI·음성(채팅 턴, STT, TTS, 위키 갱신)은 선차감 후 정산 | `src/app/api/*`, `api/ai/chat`, `api/voice/*`, `api/internal/ai-settle` (service_role) | `priceOf('toon', action)` 단가표는 `src/lib/server/pricing.ts`, AI 단가는 `src/lib/server/ai/ai-pricing.ts` |
 | toss | Pro 구독(빌링키), 크레딧팩(일반결제) | `src/app/api/billing/*`, `services/toon-worker/src/schedules/` | `SHARED_MODULES.md:127-151` |
 | webhooks | Toss, fal 수신 | `src/app/api/webhooks/{toss,fal}` | 서명 실패 401, 중복 200 |
 | llm gateway | 사용하지 않는다(2026-10-13) | - | 라우터 본체가 ai-service로 옮겨졌다(`docs/products/_platform-core/SHARED_MODULES.md:42`). 콘티·대사·프롬프트 변환은 FastAPI 그래프가 하고 기능 키는 5절 |
@@ -163,7 +163,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 
 | `job_type` | 큐 | 런타임 | 크레딧 선차감 | 재시도 | 환불 조건 |
 |---|---|---|---|---|---|
-| `storyboard.generate` | `toon.ai` | TS(그래프 호출) | 3 | max_attempts 2(LLM 타임아웃/5xx만) | 최종 실패 자동(`fail_job`) |
+| `storyboard.generate` | `toon.ai` | TS(그래프 호출) | 3 / 5(오픈소스 / 상용 경로, 01장 4.3절) | max_attempts 2(LLM 타임아웃/5xx만) | 최종 실패 자동(`fail_job`) |
 | `image.generate` | `toon.ai` | TS | 4 x 장수 | 3(fal 제출 실패). 안전 필터 거부는 재시도 없음 | 최종 실패 자동. 2장 중 1장만 실패하면 실패분 `refund_credits(p_amount=4)` |
 | `export.png` | `toon.render` | TS(fabric/node + sharp) | 0 | 3 | 해당 없음 |
 | `export.zip` | `toon.render` | TS | 0 | 3 | 해당 없음 |

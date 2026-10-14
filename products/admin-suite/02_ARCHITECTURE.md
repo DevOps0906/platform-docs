@@ -166,7 +166,7 @@ erp와 sms는 같은 표를 앱 id만 바꿔 쓴다(각 8행).
 | 항목 | 규칙 |
 |---|---|
 | 크레딧 | 선차감·정산 없음(01장 4.1절, D-10). 모놀리스에서 `consume_credits`가 없으므로 호출하지 않는다 |
-| 한도 판정 | AI 게이트가 `features.ai_assistant`, `ai_turns_per_day`, `ai_voice`, `ai_docs_max`, `ai_wiki`를 서버에서 읽는다(`DB_CONVENTIONS.md` 11장). 하루 질문 수는 `core.rate_limit_hit('<app>:ai-chat-day:<user>', 한도, 86400)` |
+| 한도 판정 | AI 게이트가 `features.ai_assistant`, `ai_turns_per_day`, `ai_turns_per_month`, `ai_commercial_turns_per_month`, `ai_voice`, `ai_docs_max`, `ai_wiki`를 서버에서 읽는다(`DB_CONVENTIONS.md` 11장). 하루 질문 수는 `core.rate_limit_hit('<app>:ai-chat-day:<user>', 한도, 86400)`, 조직 월 질문 수는 `core.rate_limit_hit('<app>:ai-chat-month:<org>:<YYYYMM>', 한도, 2678400)`, 조직 월 상용 경로는 `'<app>:ai-chat-commercial:<org>:<YYYYMM>'`로 세고 넘으면 그 요청을 `force_open_source`로 라우팅(erp, sms만. hms는 월 한도 판정 없음, 01장 4.1절) |
 | 원가 기록 | FastAPI 라우터와 음성 어댑터가 호출마다 `ai_usage`(provider, model, tokens, audio_seconds, characters, feature, run_id, conversation_id, `credits`=원가 환산)를 남기고 즉시 `settled_at`을 채운다. 정산 잡은 없다 |
 | 실패 | 제공자 체인 전부 실패 → 503 `AI_UNAVAILABLE`. 사용자에게 아무것도 청구하지 않으므로 환불 로직이 없다 |
 | 관측 | 제공자별 호출 수, 대체 발생률(`ai_usage.status='fallback'`), 한도 도달 수를 KIT-F-020 화면과 운영 로그에서 본다 |

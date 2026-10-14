@@ -36,6 +36,7 @@
 | DOC-DSN-003 | 디자인 기준: HERO_3D | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/HERO_3D.md | - |
 | DOC-DSN-004 | 디자인 기준: SKILLS | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/SKILLS.md | - |
 | DOC-DSN-005 | 디자인 기준: REFERENCES | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/REFERENCES.md | - |
+| DOC-DSN-008 | 디자인 기준: DASHBOARD_PATTERNS | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md | - |
 | DOC-DSN-006 | 디자인 토큰 정의(DESIGN.md) | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/DESIGN.md | - |
 | DOC-DSN-007 | 컴포넌트·배리언트 명세(COMPONENTS.md) | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/COMPONENTS.md | - |
 

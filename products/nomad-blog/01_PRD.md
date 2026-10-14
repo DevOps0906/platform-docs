@@ -165,15 +165,15 @@ BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, 
 
 ### 4.1 플랜
 
-정본 출처: 확정 결정 8은 blog를 정하지 않았다(`docs/products/00_MERGE_ANALYSIS.md:16`). 가격과 월 발행 수는 CA 플랜(`NOMAD Shorts Maker/src/lib/plans.ts:18-71`)을 따른다. 월 크레딧은 CA에 없던 값이라 제안이다.
+정본 출처: 확정 결정 8은 blog를 정하지 않았다(`docs/products/00_MERGE_ANALYSIS.md:16`). 가격과 월 발행 수는 CA 플랜(`NOMAD Shorts Maker/src/lib/plans.ts:18-71`)을 따른다. 월 크레딧은 CA에 없던 값이라 제안이다. 모든 가격은 원화, VAT 포함이다(B2C SaaS 기본, `docs/Price_Plans/_common/PRICING_PRINCIPLES.md` 7장, 2026-10-14 결정). `business`의 월 발행·채널은 CA의 무제한 대신 숫자 한도(발행 300건, 채널 30개)로 판다(2026-10-14 결정, 공용 원칙 6장 "무제한 금지", 발행 워커 원가 상한). 단계별 인상 계획은 `docs/Price_Plans/nomad-blog/PRICE_PLAN.md` 6장.
 
-| 코드 | 가격(월) | 월 크레딧 | 가입 크레딧 | 이월 | 월 발행 | 채널 계정 | 주요 기능 |
+| 코드 | 가격(월, VAT 포함) | 월 크레딧 | 가입 크레딧 | 이월 | 월 발행 | 채널 계정 | 주요 기능 |
 |---|---|---|---|---|---|---|---|
 | `free` | 0원 | 20(제안) | 0 | 없음 | 10건 | 2개 | 빠름 모드 AI, 제휴 카드 수동 삽입, 즉시 발행 |
 | `pro` | 29,000원 | 300(제안) | 0 | 없음 | 50건 | 10개 | 고품질 모드, 제휴 자동 삽입, 브랜드커넥트, 예약 발행 |
-| `business` | 99,000원 | 1,500(제안) | 0 | 없음 | 무제한 | 무제한 | Pro 전부 + 인스타그램(Phase 2), n8n/Make(Phase 2), 팀 5인(제안) |
+| `business` | 99,000원 | 1,500(제안) | 0 | 없음 | 300건 | 30개 | Pro 전부 + 인스타그램(Phase 2), n8n/Make(Phase 2), 팀 5인(제안) |
 
-월 크레딧 근거(제안): 발행 1건에 원고 생성 빠름 3 + 검사 1 = 4크레딧이 든다. Free 20은 AI 원고 5편(나머지 5건은 직접 쓴 원고), Pro 300은 50건 x 4 = 200에 키워드·다시쓰기 여유 100, Business 1,500은 약 300편이다. 이월 없음은 코어 기본(`carry_over=false`)이다.
+월 크레딧 근거(제안): 발행 1건에 원고 생성 빠름 3 + 검사 1 = 4크레딧이 든다. Free 20은 AI 원고 5편(나머지 5건은 직접 쓴 원고), Pro 300은 50건 x 4 = 200에 키워드·다시쓰기 여유 100, Business 1,500은 약 300편이고 월 발행 한도 300건과 맞춘다. 이월 없음은 코어 기본(`carry_over=false`)이다.
 
 ### 4.2 크레딧 단가
 
@@ -197,8 +197,8 @@ BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, 
 
 | 키 | 타입 | 의미 | 서버 판정 위치 |
 |---|---|---|---|
-| `posts_per_month` | integer, -1 무제한 | KST 월 발행 원고 수(`blog.monthly_post_usage`) | 발행 요청 라우트 |
-| `max_channel_accounts` | integer, -1 무제한 | revoked가 아닌 채널 계정 수 | 채널 연결 라우트 |
+| `posts_per_month` | integer(-1은 무제한으로 해석하되 판매 플랜에는 쓰지 않는다. Business 300) | KST 월 발행 원고 수(`blog.monthly_post_usage`) | 발행 요청 라우트 |
+| `max_channel_accounts` | integer(-1은 무제한으로 해석하되 판매 플랜에는 쓰지 않는다. Business 30) | revoked가 아닌 채널 계정 수 | 채널 연결 라우트 |
 | `channel_types` | text[] | 연결 가능한 채널 | 채널 연결 라우트 |
 | `ai_modes` | text[] | `fast`, `quality` | AI 라우트 |
 | `affiliate` | boolean | 제휴 카드 수동 삽입 | 제휴 라우트 |
@@ -218,13 +218,13 @@ BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, 
 
 ### 4.4 크레딧팩
 
-| 코드 | 크레딧 | 가격 | 크레딧당 | 근거 |
+| 코드 | 크레딧 | 가격(VAT 포함) | 크레딧당 | 근거 |
 |---|---|---|---|---|
 | `pack_100` | 100 | 4,900원 | 49원 | 제안 |
-| `pack_500` | 500 | 19,900원 | 39.8원 | 제안 |
-| `pack_1500` | 1,500 | 49,000원 | 32.7원 | 제안 |
+| `pack_500` | 500 | 21,900원 | 43.8원 | 2026-10-14 결정(이전 19,900원). 고품질 모드 원가 기준 70% 하한 40원/크레딧 |
+| `pack_1500` | 1,500 | 63,000원 | 42원 | 2026-10-14 결정(이전 49,000원). 같은 이유 |
 
-근거(제안): video 팩이 크레딧당 30~22원(`docs/products/_supabase-modular/seed.sql:63-66`)이다. blog 크레딧은 영상보다 원가가 작은 LLM 호출만 쓰지만 팩을 사는 사용자가 소량 구매자라는 점을 반영해 소량 팩 단가를 높게 두었다. 팩 크레딧은 pack 버킷이라 월 지급 만료와 무관하다.
+근거(제안): video 팩이 크레딧당 30~22원(`docs/products/_supabase-modular/seed.sql:63-66`)이다. blog 크레딧은 영상보다 원가가 작은 LLM 호출만 쓰지만 팩을 사는 사용자가 소량 구매자라는 점을 반영해 소량 팩 단가를 높게 두었다. 대량 팩은 고품질 모드(8크레딧, 원가 약 95원 가정)를 써도 매출총이익률 70%가 되도록 크레딧당 40원 이상으로 둔다(`docs/Price_Plans/nomad-blog/PRICE_PLAN.md` 3장, 10장 BL-P-5). 팩 크레딧은 pack 버킷이라 월 지급 만료와 무관하다.
 
 ### 4.5 환불(제안, 법률 검토 필요)
 
@@ -237,7 +237,7 @@ BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, 
 
 ### 4.6 AI·음성 크레딧 단가 (2026-10-13, 제안)
 
-4.2절 단가와 4.4절 크레딧팩은 바꾸지 않는다. 4.2절의 LLM 작업은 FastAPI 라우터의 기능 키(`blog.assist`, `blog.post_draft`, `blog.compliance`)로 실행되며 크레딧 값은 그대로다. 제공자 단가는 코어 seed `core.ai_model_prices`(`docs/products/_supabase-modular/seed.sql:228-246`, 모두 제안값)이고 이 표는 그 값을 blog 기능에 적용한 것이다. 계산 상수는 `src/server/ai/pricing.ts`(4.2절과 같은 이유로 코드 상수). 선차감과 정산 규칙은 `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:97-104`를 따른다.
+4.2절 단가와 4.4절 크레딧팩은 이 절에서 바꾸지 않는다(대량 팩 가격은 2026-10-14 가격 정책으로 따로 조정). 4.2절의 LLM 작업은 FastAPI 라우터의 기능 키(`blog.assist`, `blog.post_draft`, `blog.compliance`)로 실행되며 크레딧 값은 그대로다. 제공자 단가는 코어 seed `core.ai_model_prices`(`docs/products/_supabase-modular/seed.sql:243-262`, 모두 제안값)이고 이 표는 그 값을 blog 기능에 적용한 것이다. 계산 상수는 `src/server/ai/pricing.ts`(4.2절과 같은 이유로 코드 상수). 선차감과 정산 규칙은 `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130`, 음성 단가는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:97-104`를 따른다.
 
 | 작업 | 선차감(예상) | 정산 | 상용 경로 예 | 오픈소스 경로 예 | 멱등 키 |
 |---|---|---|---|---|---|
@@ -447,7 +447,7 @@ AI 대화·생성 추가 규칙(6.5절에 더해 채팅, 위키, 그래프에 �
 | D-16 | 받아쓰기·읽어 주기 제공자와 ElevenLabs 데이터 보관 | (a) 받아쓰기 오픈소스 우선, 읽어 주기 ElevenLabs 우선, 보이스 1종 고정 (b) 사용자 선택. ElevenLabs 입력 보관·학습 사용·제로 리텐션은 계약 확인 후 처리방침 반영 | (a). 데이터 보관 조건은 미확인(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:83`) |
 | D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). blog의 주 레퍼런스는 Primer라 영향이 작다 |
 | D-18 | 운영자 규정 해설집(표시광고법, 채널 가이드, SEO 원칙) 컬렉션 | (a) MVP는 규칙 사전만, Phase 2에 운영자 컬렉션 + 공개 위키 (b) MVP부터 운영자 컬렉션 | (a). 규정 해설은 법률 검토가 필요하고, MVP에서 AI가 법 해석을 답하지 않도록 한다(6.7절) |
-| D-19 | 공정 사용 한도와 월 크레딧 재산정 | (a) 하루 채팅 턴 50/200/500, 문서 10/100/1,000, 4.1절 월 크레딧 유지 (b) 그래프 단가 5를 반영해 월 크레딧 상향(Free 25, Pro 375 등) | (a)로 출시, 실사용 원가(`core.ai_usage`)로 재산정 |
+| D-19 | 공정 사용 한도와 월 크레딧 재산정 | (a) 하루 채팅 턴 50/200/500, 문서 10/100/1,000, 4.1절 월 크레딧 유지 (b) 그래프 단가 5를 반영해 월 크레딧 상향(Free 25, Pro 375 등) | (a)로 출시, 실사용 원가(`core.ai_usage`)로 재산정. 2026-10-14 가격 정책 판정: 보류(실사용 원가 측정 후 중기 후보, `docs/Price_Plans/nomad-blog/PRICE_PLAN.md` 10장 BL-P-2) |
 | D-20 | 반복 시리즈(BL-F-050) 무인 AI 초안의 사람 승인 | (a) 승인 면제 없음: 초안은 만들되 승인 전에는 발행 안 함 (b) 규칙 통과 시 면제(브랜드커넥트 무인 규칙과 함께) | (a). BL-F-052 원칙(되돌리기 어려운 발행 앞에는 사람 승인)을 유지, 면제는 Phase 2에서 법률 검토 후 |
 | D-21 | 캠페인 유형 분류 방식(BL-F-032) | (a) 캠페인 화면의 채널 표기 셀렉터로 분류 (b) 제목·요강 키워드 규칙 (c) LLM 분류 | (a) + 실패 시 `unknown`. 네이버 화면 구조는 미확인(2026-10-13)이라 셀렉터 상수 파일에 두고 분류 실패율(`unknown` 비율)을 운영 지표로 본다 |
 

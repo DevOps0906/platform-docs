@@ -195,11 +195,13 @@ ERP 역할 매트릭스(`analysis:1241` 권고 A)
 
 정본 출처: 원본 3개 모두 요금 근거가 없다(`ERP-Wesite/PRD.md`, `Hospital/PRD.md`, `School_Management_System/PRD.md`). 아래 금액은 전부 제안이며, 확정 결정 8(플랜 정본)에도 admin-suite 항목이 없다. 크레딧 과금은 쓰지 않는다. 2026-10-13에 AI 기능이 들어왔지만 계약형 업무 앱이라 AI도 크레딧을 선차감하지 않고 플랜 포함 한도로 건다(4.1절, 열린 결정 D-10).
 
-| 앱 | 코드 | 가격(월) | 월 크레딧 | 가입 크레딧 | 이월 | features | 비고 |
+가격은 모두 **VAT 별도**다(고객이 사업자·기관인 B2B, 2026-10-14 결정, `Price_Plans/admin-suite/PRICE_PLAN.md` 10장 AS-P-1). 판매 플랜의 한도 값에는 -1(무제한)을 쓰지 않는다(AS-P-6, `Price_Plans/_common/PRICING_PRINCIPLES.md` 6장 무제한 금지). 키 해석의 -1은 내부 계약·운영용으로만 남긴다. 단계별 인상(erp 59,000원, sms 학생 단계 과금)·연간 결제·도입 셋업·AI 추가 팩은 Price_Plans 6장 단계 계획이며 이 표를 바꾸지 않는다.
+
+| 앱 | 코드 | 가격(월, VAT 별도) | 월 크레딧 | 가입 크레딧 | 이월 | features | 비고 |
 |---|---|---|---|---|---|---|---|
 | erp | `default` | 0 | 0 | 0 | - | `max_members` 5, `storage_mb` 500, `export_xlsx` false, `sales_trend_days` 31 | 기본 플랜(계약형 출시) |
 | erp | `standard` | 49,000원(제안) | 0 | 0 | - | `max_members` 50, `storage_mb` 10240, `export_xlsx` true, `sales_trend_days` 366 | Phase 2 Toss 구독 |
-| sms | `default` | 0 | 0 | 0 | - | `max_students` 60, `max_classes` 3, `export_xlsx` false, `attendance_trend_days` 31 | |
+| sms | `default` | 0 | 0 | 0 | - | `max_students` 100, `max_classes` 5, `export_xlsx` false, `attendance_trend_days` 31 | 2026-10-14 60·3 → 100·5(AS-P-5, 경쟁사 무료 수준) |
 | sms | `standard` | 39,000원(제안) | 0 | 0 | - | `max_students` 1500, `max_classes` 60, `export_xlsx` true, `attendance_trend_days` 366 | |
 | hms | `contract` | 0(별도 계약) | 0 | 0 | - | `max_staff` 50, `phi_log_retention_days` 730, `export_xlsx` true | 온라인 결제 없음 |
 
@@ -209,11 +211,11 @@ ERP 역할 매트릭스(`analysis:1241` 권고 A)
 
 | 키 | 타입 | 의미 | 키가 없을 때 | 판정 위치 |
 |---|---|---|---|---|
-| `max_members` | int | ERP 활성 직원 + 대기 초대 수 상한. -1 무제한 | 5 | `decide_join_request` 호출 전 Route Handler |
+| `max_members` | int | ERP 활성 직원 + 대기 초대 수 상한. -1 무제한(판매 플랜에는 쓰지 않음) | 5 | `decide_join_request` 호출 전 Route Handler |
 | `storage_mb` | int | 상품 이미지 총량 | 500 | 업로드 서명 URL 발급 전 |
 | `export_xlsx` | bool | 엑셀 내보내기 | false | 내보내기 Route Handler |
 | `sales_trend_days` | int | 판매 추이 조회 최대 일수 | 31 | `GET /api/erp/sales/trend` |
-| `max_students`, `max_classes` | int | SMS 활성 학생/학급 상한 | 60 / 3 | 초대·학급 생성 Route Handler |
+| `max_students`, `max_classes` | int | SMS 활성 학생/학급 상한 | 100 / 5 | 초대·학급 생성 Route Handler |
 | `attendance_trend_days` | int | 출석 추이 최대 일수 | 31 | `GET /api/sms/attendance/trend` |
 | `max_staff` | int | HMS 직원 수 상한 | 50 | 직원 초대 Route Handler |
 | `phi_log_retention_days` | int | 접근 기록 보존(하한 730) | 730 | 프로비저닝 시 `workspaces.phi_log_retention_days`에 복사 |
@@ -226,13 +228,15 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 
 | 장치 | 내용 | 판정 위치 |
 |---|---|---|
-| 플랜 포함 한도 | 아래 `features` 키. 질문 한도 도달은 429 `AI_DAILY_LIMIT`, 기능 꺼짐은 403 `AI_DISABLED`, 문서 수 상한은 기존 플랜 한도처럼 402로 알린다 | AI 게이트(Route Handler) |
+| 플랜 포함 한도 | 아래 `features` 키. 사용자 하루 질문 한도 도달은 429 `AI_DAILY_LIMIT`, 조직 월 질문 한도 도달은 429 `AI_MONTHLY_LIMIT`, 조직 월 상용 경로 한도 도달은 오류 없이 오픈소스 경로로 처리(`force_open_source`와 같음), 기능 꺼짐은 403 `AI_DISABLED`, 문서 수 상한은 기존 플랜 한도처럼 402로 알린다 | AI 게이트(Route Handler) |
 | 원가 기록 | 모든 호출을 `ai_usage`에 남기고 `credits` 컬럼에는 `ai_model_prices` 단가로 환산한 원가 크레딧을 기록한다. 차감은 하지 않는다(내부 원가 보고용, 제안) | FastAPI 라우터, 음성 어댑터 |
 
 | 키 | 타입 | 의미 | 키가 없을 때 | 값(erp / sms default → standard, hms contract) |
 |---|---|---|---|---|
 | `ai_assistant` | bool | AI 어시스턴트와 위키 사용 허용 | true | true → true, hms true |
-| `ai_turns_per_day` | int | 사용자당 하루 질문 수. -1 무제한 | 30 | 30 → 200, hms 300 |
+| `ai_turns_per_day` | int | 사용자당 하루 질문 수. -1 무제한(판매 플랜에는 쓰지 않음) | 30 | 30 → 200, hms 300 |
+| `ai_turns_per_month` | int | 조직당 월 질문 수(구성원 합계, KST 달력 월). 2026-10-14 추가(AS-P-4) | 100 | 100 → 1500, hms 판정 안 함(전용 서버, 턴당 외부 원가 없음) |
+| `ai_commercial_turns_per_month` | int | 조직당 월 상용 경로(Claude 등) 질문 수. 넘으면 그 달 남은 질문은 오픈소스 경로로만 처리. 2026-10-14 추가(AS-P-4) | 0 | 0 → 300, hms 해당 없음(상용 금지, 6.6절) |
 | `ai_voice` | bool | 음성 질의 허용 | false | false → true, hms true |
 | `ai_docs_max` | int | 조직당 색인 문서 수 상한 | 20 | 20 → 500, hms 1000 |
 | `ai_wiki` | bool | 운영 위키 사용 허용(색인·ingest 비용이 있어 default 플랜 제외) | false | false → true, hms true |
@@ -247,7 +251,9 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 | 문서 1건 색인(10쪽, 약 6천 토큰) | 임베딩 오픈소스 고정이라 약 0.06 | 같음 | `admin.knowledge`는 오픈소스 임베딩만(02장 5.1절) |
 | 위키 ingest 문서 1건 | 약 6~10(오픈소스 먼저, 실패 시 상용 대체 시) | 약 2 | 문서 1건당 갱신 페이지 5개 상한 |
 
-레이트 리밋(키 `<app>:<route>:<user_id>`, `core.rate_limit_hit`): 질문 사용자당 20회/60초, 하루 `ai_turns_per_day`, STT 사용자당 10회/60초, 문서 업로드 조직당 20회/시간, 위키 ingest 조직당 5회/시간(제안).
+조직 월 한도 근거(2026-10-14, AS-P-4): 사용자당 하루 200턴 x 최대 50명은 상용 경로에서 standard 가격(VAT 별도)의 70% 매출총이익률을 지키지 못한다. 49,000원의 허용 원가 14,700원에서 인프라·결제 수수료 약 4,830원을 빼면 AI에 쓸 수 있는 원가는 월 지표 약 2,000이다. standard는 상용 300턴(약 1,200) + 오픈소스 1,200턴(약 780) = 약 1,980, default는 오픈소스 100턴(약 65)이다(`Price_Plans/admin-suite/PRICE_PLAN.md` 3장).
+
+레이트 리밋(키 `<app>:<route>:<user_id>`, `core.rate_limit_hit`): 질문 사용자당 20회/60초, 하루 `ai_turns_per_day`, 조직 월 `ai_turns_per_month`(키 `<app>:ai-chat-month:<org>:<YYYYMM>`, 창 31일), 조직 월 상용 `ai_commercial_turns_per_month`(키 `<app>:ai-chat-commercial:<org>:<YYYYMM>`, 창 31일), STT 사용자당 10회/60초, 문서 업로드 조직당 20회/시간, 위키 ingest 조직당 5회/시간(제안).
 
 ## 5. 비기능 요구사항
 
@@ -391,7 +397,7 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 | D-7 | 의료·미성년자 법령 세부 | 접속기록 보관 기간, 진료기록 보존 기간, 법정대리인 동의 절차 | 법무 확인(미확인 항목) |
 | D-8 | School 작업 트리 삭제 | 의도/실수 | HEAD 복원(사용자 결정 A, `analysis:1243`). 삭제 의도는 원작성자 확인 필요(`analysis:1233`) |
 | D-9 | 브랜드 | 원본 이름(NEXUS ERP, MEDIC-CRM) 유지 여부 | 상표 확인 전 "Admin Suite ERP/Hospital/School" |
-| D-10 | AI 과금 방식 | A) 플랜 포함 한도(`features.ai_*`) + 원가 기록, 크레딧 미사용 / B) 모놀리스 SECTION 4 복원 + 조직별 월 AI 크레딧 선차감·정산(`AI_ARCHITECTURE.md` 7장 그대로) | **확정: A**(2026-10-13 사용자 결정). 계약형 업무 앱이고 질문 단위 과금은 도입 부담이 크다. B는 AI를 별도 상품으로 팔 때 다시 검토 |
+| D-10 | AI 과금 방식 | A) 플랜 포함 한도(`features.ai_*`) + 원가 기록, 크레딧 미사용 / B) 모놀리스 SECTION 4 복원 + 조직별 월 AI 크레딧 선차감·정산(`AI_ARCHITECTURE.md` 7장 그대로) | **확정: A**(2026-10-13 사용자 결정). 계약형 업무 앱이고 질문 단위 과금은 도입 부담이 크다. B는 AI를 별도 상품으로 팔 때 다시 검토. 2026-10-14 조직 월 한도 키 2개 추가(4.1절, 결정됨(2026-10-14, Price_Plans 반영) AS-P-4) |
 | D-11 | erp, sms 기본 라우팅 | A) `auto`(Claude 먼저), 국외 이전 동의가 없으면 오픈소스만 / B) 전 기능 `open_source` 고정(내부 문서 외부 전송 0) | A(02장 5.1절). 고객이 요구하면 조직 단위로 B(`force_open_source`) 적용 |
 | D-12 | hms 전용 AI 서버 배치 단위 | A) 병원당 1세트(FastAPI + hms-llm + hms-embed + hms-voice) / B) hms 전용 공용 서버(병원 간 조직 격리는 서명 토큰으로) | A(제안). 비용이 크면 B를 법무 확인 뒤 허용(`02_ARCHITECTURE.md` 7절) |
 | D-13 | hms AI 범위 | A) 가이드라인·운영 매뉴얼만(환자 정보 제외, MVP) / B) 환자 데이터 요약·차트 보조 | A. B는 Phase 3, 접근 기록 설계와 의료기기 해당 여부 확인 뒤 |

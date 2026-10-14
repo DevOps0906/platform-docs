@@ -1078,10 +1078,10 @@ on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind
 
 -- 플랜 features 의 AI 키 병합(있으면 갱신). 크레딧 과금은 쓰지 않으므로 키는 허용 여부와 한도뿐이다(01_PRD 4.1절).
 update core.plans
-   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 30, "ai_voice": false, "ai_docs_max": 20, "ai_wiki": false}'::jsonb
+   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 30, "ai_turns_per_month": 100, "ai_commercial_turns_per_month": 0, "ai_voice": false, "ai_docs_max": 20, "ai_wiki": false}'::jsonb
  where app_id = 'erp' and code = 'default';
 update core.plans
-   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 200, "ai_voice": true, "ai_docs_max": 500, "ai_wiki": true}'::jsonb
+   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 200, "ai_turns_per_month": 1500, "ai_commercial_turns_per_month": 300, "ai_voice": true, "ai_docs_max": 500, "ai_wiki": true}'::jsonb
  where app_id = 'erp' and code = 'standard';
 
 -- AI 문서 원본 버킷: 사용자 정책을 일부러 만들지 않는다(service_role 만 접근).

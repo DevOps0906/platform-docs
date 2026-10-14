@@ -12,6 +12,7 @@
 | `pdf/` | `reviews/`의 PDF 변환본 | 인쇄·공유용 |
 | `products/` | 통합 기획서(제품 13개 + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
 | `develop/` | 제품별 개발 묶음(개발 가이드, setup 스크립트, 개발 폴더에 붙일 문서·DB) | 개발을 시작할 때 |
+| `Price_Plans/` | 가격 플랜: 공용 가격 결정 방법(`_common/`) + 플랫폼별 폴더(제품 13개, 서비스 사업 Web-App-Agency) | 가격을 정하거나 바꿀 때 |
 | `_tools/` | 리뷰 템플릿, md → PDF 변환 도구 | 리뷰를 추가할 때 |
 
 ## 2. 제품 목록
@@ -192,3 +193,4 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 기획 | 13개 제품 완료. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
 | 개발 묶음 | 13개 제품 완료(`develop/`) |
 | 남은 결정 | 각 제품 `01_PRD.md` 8절. 공용 과제는 `products/README.md` "남은 코어 과제" |
+| 가격 플랜 | `Price_Plans/` 생성. Web-App-Agency 초안, 제품 13개는 폴더만(정본은 각 PRD 4장) |

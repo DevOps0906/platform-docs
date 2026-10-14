@@ -73,7 +73,7 @@
 | 1 | `/settings/billing` | "Pro로 변경(월 9,900원)" | `POST /api/billing/orders` → `payment_orders` INSERT(금액은 서버가 plans에서 읽음) | pro 비활성 → 버튼 없음 |
 | 2 | Toss 결제창 | 결제 | - | 취소 → 원래 화면 |
 | 3 | successUrl | 자동 | `POST /api/billing/confirm` → Toss confirm → `confirm_payment_order` | `PM001` 금액 불일치 → "결제 확인 실패. 승인 취소를 요청했습니다" + 운영 알림(주문 failed 기록은 별도 호출 `fail_payment_order`, 서버 로그·알림도 남김, 04장 5절) |
-| 4 | `/settings/billing` | 확인 | 엔타이틀먼트 pro, 월 600 크레딧 | - |
+| 4 | `/settings/billing` | 확인 | 엔타이틀먼트 pro, 월 400 크레딧 | - |
 
 ### 2.5 모의주문과 킬 스위치(Phase 3)
 

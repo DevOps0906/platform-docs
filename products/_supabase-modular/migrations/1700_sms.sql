@@ -26,7 +26,7 @@ insert into core.apps (id, name, schema_name, signup_policy) values ('sms', 'Adm
 on conflict (id) do nothing;
 
 insert into core.plans (app_id, code, name, price_krw, billing_interval, monthly_credits, signup_credits, carry_over, features, is_default, is_active, sort_order) values
-  ('sms', 'default',  'Default',  0,     'none',  0, 0, false, '{"max_students": 60, "max_classes": 3, "export_xlsx": false, "attendance_trend_days": 31}', true,  true, 0),
+  ('sms', 'default',  'Default',  0,     'none',  0, 0, false, '{"max_students": 100, "max_classes": 5, "export_xlsx": false, "attendance_trend_days": 31}', true,  true, 0),
   ('sms', 'standard', 'Standard', 39000, 'month', 0, 0, false, '{"max_students": 1500, "max_classes": 60, "export_xlsx": true, "attendance_trend_days": 366}', false, true, 1)
 on conflict do nothing;
 
@@ -727,10 +727,10 @@ on conflict ((coalesce(org_id::text, '')), (coalesce(app_id, '')), feature, kind
 
 -- 플랜 features 의 AI 키 병합(있으면 갱신). 크레딧 과금은 쓰지 않으므로 키는 허용 여부와 한도뿐이다(01_PRD 4.1절).
 update core.plans
-   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 30, "ai_voice": false, "ai_docs_max": 20, "ai_wiki": false}'::jsonb
+   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 30, "ai_turns_per_month": 100, "ai_commercial_turns_per_month": 0, "ai_voice": false, "ai_docs_max": 20, "ai_wiki": false}'::jsonb
  where app_id = 'sms' and code = 'default';
 update core.plans
-   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 200, "ai_voice": true, "ai_docs_max": 500, "ai_wiki": true}'::jsonb
+   set features = features || '{"ai_assistant": true, "ai_turns_per_day": 200, "ai_turns_per_month": 1500, "ai_commercial_turns_per_month": 300, "ai_voice": true, "ai_docs_max": 500, "ai_wiki": true}'::jsonb
  where app_id = 'sms' and code = 'standard';
 
 -- AI 문서 원본 버킷: 사용자 정책을 일부러 만들지 않는다(service_role 만 접근).

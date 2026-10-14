@@ -3132,7 +3132,7 @@ insert into core.plans (app_id, code, name, price_krw, billing_interval, monthly
    '{"projects_max": 50, "formats": ["pdf", "docx", "zip"], "watermark": false, "doc_phase": "mvp", "members_max": 1, "integrations": ["csv", "webhook"], "approvals": false, "share_links": false, "ai_chat_turns_per_day": 200, "minutes_max_minutes": 120, "storage_mb": 5000}',
    false, true, 1),
   ('docs', 'team', 'Team', 59000, 'month', 1500, 0, false,
-   '{"projects_max": null, "formats": ["pdf", "docx", "zip"], "watermark": false, "doc_phase": "phase2", "members_max": 5, "integrations": ["csv", "webhook", "hubspot", "admin_suite_erp", "n8n"], "approvals": true, "share_links": true, "ai_chat_turns_per_day": 500, "minutes_max_minutes": 180, "storage_mb": 20000}',
+   '{"projects_max": 300, "formats": ["pdf", "docx", "zip"], "watermark": false, "doc_phase": "phase2", "members_max": 5, "integrations": ["csv", "webhook", "hubspot", "admin_suite_erp", "n8n"], "approvals": true, "share_links": true, "ai_chat_turns_per_day": 500, "minutes_max_minutes": 180, "storage_mb": 20000}',
    false, false, 2)
 on conflict (app_id, code) do nothing;
 

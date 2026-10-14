@@ -165,16 +165,16 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 
 ## 4. 요금과 크레딧
 
-정본: 이 절(확정 결정 8, `docs/products/00_MERGE_ANALYSIS.md:16`). 모듈러 seed의 toon 샘플(`docs/products/_supabase-modular/seed.sql:43`, `:108-111`)과 가격·월 크레딧을 같게 두었다. 바꾸지 않은 이유: 14,900원은 국내 1인 창작 도구 구독의 저가 구간이고(제안 판단), 300크레딧이면 아래 단가로 한 달 약 13회차(콘티 3 + 배경 4장 16 + MP4 3 = 22크레딧/회차)를 만들 수 있어 주 2~3회 연재 페르소나(하린)에 맞는다. 바꾼 것은 features 키 확장뿐이다(모듈러 seed 갱신 요청은 06장 6절).
+정본: 이 절(확정 결정 8, `docs/products/00_MERGE_ANALYSIS.md:16`). 가격은 모두 VAT 포함(B2C SaaS, 2026-10-14 `Price_Plans/_common/PRICING_PRINCIPLES.md` 7장). 런칭 할인·연간 결제·중장기 인상·business 등급은 `Price_Plans/toon-factory/PRICE_PLAN.md` 6장 단계 계획이며 이 절을 바꾸지 않는다. 모듈러 seed의 toon 샘플(`docs/products/_supabase-modular/seed.sql:43`, `:108-111`)과 가격·월 크레딧을 같게 두었다. 바꾸지 않은 이유: 14,900원은 국내 1인 창작 도구 구독의 저가 구간이고(제안 판단), 300크레딧이면 아래 단가로 한 달 약 13회차(오픈소스 경로 콘티 3 + 배경 4장 16 + MP4 3 = 22크레딧/회차. 상용 경로 콘티 5면 24크레딧, 약 12회차)를 만들 수 있어 주 2~3회 연재 페르소나(하린)에 맞는다. 바꾼 것은 features 키 확장뿐이다(모듈러 seed 갱신 요청은 06장 6절).
 
 ### 4.1 플랜
 
 | 코드 | 가격 | 월 크레딧 | 가입 크레딧 | 이월 | features |
 |---|---|---|---|---|---|
 | `free` (기본) | 0원 | 10 | 0 | 안 함 | `{"watermark": true, "export": ["png"], "exports_per_month": 20, "max_series": 1, "max_episodes_per_series": 3, "max_cuts_per_episode": 10, "asset_tiers": ["free"], "commercial_use": false, "mp4_max_seconds": 0, "user_asset_storage_mb": 100, "ai_chat": true, "ai_chat_turns_per_day": 20, "voice_chat": true, "dialogue_voice": true, "video_voice": false, "sponsorship": false}` |
-| `pro` | 14,900원/월 | 300 | 0 | 안 함 | `{"watermark": false, "export": ["png", "zip", "webtoon_strip", "mp4"], "exports_per_month": -1, "max_series": 20, "max_episodes_per_series": -1, "max_cuts_per_episode": 60, "asset_tiers": ["free", "premium"], "commercial_use": true, "mp4_max_seconds": 60, "user_asset_storage_mb": 2048, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dialogue_voice": true, "video_voice": true, "sponsorship": true}` |
+| `pro` | 14,900원/월 | 300 | 0 | 안 함 | `{"watermark": false, "export": ["png", "zip", "webtoon_strip", "mp4"], "exports_per_month": 300, "max_series": 20, "max_episodes_per_series": 500, "max_cuts_per_episode": 60, "asset_tiers": ["free", "premium"], "commercial_use": true, "mp4_max_seconds": 60, "user_asset_storage_mb": 2048, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "dialogue_voice": true, "video_voice": true, "sponsorship": true}` |
 
-원본의 "프리미엄 무제한 에셋"(`Toon-Factory/PRD.md:31`)은 "Pro 등급 에셋 전체 사용"으로 표현한다. AI 생성은 크레딧으로 제한되므로 "무제한"이라는 말을 쓰지 않는다(6.5절).
+Pro의 이미지 내보내기 월 300건과 작품당 500회차는 2026-10-14에 "무제한"(-1)에서 숫자 상한으로 바꿨다(`Price_Plans/_common/PRICING_PRINCIPLES.md` 6장 무제한 금지, `Price_Plans/toon-factory/PRICE_PLAN.md` 10장). 원본의 "프리미엄 무제한 에셋"(`Toon-Factory/PRD.md:31`)은 "Pro 등급 에셋 전체 사용"으로 표현한다. AI 생성은 크레딧으로 제한되므로 "무제한"이라는 말을 쓰지 않는다(6.5절).
 
 ### 4.2 `core.plans.features` 키 해석 (`DB_CONVENTIONS.md` 11장)
 
@@ -182,7 +182,7 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 |---|---|---|---|
 | `watermark` | boolean | 이미지·영상 결과에 워터마크 | 내보내기 Route Handler가 `exports.watermark`에 기록, 렌더 워커가 적용 |
 | `export` | text[] | 허용 내보내기 종류 | 내보내기 Route Handler(`TN002`) |
-| `exports_per_month` | int, -1 무제한 | 이미지 내보내기(png/zip/webtoon_strip) 월 건수(KST 월) | Route Handler + `toon.monthly_export_count`(`TN005`) |
+| `exports_per_month` | int(-1은 쓰지 않는다, 2026-10-14) | 이미지 내보내기(png/zip/webtoon_strip) 월 건수(KST 월) | Route Handler + `toon.monthly_export_count`(`TN005`) |
 | `max_series` | int | 작품 수 | DB 트리거 `toon.enforce_plan_limits`(`TN001`) |
 | `max_episodes_per_series` | int | 작품당 회차 수 | 같은 트리거 |
 | `max_cuts_per_episode` | int | 회차당 컷 수. 인스타툰은 이 값과 10 중 작은 값 | 같은 트리거 |
@@ -205,7 +205,7 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 
 | 작업 | 크레딧 | 근거 |
 |---|---|---|
-| AI 콘티 1회(최대 30컷) | 3 | 그래프 `toon.storyboard`(LLM 노드 3개 + 규칙 검사) 정액. 3은 오픈소스 경로 원가 기준 제안이고 상용 경로 원가는 더 크다(8절 D9). 제안 |
+| AI 콘티 1회(최대 30컷) | 오픈소스 경로 3 / 상용 경로 5 | 그래프 `toon.storyboard`(LLM 노드 3개 + 규칙 검사) 정액. 선차감 때 `resolve_ai_route` 체인의 첫 제공자가 상용이면 5, 오픈소스만 남으면(국외 이전 미동의 조직) 3. 2026-10-14 상용 경로 3 → 5: Sonnet 경로 원가가 크레딧당 약 24원으로 Pro 허용 원가 13원(70% 매출총이익률)을 넘는다(`Price_Plans/toon-factory/PRICE_PLAN.md` 3.2절, 8절 D9) |
 | AI 대사 다듬기 1회(3안) | 1 | 그래프 `toon.dialogue`(LLM 노드 1개) 정액. 제안 |
 | 로그라인·시놉시스 생성 1회(로그라인 3안 + 시놉시스 1안) | 1 | 그래프 `toon.logline`(LLM 노드 2개) 정액. 짧은 출력이라 대사 다듬기와 같은 값. 제안 |
 | AI 배경 1장(프롬프트 변환 포함) | 4 | fal 1장 + LLM fast 1회. 제안 |
@@ -238,7 +238,7 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 
 | 작업 | 선차감(예상) | 정산 | 상용 경로 예 | 오픈소스 경로 예 | 멱등 키 |
 |---|---|---|---|---|---|
-| AI 콘티(그래프, 4~30컷) | 3(정액) | 차액 없음. `ai_usage`에 원가만 기록하고 실행 끝에 `settled_at`을 채운다 | Claude 우선 | `oss-llm` | `consume:toon:<request_id>` |
+| AI 콘티(그래프, 4~30컷) | 상용 경로 5 / 오픈소스 경로 3(정액, 2026-10-14) | 차액 없음. `ai_usage`에 원가만 기록하고 실행 끝에 `settled_at`을 채운다 | Claude 우선 | `oss-llm` | `consume:toon:<request_id>` |
 | 대사 다듬기(그래프) | 1(정액) | 차액 없음 | 같음 | 같음 | `consume:toon:<request_id>` |
 | AI 배경 1장(프롬프트 변환 포함) | 4(정액, 기존) | 차액 없음 | - | - | `consume:toon:<request_id>` |
 | 설정 위키 만들기·갱신 1회 | 2 | 실제 토큰 × 단가, 올림, 최소 1·상한 4(초과분은 운영사 부담) | 약 3 | 약 1 | `run:<id>` |
@@ -418,7 +418,7 @@ AI 대화 규칙(6.3·6.5절에 더해 콘티·대사·채팅·TTS 입력 모두
 | D6 | AI 가시 표기 기본값 | ON(끄려면 확인) / 항상 ON / 메타데이터만 | ON(끄려면 확인). 법무 확인 후 확정. 협찬 회차는 "가상인물" 표시(TN-F-073)와 함께 검토하고, 공정위 가상인물 개정안이 확정되면 협찬 회차는 "항상 ON"으로 바꾸는 안(D20) |
 | D7 | 모놀리스 스키마 | public / 제품 스키마 | public(코어 lite 원칙). 사용자 최종 확인 대기(05장 8절) |
 | D8 | 무료 플랜 상업 이용 | 금지 / 허용 | 금지(Pro 전환 동기). 마케터 페르소나 이탈 위험은 K4로 관찰 |
-| D9 | AI 콘티 정액 3크레딧 유지 여부 | (a) 3 유지, 원가 실측 후 재산정 (b) 컷 수별(4~10컷 3 / 11~30컷 5) (c) 상용 경로만 인상 | (a)(제안). 그래프로 바뀌어 LLM 호출이 늘었다. 3은 오픈소스 경로 원가 기준이므로 상용 경로 원가를 `core.ai_usage`로 한 달 실측한 뒤 (b)를 검토한다. 그 전에 사용자에게 보이는 단가는 바꾸지 않는다 |
+| D9 | AI 콘티 정액 3크레딧 유지 여부 | (a) 3 유지, 원가 실측 후 재산정 (b) 컷 수별(4~10컷 3 / 11~30컷 5) (c) 상용 경로만 인상 | 결정됨(2026-10-14, Price_Plans 반영): (c) 상용 경로 5, 오픈소스 경로 3(4.3절). 기본 체인(Claude 먼저)은 바꾸지 않고, 컷 수별 단가 (b)는 한 달 실측 후 검토. 이전 권고: (a)(제안). 그래프로 바뀌어 LLM 호출이 늘었다. 3은 오픈소스 경로 원가 기준이므로 상용 경로 원가를 `core.ai_usage`로 한 달 실측한 뒤 (b)를 검토한다. 그 전에 사용자에게 보이는 단가는 바꾸지 않는다 |
 | D10 | 작품 설정 위키·노트의 개인정보 처리 | (a) 기본은 상용 허용(국외 이전 동의로 통제), 실제 인물·경험 기반 작품은 사용자가 표시하면 오픈소스 강제 (b) 위키·노트는 항상 오픈소스 | (a)(제안). (b)는 위키 품질이 낮아질 수 있어 평가셋(TN-06-049)으로 오픈소스 경로 품질을 확인한 뒤 결정 |
 | D11 | AI 배경 생성(fal)의 국외 이전 동의 요구 | (a) 동의 없으면 차단(`TN007`) (b) 동의 없이 허용하고 처리방침으로만 고지 | (a)(제안). fal은 라우팅 체인 밖이라 코어가 막아 주지 않는다. 법무 확인 필요 |
 | D12 | 설정 컬렉션 임베딩 | (a) `oss-embed` 고정 (b) Voyage(상용, 동의 시) | (a). 컬렉션마다 모델이 하나여야 하고 동의 여부와 무관하게 같은 모델로 질의해야 한다. 바꾸면 재색인 |
