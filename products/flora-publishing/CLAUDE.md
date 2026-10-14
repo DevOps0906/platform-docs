@@ -6,7 +6,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md`(기능 ID, 단가, features 키) → `02_ARCHITECTURE.md`(경계, 잡) → `04_API.md`(계약) → `05_DATA_MODEL.md`(테이블, RLS) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장, `DB_CONVENTIONS.md` 14장(pgvector) |
 | 3 | 화면 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` flora-publishing 절, 랜딩이면 `HERO_3D.md` |
@@ -23,7 +23,7 @@
 | DB 변경 | `1000_publishing.sql`만, PB-06-001 담당만. 모놀리스 `0002`는 변환 스크립트로 재생성 |
 | 서버가 정본 | 플랜·한도·워터마크 판정은 서버. 클라이언트 잠금은 UX 보조 |
 | 렌더 위치 | WeasyPrint는 `services/render-weasyprint`에서만. Vercel 코드에서 PDF를 만들지 않는다 |
-| mock 금지 | 실패를 성공처럼 반환하지 않는다. 실패와 환불을 사용자에게 보여 준다 |
+| mock 금지 | 실패를 성공처럼 반환하지 않는다. 실패와 환불을 사용자에게 보여 준다. 인증 Mock은 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(배포 환경 404, 맨 끝 "인증 단계 규칙" 절) |
 | LLM 키 | `api/`(FastAPI)에만. web, worker, engine에 두지 않는다. ElevenLabs 키와 서명 토큰 개인키(`AI_TOKEN_PRIVATE_KEY`)는 web 서버에만 |
 | AI 경계 | 브라우저는 `/api/ai/*`, `/api/voice/*`만 부른다. Dify, FastAPI, LLM·음성 제공자 직접 호출 금지. web → FastAPI·음성 서버는 EdDSA 서명 토큰, Dify 경로는 대화 매핑(`platform_conversation_id`, `dify_user`)만. Dify 입력에 토큰·org·원고를 넣지 않는다 |
 | AI 크레딧 | 채팅·음성·낭독·설정집·색인은 제공자 호출 전에 선차감하고 끝나면 정산, 결과가 전달되지 않으면 전액 환불(01장 4.6절). 초안 그래프는 소제목 정액 선차감에 묶는다 |
@@ -107,3 +107,35 @@
 
 07장 4절 요약(AI·디자인 항목은 끝에): `FOR ALL` 정책, `'1234'`/localStorage 잠금해제, 이메일 하드코딩 관리자, 무인증 LLM·업로드·내보내기, 빈 JWT secret 허용, 웹훅 서명 생략, 비원자 차감, 사용자 파일명을 경로로, 서버가 사용자 URL fetch, url_fetcher 무제한, 범용 AI 프록시, 전역 n8n 키, escape 없는 HTML/XML, mock 폴백, async 안 동기 호출, 마지막 1,000자 다듬기, EventSource POST, localStorage를 정본으로, 실키 `.env` 커밋, Windows 폰트 경로, 허위 수치.
 AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·원고, 개인정보 포함 원고의 상용 제공자 대체 전송, 임의 텍스트 TTS, 낭독 중 제공자 대체, 참고 파일 장문 복사 생성, 사람 소유 위키 블록 덮어쓰기, 토큰 밖 3D 색·보라 그라디언트, "Tailwind"만 적은 지시(v3 혼입).
+
+## 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본 `docs/products/_platform-core/AUTH_ROADMAP.md`, 이 제품 반영은 02장 9절, 03장 7절, 04장 8절, 05장 10절, 06장 8절.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 Stage A(Mock 로그인). 로컬 `.env.local`은 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD`. 배포 환경(Vercel 미리보기 포함)은 항상 `AUTH_MODE=live` |
+| 단계 순서 | A(Mock, PB-06-006) → G1 → B(Google + 이메일, PB-06-056, P0, 공개 베타 필수) → G2 → C1 카카오(PB-06-057, P1)·C2 네이버(PB-06-058, P1) |
+| 단계 분기 위치 | `AUTH_MODE`·제공자 목록을 읽는 코드는 `web/src/lib/auth/`, `web/src/app/(auth)/`, `web/src/app/auth/`, `web/src/app/api/dev/login/`에만. 기능 코드·worker·engine·api는 `requireSession('publishing')`·`session_context`만 쓴다 |
+| 페르소나 사용법 | `supabase start` → `supabase db reset` → `node scripts/dev/seed-users.mjs --app publishing`(제품 훅 포함) → `/login` 개발용 패널. 페르소나 키: owner, admin, member, viewer, outsider, no_app, suspended, ops, basic(05장 10절). 권한 확인은 페르소나를 바꿔 로그인해서 한다 |
+| E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장하고 테스트는 그 상태로 시작한다. Google·카카오·네이버 실로그인은 자동화하지 않고 사람이 수동 점검표로 확인한다 |
+| 금지 패턴 | 쿠키·localStorage에 역할·플랜 쓰기, `mock-auth`, `nomad_role`, `nomad_plan`, 가짜 사용자 객체·가짜 세션, 원격 Supabase에 개발 계정 만들기, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·출력·로그에 두기, 인증 모듈 밖 `AUTH_MODE` 참조, 페르소나 이메일로 권한 분기, `next` 무검증 리다이렉트, 이메일 일치만으로 계정 자동 합치기(브리지) |
+| 단계 전환 | 에이전트가 단계를 스스로 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한 뒤에 B·C 작업을 시작한다. C2 경로(`supabase_custom` 또는 `bridge`)는 스파이크 결과를 `[DECISION]`으로 남긴다 |
+| 소유 경로 | 006: `web/src/lib/auth/`, `web/src/app/api/dev/login/`, `web/src/components/dev-auth/`, `scripts/dev/`. 056: `web/src/app/(auth)/`(006에서 이어 받음), `web/src/app/auth/callback/`, `web/src/features/onboarding-terms/`. 057: `web/src/features/login-methods/`. 058: `web/src/app/auth/naver/`(브리지만), `scripts/auth/`. 배지 장착(레이아웃)과 `db:seed-users` 스크립트 등록은 PB-06-002에, 약관 단계 장착은 PB-06-044에 1줄 요청 |
+| 이 제품의 B·C 작업 | B: PB-06-056(W7 맨 앞). C1: PB-06-057, C2: PB-06-058(W8, G2 후). 남은 결정: 01장 8.1절 D20(카카오 이메일), D21(네이버 경로), D22(이메일 가입 유지) |
+
+## 에이전트 실행 계층 규칙 (2026-10-14 FLORA 개편)
+
+정본은 01장 3.1절, 02장 10절, 04장 9절, 05장 2.5절. 화면은 03장 8절.
+
+| 항목 | 규칙 |
+|---|---|
+| 새 엔진 금지 | 에이전트는 레지스트리(`web/src/server/agents/registry.ts`)가 기존 처리 함수를 부르는 것이다. 에이전트 이름으로 LLM·렌더·fal 호출 코드를 새로 쓰지 않는다 |
+| 기록 | 유료 작업형 동작은 `withAgentTask`로 감싼다(채팅·받아쓰기·읽어 주기 제외). 같은 `request_id`로 `agent_tasks` 행을 멱등하게 만들고, 모든 크레딧 차감에 `p_ref_type='agent_task'`, `p_ref_id=<작업 id>`를 넘긴다. `agent_tasks`는 service_role만 쓰고 사용자 결정은 `decide_agent_task` RPC만 |
+| 본문 금지 | `input_summary`, `result_summary`, `error_message`, 운영 콘솔 응답에 원고 본문·프롬프트·채팅 내용·키·토큰을 넣지 않는다. id·개수·상태·오류 코드만 |
+| 승인 | 사용자가 쓴 본문은 승인 전에 바꾸지 않는다(단건 생성 덮어쓰기도 제안). 빈 소제목 AI 초안은 `gen_status='generated'`가 "검토 전"(01장 D26). 반영은 `PATCH sections`(revision) 후 결정 기록. 검수 대기는 잡 원고 작업만, 선택 영역 동작은 Diff 카드가 검수 |
+| 재시도 | 실패·부분·취소 작업만, 작업당 한 번, 재시도 범위(실패분, 취소면 남은 것까지)만 차감. 원래 작업의 결과 없는 차감에 환불 행이 모두 있어야 한다(없으면 409 `refund_missing`, 차감이 없던 작업은 확인 생략) |
+| 잡 마감 | 잡을 끝내는 코드가 페이로드의 `agent_task_id`로 행을 갱신한다(worker `worker/src/lib/agent-tasks.ts`, engine `engine/app/agent_tasks.py`, api `app/ai/products/publishing/agent_tasks.py`). 직접 SQL로 상태를 건너뛰지 않는다(전이 트리거 22023) |
+| 운영 콘솔 | `/admin/*`는 `platform_admin`만, 일반 사용자 404. 조회마다 감사 `admin.view`. 원가 필드는 운영자 API에만. 데이터가 없으면 숫자 대신 "—" |
+| 디자인 레이어 | 루트 레이아웃이 `data-surface`(marketing, workspace, ops)를 붙이고 토큰은 같은 의미 이름의 값만 바꾼다. 맞춤 마젠타는 marketing의 재단선·맞춤표와 교정 표시에만. 제안서 팔레트·Pretendard는 01장 D23·D24 결정 전까지 쓰지 않는다 |
+| 소유 경로 | 059 `web/src/server/agents/`, `api/agents/`, `api/agent-tasks/`, `api/internal/agent-sync/` 등(06장 9.1절). 060 `features/agents/`, `(app)/dashboard/agents/`, 061 `features/ai-panel/`(에디터 3단 레이아웃은 022), 062 `app/admin/{books,agents,jobs,settings}/`·`api/admin/{tasks,trace,costs,books,settings,agents}/`, 064 `app/admin/graph/`(Phase 2). 027은 `app/admin/` 루트·`users/`·`billing/`·`audit/` |

@@ -35,11 +35,11 @@ apps/flora-publishing/
   web/                         Next.js (Vercel)
     src/proxy.ts               라우트 보호(session_context)
     src/app/(marketing)/       랜딩, 가격, 법무
-    src/app/(auth)/            로그인, 가입, 재설정
-    src/app/auth/callback/     OAuth 콜백(next 화이트리스트)
-    src/app/(app)/dashboard/   대시보드, 책 목록, 설정, 결제
+    src/app/(auth)/            로그인, 가입, 재설정(단계별 구성: 9절. A 개발용 패널, B Google·이메일, C 카카오·네이버)
+    src/app/auth/callback/     OAuth 콜백(finishLogin, next 화이트리스트). 단계 분기 코드는 src/lib/auth/·로그인 화면·콜백에만
+    src/app/(app)/dashboard/   대시보드, 책 목록, 설정, 사용량·결제, agents/(에이전트 작업 공간·검수 대기·실행 이력, 10절)
     src/app/(app)/books/[id]/  위저드, 에디터, 완성/내보내기
-    src/app/admin/             운영자 화면
+    src/app/admin/             운영 콘솔(운영 홈, users, books, agents, jobs(실행 추적), billing, settings 열람, audit. 10.5절)
     src/app/(public)/b/[slug]/ 공개 책 페이지(Phase 2)
     src/app/api/               Route Handlers (04장 2절). AI·음성: api/ai/, api/voice/, api/internal/, api/onboarding/, 위키·참고 파일: api/books/[id]/wiki/, references/
     src/app/onboarding/        AI 처리 방식 선택(국외 이전 동의)
@@ -48,6 +48,7 @@ apps/flora-publishing/
     src/components/ui/         기본 컴포넌트(shadcn/ui를 토큰으로 재스타일)
     src/features/{ai-chat,wiki,voice,narration,hero3d}/   채팅 패널, 설정집 화면, 받아쓰기·채팅 음성, 낭독 플레이어, 3D 히어로(three.js는 hero3d/에서만 import)
     src/features/<feature>/    화면 단위 컴포넌트와 훅(wizard, editor, books, billing, settings, landing)
+    src/server/agents/         에이전트 레지스트리(에이전트·동작 → 기존 처리 함수, 예상 크레딧, 승인 정책)와 agent_tasks 기록기 withAgentTask(10절)
     src/server/                서버 전용: ai/(서명 토큰, HMAC, 입력 마스킹), ai-pricing.ts, personas/, pricing/, features/, engine-client/, sanitize/ (프롬프트는 api/app/ai/products/publishing/prompts/로 이동)
     src/data/                  personas.json(60종), formats.json(6종), seeds/*.json(3종), themes.json(7종)
   worker/                      TS 워커 (Railway)
@@ -95,7 +96,7 @@ AI 모듈 경계(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:5-14`를 �
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 가입(`signup_app='publishing'`), 세션, `requireSession` | web `proxy.ts`, 모든 Route Handler | SM 2장 |
+| auth | 가입(`signup_app='publishing'`), 세션, `requireSession`. 제품 앱의 인증 모듈 경계는 `web/src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`). 단계 분기(`AUTH_MODE`, 제공자 목록)는 여기·로그인 화면·`/auth/callback`·`/api/dev/login`에만 둔다(9절) | web `proxy.ts`, 모든 Route Handler, 로그인 화면, 콜백 | SM 2장, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 3.1절 |
 | org | 개인 조직(1인 1워크스페이스). 멤버 초대 UI 없음 | 세션 컨텍스트 | SM 3장 |
 | credits | 선차감-환불, `withCredits`, `priceOf`(단가표는 `web/src/server/pricing`) | Route Handler, TS 워커 | CS 4.3 |
 | toss | 팩·구독 주문, confirm, 빌링키, 정기결제 워커 | `web/src/app/api/billing/*`, 공용 정기결제 워커 | SM 5장 |
@@ -314,3 +315,142 @@ AI 모듈 경계(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:5-14`를 �
 AI 관련 변수는 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`).
 
 모든 앱은 기동 시 zod(TS)·pydantic Settings(Python) 검증을 통과해야 한다. `.env`·`.env.local`은 커밋하지 않는다(`SECURITY_BASELINE.md` 5장).
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`이고 이 절은 publishing(가입 정책 open, 로그인하는 사람은 작가)에 맞춰 옮긴 것이다. 세션·권한 판정(`session_context`, `requireSession('publishing')`, `proxy.ts`)과 RLS는 단계와 무관하게 같은 코드다(AUTH_ROADMAP 0장 불변 조건).
+
+### 9.1 단계표 (이 제품 기준)
+
+| 단계 | 언제 | 켜지는 로그인 | 이 제품 작업 | 다음 단계 게이트 |
+|---|---|---|---|---|
+| A | W0부터 MVP P0 기능이 Mock으로 모두 동작할 때까지 | 로컬 시드 페르소나(05장 10절) 원클릭 로그인. 제공자 버튼 없음 | PB-06-006(Stage A로 범위 변경) | G1(AUTH_ROADMAP 4장): 06장 2절 MVP P0 작업 완료, PB-06-037 핵심 플로우 E2E·PB-06-029 RLS 스모크·PB-06-030 결제 E2E가 Mock으로 녹색, 단계 분기 코드가 인증 모듈 밖에 0건, Google 콘솔 준비 |
+| B | G1 통과 후, 공개 베타 전 | Google + 이메일(가입·메일 인증·비밀번호 재설정, 01장 D22) | PB-06-056(P0) | G2(AUTH_ROADMAP 6장): Google 실사용 공개 베타 2주(제안), 인증 P0·P1 장애 0, 콜백 오류율 1% 미만(제안), `entitled=false`로 남은 신규 가입자 0 |
+| C1 | G2 통과 후 | 카카오(Supabase 기본 제공자 `kakao`) | PB-06-057(P1) | 7.1.3절 수용 기준 |
+| C2 | G2 통과 후(C1과 병렬 가능, 네이버 검수 신청은 G2 직후) | 네이버(`custom:naver` 또는 서버 브리지, 스파이크로 결정) | PB-06-058(P1) | 7.2.4절 수용 기준 |
+
+단계 전환은 사람(대표님)이 게이트를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 남긴 뒤에만 한다.
+
+### 9.2 코드 위치와 단계 분기 규칙
+
+| 위치 | 하는 일 | 단계 분기 허용 |
+|---|---|---|
+| `web/src/lib/auth/` | `getAuthConfig()`(env zod 검증, 잘못된 조합이면 기동 실패), `isMockAuthAllowed()`, `listLoginOptions('publishing')`, `finishLogin('publishing', next)` | 예 |
+| `web/src/app/(auth)/login/` | `listLoginOptions` 결과로 개발용 패널(A)·Google 버튼과 이메일 폼(B)·카카오·네이버 버튼(C)을 렌더. 판정은 서버 컴포넌트에서 | 예 |
+| `web/src/app/auth/callback/` | 코드 교환 → `finishLogin` | 예 |
+| `web/src/app/api/dev/login/` | Stage A Mock 로그인(로컬 전용, 판정 거짓이면 404) | 예 |
+| `web/src/app/auth/naver/` | C2 브리지 경로를 택한 경우만 | 예 |
+| 그 밖의 모든 코드(`web/src/server/`, 기능 Route Handler, 화면, worker, engine, api) | `session_context`·`requireSession`만 쓴다. `AUTH_MODE`·페르소나 이메일로 분기하지 않는다 | 아니오(CI grep, 06장 PB-06-005) |
+
+`finishLogin`은 AUTH_ROADMAP 3.2절 순서를 그대로 따른다: `session_context('publishing')` 조회 → `entitled=false`면(publishing은 open) `rpc('bootstrap_app_for_org', { p_app_id: 'publishing' })` 1회 후 재조회 → `status` 분기(`/pending`, 403) → `next` 화이트리스트(01장 PB-F-002, 기본 경로 `/dashboard`) → 감사 `auth.login`. 모놀리스(단독 `public` 스키마)는 앱 행이 1개라 가입 트리거가 자동 부트스트랩하므로 두 번째 단계가 아무 일도 하지 않는다(AUTH_ROADMAP 3.2절 끝).
+
+### 9.3 환경변수 (AUTH_ROADMAP 3.3절 중 이 제품에 해당하는 것)
+
+| 변수 | 단계 | 배치 | 없으면 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web 서버 전용. worker·engine·api에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값 `mock`. `mock`인데 `isMockAuthAllowed()`가 거짓이면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web 서버 전용. 운영 B: `google,email`, C1 후 `google,email,kakao`, C2 검수 통과 후 `naver` 추가 | live에서 로그인 수단 0개면 기동 실패 |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web 서버(로컬 `.env.local`)와 `scripts/dev/seed-users.mjs`. `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬은 `supabase/config.toml`의 `env()`, 원격은 Supabase 대시보드에만. 앱 env(web·worker·engine·api)에 넣지 않는다 | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트(`scripts/auth/register-naver-provider.mjs`, 제안)만. `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web 서버 전용 | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지 경로만 | web 서버 전용, 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+콜백 origin은 8절 `APP_URL`로 고정한다(AUTH_ROADMAP 3.2절의 `NEXT_PUBLIC_APP_URL`에 해당. 이 제품은 서버 전용 `APP_URL`을 쓴다). worker·engine·api(AI 서비스)는 로그인을 처리하지 않으므로 인증 단계 변수가 없다.
+
+### 9.4 외부 콘솔과 배포 토폴로지
+
+| 콘솔 | 단계 | 리디렉션 대상 | 메모 |
+|---|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트 ID) | B | `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 범위는 `openid`, `email`, `profile`만. 동의 화면에 개인정보처리방침·이용약관 URL(`/legal/privacy`, `/legal/terms`, PB-06-025)이 필요하다. 공개 베타 전 "프로덕션" 게시 |
+| Supabase 대시보드(Providers, URL Configuration) | B·C | Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록, 와일드카드 지양) | `AUTH_PROVIDERS`와 함께 배포 체크리스트(PB-06-034, B-6)로 확인 |
+| 카카오 디벨로퍼스 | C1 | Supabase 콜백(위와 같음) | 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email`(01장 D20) |
+| 네이버 개발자센터 | C2 | `supabase_custom`이면 Supabase 콜백, `bridge`면 `https://<도메인>/auth/naver/callback` | 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않는다(C2-6) |
+
+```
+브라우저 ──> web(Vercel) /login ──signInWithOAuth──> Google·카카오(·네이버 custom) ──> Supabase /auth/v1/callback
+                                                                                         │ code
+브라우저 <── 세션 쿠키 <── web /auth/callback(exchangeCodeForSession → finishLogin) <───────┘
+(C2 브리지) web /auth/naver/start ──> 네이버 authorize ──> web /auth/naver/callback ──> 세션 발급 → finishLogin
+(A, 로컬) web /api/dev/login ──signInWithPassword(시드 계정)──> 로컬 Supabase(127.0.0.1:54321)
+```
+
+### 9.5 로그인 없는 사용자 흐름
+
+랜딩(`/`), 요금, 법무 페이지, 대기자 명단(`/api/waitlist`), 공개 책 페이지(`/b/[slug]`, Phase 2)는 로그인이 없고 단계와 무관하다. 이 화면에 로그인 버튼을 새로 넣지 않는다(헤더의 기존 "로그인" 링크만 유지, AUTH_ROADMAP 8장 끝).
+
+## 10. 에이전트 실행 계층과 운영 콘솔 (2026-10-14 FLORA 개편)
+
+요구는 01장 3.1절(PB-F-057~061). 원칙은 하나다: **실행 엔진을 새로 만들지 않는다.** 6개 에이전트는 이미 있는 Route Handler·잡·그래프를 이름 붙여 묶고, 요청마다 `publishing.agent_tasks` 1행으로 실행·검수·재시도·원가를 추적한다. 제안서가 경고한 "UI 개발을 이유로 같은 기능의 실행 엔진을 새로 만드는 것"을 피하는 구조다.
+
+### 10.1 레지스트리 (`web/src/server/agents/registry.ts`)
+
+| `agent_key` | `action` | 처리(기존 소유 작업) | 동기/비동기 | 승인 정책 |
+|---|---|---|---|---|
+| planning | `titles`, `plans`, `toc`, `persona_blend` | `/api/books/[id]/titles`·`plans`·`toc`(011), `/api/personas/blend`(012) | 동기 | 모두 not_required. 후보 중 선택이 곧 결정이고, 목차는 구조 저장(`PUT structure`)이 확정이다 |
+| research | `reference_index`, `wiki_ingest`, `wiki_lint` | 045, 046 | 비동기(`publishing.ai_index`, `wiki_ingest`, `wiki_lint`) | 모두 not_required(설정집은 페이지별 채택이 검수, 사용자 편집이라 작업 결정과 무관) |
+| writing | `section_generate`, `chapter_draft`, `write_all` | 013, 014(그래프 `publishing.draft`) | 단건 스트리밍 / 비동기 | `chapter_draft`·`write_all`: 제안(본문 있던 소제목)이나 빈 소제목 AI 초안이 1개라도 있으면 pending(취소된 실행도 저장분이 있으면 pending). `section_generate`(스트리밍): not_required, 덮어쓰기는 그 자리 Diff 카드 |
+| editing | `assist_continue`, `assist_expand`, `assist_refine`, `assist_custom`, `examples`, `style_check`, `source_check`, `refine_all` | 013(`/assist`), 014(`refine-all`) | 스트리밍 / 비동기 | 선택 영역 동작(스트리밍 7종): not_required, 그 자리의 Diff 카드·메모가 검수. `refine_all`(잡): pending |
+| publishing | `metadata`, `covers`, `export_pdf`, `export_epub`, `narration` | 020, 019, 017, 018, 053 | 동기 / 비동기 | 모두 not_required. `metadata`·`covers`는 후보 선택이 결정, 내보내기는 직전 확인 모달이 최종 점검(다운로드를 막지 않음) |
+| content | (Phase 2) | - | - | 외부 게시 전 pending |
+
+### 10.2 기록기와 실행 순서
+
+기존 Route Handler는 처리 함수를 `withAgentTask({ agent, action, origin }, handler)`로 감싼다. 감싸는 쪽이 아래 1~3, 7을 하고 기존 처리(4~6)는 그대로다.
+
+| 순서 | 동작 | 위치 |
+|---|---|---|
+| 1 | `requireSession('publishing')` → zod → 레이트 리밋 → features(기존 04장 1절 순서) | Route Handler |
+| 2 | `agent_tasks` INSERT(service_role, `status='queued'`, `request_id`, `input_summary`=범위 id·개수, `credits_estimated`). 같은 `(org_id, request_id)`가 있으면 그 행을 돌려주고 처리하지 않는다(멱등) | `withAgentTask` |
+| 3 | 크레딧 선차감(기존 멱등 키 그대로: 단건 `consume:publishing:<request_id>`, 초안 `consume:publishing:<run_id>:<section_id>`, 색인 `rag:`, 위키 `run:`, 낭독 `voice:`). 모든 차감에 `p_ref_type='agent_task'`, `p_ref_id=<작업 id>`를 넘기고 첫 차감 행 id를 `credit_ledger_id`에 적는다. 차감이 실패하면(402 등) 행을 바로 `failed`(`error_code`)로 끝낸다(환불할 것 없음) | 기존 처리 + `withAgentTask` |
+| 4 | 동기 처리 또는 `enqueue_job`. 잡 페이로드에 `agent_task_id`를 더한다(04장 4절) | 기존 처리 |
+| 5 | 잡을 끝내는 쪽이 같은 행을 갱신: `status`, `credits_used`, `result_summary`(저장·제안·실패 개수), `ai_run_id`, 승인 정책에 따라 `approval_status='pending'` | worker `worker/src/lib/agent-tasks.ts`, engine `engine/app/agent_tasks.py`, api `app/ai/products/publishing/agent_tasks.py`(같은 계약, 059가 제공) |
+| 6 | 실패는 기존대로 `fail_job` 자동 환불, 행은 `failed` + `error_code`·`error_message`(사용자에게 보여도 되는 문장만) | 같음 |
+| 7 | 동기 처리는 응답 직전에 행을 끝낸다. 동기화 크론 `/api/internal/agent-sync`(워커가 5분마다, 워커 키)가 (a) 잡은 끝났는데 `running`인 행 마감 (b) 15분 넘게 `queued`이고 잡이 없는 행 → 연결된 차감(`ref_id`) 중 환불 없는 것을 `refund_credits`로 돌려준 뒤 `failed`(`error_code='stale_queued'`) (c) 30일 지난 `pending` → `expired`를 처리한다 | `withAgentTask`, 크론 |
+
+채팅·받아쓰기·읽어 주기는 감싸지 않는다(01장 3.1절). 위키 사람 편집·채택은 작업이 아니라 사용자 편집이다.
+
+원장 연결 규칙: `CORE_SPEC.md` 4.3절 예시는 `p_ref_type='job'`이다. 이 제품은 작업형 동작의 차감에 한해 `p_ref_type='agent_task'`, `p_ref_id=<작업 id>`를 쓴다. `ref_type`은 코어에서 자유 텍스트이고 `refund_credits`가 차감 행의 `ref_type`·`ref_id`를 그대로 복사하므로 환불도 같은 키로 찾힌다(코어 변경 없음). 잡 쪽 연결은 기존대로 `core.jobs.credit_ledger_id`다.
+
+### 10.3 검수(승인) 흐름
+
+| 단계 | 동작 |
+|---|---|
+| 1 | 저자가 검수 대기함 또는 에디터 AI 패널 "제안" 탭에서 항목(소제목별 제안, 메모)을 연다. 제안 본문은 기존 위치(`core.jobs.result`, `refine_chunk` 결과, 그래프 출력)에서 읽는다. 새 저장소를 만들지 않는다 |
+| 2 | 승인한 항목만 `PATCH /api/books/[id]/sections/[sid]`(revision 확인)로 반영한다. 사용자 세션·RLS 그대로 |
+| 3 | `POST /api/agent-tasks/[id]/decision { decision, note? }` → RPC `publishing.decide_agent_task`(편집자만, pending만, 감사 `agent_task.decide`) |
+| 4 | 빈 소제목 AI 초안(01장 D26 (a))의 "검토 전" 표시는 새 컬럼 없이 소제목 자체로 판단한다: `sections.gen_status='generated'`이면 "검토 전". 저자가 고치면 기존 트리거가 `edited`로 바꾼다. 승인한 초안은 결정 API가 서버 경로로 `edited`(사람 확인)로 바꾸고, 거부한 초안은 본문을 비우고 `empty`로 돌린다(그사이 `edited`가 됐으면 건드리지 않음). 서버 경로는 트리거가 `revision`을 올리지 않으므로 두 경우 모두 `revision = revision + 1`을 직접 적어, 옛 초안을 연 에디터의 자동 저장이 `stale_revision`으로 막히게 한다. 작업 검수가 만료돼도 표시는 남는다 |
+
+### 10.4 재시도와 중복 방지
+
+| 규칙 | 구현 |
+|---|---|
+| 재시도 대상 | `failed`, `partial`, `canceled`만. DB 트리거가 강제(`PB013`) |
+| 한 번만 | `retry_of` 부분 유니크. 같은 작업 두 번째 재시도는 23505 → 409 |
+| 재시도 범위 | `failed`·`partial`: `result_summary.failed`(실패한 소제목·청크). `canceled`: `failed` + `result_summary.remaining`(취소로 처리하지 못한 것). 동기 단건 작업은 같은 입력 1건 |
+| 이중 차감 방지 | 재시도는 새 `request_id`로 새로 차감한다. 그 전에 원래 작업의 원장(`ref_id=<원래 작업 id>`)을 확인해, 결과가 남지 않은 차감(실패·취소분)에 모두 환불 행(`refund_of`)이 있어야 한다. 하나라도 없으면 409 `refund_missing`. 차감이 아예 없던 작업(402로 끝난 것 등)은 확인 없이 재시도한다. 운영 콘솔 재실행도 같은 규칙 |
+| 원래 행 불변 | 신원 컬럼(조직, 책, 에이전트, 동작, `request_id`, `retry_of`, `attempt`, `origin`)은 트리거가 바꾸지 못하게 한다. 예외: 원래 행이 지워질 때 FK가 `retry_of`를 null로 바꾸는 것만 허용 |
+
+### 10.5 운영 콘솔 데이터 경로
+
+| 화면 | 읽는 곳 | 규칙 |
+|---|---|---|
+| 운영 홈 | `core.profiles`·조직 수, `agent_tasks`(status queued·running·failed), `core.ai_usage` 기간 합, `core.audit_log` 최근 | 집계는 서버(service_role)에서만. 값이 없으면 "—" + 연결 상태(가짜 숫자 금지) |
+| 작업 큐·실행 추적 | `agent_tasks` → `core.jobs`(부모·자식) → `core.ai_runs`·`ai_run_steps` → `core.ai_usage`(`run_id`, `request_id`) → `core.credit_ledger`(`ref_type='agent_task'`, `ref_id`, `refund_of`) | 한 화면에 6단계. 프롬프트·출력 본문은 보여 주지 않고 길이·상태·오류 코드만 |
+| 원가 | `core.ai_usage.cost_usd_micros`(모델·기능·조직별), `credit_ledger` consume 합. 에이전트별 묶음은 `ai_usage.run_id`·`request_id` → 작업으로 잇고, 작업이 없는 채팅·음성은 "대화형" 묶음으로 둔다(합계가 전체 `ai_usage`와 같도록) | 원가는 운영자 API에만. 원화 환산율은 서버 상수(제안, 월 1회 갱신) |
+| 사용자·권한, 출판 프로젝트 | `core.profiles`, `core.organizations`, `core.app_entitlements`, `publishing.books`(본문 제외 컬럼), `book_exports` | 계정 정지·복구는 service_role 서버 경로 + 감사. 원고 본문 열람은 01장 D27 |
+| 설정 | `core.ai_routing_settings`(app publishing), `core.plans.features` | 열람만. 변경은 seed·마이그레이션(PB-06-001) |
+
+모든 운영자 조회는 감사 `admin.view`(대상 종류·id, 본문 없음)를 남긴다. 실행 그래프 시각화(React Flow)는 Phase 2(PB-F-062)이며 MVP는 표·타임라인이다.
+
+### 10.6 화면 영역과 디자인 레이어
+
+| 영역 | 경로 그룹 | 디자인 레이어(`data-surface`) | 03장 |
+|---|---|---|---|
+| A 공개 메인페이지 | `(marketing)` | `marketing`(Editorial Publishing) | 4절, 8.3절 |
+| B 작가 작업 공간 | `(app)/dashboard`, `(app)/books/[id]` | `workspace`(Writing Workspace) | 8.4절 |
+| C 에이전트 작업 공간 | `(app)/dashboard/agents`, 에디터 AI 패널 | `workspace` | 8.5절 |
+| D 운영 콘솔 | `admin` | `ops`(Agent Operations, 기본 밀도 compact) | 8.6절 |
+
+레이어는 토큰을 새로 만들지 않고 같은 의미 토큰의 값만 바꾼다(03장 8.2절). 루트 레이아웃(PB-06-002 소유)이 경로 그룹별 `data-surface`를 붙인다.

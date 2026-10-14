@@ -1070,6 +1070,218 @@ begin
 end $$;
 
 -- =====================================================================
+-- 16. agent_tasks: AI 에이전트 작업 단위 (2026-10-14, 에이전트 작업 공간·운영 콘솔 개편)
+--   설계: docs/products/flora-publishing/05_DATA_MODEL.md 2.5절, 02_ARCHITECTURE.md 10절, 01_PRD.md PB-F-057~061.
+--   - 사용자 요청 1건 = 행 1개(멱등 키 org_id + request_id). 실행 엔진은 새로 만들지 않는다:
+--     기존 잡(core.jobs), 실행(generation_runs), 그래프 실행(core.ai_runs) id 를 잇기만 한다.
+--   - 크레딧 원장은 consume_credits(p_ref_type => 'agent_task', p_ref_id => <id>)로 연결한다(차감이 여러 행이어도).
+--     credit_ledger_id 는 첫 차감 행(선택, 화면 표시용)이다.
+--   - 쓰기는 서버(service_role)만(guard_privileged_write). 사용자 결정(승인·부분 적용·거부)은 decide_agent_task RPC 만.
+--   - 원고 본문·프롬프트·제공자 키를 넣지 않는다. input_summary/result_summary 는 범위·개수·id 만(서버가 만든다).
+--   - 재시도는 새 행(retry_of = 원래 행). 원래 행 1개당 재시도 1개(부분 유니크)로 중복 실행·이중 차감을 막는다.
+-- =====================================================================
+create table if not exists publishing.agent_tasks (
+  id                  uuid primary key default gen_random_uuid(),
+  org_id              uuid not null references core.organizations(id) on delete cascade,
+  book_id             uuid,
+  agent_key           text not null
+                      constraint agent_tasks_agent_key_check check (agent_key in ('planning', 'research', 'writing', 'editing', 'publishing', 'content')),
+  action              text not null
+                      constraint agent_tasks_action_check check (action ~ '^[a-z][a-z0-9_]{1,40}$'),
+  origin              text not null default 'workspace'
+                      constraint agent_tasks_origin_check check (origin in ('workspace', 'wizard', 'editor', 'admin_retry')),
+  status              text not null default 'queued'
+                      constraint agent_tasks_status_check check (status in ('queued', 'running', 'succeeded', 'partial', 'failed', 'canceled')),
+  approval_status     text not null default 'not_required'
+                      constraint agent_tasks_approval_status_check check (approval_status in ('not_required', 'pending', 'approved', 'partially_applied', 'rejected', 'expired')),
+  approval_decided_by uuid,
+  approval_decided_at timestamptz,
+  approval_note       text constraint agent_tasks_approval_note_check check (approval_note is null or length(approval_note) <= 500),
+  input_summary       jsonb not null default '{}'::jsonb,
+  result_summary      jsonb not null default '{}'::jsonb,
+  job_id              uuid references core.jobs(id) on delete set null,
+  generation_run_id   uuid references publishing.generation_runs(id) on delete set null,
+  ai_run_id           uuid references core.ai_runs(id) on delete set null,
+  credit_ledger_id    bigint references core.credit_ledger(id),
+  credits_estimated   integer not null default 0 constraint agent_tasks_credits_estimated_check check (credits_estimated >= 0),
+  credits_used        integer not null default 0 constraint agent_tasks_credits_used_check check (credits_used >= 0),
+  request_id          text not null constraint agent_tasks_request_id_check check (length(request_id) between 8 and 64),
+  retry_of            uuid references publishing.agent_tasks(id) on delete set null,
+  attempt             smallint not null default 1 constraint agent_tasks_attempt_check check (attempt between 1 and 10),
+  error_code          text constraint agent_tasks_error_code_check check (error_code is null or length(error_code) <= 64),
+  error_message       text constraint agent_tasks_error_message_check check (error_message is null or length(error_message) <= 500),
+  requested_by        uuid,
+  created_at          timestamptz not null default now(),
+  started_at          timestamptz,
+  finished_at         timestamptz,
+  updated_at          timestamptz not null default now(),
+  constraint agent_tasks_book_fk foreign key (book_id, org_id) references publishing.books (id, org_id) on delete cascade,
+  constraint agent_tasks_request_uniq unique (org_id, request_id),
+  constraint agent_tasks_decision_check check (
+    (approval_status in ('approved', 'partially_applied', 'rejected')) = (approval_decided_at is not null))
+);
+create index if not exists agent_tasks_org_created_idx on publishing.agent_tasks (org_id, created_at desc);
+create index if not exists agent_tasks_book_created_idx on publishing.agent_tasks (book_id, created_at desc)
+  where book_id is not null;
+create index if not exists agent_tasks_review_idx on publishing.agent_tasks (org_id, created_at desc)
+  where approval_status = 'pending';
+create index if not exists agent_tasks_active_idx on publishing.agent_tasks (status, created_at)
+  where status in ('queued', 'running');
+create index if not exists agent_tasks_job_idx on publishing.agent_tasks (job_id) where job_id is not null;
+create unique index if not exists agent_tasks_one_retry_idx on publishing.agent_tasks (retry_of) where retry_of is not null;
+drop trigger if exists agent_tasks_set_updated_at on publishing.agent_tasks;
+create trigger agent_tasks_set_updated_at before update on publishing.agent_tasks
+  for each row execute function core.set_updated_at();
+
+-- 재시도 행 검사: 원래 행이 끝난 실패·부분·취소 상태이고 같은 조직·책·에이전트·동작이며 attempt = 원래 + 1
+create or replace function publishing.agent_tasks_before_insert()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare v_orig publishing.agent_tasks;
+begin
+  if new.retry_of is not null then
+    select * into v_orig from publishing.agent_tasks where id = new.retry_of;
+    if not found then
+      raise exception 'agent_tasks: retry source not found' using errcode = 'P0002';
+    end if;
+    if v_orig.status not in ('failed', 'partial', 'canceled') then
+      raise exception 'agent_tasks: only failed/partial/canceled tasks can be retried (status=%)', v_orig.status using errcode = 'PB013';
+    end if;
+    if v_orig.org_id <> new.org_id or v_orig.book_id is distinct from new.book_id
+       or v_orig.agent_key <> new.agent_key or v_orig.action <> new.action then
+      raise exception 'agent_tasks: retry must keep org, book, agent and action' using errcode = '22023';
+    end if;
+    if new.attempt <> v_orig.attempt + 1 then
+      raise exception 'agent_tasks: retry attempt must be % (got %)', v_orig.attempt + 1, new.attempt using errcode = '22023';
+    end if;
+  end if;
+  if new.retry_of is null and new.attempt <> 1 then
+    raise exception 'agent_tasks: first attempt must be 1' using errcode = '22023';
+  end if;
+  if new.origin = 'admin_retry' and new.retry_of is null then
+    raise exception 'agent_tasks: admin_retry requires retry_of' using errcode = '22023';
+  end if;
+  if new.status <> 'queued' or new.approval_status <> 'not_required' then
+    raise exception 'agent_tasks: new task must start as queued/not_required' using errcode = '22023';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists agent_tasks_before_insert on publishing.agent_tasks;
+create trigger agent_tasks_before_insert before insert on publishing.agent_tasks
+  for each row execute function publishing.agent_tasks_before_insert();
+
+-- 상태·승인 전이와 불변 컬럼(서버 경로 포함)
+create or replace function publishing.agent_tasks_transition()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.org_id <> old.org_id or new.book_id is distinct from old.book_id or new.agent_key <> old.agent_key
+     or new.action <> old.action or new.request_id <> old.request_id
+     or (new.retry_of is distinct from old.retry_of and new.retry_of is not null)  -- 원래 행 삭제 시 FK set null 만 허용
+     or new.attempt <> old.attempt or new.origin <> old.origin then
+    raise exception 'agent_tasks: identity columns are immutable' using errcode = '22023';
+  end if;
+  if new.status is distinct from old.status and not (
+       (old.status = 'queued'  and new.status in ('running', 'canceled', 'failed'))
+    or (old.status = 'running' and new.status in ('succeeded', 'partial', 'failed', 'canceled'))
+  ) then
+    raise exception 'agent_tasks: invalid status transition % -> %', old.status, new.status using errcode = '22023';
+  end if;
+  if new.approval_status is distinct from old.approval_status and not (
+       (old.approval_status = 'not_required' and new.approval_status = 'pending' and new.status in ('succeeded', 'partial', 'canceled'))
+    or (old.approval_status = 'pending' and new.approval_status in ('approved', 'partially_applied', 'rejected', 'expired'))
+  ) then
+    raise exception 'agent_tasks: invalid approval transition % -> %', old.approval_status, new.approval_status using errcode = '22023';
+  end if;
+  if new.status = 'running' and old.status = 'queued' then
+    new.started_at := coalesce(new.started_at, now());
+  end if;
+  if new.status in ('succeeded', 'partial', 'failed', 'canceled') and old.status <> new.status then
+    new.finished_at := now();
+  end if;
+  if old.approval_status = 'pending' and new.approval_status in ('approved', 'partially_applied', 'rejected') then
+    new.approval_decided_at := coalesce(new.approval_decided_at, now());
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists agent_tasks_transition on publishing.agent_tasks;
+create trigger agent_tasks_transition before update on publishing.agent_tasks
+  for each row execute function publishing.agent_tasks_transition();
+
+drop trigger if exists agent_tasks_guard_write on publishing.agent_tasks;
+create trigger agent_tasks_guard_write before insert or update or delete on publishing.agent_tasks
+  for each row execute function core.guard_privileged_write();
+
+-- 검수 결정(사용자 RPC). 원고 반영(sections PATCH, revision 확인)은 Route Handler 가 먼저 하고 이 RPC 로 결정을 기록한다.
+create or replace function publishing.decide_agent_task(p_task_id uuid, p_decision text, p_note text default null)
+returns publishing.agent_tasks
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_row publishing.agent_tasks;
+begin
+  if p_decision is null or p_decision not in ('approved', 'partially_applied', 'rejected') then
+    raise exception 'decide_agent_task: invalid decision %', p_decision using errcode = '22023';
+  end if;
+  if p_note is not null and length(p_note) > 500 then
+    raise exception 'decide_agent_task: note too long' using errcode = '22023';
+  end if;
+  select * into v_row from publishing.agent_tasks where id = p_task_id for update;
+  if not found then
+    raise exception 'decide_agent_task: not found' using errcode = 'P0002';
+  end if;
+  if not core.is_service_caller() and not (
+       core.has_org_role(v_row.org_id, array['owner', 'admin', 'member'])
+       and core.has_entitlement(v_row.org_id, 'publishing')) then
+    raise exception 'decide_agent_task: editor role required' using errcode = '42501';
+  end if;
+  if v_row.approval_status <> 'pending' then
+    raise exception 'decide_agent_task: task is not awaiting review (approval_status=%)', v_row.approval_status using errcode = 'PB012';
+  end if;
+  update publishing.agent_tasks
+     set approval_status     = p_decision,
+         approval_decided_by = auth.uid(),
+         approval_decided_at = now(),
+         approval_note       = p_note
+   where id = p_task_id
+  returning * into v_row;
+  perform core.write_audit(v_row.org_id, 'agent_task.decide', 'agent_task', v_row.id::text, null,
+                           jsonb_build_object('decision', p_decision, 'agent', v_row.agent_key, 'action', v_row.action));
+  return v_row;
+end;
+$$;
+
+alter table publishing.agent_tasks enable row level security;
+revoke all on publishing.agent_tasks from public, anon, authenticated;
+grant all on publishing.agent_tasks to service_role;
+grant select on publishing.agent_tasks to authenticated;
+drop policy if exists agent_tasks_select on publishing.agent_tasks;
+create policy agent_tasks_select on publishing.agent_tasks for select to authenticated
+  using (core.is_org_member(org_id) and core.has_entitlement(org_id, 'publishing'));
+
+do $$
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime'
+                   and schemaname = 'publishing' and tablename = 'agent_tasks') then
+      alter publication supabase_realtime add table publishing.agent_tasks;
+    end if;
+  end if;
+end $$;
+
+revoke execute on function publishing.agent_tasks_before_insert() from public, anon, authenticated;
+revoke execute on function publishing.agent_tasks_transition() from public, anon, authenticated;
+revoke execute on function publishing.decide_agent_task(uuid, text, text) from public, anon;
+grant execute on function publishing.decide_agent_task(uuid, text, text) to authenticated, service_role;
+
+-- =====================================================================
 -- 끝. PostgREST 노출: config.toml [api].schemas 에 publishing 추가.
 -- 타입 생성: supabase gen types typescript --local --schema core,publishing
 -- =====================================================================

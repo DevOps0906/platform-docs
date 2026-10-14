@@ -1,6 +1,6 @@
 # flora-publishing(FLORA Publishing) 개발 방법
 
-작성일 2026-10-13. 이 문서는 `D:\WorkSpace\platform\docs\products\`의 통합 기획을 멀티에이전트 베이스(`D:\WorkSpace\DEV\MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겨 flora-publishing 개발을 시작하는 방법을 처음부터 끝까지 안내합니다. 근거는 `경로:줄`로 표시하고, 근거가 없는 값은 "제안"으로 표시합니다.
+작성일 2026-10-13, 2026-10-14 개정(인증 단계 19장, 확정 결정 22; 에이전트·운영 콘솔·디자인 레이어 20장, FLORA 개편 검토용). 이 문서는 `D:\WorkSpace\platform\docs\products\`의 통합 기획을 멀티에이전트 베이스(`D:\WorkSpace\DEV\MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겨 flora-publishing 개발을 시작하는 방법을 처음부터 끝까지 안내합니다. 근거는 `경로:줄`로 표시하고, 근거가 없는 값은 "제안"으로 표시합니다.
 
 ## 0. 한눈에 보기
 
@@ -36,10 +36,12 @@ D:\WorkSpace\DEV\flora-publishing\                            베이스를 복�
 | 4 | project-profile 작성 | 6 |
 | 5 | 로컬 DB 기동과 SQL 적용 | 7 |
 | 6 | 착수 전 결정 확정, 산출물 승인 | 8 |
-| 7 | 작업(55개)을 task로 변환 | 9 |
+| 7 | 작업(65개)을 task로 변환 | 9 |
 | 8 | 웨이브별 개발 사이클 | 10 |
 | - | AI 계층, 개발 위키, 메인 디자인, 원본 이식, 공용 모듈, 검증, 위험 | 11~17 |
 | - | 체크리스트 | 18 |
+| - | 인증 단계: Mock → Google → 카카오·네이버(7·9·10절과 함께 봅니다) | 19 |
+| - | 에이전트 실행 계층, 검수, 운영 콘솔, 디자인 레이어(2026-10-14) | 20 |
 
 ## 1. 개요
 
@@ -49,8 +51,8 @@ D:\WorkSpace\DEV\flora-publishing\                            베이스를 복�
 | 통합 원본 | `D:\WorkSpace\platform\Flora-v2\`(베이스), `flora\`(v1 엔진), `flora-publisher\`, `구현해야 할 프로젝트\SellingDocs\`, `WeasyPrint - CSS Paged Media 명세.md` |
 | 모듈러 앱 id / 스키마 | `publishing` / `publishing` (통합 DB를 쓸 때) |
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(`public` 스키마, 기획서 01장 D10) |
-| 개발 근거 | `docs/file/`의 산출물 24개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
-| AI 범위 | 책별 RAG, 책 설정집 위키, 초안 그래프 `publishing.draft`, 단건 생성 그래프 `publishing.assist`, 글쓰기 도우미 채팅(Dify), 받아쓰기·채팅 음성·원고 낭독(미리듣기) |
+| 개발 근거 | `docs/file/`의 산출물 25개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
+| AI 범위 | 책별 RAG, 책 설정집 위키, 초안 그래프 `publishing.draft`, 단건 생성 그래프 `publishing.assist`, 글쓰기 도우미 채팅(Dify), 받아쓰기·채팅 음성·원고 낭독(미리듣기). 2026-10-14: 이 기능들을 6개 에이전트로 묶는 실행·검수 계층(`agent_tasks`)과 운영 콘솔. 교육 프로그램은 범위 밖 |
 | 소유 서비스 | WeasyPrint 렌더 서비스(`services/render-weasyprint`)는 astro-ai와 공용이며 이 제품이 소유·운영합니다 |
 
 이 문서는 "어떻게 시작하고 진행하는가"를 다룹니다. "무엇을 만드는가"는 묶음 안의 산출물(`docs/file/`)이 정본입니다.
@@ -79,6 +81,7 @@ D:\WorkSpace\DEV\flora-publishing\                            베이스를 복�
 - ElevenLabs(음성, web 서버 전용)
 - fal(표지, worker 전용), Toss Payments(결제), Supabase
 - 서명 토큰 키쌍(`AI_TOKEN_PRIVATE_KEY`, web 서버 전용)과 Dify 내부 키
+- Google OAuth 클라이언트 ID·시크릿(Stage B, Supabase 대시보드·로컬 `config.toml`에만), 카카오·네이버 로그인 키(Stage C). 개발 시작(Stage A)에는 필요 없습니다(19장)
 
 | 인프라 | 문서 |
 |---|---|
@@ -122,7 +125,7 @@ D:\WorkSpace\DEV\flora-publishing\                            베이스를 복�
 | `docs/products/flora-publishing/03_SCREENS_UX.md` | `docs/file/03-설계/03_SCREENS_UX.md` | DOC-DES-002 | 화면설계서 |
 | `docs/products/flora-publishing/04_API.md` | `docs/file/03-설계/04_API.md` | DOC-DES-003 | 인터페이스설계서 |
 | `docs/products/flora-publishing/05_DATA_MODEL.md` | `docs/file/03-설계/05_DATA_MODEL.md` | DOC-DES-004 | 데이터설계서 |
-| `docs/products/_platform-core/` 8개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~008 | 공용 코어 명세 |
+| `docs/products/_platform-core/` 9개(CORE_SPEC, SHARED_MODULES, SECURITY_BASELINE, DB_CONVENTIONS, DOC_TEMPLATE, AI_ARCHITECTURE, LLM_WIKI, VOICE_ARCHITECTURE, AUTH_ROADMAP) | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(DOC-CORE-009 `AUTH_ROADMAP.md`는 2026-10-14 인증 단계, 19장) |
 | `docs/products/_design-guide/` 5개(DESIGN_PRINCIPLES, DESIGN_SYSTEM, HERO_3D, SKILLS, REFERENCES) | `docs/file/03-설계/디자인/` | DOC-DSN-001~005 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md 초기 템플릿 | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 디자인 토큰, 컴포넌트 명세 |
 | `docs/products/_design-guide/DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-008 | 앱 화면 구조 패턴(A~O). `03_SCREENS_UX.md` 화면 표의 `패턴` 열과 화면 작업 지시(`DESIGN_SYSTEM.md` 10장)가 이 코드를 쓴다 |
@@ -134,7 +137,7 @@ D:\WorkSpace\DEV\flora-publishing\                            베이스를 복�
 | `docs/products/flora-publishing/supabase/monolith/migrations/0002_publishing_domain.sql` | `supabase/migrations/20261013000002_publishing_domain.sql` | - | DB |
 | `docs/products/flora-publishing/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB(플랜, 크레딧팩, AI 라우팅 12행) |
 | `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
-| (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 24개 |
+| (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 25개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 채팅 앱 설정 |
 
 **문서 경로 보정**: 복사본 안의 문서 경로는 새 위치로 바꿨고, 복사하지 않은 파일(통합 DB `_supabase-modular`, 다른 제품 문서)을 가리키는 참조는 `D:/WorkSpace/platform/...` 절대경로로 바꿔 계속 열 수 있게 했습니다. 경로 검사 결과: 참조 443개, 묶음 안 누락 0, 절대경로 누락 0. 기획서가 바뀌면 `D:\WorkSpace\platform\docs\develop\_shared\tools\build_root.py flora-publishing`을 다시 실행합니다.
@@ -161,8 +164,8 @@ D:\WorkSpace\DEV\flora-publishing\
 ├── services\render-weasyprint\       [없음] PB-06-004가 만듭니다(공용 PDF 렌더 서비스)
 ├── docs\
 │   ├── reference\ 00_MERGE_ANALYSIS.md, reviews\(리뷰 4건)   [묶음]
-│   ├── file\ _index.md(24개), 01-관리, 02-요구사항, 03-설계(공용코어 8개, 디자인 5개 + DESIGN.md, COMPONENTS.md), 04-구현   [묶음]
-│   └── wiki\ WIKI_SCHEMA.md, index.md, log.md, sources\(24개)  [묶음] 개발 위키
+│   ├── file\ _index.md(25개), 01-관리, 02-요구사항, 03-설계(공용코어 9개(AUTH_ROADMAP 포함), 디자인 5개 + DESIGN.md, COMPONENTS.md), 04-구현   [묶음]
+│   └── wiki\ WIKI_SCHEMA.md, index.md, log.md, sources\(25개)  [묶음] 개발 위키
 ├── infra\dify\README.md              [묶음] 채팅 앱 설정 설명서(DSL은 publishing-chat.yml로 추가)
 ├── supabase\ migrations\(20261013000001_core_lite.sql, 20261013000002_publishing_domain.sql), seed.sql   [묶음]
 └── tasks\  _local\                   [베이스] 작업 데이터(git 추적 안 함)
@@ -211,12 +214,13 @@ D:\WorkSpace\DEV\flora-publishing\
 
 - `core_lite`에는 SECTION 11(AI, pgvector)과 SECTION 12(음성)가 들어 있습니다.
 - 기획 단계 검증은 PGlite로 했습니다(`D:\WorkSpace\platform\docs\products\_tools-sqlcheck\check.mjs --vector`, 모놀리스 3/3 OK, AI 라우팅 12행 확인). 실제 Supabase(`db reset`)에서 한 번 더 확인하는 것이 PB-06-001의 수용 기준입니다.
+- 개발 시작 단계(Stage A)에서는 `db reset` 뒤 `node scripts/dev/seed-users.mjs --app publishing`으로 개발용 페르소나를 만들고 `/login` 개발용 패널로 로그인합니다(19.2절). 시드 스크립트는 PB-06-006이 만들므로 그 전(W0)에는 SQL·단위 테스트로만 확인합니다.
 - RLS 회귀 테스트(57항목 + AI 코어 항목)는 PB-06-029에서 `supabase/tests/`로 옮깁니다.
 - 원격 `supabase db push`는 에이전트가 실행하지 않고 사람이 확인 후 실행합니다.
 
 ## 8. 6단계: 착수 전 결정 확정
 
-`docs/file/02-요구사항/01_PRD.md` 8절의 결정 19개를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
+`docs/file/02-요구사항/01_PRD.md` 8절의 결정 27개(D6은 2026-10-14 확정 결정 22로 닫힘, D20~D22는 8.1절 인증 단계, D23~D27은 8.2절 FLORA 개편)를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
 
 | ID | 결정 | 확정 시점 |
 |---|---|---|
@@ -225,7 +229,7 @@ D:\WorkSpace\DEV\flora-publishing\
 | D3 | 판형 프리셋 값 충돌(A5 등) | PB-06-016 전, 실물 출력 테스트로 확정 |
 | D4 | 업로드 형식(HWP 제외) | PB-06-015 전 |
 | D5 | 판매·유통 | Phase 2 기획 전 |
-| D6 | 카카오 로그인 | PB-06-006 전 |
+| D6 | 카카오 로그인 | 닫힘(확정 결정 22: 카카오는 G2 후 C1, PB-06-057) |
 | D7 | LLM 전략 | 닫힘(확정 결정 17) |
 | D8 | 크레딧 단가·월 크레딧 | PB-06-008 전, 출시 전 원가 재산정 |
 | D9 | Free의 업로드·전체 생성 허용 | PB-06-008 전 |
@@ -239,6 +243,14 @@ D:\WorkSpace\DEV\flora-publishing\
 | D17 | 채팅 화면 레퍼런스 Astryx(존재·라이선스 확인) | 디자인 시스템 1단계(PB-06-039) 전 |
 | D18 | 워커의 그래프 호출 인증(잡 토큰) | PB-06-047 전 |
 | D19 | 무료 플랜의 AI 범위 | PB-06-044 전 |
+| D20 | 카카오 이메일 정책(비즈 앱 `account_email` 권장) | G2 판정 전, PB-06-057 착수 전 |
+| D21 | 네이버 경로(`supabase_custom`/`bridge`) | C2 스파이크(PB-06-058 첫 단계) 결과로 |
+| D22 | 이메일+비밀번호 가입 유지(권고 유지) | G1 판정 전, PB-06-056 착수 전 |
+| D23 | 브랜드 팔레트(기존 유지 권고 vs 제안서 포레스트 그린) | PB-06-041 사람 검토 |
+| D24 | 화면 서체(레이어별: 랜딩 기존, 작업·운영 화면 Pretendard 후보) | PB-06-041 |
+| D25 | 랜딩 헤드라인(기존 vs 제안서), 대기자 랜딩 교대 실험 | 공개 베타 전(PB-06-063) |
+| D26 | 빈 소제목 AI 초안 반영 방식(바로 채우고 "검토 전" 표시 권고) | PB-06-059 착수 전 |
+| D27 | 운영자 원고 열람(이용자 허용분만 권고) | PB-06-062 착수 전 |
 
 **산출물 승인 절차**
 1. 결정 결과를 해당 산출물에 반영하는 task를 만듭니다.
@@ -249,20 +261,20 @@ D:\WorkSpace\DEV\flora-publishing\
 
 ### 9.1 작업과 웨이브 (정본: `docs/file/01-관리/06_AGENT_PLAN.md` 2~3절)
 
-작업은 PB-06-001~055, 모두 55개입니다. 그중 PB-06-041은 사람이 하는 디자인 비주얼 검토입니다.
+작업은 PB-06-001~065, 모두 65개입니다(2026-10-14 에이전트·운영 7개 추가, 20장). 그중 PB-06-041은 사람이 하는 디자인 비주얼 검토입니다. PB-06-056~058은 2026-10-14에 추가한 인증 단계 작업이고(19장, `06_AGENT_PLAN.md` 8절), 기존 PB-06-006은 Stage A(Mock 로그인) 범위로 바뀌었습니다.
 
 | 웨이브 | 작업 ID | 진입 조건 | 산출물 |
 |---|---|---|---|
 | W0 | 001, 002, 003, 004, 039 | 없음 | DB 적용(AI 기본값 포함), web·엔진·렌더 골격, 디자인 레퍼런스(1단계) |
-| W1 | 005, 006, 007, 008, 016, 025, 029, 043 | W0 | CI, 인증, API 공통, 단가·features, HTML/프리셋, 법무 문구·고지문, RLS 테스트, AI 서비스 설치 |
+| W1 | 005, 006, 007, 008, 016, 025, 029, 043 | W0 | CI, 인증 Stage A(Mock 로그인·시드·가드), API 공통, 단가·features, HTML/프리셋, 법무 문구·고지문, RLS 테스트, AI 서비스 설치 |
 | W1-D | 040 → 041 → 042(직렬) | 002, 039 | 디자인 시스템 2~4단계. 화면 작업의 진입 조건 |
-| W2 | 009, 010, 012, 015, 017, 018, 028, 034, 044, 048, 054 | W1, 054는 042 | 결제, 책 CRUD, 페르소나, 업로드, PDF, ePub, 대기자, 배포, AI 게이트, 단건 생성 그래프, 3D 히어로 |
+| W2 | 009, 010, 012, 015, 017, 018, 028, 034, 044, 048, 054, 059 | W1, 054는 042 | 결제, 책 CRUD, 페르소나, 업로드, PDF, ePub, 대기자, 배포, AI 게이트, 단건 생성 그래프, 3D 히어로, 에이전트 실행 계층 |
 | W3 | 011, 013, 019, 020, 024, 027, 045 | 010, 012, 044, 048 | 기획 LLM, 섹션 생성, 표지, 책 정보, 랜딩, 운영자, 책별 RAG |
-| W4 | 021, 023, 030, 031, 032, 046, 047, 050 | 013, 017, 045 | 위저드 UI, 대시보드, 결제 E2E, 통합·엔진 테스트, 설정집 위키, 초안 그래프, 채팅 패널 |
-| W5 | 014, 033, 038, 049, 051, 052 | W4 | 전체 생성 워커, 아카이브, 문구 점검, Dify 채팅, 설정집 화면, 음성 |
-| W6 | 022, 026, 036, 053 | W5 | 에디터, 웹훅, 탈퇴, 낭독·미리듣기 |
-| W7 | 037, 055 | W6 | E2E, AI 보안 회귀. **MVP 출시 조건** |
-| W8 | 035 | MVP 출시 | 공개 책 페이지(Phase 2) |
+| W4 | 021, 023, 030, 031, 032, 046, 047, 050, 062, 063 | 013, 017, 045, 화면은 042, 062는 027 | 위저드 UI, 대시보드, 결제 E2E, 통합·엔진 테스트, 설정집 위키, 초안 그래프, 채팅 패널, 운영 콘솔 확장, 헤드라인 실험 |
+| W5 | 014, 033, 038, 049, 051, 052, 060 | W4 | 전체 생성 워커, 아카이브, 문구 점검, Dify 채팅, 설정집 화면, 음성, 에이전트 작업 공간 |
+| W6 | 022, 026, 036, 053 | W5 | 에디터(3단 레이아웃 포함), 웹훅, 탈퇴, 낭독·미리듣기 |
+| W7 | 056(G1 통과 후 먼저), 037, 055, 061 | W6, 056은 G1 | Google + 이메일 로그인(Stage B), E2E(Mock 페르소나 storageState, 056 후 스테이징 재실행, 에이전트 작업 불변식), AI 보안 회귀, 에디터 AI 패널(P1). **MVP 출시 조건**(061 제외) |
+| W8 | 035, 057·058(G2 통과 후), 064, 065 | MVP 출시, 057·058은 G2 | 공개 책 페이지(Phase 2), 카카오 로그인(C1, P1), 네이버 로그인(C2, P1), 워크플로 빌더·콘텐츠 에이전트(Phase 2) |
 
 ### 9.2 모델과 에이전트 매핑 (주 Opus, 부 Sonnet, 고문 Fable)
 
@@ -274,7 +286,7 @@ D:\WorkSpace\DEV\flora-publishing\
 | Haiku | 보일러플레이트, 린트·타입 정리, 반복 체크 | 오케스트레이터가 직접 처리(베이스에 Haiku 워커 없음) |
 | 사람 | 디자인 비주얼 검토(PB-06-041) | 사용자 |
 
-모델 비율(54개 기준): Fable 10, Opus 29, Sonnet 11, Haiku 4(18.5% / 53.7% / 20.4% / 7.4%). 리뷰는 `claude-reviewer`, `plan-challenger`, `review-expert`가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다.
+모델 비율(64개 기준, 2026-10-14): Fable 13, Opus 33, Sonnet 13, Haiku 5(20.3% / 51.6% / 20.3% / 7.8%, 규모 가중 22.0% / 54.3% / 19.7% / 3.9%). 리뷰는 `claude-reviewer`, `plan-challenger`, `review-expert`가 병렬로 맡습니다. 모델 지정은 setup 스크립트 5단계가 복사본에만 적용합니다.
 
 ### 9.3 task 폴더 만들기
 
@@ -333,7 +345,8 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 6 | 개발 위키 갱신(12절) | `llm-wiki` 스킬 |
 | 7 | 완료: task status `done`, 웨이브의 모든 task가 끝나면 다음 웨이브 | - |
 
-- **MVP 출시 조건**: W7까지 완료, AI 보안 회귀(PB-06-055) 통과, `06_AGENT_PLAN.md` 7절 완료 정의 충족.
+- **MVP 출시 조건**: W7까지 완료(Stage B PB-06-056 포함, P1인 에디터 AI 패널 PB-06-061은 제외), AI 보안 회귀(PB-06-055) 통과, `06_AGENT_PLAN.md` 7절 완료 정의 충족.
+- **인증 단계 게이트**: W6이 끝나고 Mock 핵심 플로우 E2E가 녹색이면 사람이 G1을 판정합니다(19.3절). G2는 공개 베타 2주 뒤입니다(19.5절).
 - 구현이 산출물과 달라지면 코드를 조용히 맞추지 말고 산출물 갱신 task를 따로 만듭니다.
 - 화면 작업은 디자인 시스템 4단계(PB-06-042)가 끝난 뒤 시작합니다.
 
@@ -371,7 +384,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 - 위키는 산출물을 대체하지 않습니다. 충돌하면 `docs/file/`이 정본입니다.
 - 키·토큰 값과 개인정보는 위키에 쓰지 않습니다.
-- 초기 페이지(`sources/*.md` 24개)는 setup 시 함께 들어옵니다.
+- 초기 페이지(`sources/*.md` 25개)는 setup 시 함께 들어옵니다.
 - 이것은 개발용 위키이며, 제품 안의 "책 설정집"(제품 지식 위키)과 다릅니다.
 
 ## 13. 메인 디자인과 디자인 시스템
@@ -383,7 +396,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 단계 | 작업 | 담당 |
 |---|---|---|
 | 1. 레퍼런스 확정 | 앱 화면은 Atlassian(주, 워크플로·보드·상태 배지) + Primer(보조, 밀도), 채팅은 Astryx 패턴(확인 후, D17), 랜딩은 HERO_3D | PB-06-039, 고문 검토 |
-| 2. 가진 것 위에서 시작 | 03장 토큰 플랜(청먹, 교정지, 판면, 공정 시안, 맞춤 마젠타, 재단 회색) + Tailwind CSS v4 `@theme` → `apps/web/src/styles/tokens.css`, 기본 컴포넌트 | PB-06-040 |
+| 2. 가진 것 위에서 시작 | 03장 토큰 플랜(청먹, 교정지, 판면, 공정 시안, 맞춤 마젠타, 재단 회색) + Tailwind CSS v4 `@theme` → `apps/web/src/styles/tokens.css`, 기본 컴포넌트, 레이어 3종 `data-surface`(marketing·workspace·ops, 03장 8.2절) | PB-06-040 |
 | 3. 비주얼은 사람이 | 라이트/다크, 상태, 크기 배리언트를 스크린샷으로 보고 사람이 수치를 고칩니다 | PB-06-041(사람) |
 | 4. 정답을 한 곳으로 | 코드를 정답으로 확정하고 `DESIGN.md`, `COMPONENTS.md`를 코드 기준으로 맞춤 | PB-06-042 |
 
@@ -471,7 +484,7 @@ baseline:
 
 | 위험 | 대응 |
 |---|---|
-| 작업 수와 범위 | 55개 작업, 디자인 시스템 사람 검토(PB-06-041)가 병목입니다. W1-D를 일찍 시작합니다 |
+| 작업 수와 범위 | 65개 작업(인증 단계 3개, 에이전트·운영 7개 포함), 디자인 시스템 사람 검토(PB-06-041)가 병목입니다. W1-D를 일찍 시작합니다 |
 | 렌더 컨테이너 | pango, cairo, Noto CJK 누락 시 한글이 깨집니다. 기동 시 `fc-list :lang=ko` 검사(PB-06-004) |
 | 원고 개인정보 | 기본은 국외 이전 동의로 통제, 개인정보 포함 책은 오픈소스 전용. 오픈소스 품질이 낮을 수 있습니다(D12) |
 | AI·음성 비용 | 크레딧 선차감과 정산, 기능별 라우팅, 오픈소스 우선 기능으로 관리합니다. 초안 그래프 단가(2/4)는 제안값이므로 `core.ai_usage` 원가로 확정합니다(D14) |
@@ -479,6 +492,7 @@ baseline:
 | 낭독 저작권·약관 | 미리듣기 파일의 배포 가능 여부는 ElevenLabs 약관 확인 전까지 청취 확인용으로 한정합니다(D15) |
 | 원본 키 유출 | v1·v2의 `.env` 실키는 재발급하고 아카이브에 `.env*`를 남기지 않습니다(07장 5절) |
 | 비밀키 | `.env*`는 커밋하지 않습니다. 서명 개인키는 Next.js 서버에만 둡니다. 키 값을 로그·문서·위키에 쓰지 않습니다 |
+| 인증 단계 건너뛰기 | Mock 단계에서 Google 콘솔을 먼저 붙이거나 기능 코드에 `if (mock)`을 넣지 않습니다. 단계 분기는 인증 모듈 안에서만, 전환은 사람이 G1·G2 판정 후(19장) |
 | 기획 변경 | 산출물 갱신 task로 처리합니다. 바뀐 기획서를 다시 묶으려면 `build_root.py`를 실행합니다 |
 | AI에게 범위 없이 맡기기 | `DESIGN_SYSTEM.md` 7장 금지 사항. 맡기는 크기는 검증할 수 있는 크기까지입니다 |
 
@@ -490,11 +504,175 @@ baseline:
 - [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
 - [ ] 공용 인프라 준비: Dify, 오픈소스 음성·LLM 서버(또는 임시로 상용만)
 - [ ] `supabase start` → `supabase db reset` 성공(7절)
-- [ ] 결정 D1~D19 확정, 산출물 "승인" 전환(8절)
+- [ ] 결정 D1~D27 확정(D6은 닫힘), 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
 - [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.3)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
-- [ ] W1~W7 진행, AI 보안 회귀 통과, MVP 출시 조건 충족
+- [ ] Stage A: 시드 페르소나로 로컬 로그인 확인(19.2절)
+- [ ] W1~W6 진행 후 G1 판정과 `[DECISION] G1 통과` 기록(19.3절)
+- [ ] W7: Stage B(PB-06-056) 먼저, 이어서 E2E·AI 보안 회귀, MVP 출시 조건 충족
+- [ ] 공개 베타 2주 뒤 G2 판정, C1·C2(19.5~19.7절)
+
+## 19. 인증 단계: Mock → Google → 카카오·네이버
+
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(확정 결정 22, 2026-10-14). 제품 반영: `docs/file/02-요구사항/01_PRD.md` PB-F-001·8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙".
+
+처음에는 Mock 로그인으로 모든 MVP 기능을 완성하고, 기능이 안정되면 Google 로그인을 붙이고, 그것이 안정되면 카카오·네이버를 붙입니다. 세션은 처음부터 실제 Supabase JWT이므로 단계가 바뀌어도 권한·RLS·크레딧 코드는 바뀌지 않습니다.
+
+### 19.1 단계 요약
+
+| 단계 | 언제 | 켜지는 로그인 | 작업 | 끝나는 조건 |
+|---|---|---|---|---|
+| A Mock | W0부터 W6까지(MVP 기능 개발) | 로컬 시드 페르소나 원클릭 로그인. 상단 배지 `MOCK AUTH · 로컬 전용` | PB-06-006(W1) | G1(19.3절) |
+| B Google | G1 통과 후, 공개 베타 전(W7 맨 앞) | Google + 이메일(가입·메일 인증·재설정) | PB-06-056(P0, Fable, M) | G2(19.5절) |
+| C1 카카오 | G2 통과 후(W8) | 카카오(Supabase 기본 제공자) | PB-06-057(P1, Opus, S) | `AUTH_ROADMAP.md` 7.1.3절 |
+| C2 네이버 | G2 통과 후(W8, C1과 병렬) | 네이버(`custom:naver` 또는 서버 브리지) | PB-06-058(P1, Fable, M) | `AUTH_ROADMAP.md` 7.2.4절 |
+
+### 19.2 Stage A 로컬 실행 순서
+
+| 순서 | 명령·행동 | 설명 |
+|---|---|---|
+| 1 | `supabase start` | 로컬 Supabase(`http://127.0.0.1:54321`) |
+| 2 | `supabase db reset` | 마이그레이션과 seed 적용(7절) |
+| 3 | `apps/web/.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD=<임의의 긴 값>` | 커밋하지 않습니다. `NEXT_PUBLIC_*`에 넣지 않습니다. `NEXT_PUBLIC_SUPABASE_URL`이 로컬이 아니면 web이 기동하지 않습니다 |
+| 4 | `node scripts/dev/seed-users.mjs --app publishing` | 페르소나 owner, admin, member, viewer, outsider, no_app, suspended, ops와 제품 훅의 basic(제안)을 만듭니다. 원격 URL이면 즉시 종료, 두 번 실행해도 크레딧 1회. 비밀번호는 출력하지 않습니다 |
+| 5 | `npm run dev` 후 `/login` | 개발용 패널에서 페르소나 버튼을 누르면 `/dashboard`(owner·no_app은 `/onboarding` 약관 단계부터) |
+| 6 | E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장합니다(PB-06-037) |
+
+페르소나별 기대 결과는 `docs/file/03-설계/05_DATA_MODEL.md` 10절입니다. 권한 분기는 페르소나를 바꿔 로그인해서 확인하고, 기능 코드에서 페르소나 이메일로 분기하지 않습니다.
+
+### 19.3 G1 체크리스트 (사람이 판정)
+
+- [ ] `06_AGENT_PLAN.md` 2절 MVP P0 기능 작업 완료(인증 B·C 작업과 W7의 037·055 공개 베타 마무리 제외)
+- [ ] 핵심 플로우 E2E(PB-06-037) Mock 페르소나로 로컬 녹색
+- [ ] RLS 스모크(PB-06-029) 전 항목 통과, `outsider` 교차 테넌트 거부
+- [ ] 결제 E2E(PB-06-030) Toss 테스트 키로 녹색
+- [ ] CI(PB-06-005): 인증 모듈 밖 `AUTH_MODE` 참조 0, `mock-auth`·`nomad_role`·`nomad_plan` 0, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패
+- [ ] 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트
+- [ ] 결과를 PB-06-056 task `log.md`에 `[DECISION] G1 통과`로 기록
+
+### 19.4 Stage B 외부 설정 순서 (`AUTH_ROADMAP.md` 5.1절)
+
+| 순서 | 할 일 | 비고 |
+|---|---|---|
+| 1 | Google Cloud 콘솔 → OAuth 동의 화면: 사용자 유형 External, 범위 `openid`, `email`, `profile`만 | 게시 상태 "테스트"에서는 등록한 테스트 사용자만 로그인됩니다 |
+| 2 | 사용자 인증 정보 → OAuth 클라이언트 ID(웹 애플리케이션). 승인된 리디렉션 URI = `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback` | 앱 도메인이 아니라 Supabase 콜백입니다 |
+| 3 | Supabase 대시보드 → Authentication → Providers → Google 사용, 클라이언트 ID·시크릿 입력. 로컬은 `supabase/config.toml` `[auth.external.google]`의 `env(GOOGLE_CLIENT_ID)` | 앱 env에는 넣지 않습니다 |
+| 4 | Authentication → URL Configuration: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록) | 와일드카드 지양 |
+| 5 | 동의 화면을 "프로덕션"으로 게시 | 공개 베타 전 |
+| 6 | 배포 env: `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email` | 배포 체크리스트(B-6) |
+| 7 | 수동 점검표: 데스크톱·모바일 각 1회, 신규·기존 계정 | 결과를 task `log.md`에(B-5). 실제 Google 로그인은 자동화하지 않습니다 |
+
+### 19.5 G2 체크리스트 (사람이 판정)
+
+- [ ] Google 실로그인으로 공개 베타 운영 2주(제안)
+- [ ] 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안, 감사 `auth.login`과 오류 로그)
+- [ ] 가입 기간 신규 가입자 중 `entitled=false`로 남은 사용자 0(`AUTH_ROADMAP.md` 6장의 SQL을 단독 `public` 스키마에 맞춰 실행)
+- [ ] 카카오: 디벨로퍼스 앱 생성, 이메일 정책 D20 확정(비즈 앱 전환 권장)
+- [ ] 네이버: 애플리케이션 등록, 검수 신청 자료(로그인 버튼부터 가입 완료까지 화면 캡처) 준비
+- [ ] 결과를 `[DECISION] G2 통과`로 기록
+
+### 19.6 C1 카카오 설정 (`AUTH_ROADMAP.md` 7.1.1절)
+
+| 순서 | 할 일 |
+|---|---|
+| 1 | 카카오 디벨로퍼스 앱 생성 → REST API 키 = `client_id` |
+| 2 | 카카오 로그인 Client Secret 활성 → `client_secret` |
+| 3 | Redirect URI = Supabase 콜백(`https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://localhost:54321/auth/v1/callback`) |
+| 4 | 카카오 로그인 활성, 동의항목 `profile_nickname`, `profile_image`, 비즈 앱이면 `account_email` |
+| 5 | Supabase → Providers → Kakao 사용(로컬 `[auth.external.kakao]`). 이메일을 받지 못하면 "Allow users without an email"(D20 (b)일 때만) |
+| 6 | 배포 env `AUTH_PROVIDERS=google,email,kakao`, 설정 → 로그인 방법 화면 확인(`03_SCREENS_UX.md` 7.4절) |
+
+### 19.7 C2 네이버 스파이크와 검수 (`AUTH_ROADMAP.md` 7.2.2절)
+
+| 단계 | 할 일 | 통과 기준 |
+|---|---|---|
+| 1 | 운영과 분리한 Supabase 프로젝트에 관리자 API로 `custom:naver` 등록(`provider_type: 'oauth2'`, authorize·token·`/v1/nid/me` 엔드포인트). 등록은 `scripts/auth/register-naver-provider.mjs`(제안)로 남깁니다 | 등록 성공 |
+| 2 | 네이버 "개발 중" 상태 + 등록한 테스트 아이디로 `signInWithOAuth({ provider: 'custom:naver' })` | 로그인 성공, `identities[].provider = 'custom:naver'` |
+| 3 | `auth.users.email`이 채워졌는지, 재로그인이 같은 사용자인지 | 둘 다 참이면 `supabase_custom` 채택 |
+| 4 | 실패하면 브리지 경로(`04_API.md` 8절 `/auth/naver/start`·`/auth/naver/callback`)를 택하고 코어 요청 R15(`staged/0010_core_auth_identity_links.sql` 적용, 사람이 승인). 결과를 `NAVER_AUTH_PATH`와 `[DECISION]`에 기록 | 기록 |
+| 5 | 네이버 검수 신청(로그인 버튼부터 가입 완료까지 화면 캡처). 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않습니다(C2-6) | 검수 통과 |
+
+로컬 Supabase CLI가 커스텀 제공자를 지원하는지는 미확인입니다. 지원하지 않으면 로컬은 Mock·Google·카카오로 개발하고 네이버는 스테이징 프로젝트에서 확인합니다.
+
+### 19.8 단계 전환 요청 프롬프트 예시 (G1 통과 후 Stage B)
+
+베이스 `_templates/dev-request-prompt.md` 형식을 따르며 9.4절 예시를 본떴습니다.
+
+```
+D:/WorkSpace/DEV/flora-publishing/docs/file 의 모든 파일(프로젝트 산출물)을 최대한 자세히 읽고 분석한다.
+(이미 읽은 파일은 skip. 특히 docs/file/03-설계/공용코어/AUTH_ROADMAP.md 0·3·5장과 06_AGENT_PLAN.md 8절)
+
+[요구사항]
+PB-06-056: 인증 Stage B(Google OAuth + 이메일 가입·메일 인증·비밀번호 재설정)로 전환한다.
+전제 = log.md 에 [DECISION] G1 통과 기록이 있다(없으면 시작하지 않고 보고).
+완료 조건 = ① AUTH_ROADMAP.md 5.3절 B-1~B-6 ② /login 에 Google 버튼 + 이메일 폼, /signup·/reset-password 구현
+③ /auth/callback 이 finishLogin(코드 교환 → session_context → bootstrap_app_for_org 1회 → status 분기 → next 화이트리스트)을 거친다
+④ 첫 OAuth 로그인은 /onboarding 약관 단계 → AI 처리 방식 순서(03_SCREENS_UX.md 7.3절)
+⑤ Mock E2E(PB-06-037)가 계속 녹색이고 배포 빌드에서 /api/dev/login 404
+⑥ 06_AGENT_PLAN.md 의 PB-06-056 수용 기준 충족.
+
+[작업의 특성]
+권한 경계 작업. 단계 분기는 apps/web/src/lib/auth/, (auth)/, auth/ 안에서만. Google 콘솔·Supabase 대시보드 설정은 사람이 하고(AUTH_ROADMAP.md 5.1절) 에이전트는 체크리스트만 만든다.
+작업 대상 경로: apps/web/src/app/(auth)/, apps/web/src/app/auth/callback/, apps/web/src/features/onboarding-terms/, apps/web/src/app/api/terms/, supabase/config.toml, docs/flora-publishing/ops/auth-checklist.md
+
+이 요구와 근거 산출물(baseline)로 작업을 만들어 진행한다.
+승인·결정 사항은 묻지 말고 먼저 진행한 뒤, 임의로 결정한 내용은 log.md 에 [DECISION] 으로 남기고 종료 시 [DECISION-SUMMARY] 로 정리한다.
+
+main worker 는 claude-main 이 진행한다.
+main worker 의 서브 에이전트는 nextjs-expert 가 진행한다.
+review role worker 는 claude-reviewer 가 진행한다.
+review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
+```
+
+C1·C2도 같은 형식으로 요청하되 전제를 `[DECISION] G2 통과`로, 완료 조건을 `AUTH_ROADMAP.md` 7.1.3절(C1-1~C1-5) 또는 7.2.4절(C2-1~C2-6)로 바꿉니다.
+
+### 19.9 이 제품의 인증 작업 ID
+
+| 단계 | 작업 | 우선순위·규모·모델 | 웨이브 |
+|---|---|---|---|
+| A | PB-06-006(범위 변경: Mock 로그인, 시드, 가드, `finishLogin`) | P0, M, Fable | W1 |
+| B | PB-06-056 | P0, M, Fable | W7 맨 앞(G1 후) |
+| C1 | PB-06-057 | P1, S, Opus | W8(G2 후) |
+| C2 | PB-06-058 | P1, M, Fable | W8(G2 후) |
+
+## 20. 에이전트 실행 계층과 운영 콘솔 (2026-10-14 FLORA 개편, 검토용)
+
+외부 제안서(ChatGPT 작성 "UI/UX 및 AI 에이전트 통합 디자인 제안서")를 기존 기획과 대조해 반영했습니다. 정본은 `docs/file/02-요구사항/01_PRD.md` 3.1절·8.2절, `docs/file/03-설계/02_ARCHITECTURE.md` 10절, `03_SCREENS_UX.md` 8절, `04_API.md` 9절, `05_DATA_MODEL.md` 2.5절, `docs/file/01-관리/06_AGENT_PLAN.md` 9절입니다.
+
+### 20.1 무엇이 바뀌었나
+
+| 항목 | 내용 |
+|---|---|
+| 에이전트 | 기획·자료·집필·편집·출판(콘텐츠는 Phase 2). 새 실행 엔진이 아니라 기존 Route Handler·잡·그래프를 레지스트리로 묶은 것 |
+| 기록 | 유료 작업형 요청 1건 = `agent_tasks` 1행(`request_id` 멱등). 잡·실행·그래프 id를 잇고, 크레딧 원장은 `ref_type='agent_task'`, `ref_id=<작업 id>`로 묶는다 |
+| 검수 | 사용자가 쓴 본문은 승인 전 불변. 잡으로 끝난 원고 작업(챕터 초안, 전체 순차 생성, 전체 다듬기)은 검수 대기함과 에디터 AI 패널 "제안" 탭에서 비교·승인·거부(RPC `decide_agent_task`). 선택 영역 동작은 그 자리 Diff 카드가 검수 |
+| 재시도 | 실패·부분·취소만, 작업당 한 번, 재시도 범위(실패분, 취소면 남은 것까지)만 차감. 원래 작업의 결과 없는 차감이 모두 환불돼 있어야 한다(DB 트리거·부분 유니크 + 원장 `ref_id` 확인) |
+| 운영 콘솔 | 운영 홈, 사용자·권한, 출판 프로젝트, 에이전트·AI 운영, 작업 큐·실행 추적 6단계, 결제·크레딧·원가, 설정 열람, 감사. 원고 본문은 기본 차단 |
+| 디자인 | 레이어 3종(`data-surface`: marketing, workspace, ops). 색·서체·헤드라인은 D23~D25 결정 전까지 기존 토큰 |
+| 범위 밖 | 교육 프로그램(별도 사업) |
+
+### 20.2 로컬 확인 순서 (Stage A Mock 로그인 상태에서)
+
+| 순서 | 할 일 | 기대 |
+|---|---|---|
+| 1 | `supabase db reset` 후 `\d agent_tasks`(모놀리스 `public`) | 표, 트리거 3개(`set_updated_at`, `before_insert`, `transition`) + guard |
+| 2 | `owner` 페르소나로 챕터 초안 실행 | `/dashboard/agents?tab=history`에 행 1개, 끝나면 "검수 대기" |
+| 3 | 같은 요청을 같은 `request_id`로 다시 보냄 | 새 행 0, 차감 0 |
+| 4 | 일부 승인 | 승인한 소제목만 revision+1, 작업 "일부 승인", 감사 `agent_task.decide` |
+| 5 | `viewer`로 결정 시도 | 403 |
+| 6 | `ops` 페르소나로 `/admin/jobs/<작업 id>` | 6단계 추적, 본문·프롬프트 없음 |
+
+### 20.3 이 제품의 에이전트·운영 작업 ID
+
+| ID | 작업 | 웨이브 | 모델 |
+|---|---|---|---|
+| PB-06-059 | 에이전트 실행 계층(레지스트리, 기록기, API, 동기화 크론) | W2 | Opus |
+| PB-06-060 | 에이전트 작업 공간 화면 | W5 | Sonnet |
+| PB-06-061 | 에디터 AI 패널(3단 레이아웃은 022, W6) | W7 | Opus |
+| PB-06-062 | 운영 콘솔 확장(추적, 원가, 재실행) | W4 | Fable |
+| PB-06-063 | 랜딩 헤드라인 실험(D25) | W4 | Haiku |
+| PB-06-064, 065 | 워크플로 빌더, 콘텐츠 에이전트(Phase 2) | W8 | Sonnet, Opus |
 
 ## 부록 A. 스크립트 없이 손으로 할 때
 

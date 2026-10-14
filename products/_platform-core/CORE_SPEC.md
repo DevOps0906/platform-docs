@@ -11,7 +11,7 @@
 | 3 | `SECURITY_BASELINE.md` | 모든 제품이 지켜야 하는 보안 규칙 |
 | 4 | `DB_CONVENTIONS.md` | 제품 스키마 작성 규칙 |
 | 5 | `DOC_TEMPLATE.md` | 제품 폴더 문서의 장 구조 |
-| 6 | `MONOLITH_CORE_LITE.sql` | 단독 Supabase 프로젝트용 코어 |
+| 6 | `MONOLITH_CORE_LITE.sql` | 단독 Supabase 프로젝트용 코어. 인증 단계(Mock → Google → 카카오·네이버)는 `AUTH_ROADMAP.md`와 이 문서 18장 |
 
 표기: "제안"은 원본 문서나 리뷰에 근거가 없어 이 문서가 새로 정한 값이다. "미확인"은 외부 사실(API 존재 여부 등)을 확인하지 않은 것이다. 둘 다 사용자 결정 전까지 확정이 아니다.
 
@@ -80,7 +80,7 @@
 
 | 규칙 | 이유 |
 |---|---|
-| 가입 폼은 `options.data.signup_app = '<app_id>'`를 보낸다 | 없으면 엔타이틀먼트가 생기지 않아 첫 화면에서 `entitled=false` |
+| 가입 폼은 `options.data.signup_app = '<app_id>'`를 보낸다. OAuth(Google·카카오·네이버) 가입은 이 값을 보낼 수 없으므로 콜백이 `bootstrap_app_for_org`를 1회 호출한다(18장) | 없으면 엔타이틀먼트가 생기지 않아 첫 화면에서 `entitled=false` |
 | 기존 사용자가 다른 앱을 처음 열면 `rpc('bootstrap_app_for_org', {p_app_id})`를 호출한다 | SSO 크로스 셀 경로. owner/admin만 가능(`migrations/0003_core_credits.sql:440-461`) |
 | 프로필이 없으면 로그아웃 처리한다. 기본 역할을 admin으로 두지 않는다 | Hospital은 프로필이 없을 때 admin으로 보낸다(`Hospital/src/proxy.ts:57`, `:69`). 이 패턴을 복사하면 안 된다 |
 
@@ -453,3 +453,16 @@ pg_cron 또는 워커 크론으로 service_role이 호출한다(`docs/products/_
 | 크레딧 | AI·음성 사용은 `ai_usage` 기록 + `consume_credits`/`refund_credits`(4장 규약 그대로) |
 | 잡 | RAG 색인, 위키 ingest/lint, 장시간 그래프, 음성 만료 정리는 `core.jobs`(9장) |
 
+
+## 18. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `AUTH_ROADMAP.md`다. 이 장은 코어 계약에 닿는 부분만 적는다.
+
+| 항목 | 계약 | 근거 |
+|---|---|---|
+| 단계 | A Mock(로컬 시드 계정, MVP 개발) → G1 → B Google(+제품 PRD의 이메일·초대 메일) → G2 → C1 카카오, C2 네이버 | `AUTH_ROADMAP.md` 0장 |
+| 세션 | 모든 단계에서 실제 Supabase Auth JWT. `session_context`(2.3절)와 RLS는 단계와 무관하게 같다 | `AUTH_ROADMAP.md` 0장 불변 조건 |
+| OAuth 첫 로그인 부트스트랩 | `signInWithOAuth`는 `options.data.signup_app`을 보낼 수 없다. 모듈러에서는 가입 트리거(`migrations/0001_core_identity.sql:113`)가 엔타이틀먼트를 만들지 않으므로, 콜백이 `entitled=false`이고 앱 `signup_policy`가 open·approval이면 `rpc('bootstrap_app_for_org', { p_app_id })`를 1회 호출한다(`migrations/0003_core_credits.sql:440-461`, 가입·월 크레딧은 멱등 키로 1회). invite 앱은 호출하지 않는다. 모놀리스는 앱 행이 1개면 트리거가 자동 부트스트랩하므로 호출이 무동작이다 | `AUTH_ROADMAP.md` 3.2절 |
+| Mock 계정 | `auth.admin.createUser(..., email_confirm: true, user_metadata: { signup_app })`로 만들어 실제 가입 트리거를 탄다. 역할은 `invite_member`·`accept_invite` RPC로 맞춘다. 원격 DB에는 만들지 않는다 | `AUTH_ROADMAP.md` 2.3절 |
+| 네이버 | Supabase 커스텀 제공자 `custom:naver`가 1순위(스파이크로 확인). 실패하면 서버 브리지 + 보류 마이그레이션 `staged/0010_core_auth_identity_links.sql`(service_role 쓰기, 본인 SELECT). `core.oauth_states`는 로그인 전 사용자·조직이 없어 로그인 state에 쓰지 않는다 | `AUTH_ROADMAP.md` 7.2절 |
+| 감사 | 로그인 콜백은 `auth.login`(provider, 첫 로그인 여부), 계정 연결은 `auth.identity_link`·`auth.identity_unlink`를 남긴다. 토큰·코드는 남기지 않는다 | `AUTH_ROADMAP.md` 3.2절, 7.3절 |

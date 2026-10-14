@@ -13,5 +13,7 @@
 | [`LLM_WIKI.md`](LLM_WIKI.md) | 제품 지식 위키와 개발용 프로젝트 위키 |
 | [`VOICE_ARCHITECTURE.md`](VOICE_ARCHITECTURE.md) | 음성 대화·제품 음성 기능, ElevenLabs·오픈소스 이원화 |
 | [`MONOLITH_CORE_LITE.sql`](MONOLITH_CORE_LITE.sql) | 제품별 단독 Supabase 프로젝트(모놀리스)용 코어 SQL 축소판. 제품 `supabase/monolith/migrations/0001_core_lite.sql`의 원본 |
+| [`AUTH_ROADMAP.md`](AUTH_ROADMAP.md) | 인증 단계 규격(2026-10-14): Mock(로컬 시드 계정) → Google OAuth → 카카오·네이버, 게이트 G1·G2, Mock 가드, 콜백 공통 처리, 제품별 적용 매트릭스 |
+| [`staged/`](staged/) | 보류 마이그레이션. `0010_core_auth_identity_links.sql`은 네이버 브리지 경로를 택할 때만 적용(`AUTH_ROADMAP.md` 7.2.3절) |
 
 통합 DB(모듈러) 버전의 코어 SQL은 [`../_supabase-modular/migrations/0000~0009`](../_supabase-modular/migrations/)입니다.

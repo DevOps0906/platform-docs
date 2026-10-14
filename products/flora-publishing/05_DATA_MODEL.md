@@ -2,6 +2,8 @@
 
 2026-10-13 개정: AI·음성(확정 결정 13~17)은 코어 표(`core.ai_*`, `core.wiki_*`, `core.voice_*`)만 참조하고 제품 AI 표를 만들지 않는다(이유는 6절). 이번 개정의 DB 변경은 `1000_publishing.sql` 15절(AI·음성 라우팅 기본값 12행, free·basic 플랜 AI 키 6개, 체인 검사)뿐이며 표 구조는 바꾸지 않았다.
 
+2026-10-14 FLORA 개편(검토용): 제품 표 `publishing.agent_tasks` 1개와 사용자 RPC `decide_agent_task` 1개를 더했다(2.5절, `1000_publishing.sql` 16절). 실행·원가·검수 기록을 위한 새 실행 이벤트 표, 승인 이력 표, 비용 원장은 만들지 않았다: 실행 단계는 `core.jobs`·`core.ai_run_steps`, 비용은 `core.ai_usage`·`core.credit_ledger`, 결정 이력은 `core.audit_log`가 이미 정본이다(제안서 8절 "기존 모델이 있으면 확장").
+
 작성일 2026-10-12. 정본 SQL은 `docs/products/_supabase-modular/migrations/1000_publishing.sql`(아래 "조각:줄"). 모놀리스 `supabase/monolith/migrations/0002_publishing_domain.sql`은 조각을 변환한 것이다. 규칙은 `docs/products/_platform-core/DB_CONVENTIONS.md`(아래 DBC).
 
 ## 1. 개요와 ERD
@@ -13,6 +15,7 @@ core.organizations (참조만)
  │     ├─> publishing.cover_images ───┘(cover_image_id)          cover_images ──> core.jobs
  │     ├── publishing.book_exports ──> core.jobs, core.credit_ledger
  │     ├── publishing.generation_runs ──> core.jobs (parent_job_id)
+ │     ├── publishing.agent_tasks ──> core.jobs, generation_runs, core.ai_runs, core.credit_ledger, agent_tasks(retry_of)  (2026-10-14)
  │     └── publishing.manuscript_uploads (book_id 선택) ──> core.jobs
  ├── publishing.member_settings (org_id, user_id)
  ├── publishing.custom_personas
@@ -93,6 +96,34 @@ core AI·음성 (참조만, 6절)
 | `custom_personas` (조각:98-113) | 나만의 페르소나 | `name` 1~60자, `base_persona_ids` ≤ 3, `taste_config`, `status` active/archived. INSERT는 서버만 |
 | `member_settings` (조각:360-374) | 사용자 화면 설정 | PK `(org_id, user_id)`, `theme_key` 7종, `favorite_persona_ids` ≤ 60, `llm_mode`, `editor_prefs` |
 
+### 2.5 agent_tasks (2026-10-14, 조각 16절)
+
+목적: 에이전트 작업 1건(사용자 요청 1건) = 행 1개. 실행·검수·재시도·원가 추적의 기준 id. 서버만 쓴다.
+
+| 이름 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| `id` | uuid | N | `gen_random_uuid()` | PK |
+| `org_id` | uuid | N | - | 조직 |
+| `book_id` | uuid | Y | - | `(book_id, org_id)` → books, cascade. 페르소나 합성처럼 책 없는 동작은 null |
+| `agent_key` | text | N | - | planning, research, writing, editing, publishing, content |
+| `action` | text | N | - | 레지스트리 동작 키(`^[a-z][a-z0-9_]{1,40}$`, 02장 10.1절) |
+| `origin` | text | N | 'workspace' | workspace, wizard, editor, admin_retry |
+| `status` | text | N | 'queued' | queued, running, succeeded, partial, failed, canceled |
+| `approval_status` | text | N | 'not_required' | not_required, pending, approved, partially_applied, rejected, expired |
+| `approval_decided_by`, `approval_decided_at`, `approval_note` | uuid, timestamptz, text(500) | Y | - | 결정 3종이면 `decided_at` 필수(CHECK) |
+| `input_summary`, `result_summary` | jsonb | N | '{}' | 범위 id·개수, 결과 id 목록(`saved`, `suggested`, `failed`, 취소 시 `remaining`). 원고 본문·프롬프트 금지 |
+| `job_id` | uuid | Y | - | → core.jobs, set null |
+| `generation_run_id` | uuid | Y | - | → generation_runs, set null |
+| `ai_run_id` | uuid | Y | - | → core.ai_runs, set null |
+| `credit_ledger_id` | bigint | Y | - | → core.credit_ledger, 첫 차감 행(표시용). 작업의 전체 원장은 `credit_ledger.ref_type='agent_task'`, `ref_id=<id>`로 묶는다(차감이 소제목마다 여러 행일 수 있다) |
+| `credits_estimated`, `credits_used` | integer | N | 0 | 0 이상 |
+| `request_id` | text | N | - | 8~64자. `unique(org_id, request_id)` 멱등 |
+| `retry_of` | uuid | Y | - | → agent_tasks, set null(원래 행 삭제 때만 null로 바뀔 수 있다). 부분 유니크(재시도 1회) |
+| `attempt` | smallint | N | 1 | 1~10. 첫 작업은 1, 재시도는 원래 + 1(트리거). `origin='admin_retry'`면 `retry_of` 필수 |
+| `error_code`, `error_message` | text | Y | - | 64자, 500자(사용자에게 보여도 되는 문장만) |
+| `requested_by` | uuid | Y | - | FK 없음(DBC 3장) |
+| `created_at`, `started_at`, `finished_at`, `updated_at` | timestamptz | - | - | 전이 트리거가 시각 기록 |
+
 ## 3. 상태 전이
 
 | 테이블.컬럼 | 현재 | 허용 전이 | 누가 | 부수 효과 | 구현 |
@@ -109,6 +140,11 @@ core AI·음성 (참조만, 6절)
 | generation_runs.status | queued | running, canceled, failed | 서버, 취소 요청은 RPC | started_at | 트리거(조각:626) + `request_generation_cancel` |
 | | running | succeeded, partial, failed, canceled | 서버 | finished_at, 미처리 자식 cancel_job(환불) | 같음 |
 | manuscript_uploads.status | pending_upload → uploaded → parsing → parsed / failed → expired | (parsing → uploaded는 재시도) | 서버 | 파싱 24시간 뒤 원본 삭제, `raw_deleted_at` | 트리거(조각:652) |
+| agent_tasks.status(2026-10-14) | queued | running, canceled, failed | 서버 | started_at | 트리거 `agent_tasks_transition`(조각 16절) |
+| | running | succeeded, partial, failed, canceled | 서버 | finished_at | 같음 |
+| agent_tasks.approval_status | not_required | pending(상태가 succeeded·partial·canceled일 때만) | 서버 | - | 같음 |
+| | pending | approved, partially_applied, rejected(사용자 RPC `decide_agent_task`), expired(서버, 30일) | 사용자·서버 | approval_decided_at, 감사 `agent_task.decide` | 같음 + RPC |
+| agent_tasks 신원 컬럼 | - | 변경 불가(org, book, agent, action, request_id, retry_of, attempt, origin). 예외: 원래 행 삭제 시 FK가 `retry_of`를 null로 | - | 위반 22023 | 같음 |
 | cover_images.status | queued → running → succeeded/failed | - | 서버 | - | 서버 코드(단순 순서, 부수 효과 없음) |
 
 ## 4. RLS 정책
@@ -121,6 +157,7 @@ core AI·음성 (참조만, 6절)
 | member_settings | `user_id = auth.uid() and is_org_member` | 같음 + 엔타이틀먼트 | 같음 | 없음 | select, insert, update |
 | cover_images, manuscript_uploads, book_exports, generation_runs | 멤버 + 엔타이틀먼트 | 없음 | 없음 | 없음 | select. + `guard_privileged_write` |
 | webhook_endpoints, webhook_deliveries | owner/admin + 엔타이틀먼트 | 없음 | 없음 | 없음 | select. + guard |
+| agent_tasks(2026-10-14) | 멤버 + 엔타이틀먼트 | 없음 | 없음(결정은 RPC) | 없음 | select. + guard. INSERT 트리거가 재시도 규칙(`PB013`)과 시작 상태를 강제 |
 | waitlist | 없음 | 없음 | 없음 | 없음 | 없음. + guard |
 
 사용자 쓰기 정책을 준 테이블(books, chapters, sections, custom_personas, member_settings)의 DBC 8장 조건 충족 근거:
@@ -144,6 +181,10 @@ core AI·음성 (참조만, 6절)
 | `book_exports_org_month_idx (org_id, created_at)` | Free 월 내보내기 횟수 |
 | `book_exports_expiry_idx (expires_at) where succeeded` | 만료 purge |
 | `generation_runs_one_active_per_book_idx` | 동시 실행 방지 |
+| `agent_tasks_org_created_idx`, `agent_tasks_book_created_idx` | 실행 이력(조직·책별 최근순) |
+| `agent_tasks_review_idx (org_id, created_at desc) where approval_status='pending'` | 검수 대기함, 사이드바 배지 |
+| `agent_tasks_active_idx (status, created_at) where queued/running` | 운영 콘솔 작업 큐, 동기화 크론 |
+| `agent_tasks_job_idx`, `agent_tasks_one_retry_idx`, `agent_tasks_request_uniq` | 잡 → 작업 역추적, 재시도 1회, 요청 멱등 |
 | `custom_personas_org_idx`, `cover_images_book_idx`, `manuscript_uploads_org_idx`, `webhook_*_org_idx` | 목록 |
 
 예상 규모(제안): Basic 조직당 책 20권, 책당 섹션 60, 섹션 본문 평균 6KB → 조직당 약 7MB. RLS 헬퍼는 STABLE SECURITY DEFINER라 행마다 재평가되지만 `org_id` 인덱스로 범위가 작다.
@@ -162,7 +203,8 @@ core AI·음성 (참조만, 6절)
 | `core.write_audit` | RPC 감사 | 안 함 |
 | `core.set_updated_at`, `core.guard_privileged_write` | 트리거 | 안 함 |
 | Storage `org-files`, `exports`, `public-assets` | 업로드·표지, 내보내기, 공개 표지(Phase 2) | 안 함. 경로 첫 폴더 = org_id를 CHECK로 한 번 더 확인 |
-| Realtime `supabase_realtime` | `publishing.sections`, `publishing.generation_runs` 추가 | 발행 목록에 제품 테이블만 추가 |
+| Realtime `supabase_realtime` | `publishing.sections`, `publishing.generation_runs`, `publishing.agent_tasks`(2026-10-14) 추가 | 발행 목록에 제품 테이블만 추가 |
+| `core.ai_runs`, `core.ai_usage`, `core.audit_log` | agent_tasks.ai_run_id FK, 운영 콘솔 원가·추적, 결정 감사 | 안 함 |
 
 ### 6.1 AI·음성 코어 객체와 제품 규칙 (2026-10-13)
 
@@ -242,7 +284,7 @@ AI·음성 코어 객체(`docs/products/_supabase-modular/migrations/0008_core_a
 
 | 파일 | 내용 |
 |---|---|
-| `docs/products/_supabase-modular/migrations/1000_publishing.sql` | 번호 1000(범위 1000~1099). 스키마, `core.apps` 등록, 헬퍼 3, 테이블 12, 트리거 함수 9, 사용자 RPC 2, RLS·GRANT, Realtime, 14절 함수 EXECUTE 최종 회수(PUBLIC·anon, `0007_core_function_privileges.sql`과 같은 규칙), 15절 AI·음성 기본값(라우팅 12행, free·basic AI 키 6개, 체인 검사) |
+| `docs/products/_supabase-modular/migrations/1000_publishing.sql` | 번호 1000(범위 1000~1099). 스키마, `core.apps` 등록, 헬퍼 3, 테이블 12, 트리거 함수 9, 사용자 RPC 2, RLS·GRANT, Realtime, 14절 함수 EXECUTE 최종 회수(PUBLIC·anon, `0007_core_function_privileges.sql`과 같은 규칙), 15절 AI·음성 기본값(라우팅 12행, free·basic AI 키 6개, 체인 검사), 16절 `agent_tasks`(2026-10-14: 표 1, 트리거 함수 2, 사용자 RPC 1, RLS, Realtime) |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `_platform-core/MONOLITH_CORE_LITE.sql` 복사본(OAuth state, affiliate 절 제거) |
 | `supabase/monolith/migrations/0002_publishing_domain.sql` | 위 조각의 모놀리스 변환본 |
 | `supabase/monolith/seed.sql` | apps 1행, 플랜 free/basic(features 22키: 기존 16 + AI 6), 크레딧팩 2종, AI 라우팅 기본값 12행 + 체인 검사. 제품 seed 없음(카탈로그는 코드 JSON) |
@@ -252,9 +294,50 @@ AI·음성 코어 객체(`docs/products/_supabase-modular/migrations/0008_core_a
 | 검사 | 결과 |
 |---|---|
 | `node check.mjs --vector mono 0001_core_lite.sql 0002_publishing_domain.sql seed.sql` | OK 3/3 (2026-10-13 재검증, AI 표가 있어 `--vector` 필수) |
-| `node check.mjs --vector mod 0000~0009 seed.sql 1000_publishing.sql` | OK 12/12 (2026-10-13 재검증) |
+| `node check.mjs --vector mod 0000~0009 seed.sql 1000_publishing.sql` | OK 12/12 (2026-10-13 재검증, 2026-10-14 16절 추가 후 재검증 OK) |
+| `agent_tasks` 동작 스모크(2026-10-14, PGlite, service 세션) | 상태 역행 22023, 신원 컬럼 변경 22023, 결정 후 `approval_decided_at` 기록, 이중 결정 `PB012`, 같은 `request_id` 23505, 같은 작업 두 번째 재시도 23505, 진행 중 작업 재시도 `PB013`, 취소 작업 → 검수 대기 허용, 첫 작업 `attempt<>1` 22023, `admin_retry` 원래 행 없음 22023, 재시도가 있는 원래 행 삭제 시 `retry_of` null 모두 기대대로. 같은 스모크를 모놀리스 0002 변환본에도 돌려 OK |
 | 반복 실행 | 두 구조 모두 제품 SQL 2회 적용 OK |
 | AI 기본값(2026-10-13, PGlite) | 제품 파일 2회 적용 후 `ai_routing_settings`(org null, app publishing) 12행. free·basic `features`에 AI 키 6개 병합. 미동의 조직 `resolve_ai_route`: `publishing.draft`·`publishing.assist`·`chat` = oss-llm, `wiki.ingest` = oss-llm, `narration` = oss-voice, `voice_chat` stt/tts = oss-voice, `publishing.dictation` = oss-voice, `publishing.knowledge` = oss-embed. 동의 후: `publishing.draft` = anthropic > openai > google > oss-llm, `wiki.ingest` = oss-llm > anthropic, `narration` = elevenlabs > oss-voice, `dify.aux` = oss-llm(동의 후에도). 컬렉션 `book-<uuid>`와 위키 slug `books/<uuid>/characters/seo-jin`이 CHECK를 통과 |
 | RLS 스모크(PGlite, 사용자 A·B·C + anon) | 모듈러 57/57, 모놀리스 57/57 통과 |
 
 RLS 스모크 주요 항목: B가 A 조직의 제품 테이블 11개 SELECT 0행, B의 A 조직 INSERT 42501, A 책 UPDATE/DELETE 0행, 다른 책 참조 INSERT 23503, B의 `request_generation_cancel`·`set_book_visibility`(A 행) 42501, `book_plan_limit`(A 조직) 기본값만 반환, 자기 엔타이틀먼트·지갑·profiles.platform_role·org_members.role 변경 42501, `grant_credits`·`consume_credits` 42501, 서버 전용 테이블 사용자 INSERT 42501, 컬럼 GRANT 밖 컬럼(`is_public`, `gen_status`, `org_id`) UPDATE 42501, 상태 전이 위반 22023, Free 4번째 책 `PB001`, Pro 테마 `PB008`, 엔타이틀먼트 정지 조직 INSERT 42501, anon 비공개 책 0행, anon의 제품 함수 EXECUTE 없음·트리거 함수는 authenticated도 EXECUTE 없음(PUBLIC 경유 차단). 스크립트는 PB-06-029 작업에서 `supabase/tests/`로 옮긴다.
+
+2026-10-14 추가할 RLS 스모크(PB-06-029): B가 A 조직 `agent_tasks` SELECT 0행, 사용자 세션 `agent_tasks` INSERT·UPDATE·DELETE 42501(guard), B의 `decide_agent_task`(A 행) 42501, viewer의 `decide_agent_task` 42501, 엔타이틀먼트 정지 조직의 결정 42501, anon의 `decide_agent_task` EXECUTE 없음.
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경은 없다. 인증 단계는 코어 계약(`session_context`, 가입 트리거, `bootstrap_app_for_org`)을 그대로 쓰고, Stage A의 Mock 로그인은 로컬 Supabase에 시드한 실제 계정으로 로그인한다(`docs/products/_platform-core/AUTH_ROADMAP.md` 2장). C2에서 브리지 경로를 택하면 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`의 `core.auth_identity_links`를 참조만 한다(제품 테이블 추가 없음, 06장 8.3절 R15).
+
+시드는 `scripts/dev/seed-users.mjs --app publishing`(공통, AUTH_ROADMAP 2.3절)이 공통 페르소나를 만든 뒤 제품 훅 `scripts/dev/seed-users.publishing.mjs`(제안)를 실행한다. 원격 호스트면 즉시 종료하고, 두 번 실행해도 크레딧이 두 번 지급되지 않는다. 이메일 도메인 `.test`, 비밀번호는 `DEV_SEED_PASSWORD`(출력하지 않음).
+
+### 10.1 공통 페르소나 (AUTH_ROADMAP 2.2절)
+
+| 키 | 만드는 경로 | 기대 `session_context('publishing')` | publishing에서 확인하는 것 |
+|---|---|---|---|
+| `owner` | `auth.admin.createUser`(`user_metadata.signup_app='publishing'`) → 가입 트리거 `core.handle_new_user` | 개인 조직 owner, `entitled=true`, `plan_code='free'`, `credit_balance=20` | 01장 PB-F-001 Stage A 수용 기준, Free 한도(`PB001~PB004`, 워터마크, 월 내보내기 2회), 온보딩 2단계(03장 7.3절) |
+| `admin` | 생성 후 owner가 `invite_member(org, user, 'admin')` → 본인 `accept_invite` | owner 조직의 admin | 책 삭제·복구, 결제 화면 접근(owner/admin), 웹훅 등록 |
+| `member` | 같은 방법(`member`) | owner 조직의 member | 책 생성·집필 가능, `/dashboard/billing` 접근 불가 |
+| `viewer` | 같은 방법(`viewer`) | owner 조직의 viewer | 위저드 읽기 전용(03장 1절), 쓰기 API 403 |
+| `outsider` | `signup_app='publishing'`으로 생성(다른 개인 조직) | 자기 조직 owner | 교차 테넌트: owner 조직의 `books`·`sections`·`book_exports`·대화·위키 0행, 다른 책 `book_id`로 채팅 404, 다른 컬렉션 RAG 42501 |
+| `no_app` | `signup_app` 없이 생성 | 모듈러: `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('publishing')` 1회 후 `entitled=true`. 모놀리스: 가입 트리거가 자동 부트스트랩해 처음부터 `entitled=true` | OAuth 첫 로그인 경로(B-1)를 A단계에서 미리 검증. 재로그인 3회 뒤 가입 크레딧 원장 행 1개 |
+| `suspended` | 생성 후 service_role로 `status=suspended` | 403 | `/suspended` 안내, 모든 API 403 |
+| `ops` | 생성 후 service_role로 `platform_role=platform_admin` | 운영자 | `/admin` 접근(일반 사용자는 404, PB-F-005), 수동 조정 감사 1행 |
+
+`pending`은 approval 앱 전용이라 만들지 않는다(publishing `signup_policy='open'`, `docs/products/_supabase-modular/seed.sql:13`).
+
+### 10.2 제품 훅 행 (publishing 도메인)
+
+AUTH_ROADMAP 8장의 publishing "A 추가 페르소나"는 "-"(필수 추가 없음)이다. 아래 행은 Basic 게이팅과 온보딩 E2E를 Mock으로 돌리기 위한 제안이다.
+
+| 키 | 만드는 경로 | 기대 결과 | 확인하는 것 |
+|---|---|---|---|
+| `basic`(제안) | `signup_app='publishing'`으로 생성 → service_role로 `core.subscriptions`에 basic 플랜 `trialing` 행 INSERT → `core.apply_subscription_transition(<sub>, 'active', 'dev_seed')`(`docs/products/_supabase-modular/migrations/0002_core_billing.sql:265`) → `grant_credits`(bucket `plan`, 멱등 키 `dev-seed:basic:<org>`, 200) | `plan_code='basic'`, `credit_balance=220`(가입 20 + plan 200, 제안) | 전체 순차 생성, 업로드, 어조, 보조 집필, quality 모드, 페르소나 합성, 낭독, 웹훅이 열린다(01장 4.4절). 실제 결제 경로는 PB-06-030이 Toss 테스트 키로 따로 검증한다 |
+| 약관 동의 기록 | `admin`, `member`, `viewer`, `outsider`, `basic`에 감사 행(제안: 행동 `terms.accept`, 약관 버전)을 service_role로 만든다. `owner`, `no_app`은 만들지 않는다 | 앞의 페르소나는 로그인 직후 `/dashboard`, `owner`·`no_app`은 `/onboarding` 약관 단계 | 03장 7.3절 온보딩 경로와 기능 E2E를 분리 |
+| AI 국외 이전 동의 | 만들지 않는다(모든 페르소나 미동의로 시작) | 오픈소스 체인 | 동의 경로는 E2E(PB-06-037)가 `owner`로 직접 통과시킨다. 상용 체인이 필요한 테스트는 테스트 안에서 `set_ai_cross_border_ack`(owner)를 부른다 |
+
+### 10.3 모놀리스와 모듈러 차이
+
+| 항목 | 모듈러(`publishing` + `core`) | 모놀리스(단독 `public`, 개발 폴더 기본) |
+|---|---|---|
+| `no_app` | `entitled=false`로 생성, `finishLogin`의 `bootstrap_app_for_org`가 메운다 | 앱 행이 1개라 가입 트리거가 자동 부트스트랩(`entitled=true`), `finishLogin`의 부트스트랩 단계는 무동작 |
+| 시드 대상 | `--app`을 여러 번 줄 수 있다(두 번째 앱부터 service_role `bootstrap_app_for_org`) | `--app publishing` 한 번 |
