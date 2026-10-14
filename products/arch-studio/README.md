@@ -21,6 +21,7 @@
 | 차별화 근거 | 국토교통부 "AI 기반 통합인허가 사전진단"이 2026-12 시범, 2027 하반기 전국 서비스 예정이다. 대지 단위 검토(용도지역, 건폐율·용적률, 행위제한)는 무료 공공 서비스가 되므로, 이 제품은 설계안 단위 실시간 판정에 집중한다 | [매일신문 2026-06-05](https://www.imaeil.com/page/view/2026060509435967518), [세계일보 2026-07-08](https://www.segye.com/newsView/20260708509141) |
 | 판매 모델 | 영구 라이선스(시리얼) + 연간 업데이트 플랜 + AI 크레딧, 진입용 월 구독 병행 | 사용자 결정(2026-10-14), `01_PRD.md` 4장 |
 | 공유하는 것 | `_platform-core` 공용 모듈만 인용한다: auth, org, credits, toss, webhooks, storage, audit, jobs, compliance, fal client, weasyprint render, ai-gateway, ai-service, dify, core-voice, llm-wiki. 재정의하지 않는다 | `docs/products/_platform-core/SHARED_MODULES.md:3`, 1장(`:31`) |
+| 인증 단계 | 다른 제품과 같은 순서로 로그인을 켠다: A Mock(로컬 시드 계정, MVP 개발) → G1 → B Google + 이메일(사전예약 판매·공개 베타 전) → G2 → C1 카카오·C2 네이버(P2 선택). 데스크톱 앱은 시스템 브라우저 로그인 후 앱 복귀(D-15), 시리얼은 계정 조직에 귀속(D-16) | 확정 결정 22, `docs/products/_platform-core/AUTH_ROADMAP.md` 8장, `01_PRD.md` AR-F-027·8.2절 |
 | 새로 필요한 코어 기능 | 영구 라이선스 결제 종류(현재 `payment_orders.kind`는 subscription, credit_pack, billing_key_charge뿐), 데스크톱 클라이언트용 라이선스 서명 키 | `docs/products/_supabase-modular/migrations/0002_core_billing.sql:140`, `01_PRD.md` 8장 D-3 |
 
 ## 3. 원본 매핑

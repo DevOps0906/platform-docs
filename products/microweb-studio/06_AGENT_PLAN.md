@@ -180,7 +180,7 @@
 
 ## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
 
-정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(0장 단계 요약, 8장 제품별 매트릭스 microweb 행 `:330`, 9장 작업 계획 반영 규칙)다. microweb은 초대제(`signup_policy='invite'`) 앱이라 B단계 로그인 수단은 Google + 초대 메일이고, 카카오·네이버는 P2 선택이다. 하객(`/i/*`), 고객 시안(`/p/*`), 쇼룸 방문자는 로그인이 없으며 어느 단계에서도 로그인 버튼을 추가하지 않는다(`AUTH_ROADMAP.md:339`). 아래 작업은 `src/app/i/`, `src/app/p/`, `src/app/(showroom)/`, `src/app/api/public/`, `src/engine/`를 수정하지 않는다. A단계 추가 페르소나는 `studio_access` 허용(`owner`)·미허용(`studio_denied`)이다(05장 10절).
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(0장 단계 요약, 8장 제품별 매트릭스 microweb 행 `:330`, 9장 작업 계획 반영 규칙)다. microweb은 초대제(`signup_policy='invite'`) 앱이라 B단계 로그인 수단은 Google + 초대 메일이고, 카카오·네이버는 P2 선택이다. 하객(`/i/*`), 고객 시안(`/p/*`), 쇼룸 방문자는 로그인이 없으며 어느 단계에서도 로그인 버튼을 추가하지 않는다(`AUTH_ROADMAP.md:340`). 아래 작업은 `src/app/i/`, `src/app/p/`, `src/app/(showroom)/`, `src/app/api/public/`, `src/engine/`를 수정하지 않는다. A단계 추가 페르소나는 `studio_access` 허용(`owner`)·미허용(`studio_denied`)이다(05장 10절).
 
 ### 8.1 단계와 작업
 

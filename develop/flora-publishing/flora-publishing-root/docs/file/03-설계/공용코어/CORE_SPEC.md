@@ -28,7 +28,7 @@
 | 수익화 | 제휴마케팅(계정, 링크, 클릭, 대가성 문구, 브랜드커넥트 지원) | 링크를 어디에 삽입할지(blog 본문, video 설명란) |
 | AI·음성·위키 | 제공자·단가·라우팅, RAG 컬렉션·문서·청크(pgvector), 위키, 대화, 그래프 실행 기록, 음성 세션·작업 | 제품 그래프, 기능별 라우팅 기본값(seed 행), 프롬프트, 제품 전용 AI 테이블(꼭 필요할 때만) |
 
-경계 원칙은 하나다. **제품은 코어 테이블을 직접 쓰지 않는다.** 읽기는 RLS SELECT 정책으로, 쓰기는 service_role 키를 가진 서버 코드 또는 SECURITY DEFINER RPC로만 한다. 이 원칙이 깨진 사례가 리뷰 전반에서 반복되었다(`docs/reference/00_MERGE_ANALYSIS.md:516`, `:961`).
+경계 원칙은 하나다. **제품은 코어 테이블을 직접 쓰지 않는다.** 읽기는 RLS SELECT 정책으로, 쓰기는 service_role 키를 가진 서버 코드 또는 SECURITY DEFINER RPC로만 한다. 이 원칙이 깨진 사례가 리뷰 전반에서 반복되었다(`docs/reference/00_MERGE_ANALYSIS.md:526`, `:971`).
 
 ### 1.2 두 배포 형태
 
@@ -95,7 +95,7 @@
 | `app_id`, `plan_code`, `entitled` | text, text, boolean | `plan_code`는 `entitled_plan_code()` 결과, `entitled = plan_code is not null` |
 | `credit_balance` | integer | plan + pack 합 |
 
-사용 위치: `proxy.ts`(라우트 보호), 대시보드 레이아웃, Route Handler 진입부. 서버 클라이언트 3종(`sellingstudio/lib/supabase/client.ts`, `server.ts`, `admin.ts`)을 그대로 쓴다. 라우트 보호 골격은 `Hospital/src/proxy.ts:13-48`(쿠키 세션 갱신 → `getUser()` → 보호 경로면 로그인으로 리다이렉트)을 쓰되, 역할 분기는 `session_context`의 `org.role`과 `platform_role`로 한다. 역할 → 페이지 매트릭스의 형태는 `Hospital/src/lib/permissions.ts:5-10`을 따르되 서버에서 강제한다(`docs/reference/00_MERGE_ANALYSIS.md:1131`).
+사용 위치: `proxy.ts`(라우트 보호), 대시보드 레이아웃, Route Handler 진입부. 서버 클라이언트 3종(`sellingstudio/lib/supabase/client.ts`, `server.ts`, `admin.ts`)을 그대로 쓴다. 라우트 보호 골격은 `Hospital/src/proxy.ts:13-48`(쿠키 세션 갱신 → `getUser()` → 보호 경로면 로그인으로 리다이렉트)을 쓰되, 역할 분기는 `session_context`의 `org.role`과 `platform_role`로 한다. 역할 → 페이지 매트릭스의 형태는 `Hospital/src/lib/permissions.ts:5-10`을 따르되 서버에서 강제한다(`docs/reference/00_MERGE_ANALYSIS.md:1141`).
 
 ### 2.4 멤버 관리 함수
 
@@ -137,7 +137,7 @@
 
 | 규칙 | 내용 |
 |---|---|
-| 서버에서만 판정 | `core.entitled_plan_code(org, app)`으로 플랜 코드를 얻고 `plans.features`를 읽어 기능을 켠다. 클라이언트 게이팅은 UX 보조일 뿐이다(`docs/reference/00_MERGE_ANALYSIS.md:149`) |
+| 서버에서만 판정 | `core.entitled_plan_code(org, app)`으로 플랜 코드를 얻고 `plans.features`를 읽어 기능을 켠다. 클라이언트 게이팅은 UX 보조일 뿐이다(`docs/reference/00_MERGE_ANALYSIS.md:159`) |
 | RLS에서 앱 접근 | 제품 테이블 정책은 `core.is_org_member(org_id) and core.has_entitlement(org_id, '<app>')` |
 | 플랜 정본 | video는 `NOMAD Shorts Maker/PRD_pricing.md:116-143`, 나머지는 각 제품 01_PRD(`seed.sql:3-8`). seed의 금액은 샘플이다 |
 | 한도형 기능 | 월 N건 같은 쿼터는 `features`에 숫자로 넣고(`"posts_per_month": 10`), 소비는 크레딧 원장 `reason`별 집계 또는 제품 테이블 카운트로 서버가 판정한다. 별도 쿼터 테이블은 코어에 없다(제안: 필요한 제품만 자기 스키마에 둔다) |
@@ -168,7 +168,7 @@
 
 | 보장 | 구현 |
 |---|---|
-| 원자 차감 | `wallets FOR UPDATE` 잠금 뒤 검사·갱신·원장 INSERT를 한 트랜잭션에서(`:171-194`). 비원자 차감 결함(`docs/reference/00_MERGE_ANALYSIS.md:481`)의 차단 설계 |
+| 원자 차감 | `wallets FOR UPDATE` 잠금 뒤 검사·갱신·원장 INSERT를 한 트랜잭션에서(`:171-194`). 비원자 차감 결함(`docs/reference/00_MERGE_ANALYSIS.md:491`)의 차단 설계 |
 | 멱등 | 같은 `p_idempotency_key`는 advisory lock 뒤 기존 행을 반환(`:160-167`) |
 | 차감 순서 | plan 버킷부터, 부족분은 pack(`:179-180`) |
 | 환불 비율 | 원 차감의 버킷 비율대로 되돌림, 누적 환불은 원액을 넘지 못함(`:333-346`) |
@@ -223,7 +223,7 @@ LLM 게이트웨이처럼 잡 없이 동기 호출하는 경우도 2 → 호출 
 | 5 | 서버 | `core.confirm_payment_order(order_id, payment_key, amount_krw, method, raw, approved_at)` |
 | 6 | DB | 주문 잠금 → 금액 대조 → payments INSERT → 주문 confirmed → 종류별 지급(크레딧팩은 `grant_credits`, 구독은 subscriptions upsert + 엔타이틀먼트 + 첫 달 크레딧). 한 트랜잭션 |
 
-근거: `migrations/0003_core_credits.sql:534-631`. 실패 코드 `PM404` 주문 없음, `PM409` 다른 결제키로 재확인, `PM410` 상태 불가, `PM001` 금액 불일치. raise는 트랜잭션을 되돌리므로 confirm 안에서는 주문 상태가 바뀌지 않는다. 서버는 PM001을 받으면 별도 호출로 `core.fail_payment_order(order_id, 'amount_mismatch', detail)`(service_role 전용, 멱등, 감사 행 `payment_order.failed`)을 불러 주문을 failed로 남긴 뒤 Toss 취소와 운영 알림을 한다(2026-10-13 반영). 같은 `(order_id, payment_key)` 재호출은 기존 payments 행을 돌려준다(멱등). 이 흐름은 Astro AI 리뷰 권고 "결제창 → successUrl → 서버 confirm → 금액·orderId 대조 → 멱등 지급, 웹훅은 보조"(`docs/reference/00_MERGE_ANALYSIS.md:356`)와 Shorts Maker 리뷰의 "payment_orders 선저장, confirm 멱등, 웹훅 서명 필수, 빌링키 정기결제"(`:545`)를 그대로 구현한 것이다.
+근거: `migrations/0003_core_credits.sql:534-631`. 실패 코드 `PM404` 주문 없음, `PM409` 다른 결제키로 재확인, `PM410` 상태 불가, `PM001` 금액 불일치. raise는 트랜잭션을 되돌리므로 confirm 안에서는 주문 상태가 바뀌지 않는다. 서버는 PM001을 받으면 별도 호출로 `core.fail_payment_order(order_id, 'amount_mismatch', detail)`(service_role 전용, 멱등, 감사 행 `payment_order.failed`)을 불러 주문을 failed로 남긴 뒤 Toss 취소와 운영 알림을 한다(2026-10-13 반영). 같은 `(order_id, payment_key)` 재호출은 기존 payments 행을 돌려준다(멱등). 이 흐름은 Astro AI 리뷰 권고 "결제창 → successUrl → 서버 confirm → 금액·orderId 대조 → 멱등 지급, 웹훅은 보조"(`docs/reference/00_MERGE_ANALYSIS.md:366`)와 Shorts Maker 리뷰의 "payment_orders 선저장, confirm 멱등, 웹훅 서명 필수, 빌링키 정기결제"(`:555`)를 그대로 구현한 것이다.
 
 ### 5.3 빌링키 정기결제
 
@@ -248,7 +248,7 @@ Toss 결제 취소 API 호출 뒤 `payments.status`를 canceled/partial_canceled
 | 서명 검증 필수 | 제공자 서명 헤더를 검증하고 결과를 `webhook_events.signature_valid`에 기록한다. 실패한 이벤트는 처리하지 않고 `status='ignored'`로 둔다 | `migrations/0002_core_billing.sql:183-201` |
 | 멱등 | `(provider, event_id)` 유일. 중복 수신은 INSERT 충돌로 감지해 200으로 응답만 한다 | `:200` |
 | 처리 순서 | 수신 → 서명 검증 → INSERT(received) → 처리 → processed 또는 failed(`attempts`, `error`) | 표 컬럼 |
-| 결제 웹훅은 보조 | 지급은 confirm 경로가 정본. 웹훅은 상태 동기화(취소, 가상계좌 입금)에만 쓴다 | `docs/reference/00_MERGE_ANALYSIS.md:356` |
+| 결제 웹훅은 보조 | 지급은 confirm 경로가 정본. 웹훅은 상태 동기화(취소, 가상계좌 입금)에만 쓴다 | `docs/reference/00_MERGE_ANALYSIS.md:366` |
 | 응답 | 검증 실패 401, 중복 200, 처리 실패 500(재전송 유도) | 제안 |
 
 제공자별 `event_id`: Toss는 웹훅 본문의 `paymentKey + status + 발생시각`을 합쳐 해시(Toss 웹훅에 고유 이벤트 id 필드가 있는지는 미확인), fal은 `request_id`, Make/n8n 콜백은 요청 헤더의 `X-Request-Id`(없으면 본문 해시). 서명 방식은 `SHARED_MODULES.md` webhooks 절에 있다.
@@ -265,14 +265,14 @@ Toss 결제 취소 API 호출 뒤 `payments.status`를 canceled/partial_canceled
 | 멤버 검증 | 발급 시 user가 org의 활성 멤버인지 확인 | `:545-547` |
 | 정리 | `purge_expired_oauth_states()` 매일 | `:583-598` |
 
-OAuth state 위조 결함(`docs/reference/00_MERGE_ANALYSIS.md:516`, `:604`)의 차단 설계다.
+OAuth state 위조 결함(`docs/reference/00_MERGE_ANALYSIS.md:526`, `:614`)의 차단 설계다.
 
 ## 8. 암호화된 자격증명
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
 | 저장 형식 | `core.encrypted_credentials.ciphertext`에 AES-256-GCM 암호문만. 평문 컬럼 없음. `key_version`으로 키 세대를 기록 | `migrations/0004_core_security.sql:600-623` |
-| 키 위치 | 환경변수(버전별)로만 존재. DB에 키를 두지 않는다. 키가 없으면 앱이 기동 실패해야 한다(0키 폴백 금지, `docs/reference/00_MERGE_ANALYSIS.md:611`) | 주석 `:602` |
+| 키 위치 | 환경변수(버전별)로만 존재. DB에 키를 두지 않는다. 키가 없으면 앱이 기동 실패해야 한다(0키 폴백 금지, `docs/reference/00_MERGE_ANALYSIS.md:621`) | 주석 `:602` |
 | 유일성 | `(org_id, app_id, provider, external_account_id)` | `:622` |
 | 사용자 읽기 | `core.credential_summaries` 뷰(암호문 제외, 멤버십 필터) | `:634-639` |
 | 사용자 쓰기 | `revoke_credential(id)`만(owner/admin). 암호문을 비우고 revoked로 바꾼다 | `:642-661` |
@@ -340,13 +340,13 @@ OAuth state 위조 결함(`docs/reference/00_MERGE_ANALYSIS.md:516`, `:604`)의 
 |---|---|---|
 | 함수 | `core.rate_limit_hit(key, limit, window_seconds) returns (allowed, remaining, reset_at)`. 고정 윈도우, 호출 1회 = 1히트 | `migrations/0004_core_security.sql:678-699` |
 | 키 규약 | `<app>:<route>:<org_id 또는 ip_hash>` (제안) |
-| 적용 대상 | 생성 API, 로그인/가입, 웹훅 수신, `/r/[code]` 리다이렉트, 비회원 데모(`docs/reference/00_MERGE_ANALYSIS.md:369`, `:422`) |
+| 적용 대상 | 생성 API, 로그인/가입, 웹훅 수신, `/r/[code]` 리다이렉트, 비회원 데모(`docs/reference/00_MERGE_ANALYSIS.md:379`, `:432`) |
 | Redis가 있는 제품 | video처럼 Upstash Redis를 쓰는 제품은 Redis 카운터를 써도 된다. 키 규약은 같게 한다 |
 | 정리 | `purge_rate_limit_buckets()` 매일 | `:701-716` |
 
 ## 13. 제휴마케팅(affiliate) 모듈
 
-확정 결정 12(`docs/reference/00_MERGE_ANALYSIS.md:20`). video와 blog가 함께 쓴다. commerce는 쓰지 않는다(`:957`). 2026-10-13 확정 결정 19로 브랜드커넥트 지원서를 블로그형/클립형으로 나눴다(16.1절).
+확정 결정 12(`docs/reference/00_MERGE_ANALYSIS.md:20`). video와 blog가 함께 쓴다. commerce는 쓰지 않는다(`:967`). 2026-10-13 확정 결정 19로 브랜드커넥트 지원서를 블로그형/클립형으로 나눴다(16.1절).
 
 ### 13.1 모델
 

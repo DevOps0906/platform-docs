@@ -342,7 +342,7 @@ node check.mjs --vector mono \
 
 ## 8. 6단계: 착수 전 결정 확정
 
-`docs/file/02-요구사항/01_PRD.md` 8절의 결정 20개(D-13~D-17은 Phase 2·3D 영상, D-18~D-20은 8.1절 인증 단계)를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
+`docs/file/02-요구사항/01_PRD.md` 8절의 결정 22개(D-13~D-17은 Phase 2·3D 영상, D-18~D-22는 8.1절 인증 단계)를 확정합니다. 기획은 각 항목의 "권고"로 작성돼 있습니다. 가정과 다르게 정하면 해당 산출물을 고치는 task를 따로 만듭니다.
 
 | ID | 결정 | 권고 | 확정 시점 |
 |---|---|---|---|
@@ -366,6 +366,8 @@ node check.mjs --vector mono \
 | D-18 | 카카오 이메일 정책(비즈 앱 `account_email` 권장) | (a) 비즈 앱 전환 후 필수 동의 | G2 판정 전, DC-06-064 착수 전 |
 | D-19 | 네이버 경로(`supabase_custom`/`bridge`) | 스파이크로 결정 | C2 스파이크(DC-06-065 첫 단계) 결과로 |
 | D-20 | 이메일+비밀번호 가입 유지 | (a) 유지 | G1 판정 전, DC-06-063 착수 전 |
+| D-21 | Google 로그인 사용자의 이메일 인증 판정 기준 | (a) `email_confirmed_at`만 본다. Google 사용자 값은 DC-06-063에서 확인 후 `[DECISION]` | DC-06-063 착수 전 |
+| D-22 | 로그인용 Google OAuth 클라이언트 분리 | (a) 로그인 전용 Google Cloud 프로젝트·웹 클라이언트. `GOOGLE_API_KEY`(LLM)·HubSpot 연동 OAuth와 공유하지 않음 | G1 판정 전(G1 외부 준비) |
 
 **D-3 계약서 게이트를 지키는 방법**
 - 규칙: 법무 검토 전에는 `doc_types.is_active=false`로 배포합니다(`01_PRD.md:390`, `06_AGENT_PLAN.md:32`, `:220`). 패키지는 7종으로 축소 표시합니다.
@@ -717,7 +719,7 @@ baseline:
 - [ ] 공용 인프라 준비: Dify, 오픈소스 LLM·임베딩·음성 서버(또는 모의 서버), 공용 렌더 서비스 확인
 - [ ] `supabase start` → `supabase db reset` 성공, 라우팅 13행·강제 오픈소스 3행·MVP 활성 유형 8종(계약서 비활성) 확인(7.1절)
 - [ ] PGlite 체커 `--vector mono` OK(7.2절), RLS 스모크 105항목 수동 또는 러너로 확인(7.3절)
-- [ ] 결정 D-1~D-20 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
+- [ ] 결정 D-1~D-22 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)
 - [ ] 시각 레퍼런스(Awwwards·Dribbble) 링크를 열어 확인하고 브리프·토큰 플랜과 대조(13.5)
 - [ ] 디자인 시스템 1~4단계 완료(13.1). 사람 비주얼 검토 포함
@@ -762,7 +764,7 @@ baseline:
 - [ ] RLS 스모크(DC-06-003) 전 항목 통과, `outsider` 교차 테넌트 거부
 - [ ] 결제 E2E(DC-06-048) Toss 테스트 키로 녹색
 - [ ] CI(DC-06-007): 인증 모듈 밖 `AUTH_MODE` 참조 0, `mock-auth`·`nomad_role`·`nomad_plan` 0, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패
-- [ ] 외부 준비: Google Cloud 프로젝트, OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL `/legal/privacy`·`/legal/terms`, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트
+- [ ] 외부 준비: Google Cloud 프로젝트(로그인 전용, `GOOGLE_API_KEY`·HubSpot 연동 OAuth와 분리, D-22), OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL `/legal/privacy`·`/legal/terms`, 승인된 도메인), 웹 클라이언트 ID, 운영 Supabase 프로젝트
 - [ ] 결과를 DC-06-063 task `log.md`에 `[DECISION] G1 통과`로 기록
 
 ### 19.4 Stage B 외부 설정 순서 (`AUTH_ROADMAP.md` 5.1절)

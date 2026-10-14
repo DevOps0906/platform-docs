@@ -81,7 +81,7 @@ v2를 고른 이유는 다음과 같습니다.
 
 | 기능 | 보유 프로젝트(구현상태) | 처리 | 통합 후 모습 | 근거 |
 |---|---|---|---|---|
-| 로그인/가입 | v1 동작(Supabase OAuth+이메일), v2 부분(GoTrue raw fetch로 세션 미생성), SD 기획만(매직링크+Google), FP 기획만(NextAuth Google/Kakao) | 통합 | `@supabase/ssr` 기반 이메일+Google. 카카오는 결정 사항. NextAuth는 버림 | `reviews/Flora-v2.md:61,93`, `flora/PRD.md:103`, `구현해야 할 프로젝트/SellingDocs/PRD.md:47`, `flora-publisher/frontend/docs/prd/02_user_flow.md` |
+| 로그인/가입 | v1 동작(Supabase OAuth+이메일), v2 부분(GoTrue raw fetch로 세션 미생성), SD 기획만(매직링크+Google), FP 기획만(NextAuth Google/Kakao) | 통합 | `@supabase/ssr` 기반 이메일+Google. 카카오는 결정 사항(→ 확정 결정 22로 대체: 카카오는 C1단계, 정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`). NextAuth는 버림 | `reviews/Flora-v2.md:61,93`, `flora/PRD.md:103`, `구현해야 할 프로젝트/SellingDocs/PRD.md:47`, `flora-publisher/frontend/docs/prd/02_user_flow.md` |
 | 라우트 보호(proxy.ts) | v1 동작, v2 부분(쿠키 세션 전제인데 세션이 없음) | 유지(v2) | v2 `src/proxy.ts`를 그대로 쓰고 로그인을 고쳐서 연결 | `reviews/Flora-v2.md:47,61` |
 | 백엔드 JWT 인증 | v1 부분(`dev-user` 우회, LLM 무인증), v2 부분(LLM·export·upload 무인증, 빈 JWT secret 허용) | 디벨롭 | 라우터 단위 `Depends(get_current_user)` 적용, 공개 엔드포인트 화이트리스트, 프론트에 단일 `apiFetch`로 토큰 주입 | `reviews/Flora-v2.md:62-63,70,114`, `reviews/flora.md:68,80` |
 | RLS 테넌트 격리 | v1 부분, v2 부분(`user_plans FOR ALL`로 셀프 업그레이드 가능), SD 기획만(`books FOR ALL`) | 디벨롭 | 플랜·크레딧 테이블은 SELECT만 허용, 쓰기는 service role만 | `reviews/Flora-v2.md:64,99`, `reviews/flora.md:70` |
@@ -282,10 +282,10 @@ v2를 고른 이유는 다음과 같습니다.
    - (c) 판매와 정산까지
    - 권고: **(b)**. (c)는 통신판매중개, 정산, 세무 기획이 통째로 필요합니다.
 
-10. **카카오 로그인**
+10. **카카오 로그인** (확정 결정 22로 대체됨, 2026-10-14)
     - (a) 이메일 + Google만
     - (b) 카카오 추가(FP PRD)
-    - 권고: **(a)로 시작**하고 가입 전환 데이터를 보고 추가합니다.
+    - 권고: **(a)로 시작**하고 가입 전환 데이터를 보고 추가합니다. → 확정 결정 22가 대체했다: Mock(A) → Google+이메일(B) → 카카오(C1)·네이버(C2) 순서. 정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 1장·8장.
 
 ---
 

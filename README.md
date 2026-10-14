@@ -10,7 +10,7 @@
 |---|---|---|
 | `reviews/` | 원본 프로젝트 25개의 코드 리뷰(결함, 이식할 자산) | 왜 이렇게 기획했는지 근거를 볼 때 |
 | `pdf/` | `reviews/`의 PDF 변환본 | 인쇄·공유용 |
-| `products/` | 통합 기획서(제품 13개 + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
+| `products/` | 통합 기획서(제품 14개(arch-studio는 PRD 초안) + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
 | `develop/` | 제품별 개발 묶음(개발 가이드, setup 스크립트, 개발 폴더에 붙일 문서·DB) | 개발을 시작할 때 |
 | `Price_Plans/` | 가격 플랜: 공용 가격 결정 방법(`_common/`) + 플랫폼별 폴더(제품 13개, 서비스 사업 Web-App-Agency) | 가격을 정하거나 바꿀 때 |
 | `_tools/` | 리뷰 템플릿, md → PDF 변환 도구 | 리뷰를 추가할 때 |
@@ -32,6 +32,7 @@
 | study-note | 학습 노트 정리 | `products/study-note/` | `develop/study-note/` |
 | website-floria | 회사 홈페이지 | `products/website-floria/` | `develop/website-floria/` |
 | nomad-docs (NOMAD Docs) | 체크리스트로 계약서·요구사항정의서 등 실무 문서 자동 생성, CRM형 작업 공간 | `products/nomad-docs/` | `develop/nomad-docs/` |
+| arch-studio (가칭) | 설치형 건축 설계 앱(법규 판정, AI 렌더, 시리얼 라이선스) | `products/arch-studio/`(PRD 초안) | 아직 없음 |
 
 공용: `products/_platform-core/`(인증·조직·크레딧·결제·잡·AI·음성 규격), `products/_design-guide/`
 (디자인 시스템, 3D 히어로, Awwwards·Dribbble 레퍼런스), `products/_supabase-modular/`(통합 DB: `core` + 제품 스키마).
@@ -184,13 +185,14 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - DB 정본은 모듈러 조각(`_supabase-modular/migrations/<번호>_<스키마>.sql`)이고, 제품 모놀리스는 변환본입니다.
 - 원격 DB 적용(`supabase db push`)은 사람이 확인 후 실행합니다.
 - 기술 스택은 Tailwind CSS v4 고정(v3 문법·`tailwind.config.js` 금지).
+- 로그인은 전 제품 같은 단계로 켭니다: A Mock 로그인(로컬 Supabase 시드 계정으로 실제 로그인, MVP 개발) → G1 → B Google OAuth(+이메일·초대 메일, 공개 베타 전) → G2 → C1 카카오·C2 네이버. 쿠키에 역할을 적는 Mock은 금지입니다. 정본 [`products/_platform-core/AUTH_ROADMAP.md`](products/_platform-core/AUTH_ROADMAP.md)(확정 결정 22).
 - 이 저장소 변경은 브랜치 → PR → main 병합으로 합니다.
 
 ## 7. 현재 상태 (2026-10-14)
 
 | 항목 | 상태 |
 |---|---|
-| 기획 | 13개 제품 완료. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
+| 기획 | 13개 제품 완료, arch-studio는 PRD 초안. 인증 단계(확정 결정 22) 14개 제품 반영 완료. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
 | 개발 묶음 | 13개 제품 완료(`develop/`) |
 | 남은 결정 | 각 제품 `01_PRD.md` 8절. 공용 과제는 `products/README.md` "남은 코어 과제" |
 | 가격 플랜 | `Price_Plans/` 생성. Web-App-Agency 초안, 제품 13개는 폴더만(정본은 각 PRD 4장) |

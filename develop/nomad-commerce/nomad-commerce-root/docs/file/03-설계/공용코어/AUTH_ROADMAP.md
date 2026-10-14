@@ -1,6 +1,6 @@
 # AUTH_ROADMAP: 인증 단계별 도입 규격 (Mock → Google → 카카오·네이버)
 
-작성일 2026-10-14. 확정 결정 22(`docs/reference/00_MERGE_ANALYSIS.md` "확정 결정" 표)의 정본이다. 13개 제품 전부에 적용한다. 대상 독자는 제품 기획 에이전트, 인증 작업 담당(Fable), 개발 폴더에서 일하는 구현 에이전트다. 경로 인용에서 `migrations/`는 `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/`다.
+작성일 2026-10-14. 확정 결정 22(`docs/reference/00_MERGE_ANALYSIS.md` "확정 결정" 표)의 정본이다. 14개 제품(arch-studio 포함) 전부에 적용한다. 대상 독자는 제품 기획 에이전트, 인증 작업 담당(Fable), 개발 폴더에서 일하는 구현 에이전트다. 경로 인용에서 `migrations/`는 `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/`다.
 
 이 문서는 "언제 어떤 로그인을 켜는가"와 "단계를 바꿀 때 무엇이 바뀌고 무엇이 바뀌지 않는가"를 정한다. 세션·조직·엔타이틀먼트 계약(`CORE_SPEC.md` 2장)과 보안 규칙(`SECURITY_BASELINE.md`)은 그대로이며, 이 문서가 그 위에 단계 규칙을 더한다.
 
@@ -29,7 +29,7 @@
 | 순서 | Mock → Google → 카카오·네이버 | 2026-10-14 사용자 결정. 외부 콘솔 설정·검수 없이 MVP 기능 개발을 먼저 끝내고, 실제 로그인은 기능이 안정된 뒤 붙인다 |
 | Mock의 정의 | "로컬 Supabase의 시드 계정으로 실제 로그인"(제안) | 쿠키에 역할을 적는 방식의 Mock은 리뷰에서 권한 위조·프로덕션 노출 결함으로 확인됐다: `D:/WorkSpace/platform/docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`(`lib/mock-auth.ts` 프로덕션 노출), `docs/file/04-구현/07_SOURCE_MIGRATION.md:96`(`mock-login`, `nomad_role`, `nomad_plan` 쿠키 권한). 실제 JWT를 쓰면 RLS·엔타이틀먼트·크레딧이 Mock 단계부터 진짜로 검증된다 |
 | 이메일+비밀번호 | 제품 PRD가 이미 정한 범위를 유지하되 B단계에서 Google과 함께 켠다. 초대제 제품(microweb, sms, stock, site)의 초대 메일 수락 흐름도 B단계 | 기존 제품 결정(`astro-ai/01_PRD.md` AS-F-001 등)을 바꾸지 않는다. 신규 공개 가입 제품에서 이메일을 뺄지는 각 PRD 8절 열린 결정 |
-| Apple, 매직링크 | 이번 로드맵 범위 밖. 기존 연기 결정 유지 | `docs/reference/00_MERGE_ANALYSIS.md:317` |
+| Apple, 매직링크 | 이번 로드맵 범위 밖. 기존 연기 결정 유지 | `docs/reference/00_MERGE_ANALYSIS.md:318` |
 | 카카오 위치 | nomad-commerce의 MVP 카카오(CM-F-001)와 flora-publishing의 카카오 열린 결정(D6)은 C1으로 옮긴다 | 단계 순서를 전 제품에서 같게 한다 |
 
 ## 2. Stage A: Mock 로그인
@@ -335,6 +335,7 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 | study-note(`notes`) | open | 수강생·강사 | - | Google + 이메일 | P1 | P1 |
 | website-floria(`site`) | invite | 운영자(방문자는 로그인 없음) | `provision_site` 완료·미완료 | Google + 초대 메일 | 제외 | 제외 |
 | nomad-docs(`docs`) | open | 프리랜서·에이전시 | - | Google + 이메일 | P1 | P1 |
+| arch-studio(`arch`, 제안) | open(앱은 시리얼 라이선스, 계정은 크레딧·클라우드 기능용) | 소규모 건축사사무소·전원주택 시공사 실무자 | 체험 중·체험 만료, 영구(업데이트 유효·만료 폴백), 월 구독, 기기 2대 활성화 완료(PRD 4.3·4.4절 상태) | Google + 이메일(데스크톱은 시스템 브라우저 로그인 후 앱 복귀, PRD D-15) | P2 선택(유료 B2B 실무 도구라 시리얼·영수증·세금계산서를 이메일로 보내므로 이메일 확보가 우선이고, 데스크톱 앱 복귀 경로를 제공자마다 검증해야 한다. 베타 가입 전환 데이터로 P1 승격 판단) | P2 선택(같음) |
 
 로그인 없는 사용자(하객, 청중, 방문자)의 흐름은 단계와 무관하다. 그 화면에 로그인 버튼을 추가하지 않는다.
 
@@ -357,7 +358,7 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 | 문서 | 반영할 것 |
 |---|---|
 | `01_PRD.md` | 2절 범위 표: 인증 단계 A(MVP 개발)·B(공개 베타)·C(G2 후). 3절 가입·로그인 FR: 단계 표기, 수용 기준. 6절 개인정보 수집 항목: 단계별 제공자 식별자. 8절 열린 결정: 카카오 이메일 정책(7.1.2절), 네이버 경로(스파이크), 이메일 가입 유지 여부(공개 가입 제품) |
-| `02_ARCHITECTURE.md` | 모듈 경계의 auth 행에 `src/lib/auth/`와 단계 분기 규칙, 8절 환경변수에 3.3절 표, 배포 토폴로지에 제공자 콘솔(Google·카카오·네이버) |
+| `02_ARCHITECTURE.md` | 모듈 경계의 auth 행에 `src/lib/auth/`와 단계 분기 규칙. 전용 "인증 단계" 절(기존 제품은 9절)을 두고 그 안에 단계별 구성, 3.3절 환경변수 표, 제공자 콘솔(Google·카카오·네이버) 배포 설정을 적는다. 기존 환경변수 절에는 그 절을 가리키는 한 줄만 둔다 |
 | `03_SCREENS_UX.md` | `/login`·`/signup`·`/auth/callback` 행에 단계별 표시(A 개발용 패널, B Google 버튼, C 카카오·네이버 버튼), 오류 상태(`error=callback`, `state`, `email_in_use`), 설정 → 로그인 방법(C) |
 | `04_API.md` | `POST /api/dev/login`(A, 로컬 전용), `GET /auth/callback`(B), `GET /auth/naver/start`·`/auth/naver/callback`(C2 브리지만) |
 | `05_DATA_MODEL.md` | 스키마 변경 없음(코어 계약 그대로). 브리지 경로 채택 시 코어 `auth_identity_links` 참조만 |

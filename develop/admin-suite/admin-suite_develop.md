@@ -583,7 +583,7 @@ baseline:
 
 - [ ] 첫 기관 배포 후 Google·이메일 실로그인 운영 2주(제안)
 - [ ] 인증 관련 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안, 감사 `auth.login`과 오류 로그)
-- [ ] erp OAuth·이메일 신규 사용자 중 pending 프로필 없이 남은 사용자 0, sms·hms 초대 수락 실패(링크 만료 제외) 0(open 앱용 `entitled=false` 조건 대신, `06_AGENT_PLAN.md` 8.2절)
+- [ ] erp OAuth·이메일 신규 사용자 중 pending 프로필 없이 남은 사용자(`/pending` 미도달) 0, 기존 활성 구성원 pending 강등 0, sms·hms 초대 수락 실패(링크 만료 제외) 0(제안, open 앱용 `entitled=false` 조건 대신, `06_AGENT_PLAN.md` 8.2절)
 - [ ] D-24 결정: 고객 기관 요청이 있으면 "도입", 없으면 "도입하지 않음"(059·060 취소)
 - [ ] "도입"이면 카카오 디벨로퍼스 앱 생성과 이메일 정책 D-22(비즈 앱 전환 권장), 네이버 애플리케이션 등록과 검수 자료 준비
 - [ ] 결과를 `[DECISION] G2 통과`, `[DECISION] D-24 ...`로 기록
