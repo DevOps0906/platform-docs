@@ -4,7 +4,7 @@
 
 ## 0. 패키지 배치 (제안)
 
-분석은 "공용 패키지로 분리", "SS 구현을 기준으로"만 정했고(`docs/reference/00_MERGE_ANALYSIS.md:955`, `:962`) 패키지 이름은 정하지 않았다. 아래는 제안이다.
+분석은 "공용 패키지로 분리", "SS 구현을 기준으로"만 정했고(`docs/reference/00_MERGE_ANALYSIS.md:965`, `:972`) 패키지 이름은 정하지 않았다. 아래는 제안이다.
 
 | 패키지/서비스 | 내용 | 런타임 |
 |---|---|---|
@@ -142,7 +142,7 @@ export interface CreditsApi {
 |---|---|
 | 소유 / 소비 | _platform-core / 유료 플랜 제품 |
 | 코어 SQL | `core.payment_orders`, `core.payments`, `core.billing_keys`, `core.billing_key_summaries`(`migrations/0002_core_billing.sql:66-181`, `:245-251`), `core.confirm_payment_order`(`migrations/0003_core_credits.sql:534-631`), `core.apply_subscription_transition`(`migrations/0002_core_billing.sql:265-341`), `core.expire_stale_payment_orders`(`:347-363`) |
-| 금지 | 클라이언트가 보낸 amount를 믿는 것, orderId 파싱으로 org/plan 추출, `customerKey = Date.now()`(`docs/reference/00_MERGE_ANALYSIS.md:545`), 웹훅만으로 지급 |
+| 금지 | 클라이언트가 보낸 amount를 믿는 것, orderId 파싱으로 org/plan 추출, `customerKey = Date.now()`(`docs/reference/00_MERGE_ANALYSIS.md:555`), 웹훅만으로 지급 |
 | 실패/환불 | confirm 실패(`PM001`) → 별도 호출 `core.fail_payment_order`로 주문 failed 기록, 운영 알림, 사용자에게 "결제 확인 실패, 승인 취소 요청" 안내 후 서버가 Toss 취소 API 호출(제안). 정기결제 실패 → `past_due` → 재시도 1일/3일/7일(제안) → `canceled`. 환불 → Toss 취소 API → `payments` 갱신 → 크레딧 조정(`CORE_SPEC.md` 5.4) |
 
 ```ts
@@ -169,7 +169,7 @@ export interface TossApi {
 | 소유 / 소비 | _platform-core / 웹훅 받는 제품 |
 | 코어 SQL | `core.webhook_events`(`migrations/0002_core_billing.sql:187-201`) |
 | 인바운드 | Toss(결제 상태), fal(이미지 완료), Make/n8n 콜백, (제안) YouTube/Meta 알림 |
-| 아웃바운드 | 사용자 등록 웹훅 URL로 서명된 POST(`project.completed`, `pdf.exported` 같은 이벤트, `docs/reference/00_MERGE_ANALYSIS.md:139`). automation-core가 소유 |
+| 아웃바운드 | 사용자 등록 웹훅 URL로 서명된 POST(`project.completed`, `pdf.exported` 같은 이벤트, `docs/reference/00_MERGE_ANALYSIS.md:149`). automation-core가 소유 |
 | 실패 | 서명 실패 → 401 + `signature_valid=false, status='ignored'`. 중복 → 200. 처리 예외 → `status='failed', attempts+1, error` → 500으로 재전송 유도. 3회 실패 후 운영 알림(제안) |
 
 ```ts
@@ -191,7 +191,7 @@ Toss 서명 검증 방식과 이벤트 고유 id 필드는 Toss 문서 기준으
 |---|---|
 | 소유 / 소비 | _platform-core / YouTube, Meta, TikTok, 네이버, 쿠팡 등 외부 연동 제품 |
 | 코어 SQL | `core.oauth_states`, `create_oauth_state`, `consume_oauth_state`(`migrations/0004_core_security.sql:508-581`), `core.encrypted_credentials`, `credential_summaries`, `revoke_credential`(`:604-661`) |
-| 암호화 | AES-256-GCM, 키는 환경변수 `CREDENTIALS_KEY_V<n>`(제안), 현재 버전 `CREDENTIALS_KEY_VERSION`. 키가 없으면 기동 실패. 0키 폴백 금지(`docs/reference/00_MERGE_ANALYSIS.md:611`) |
+| 암호화 | AES-256-GCM, 키는 환경변수 `CREDENTIALS_KEY_V<n>`(제안), 현재 버전 `CREDENTIALS_KEY_VERSION`. 키가 없으면 기동 실패. 0키 폴백 금지(`docs/reference/00_MERGE_ANALYSIS.md:621`) |
 | 실패 | state 무효(`OA001`) → 400 "연결을 다시 시작하세요". 토큰 갱신 실패 → `status='error'`, `last_error`, 사용자 알림, 재연결 유도. 복호화 실패(키 버전 없음) → 500 + 운영 알림 |
 
 ```ts
@@ -214,9 +214,9 @@ export interface CredentialVault {
 | 소유 / 소비 | _platform-core(기준 구현 `sellingstudio/lib/llm/openrouter.ts`) / 전 제품 |
 | 2026-10-13 변경 | 이 절은 최초(2026-10-12) 설계의 이력이다. 라우터 본체는 FastAPI `ai-service`의 `llm/`로 옮겼고 상용(Claude, ChatGPT, Gemini, OpenRouter)과 오픈소스(vLLM) 이원화, `core.resolve_ai_route` 기반 대체 체인을 쓴다(`AI_ARCHITECTURE.md` 4절). `packages/core-ai/llm`의 TS 인터페이스는 `/api/ai/*` 호출용 얇은 래퍼로 남는다. 아래 "보강"의 OpenRouter 폴백은 새 대체 체인의 한 단계로 흡수된다 |
 | 기준 구현에서 가져오는 것 | 용도별 모델 맵 `MODELS`(`openrouter.ts:3-8`), OpenRouter chat completions 호출과 `response_format: json_object`(`:15-46`) |
-| 보강 | 제공자 라우팅(Anthropic 직접 + OpenRouter 폴백, `docs/reference/00_MERGE_ANALYSIS.md:154`), 사용자 노출은 "빠름/고품질" 2모드(`:154`), 호출마다 `ai_usage` 기록, 크레딧 선차감, 타임아웃과 재시도, 스트리밍, 모델 화이트리스트(`:858`) |
+| 보강 | 제공자 라우팅(Anthropic 직접 + OpenRouter 폴백, `docs/reference/00_MERGE_ANALYSIS.md:164`), 사용자 노출은 "빠름/고품질" 2모드(`:164`), 호출마다 `ai_usage` 기록, 크레딧 선차감, 타임아웃과 재시도, 스트리밍, 모델 화이트리스트(`:868`) |
 | 코어 SQL | `core.ai_usage`(`migrations/0003_core_credits.sql:80-98`), `consume_credits` |
-| 금지 | 브라우저에서 제공자 직접 호출, 사용자 BYOK 키 평문 저장(`docs/reference/00_MERGE_ANALYSIS.md:153`), 장애를 mock 응답으로 숨기기(`:155`) |
+| 금지 | 브라우저에서 제공자 직접 호출, 사용자 BYOK 키 평문 저장(`docs/reference/00_MERGE_ANALYSIS.md:163`), 장애를 mock 응답으로 숨기기(`:165`) |
 | 실패/환불 | 제공자 오류 → 폴백 모델 1회 → 실패 시 `refund_credits` + `ai_usage.status='error'`. 폴백 성공은 `status='fallback'`. 타임아웃 기본 60초, 재시도 1회(제안) |
 
 ```ts
@@ -272,7 +272,7 @@ fal 웹훅 서명 검증 방식은 fal 문서 기준으로 구현 시 확인한�
 | 인증 | 내부 서비스 토큰(`X-Render-Token`, 환경변수) + 요청 본문에 `org_id`, `app_id`, `job_id`. 공개 인터넷에서 호출 불가(제안: Railway private network 또는 IP 허용 목록) |
 | 코어 SQL | `core.jobs`(`job_type='render.pdf'`), Storage `exports` 정책(`migrations/0005_core_jobs_storage.sql:344-347`) |
 | 실패/환불 | 렌더 예외 → `fail_job(retryable=false)` → 환불. 타임아웃 120초(제안). 폰트 누락은 배포 검증 항목(컨테이너 기동 시 Noto CJK 존재 확인) |
-| 쪽번호/제책 | `@page` counter로 쪽번호, `:left/:right` 여백 비대칭은 프리셋에서(`docs/reference/00_MERGE_ANALYSIS.md:86`, `:101`) |
+| 쪽번호/제책 | `@page` counter로 쪽번호, `:left/:right` 여백 비대칭은 프리셋에서(`docs/reference/00_MERGE_ANALYSIS.md:96`, `:111`) |
 
 ```ts
 // 요청 계약 (HTTP POST /render/pdf)
@@ -285,18 +285,18 @@ export interface RenderPdfRequest {
 export interface RenderPdfResponse { storage_path: string; pages: number; bytes: number; duration_ms: number }
 ```
 
-astro-ai는 같은 계약으로 사주/타로 PDF를 렌더한다. 테마 미리보기도 이 서비스가 만든 PDF 첫 페이지 이미지를 쓴다(`docs/reference/00_MERGE_ANALYSIS.md:337`).
+astro-ai는 같은 계약으로 사주/타로 PDF를 렌더한다. 테마 미리보기도 이 서비스가 만든 PDF 첫 페이지 이미지를 쓴다(`docs/reference/00_MERGE_ANALYSIS.md:347`).
 
 ## 11. sns uploader
 
 | 항목 | 내용 |
 |---|---|
-| 소유 / 소비 | nomad-video / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:811`), nomad-blog(인스타 포스팅, `:632`) |
+| 소유 / 소비 | nomad-video / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:821`), nomad-blog(인스타 포스팅, `:642`) |
 | 기준 자산 | Shorts Maker `lib/platforms/*`, `channels/oauth-manager.ts`, YSM `account_manager`(AES-GCM). 이식 전에 0키 폴백, state 결함, tsc 오류를 먼저 고친다(`:955`) |
 | 플랫폼 | YouTube Data API v3(resumable 업로드), Instagram Reels/Threads(Meta Graph), TikTok Content Posting(`NOMAD Shorts Maker/PRD.md` 10-3), 네이버 클립(`naver_clip`, 확정 결정 18) |
 | 네이버 클립 | 공식 업로드 API 미확인(2026-10-13 기준. 클립 크리에이터 PC 웹 업로드만 확인). Playwright로 사용자 네이버 계정에 로그인해 PC 웹에서 업로드한다. OAuth가 없으므로 `connect()`는 로그인 세션(쿠키)을 `encrypted_credentials`에 저장하는 흐름이고, 원본 `NOMAD Shorts Maker/src/skill/playwright-engine/naver-login.ts`를 재사용한다. 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의(고지문 버전 `clip-2026-10-v1`)가 없으면 업로드 잡을 만들지 않는다. 잡 `upload.naver_clip`. `pinComment`·`quota`는 지원하지 않음(capabilities로 표시), `fetchStats`는 PC 웹 화면 수집(제안). 공식 API가 확인되면 같은 `UploaderAdapter`로 교체한다 |
 | 코어 SQL | `core.encrypted_credentials`(채널 토큰), `oauth_states`, `core.jobs`(`job_type='upload.<platform>'`), `rate_limit_hit` |
-| 채널 한도 | 플랜 `features.max_channels`(`seed.sql:35`, `:55-57`)를 서버가 강제. 쿼터 초과 시 같은 언어 그룹의 대체 채널 선택(`docs/reference/00_MERGE_ANALYSIS.md:687`) |
+| 채널 한도 | 플랜 `features.max_channels`(`seed.sql:35`, `:55-57`)를 서버가 강제. 쿼터 초과 시 같은 언어 그룹의 대체 채널 선택(`docs/reference/00_MERGE_ANALYSIS.md:697`) |
 | 실패/환불 | 업로드 실패 → 재시도 3회(`PRD.md` 10-4) → 최종 실패 시 환불(업로드 1크레딧/채널). 쿼터 초과 → 재시도 불가로 두지 않고 `run_after`를 다음 쿼터 리셋 시각(PT 자정)으로 미뤄 재큐잉(제안). 토큰 만료 → 갱신 1회 → 실패 시 `credentials.status='error'`, 잡 실패, 사용자 재연결 요청 |
 | 대가성 문구 | affiliate 모듈의 `effective_disclosure`를 설명란 첫 줄과 고정 댓글에 삽입(확정 결정 12). 업로더는 `description`을 받기 전에 affiliate 모듈이 끼워 넣은 결과를 받는다. `naver_clip`은 `video_description` 문구를 제목 앞머리와 첫 번째 해시태그로 넣는다(`injectDisclosure(..., 'video_description', { target: 'title_hashtag' })`, 17장) |
 
@@ -328,8 +328,8 @@ export interface UploaderRegistry { get(platform: Platform): UploaderAdapter; pi
 
 | 항목 | 내용 |
 |---|---|
-| 소유 / 소비 | _platform-core / video, commerce, (blog). 노드는 각 제품이 등록(`docs/reference/00_MERGE_ANALYSIS.md:958`) |
-| 원칙 | 서버 실행(브라우저 실행 금지), 엣지 연결 필수(`edges.length === 0`이면 실행 불가, `NOMAD Shorts Maker/CLAUDE.md` 구현 원칙 8), 위상 정렬(v1 설계), 노드 레지스트리(CM 구조)(`00_MERGE_ANALYSIS.md:958`) |
+| 소유 / 소비 | _platform-core / video, commerce, (blog). 노드는 각 제품이 등록(`docs/reference/00_MERGE_ANALYSIS.md:968`) |
+| 원칙 | 서버 실행(브라우저 실행 금지), 엣지 연결 필수(`edges.length === 0`이면 실행 불가, `NOMAD Shorts Maker/CLAUDE.md` 구현 원칙 8), 위상 정렬(v1 설계), 노드 레지스트리(CM 구조)(`00_MERGE_ANALYSIS.md:968`) |
 | 브릿지 | n8n/Make 콜백과 HMAC emit(`:959`, `:835`). 전역 n8n 키 프록시는 폐기(`:140`). 사용자 웹훅 URL 등록 → 서명 POST 하나로 통일(`:139`) |
 | 코어 SQL | `core.jobs`: 플로우 실행 1건 = 부모 잡, 노드 1개 = 자식 잡(`parent_job_id`, `migrations/0005_core_jobs_storage.sql:37`) |
 | 크레딧 | 노드마다 `estimateCredits(input)`. 실행 시작 시 합계를 미리 보여 주고(`NOMAD Shorts Maker/DESIGN.md` 5-6 "예상 크레딧"), 차감은 노드 시작 시 노드 단위로. 노드 실패 → 그 노드만 환불(`fail_job` 자동), 하류 노드는 canceled |
@@ -357,9 +357,9 @@ export interface FlowRunner {
 | 항목 | 내용 |
 |---|---|
 | 소유 / 소비 | _platform-core / video(업로드 게이트), commerce(상세페이지 금지어), blog(발행 전) |
-| 두 단계 | 1) 규칙 사전(commerce 금지어, 한글 경계 처리. `\b`는 한글에 안 맞음, `docs/reference/00_MERGE_ANALYSIS.md:786`) 2) LLM 판정 PASS/WARN/FAIL(video Compliance Filter, `NOMAD Shorts Maker/PRD.md` 9-4) → 공용 모듈로 합침(`00_MERGE_ANALYSIS.md:963`) |
+| 두 단계 | 1) 규칙 사전(commerce 금지어, 한글 경계 처리. `\b`는 한글에 안 맞음, `docs/reference/00_MERGE_ANALYSIS.md:796`) 2) LLM 판정 PASS/WARN/FAIL(video Compliance Filter, `NOMAD Shorts Maker/PRD.md` 9-4) → 공용 모듈로 합침(`00_MERGE_ANALYSIS.md:973`) |
 | 게이트 규칙 | FAIL → 발행 차단 + 수정 가이드. WARN → 사용자 확인 후 진행(확인 기록을 audit). PASS → 진행(`NOMAD Shorts Maker/CLAUDE.md` 구현 원칙 5) |
-| 규칙 사전 위치 | 코어 SQL에 테이블이 없다. 제안: 패키지 안 버전 관리 JSON(플랫폼 공통) + 제품 스키마의 `banned_words` 테이블(조직/제품 추가분, `00_MERGE_ANALYSIS.md:786`) |
+| 규칙 사전 위치 | 코어 SQL에 테이블이 없다. 제안: 패키지 안 버전 관리 JSON(플랫폼 공통) + 제품 스키마의 `banned_words` 테이블(조직/제품 추가분, `00_MERGE_ANALYSIS.md:796`) |
 | 비용 | LLM 판정 1크레딧(`NOMAD Shorts Maker/PRD.md` 13장). 규칙 단계는 무료 |
 | 실패 | LLM 오류 → 규칙 단계 결과만으로 WARN 처리하고 "AI 검증 실패" 표시. PASS로 통과시키지 않는다 |
 | 제품 자체 문구 | 제품 마케팅 문구의 가상 후기, 허위 수치 금지는 01_PRD 법/개인정보 절의 몫이며 이 모듈이 검사하는 대상이 아니다 |
@@ -384,7 +384,7 @@ export interface ComplianceChecker {
 | 경로 | `<org_id>/<app_id>/<entity>/<uuid>.<ext>` |
 | 업로드 | 브라우저는 `org-files`/`public-assets`의 자기 조직 폴더에 직접 업로드(RLS). 큰 파일은 서명 업로드 URL(제안). `exports`는 서버만 |
 | 다운로드 | 비공개 버킷은 서명 URL. 기본 1시간, exports 7일 |
-| 검증 | 서버가 MIME과 크기를 다시 검사한다(`docs/reference/00_MERGE_ANALYSIS.md:213`). 원고 업로드 20MB 상한(`:116`)은 제품 값 |
+| 검증 | 서버가 MIME과 크기를 다시 검사한다(`docs/reference/00_MERGE_ANALYSIS.md:223`). 원고 업로드 20MB 상한(`:126`)은 제품 값 |
 | 실패 | 경로 첫 세그먼트가 uuid가 아니면 정책이 거부(`storage_org_id` null) |
 
 ```ts
@@ -436,7 +436,7 @@ export interface WorkerOptions { queue: string; workerId: string; concurrency: n
 export function runWorker(opts: WorkerOptions): Promise<never>   // claim_jobs → run → complete_job | fail_job. heartbeat false 반환이면 취소 신호로 AbortSignal 발화
 ```
 
-Python 쪽은 같은 RPC를 `supabase.rpc('claim_jobs', {...})`로 호출한다. 큐 이름을 TS와 분리해(`video.media.*`) 두 런타임이 같은 잡을 집지 않게 한다(`docs/reference/00_MERGE_ANALYSIS.md:707`).
+Python 쪽은 같은 RPC를 `supabase.rpc('claim_jobs', {...})`로 호출한다. 큐 이름을 TS와 분리해(`video.media.*`) 두 런타임이 같은 잡을 집지 않게 한다(`docs/reference/00_MERGE_ANALYSIS.md:717`).
 
 ## 17. affiliate
 
@@ -490,7 +490,7 @@ export interface AffiliateApi {
 | 재정의 금지 | 위 모듈(1장 표 전체, AI 계층 포함)을 제품 폴더에서 다시 만들지 않는다. 필요 기능이 없으면 `_platform-core`에 요청 작업으로 남긴다 |
 | 서버 경계 | service_role 키는 서버 코드에만. 크레딧 RPC, 잡 RPC, 자격증명 복호화는 Route Handler/워커에서만 |
 | 멱등 키 | 클라이언트가 요청마다 UUID `request_id`를 보내고 서버가 `consume:<app>:<request_id>`, `job:<app>:<request_id>`로 쓴다 |
-| 실패 표시 | 장애를 mock 응답으로 숨기지 않는다(`docs/reference/00_MERGE_ANALYSIS.md:155`). 사용자에게 실패와 환불 여부를 보여 준다 |
+| 실패 표시 | 장애를 mock 응답으로 숨기지 않는다(`docs/reference/00_MERGE_ANALYSIS.md:165`). 사용자에게 실패와 환불 여부를 보여 준다 |
 | 문서화 | 제품 `02_ARCHITECTURE.md` 모듈 경계 절에 "어느 공용 모듈을 어떤 용도로 쓰는지" 표를 적는다 |
 
 ## 19. AI 계층 모듈 (2026-10-13 추가)
