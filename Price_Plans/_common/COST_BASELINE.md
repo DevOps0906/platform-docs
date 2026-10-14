@@ -28,7 +28,12 @@
 
 AI 호출 원가는 코어 seed 단가를 원가 지표로 쓴다(`products/_supabase-modular/seed.sql:243-262`, 값은 제안, 원화 환산 미확인). 제품별 작업 원가 계산 예시는 `products/website-floria/01_PRD.md` 4.1절을 참고한다.
 
-원화 환산 환율은 미확인이다. 2026-10-14 초안 작성 때 플랫폼 문서마다 1달러 1,400원(nomad-docs·blog·commerce, admin-suite, stock-dashboard, microweb-studio, astro-ai, study-note, live-poll) 또는 1,500원(nomad-video, toon-factory, flora-publishing)을 가정했다. 다음 분기 재확인 때 하나로 통일하고 각 문서 3장을 다시 계산한다.
+원화 환산은 모든 플랫폼 문서에서 **1달러 = 1,400원**(계획 환율, 제안)을 쓴다. 2026-10-14 시세는 약 1,343~1,345원이고 52주 범위는 1,330~1,562원이다. 1,400원은 현재 시세에 약 4% 여유를 둔 값이다. 시세가 1,450원을 넘으면 다시 정하고 각 문서 3장을 다시 계산한다.
+
+| 항목 | 값 | 출처 | 확인일 |
+|---|---|---|---|
+| 현재 시세 | 1,343.20원(씨티은행 고시), 10-13 종가 1,344.48원 | https://www.citibank.co.kr/FxdExrt0100.act , https://kr.investing.com/currencies/usd-krw-historical-data | 2026-10-14 |
+| 52주 범위 | 1,330.04~1,562.47원 | https://kr.investing.com/currencies/usd-krw-historical-data | 2026-10-14 |
 
 에이전시 제작에 쓰는 코딩 에이전트(Claude Code 등) 구독비는 플랫폼 원가가 아니라 사업 고정비로 본다. 금액은 미확인이며 대표님 실제 결제액으로 채운다.
 
