@@ -182,7 +182,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 |---|---|
 | 기능 게이팅과 권한 판정은 서버. 클라이언트 판정은 UX 보조 | `docs/products/00_MERGE_ANALYSIS.md:149`, `:1131` |
 | 클라이언트 PageGuard로 보호한 RSC는 데이터가 이미 노출된다. 서버 가드로 대체 | `:1132` |
-| 비밀번호/코드 우회(`OVERRIDE 1234`, `flora_pro_unlocked`) 기능을 두지 않는다. dev 전용이라도 프로덕션 빌드에서 제거 | `:150`, `:1133`, `:1218` |
+| 비밀번호/코드 우회(`OVERRIDE 1234`, `flora_pro_unlocked`) 기능을 두지 않는다. dev 전용이라도 프로덕션 빌드에서 제거. 허용되는 개발용 로그인은 로컬 시드 계정 Mock(실제 JWT, 원격 DB 불가)뿐이며 가드는 17장 | `:150`, `:1133`, `:1218` |
 | 프로필이 없으면 로그아웃. 기본 역할 admin 금지 | `Hospital/src/proxy.ts:57`, `:69` |
 | `proxy.ts`(미들웨어)는 반드시 로드되는 위치에 둔다(School은 루트 `middleware.ts`라 미로드) | `docs/products/00_MERGE_ANALYSIS.md:1125` |
 | 백그라운드 작업은 service_role로 실행한다. 세션 없는 작업이 RLS에 막혀 조용히 실패하는 패턴 금지 | `:516` |
@@ -304,3 +304,19 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 대화 열람 | 대화·메시지는 그 사용자 본인만 읽는다. 조직 관리자라도 타인의 대화 원문은 제품 관리자 기능(감사 기록 동반)으로만 열람(제안) |
 | 로그 | 프롬프트 전문, 토큰, 음성 원본을 애플리케이션 로그에 남기지 않는다(규칙 12 "로그") |
 
+
+## 17. 인증 단계 보안 규칙 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `AUTH_ROADMAP.md`다. 아래 규칙을 어기면 리뷰 "높음"으로 본다.
+
+| 규칙 | 내용 | 근거 |
+|---|---|---|
+| Mock은 실제 로그인이다 | 로컬 Supabase 시드 계정으로 실제 JWT를 받는다. 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock 금지(`mock-auth.ts`, `nomad_role`, `nomad_plan`, `dev-user`) | `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`, `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, 14장 |
+| Mock 허용 판정 | `isMockAuthAllowed()` = `AUTH_MODE=mock` + Supabase 호스트 `127.0.0.1`·`localhost` + `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 없음. 거짓이면 `/api/dev/login` 404, 개발용 패널 미렌더 | `AUTH_ROADMAP.md` 2.4절 |
+| 조용한 전환 금지 | `AUTH_MODE=mock`인데 판정이 거짓이면 기동 실패. live 모드에서 로그인 수단 0개면 기동 실패 | 13장 "기동 시 환경변수 검증" |
+| 시드 스크립트 | Supabase 호스트가 루프백이 아니면 즉시 종료. 비밀번호 `DEV_SEED_PASSWORD`는 서버 env만, 출력 금지 | `AUTH_ROADMAP.md` 2.3절 |
+| 단계 분기 위치 | `AUTH_MODE`·제공자 목록 참조는 인증 모듈, 로그인 화면, 콜백 라우트에만. CI가 그 밖의 참조를 실패로 본다 | `AUTH_ROADMAP.md` 9장 |
+| 콜백 | PKCE 코드 교환, `next`는 `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin은 `NEXT_PUBLIC_APP_URL` 고정. 실패 로그에 토큰·코드 금지 | `AUTH_ROADMAP.md` 3.2절 |
+| 계정 합치기 | 이메일 일치만으로 외부 로그인 계정을 기존 사용자에 합치지 않는다. 자동 연결은 Supabase가 이메일 인증을 확인한 경우만, 나머지는 로그인 상태의 수동 연결 | `AUTH_ROADMAP.md` 7.2.3절, 7.3절 |
+| 네이버 브리지(채택 시) | state는 HttpOnly·Secure·SameSite=Lax 서명 쿠키, 상수 시간 비교, 1회 사용. 제공자 토큰 저장 금지. 사용자는 `auth_identity_links`의 제공자 고유 id로만 찾는다(`listUsers` 전체 조회 금지) | `AUTH_ROADMAP.md` 7.2.3절 |
+| 회귀 테스트 | 15장 RLS 스모크와 별도로 각 제품 E2E에 Mock 페르소나(`owner`, `outsider`, `viewer`, `no_app`) 로그인 시나리오를 둔다. 배포 빌드에서 `/api/dev/login` 404 검사 | `AUTH_ROADMAP.md` 5.3절 B-4 |

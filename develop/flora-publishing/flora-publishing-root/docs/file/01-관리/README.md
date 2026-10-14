@@ -13,6 +13,7 @@ FLORA Publishing은 원고는 있지만 편집·조판 경험이 없는 1인 작
 | 과금 | 크레딧팩 + 저가 구독(Toss Payments) | 확정 결정 4, 8, `docs/reference/00_MERGE_ANALYSIS.md:12`, `:16` |
 | 백엔드 | Next.js + FastAPI(출판 엔진 `engine/`, AI 서비스 `api/`). WeasyPrint 렌더 서비스는 astro-ai와 공용이며 이 제품이 소유 | 확정 결정 3, `docs/reference/00_MERGE_ANALYSIS.md:11`, `docs/file/03-설계/공용코어/SHARED_MODULES.md:37` |
 | 테넌시 | org 기준 스키마, 운영은 1인 1워크스페이스 | 확정 결정 5, `docs/reference/00_MERGE_ANALYSIS.md:13` |
+| 에이전트·운영 (2026-10-14 FLORA 개편, 검토용) | 기존 기능을 6개 에이전트(기획·자료·집필·편집·출판, 콘텐츠는 Phase 2)로 묶어 실행·검수(승인)·재시도·원가를 `publishing.agent_tasks` 1개 표로 추적. 에디터 3단 + AI 패널, 에이전트 작업 공간, 운영 콘솔(실행 추적 6단계, 원가, 원고 열람 최소 권한). 교육 프로그램은 범위 밖. 새 실행 엔진 없음 | 01장 3.1절, 02장 10절, 03장 8절 |
 | AI·음성·3D (2026-10-13) | 책별 RAG, 책 설정집 위키, LangGraph 초안 그래프 `publishing.draft`(개요 → 초안 → 일관성 검사 → 교정 → compliance), Dify 글쓰기 도우미 채팅, 받아쓰기·채팅 음성·원고 낭독(미리듣기), 상용/오픈소스 모델 이원화와 국외 이전 동의, 원고 낱장이 제본되는 3D 히어로, Tailwind CSS v4 디자인 시스템(주 레퍼런스 Atlassian, 보조 Primer) | 확정 결정 13~17(`docs/reference/00_MERGE_ANALYSIS.md:21-25`) |
 
 ## 2. 통합 근거
@@ -42,14 +43,14 @@ FLORA Publishing은 원고는 있지만 편집·조판 경험이 없는 1인 작
 |---|---|
 | `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구사항(PB-F-###)과 수용 기준, 요금과 크레딧 단가, 비기능 수치, 법·개인정보·금지 문구, KPI, 열린 결정 |
 | `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계(Next / TS 워커 / FastAPI 엔진 / FastAPI AI 서비스 / 렌더 서비스), 공용 모듈 사용표, 잡 타입, AI 라우팅 기본값과 그래프 `publishing.draft`·`publishing.assist`, 리뷰 "높음" 비보안 결함 차단 설계 13건, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우 11개, 화면별 명세, AI 채팅·음성·설정집 화면, 디자인 시스템, 메인페이지 디자인 방향(레퍼런스, 브리프, 토큰 플랜, 와이어프레임 2안, 3D 히어로), 상태·오류 |
+| `03_SCREENS_UX.md` | 화면 목록, 핵심 플로우 11개, 화면별 명세, AI 채팅·음성·설정집 화면, 디자인 시스템, 메인페이지 디자인 방향(레퍼런스, 브리프, 토큰 플랜, 와이어프레임 2안, 3D 히어로), 상태·오류, 로그인 단계(7절), 4개 영역·3개 디자인 레이어·랜딩 6섹션·에디터 AI 패널·에이전트 화면·운영 콘솔(8절, 2026-10-14) |
 | `04_API.md` | Route Handler, 제품 RPC, 잡 페이로드 계약, 렌더 서비스 계약, 웹훅, 외부 API, 오류 코드(PB###) |
-| `05_DATA_MODEL.md` | 테이블 12개, 상태 전이, RLS 정책, 인덱스, 코어 참조, 리뷰 "높음" 보안·데이터 결함 차단 설계 12건, 모놀리스와 모듈러 차이, RLS 스모크 결과 |
-| `06_AGENT_PLAN.md` | 작업 55개(AI·음성·3D·디자인 시스템 17개 포함, PB-06-###), 소유 경계, 웨이브, 모델 비율, 리뷰 5장 작업 55건 흡수표, 코어 요청 |
+| `05_DATA_MODEL.md` | 테이블 13개(2026-10-14 `agent_tasks` 추가), 상태 전이, RLS 정책, 인덱스, 코어 참조, 리뷰 "높음" 보안·데이터 결함 차단 설계 12건, 모놀리스와 모듈러 차이, RLS 스모크 결과 |
+| `06_AGENT_PLAN.md` | 작업 65개(AI·음성·3D·디자인 시스템 17개, 인증 단계 3개(8절), 에이전트·운영 7개(9절, 2026-10-14) 포함, PB-06-###), 소유 경계, 웨이브, 모델 비율, 리뷰 5장 작업 55건 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본별 이식/참고/폐기 자산, 이식 시 수정점, 분석 "폐기" 38건 전부와 사유, 복사 금지 결함, 아카이브 절차 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용: `0001_core_lite.sql`(코어 축소판, OAuth state와 affiliate 절 제거), `0002_publishing_domain.sql`, `seed.sql` |
-| `../_supabase-modular/migrations/1000_publishing.sql` | 통합 DB용 `publishing` 스키마 조각(모놀리스 도메인의 정본). 15절에 AI·음성 라우팅 기본값 12행과 플랜 AI 키 6개 |
+| `../_supabase-modular/migrations/1000_publishing.sql` | 통합 DB용 `publishing` 스키마 조각(모놀리스 도메인의 정본). 15절에 AI·음성 라우팅 기본값 12행과 플랜 AI 키 6개, 16절에 `agent_tasks`(2026-10-14) |
 
 ## 5. DB 구조 선택
 

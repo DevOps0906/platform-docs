@@ -145,7 +145,7 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 A-3 목록 밖�
 |---|---|---|---|
 | `user_plans FOR ALL` 정책 | `Flora-v2/supabase/migrations/002_rls.sql:13`, `flora/supabase/migrations/002_user_plans_and_persona.sql:23-25` | 자기 플랜 상향 | 코어 엔타이틀먼트(SELECT만) |
 | Pro 잠금해제 `'1234'`, localStorage 플래그, 관리자 이메일 하드코딩 | `Flora-v2/frontend/src/components/ui/password-unlock-modal.tsx:14-15`, `frontend/src/lib/admin.ts:1` | 유료 기능 무료, 권한 상승 | 서버 features 해석, `platform_role` |
-| 라우터 무인증(LLM/export/upload), `dev-user` 우회, 빈 JWT secret | `docs/reviews/Flora-v2.md:63`, `:70`, `docs/reviews/flora.md:80` | 비용 유출, 데이터 접근 | `requireSession`, 엔진 내부 토큰, 기동 검증 |
+| 라우터 무인증(LLM/export/upload), `dev-user` 우회, 빈 JWT secret | `docs/reviews/Flora-v2.md:63`, `:70`, `docs/reviews/flora.md:80` | 비용 유출, 데이터 접근 | `requireSession`, 엔진 내부 토큰, 기동 검증. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT, 배포 환경 404)뿐이다(6절) |
 | 웹훅 서명 미검증·시크릿 오용 | `flora/api/routers/billing.py:83-119`, `Flora-v2/api/routers/billing.py:64` | 위조 결제로 플랜 상승 | Toss confirm 정본 + 웹훅 서명 필수 |
 | 비원자 크레딧 차감, 클라이언트 게이팅 | `docs/reviews/SellingDocs.md:49` | 음수 잔액, 무료 사용 | 코어 `consume_credits` |
 | 사용자 입력 파일명을 경로에 사용 | `flora/api/routers/tts.py:59-71` | 경로 조작 | 서버 생성 경로 + 경로 CHECK |
@@ -182,3 +182,25 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 A-3 목록 밖�
 | 5 | 키 재발급: v1 `frontend/.env`와 v2 루트 `.env`의 `SUPABASE_SERVICE_ROLE_KEY`, `OPENROUTER_API_KEY`(값 미확인, 키 이름만 확인)를 각 콘솔에서 재발급하고 기존 키 폐기. 재발급 기록은 `docs/flora-publishing/ops/key-rotation.md` | PB-06-033 |
 | 6 | 아카이브 폴더에서 `.env*`를 지운 뒤 이동(키가 아카이브에 남지 않게) | PB-06-033 |
 | 7 | 원본 폴더 이동·삭제는 사용자 승인 후에만(이번 단계는 기획만, 원본 무수정) | 사용자 |
+
+## 6. 인증 단계 관련 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+4절 표에 이어서 본다. 이 제품 원본에는 쿠키에 역할·플랜을 적는 Mock 로그인이 없지만, 다른 제품 원본에서 확인된 같은 결함을 이식·재발명하지 않도록 행을 둔다. 허용되는 Mock은 `docs/products/_platform-core/AUTH_ROADMAP.md` 2장(로컬 Supabase 시드 계정으로 실제 JWT, `isMockAuthAllowed()` 가드, 배포 환경 404)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`mock-auth.ts`, `nomad_role`, `nomad_plan` 쿠키, localStorage 역할·플랜) | `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`(다른 제품 원본, AUTH_ROADMAP 1장) | 권한 위조, 프로덕션 노출 | AUTH_ROADMAP 2장 Mock 로그인(PB-06-006), CI 금지 문자열(PB-06-005) |
+| 콜백 `next` 무검증 연결(`${origin}${next}`) | `docs/reviews/Flora-v2.md:71`(`Flora-v2/frontend/src/app/auth/callback/route.ts:7,13`) | `next=@evil.com` 외부 리다이렉트 | `finishLogin`의 화이트리스트(01장 PB-F-002, AUTH_ROADMAP 3.2절 5번) |
+| `SUPABASE_URL` 미설정 시 `dev-user` 반환 | `docs/reviews/flora.md:80`(`flora/api/routers/auth.py:17-18`) | 환경변수 누락이 곧 인증 우회 | 기동 시 env 검증. `AUTH_MODE=mock`인데 판정이 거짓이면 기동 실패(AUTH_ROADMAP 2.4절) |
+| 기능 코드의 `if (mock)`·페르소나 이메일 분기 | AUTH_ROADMAP 0장 불변 조건, 2.5절 | 단계 전환 때 권한 경로가 달라짐 | 단계 분기는 `web/src/lib/auth/`·로그인 화면·콜백·`/api/dev/login`에만(02장 9.2절) |
+
+## 7. 외부 제안서 반영 기준 (2026-10-14 FLORA 개편)
+
+"FLORA Publishing — UI/UX 및 AI 에이전트 통합 디자인 제안서"(ChatGPT 작성, 대표님 전달)는 원본 코드가 아니라 기획 의견이다. 무엇을 가져오고 무엇을 가져오지 않았는지 남긴다.
+
+| 구분 | 내용 | 반영 위치 |
+|---|---|---|
+| 가져옴 | 교육 범위 제외, 4개 영역, 3개 디자인 레이어와 포인트 색 사용 규칙, 랜딩 6섹션, 에디터 3단과 AI 패널, 6개 에이전트와 승인 방식, Workspace·Builder 구분(Builder는 Phase 2), 운영 콘솔 메뉴·실행 추적·원가·장애 재실행·원고 열람 최소 권한, "기존 모델·엔진을 확장하고 중복 생성하지 않는다" | 01장 3.1절, 02장 10절, 03장 8절, 04장 9절, 05장 2.5절, 06장 9절 |
+| 결정으로 올림 | 포레스트 그린 팔레트, Pretendard, 헤드라인 "당신의 경험을, 한 권의 책으로." | 01장 D23~D25 |
+| 가져오지 않음 | 개념 예시로 든 `agent_runs`, `task_events` 별도 표(코어 `ai_runs`·`jobs`·`audit_log`가 이미 있음), 새 실행 엔진, 에이전트 6개 카드 그리드 | 05장 머리말 |
+| 복사 금지 | 제안서에 붙은 이미지 썸네일(`images.openai.com` 주소)과 그 원본 작품의 레이아웃·카피·로고. 원본 URL을 확인하기 전에는 레퍼런스로 쓰지 않는다 | 03장 8.3절 끝, `REFERENCES.md` "영감용이지 복제용이 아니다" |
