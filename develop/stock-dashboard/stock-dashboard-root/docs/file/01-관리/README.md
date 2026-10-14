@@ -41,7 +41,7 @@
 | `03_SCREENS_UX.md` | 화면 목록, 플로우(초대 → 가입 → 첫 연결 → 첫 진단, 결제), 화면별 명세, 초대 랜딩 디자인 방향, 상태/오류 |
 | `04_API.md` | Route Handler, 제품 RPC, 잡 페이로드, 웹훅, 증권사/DART/LLM 어댑터, 오류 코드 |
 | `05_DATA_MODEL.md` | 테이블 19개, 상태 전이, RLS, 인덱스, 보안·데이터 차단 설계(리뷰 #1~#4), 모놀리스/모듈러 차이, RLS 스모크 결과 |
-| `06_AGENT_PLAN.md` | 작업 51개(AI·음성·3D·디자인 시스템 17개 포함), 웨이브, 모델 비율, 리뷰 5장 흡수표, 코어 요청 |
+| `06_AGENT_PLAN.md` | 작업 54개(AI·음성·3D·디자인 시스템 17개, 인증 단계 B·C 3개 포함), 웨이브, 모델 비율, 리뷰 5장 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 폐기 목록, 복사 금지 결함 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 마이그레이션 3개(`0001_core_lite`, `0002_stock_domain`, `0003_stock_orders_paper`)와 `seed.sql` |

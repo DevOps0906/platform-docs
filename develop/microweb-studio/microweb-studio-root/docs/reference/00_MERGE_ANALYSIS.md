@@ -27,6 +27,7 @@
 | 19 | 브랜드커넥트 범용화 (2026-10-13) | `core.brandconnect_applications`의 `blog_url`을 `target_url` + `target_kind`(blog/clip) + `source_app`(blog/video)으로 바꾼다. Playwright 지원 어댑터는 blog가 계속 소유하고, video는 `brandconnect.apply` 잡을 `source_app='video'`로 요청한다. blog 스캔 결과에 `campaign_type`을 붙여 클립형 캠페인을 video로 넘긴다. 정본: `docs/file/03-설계/공용코어/CORE_SPEC.md` 13장, `nomad-blog/01_PRD.md` 3.4절 |
 | 20 | toon-factory 벤치마킹 보강 (2026-10-13) | 경쟁 서비스 비교(`toon-factory/08_BENCHMARK.md`) 결과로 로그라인·시놉시스 생성과 플랫폼 포맷 프리셋을 MVP에, 직접 업로드(naver_clip 포함)와 숏툰 모션을 Phase 2에, 브랜디드 툰(광고 표시·고객 승인)을 신규로 넣는다. 벤치마크는 분기마다 다시 확인한다 |
 | 21 | 쇼츠 대행사업 (2026-10-13) | 직접 대행으로 시작하고 nomad-video를 내부 도구로 쓴다(고객사 `video.clients`, 고객 승인 단계, 월간 리포트, VD-F-120~126). 영업·계약·운영 문서는 nomad-docs `shorts_agency` 패키지로 만든다. 다른 대행사에 판매하는 화이트라벨 SaaS는 Phase 2에서 검토한다(video D-24). 사업 운영 정본: `nomad-video/08_AGENCY_OPERATIONS.md` |
+| 22 | 인증 단계 도입 (2026-10-14) | 전 제품의 로그인을 단계로 켠다. A(MVP 개발): 로컬 Supabase 시드 계정으로 실제 JWT를 받는 Mock 로그인(쿠키 역할 Mock 금지, 원격 DB·배포 환경 차단) → 게이트 G1(MVP P0 기능·핵심 플로우 E2E·RLS 스모크가 Mock으로 녹색) → B: Google OAuth(+제품 PRD의 이메일·초대 메일), 공개 베타 필수 → 게이트 G2(Google 실사용 2주 안정, 제안) → C1 카카오(Supabase 기본 제공자), C2 네이버(Supabase 커스텀 OAuth2 `custom:naver` 스파이크, 실패 시 서버 브리지 + `staged/0010_core_auth_identity_links.sql`). nomad-commerce의 MVP 카카오와 flora-publishing 카카오 열린 결정은 C1으로 옮긴다. 정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`. |
 
 ### video 트랙 정의 (확정)
 

@@ -6,7 +6,8 @@
 |---|---|
 | 주 사용자 | 외주 개발 프리랜서, 소형 개발 에이전시 |
 | DB 스키마(모듈러 번호) | `docs`(2300) |
-| 개발 작업 수 | 62개(`products/nomad-docs/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 65개(`products/nomad-docs/06_AGENT_PLAN.md`, 인증 단계 작업 3개 포함) |
+| 인증 단계 | 개발은 Mock 로그인(Stage A, 로컬 시드 계정)으로 시작 → G1 후 Google + 이메일(B) → G2 후 카카오·네이버(C). [`nomad-docs_develop.md`](nomad-docs_develop.md) 19장 |
 | 기획서 | [`products/nomad-docs/`](../../products/nomad-docs/) |
 | 참고 | 계약서는 법무 검토(D-3) 전까지 비활성입니다. |
 

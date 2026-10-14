@@ -269,7 +269,7 @@ AI·음성 코어 객체(2026-10-13, `docs/products/_supabase-modular/migrations
 
 ## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
 
-스키마 변경 없음. 인증 단계는 코어 계약(`core.profiles`, `org_members`, `app_entitlements`, `session_context`) 위에서 동작하고 blog 스키마는 바뀌지 않는다. C2에서 브리지 경로를 택하면 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`을 참조만 한다(06장 6.2절 요청). 정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(이하 AUTH_ROADMAP) 2.2·2.3절이다.
+스키마 변경 없음. 인증 단계는 코어 계약(`core.profiles`, `org_members`, `app_entitlements`, `session_context`) 위에서 동작하고 blog 스키마는 바뀌지 않는다. C2에서 브리지 경로를 택하면 코어 `docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`을 참조만 한다(06장 8.3절 요청). 정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(이하 AUTH_ROADMAP) 2.2·2.3절이다.
 
 시드는 `scripts/dev/seed-users.mjs --app blog`(공통 행) 뒤에 제품 훅 `scripts/dev/seed-users.blog.mjs`(blog 행)를 실행한다. 둘 다 Supabase 호스트가 `127.0.0.1`·`localhost`가 아니면 즉시 종료하고, 멱등이다(이미 있는 이메일은 건너뛰고 상태만 맞춤). 계정은 `auth.admin.createUser(..., email_confirm: true, user_metadata: { signup_app: 'blog' })`로 만들어 실제 가입 트리거(`migrations/0001_core_identity.sql:113`)를 탄다.
 

@@ -68,6 +68,7 @@
 | 4 | 인덱스 마무리, 최종 보고 | 완료 | 이 절 |
 | 5 | AI 계층·음성·3D 히어로·디자인 시스템 반영, 개발 방법 문서 12개 | 완료 | 아래 "2026-10-13 AI 계층 추가", `../develop/<제품>/` |
 | 6 | 네이버 클립·브랜드커넥트 범용화·toon 벤치마킹·쇼츠 대행 (확정 결정 18~21) | 완료 | 아래 "2026-10-13 결정 18~21", PR #2 |
+| 7 | 인증 단계: Mock → Google → 카카오·네이버 (확정 결정 22), 13개 제품 반영 | 완료 | 아래 "2026-10-14 인증 단계", `_platform-core/AUTH_ROADMAP.md` |
 
 ## 제품별 결과
 
@@ -219,3 +220,28 @@ PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`)
 | 쇼츠 대행사업(결정 21) | `nomad-video/08_AGENCY_OPERATIONS.md` (패키지, 가격 근거, 프로세스, 필요 문서 14종, 법적 위험) | `nomad-video/01_PRD.md` VD-F-120~126, `nomad-docs/01_PRD.md` DC-F-046 `shorts_agency`, `_supabase-modular/migrations/2300_docs.sql` |
 
 확인 필요: 네이버 약관의 자동화 조항(미확인), 공정위 AI 가상인물 표시 개정안 확정 여부(미확인), 이미 배포된 DB에는 별도 `alter table` 필요.
+
+## 2026-10-14 인증 단계 (확정 결정 22)
+
+정본은 `_platform-core/AUTH_ROADMAP.md`다. 개발 1단계(MVP)는 로컬 Supabase 시드 계정으로 실제 JWT를 받는 Mock 로그인(Stage A), 모든 MVP 기능이 동작하면 사람이 G1을 판정하고 Google OAuth(+ 제품에 따라 이메일·초대 메일, Stage B), 그것이 안정되면 G2 후 카카오(C1)·네이버(C2)를 붙인다. 쿠키에 역할을 적는 Mock은 금지이고, 단계 분기 코드는 인증 모듈(`src/lib/auth/` 또는 admin-kit `src/auth/`)과 로그인·콜백·`/api/dev/login`에만 둔다. 개발 묶음의 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009)로 들어간다.
+
+| 제품 | 06장 작업 | A(Mock) | B(Google) | C1 카카오 | C2 네이버 | 문서 경로 검사(참조 / 누락) |
+|---|---|---|---|---|---|---|
+| flora-publishing | 65 | PB-06-006 | PB-06-056 | PB-06-057(P1) | PB-06-058(P1) | 490 / 0 |
+| astro-ai | 57 | AS-06-003 | AS-06-055 | AS-06-056(P1) | AS-06-057(P1) | 574 / 0 |
+| nomad-video | 65 | VID-06-004 | VID-06-063 | VID-06-064(P1) | VID-06-065(P1) | 377 / 0 |
+| nomad-blog | 59 | BL-06-004 | BL-06-057 | BL-06-058(P1) | BL-06-059(P1) | 427 / 0 |
+| nomad-commerce | 60 | CM-06-007 | CM-06-058 | CM-06-059(P1) | CM-06-060(P1) | 473 / 0 |
+| microweb-studio | 56 | MW-06-003 | MW-06-054 | MW-06-055(P2 선택) | MW-06-056(P2 선택) | 378 / 0 |
+| admin-suite | 60 | ADM-06-007 | ADM-06-058(hms는 이메일만) | ADM-06-059(erp·sms P2 선택, hms 제외) | ADM-06-060(같음) | 433 / 0 |
+| live-poll | 51 | LP-06-003 | LP-06-049 | LP-06-050(P1) | LP-06-051(P1) | 382 / 0 |
+| stock-dashboard | 54 | ST-06-006, 009 | ST-06-052 | ST-06-053(P2 선택) | ST-06-054(P2 선택) | 495 / 0 |
+| toon-factory | 69 | TN-06-004, 027 | TN-06-067 | TN-06-068(P1) | TN-06-069(P1) | 428 / 0 |
+| study-note | 55 | NT-06-006 | NT-06-053 | NT-06-054(P1) | NT-06-055(P1) | 326 / 0 |
+| website-floria | 49 | SI-06-019 | SI-06-049 | 제외 | 제외 | 396 / 0 |
+| nomad-docs | 65 | DC-06-014 | DC-06-063 | DC-06-064(P1) | DC-06-065(P1) | 607 / 0 |
+| 합계 | 765 | | | | | |
+
+각 제품 반영 위치는 `AUTH_ROADMAP.md` 10장 그대로다: 01장 2절·가입 FR·6절·8절(인증 결정), 02장 9절, 03장 7절, 04장 8절, 05장 10절(시드 페르소나), 06장 8절, 07장 6절(복사 금지), `CLAUDE.md` "인증 단계 규칙", 개발 안내서 19장. 네이버를 서버 브리지로 붙이게 되면 코어 `staged/0010_core_auth_identity_links.sql`을 한 번만 적용한다(각 제품 06장 코어 요청).
+
+같은 날 flora-publishing은 "FLORA 개편"(에이전트 실행 계층 `agent_tasks`, 운영 콘솔, 디자인 레이어 3종, PB-06-059~065)을 따로 반영했다. 이 개편은 flora 전용이고 다른 제품에는 넣지 않았다.

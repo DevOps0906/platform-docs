@@ -33,13 +33,13 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구사항(LP-F-001~037)과 수용 기준, 플랜과 AI·음성 크레딧 단가, 비기능 수치, 법/개인정보(AI·음성 고지 포함), KPI, 열린 결정(D1~D18) |
-| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 실시간 구조(브로드캐스터 워커 + private Broadcast), AI 라우팅 기본값과 그래프 `poll.qna_assist`, 청중 음성 질문 경로, 리뷰 높음 #1, #2 차단 설계 |
-| `03_SCREENS_UX.md` | 화면 목록, 플로우, 진행자 콘솔/발표 화면/오버레이/청중 화면 명세, AI 패널·음성·위키 화면, 디자인 시스템, 랜딩 디자인 방향과 3D 히어로 |
-| `04_API.md` | Route Handler(AI·음성 포함), RPC, 브로드캐스트 메시지 계약, FastAPI·Dify 계약, 오류 코드(PL###, AI·음성 코드) |
-| `05_DATA_MODEL.md` | 테이블 9개(제품 전용 AI 표 없음과 그 이유), 상태 전이, RLS, 리뷰 높음 #3, #4 차단 설계, 모놀리스와 모듈러의 차이 |
-| `06_AGENT_PLAN.md` | 작업 48개(AI·음성·3D·디자인 시스템 16개 포함, LP-06-###), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
-| `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 폐기 목록, 복사 금지 결함 |
+| `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구사항(LP-F-001~037)과 수용 기준, 플랜과 AI·음성 크레딧 단가, 비기능 수치, 법/개인정보(AI·음성 고지, 로그인 제공자 식별자 포함), KPI, 열린 결정(D1~D18, 인증 단계 D19~D21은 8.1절) |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 실시간 구조(브로드캐스터 워커 + private Broadcast), AI 라우팅 기본값과 그래프 `poll.qna_assist`, 청중 음성 질문 경로, 리뷰 높음 #1, #2 차단 설계, 인증 단계(9절: 진행자만 로그인, 청중·오버레이는 단계와 무관) |
+| `03_SCREENS_UX.md` | 화면 목록, 플로우, 진행자 콘솔/발표 화면/오버레이/청중 화면 명세, AI 패널·음성·위키 화면, 디자인 시스템, 랜딩 디자인 방향과 3D 히어로, 단계별 로그인 화면(7절) |
+| `04_API.md` | Route Handler(AI·음성 포함), RPC, 브로드캐스트 메시지 계약, FastAPI·Dify 계약, 오류 코드(PL###, AI·음성 코드), 인증 단계 라우트(8절) |
+| `05_DATA_MODEL.md` | 테이블 9개(제품 전용 AI 표 없음과 그 이유), 상태 전이, RLS, 리뷰 높음 #3, #4 차단 설계, 모놀리스와 모듈러의 차이, 개발용 시드 페르소나(10절: 공통 + `host`·`cohost`) |
+| `06_AGENT_PLAN.md` | 작업 51개(AI·음성·3D·디자인 시스템 16개, 인증 단계 B·C 3개(8절) 포함, LP-06-###. Stage A는 기존 LP-06-003), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
+| `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 폐기 목록, 복사 금지 결함(인증 단계 6절) |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `MONOLITH_CORE_LITE.sql` 사본. SECTION 6-A, 6-B, 9를 이유 주석과 함께 지웠다(4, 7, 8은 AI 계층 때문에 복원) |
 | `supabase/monolith/migrations/0002_poll_domain.sql` | 모듈러 조각 `1800_poll.sql`을 public 스키마로 변환한 것 |

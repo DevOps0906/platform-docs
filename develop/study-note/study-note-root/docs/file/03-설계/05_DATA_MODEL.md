@@ -268,3 +268,45 @@ DBC 12장 기준.
 | 동의 후에도 오픈소스로 남는 것 | `dify.aux`(강제), `notes.knowledge`(open_source), `lecture_note`(강제) |
 
 AI 기능별 기본값 행(정본 02장 5.3절): `notes.organize`, `notes.quiz`(llm, auto, oss-llm → anthropic → google), `chat`(llm, auto, oss-llm → anthropic → openai → google), `wiki.query`, `wiki.ingest`, `wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `notes.knowledge`(embedding, open_source, oss-embed), `lecture_note`(stt, open_source, oss-voice, 강제), `voice_chat`·`quiz_voice` stt(auto, oss-voice → elevenlabs), `voice_chat`·`quiz_voice` tts(auto, elevenlabs → oss-voice).
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음. 인증 단계는 코어 계약(`core.handle_new_user`, `session_context`, `invite_member`·`accept_invite`, `bootstrap_app_for_org`)을 그대로 쓰고 제품 테이블을 더하지 않는다. 네이버 브리지 경로를 택하면 코어 `auth_identity_links`(`D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`)만 참조한다(06장 C-11).
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.2·2.3절이다. 시드는 `scripts/dev/seed-users.mjs --app notes`(NT-06-006)가 `supabase db reset` 뒤에 로컬 DB에만 만든다. 이메일 도메인은 `.test`(제안).
+
+### 10.1 공통 페르소나 (study-note에서의 기대 결과)
+
+| 키 | 만드는 경로 | 기대 결과(study-note) |
+|---|---|---|
+| `owner` | `auth.admin.createUser(... user_metadata: { signup_app: 'notes' })` → 가입 트리거 | 개인 조직 owner, `session_context('notes')` `entitled=true`, `free`, 잔액 30(월 지급 1회). 정리 실행 가능 |
+| `admin` | 생성 후 owner 세션 `invite_member(owner_org, uid, 'admin')` → 본인 세션 `accept_invite(owner_org)` | owner 조직 admin. `entries` 쓰기·실행 가능 |
+| `member` | 같은 경로(`member`) | owner 조직 member. 실행 가능, `POST /api/notes/account/delete` 403(owner 전용) |
+| `viewer` | 같은 경로(`viewer`) | owner 조직 viewer. 목록 읽기만, `entries` INSERT 42501(정책이 owner/admin/member만 허용, 4절), 실행 403 |
+| `outsider` | `signup_app: 'notes'`로 별도 생성 | 자기 조직 owner. owner 조직의 `entries`·`runs`·`run_steps`·`user_settings`·`ai_documents` 0행(RLS 스모크와 같은 기대) |
+| `no_app` | `signup_app` 없이 생성 | 이 제품의 개발 DB는 단독 모놀리스(`public`)라 앱 행이 1개여서 가입 트리거가 자동 부트스트랩해 `entitled=true`. 모듈러 통합 DB에서는 `entitled=false` → Mock 로그인의 `finishLogin`이 `bootstrap_app_for_org('notes')` 1회 후 `entitled=true`, 잔액 30(멱등 키로 재로그인 시 추가 지급 없음) |
+| `suspended` | 생성 후 service_role로 `status=suspended` | 403 |
+| `ops` | 생성 후 service_role로 `platform_role=platform_admin` | `/admin/models`(Phase 2) 접근 |
+| `pending` | 만들지 않는다 | 이 앱은 open이라 approval 상태가 없다 |
+
+### 10.2 study-note 도메인 페르소나 (제품 훅 `scripts/dev/seed-users.notes.mjs`)
+
+| 키 | 만드는 경로 | 기대 결과 | 쓰는 테스트 |
+|---|---|---|---|
+| `unverified` | `auth.admin.createUser({ email_confirm: false, user_metadata: { signup_app: 'notes' } })` | `entitled=true`, 잔액 30이지만 `email_confirmed_at is null`. `POST /api/notes/runs`, `/api/ai/organize` 등 정리 실행 계열 403 `email_not_verified`(01장 NT-F-001). 읽기와 설정 저장은 가능 | NT-06-005, 024 |
+| `low_credit` | `signup_app: 'notes'`로 생성 후 service_role `consume_credits(org, 27, 'notes', 'dev_seed', p_idempotency_key => 'dev-seed:low_credit:<org>')` | 잔액 3. 예상 4 크레딧 실행에서 UI가 "1 크레딧이 부족합니다"(NT-F-011), 강제 요청은 402 `CR001`이고 고아 실행·잡 0 | NT-06-024 |
+
+훅은 모든 페르소나에 약관 동의 감사 기록(`notes_consent.terms`, 제안, 03장 7.3절)을 service_role로 남긴다. 이메일 가입자가 `/signup`에서 동의한 것과 같은 상태로 두어, B단계에서 생기는 `/onboarding/terms` 이동이 Mock E2E(NT-06-024)를 바꾸지 않게 한다.
+
+| 확인 필요 | 내용 |
+|---|---|
+| `unverified` 로그인 | 로컬 `supabase/config.toml`의 `[auth.email] enable_confirmations = true`에서는 미인증 계정의 `signInWithPassword`가 거부될 수 있다(미확인). 거부되면 이 페르소나는 Mock 로그인 대상에서 빼고, 이메일 인증 가드는 `email_confirmed_at`을 null로 둔 세션 객체를 넣는 단위 테스트(NT-06-005)와 B단계 이메일 가입 E2E(NT-06-053)로 확인한다. 결과는 NT-06-006 task `log.md` `[DECISION]`(06장 8.5절) |
+| `low_credit` 차감 | 시드용 차감도 원장(`credit_ledger`)에 남는다. 개발 DB 전용이라 원장 drift 검사에서 `reason='dev_seed'` 행은 정상으로 본다 |
+
+### 10.3 시드 출력과 금지
+
+| 항목 | 규칙 |
+|---|---|
+| 출력 | 페르소나·이메일·조직 id·플랜·잔액·`email_confirmed_at` 여부 표. 비밀번호(`DEV_SEED_PASSWORD`)는 출력하지 않는다 |
+| 원격 차단 | `SUPABASE_URL` 호스트가 `127.0.0.1`·`localhost`가 아니면 exit 1 |
+| 기능 코드 | 페르소나 이메일·키로 분기하지 않는다. 권한은 `session_context`로만(`AUTH_ROADMAP.md` 2.5절) |

@@ -184,7 +184,7 @@ AI·음성 코어 객체(2026-10-13, `D:/WorkSpace/platform/docs/products/_supab
 | `docs/reference/reviews/nomad-ai-factory.md` 3장 #2 | `docs/reference/reviews/nomad-ai-factory.md:58` | 한도·사용량 기록이 클라이언트 | 사용량 원장은 core `credit_ledger`(append-only), 브라우저 INSERT 42501(스모크 확인). 한도는 트리거 | CM-06-010 |
 | `docs/reference/reviews/nomad-ai-factory.md` 3장 #3 | `docs/reference/reviews/nomad-ai-factory.md:59` | 14개 서비스 키 localStorage 평문 | BYOK 기능 없음(07장 폐기). 외부 키는 플랫폼 env(AI) 또는 `encrypted_credentials`(마켓)만. 브라우저에 키 미전달 | CM-06-009 |
 | `docs/reference/reviews/nomad-ai-factory.md` 3장 #4 | `docs/reference/reviews/nomad-ai-factory.md:60` | 스키마·RLS가 저장소에 없어 재현 불가 | 조각 1개 + 모놀리스 변환본 + seed, PGlite 체커 OK, RLS 스모크 60/59항목 통과(9절) | 9절, CM-06-001 |
-| `docs/reference/reviews/nomad-ai-commerce.md` 3장 #1 | `docs/reference/reviews/nomad-ai-commerce.md:58` | 쿠키로 인증·관리자 통과 | 역할은 `core.org_members.role`·`profiles.platform_role`만, `session_context`로 서버 판정. 모의 로그인 없음 | CM-06-007 |
+| `docs/reference/reviews/nomad-ai-commerce.md` 3장 #1 | `docs/reference/reviews/nomad-ai-commerce.md:58` | 쿠키로 인증·관리자 통과 | 역할은 `core.org_members.role`·`profiles.platform_role`만, `session_context`로 서버 판정. 쿠키 역할 Mock 금지, 개발용 로그인은 AUTH_ROADMAP 2장의 로컬 시드 계정만(실제 JWT, 배포 환경 404, 10절) | CM-06-007 |
 | `docs/reference/reviews/nomad-ai-commerce.md` 3장 #2 | `docs/reference/reviews/nomad-ai-commerce.md:59` | 사용자 URL SSRF, raw_html 저장 | 아마존은 ASIN만 추출하고 서버가 URL을 fetch하지 않음. URL 벤치마킹은 `packages/commerce-net`(허용 도메인, 사설 IP·메타데이터 IP 차단, 리다이렉트 3회, 2MB, 10초). 원문 HTML 컬럼 없음 | CM-06-008, CM-06-018 |
 | `docs/reference/reviews/nomad-ai-commerce.md` 3장 #3 | `docs/reference/reviews/nomad-ai-commerce.md:60` | 인증 없는 GET이 전 사용자 키 평문 반환 | `market_accounts`에 비밀 컬럼 없음, 사용자는 RLS 하 자기 조직만, 요약은 `credential_summaries`(암호문 제외). 키 입력 API는 owner/admin + 응답 마스킹 | CM-06-009 |
 | `docs/reference/reviews/nomad-ai-commerce.md` 3장 #6 | `docs/reference/reviews/nomad-ai-commerce.md:63` | 요청 바디 `tableName`으로 임의 테이블 insert | 블로그 원고 기능 제거(확정 결정 1). 테이블 이름을 요청에서 받는 API 없음. service_role 쓰기는 고정 테이블만, 서버 전용 테이블은 guard 트리거 | 07장, CM-06-020 |
@@ -244,3 +244,34 @@ AI·음성 코어 객체(2026-10-13, `D:/WorkSpace/platform/docs/products/_supab
 AI 기능별 기본값 행(정본 02장 5.1절): `commerce.detail_page`(llm, auto, anthropic → openai → google → oss-llm), `commerce.compliance`(llm, auto, openai → google → oss-llm), `commerce.assist`(llm, auto, google → openai → oss-llm), `commerce.vision`(llm, auto, openai → google → oss-llm), `chat`(llm, auto, openai → google → anthropic → oss-llm), `wiki.query`·`wiki.ingest`·`wiki.lint`(llm, auto, oss-llm → anthropic), `dify.aux`(llm, open_source, oss-llm, 강제), `commerce.knowledge`(embedding, open_source, oss-embed), `voice_chat` stt(auto, oss-voice → elevenlabs), `voice_chat` tts(auto, elevenlabs → oss-voice), `product_voice` stt(auto, oss-voice → elevenlabs), `shorts_narration` tts(auto, elevenlabs → oss-voice, 작업 중 대체 금지는 음성 어댑터).
 
 스모크 항목: 비멤버 B가 A 조직 commerce 테이블 10개 + 조직 금지어 SELECT 0행, A 조직으로 INSERT 42501, A 행 UPDATE/DELETE 0행, 서버 전용 테이블 INSERT 42501(자기 조직 포함), 기본 금지어·환율 쓰기 거부, A 페이지 WARN 확인 RPC 42501, `commerce_features` 42501, 자기 지갑·원장·`grant_credits`·엔타이틀먼트 plan·`platform_role`·org_members role 변경 42501, `encrypted_credentials` SELECT 42501, 서버 컬럼(banned_words_found, listing status/completeness) UPDATE 42501, org_id 이동 42501, 다른 조직 상품 참조 23503, 반품 7일 미만·자유 제한 사유 23514, Free 31번째 상품 CM002, 엔타이틀먼트 없는 조직 INSERT 42501, 서버 경로 CM001/CM003/CM004/CM005/CM006/CM007/CM009와 필수 슬롯 23514, WARN 확인 후 업로드 성공과 감사 행. 모듈러 seed 샘플 free 플랜은 `market_api`가 없어 업로드가 CM007로 막힘을 확인한 뒤, 01장 정본 features로 갱신(요청 반영 가정)하고 나머지를 실행했다.
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음. 인증 단계(`docs/file/03-설계/공용코어/AUTH_ROADMAP.md`)는 코어 계약(`session_context`, RLS, 가입 트리거)을 그대로 쓰고, 이 제품은 테이블·컬럼·RPC를 더하지 않는다. C2 브리지 경로를 택하면 코어 `D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`(`core.auth_identity_links`)만 참조한다(코어가 1회 적용).
+
+시드는 `supabase db reset` 뒤 `node scripts/dev/seed-users.mjs --app commerce`로 만든다. 로컬 Supabase에서만 동작하고(호스트가 `127.0.0.1`·`localhost`가 아니면 종료), 계정은 실제 가입 트리거(`core.handle_new_user`, `migrations/0001_core_identity.sql:113`)와 실제 RPC로 만든다.
+
+공통 페르소나(`AUTH_ROADMAP.md` 2.2절)를 commerce에 적용한 결과:
+
+| 키 | 만드는 방법 | 기대 `session_context('commerce')` | commerce에서 확인하는 것 |
+|---|---|---|---|
+| `owner` | `signup_app=commerce` | 개인 조직 owner, `entitled=true`, plan `free`, 월 15크레딧 1회 지급(가입 크레딧 0, 01장 4.1절) | 기본 사용자. CM-F-001 A 수용 기준, 핵심 플로우 E2E(CM-06-035), 국외 이전 미동의 상태(오픈소스 경로) |
+| `admin` | owner 조직에 `invite_member(admin)` → `accept_invite` | owner 조직 admin | 마켓 계정·결제 화면 접근(04장 1절 역할) |
+| `member` | 같음(member) | owner 조직 member | 생성·편집 가능, 마켓 계정·결제 403 |
+| `viewer` | 같음(viewer) | owner 조직 viewer | 읽기만. 생성·편집 API 403, `products` INSERT 42501 |
+| `outsider` | `signup_app=commerce`(다른 개인 조직) | 자기 조직 owner | 교차 테넌트: owner 조직의 13개 테이블 SELECT 0행, 다른 조직 `product_id` 채팅 바인딩 403(CM-06-057) |
+| `no_app` | `signup_app` 없이 생성 | 모듈러: `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('commerce')` 후 `entitled=true`, free. 모놀리스: 앱 행 1개라 가입 트리거가 자동 부트스트랩해 처음부터 `entitled=true` | OAuth 첫 로그인 부트스트랩 경로(B-1)를 A단계에서 미리 검증. 재로그인 3회 뒤 원장 행 수 같음 |
+| `suspended` | 생성 후 service_role로 `status=suspended` | 403 | 차단 화면 |
+| `ops` | 생성 후 service_role로 `platform_role=platform_admin` | 운영자 | `/admin/knowledge`, `/admin/wiki`(03장 1절). 로컬에서는 이 계정의 조직 id를 `COMMERCE_KNOWLEDGE_ORG_ID`로 쓴다(제안) |
+| `pending` | 만들지 않는다 | - | commerce는 open 앱(`1400_commerce.sql:31`)이라 승인 대기 상태가 없다 |
+
+commerce 도메인 행(제품 훅 `scripts/dev/seed-users.commerce.mjs`, 제안. `AUTH_ROADMAP.md` 8장은 commerce 추가 페르소나를 "-"로 두었고, 아래는 플랜·동의 분기를 E2E로 검증하려고 더하는 제안 행이다):
+
+| 키 | 만드는 방법 | 기대 결과 | 쓰임 |
+|---|---|---|---|
+| `pro` | `signup_app=commerce` 후 service_role로 그 조직의 `core.subscriptions`·`core.app_entitlements` `plan_id`를 `pro` 플랜으로 바꾸고 `grant_credits(350, bucket 'plan', 멱등 키 'dev:pro:<org>')`(제안. 결제 E2E가 아니라 시드이므로 Toss 경로를 타지 않는다) | plan_code `pro`, `features.concurrency=2`, `voice_input`·`voice_chat`·`shorts_narration` true | 동시 생성 2건 제한(CM-F-023), 플랜 게이팅 기능(음성, 15슬롯, 엑셀) 화면 확인 |
+| `ai_consent` | `signup_app=commerce` 후 본인 세션으로 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack: true, p_notice_version: AI_CROSS_BORDER_NOTICE_VERSION })`(`migrations/0008_core_ai.sql:553`) | `ai_org_settings.cross_border_notice` = 현재 버전, 감사 `ai.cross_border.ack` 1행, `resolve_ai_route`가 상용 체인 반환 | 국외 이전 동의 분기(CM-F-049), 상용 경로 평가셋 |
+
+시드 결과의 기대값은 시드 스크립트가 표로 출력하고(비밀번호 제외), 두 번 실행해도 크레딧이 두 번 지급되지 않는다(멱등 키 `signup:<org>:commerce`, `dev:pro:<org>`). 기능 코드는 페르소나 이메일로 분기하지 않는다(권한은 `session_context`로만).
+
+모놀리스와 모듈러의 차이(8절에 더한다): 모듈러 통합 DB는 `--app commerce`를 여러 앱과 함께 줄 수 있고 두 번째 앱부터 `bootstrap_app_for_org`를 호출한다. 모놀리스(이 제품 개발 기본, `public` 스키마)는 앱 행이 1개라 `no_app`도 가입 트리거가 자동 부트스트랩하므로 `finishLogin`의 3번 단계가 아무 일도 하지 않는다(같은 코드를 그대로 쓴다).

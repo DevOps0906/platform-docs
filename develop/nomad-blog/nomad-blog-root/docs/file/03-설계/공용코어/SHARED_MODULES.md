@@ -81,7 +81,7 @@ export async function getSessionContext(appId: string, orgId?: string): Promise<
 export async function requireSession(appId: string, opts?: { roles?: Array<SessionContext['org'] extends infer O ? O extends { role: infer R } ? R : never : never> }): Promise<SessionContext>
 ```
 
-가입 폼 계약: `supabase.auth.signUp({ email, password, options: { data: { signup_app: '<app_id>', full_name } } })`. `signup_app`이 없으면 엔타이틀먼트가 생기지 않는다(`CORE_SPEC.md` 2.2).
+가입 폼 계약: `supabase.auth.signUp({ email, password, options: { data: { signup_app: '<app_id>', full_name } } })`. `signup_app`이 없으면 엔타이틀먼트가 생기지 않는다(`CORE_SPEC.md` 2.2). 로그인 수단의 단계(Mock → Google → 카카오·네이버)와 `packages/core-auth/providers` 계약은 20장과 `AUTH_ROADMAP.md`.
 
 ## 3. org
 
@@ -507,3 +507,29 @@ export interface AffiliateApi {
 
 공통 규칙: 브라우저에서 Dify, FastAPI, LLM, 음성 제공자를 직접 호출하지 않는다. 서명 토큰은 EdDSA다. 개인키 `AI_TOKEN_PRIVATE_KEY`는 제품 Next.js만, FastAPI·음성 서버는 공개키(`AI_TOKEN_JWKS_URL`)만 갖는다(`SECURITY_BASELINE.md` 16장).
 
+
+## 20. auth providers: 로그인 단계 (2026-10-14 추가, 확정 결정 22)
+
+| 항목 | 내용 |
+|---|---|
+| 소유 / 소비 | _platform-core / 전 제품(제품 앱 안 위치는 `src/lib/auth/`) |
+| 정본 | `AUTH_ROADMAP.md`(단계, 게이트, 가드, 콜백, 페르소나, 제품 매트릭스) |
+| 코어 SQL | 변경 없음(`profiles`, `handle_new_user`, `bootstrap_app_for_org`, `session_context`). 네이버 브리지 경로를 택할 때만 `staged/0010_core_auth_identity_links.sql` |
+| 실패 동작 | `AUTH_MODE=mock`인데 원격 Supabase를 가리키거나 배포 플랫폼이면 기동 실패. live 모드에서 로그인 수단 0개면 기동 실패. 콜백 실패는 `/login?error=callback`(토큰·코드 로그 금지) |
+
+```ts
+// packages/core-auth/providers — 계약 예시(구현 파일 아님)
+export type AuthMode = 'mock' | 'live'
+export type LoginProvider = 'google' | 'kakao' | 'naver' | 'email'
+export function getAuthConfig(): { mode: AuthMode; providers: LoginProvider[]; naverPath?: 'supabase_custom' | 'bridge' }
+export function isMockAuthAllowed(): boolean        // AUTH_MODE=mock && Supabase 호스트가 루프백 && VERCEL_ENV·RAILWAY_ENVIRONMENT 없음
+export function listLoginOptions(appId: string): Array<{ kind: 'mock'; personas: Array<{ key: string; label: string }> } | { kind: 'oauth'; provider: 'google' | 'kakao' | 'naver' } | { kind: 'email' }>
+export async function finishLogin(appId: string, next: string | null): Promise<string>  // session_context → (OAuth 첫 로그인) bootstrap_app_for_org → 상태 분기 → next 화이트리스트
+```
+
+| 단계 | 제품이 쓰는 경로 |
+|---|---|
+| A | `POST /api/dev/login { persona }`(로컬 전용, 판정이 거짓이면 404), `scripts/dev/seed-users.mjs --app <app_id>` |
+| B | `signInWithOAuth({ provider: 'google' })` → `/auth/callback`(`finishLogin`) |
+| C1 | `signInWithOAuth({ provider: 'kakao' })` → 같은 콜백 |
+| C2 | `signInWithOAuth({ provider: 'custom:naver' })` → 같은 콜백, 또는 브리지 `/auth/naver/start`·`/auth/naver/callback` |

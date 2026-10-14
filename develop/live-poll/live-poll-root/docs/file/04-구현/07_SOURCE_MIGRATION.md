@@ -96,3 +96,15 @@ AI 관련 원본 자산(2026-10-13 점검): 없다. 리뷰 1장 표가 AI 항목
 | 2 | 키 재발급: 원본에 키가 없어 해당 없음 |
 | 3 | zip 중복: 없음 |
 | 4 | 원본 PRD/CLAUDE의 내용은 01~07장에 흡수됐으므로 앱 저장소에는 복사하지 않는다 |
+
+## 6. 인증 단계 복사 금지 결함 (2026-10-14 추가, 확정 결정 22)
+
+원본 `Slido_Project`에는 코드가 없어 아래 패턴의 원본 사본은 없다. 다른 제품 원본에서 확인된 결함이라 재사용 자산(basic-master-module, Nomad-BlogStudio 클라이언트 등)을 옮길 때 섞여 들어오지 않게 4절 표에 더한다. 허용되는 Mock은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT, 배포 환경 404)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`lib/mock-auth.ts`, 쿠키에 역할·플랜을 적어 권한 판정) | `D:/WorkSpace/platform/docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88` | 권한 위조, 프로덕션 노출 | AUTH_ROADMAP 2장 Mock(`POST /api/dev/login`, `isMockAuthAllowed()`), 권한은 `session_context('poll')`만 |
+| `mock-login` 라우트, `nomad_role`·`nomad_plan` 쿠키 | `D:/WorkSpace/platform/docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96` | 쿠키 조작으로 셀프 업그레이드 | 같음. CI 금지 문자열(06장 LP-06-003) |
+| 콜백 `next` 무검증 리다이렉트 | `docs/file/03-설계/공용코어/SECURITY_BASELINE.md` 17장 | 오픈 리다이렉트로 피싱 | `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin은 `NEXT_PUBLIC_APP_URL` 고정(AUTH_ROADMAP 3.2절 5번, 04장 8절) |
+| `dev-user`·고정 사용자 id 우회, 원격 DB에 개발 계정 생성 | `docs/file/03-설계/공용코어/SECURITY_BASELINE.md` 14장, 17장 | 인증 우회, 운영 데이터 오염 | 시드 스크립트는 루프백 Supabase만(원격이면 exit 1) |
+| 청중·오버레이 화면에 로그인 요구 또는 Supabase 익명 로그인으로 Mock 대체 | 이 기획(01장 D2, 3절 "Supabase 익명 로그인") | 청중 무로그인 설계 위반, 익명 사용자마다 조직 생성 | 청중은 참가자 토큰, 오버레이는 키. 인증 단계와 무관하게 유지 |

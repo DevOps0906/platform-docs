@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 작업 ID `TN-06-###`. 모델 기준은 `docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 1장(Fable: 결제·권한·RLS·데이터 모델, Opus: 기능·API·테스트 설계, Sonnet: UI·문서, Haiku: 보일러플레이트·문구·반복 점검).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 19개(TN-06-041~059)를 뒤에 붙였다. 기존 ID는 바꾸지 않았다. 내용이 바뀐 기존 작업은 014·015·035(그래프 호출로 전환), 034(디자인 시스템 2단계), 023(스케줄 추가), 037·004(소유 경계 안내), 001·009·020·028·030·033(수용 기준 보강)이고, 화면 작업 009·013·017·021·024·026·027·032의 선행에 TN-06-043을 더했고(017은 선행에서 014를 빼고 응답 스키마 픽스처로 개발한 뒤 030 E2E에서 연동), 030의 선행에 048·055를 더했다. 작업 수 59개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 이전 40개가 이미 상한이었고, AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘었다. 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 19개(TN-06-041~059)를 뒤에 붙였다. 기존 ID는 바꾸지 않았다. 내용이 바뀐 기존 작업은 014·015·035(그래프 호출로 전환), 034(디자인 시스템 2단계), 023(스케줄 추가), 037·004(소유 경계 안내), 001·009·020·028·030·033(수용 기준 보강)이고, 화면 작업 009·013·017·021·024·026·027·032의 선행에 TN-06-043을 더했고(017은 선행에서 014를 빼고 응답 스키마 픽스처로 개발한 뒤 030 E2E에서 연동), 030의 선행에 048·055를 더했다. 작업 수 59개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다(2026-10-13 2차 보강 7개로 66개, 2026-10-14 인증 단계 작업 3개(TN-06-067~069, 8절)로 69개 = 모델 68 + 사람 1). 이전 40개가 이미 상한이었고, AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘었다. 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
 
 ## 1. 원칙과 소유 경계
 
@@ -30,7 +30,7 @@
 | TN-06-001 | 모듈러 조각 확정, 로컬 적용, 타입 생성, `[api].schemas`에 toon 추가 | `supabase/migrations/2000_toon.sql`, `supabase/config.toml`, `packages/toon-doc/src/db-types.ts` | 없음 | P0 | M | Fable | `supabase db reset` 성공, SQL 체커 OK, `gen types --schema core,toon` 결과 커밋, 라우팅 기본값 14행(`2000_toon.sql` 10절) 적용 확인 | 리뷰 5장 #2, 05장 |
 | TN-06-002 | RLS/권한 회귀 테스트 자동화(05장 4.1절 68항목 + Storage 정책) | `supabase/tests/toon/` | TN-06-001 | P0 | M | Fable | CI에서 모듈러·모놀리스 둘 다 68항목 이상 통과, 실패 시 빌드 실패 | `SECURITY_BASELINE.md:238-263`, 리뷰 5장 #12 |
 | TN-06-003 | 조각 → 모놀리스 변환 스크립트(DB_CONVENTIONS 12장 규칙) | `tools/sql-mono/` | 없음 | P0 | S | Haiku | 스크립트 결과가 `supabase/monolith/migrations/0002_toon_domain.sql`과 바이트 단위로 같다 | `DB_CONVENTIONS.md:264` |
-| TN-06-004 | 앱 골격: Next 16, core-db/core-auth 연결, `proxy.ts` 라우트 보호, shadcn 설치, 로그인/가입 서버 액션 뼈대 | `apps/toon/package.json`, `next.config.ts`, `tsconfig.json`, `src/app/layout.tsx`, `src/proxy.ts`, `src/components/ui/`(shadcn 설치 산출물만, 재스타일은 TN-06-034) | 없음 | P0 | M | Sonnet | 비로그인으로 `/app` 접근 시 `/login` 리다이렉트, 프로필 없는 세션은 로그아웃, `tsc` 0 오류 | 리뷰 5장 #3, `SECURITY_BASELINE.md:178-188` |
+| TN-06-004 | 앱 골격: Next 16, core-db/core-auth 연결, `proxy.ts` 라우트 보호, shadcn 설치. 인증 Stage A(2026-10-14, 확정 결정 22): 인증 모듈 경계 `src/lib/auth/`(`getAuthConfig` env zod, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`), Mock 로그인 `POST /api/dev/login`, 레이아웃 상단 배지 `MOCK AUTH · 로컬 전용`, 시드 `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.toon.mjs`(05장 10절), 가드(기동 검증, 배포 빌드 실패). 이메일 가입·비밀번호 재설정 화면과 Google·`/auth/callback`은 B(TN-06-067)로 옮겼다 | `apps/toon/package.json`, `next.config.ts`, `tsconfig.json`, `src/app/layout.tsx`, `src/proxy.ts`, `src/components/ui/`(shadcn 설치 산출물만, 재스타일은 TN-06-034), `src/lib/auth/`(`oauth/`는 067~069), `src/app/api/dev/login/`, `scripts/dev/` | 없음 | P0 | M | Sonnet | 비로그인으로 `/app` 접근 시 `/login` 리다이렉트, 프로필 없는 세션은 로그아웃, `tsc` 0 오류. Mock 기준(W0 끝 `supabase db reset` 뒤 확인): `owner` 페르소나 로그인 → `session_context('toon')` `entitled=true`·plan `free`·잔액 10, `outsider`로 owner 조직 작품 조회 0행, `no_app`(모듈러) 로그인 → `finishLogin`이 부트스트랩 1회, 시드 2회 실행 뒤 원장 행 수 같음, `SUPABASE_URL`이 원격이면 시드 exit 1, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404, `next=//evil.com` → `/app`, `src/lib/auth/` 밖 `AUTH_MODE` 참조 0 | 리뷰 5장 #3, `SECURITY_BASELINE.md:178-188`, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2·3장 |
 | TN-06-005 | CutDoc zod 판별 유니온, 버전 마이그레이션, 콘티 스크립트 스키마 | `packages/toon-doc/src/schema/` | 없음 | P0 | M | Fable | 02장 2.2절, 04장 4.1절 스키마 그대로. 잘못된 kind, 61개 레이어, 256KB 초과 문서가 거부된다 | 리뷰 #3, #4, 리뷰 5장 #1 |
 | TN-06-006 | 공용 렌더러 `renderCut`(브라우저 fabric / `fabric/node`), 글꼴 로딩, 워터마크·AI 표기 오버레이 | `packages/toon-doc/src/render/`, `packages/toon-doc/tests/render/` | TN-06-005 | P0 | L | Opus | 같은 문서를 두 환경에서 렌더한 골든 이미지 차이 0.5% 이하(샘플 10컷) | 02장 2절, 7절 위험 |
 | TN-06-007 | editorStore: 문서 모델, 커맨드, immer patch 히스토리 100단계, 디바운스 자동 저장(`save_cut_doc`), 충돌 처리 | `apps/toon/src/stores/` | TN-06-005 | P0 | L | Opus | Undo 100회로 초기 상태 복귀, 두 탭 동시 편집 시 `TN409` 배너 | 리뷰 5장 #4, TN-F-005, TN-F-015 |
@@ -53,11 +53,11 @@
 | TN-06-024 | 결제/요금 화면(플랜, 팩, 원장, 해지 예약) | `apps/toon/src/app/app/billing/`, `apps/toon/src/app/(marketing)/pricing/` | TN-06-022, TN-06-043 | P0 | M | Sonnet | 01장 4절 값과 화면 값 일치, "무제한" 문구 없음 | 리뷰 5장 #13 |
 | TN-06-025 | 결제 E2E(Toss 테스트 키): 구독 시작 → 워터마크 해제 → 해지 예약 → 기간 말 free 복귀, 크레딧팩 구매 | `tests/e2e/billing/` | TN-06-022, TN-06-023, TN-06-024 | P0 | M | Opus | 시나리오 5개 통과, 원장 drift 0 | `DOC_TEMPLATE.md` 2.7절 필수 |
 | TN-06-026 | 랜딩(세로 스트립 히어로, 주석 전환, 요금 표) | `apps/toon/src/app/(marketing)/(home)/`, `apps/toon/src/components/landing/` | TN-06-043 | P1 | M | Sonnet | `DESIGN_PRINCIPLES.md` 7단계 체크리스트 12항목 통과, 01장 6.5절 금지 문구 0건, 히어로 자리에 TN-06-056 컴포넌트 장착(1줄 요청), 정지 이미지로도 레이아웃 이동 0 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/file/03-설계/디자인/REFERENCES.md:16-23`). | 리뷰 5장 #13, 03장 4절 |
-| TN-06-027 | 로그인·가입(연령 확인, `signup_app`) 화면, 온보딩 템플릿 3종 | `apps/toon/src/app/(auth)/`, `apps/toon/src/app/app/onboarding/`, `packages/toon-doc/src/templates/` | TN-06-004, TN-06-016, TN-06-043 | P0 | M | Sonnet | 가입 후 템플릿 선택까지 3클릭, 템플릿은 무료 에셋만 | 리뷰 5장 #13, TN-F-006 |
+| TN-06-027 | Stage A 로그인 화면(2026-10-14): `/login` 개발용 패널(페르소나 버튼, 현재 페르소나, 로그아웃, 제공자 버튼 장착 지점), 온보딩 템플릿 3종. 이메일 가입(연령 확인, `signup_app`)·비밀번호 재설정 화면은 TN-06-067(B)로 옮겼다 | `apps/toon/src/app/(auth)/login/`, `apps/toon/src/app/app/onboarding/`, `packages/toon-doc/src/templates/` | TN-06-004, TN-06-016, TN-06-043 | P0 | M | Sonnet | Mock `owner` 로그인 후 템플릿 선택까지 3클릭, 템플릿은 무료 에셋만, `isMockAuthAllowed()`가 거짓이면 패널 코드 미렌더(서버 컴포넌트 분기), 패널 페르소나 목록이 05장 10절과 같다 | 리뷰 5장 #13, TN-F-006, `AUTH_ROADMAP.md` 2.1절 |
 | TN-06-028 | 약관, 처리방침, AI 이용 고지, 에셋 이용 허락 페이지 문구 | `apps/toon/src/app/(legal)/` | TN-06-004 | P0 | S | Haiku | 01장 6.1~6.3절 항목 전부 포함, 법무 검토 체크박스, AI 조항 3종(국외 이전·음성 처리·생성형 AI 사용 고지, 01장 6.7절) 포함 | 01장 6절 |
 | TN-06-029 | 에디터 단위/통합 테스트: 커맨드·히스토리, 스키마 직렬화 왕복, 레이아웃 함수 | `apps/toon/tests/editor/`, `packages/toon-doc/tests/schema/` | TN-06-007, TN-06-010 | P0 | M | Opus | 커버리지 80% 이상(stores, schema, layout) | 리뷰 5장 #12 |
-| TN-06-030 | E2E 핵심 플로우: 가입 → 템플릿 → 편집 → PNG 내보내기, 콘티 → 적용 → MP4 | `tests/e2e/flows/` | TN-06-017, TN-06-020, TN-06-021, TN-06-027, TN-06-048, TN-06-055 | P0 | M | Opus | 두 시나리오가 CI에서 통과, K1 측정 로그 출력, 시나리오에 설정 위키 만들기 → 콘티 일관성 표시 → 적용, MP4 음성 포함 내보내기(모의 제공자)를 포함 | 01장 7절 |
-| TN-06-031 | 린트·타입 정리, 금지 문구 검사 스크립트(01장 6.5절 사전) | `tools/copy-lint/`, 루트 `eslint.config.mjs` | TN-06-026 | P1 | S | Haiku | 금지 문구가 포함된 문자열이 있으면 CI 실패 | 01장 6.5절 |
+| TN-06-030 | E2E 핵심 플로우: 가입 → 템플릿 → 편집 → PNG 내보내기, 콘티 → 적용 → MP4 | `tests/e2e/flows/` | TN-06-017, TN-06-020, TN-06-021, TN-06-027, TN-06-048, TN-06-055 | P0 | M | Opus | 두 시나리오가 CI에서 통과, K1 측정 로그 출력, 시나리오에 설정 위키 만들기 → 콘티 일관성 표시 → 적용, MP4 음성 포함 내보내기(모의 제공자)를 포함. Mock 페르소나 storageState로 실행(Playwright `globalSetup`이 `/api/dev/login`으로 `owner`·`pro_owner`·`viewer`·`outsider`·`no_app` 상태 저장, 가입 단계는 `no_app` 첫 진입 부트스트랩으로 대체). `outsider` 교차 조직 접근 거부, `viewer` 편집 비활성 시나리오 포함. TN-06-067 뒤에도 같은 Mock E2E가 녹색(B-5) | 01장 7절 |
+| TN-06-031 | 린트·타입 정리, 금지 문구 검사 스크립트(01장 6.5절 사전), 인증 금지 패턴 검사(2026-10-14) | `tools/copy-lint/`, 루트 `eslint.config.mjs` | TN-06-026 | P1 | S | Haiku | 금지 문구가 포함된 문자열이 있으면 CI 실패. CI 금지 문자열(`AUTH_ROADMAP.md` 9장): 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈(`src/lib/auth/`, 로그인 화면, `/auth/callback`, `/api/dev/login`) 밖의 `AUTH_MODE` 참조가 있으면 CI 실패(G1 5번 확인 자료) | 01장 6.5절 |
 | TN-06-032 | 내 에셋 화면(AI 배지, 용량, 보관) | `apps/toon/src/app/app/library/` | TN-06-015, TN-06-043 | P1 | S | Sonnet | 보관 후 목록에서 사라짐(`archive_user_asset`) | TN-F-045 |
 | TN-06-033 | 워커 골격(`runWorker`, 큐 2개, 동시성), 환경변수 검증(웹·워커) | `services/toon-worker/src/main.ts`, `services/toon-worker/src/registry.ts`, `services/toon-worker/src/env/`, `apps/toon/src/lib/env/` | 없음 | P0 | S | Haiku | 필수 변수 누락 시 기동 실패, FFmpeg·글꼴 확인 실패 시 기동 실패, `AI_SERVICE_URL`·`TOON_WORKER_INTERNAL_KEY` 누락 시 기동 실패, LLM·ElevenLabs 키가 워커 환경에 있으면 기동 거부 | 02장 8절 |
 | TN-06-034 | 디자인 시스템 2단계: 03장 4.3절 토큰 + Tailwind CSS v4 `@theme`으로 `tokens.css` 확정, 기본 컴포넌트·배리언트(03장 3.7절) 구현, `/dev/components`, 글꼴 4종 파일과 OFL 확인 | `apps/toon/src/styles/`, `apps/toon/src/components/ui/`(TN-06-004 설치 산출물을 재스타일), `apps/toon/src/app/dev/components/`, `assets/fonts/` | TN-06-004, TN-06-041 | P0 | M | Sonnet | 토큰 6색·서체 역할이 `@theme` CSS 변수로만 쓰이고 hex 직접 사용 0(린트), `tailwind.config.js` 0, 03장 3.7절 기본 컴포넌트가 `/dev/components`에 라이트/다크로 나온다, 글꼴 라이선스 파일 동봉 | 03장 3.7·4절, `DESIGN_SYSTEM.md` 4장 2단계 |
@@ -94,7 +94,7 @@
 | TN-06-065 | (Phase 2) SNS 직접 업로드: 코어 공용 업로더 소비, 네이버 클립 위험 고지·동의 화면, 협찬 회차 제목·해시태그 문구 강제 | `apps/toon/src/app/api/uploads/`, `apps/toon/src/components/upload/` | 6절 요청 13, TN-06-064 | P1 | L | Opus | 동의 없는 `naver_clip` 업로드 잡 0, 협찬 회차 업로드 제목 첫 줄 문구 100% | 01장 TN-F-080, D18 |
 | TN-06-066 | (Phase 2) 숏툰 모션·자막·효과음 | `services/toon-worker/src/media-motion/`, `packages/toon-doc/src/motion/` | TN-06-020, TN-06-055 | P1 | L | Opus | 모션 프리셋 3종 골든 영상, 자막 타이밍 오차 100ms 이하, 60초 상한 유지 | 01장 TN-F-081 |
 
-P0 작업과 테스트 대응: DB(001, 005) → 002·029, 렌더(006, 019, 020) → 006 골든·030, 에디터(007, 008, 009, 010) → 029·030, API(011, 014, 015, 018, 037) → 002·030·037 단위 테스트, 결제(022, 023, 024) → 025, AI·음성(044, 045, 046, 047, 049, 050, 051, 053, 054, 055) → 057·030(각 작업의 평가셋·단위 테스트 포함), 디자인 시스템 2단계(034) → 042 사람 검토.
+P0 작업과 테스트 대응: DB(001, 005) → 002·029, 렌더(006, 019, 020) → 006 골든·030, 에디터(007, 008, 009, 010) → 029·030, API(011, 014, 015, 018, 037) → 002·030·037 단위 테스트, 결제(022, 023, 024) → 025, AI·음성(044, 045, 046, 047, 049, 050, 051, 053, 054, 055) → 057·030(각 작업의 평가셋·단위 테스트 포함), 디자인 시스템 2단계(034) → 042 사람 검토, 인증(004 Stage A, 067 Stage B) → 030(Mock 페르소나 storageState)·031(금지 패턴)·067 단위 테스트와 수동 점검표(B-5).
 
 ## 3. 웨이브(병렬 실행 순서)
 
@@ -108,20 +108,20 @@ P0 작업과 테스트 대응: DB(001, 005) → 002·029, 렌더(006, 019, 020) 
 | W4 | 020, 025, 029, 031, 047, 049, 050, 053 | 8 | W3 완료(020은 019 완료) | MP4, 결제 E2E, 에디터 테스트, 린트, 설정 위키 운영, 콘티 그래프, 보조 그래프, 음성 대화 |
 | W5 | 014, 015, 017, 035, 048, 051, 054, 055 | 8 | W4 완료 | AI 콘티·배경·대사 API(그래프 연결), 화면(콘티), 설정 위키 화면, Dify 채팅, 대사 미리듣기, MP4 음성 |
 | W5-B | 060(W0에서 시작 가능), 061, 062, 063, 064 | 5 | 060은 001·002 뒤, 나머지는 W5 완료 | 2026-10-13 2차 보강: 프리셋·협찬 DB, 로그라인, 프리셋 화면, 브랜디드 툰, 표시 렌더 |
-| W6 | 030, 032, 057 | 3 | W5·W5-B 완료 | 핵심 E2E(협찬 회차 내보내기 포함), 내 에셋, AI 보안·라우팅 회귀 → MVP 완료 조건 |
-| W7 | 038 → 039, 040, 065, 066 | 4(039는 038 뒤) | MVP 출시 후 | Phase 2·3(직접 업로드·숏툰 모션 포함) |
+| W6 | 067(G1 통과 후 먼저), 030, 032, 057 | 4 | W5·W5-B 완료. 067은 G1(8절) | Stage B Google·이메일 로그인(공개 베타 필수), 핵심 E2E(협찬 회차 내보내기 포함), 내 에셋, AI 보안·라우팅 회귀 → MVP 완료 조건 |
+| W7 | 038 → 039, 040, 065, 066, 068·069(G2 통과 후) | 6(039는 038 뒤, 068·069는 G2 뒤) | MVP 출시 후 | Phase 2·3(직접 업로드·숏툰 모션 포함), 카카오·네이버 로그인 |
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 9 (001, 002, 005, 022, 023, 038, 044, 045, 057) | 15.5% | 20 / 116 = 17.2% |
-| Opus | 27 (006, 007, 008, 010, 011, 012, 014, 015, 016, 018, 019, 020, 025, 029, 030, 035, 037, 039, 043, 046, 047, 049, 050, 051, 053, 054, 055) | 46.6% | 61 / 116 = 52.6% |
-| Sonnet | 18 (004, 009, 013, 017, 021, 024, 026, 027, 032, 034, 036, 040, 041, 048, 052, 056, 058, 059) | 31.0% | 31 / 116 = 26.7% |
-| Haiku | 4 (003, 028, 031, 033) | 6.9% | 4 / 116 = 3.4% |
-| 합계 | 58 | 100% | 116 |
+| Fable | 12 (001, 002, 005, 022, 023, 038, 044, 045, 057, 060, 067, 069) | 17.6% | 25 / 135 = 18.5% |
+| Opus | 33 (006, 007, 008, 010, 011, 012, 014, 015, 016, 018, 019, 020, 025, 029, 030, 035, 037, 039, 043, 046, 047, 049, 050, 051, 053, 054, 055, 061, 063, 064, 065, 066, 068) | 48.5% | 74 / 135 = 54.8% |
+| Sonnet | 19 (004, 009, 013, 017, 021, 024, 026, 027, 032, 034, 036, 040, 041, 048, 052, 056, 058, 059, 062) | 27.9% | 32 / 135 = 23.7% |
+| Haiku | 4 (003, 028, 031, 033) | 5.9% | 4 / 135 = 3.0% |
+| 합계 | 68 | 100%(반올림 합 99.9%) | 135 |
 
-비율은 모델 작업 58개 기준이다. 사람 작업 1개(TN-06-042, M)는 비율에서 뺐다. 2026-10-13 이전(40개)은 Fable 15.0%, Opus 45.0%, Sonnet 30.0%, Haiku 10.0%였다. 합계 59개 = 모델 58 + 사람 1.
+비율은 모델 작업 68개 기준이다(2026-10-14 재계산: 2차 보강 060~066이 이 표에 빠져 있던 것을 함께 반영하고 인증 단계 067~069를 더했다). 사람 작업 1개(TN-06-042, M)는 비율에서 뺐다. 2026-10-13 이전(40개)은 Fable 15.0%, Opus 45.0%, Sonnet 30.0%, Haiku 10.0%였고, 2026-10-13 1차(58개)는 Fable 15.5%, Opus 46.6%, Sonnet 31.0%, Haiku 6.9%(가중 116)였다. 합계 69개 = 모델 68 + 사람 1.
 
 Fable은 이전 항목(결제, RLS, 데이터 모델)에 더해 AI 보안 경계(서명 토큰 검증 044, AI 게이트의 선차감·정산·동의 045, AI 회귀 057)를 맡는다. 그래프·RAG·위키·Dify·음성 구현은 Opus, 채팅 시트·설정 위키 화면·3D 히어로·규칙 사전·온보딩 화면은 Sonnet이다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md:253`).
 
@@ -178,4 +178,46 @@ Fable은 이전 항목(결제, RLS, 데이터 모델)에 더해 AI 보안 경계
 | 렌더 일치 | 골든 이미지 차이 0.5% 이하 |
 | AI·음성 | `pytest apps/api` 통과, TN-06-057 녹색, 콘티 그래프 평가셋 20개를 상용·오픈소스 경로 모두 통과, 채팅 평가셋 30문항 금지 문구 0, 영상 음성 대체 금지 테스트 통과, 정산 크론 뒤 `settled_at is null` 0 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준, 디자인 시스템 4단계(TN-06-043) 완료, `tailwind.config.js`·hex 하드코딩 0 |
-| 작업 | W0~W6 작업(001~037, 041~064) 전부 완료. W7(038~040, 065, 066)은 MVP 범위 밖 |
+| 작업 | W0~W6 작업(001~037, 041~064, 067) 전부 완료. 067은 G1 통과 후(공개 베타 필수, B-1~B-6). W7(038~040, 065, 066, 068, 069)은 MVP 범위 밖(068·069는 G2 후) |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 9장 규칙이다. Stage A는 기존 작업 TN-06-004(인증 모듈 경계, Mock 로그인, 시드, 가드, `finishLogin`)와 TN-06-027(개발용 패널)의 범위를 바꿔 처리했고(2절 해당 행), W0~W5 작업은 시드 스크립트가 생기기 전(W0 안)에는 SQL·단위 테스트로 검증한다. 새 작업은 아래 3개이고 ID는 기존 최대 TN-06-066 다음부터다. toon은 AUTH_ROADMAP 8장에서 C1·C2 모두 P1이다.
+
+### 8.1 작업 목록 (2절과 같은 열)
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| TN-06-067 | Stage B: Google OAuth 전환 + 이메일 가입·메일 인증·비밀번호 재설정 화면 + 온보딩 약관 단계. 로그인 화면 제공자 버튼(`listLoginOptions`), `/auth/callback`(`finishLogin` 완성과 단위 테스트), `/onboarding/terms`(약관·만 14세 확인, 03장 7.2절), 배포 env(`AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`), 로컬 `supabase/config.toml` B 설정 요청(DB 소유 Fable 작업에 PR 설명으로), 배포 체크리스트 | `apps/toon/src/app/(auth)/signup/`, `(auth)/reset/`, `(auth)/auth/callback/`, `(auth)/login/providers/`(027 소유 `(auth)/login/` 중 장착 지점 하위만, 027 완료 후), `apps/toon/src/app/onboarding/terms/`, `apps/toon/src/lib/auth/oauth/`(`kakao.ts`, `naver.ts`는 068·069), `src/lib/auth/`의 콜백 연결부(004에서 이어 받음, W0 완료 뒤라 동시 쓰기 없음), `docs/toon-factory/ops/auth-checklist.md`(제안). 약관 미동의 사용자의 `/app/*` → `/onboarding/terms` 리다이렉트와 `proxy.ts` 공개 경로 `/auth/callback`은 004 파일(`src/proxy.ts`)에 1줄 요청 | G1(AUTH_ROADMAP 4장), TN-06-004, TN-06-027, TN-06-028 | P0 | M | Fable | AUTH_ROADMAP 5.3절 그대로: B-1 새 Google 계정 첫 로그인 → `session_context('toon')` `entitled=true`, plan `free`, 잔액 10이 1회만 지급(재로그인 3회 뒤 원장 행 수 같음). B-2 `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` → `/app`. B-3 `code` 없음·재사용·만료 → `/login?error=callback`, 서버 오류 로그에 토큰·코드 없음. B-4 배포 빌드(`VERCEL_ENV=production`)에서 `/api/dev/login` 404, 로그인 화면에 개발용 패널 없음, `AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(TN-06-030) 계속 녹색, Google 실로그인은 사람이 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)로 확인해 task `log.md`에 기록. B-6 운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS` 값이 배포 체크리스트와 일치. toon 추가: OAuth 첫 로그인은 `/onboarding/terms` → `/onboarding/ai` → `/app/onboarding` 순서, 약관 미동의 상태로 `/app/*` 진입 시 `/onboarding/terms`, 이메일 가입자는 약관 단계 건너뜀 | `AUTH_ROADMAP.md` 5장, 9장, 01장 TN-F-040·8.1절 |
+| TN-06-068 | Stage C1: 카카오 로그인(Supabase 기본 제공자 `kakao`), 설정 → 로그인 방법(카카오 연결·해제, 화면 구역 공용 부분 포함), 01장 D22 반영 | `apps/toon/src/lib/auth/oauth/kakao.ts`, `apps/toon/src/app/app/settings/login-methods/`(로그인 방법 구역. `/app/settings` 페이지 장착은 그 페이지 소유 작업에 1줄 요청), `docs/toon-factory/ops/auth-checklist.md` 카카오 절(제안). 로그인 화면 카카오 버튼은 067의 `listLoginOptions` 기반 렌더라 `AUTH_PROVIDERS` 값만 바꾼다(버튼 컴포넌트 수정이 필요하면 067 파일에 1줄 요청) | G2(AUTH_ROADMAP 6장), TN-06-067 | P1 | S | Opus | AUTH_ROADMAP 7.1.3절 그대로: C1-1 새 카카오 계정 첫 로그인 → B-1과 같은 결과(free, 10크레딧 1회). C1-2 비즈 앱(a)이면 Google로 가입한 같은 이메일 사용자가 카카오로 로그인 → 같은 `user_id`(자동 연결은 제공자 이메일 인증이 확인된 경우만, 미확인이면 7.3절 수동 연결). C1-3 (b)면 이메일 없는 사용자가 결제 전 연락 이메일 입력 화면을 본다. C1-4 표시 이름은 카카오 닉네임, 없으면 `user` 규칙. C1-5 카카오 버튼은 카카오 디자인 가이드의 색·문구(미확인: 최신판 확인 후 반영). 로그인 방법 화면: 마지막 수단 해제 불가, 감사 `auth.identity_link`·`auth.identity_unlink` | `AUTH_ROADMAP.md` 7.1·7.3절, 01장 D22 |
+| TN-06-069 | Stage C2: 네이버 로그인. 첫 단계 스파이크(0.5일, `custom:naver` 등록 스크립트 `scripts/auth/register-naver-provider.mjs`) → 경로 결정(01장 D23) → `supabase_custom` 또는 서버 브리지(`/auth/naver/start`·`/auth/naver/callback`), 로그인 방법 화면의 네이버 연결, 검수 신청 캡처 | `apps/toon/src/lib/auth/oauth/naver.ts`, `apps/toon/src/app/(auth)/auth/naver/`(브리지일 때만), `scripts/auth/`. 로그인 방법 화면의 네이버 행은 068 파일에 1줄 요청 | G2, TN-06-067, TN-06-068(로그인 방법 화면 공용 부분) | P1 | M | Fable | AUTH_ROADMAP 7.2.4절 그대로: C2-1 스파이크 결과가 `[DECISION]`으로 기록되고 `NAVER_AUTH_PATH`가 그 값. C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과. C2-3 같은 네이버 계정 재로그인 5회 → 같은 `user_id`, 사용자 수 증가 0. C2-4 (브리지) state 변조·재사용·쿠키 없음 → 거부, 세션 미생성, 다른 브라우저에서 받은 콜백 URL 재생 → 거부. C2-5 (브리지) 같은 이메일의 Google 가입자가 네이버로 처음 로그인 → `email_in_use` 안내, 새 사용자 0. C2-6 네이버 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver`를 넣지 않는다. 브리지면 8.3절 코어 요청 적용 뒤 착수 | `AUTH_ROADMAP.md` 7.2·7.3절, 01장 D23 |
+
+### 8.2 게이트와 웨이브
+
+| 작업 | 진입 게이트 | 웨이브 | 판정 |
+|---|---|---|---|
+| TN-06-004, 027(Stage A) | 없음 | W0(004), W3(027) 그대로 | - |
+| TN-06-067(Stage B) | G1: (1) 2절 MVP P0 기능 작업 완료(067과 W6 통합 작업 030·032·057 제외), (2) TN-06-030 핵심 E2E가 Mock storageState로 녹색, (3) TN-06-002·060 RLS 스모크 전 항목 + `outsider` 교차 테넌트 거부, (4) TN-06-025 결제 E2E 녹색(Toss 테스트 키), (5) TN-06-031 CI에서 인증 모듈 밖 단계 분기 0건, (6) Google Cloud 프로젝트·동의 화면·웹 클라이언트 ID·운영 Supabase 준비 | W6의 맨 앞(030·032·057은 067 완료를 기다리지 않고 Mock으로 먼저 녹색을 만든 뒤 067 완료 후 B-5로 재확인) | 사람(대표님)이 판정해 task `log.md`에 `[DECISION] G1 통과` |
+| TN-06-068, 069(Stage C) | G2: Google 실사용 공개 베타 2주(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안), 신규 가입자 중 `entitled=false` 0(open 앱), 카카오 앱 생성(이메일 필요 시 비즈 앱 전환), 네이버 애플리케이션 등록·검수 자료·스파이크 기록 | W7, "G2 통과 후". 068과 069는 병렬 가능(네이버 검수 신청은 G2 직후) | 사람이 판정해 `[DECISION] G2 통과` |
+
+G1 1번 조건의 "MVP P0 기능 작업"과 W6 통합 작업의 관계: 030(E2E)은 G1 2번의 확인 수단이므로 G1 전에 Mock으로 먼저 녹색이어야 한다. 그래서 W6 안에서도 030의 Mock 녹색 → G1 판정 → 067 → 030 재확인(B-5) 순서다.
+
+### 8.3 불일치 기록과 코어 요청
+
+| # | 내용 | 처리 |
+|---|---|---|
+| 1 | 4절 비율 표가 2026-10-13 2차 보강(TN-06-060~066)을 반영하지 않고 58개 기준으로 남아 있었다 | 2026-10-14에 060~066과 067~069를 함께 넣어 68개(가중 135)로 다시 계산했다(4절) |
+| 2 | 01장 2절 범위 표에 로그인 행이 없다 | 줄 번호 보존을 위해 표에 행을 넣지 않고 2절 머리말 한 줄 + 01장 8.1절 범위 표로 처리 |
+| 3 | 이메일 가입이 TN-F-040(MVP)에 있지만 Stage A에서는 화면을 만들지 않는다 | AUTH_ROADMAP 2.5절대로 B(TN-06-067)로 옮김. "이메일 인증 전 제한" 규칙이 생기면 `email_confirmed_at` 서버 가드는 A에서 먼저 만든다(현재 toon에 해당 규칙 없음) |
+| 4 | 시드 `pro_owner`의 월 크레딧: 가입과 Pro 승인이 같은 날이면 월 지급 멱등 키가 같아 300 지급이 건너뛰어질 수 있다(05장 10절) | 확인 필요(코드 읽기 기준, 실행 미확인). TN-06-004 시드 실행에서 드러나면 코어 요청 15로 올린다 |
+| 5 | 코어 요청(6절에 이어 번호) 14: 네이버 브리지 경로 채택 시 `D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`을 코어에 적용(모듈러 0010, 모놀리스 다음 번호) | 01장 D23 결과가 브리지일 때만. 급함: TN-06-069 착수 전 |
+
+### 8.4 기존 문서와 달라진 점
+
+| 항목 | 이전 | 지금 | 반영 |
+|---|---|---|---|
+| TN-06-004 범위 | 앱 골격 + 로그인/가입 서버 액션 뼈대 | 앱 골격 + Stage A(인증 모듈 경계, `/api/dev/login`, 시드 스크립트, 가드, `finishLogin`). Google·`/auth/callback`·이메일 화면은 067 | 2절 004 행 |
+| TN-06-027 범위 | `(auth)/` 전체(로그인·가입 화면), 온보딩 템플릿 | `(auth)/login/` 개발용 패널 + 온보딩 템플릿. `(auth)/` 나머지(가입·연령 확인, 재설정, 콜백)는 067 | 2절 027 행 |
+| 인증 경로 소유 | 004(`proxy.ts`, 서버 액션 뼈대), 027(`(auth)/` 전체) | 004 → 067(콜백 연결부, 이어 받음) → 068·069(`oauth/kakao.ts`·`naver.ts`, 파일로 나눔). `(auth)/login/providers/`는 027 → 067. 로그인 방법 화면은 068, 네이버 행은 068 파일에 069가 요청 | 8.1절 |
+| TN-06-030·031 수용 기준 | 가입부터 실행하는 E2E, 문구 검사만 | 030은 Mock 페르소나 storageState(067 후 재확인, B-5), 031은 AUTH_ROADMAP 9장 CI 금지 문자열. 031은 P1이지만 G1 5번 근거라 G1 판정 전에 끝나야 한다(W4, 7절 "W0~W6 전부 완료"와 같음) | 2절 030·031 행 |
+| 작업 수 | 66개(4절은 58개 기준으로 060~066 미반영) | 69개(모델 68, 사람 1) | 머리말, 4절, 7절 |

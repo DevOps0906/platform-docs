@@ -243,3 +243,45 @@ AI·음성 코어 객체(2026-10-13, `D:/WorkSpace/platform/docs/products/_supab
 | 제품 파일 2회 반복 적용 후 `ai_routing_settings`(org null, app poll) | 12행(모듈러·모놀리스) |
 | free 플랜 | `signup_credits` 100, `features`에 기존 키 + AI 키 11개 |
 | 미동의 조직 `resolve_ai_route` | `chat` = oss-llm, `voice_chat` tts = oss-voice, `qna_read_aloud` = oss-voice, `poll.moderate`·`poll.knowledge`·`voice_question`·`dify.aux` = 오픈소스(강제) |
+
+## 10. 개발용 시드 페르소나 (Stage A, 2026-10-14 추가, 확정 결정 22)
+
+스키마 변경 없음. 인증 단계는 코어 계약(`core.handle_new_user`, `session_context`, `bootstrap_app_for_org`)을 그대로 쓰고 poll 테이블·RLS·RPC를 바꾸지 않는다. C2 네이버를 브리지 경로로 정하면(01장 D20) 코어 `D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql`의 `core.auth_identity_links`를 참조만 한다(코어가 한 번 적용, 이 제품은 수정하지 않음).
+
+시드는 `scripts/dev/seed-users.mjs --app poll`(공통 페르소나, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2.2, 2.3절)을 실행한 뒤 제품 훅 `scripts/dev/seed-users.poll.mjs`가 아래 제품 행을 만든다. 로컬 Supabase(`127.0.0.1`·`localhost`)에서만 실행하고, 모든 쓰기는 실제 사용자 세션의 RPC 경로로 한다(service_role 직접 INSERT는 표에 적은 것만).
+
+### 10.1 공통 페르소나 (AUTH_ROADMAP 2.2절, 이 제품 적용)
+
+| 키 | 이메일 | 만드는 방법 | 기대 결과(poll) |
+|---|---|---|---|
+| `owner` | `owner@dev.test` | `signup_app=poll`로 `auth.admin.createUser` → 가입 트리거 | 개인 조직 owner, `entitled=true`, `plan_code='free'`, 가입 크레딧 100 1회 |
+| `admin`, `member`, `viewer` | `admin@dev.test` 등 | owner 세션 `invite_member(org, user, role)` → 각자 `accept_invite(org)` | owner 조직의 해당 역할. viewer는 `create_event` 42501, 행사 목록·결과 읽기만 |
+| `outsider` | `outsider@dev.test` | `signup_app=poll`(별도 개인 조직) | 자기 조직 owner. owner 조직의 `poll.events`·`qna_questions` 0행, 진행자 RPC 42501 |
+| `no_app` | `no_app@dev.test` | `signup_app` 없이 생성 | 모듈러: `entitled=false` → `finishLogin`이 `bootstrap_app_for_org('poll')` 1회 후 `entitled=true`(open 앱). 모놀리스: 앱 행이 1개라 가입 트리거가 바로 부트스트랩해 `entitled=true`(`D:/WorkSpace/platform/docs/products/live-poll/supabase/monolith/migrations/0001_core_lite.sql:32`, `:264-268`) |
+| `suspended` | `suspended@dev.test` | 생성 후 service_role로 `status=suspended` | 진행자 화면 403 |
+| `ops` | `ops@dev.test` | 생성 후 service_role로 `platform_role=platform_admin` | 운영 화면(있을 때) |
+| `pending` | 만들지 않는다 | - | poll은 open 앱(seed `signup_policy='open'`)이라 승인 대기 상태가 없다 |
+
+### 10.2 제품 훅 행 (AUTH_ROADMAP 2.2절·8장 live-poll 행: 행사 진행자·공동 진행자)
+
+| 키 | 이메일 | 만드는 방법(RPC/서비스 경로) | 기대 결과 | 쓰임 |
+|---|---|---|---|---|
+| `host` | `host@dev.test` | `signup_app=poll`로 생성(개인 조직 owner) → host 세션으로 `rpc('create_event', ...)` 2회(행사 A, B) → 행사 A에 `polls`·`poll_options` RLS INSERT(단일 선택 1개, 선택지 3개) → `rpc('transition_event', {p_to:'live'})` → `rpc('rotate_overlay_key')` | 행사 A live(6자리 코드 발급), 행사 B draft. 동시 live 1개 한도(free)라 B를 live로 바꾸면 PL012. 훅 출력에 행사 A 코드와 로컬 오버레이 URL(키 포함, 로컬 전용) | 행사 진행자. 콘솔·발표 화면·오버레이·청중 E2E의 기준 행사 |
+| `cohost` | `cohost@dev.test` | 생성 후 host 세션 `invite_member(host 조직, cohost, 'member')` → cohost 세션 `accept_invite(host 조직)` | host 조직의 member. 행사 A의 `transition_poll`, `moderate_question`, `block_participant` 성공, `set_event_passcode`·`delete_event`는 42501(owner/admin 전용, 04장 3절) | 공동 진행자. 같은 행사를 두 진행자가 동시에 제어하는 콘솔 시나리오 |
+
+| 항목 | 내용 |
+|---|---|
+| 공동 진행자 범위 | 공동 진행자 초대 화면은 Phase 2(01장 2절)다. `cohost`는 화면 없이 코어 멤버 RPC로만 만들며 `team_members` 한도(Phase 2, Route Handler 강제)를 거치지 않는다. 진행자 RPC와 RLS는 이미 member를 허용하므로 MVP 권한 검증에 쓴다 |
+| 청중 | 페르소나를 만들지 않는다. 청중은 Supabase Auth 사용자가 아니라 참가자 토큰(D2)이며, E2E는 `POST /api/p/join { code }`로 브라우저 컨텍스트마다 참가자 쿠키를 받는다. Mock 단계에서도 그대로 동작한다 |
+| 오버레이 | 페르소나 없음. 훅이 `rotate_overlay_key`로 받은 키 URL로 접근한다 |
+| 멱등 | 같은 이메일이 있으면 건너뛰고, host 행사는 제목(`[DEV] 행사 A`, `[DEV] 행사 B`)으로 찾아 없을 때만 만든다. 가입 크레딧 멱등 키 `signup:<org>:poll`로 두 번 지급되지 않는다 |
+| 약관·온보딩 | A단계에는 약관 단계가 없다. B에서 LP-06-049가 약관 가드와 기록 방식(03장 7.3절)을 정하면 이 훅이 페르소나마다 동의 기록을 만든다(049가 003 소유 훅에 1줄 요청). 국외 이전 동의는 기본 미동의(오픈소스 경로). AI 상용 경로 테스트가 필요하면 owner 세션으로 `set_ai_cross_border_ack`를 따로 호출한다 |
+
+### 10.3 모놀리스와 모듈러 차이
+
+| 항목 | 모듈러(`poll` 스키마, 통합 DB) | 모놀리스(단독 `public`) |
+|---|---|---|
+| 시드 실행 | `seed-users.mjs --app poll`. 다른 앱도 쓰는 통합 DB면 `--app`을 여러 번 주고 두 번째 앱부터 `bootstrap_app_for_org`(AUTH_ROADMAP 2.3절) | `seed-users.mjs --app poll` 한 번 |
+| `no_app` | `entitled=false`로 생성 → 첫 로그인 `finishLogin`이 `bootstrap_app_for_org('poll')` 1회 | 앱 행이 1개라 가입 트리거가 자동 부트스트랩해 처음부터 `entitled=true`. `finishLogin`의 부트스트랩 단계는 아무 일도 하지 않는다 |
+| 훅 RPC 이름 | `poll.create_event`, `core.invite_member` 등 스키마 접두사 | 같은 함수가 `public`에 있다(`POLL_DB_SCHEMA=public`, `SUPABASE_DB_SCHEMA=public`) |
+| 스키마·RLS | 변경 없음 | 변경 없음 |

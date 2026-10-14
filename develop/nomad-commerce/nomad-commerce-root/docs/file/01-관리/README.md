@@ -39,14 +39,14 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구사항(CM-F-###, AI·음성 CM-F-040~052 포함), 요금/크레딧(AI·음성 단가 4.6절), 비기능 수치, 법/개인정보/금지 문구(AI 6.1절), KPI, 열린 결정(D-1~D-17) |
-| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡/워커와 그래프 호출, AI 라우팅 기본값 14행과 그래프 2개(`commerce.detail_page`, `commerce.assist`), 리뷰 "높음" 차단 설계(비보안 5건), 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 플로우(AI 채팅·음성·내레이션·위키 포함), 화면별 명세, 디자인 시스템(Primer 주, Atlassian 보조), 랜딩 디자인 방향과 3D 히어로, 상태/오류, 접근성 |
-| `04_API.md` | Route Handler(`/api/ai/*`, `/api/voice/*` 포함), RPC, 잡 페이로드, 그래프 계약, 웹훅, 외부 어댑터, FastAPI 엔드포인트, Dify 계약, 오류 코드 |
-| `05_DATA_MODEL.md` | 테이블 13개(AI 전용 제품 테이블 없음, 코어 AI·음성 표 참조), 상태 전이, RLS, 인덱스, 코어 참조, 리뷰 "높음" 차단 설계(보안·데이터 17건), 모놀리스/모듈러 차이, AI 라우팅 검증 결과 |
-| `06_AGENT_PLAN.md` | 작업 57개(AI·음성·3D·디자인 시스템 17개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표 57행, 코어 요청(AI 계층 R-1~R-8) |
-| `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기, 폐기 23항목, 복사 금지 결함, 아카이브 절차 |
-| `CLAUDE.md` | 개발 에이전트 지침 |
+| `01_PRD.md` | 페르소나, MVP/Phase 범위, 기능 요구사항(CM-F-###, AI·음성 CM-F-040~052 포함), 요금/크레딧(AI·음성 단가 4.6절), 비기능 수치, 법/개인정보/금지 문구(AI 6.1절), KPI, 열린 결정(D-1~D-17, 인증 단계 D-18~D-20은 8.1절) |
+| `02_ARCHITECTURE.md` | 스택(FastAPI·LangGraph·Dify·음성·3D 포함), 모듈 경계, 공용 모듈 사용, 잡/워커와 그래프 호출, AI 라우팅 기본값 14행과 그래프 2개(`commerce.detail_page`, `commerce.assist`), 리뷰 "높음" 차단 설계(비보안 5건), 배포, 환경변수, 인증 단계(9절: 단계표, 분기 위치, 인증 env, 외부 콘솔) |
+| `03_SCREENS_UX.md` | 화면 목록, 플로우(AI 채팅·음성·내레이션·위키 포함), 화면별 명세, 디자인 시스템(Primer 주, Atlassian 보조), 랜딩 디자인 방향과 3D 히어로, 상태/오류, 접근성, 로그인 화면 단계별 구성(7절) |
+| `04_API.md` | Route Handler(`/api/ai/*`, `/api/voice/*` 포함), RPC, 잡 페이로드, 그래프 계약, 웹훅, 외부 어댑터, FastAPI 엔드포인트, Dify 계약, 오류 코드, 인증 단계 경로(8절) |
+| `05_DATA_MODEL.md` | 테이블 13개(AI 전용 제품 테이블 없음, 코어 AI·음성 표 참조), 상태 전이, RLS, 인덱스, 코어 참조, 리뷰 "높음" 차단 설계(보안·데이터 17건), 모놀리스/모듈러 차이, AI 라우팅 검증 결과, 개발용 시드 페르소나(10절, 스키마 변경 없음) |
+| `06_AGENT_PLAN.md` | 작업 60개(AI·음성·3D·디자인 시스템 17개, 인증 단계 B·C 3개(CM-06-058~060, 8절) 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표 57행, 코어 요청(AI 계층 R-1~R-8, 인증 R-9) |
+| `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기, 폐기 23항목, 복사 금지 결함, 아카이브 절차, 인증 단계 복사 금지(6절: `mock-login`·쿠키 역할, MVP 카카오 버튼) |
+| `CLAUDE.md` | 개발 에이전트 지침, 인증 단계 규칙(맨 끝 절) |
 | `supabase/monolith/` | `0001_core_lite.sql`(코어 lite 복사, affiliate 절 제거, AI·음성 SECTION 11·12 포함), `0002_commerce_domain.sql`(모듈러 조각 변환본), `seed.sql`(플랜 AI 키와 AI 라우팅 기본값 14행 포함) |
 | 모듈러 조각 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1400_commerce.sql`(20절 AI·음성 기본값 포함) |
 

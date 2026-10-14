@@ -160,3 +160,14 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 B-2 목록 밖�
 | 4 | 키 재발급: 두 원본에 코드·`.env`가 없어 해당 없음. 원본 문서의 도메인(`shinbiroune.ai`, `AA/공통/GEO.md:133`)과 운영자 이메일은 사용 전 소유 확인(미확인) |
 | 5 | zip 중복: 해당 없음(두 원본에 zip 없음) |
 | 6 | AS-06-031에서 위 체크리스트 완료를 PR로 기록 |
+
+## 6. 인증 단계 복사 금지 (2026-10-14 추가, 확정 결정 22)
+
+두 원본(Astro AI, FortuneDocs)에는 코드가 없어 쿠키 역할 Mock이나 콜백 구현이 없다(5절 4단계). 아래는 다른 원본에서 확인된 결함을 신규 구현에 들이지 않기 위한 행이다. 허용되는 Mock은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장(로컬 시드 계정으로 실제 JWT를 받는 로그인)뿐이다.
+
+| 패턴 | 출처 | 왜 금지 | 대체 |
+|---|---|---|---|
+| 쿠키 역할 Mock(`mock-auth.ts`, `mock-login`, `nomad_role`·`nomad_plan` 쿠키, `dev-user` 우회) | `D:/WorkSpace/platform/docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88`, `D:/WorkSpace/platform/docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96` | 권한 위조, 프로덕션 노출 | `AUTH_ROADMAP.md` 2장 로컬 시드 계정 Mock(`isMockAuthAllowed()`, 배포 환경 404), 권한은 `session_context`만 |
+| 콜백 `next` 무검증 리다이렉트 | `AUTH_ROADMAP.md` 3.2절 5번, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md` 17장 | 오픈 리다이렉트, 피싱 | `/`로 시작하고 `//`·`@`·`\` 없는 경로만, origin 고정(04장 8절) |
+| 기능 코드의 `if (mock)`·`AUTH_MODE` 분기, 페르소나 이메일로 권한 분기 | `AUTH_ROADMAP.md` 0장 불변 조건, 2.5절 | Mock과 실제 로그인의 동작이 갈려 Mock 단계 검증이 무의미해진다 | 분기는 `src/lib/auth/`·로그인 화면·콜백에만(AS-06-032 CI 검사) |
+| 환영 크레딧을 가입 트리거나 제공자별 코드에서 지급 | 01장 AS-F-002, D-3 | 인증 전 지급으로 반복 수령, 제공자마다 규칙이 갈림 | 인증 확인 뒤 서버 함수 1개(`src/server/welcome-credits.ts`, 멱등 키 `signup:<org>:astro`)를 이메일·Google·카카오·네이버가 함께 쓴다 |

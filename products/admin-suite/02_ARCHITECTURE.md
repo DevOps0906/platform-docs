@@ -288,7 +288,7 @@ AI 관련 변수는 `docs/products/_platform-core/AI_ARCHITECTURE.md:160`의 목
 | 이름 | 단계 | 배치 | erp | sms | hms | 없으면 |
 |---|---|---|---|---|---|---|
 | `AUTH_MODE` | A·B·C | web | 로컬 `mock`, 배포 `live` | 같음 | 같음 | `live`. `mock`인데 Mock 허용 판정이 거짓이면 기동 실패 |
-| `AUTH_PROVIDERS` | B·C | web | `google,email`(C 도입 시 `kakao`, `naver` 추가) | `google,email` | `email`만(D-21 (b) 확정 시 `google` 추가). 그 밖의 값이면 기동 실패(제안, 5.5절 금지 변수 검사와 같은 방식) | live에서 로그인 수단 0개면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web | `google,email`(C 도입 시 `kakao`, `naver` 추가) | 같음 | `email`만(D-21 (b) 확정 시 `google` 추가). 그 밖의 값이면 기동 실패(제안, 5.5절 금지 변수 검사와 같은 방식) | live에서 로그인 수단 0개면 기동 실패 |
 | `DEV_SEED_PASSWORD` | A | web(로컬), 시드 스크립트 | 로컬만 | 로컬만 | 로컬만 | Mock 모드 기동 실패 |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`, 원격은 Supabase 대시보드만(앱 env에 넣지 않음) | 사용 | 사용 | D-21 전 사용 안 함 | 로컬 Google 버튼 비활성 |
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | D-24 도입 시 | D-24 도입 시 | 사용 안 함 | 카카오 버튼 비활성 |

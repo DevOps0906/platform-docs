@@ -166,7 +166,7 @@ git 쓰기 명령은 사용자 승인 후 개발 단계에서 수행한다(이 �
 
 | 패턴 | 출처 | 왜 금지 | 대체 |
 |---|---|---|---|
-| 쿠키·localStorage에 역할·플랜을 적는 Mock(`nomad_role`, `nomad_plan`, `mock-login`, `dev-user`) | 이 제품 원본에서는 확인하지 않았다. 같은 계열 원본의 전례: `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`, `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88` | 권한 위조, 프로덕션 노출 | `AUTH_ROADMAP.md` 2장 시드 페르소나 + `session_context` |
+| 쿠키·localStorage에 역할·플랜을 적는 Mock(`mock-auth.ts`, `nomad_role`, `nomad_plan`, `mock-login`, `dev-user`) | 이 제품 원본: SM `src/lib/mock-auth.ts:15-19`(localStorage Mock 로그인, 항상 렌더, `docs/reviews/NOMAD_Shorts_Maker.md:83`, 4절 표의 "Mock 로그인 상시 노출" 행). 쿠키 이름 `nomad_role`·`nomad_plan`은 같은 계열 원본의 전례: `docs/products/nomad-commerce/07_SOURCE_MIGRATION.md:96`, `docs/products/nomad-blog/07_SOURCE_MIGRATION.md:88` | 권한 위조, 프로덕션 노출 | `AUTH_ROADMAP.md` 2장 시드 페르소나 + `session_context` |
 | 로그인 콜백의 `next`·`redirect` 무검증 리다이렉트 | 이 제품 원본의 사용자 로그인 콜백은 리뷰에 없다(미확인). YSM 네이버 콜백(`[5f6d262] app/api/auth/naver/callback/route.ts`)은 4절에서 이미 폐기 | 오픈 리다이렉트 | `next`는 `/`로 시작하고 `//`·`@`·`\` 없을 때만, origin은 `NEXT_PUBLIC_APP_URL` 고정(`AUTH_ROADMAP.md` 3.2절 5번) |
 | 기능 코드의 `if (mock)`, 페르소나 이메일로 권한 분기 | 신규 위험 | 배포 경로와 개발 경로가 갈라져 테스트가 의미를 잃음 | 단계 분기는 `src/lib/auth/`·로그인 화면·콜백·`/api/dev/login`만(CI 검사, 06장 VID-06-039) |
 | 채널 연결 OAuth 코드(`oauth-manager`, `core.oauth_states`)를 사용자 로그인 콜백에 재사용 | SM `src/lib/channels/oauth-manager.ts`(2절 이식 대상) | 채널 state는 로그인한 사용자·조직이 전제라 로그인 전에 쓸 수 없고, 두 흐름의 토큰 저장 규칙이 다르다 | 사용자 로그인은 Supabase Auth(`signInWithOAuth`) + `/auth/callback`, 채널은 기존 코어 oauth 모듈. 서로 import하지 않는다 |

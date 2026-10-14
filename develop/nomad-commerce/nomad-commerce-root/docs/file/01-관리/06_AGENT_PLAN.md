@@ -2,7 +2,7 @@
 
 작업 ID는 `CM-06-###`(DB_CONVENTIONS 1장 SQLSTATE 접두사 `CM`).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 17개(CM-06-041~057)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 001·002·004·005(수용 기준 보강), 006·017·020·031(소유 경로 조정), 011·013(그래프 호출로 변경, 선행 추가), 012·027·029·032·033·035·036·038(수용 기준 또는 선행 보강)이다. 작업 수 57개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다. 웨이브는 3절에서 다시 짰다(011과 013은 그래프 선행 때문에 W5로 이동).
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 17개(CM-06-041~057)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 001·002·004·005(수용 기준 보강), 006·017·020·031(소유 경로 조정), 011·013(그래프 호출로 변경, 선행 추가), 012·027·029·032·033·035·036·038(수용 기준 또는 선행 보강)이다. 작업 수 57개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다. 웨이브는 3절에서 다시 짰다(011과 013은 그래프 선행 때문에 W5로 이동). 2026-10-14 개정(확정 결정 22, 인증 단계): CM-06-007을 Stage A(Mock 로그인) 범위로 바꾸고 B·C1·C2 작업 3개(CM-06-058~060)를 8절에 붙여 작업 수는 60개다.
 
 ## 1. 원칙과 소유 경계
 
@@ -31,7 +31,7 @@
 | CM-06-004 | 앱 골격 이식(sellingstudio → 모노레포): 라우트 그룹, core-db 클라이언트, 의존성 고정, 미사용 의존성 제거, CSP 강화 | `apps/nomad-commerce/{package.json,next.config.ts,app/layout.tsx,app/globals.css}` | 없음 | P0 | M | Sonnet | `pnpm build` 통과, `unsafe-eval`·사설 IP 없음, `latest` 0건, Stripe·미사용 14개 제거, Tailwind CSS v4 설정(`@import "tailwindcss"`, `@theme`)만 사용하고 `tailwind.config.js` 0, `globals.css`가 `styles/tokens.css`(CM-06-042)를 import | V2 #3, v1 #1·#6, SS #9·#13 |
 | CM-06-005 | 환경변수 검증(zod)과 `.env.example`(앱·워커) | `apps/nomad-commerce/lib/env.ts`, `services/commerce-worker/src/env.ts`, `.env.example` 2개 | CM-06-004 | P0 | S | Haiku | 02장 8절 필수 키 누락 시 기동 실패 테스트, `CREDENTIALS_KEY` 0키 폴백 없음, AI 필수 키(`AI_TOKEN_PRIVATE_KEY`, `AI_SERVICE_URL`, `DIFY_*` 등) 누락 시 앱 기동 실패, 앱·워커 env에 LLM 제공자 키 0 | CM #13, v1 #12 |
 | CM-06-006 | 도메인 상수 패키지: 18슬롯, 유형별 기본 슬롯, 필수 슬롯, 8단계 phase, 마켓 규격, features 파서, 크레딧 단가, 마진 계산, nav | `packages/commerce-domain/`(`schema/` 제외, CM-06-051 소유) | 없음 | P0 | M | Opus | 단위 테스트: 모든 유형 기본값이 T-1·L-3 포함, 10/15장 개수, 쿠팡 6,000px → 3분할, 마진 공식, features 기본값(01장 4.4) | V2 #1·#9, v1 #10, 01장 3.6 |
-| CM-06-007 | 인증·세션: 로그인(이메일/Google/Kakao), 콜백 `next` 화이트리스트·origin 고정, `requireSession`, `proxy.ts`, 모의 인증 없음 | `apps/nomad-commerce/app/(auth)/`, `apps/nomad-commerce/proxy.ts`, `apps/nomad-commerce/lib/session/` | CM-06-004 | P0 | M | Fable | `next=//evil.com` → `/dashboard`, 쿠키 위조로 관리자 403, 요청당 `session_context` 1회 | CM #1·#2·#4, SS #5·#7, v1 #1 |
+| CM-06-007 | 인증 Stage A(확정 결정 22): 인증 모듈 경계 `lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`), Mock 로그인(`POST /api/dev/login`, 로그인 화면 개발용 페르소나 패널, 모든 화면 상단 `MOCK AUTH · 로컬 전용` 배지), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.commerce.mjs`(05장 10절), 가드(env zod 검증, Mock 허용 판정), `requireSession`, `proxy.ts`, `next` 화이트리스트·origin 고정. 쿠키 역할 Mock 없음. 이메일 가입·비밀번호 재설정 화면과 Google은 CM-06-058(B), 카카오는 CM-06-059(C1), 네이버는 CM-06-060(C2)으로 옮겼다 | `apps/nomad-commerce/app/(auth)/login/`(페이지와 개발용 패널. 제공자 버튼·이메일 폼은 `listLoginOptions` 결과로 `components/auth/`를 렌더하는 자리만 둔다), `apps/nomad-commerce/app/api/dev/login/`, `apps/nomad-commerce/lib/auth/`(`naver/` 제외, CM-06-060), `apps/nomad-commerce/proxy.ts`, `apps/nomad-commerce/lib/session/`, `scripts/dev/` | CM-06-001, CM-06-004 | P0 | M | Fable | `owner` 페르소나 로그인 → `session_context('commerce').entitled=true`·plan `free`, `no_app` 로그인 → `finishLogin`이 부트스트랩 후 `entitled=true`(재로그인 3회 뒤 원장 행 수 같음), `outsider`로 owner 조직 commerce 테이블 0행, `viewer` 쓰기 403, `next=//evil.com` → `/dashboard`, 쿠키 `nomad_role=SUPER_ADMIN` 위조로 관리자 403, 요청당 `session_context` 1회, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404, 시드 스크립트는 원격 Supabase URL이면 exit 1, 두 번 실행해도 크레딧 지급 1회 | CM #1·#2·#4, SS #5·#7, v1 #1, `AUTH_ROADMAP.md` 2장·3.1절·9장 |
 | CM-06-008 | 안전 fetch(허용 도메인, DNS 후 사설 IP 차단, 리다이렉트 3회, 2MB, 10초) | `packages/commerce-net/` | 없음 | P0 | S | Fable | 169.254.169.254, 10.0.0.0/8, IPv6 루프백, DNS 리바인딩 테스트 차단 | CM #3, SS #5, V2 #7 |
 | CM-06-009 | 마켓 계정·자격증명: vault 저장, 마스킹 응답, 검증 호출, 슬롯, 연결 해제(`revoke_credential`), 감사 | `apps/nomad-commerce/app/api/market-accounts/`, `apps/nomad-commerce/lib/credentials/` | CM-06-001, CM-06-007 | P0 | M | Fable | 응답·로그·DB 평문 키 0건(테스트로 grep), 슬롯 초과 CM003→403, 다른 조직 자격증명 CM006 | V2 #5, v1 #3, CM #2 |
 | CM-06-010 | 생성 요청 API + 크레딧 선차감 + 취소/재시도 + 부분 환불 규약 | `apps/nomad-commerce/app/api/detail-pages/`(copy·acknowledge 제외 경로), `apps/nomad-commerce/lib/generation/` | CM-06-001, CM-06-006, CM-06-007 | P0 | M | Fable | 잔액 부족 402·잡 0건, 같은 request_id 2회 → 원장 1행, waiting 취소 즉시 환불, p95 800ms | V2 #4, SS #1·#2, v1 #2 |
@@ -55,12 +55,12 @@
 | CM-06-028 | 상품DB·소싱 화면(가상 스크롤 표, 일괄 바, 엑셀 매핑) | `apps/nomad-commerce/app/(app)/products/`, `apps/nomad-commerce/app/(app)/sourcing/`, `apps/nomad-commerce/components/products/` | CM-06-020, CM-06-027 | P0 | L | Sonnet | 2,000행 스크롤, 빈 상태 문구, 키보드 선택 | V2 #13, CM #11, v1 #11 |
 | CM-06-029 | 상세페이지 화면(생성 모달 개별/다중, 큐 패널, 뷰어, 인라인 편집, WARN 확인, copy 저장 API) | `apps/nomad-commerce/app/(app)/detail-pages/`, `apps/nomad-commerce/components/detail/`, `apps/nomad-commerce/app/api/detail-pages/[id]/copy/`, `apps/nomad-commerce/app/api/detail-pages/[id]/acknowledge/` | CM-06-010, CM-06-027 | P0 | L | Sonnet | Realtime 진행률 복원, 컴포넌트 300줄 이하 분해, FAIL이면 버튼 비활성, compliance 패널이 issues의 근거 위키 링크·기준일과 "AI가 생성한 콘텐츠"를 표시 | V2 #13, SS #6 |
 | CM-06-030 | 등록 폼·업로드 이력·내보내기 화면 | `apps/nomad-commerce/app/(app)/listings/`, `apps/nomad-commerce/app/(app)/uploads/`, `apps/nomad-commerce/app/(app)/exports/`, `apps/nomad-commerce/components/listing/` | CM-06-023, CM-06-024, CM-06-027 | P0 | M | Sonnet | 완성도 바, 필드 오류 이동, 만료 다운로드 재생성 | V2 #11 |
-| CM-06-031 | 설정 화면(마켓 계정, 배송·반품 템플릿, 금지어) | `apps/nomad-commerce/app/(app)/settings/`(`ai/` 제외, CM-06-046 소유), `apps/nomad-commerce/components/settings/` | CM-06-009, CM-06-027 | P0 | M | Sonnet | 반품 제한은 4코드 체크박스만, 키 입력 후 마스킹 표시, 기본 금지어 읽기 전용 | CM #12 |
+| CM-06-031 | 설정 화면(마켓 계정, 배송·반품 템플릿, 금지어) | `apps/nomad-commerce/app/(app)/settings/`(`ai/` 제외 CM-06-046 소유, `login/` 제외 CM-06-059 소유), `apps/nomad-commerce/components/settings/` | CM-06-009, CM-06-027 | P0 | M | Sonnet | 반품 제한은 4코드 체크박스만, 키 입력 후 마스킹 표시, 기본 금지어 읽기 전용 | CM #12 |
 | CM-06-032 | 랜딩·가격 페이지(03장 4절) | `apps/nomad-commerce/app/(marketing)/`, `apps/nomad-commerce/components/marketing/` | CM-06-004, CM-06-044 | P0 | M | Sonnet | 01장 6절 금지 문구 0건(체크리스트), 허위 수치·후기 0건, DESIGN_PRINCIPLES 7단계 12항목, 히어로 자리는 정지 이미지(`public/hero/box-shelf.avif`, CM-06-056 소유)로 먼저 구현하고 3D는 CM-06-056이 장착 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/file/03-설계/디자인/REFERENCES.md:16-23`). | V2 #14, v1 #11 |
 | CM-06-033 | 법적 문서(약관, 처리방침, AI 고지)와 법률 검토 의뢰 패키지(반품 4코드, L-1 문안, 구매대행 고지, 고시 책임) | `apps/nomad-commerce/content/legal/`, `apps/nomad-commerce/app/(marketing)/legal/` | CM-06-004 | P0 | S | Sonnet | 검토 전 문안은 "검토 중" 표시, 제3자 제공자 목록 포함, 국외 이전 고지문·음성 처리 고지문과 AI 고지 페이지 문구가 `AI_CROSS_BORDER_NOTICE_VERSION`·`AI_VOICE_NOTICE_VERSION` 상수와 같은 버전 | V2 #14, 01장 6절 |
 | CM-06-034 | UI 문구 상수와 오류 코드 → 사용자 문구 매핑 | `apps/nomad-commerce/lib/copy/` | CM-06-006 | P1 | S | Haiku | 04장 7절 코드 전부 매핑, 사과·모호 문구 0건 | DESIGN_PRINCIPLES 카피 규칙 |
-| CM-06-035 | 핵심 플로우 E2E(가입 → 아마존 목 → 생성 → WARN 확인 → ZIP → 업로드 목) | `tests/e2e/flows/` | CM-06-011, CM-06-013, CM-06-028, CM-06-029, CM-06-030 | P0 | M | Opus | 03장 2.1~2.5 플로우 통과, 소셜 로그인 콜백 루프 없음 | CM #4, 02장 6절 |
-| CM-06-036 | CI(tsc, lint `no-explicit-any`·`no-console`, build, SQL 체커, RLS 스모크) | `.github/workflows/nomad-commerce.yml` | CM-06-003 | P1 | S | Haiku | PR마다 실행, 실패 시 차단. `pytest apps/api`, 라우팅 seed 스냅샷(CM-06-057), `tailwind.config.js`·`bg-[#...]` 금지 검사 포함 | v1 #7, SECURITY_BASELINE 13장 |
+| CM-06-035 | 핵심 플로우 E2E(가입 → 아마존 목 → 생성 → WARN 확인 → ZIP → 업로드 목) | `tests/e2e/flows/` | CM-06-011, CM-06-013, CM-06-028, CM-06-029, CM-06-030 | P0 | M | Opus | 03장 2.1~2.5 플로우 통과, Mock 페르소나 storageState(Playwright `globalSetup`이 `/api/dev/login`으로 저장, `owner`·`member`·`viewer`·`outsider`)로 실행, 콜백 루프 없음(실제 OAuth 콜백 검사는 CM-06-058 B-2·B-3) | CM #4, 02장 6절 |
+| CM-06-036 | CI(tsc, lint `no-explicit-any`·`no-console`, build, SQL 체커, RLS 스모크) | `.github/workflows/nomad-commerce.yml` | CM-06-003 | P1 | S | Haiku | PR마다 실행, 실패 시 차단. `pytest apps/api`, 라우팅 seed 스냅샷(CM-06-057), `tailwind.config.js`·`bg-[#...]` 금지 검사 포함. 인증 단계 검사: 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈 밖의 `AUTH_MODE` 참조 금지 grep(`AUTH_ROADMAP.md` 9장 "CI 금지 문자열"), `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패 확인 | v1 #7, SECURITY_BASELINE 13장 |
 | CM-06-037 | 원본 아카이브(4개 → `archive/`), 노출 키 재발급 체크리스트, 시안·zip 정리 | `archive/`, `docs/archive-checklist-commerce.md` | CM-06-035 | P1 | S | Haiku | 07장 5절 체크 항목 전부, 원본 코드가 빌드 경로에 없음 | v1 #4·#5, CM #10 |
 | CM-06-038 | Phase 2 상품 쇼츠: video 워커 API 호출, 음원 선택 | `apps/nomad-commerce/lib/integrations/video/`, `apps/nomad-commerce/app/(app)/shorts/` | CM-06-035, CM-06-055 | P2 | M | Opus | 렌더 코드 0줄(호출만), 실패 환불, 내레이션 mp3 경로(CM-06-055)와 상세페이지 이미지 경로를 video 워커 API로 전달 | V2 #15, C-6 |
 | CM-06-039 | Phase 2 자동화 노드(automation-core 등록), SNS 업로더 소비, 대량 등록 | `apps/nomad-commerce/lib/automation/` | CM-06-035 | P2 | L | Opus | 엣지 없는 그래프 실행 거부, 노드 단위 크레딧 | V2 #15, v1 #6·#9, CM #5, SS #15 |
@@ -70,7 +70,7 @@
 | CM-06-043 | 디자인 시스템 3단계: 사람 비주얼 검토(라이트/다크, 상태 6종, 크기 배리언트) | `docs/file/03-설계/디자인/review/`(스크린샷, 수정 기록) | CM-06-042 | P0 | M | 사람(보조 Sonnet) | 03장 3.2절 기본 컴포넌트 전부의 라이트/다크·상태별 스크린샷과 사람이 고친 수치 기록, 대비 4.5:1·포커스 링 확인, 다크 토큰 값 확정. 이 단계는 줄이지 않는다 | DESIGN_SYSTEM 4장 3단계 |
 | CM-06-044 | 디자인 시스템 4단계: 코드(Tailwind CSS v4 CSS + 컴포넌트)를 정답으로 확정하고 문서를 코드 기준으로 재작성 | `docs/file/03-설계/디자인/DESIGN.md`(2절 이후), `docs/file/03-설계/디자인/COMPONENTS.md` | CM-06-043 | P0 | S | Opus | 문서 토큰 값과 `tokens.css`가 스크립트 비교로 100% 일치, 피그마 노드 id·외부 파일 링크 0, `tailwind.config.js` 0. 화면 작업(027, 032, 050, 053, 056)의 진입 조건 | DESIGN_SYSTEM 4장 4단계 |
 | CM-06-045 | AI 서비스 설치: `apps/api`에 공용 ai-service 적용, commerce 설정(app, `COMMERCE_KNOWLEDGE_ORG_ID`, 컬렉션 이름), JWKS 검증, 라우터·국외 동의 필터 연동 테스트 | `apps/api/`(`app/ai/graphs/`, `app/ai/tools/commerce/`, `app/ai/compliance/commerce.py`, `app/ai/products/commerce/` 제외), `apps/api/tests/platform/` | CM-06-001 | P0 | M | Fable | 다른 app `aud`·만료·재사용 `jti` 토큰 401, 토큰 org와 다른 org의 상품 요청 403, 미동의 조직 라우팅에 상용 0, `dify.aux` 상용 0, 필수 변수 누락 시 기동 실패 | 02장 2·5절, AI_ARCHITECTURE 2·4·8장 |
-| CM-06-046 | AI 게이트: 대화 생성·바인딩 검증, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, 서명 토큰·잡 토큰 발급, 정산 엔드포인트, AI 단가, 온보딩·설정의 국외 이전 동의, 음성 처리 고지 기록 | `apps/nomad-commerce/app/api/ai/{conversations,chat}/`, `apps/nomad-commerce/app/api/internal/`, `apps/nomad-commerce/app/api/onboarding/`, `apps/nomad-commerce/app/onboarding/`, `apps/nomad-commerce/app/(app)/settings/ai/`, `apps/nomad-commerce/lib/ai/`(`rag-hooks.ts` 제외) | CM-06-007, CM-06-045 | P0 | L | Fable | 04장 2.1절 계약 충족. 같은 `request_id` 재전송 차감 1회, 응답 미전달 시 환불 1행, Dify 차단 시 `/tools/answer-direct`로 응답, 잡 토큰은 running `detail.generate` 잡에만(다른 상태·타입 409), 동의 시 `ai_org_settings` 고지문 버전과 감사 `ai.cross_border.ack` 일치, 정산 호출 뒤 10분 넘은 `settled_at is null` 0, 하루 턴 상한 429 | 01장 CM-F-045, 049, 050 |
+| CM-06-046 | AI 게이트: 대화 생성·바인딩 검증, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, 서명 토큰·잡 토큰 발급, 정산 엔드포인트, AI 단가, 온보딩·설정의 국외 이전 동의, 음성 처리 고지 기록 | `apps/nomad-commerce/app/api/ai/{conversations,chat}/`, `apps/nomad-commerce/app/api/internal/`, `apps/nomad-commerce/app/api/onboarding/`, `apps/nomad-commerce/app/onboarding/`(`terms/` 제외, CM-06-058 소유), `apps/nomad-commerce/app/(app)/settings/ai/`, `apps/nomad-commerce/lib/ai/`(`rag-hooks.ts` 제외) | CM-06-007, CM-06-045 | P0 | L | Fable | 04장 2.1절 계약 충족. 같은 `request_id` 재전송 차감 1회, 응답 미전달 시 환불 1행, Dify 차단 시 `/tools/answer-direct`로 응답, 잡 토큰은 running `detail.generate` 잡에만(다른 상태·타입 409), 동의 시 `ai_org_settings` 고지문 버전과 감사 `ai.cross_border.ack` 일치, 정산 호출 뒤 10분 넘은 `settled_at is null` 0, 하루 턴 상한 429 | 01장 CM-F-045, 049, 050 |
 | CM-06-047 | 마켓 규칙 원고(쿠팡·스마트스토어: 상품명 규칙, 이미지 규격, 고시 유형, 대표 반려 사유, 금지어·표시광고 지침, 건기식 규칙) | `content/knowledge/` | CM-06-006, CM-06-017 | P0 | L | Sonnet | 항목마다 마켓·기준일·출처·작성자·검수일 메타데이터(출처를 확인 못 한 항목은 "출처 확인 필요"), 금지 문구 규칙 검사 0, `commerce-domain` 마켓 규격 상수와 다른 항목은 0건이거나 명시, 운영자 검수 기록(01장 D-9) | 01장 CM-F-041 |
 | CM-06-048 | RAG 색인: 운영자 조직 컬렉션 `commerce-rules`·`commerce-wiki`(oss-embed), 셀러 조직 `commerce-products`(상품·스펙 시트) 색인 훅·보정 크론·purge 연동, 색인 스크립트, `/dify/retrieval` 설정, 검색 평가셋(규칙 40문항·상품 30문항) | `apps/api/app/ai/products/commerce/knowledge.py`, `scripts/knowledge/`, `apps/api/tests/commerce/retrieval/`, `apps/nomad-commerce/app/api/products/[id]/specs/`, `apps/nomad-commerce/lib/ai/rag-hooks.ts` | CM-06-045, CM-06-047 | P0 | M | Opus | 재현율@8 0.8 이상(제안), 다른 조직 컬렉션 요청 42501, 외부 지식 응답에 셀러 조직 데이터 0, 컬렉션당 임베딩 모델 1종, 상품 삭제 purge 뒤 문서·청크 0, 색인 실패가 상품 저장을 막지 않음, 스펙 업로드 월 20건 한도(D-11) | 01장 CM-F-040, 041 |
 | CM-06-049 | 마켓 규칙 위키 운영: 규칙 원고 → 위키 ingest(draft), 게시·편집·이력·lint 관리자 화면과 API, 주 1회 lint 잡 | `apps/api/app/ai/products/commerce/wiki_config.py`, `apps/nomad-commerce/app/admin/wiki/`, `apps/nomad-commerce/app/admin/knowledge/`, `apps/nomad-commerce/app/api/admin/wiki/`, `apps/nomad-commerce/app/api/admin/knowledge/` | CM-06-044, CM-06-048 | P0 | M | Opus | 새 페이지 draft, 출처·기준일 없는 페이지 게시 409, 사람 소유 표시(`<!-- owner:user -->`) 블록을 ingest가 수정하지 않음, `expected_version` 불일치 409, 문서 1건당 갱신 페이지 5개 상한, lint 결과 화면 표시, 모든 쓰기 감사 1행 | 01장 CM-F-042, LLM_WIKI 3장 |
@@ -94,21 +94,21 @@
 | W3 | 014, 018, 019, 023, 024, 034, 036, 048, 056 | 9 | W2(012, 009, 047) | 이미지, 소싱, 업로드, 내보내기, 문구, CI, RAG 색인, 3D 히어로 |
 | W4 | 020, 026, 028, 029, 030, 031, 049, 051, 052, 053 | 10 | W3(048) | 소싱 API, 결제 E2E, 화면 4종, 위키 운영, 생성·보조 그래프, Dify 채팅, 채팅 패널 |
 | W5 | 011, 013, 050, 054 | 4 | W4(046, 051, 049, 053) | 보조 AI 라우트, 상세페이지 파이프라인(그래프 연결), 공개 위키, 음성 대화·상품 음성 입력 |
-| W6 | 035, 055, 057 | 3 | W5 | 플로우 E2E, 쇼츠 내레이션, AI 보안 회귀. MVP 출시 조건 |
-| W7 | 037 | 1 | W6 | 아카이브 → 베타 |
-| W8(Phase 2) | 038, 039, 040 | 3 | 베타 출시 | 쇼츠 영상 연동, 자동화, 모바일 |
+| W6 | 035, 055, 057 | 3 | W5 | 플로우 E2E(Mock 페르소나), 쇼츠 내레이션, AI 보안 회귀. MVP 출시 조건(G1 판정 근거) |
+| W7 | 058(G1 통과 후 먼저), 037 | 2 | W6, 058은 G1 판정(8절). 037과 035·057의 B 구성 재실행(B-5)은 058 완료를 기다린다 | Google 로그인 전환(Stage B), 아카이브 → 공개 베타. 공개 베타 조건 |
+| W8(Phase 2) | 038, 039, 040, 059·060(G2 통과 후) | 5 | 베타 출시, 059·060은 G2 | 쇼츠 영상 연동, 자동화, 모바일, 카카오(C1)·네이버(C2) 로그인 |
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 10 | 17.9% | 20 / 112 = 17.9% |
-| Opus | 26 | 46.4% | 55 / 112 = 49.1% |
-| Sonnet | 15 | 26.8% | 32 / 112 = 28.6% |
-| Haiku | 5 | 8.9% | 5 / 112 = 4.5% |
-| 합계 | 56 | 100% | 112 |
+| Fable | 12 | 20.3% | 24 / 117 = 20.5% |
+| Opus | 27 | 45.8% | 56 / 117 = 47.9% |
+| Sonnet | 15 | 25.4% | 32 / 117 = 27.4% |
+| Haiku | 5 | 8.5% | 5 / 117 = 4.3% |
+| 합계 | 59 | 100% | 117 |
 
-비율은 모델 작업 56개 기준이다. 사람 작업 1개(CM-06-043, M)는 비율에서 뺐다(전체 57개). 2026-10-13 이전(40개)은 Fable 17.5%, Opus 47.5%, Sonnet 22.5%, Haiku 12.5%였다. Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 개인정보 삭제에 더해 AI 보안 경계(서명 토큰 검증 045, AI 게이트의 선차감·정산·동의 046, AI 회귀 057)를 맡는다. 그래프·RAG·Dify·음성 구현은 Opus, 채팅 패널·공개 위키·3D 히어로·규칙 원고·디자인 시스템 구현은 Sonnet이다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md:253`).
+비율은 모델 작업 59개 기준이다. 사람 작업 1개(CM-06-043, M)는 비율에서 뺐다(전체 60개). 2026-10-14 인증 단계 작업 3개(058 Fable M, 059 Opus S, 060 Fable M)를 더하기 전(56개)은 Fable 17.9%, Opus 46.4%, Sonnet 26.8%, Haiku 8.9%(가중 17.9/49.1/28.6/4.5%)였다. 2026-10-13 이전(40개)은 Fable 17.5%, Opus 47.5%, Sonnet 22.5%, Haiku 12.5%였다. Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 개인정보 삭제에 더해 AI 보안 경계(서명 토큰 검증 045, AI 게이트의 선차감·정산·동의 046, AI 회귀 057)를 맡는다. 그래프·RAG·Dify·음성 구현은 Opus, 채팅 패널·공개 위키·3D 히어로·규칙 원고·디자인 시스템 구현은 Sonnet이다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md:253`).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -157,7 +157,7 @@
 | #1 | 모의 인증 제거·미들웨어 | CM-06-007 |
 | #2 | API 인증 가드·market-accounts | CM-06-007, CM-06-009 |
 | #3 | tableName 주입·SSRF | CM-06-008, CM-06-020, CM-06-018 |
-| #4 | 소셜 로그인 연결 | CM-06-007, CM-06-035 |
+| #4 | 소셜 로그인 연결 | CM-06-007(Stage A 세션 경로), CM-06-058(Google, B), CM-06-059(카카오, C1), CM-06-060(네이버, C2), CM-06-035 |
 | #5 | 워크플로우 엔진 | CM-06-039 |
 | #6 | 스키마 보강·타입 | CM-06-001 |
 | #7 | 업로드 잡 DB 전환 | CM-06-023 |
@@ -225,9 +225,44 @@
 | RLS 스모크 | CM-06-003 전 항목 통과 |
 | 결제 E2E | CM-06-026 통과(Toss 테스트 키) |
 | 플로우 E2E | CM-06-035 통과 |
-| 06장 작업 | W0~W7 작업 전부 완료(P0·P1), W8(P2)은 Phase 2 |
+| 06장 작업 | W0~W7 작업 전부 완료(P0·P1, Stage B CM-06-058 포함. 공개 베타 전 G1 판정), W8은 Phase 2(P2)와 G2 후 인증 C 작업(059·060, P1) |
 | 법률 검토 | 01장 6절 5개 문안(AI 고지문 포함) 검토 완료 전 유료 출시 금지 |
 | AI·음성 | `pytest apps/api` 통과, CM-06-057 녹색, 그래프 평가셋 20건을 상용·오픈소스 경로 모두 통과, 채팅 평가셋 30문항 금지 문형 0, 내레이션 대체 금지 테스트 통과, 앱·워커에 LLM 키 0 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준, 디자인 시스템 4단계(CM-06-044) 완료, `tailwind.config.js`·hex 하드코딩 0 |
 
-P0 작업과 검증 작업 대응: DB·권한(001, 007, 008, 009) → 003 / 결제(025) → 026 / 생성·소싱·업로드·내보내기·화면(006, 010~024, 027~031) → 각 작업 단위 테스트 + 035 / 랜딩·법적(032, 033) → 032 체크리스트 + 법률 검토 / AI·음성(045~055) → 각 작업 평가셋·단위 테스트 + 057.
+P0 작업과 검증 작업 대응: DB·권한(001, 007, 008, 009) → 003 / 인증 Stage A(007) → 007 자체 테스트 + 035(Mock 페르소나) / 인증 Stage B(058) → 058 B-1~B-6(자동 테스트 + Google 수동 점검표) + 035(Mock E2E 유지, B-5) + 036(금지 문자열·빌드 검사) / 결제(025) → 026 / 생성·소싱·업로드·내보내기·화면(006, 010~024, 027~031) → 각 작업 단위 테스트 + 035 / 랜딩·법적(032, 033) → 032 체크리스트 + 법률 검토 / AI·음성(045~055) → 각 작업 평가셋·단위 테스트 + 057.
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(9장 작업 반영 규칙, 8장 매트릭스: commerce는 open, B Google + 이메일, C1 카카오 P1(기존 MVP 카카오 이동), C2 네이버 P1). Stage A는 기존 CM-06-007이 맡는다(2절). 아래 3개는 2절과 같은 열이다.
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| CM-06-058 | 인증 Stage B: Google OAuth 전환 + 이메일 가입·인증 메일 안내·비밀번호 재설정 화면, `/auth/callback`(`finishLogin` 연결), 온보딩 약관 단계(`/onboarding/terms` → `/onboarding/ai`), 배포 env `AUTH_MODE=live`·`AUTH_PROVIDERS=google,email`, 로컬 `config.toml` Google 설정, 배포 체크리스트 | `apps/nomad-commerce/components/auth/`(제공자 버튼, 이메일 폼. `kakao/`는 CM-06-059), `apps/nomad-commerce/app/auth/callback/`, `apps/nomad-commerce/app/(auth)/{signup,reset-password}/`, `apps/nomad-commerce/app/onboarding/terms/`, `docs/deploy/auth-checklist.md`(제안). `finishLogin`의 약관 단계 연결(`lib/auth/`)은 CM-06-007 파일에, `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`는 CM-06-001 파일에 1줄 요청 | G1(사람 판정), CM-06-007, CM-06-033(약관·처리방침 URL), CM-06-046(온보딩 AI 단계) | P0(공개 베타 필수) | M | Fable | `AUTH_ROADMAP.md` 5.3절 그대로: B-1 새 Google 계정 첫 로그인 → `session_context('commerce')` `entitled=true`, plan `free`, 월 15크레딧 1회(재로그인 3회 뒤 원장 행 수 같음). B-2 `next=//evil.com`, `next=https://evil.com`, `next=/\evil.com` → `/dashboard`. B-3 `code` 없음·재사용·만료 → `/login?error=callback`, 서버 로그에 토큰·코드 없음. B-4 배포 빌드(`VERCEL_ENV=production`)에서 `/api/dev/login` 404, 로그인 화면에 개발용 패널 없음, `AUTH_MODE=mock`이면 빌드 실패. B-5 Mock E2E(CM-06-035) 계속 녹색, Google 실로그인은 사람이 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)로 확인해 task `log.md`에 기록. B-6 운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS` 값이 배포 체크리스트와 일치. 추가: 첫 Google 로그인 사용자가 약관 동의 전에는 `/dashboard`에 들어가지 않음 | `AUTH_ROADMAP.md` 5장, 9장, 01장 CM-F-001 |
+| CM-06-059 | 인증 Stage C1: 카카오 로그인(Supabase 기본 제공자 `kakao`) + 설정 → 로그인 방법(`/settings/login`, 연결·해제) | `apps/nomad-commerce/components/auth/kakao/`(CM-06-058 디렉토리의 하위 폴더), `apps/nomad-commerce/app/(app)/settings/login/`(CM-06-031 소유에서 뺌). 로컬 `supabase/config.toml`의 `[auth.external.kakao]` 블록과 `enable_manual_linking`은 CM-06-001 파일에 1줄 요청 | G2(사람 판정), CM-06-058, 01장 D-18 결정 | P1 | S | Opus | `AUTH_ROADMAP.md` 7.1.3절 그대로: C1-1 새 카카오 계정 첫 로그인 → B-1과 같은 결과(엔타이틀먼트·크레딧 1회). C1-2 비즈 앱(a)이면 Google로 가입한 같은 이메일 사용자가 카카오로 로그인 → 같은 `user_id`(자동 연결이 안 되면 수동 연결 7.3절). C1-3 (b)면 이메일 없는 사용자가 결제 전 연락 이메일 입력 화면을 본다. C1-4 표시 이름은 카카오 닉네임, 없으면 `user` 규칙. C1-5 카카오 버튼은 카카오 디자인 가이드 색·문구(미확인: 최신판 확인 후 반영). 추가: 로그인 수단 1개 남은 상태에서 해제 거부, 연결·해제 감사 1행 | `AUTH_ROADMAP.md` 7.1절, 7.3절, 8장 |
+| CM-06-060 | 인증 Stage C2: 네이버 로그인(스파이크 0.5일 → `custom:naver` 또는 서버 브리지). 브리지면 `/auth/naver/start`·`/auth/naver/callback`과 코어 요청(8.2절 R-9) | `apps/nomad-commerce/app/auth/naver/`(브리지만), `apps/nomad-commerce/lib/auth/naver/`, `scripts/auth/register-naver-provider.mjs` | G2(사람 판정), CM-06-058, 브리지면 R-9 반영 | P1 | M | Fable | `AUTH_ROADMAP.md` 7.2.4절 그대로: C2-1 스파이크 결과가 `[DECISION]`으로 기록되고 `NAVER_AUTH_PATH`가 그 값. C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과. C2-3 같은 네이버 계정 재로그인 5회 → 같은 `user_id`, 사용자 수 증가 0. C2-4 (브리지) state 변조·재사용·쿠키 없음 → 거부, 세션 미생성, 다른 브라우저에서 받은 콜백 URL 재생 → 거부. C2-5 (브리지) 같은 이메일의 Google 가입자가 네이버로 처음 로그인 → `email_in_use`, 새 사용자 0. C2-6 네이버 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver` 없음 | `AUTH_ROADMAP.md` 7.2절, 9장 |
+
+게이트와 웨이브(3절 표에도 그 줄 안에 반영):
+
+| 작업 | 진입 게이트(사람 판정, task `log.md` `[DECISION]`) | 웨이브 | 비고 |
+|---|---|---|---|
+| CM-06-007(Stage A) | - | W1(그대로) | 앞 웨이브 W0 작업(001, 004, 006, 008, 017, 041)은 시드 스크립트 없이 SQL·단위 테스트로 검증한다 |
+| CM-06-058(B) | G1: MVP P0 기능 작업 완료(B·C 제외), 핵심 플로우 E2E(CM-06-035)·RLS 스모크(CM-06-003)·결제 E2E(CM-06-026)가 Mock 페르소나로 녹색, 인증 모듈 밖 단계 분기 0건(CM-06-036), Google Cloud·운영 Supabase 준비(`AUTH_ROADMAP.md` 4장) | W7 맨 앞(마지막 기능 웨이브 W5, 통합·E2E 웨이브 W6 다음. 공개 베타 직전 웨이브) | G1 조건 2가 E2E 녹색을 요구하므로 E2E 작업(035, 057)이 끝난 W6 뒤에 둔다 |
+| CM-06-059(C1), CM-06-060(C2) | G2: Google 실사용 공개 베타 2주 안정(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안), open 앱 신규 가입자 중 `entitled=false` 0, 카카오 앱·네이버 애플리케이션 준비(`AUTH_ROADMAP.md` 6장) | W8(베타 출시 후 웨이브, "G2 통과 후") | 059와 060은 병렬. 네이버 검수 신청은 G2 직후 |
+
+### 8.1 소유 경로 메모
+
+| 항목 | 내용 |
+|---|---|
+| 콜백 경로 | 기존 문서는 콜백 소유를 `app/(auth)/callback/`으로 적었다(2절 CM-06-007 원래 행, 07장 1.1절). Next.js 라우트 그룹 `(auth)`는 URL에 나타나지 않아 이 경로는 `/callback`이 된다. 03장·`AUTH_ROADMAP.md`의 URL `/auth/callback`에 맞춰 CM-06-058은 `app/auth/callback/`을 소유한다(제안). 07장 1.1절 대상 위치도 같은 줄 안에서 `app/auth/callback/`으로 고쳤다 |
+| 로그인 화면 | 페이지(`app/(auth)/login/`)와 개발용 패널은 CM-06-007, 제공자 버튼·이메일 폼 컴포넌트(`components/auth/`)는 CM-06-058, 카카오 버튼(`components/auth/kakao/`)은 CM-06-059가 소유한다. 페이지는 `listLoginOptions('commerce')` 결과만 보고 렌더하므로 B·C 작업이 페이지 파일을 고치지 않는다 |
+| 온보딩 | `app/onboarding/`은 CM-06-046, 그중 `terms/`만 CM-06-058 |
+| 설정·config | `app/(app)/settings/login/`은 CM-06-031 소유에서 빼서 CM-06-059. `supabase/config.toml`(CM-06-001)의 제공자 블록은 058·059가 1줄 요청으로 바꾼다 |
+| 카카오 위치 | 이전 문서는 CM-F-001·CM-06-007에서 카카오를 MVP(이메일/Google/Kakao)로 두었다. 확정 결정 22로 C1(CM-06-059, G2 후, P1)으로 옮겼고 01장 2절·CM-F-001·8.1절, 02장 9절, 03장 2.1·7절, 04장 8절, 개발서가 같은 단계를 쓴다 |
+| 작업 수 | 57개(모델 작업 56) → 60개(모델 작업 59). 머리말, 4절, README, 개발서 0장·9.1절이 같은 수를 쓴다 |
+
+### 8.2 코어 요청 추가
+
+| ID | 대상 | 요청 | 이유 | 그때까지의 우회 |
+|---|---|---|---|---|
+| R-9 | `D:/WorkSpace/platform/docs/products/_platform-core/staged/0010_core_auth_identity_links.sql` | C2 스파이크가 브리지 경로로 결정되면 코어가 이 보류 마이그레이션을 1회 적용 | 네이버 고유 id ↔ 사용자 연결(`AUTH_ROADMAP.md` 7.2.3절). 코어는 한 번만 적용하고 모든 제품이 쓴다 | 스파이크가 `custom:naver`로 통과하면 요청하지 않는다 |

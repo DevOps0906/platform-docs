@@ -356,6 +356,8 @@ RLS 스모크 결과(사용자 A·B 서로 다른 조직, X는 엔타이틀먼�
 |---|---|
 | `pending` | astro는 open 앱이라 만들지 않는다(approval 앱만) |
 | 미인증 계정 | 로컬 `enable_confirmations = true`에서는 미인증 이메일의 비밀번호 로그인이 거부되므로(Supabase 동작, 미확인) "미인증 잔액 0" 기준은 Mock 페르소나가 아니라 AS-06-009의 서버 단위 테스트(`email_confirmed_at` null 사용자로 `/api/auth/welcome` 409)로 검사한다 |
+| 멱등 키 공유 | 환영 크레딧 키 `signup:<org>:astro`는 코어 가입 크레딧 키(`migrations/0003_core_credits.sql:426`, `on_signup_app_bootstrap`)와 같은 문자열이다. astro 플랜의 `signup_credits=0`이라 코어는 이 키로 원장 행을 만들지 않고(`> 0`일 때만 지급), 그래서 환영 지급이 막히지 않는다. 모놀리스·모듈러 seed 모두 0이며(01장 D-3), 이 값을 0보다 크게 바꾸면 환영 크레딧이 멱등 처리로 지급되지 않으니 D-3을 다시 정한다 |
+| IP 해시 보류와 반복 실행 | 같은 IP 해시 하루 3회 초과 보류(AS-F-002)는 실제로 지급할 때만 센다(제안: 멱등 키로 이미 지급된 조직이면 `rate_limit_hit`을 부르지 않는다). 로컬에서는 모든 페르소나가 같은 IP라, 먼저 세면 E2E를 반복할 때 `welcome_pending`·`no_app` 지급이 보류된다 |
 | 재시드 | 멱등: 이미 있는 이메일은 건너뛰고 역할·상태만 맞춘다. `welcome_pending`이 한 번 로그인해 30을 받은 뒤 미지급 상태로 되돌리려면 `supabase db reset` 후 다시 시드한다(원장은 append-only라 훅이 회수하지 않는다) |
 | 도메인 데이터 | 보관함 대상·리딩·대화는 시드하지 않는다(제안). E2E가 각 페르소나로 API를 호출해 만든다 |
 | 모놀리스/모듈러 | 이 개발은 단독 `public` 모놀리스(01장 D-9, `docs/develop/astro-ai/astro-ai_develop.md` 1절)라 `no_app`도 자동 부트스트랩되어 402 경로를 볼 수 없다. 402·부트스트랩 검증은 모듈러 통합 DB에서만 의미가 있다(`--app`을 여러 번 주면 두 번째 앱부터 `bootstrap_app_for_org`) |

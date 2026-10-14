@@ -2,14 +2,14 @@
 
 작업 ID는 `AS-06-###`(DB_CONVENTIONS 1장 SQLSTATE 접두사 `AS`). 모델 기준은 `docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 1장: Fable(결제, 권한, RLS, 데이터 모델), Opus(기능 구현, API 연동, 테스트 설계), Sonnet(UI, 메인페이지, 컴포넌트, 문서), Haiku(보일러플레이트, 린트/타입, 문구, 반복 체크).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 16개(AS-06-039~054)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(그래프 호출), 017(디자인 시스템 2단계), 018~023(선행에 041 추가), 001·002·025·028·033(수용 기준 보강)이다. 작업 수 54개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 16개(AS-06-039~054)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(그래프 호출), 017(디자인 시스템 2단계), 018~023(선행에 041 추가), 001·002·025·028·033(수용 기준 보강)이다. 2026-10-14 개정: 확정 결정 22(인증 단계)에 따라 AS-06-003을 Stage A(Mock 로그인) 범위로 바꾸고 B·C1·C2 작업 3개(AS-06-055~057)를 8절에 붙여 작업 수는 57개다. 작업 수 54개(현재 57개)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
 
 ## 1. 원칙과 소유 경계
 
 | 원칙 | 내용 |
 |---|---|
 | 디렉토리 단위 소유 | 한 디렉토리(또는 명시한 파일)는 한 작업만 쓴다. 다른 작업의 파일이 필요하면 선행 작업으로 두고 인터페이스만 import한다 |
-| 공용 파일 | `apps/astro-ai/src/app/layout.tsx`, `src/proxy.ts`, `src/lib/`는 AS-06-003 소유. 이후 변경은 003 담당에게 요청 |
+| 공용 파일 | `apps/astro-ai/src/app/layout.tsx`, `src/proxy.ts`, `src/lib/`는 AS-06-003 소유. 이후 변경은 003 담당에게 요청. 예외: 인증 단계 작업(AS-06-055~057, 8절)은 003 완료 뒤 `src/lib/auth/`의 제공자 목록·`finishLogin`과 `src/app/(auth)/`의 제공자 버튼·콜백을 이어받는다 |
 | 워커 핸들러 등록 | `apps/astro-worker/src/handlers/*.ts`는 파일명 규칙으로 자동 등록(레지스트리는 AS-06-012 소유). 각 핸들러 파일은 작업별로 따로 소유 |
 | API 하위 폴더 | `src/app/api/<폴더>/` 단위로 소유가 다르다(아래 표) |
 | 코어 | `_platform-core`, `_supabase-modular`의 다른 파일, 공용 렌더 서비스(`services/render-weasyprint`, flora-publishing 소유)는 수정하지 않는다. 필요하면 6절 요청 |
@@ -26,13 +26,13 @@
 |---|---|---|---|---|---|---|---|---|
 | AS-06-001 | DB 조각 적용, 타입 생성, 모듈러 → 모놀리스 변환 스크립트 | `supabase/migrations/`, `scripts/db/` | 없음 | P0 | M | Fable | `supabase db reset` 성공, `check.mjs --vector` mod/mono OK, 변환 스크립트 결과가 `0002_astro_domain.sql`과 같다, AI 라우팅 기본값 10행과 starter AI 키 적용(05장 9절) | Astro 5장 #2, FD 5장 #3, 05장 |
 | AS-06-002 | RLS/권한 회귀 테스트 자동화 | `supabase/tests/` | 001 | P0 | M | Fable | 05장 9절 65항목 + `SECURITY_BASELINE.md` 15장이 CI에서 통과, 실패 시 머지 차단. AI 코어 표 항목 추가: 타인 대화·메시지·`voice_jobs` 0행, `ai_chunks` SELECT 42501, `resolve_ai_route`·`match_ai_chunks` authenticated 호출 42501 | SECURITY_BASELINE 15장, 16장 |
-| AS-06-003 | 앱 골격: Next 16, core-db 클라이언트 3종, `proxy.ts`, `requireSession`, 레이아웃, 로그인·가입·콜백 | `apps/astro-ai/src/app/layout.tsx`, `src/proxy.ts`, `src/lib/`, `src/app/(auth)/` | 001 | P0 | M | Opus | 가입 시 `signup_app='astro'` 전송, 비로그인 `/dashboard` → `/login`, 프로필 없음 → 로그아웃 | Astro 5장 #3, FD 5장 #5 |
+| AS-06-003 | 앱 골격 + 인증 Stage A: Next 16, core-db 클라이언트 3종, `proxy.ts`, `requireSession`, 레이아웃, 인증 모듈 경계(`src/lib/auth/`: `getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`), Mock 로그인(`POST /api/dev/login`, `/login` 개발용 패널, `MOCK AUTH · 로컬 전용` 배지), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.astro.mjs`(`welcome_pending` 포함, 05장 10절), 가드(env zod, 빌드 검사). 이메일 가입·메일 인증·비밀번호 재설정 화면과 Google 버튼·콜백 완성은 AS-06-055(Stage B)로 옮겼다 | `apps/astro-ai/src/app/layout.tsx`, `src/proxy.ts`, `src/lib/`, `src/app/(auth)/`, `src/app/api/dev/`, `scripts/dev/` | 001 | P0 | M | Opus | `owner` 페르소나 Mock 로그인 → `session_context('astro')` `entitled=true`·`plan_code='starter'`, `outsider`로 owner 조직 보관함·리딩 0행, 비로그인 `/dashboard` → `/login`, 프로필 없음 → 로그아웃, `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live`에서 `/api/dev/login` 404·개발용 패널 미렌더, 시드 스크립트는 Supabase 호스트가 루프백이 아니면 exit 1이고 2회 실행해도 원장 행 증가 0, 시드 계정은 `signup_app='astro'`로 실제 가입 트리거 경유(`AUTH_ROADMAP.md` 2장) | Astro 5장 #3, FD 5장 #5, 확정 결정 22 |
 | AS-06-004 | 만세력 사양서와 골든 테스트 100건 | `packages/saju-engine/SPEC.md`, `packages/saju-engine/fixtures/` | 없음 | P0 | M | Fable | 01장 AS-F-006 항목 전부 규칙 명시, 골든 100건(분포 01장) 기대값과 출처(기존 만세력 2곳 대조) 기록 | Astro 5장 #6, FD 5장 #1 |
 | AS-06-005 | 만세력 엔진 구현 | `packages/saju-engine/src/` | 004 | P0 | L | Fable | 골든 100건 통과, 브라우저 번들 150KB(gzip) 이하(제안), 같은 입력 같은 출력 | Astro 5장 #6, FD 5장 #2 |
 | AS-06-006 | PII 암호화 패키지(AES-256-GCM, 키 버전) | `packages/astro-crypto/` | 없음 | P0 | S | Fable | 키 누락 시 예외로 기동 실패, 왕복 테스트, 키 버전 교체 재암호화 함수 | 01장 AS-F-005, SECURITY_BASELINE 12장 |
 | AS-06-007 | 보관함·동의 API | `apps/astro-ai/src/app/api/subjects/`, `src/app/api/consents/` | 003, 005, 006 | P0 | M | Opus | 04장 2절 subjects 행 계약 충족, 21번째 409, 동의 없는 가족 400, 응답에 암호문 없음 | FD 5장 #8 |
 | AS-06-008 | Toss 크레딧팩 결제(주문, confirm, 웹훅 재조회) | `apps/astro-ai/src/app/api/billing/orders/`, `src/app/api/billing/confirm/`, `src/app/api/webhooks/toss/`, `src/app/billing/` | 003 | P0 | M | Fable | 같은 결제 2회 confirm 지급 1회, 금액 변조 지급 0 + Toss 취소 호출, 웹훅 서명 실패 401 | Astro 5장 #5, FD 5장 #13 |
-| AS-06-009 | 환영 크레딧과 가입 남용 방지 | `apps/astro-ai/src/app/api/auth/`, `src/server/welcome-credits.ts` | 003, 027 | P0 | S | Fable | 미인증 0cr, 인증 후 30cr, 같은 조직 2회 호출 원장 1행, 같은 IP 해시 하루 4번째 가입 보류 | FD 5장 #11, 01장 D-3 |
+| AS-06-009 | 환영 크레딧과 가입 남용 방지 | `apps/astro-ai/src/app/api/auth/`, `src/server/welcome-credits.ts` | 003, 027 | P0 | S | Fable | 미인증 0cr, 인증 후 30cr, 같은 조직 2회 호출 원장 1행, 같은 IP 해시 하루 4번째 가입 보류. Stage A: `welcome_pending` 페르소나 첫 Mock 로그인 뒤 30, 재로그인 3회 뒤 환영 원장 1행(`finishLogin` 지급 단계 연결은 003 파일에 1줄 요청, 04장 8절). 지급 함수는 로그인 제공자와 무관하게 인증 확인 여부 하나만 본다(B·C 재사용) | FD 5장 #11, 01장 D-3 |
 | AS-06-010 | 리딩 생성·재생성·취소·다운로드 API, 단가표 | `apps/astro-ai/src/app/api/readings/`, `src/server/pricing.ts` | 005, 006, 007, 027 | P0 | M | Fable | 잔액 부족 402, 같은 `request_id` 재요청 시 차감 1회, enqueue 실패 시 환불 행, 진행 중 4번째 409, 다운로드 URL 7일 | Astro 5장 #4, FD 5장 #4, #6 |
 | AS-06-011 | 프롬프트, 현대적 재해석 사전, 장 출력 zod 스키마, 금지 표현 규칙 | `packages/astro-report/prompts/`, `schema/`, `rules/` | 004 | P0 | M | Opus | 사전 30항목 이상, 금지 규칙이 01장 6.4절 분류 전부 포함, 한글 경계 매칭 테스트 | FD 5장 #7 |
 | AS-06-012 | 워커: 생성 핸들러(잡 토큰 발급 요청 → 그래프 `astro.reading` 실행 → 결과 zod 재검증·저장), 핸들러 레지스트리, 정합성 스위퍼, AI 정산 크론 호출 | `apps/astro-worker/src/index.ts`, `src/handlers/generate.ts`, `src/sweeper.ts` | 010, 011, 014, 043, 048 | P0 | L | Opus | 리딩 1건에 그래프 실행 1회(`ai_runs.job_id` 일치), 그래프 실패·120초 초과 시 환불 행 1, 워커 환경 변수에 LLM 키 0, 그래프 입력에 실명·생년월일 0, 리딩·잡 상태 불일치 5분 내 정리 | Astro 5장 #7, 01장 AS-F-029 |
@@ -44,18 +44,18 @@
 | AS-06-018 | 보관함 화면과 입력 폼(원국 프리뷰 연결) | `apps/astro-ai/src/components/subjects/`, `src/app/dashboard/subjects/` | 007, 017, 019, 041 | P0 | M | Opus | 03장 2.2 플로우 통과, 프리뷰 100ms 이내, 존재하지 않는 음력일 폼 오류 | FD 5장 #8 |
 | AS-06-019 | 원국 카드, 오행 막대 SVG, 대운 타임라인 | `apps/astro-ai/src/components/chart/` | 005, 017, 041 | P0 | M | Sonnet | 金·水 테두리 대비, 표 마크업과 스크린리더 라벨, 375px에서 4열 유지 | FD 5장 #9 |
 | AS-06-020 | 리딩 시작 스테퍼, 타로 부채꼴 선택, 진행률(Realtime), 결과 뷰어 | `apps/astro-ai/src/components/reading/`, `src/app/dashboard/readings/` | 010, 017, 019, 041 | P0 | M | Opus | `postgres_changes` 구독으로 단계 표시, 402 시 충전 모달, 키보드로 카드 3장 선택 | Astro 5장 #9 |
-| AS-06-021 | 대시보드 홈, 히스토리, 크레딧, 설정 | `apps/astro-ai/src/app/dashboard/page.tsx`, `dashboard/history/`, `dashboard/credits/`, `dashboard/settings/` | 008, 017, 041 | P1 | M | Sonnet | 빈 상태·스켈레톤, 원장 표, 설정의 기본 테마 저장(사용자 세션 `preferences`), 설정의 AI 처리 방식·자동 읽어 주기 항목(API는 043) | Astro 5장 #11 |
+| AS-06-021 | 대시보드 홈, 히스토리, 크레딧, 설정 | `apps/astro-ai/src/app/dashboard/page.tsx`, `dashboard/history/`, `dashboard/credits/`, `dashboard/settings/`(`login-methods/` 제외, AS-06-056) | 008, 017, 041 | P1 | M | Sonnet | 빈 상태·스켈레톤, 원장 표, 설정의 기본 테마 저장(사용자 세션 `preferences`), 설정의 AI 처리 방식·자동 읽어 주기 항목(API는 043) | Astro 5장 #11 |
 | AS-06-022 | 최소 어드민(유저, 결제·환불, 크레딧 지급, 발송 모니터) | `apps/astro-ai/src/app/admin/`, `src/app/api/admin/`(둘 다 `wiki/`, `knowledge/` 제외, AS-06-046 소유) | 008, 010, 041 | P1 | M | Opus | 일반 사용자 403, 사유 없는 환불·지급 400, 모든 쓰기 감사 1행 | Astro 5장 #12 |
 | AS-06-023 | 랜딩, 샘플, 가격, JSON-LD, `/llms.txt` | `apps/astro-ai/src/app/(marketing)/page.tsx`, `(marketing)/layout.tsx`, `(marketing)/sample/`, `(marketing)/pricing/`, `public/llms.txt` | 017, 024, 041, 053 | P1 | M | Sonnet | 빌드 산출물에 `aggregateRating` 0, LCP 2.5초, Lighthouse 성능 90/접근성 95, 금지 문구 0, 히어로에 AS-06-053 장착, `/llms.txt`에 공개 위키 링크 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/file/03-설계/디자인/REFERENCES.md:16-23`). | Astro 5장 #13, FD 5장 #14 |
 | AS-06-024 | Live Demo API와 키워드 규칙 | `apps/astro-ai/src/app/api/demo/`, `packages/saju-engine/src/demo/` | 005, 027 | P1 | S | Opus | IP 해시당 4번째 429, LLM 호출 0, 입력 로그 0 | Astro 5장 #14 |
 | AS-06-025 | 법적 페이지(약관, 개인정보처리방침, 환불, 면책)와 동의 문구 | `apps/astro-ai/src/app/(marketing)/legal/`, `apps/astro-ai/content/legal/` | 없음 | P0 | S | Sonnet | 01장 6절 항목 전부 반영, 국외 이전 표(AI·음성 제공자 포함), 상용 AI 국외 이전 고지문·음성 처리 고지문과 버전 상수, AI 생성 표시 문구, Dify 로그 보존 30일, 통신판매업 정보 자리 | FD 5장 #14 |
 | AS-06-026 | 대상 삭제, 탈퇴(30일 유예 purge), 데이터 내보내기, 파일 purge 핸들러 | `apps/astro-ai/src/app/api/account/`, `apps/astro-worker/src/handlers/purge.ts` | 007, 012 | P1 | M | Fable | 대상 삭제 후 리딩 0행·파일 0개(24시간), 탈퇴 30일 뒤 조직 0행, 감사 기록 | 01장 AS-F-026, AS-F-027 |
 | AS-06-027 | 레이트 리밋 래퍼와 IP 해시 | `apps/astro-ai/src/server/ratelimit/` | 003 | P0 | S | Opus | 키 규약 `astro:<route>:<id>`, 원문 IP 저장 0, 429 + Retry-After | FD 5장 #11 |
-| AS-06-028 | Playwright 핵심 플로우 + Lighthouse CI | `e2e/flows/`, `.github/workflows/astro-e2e.yml` | 012, 020, 021, 022, 023, 050 | P1 | M | Opus | 가입(온보딩 AI 동의 포함), 리딩 생성, 실패 자동 환불, 어드민 환불, 대상 삭제, AI 채팅 1턴(목 제공자) 6개 녹색 | Astro 5장 #15 |
-| AS-06-029 | 결제 E2E(Toss 테스트 키) | `e2e/billing/` | 008 | P0 | M | Opus | 팩 4종 결제 성공, 결제창 취소, 새로고침 재confirm 멱등, 금액 변조 차단 | FD 5장 #13, DOC_TEMPLATE 필수 |
+| AS-06-028 | Playwright 핵심 플로우 + Lighthouse CI | `e2e/flows/`, `.github/workflows/astro-e2e.yml` | 012, 020, 021, 022, 023, 050 | P1 | M | Opus | 가입(온보딩 AI 동의 포함), 리딩 생성, 실패 자동 환불, 어드민 환불, 대상 삭제, AI 채팅 1턴(목 제공자) 6개 녹색. Mock 페르소나 storageState로 실행(`globalSetup`이 `/api/dev/login`): 가입 플로우는 `welcome_pending` 첫 로그인 → 환영 30 → `/onboarding/ai`, 어드민은 `ops`, 교차 테넌트는 `outsider`. `AUTH_MODE=live` 빌드에서 `/api/dev/login` 404 검사 포함 | Astro 5장 #15 |
+| AS-06-029 | 결제 E2E(Toss 테스트 키) | `e2e/billing/` | 008 | P0 | M | Opus | 팩 4종 결제 성공, 결제창 취소, 새로고침 재confirm 멱등, 금액 변조 차단. Mock `owner` 페르소나 storageState로 실행 | FD 5장 #13, DOC_TEMPLATE 필수 |
 | AS-06-030 | KASI 대조 배치 스크립트 | `packages/saju-engine/scripts/` | 005 | P1 | S | Opus | 1900~2100 음양력 변환과 절입 시각 샘플 1,000건 불일치 0, CI 수동 트리거 | FD 5장 #1, #13 |
 | AS-06-031 | 원본 문서 정리와 아카이브 | `archive/`, `docs/astro-ai/` | 없음 | P0 | S | Haiku | 07장 5절 체크리스트 완료, 원본 대화 잔재·`[cite]` 미이식 확인 | FD 5장 #15, Astro 5장 #1 |
-| AS-06-032 | 환경변수 검증, 타입 재생성 스크립트, 린트 설정 | `apps/astro-ai/src/env.ts`, `apps/astro-worker/src/env.ts`, 루트 `package.json` scripts, `eslint.config.mjs` | 003 | P0 | S | Haiku | 02장 8절 필수 변수 누락 시 기동 실패, `NEXT_PUBLIC_`에 비밀 0 | SECURITY_BASELINE 13장 |
+| AS-06-032 | 환경변수 검증, 타입 재생성 스크립트, 린트 설정 | `apps/astro-ai/src/env.ts`, `apps/astro-worker/src/env.ts`, 루트 `package.json` scripts, `eslint.config.mjs` | 003 | P0 | S | Haiku | 02장 8절 필수 변수 누락 시 기동 실패, `NEXT_PUBLIC_`에 비밀 0. 인증 금지 패턴 CI 검사: 쿠키·localStorage 역할/플랜, `mock-auth`, `nomad_role`, `nomad_plan`, 인증 모듈(`src/lib/auth/`, 로그인 화면, 콜백) 밖의 `AUTH_MODE` 참조가 있으면 실패(`AUTH_ROADMAP.md` 9장), `DEV_SEED_PASSWORD`가 `NEXT_PUBLIC_*`이면 실패 | SECURITY_BASELINE 13장 |
 | AS-06-033 | 리포트 품질 평가셋(골든 입력 20건 자동 검사) | `packages/astro-report/eval/` | 011 | P1 | S | Opus | 20건 모두 글자 수·호칭 3회·금지 표현 0·수치가 엔진 값과 일치. 그래프 출력(AS-06-048)을 상용 경로와 오픈소스 경로로 각각 돌릴 수 있다 | 01장 AS-F-009~011 |
 | AS-06-034 | 워커 관측(로그 마스킹, p95 지표) | `apps/astro-worker/src/observability/` | 012 | P1 | S | Opus | 로그에 실명·생년월일·이메일 0, T0→PDF p95 대시보드 | 01장 5절 |
 | AS-06-035 | ePub 내보내기(Phase 2) | `packages/astro-report/epub/` | 014 | P2 | S | Sonnet | PDF와 같은 HTML 템플릿, ePubCheck 통과 | FD 5장 #12 |
@@ -66,7 +66,7 @@
 | AS-06-040 | 디자인 시스템 3단계: 사람 비주얼 검토(라이트/다크, 상태 6종, 크기 배리언트) | `docs/file/03-설계/디자인/review/`(스크린샷, 수정 기록) | 017 | P0 | M | 사람(보조 Sonnet) | 03장 3.2절 기본 컴포넌트 전부의 라이트/다크·상태별 스크린샷과 사람이 고친 수치 기록, 대비 4.5:1·포커스 링 확인. 이 단계는 줄이지 않는다 | DESIGN_SYSTEM 4장 3단계 |
 | AS-06-041 | 디자인 시스템 4단계: 코드(Tailwind v4 CSS + 컴포넌트)를 정답으로 확정하고 문서를 코드 기준으로 재작성 | `docs/file/03-설계/디자인/DESIGN.md`(2절 이후), `docs/file/03-설계/디자인/COMPONENTS.md` | 040 | P0 | S | Opus | 문서 토큰 값과 `tokens.css`가 스크립트 비교로 100% 일치, 피그마 노드 id·외부 파일 링크 0, `tailwind.config.js` 0 | DESIGN_SYSTEM 4장 4단계 |
 | AS-06-042 | AI 서비스 설치: `apps/api`에 공용 ai-service 적용, astro 설정(app, `ASTRO_KNOWLEDGE_ORG_ID`, 컬렉션 이름), JWKS 검증, 라우터·국외 동의 필터 연동 테스트 | `apps/api/`(`app/ai/graphs/`, `app/ai/tools/astro/`, `app/ai/compliance/astro.py`, `app/ai/products/astro/knowledge.py`, `wiki_config.py` 제외), `apps/api/tests/platform/` | 001 | P0 | M | Fable | 다른 app `aud`·만료·재사용 `jti` 토큰 401, 토큰 org와 다른 org 리딩 요청 403, 미동의 조직 라우팅에 상용 0, `dify.aux` 상용 0, 필수 변수 누락 시 기동 실패 | 02장 2·5절, AI_ARCHITECTURE 2·4·8장 |
-| AS-06-043 | AI 게이트: 대화 생성, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, 서명 토큰·잡 토큰 발급, 정산 크론, AI 단가, 온보딩 국외 이전 동의 | `apps/astro-ai/src/app/api/ai/`, `src/app/api/internal/`, `src/app/api/onboarding/`, `src/app/onboarding/`, `src/server/ai/`, `src/server/ai-pricing.ts` | 003, 027, 042 | P0 | L | Fable | 04장 2.1절 계약 충족. 같은 `request_id` 재전송 차감 1회, 응답 미전달 시 환불 1행, Dify 차단 시 `/tools/answer-direct`로 응답, 잡 토큰은 running 잡에만(다른 상태 409), 동의 시 `ai_org_settings`·`consents` 버전 일치, 정산 크론 뒤 10분 넘은 `settled_at is null` 0 | 01장 AS-F-032, 035, 036 |
+| AS-06-043 | AI 게이트: 대화 생성, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, 서명 토큰·잡 토큰 발급, 정산 크론, AI 단가, 온보딩 국외 이전 동의 | `apps/astro-ai/src/app/api/ai/`, `src/app/api/internal/`, `src/app/api/onboarding/`(`terms/` 제외, AS-06-055), `src/app/onboarding/`(`terms/` 제외, AS-06-055), `src/server/ai/`, `src/server/ai-pricing.ts` | 003, 027, 042 | P0 | L | Fable | 04장 2.1절 계약 충족. 같은 `request_id` 재전송 차감 1회, 응답 미전달 시 환불 1행, Dify 차단 시 `/tools/answer-direct`로 응답, 잡 토큰은 running 잡에만(다른 상태 409), 동의 시 `ai_org_settings`·`consents` 버전 일치, 정산 크론 뒤 10분 넘은 `settled_at is null` 0 | 01장 AS-F-032, 035, 036 |
 | AS-06-044 | 명리·타로 해설집 원고(천간·지지·십신·오행·대운, 메이저 아르카나 22장 정·역) | `content/knowledge/` | 011 | P0 | L | Sonnet | 용어 100항목 이상(제안) + 카드 22장 정·역, 항목마다 작성자·검수일·출처 메타데이터, 금지 문구 규칙 검사 0, 운영자 검수 기록(01장 D-15) | 01장 AS-F-030 |
 | AS-06-045 | RAG 색인과 Dify 외부 지식 API: 운영자 지식 조직 컬렉션(`astro-knowledge`, `astro-wiki`, oss-embed), 색인 스크립트, `/dify/retrieval` 설정, 검색 평가셋 40문항 | `apps/api/app/ai/products/astro/knowledge.py`, `scripts/knowledge/`, `apps/api/tests/astro/retrieval/` | 042, 044 | P0 | M | Opus | 재현율@8 0.8 이상(제안), 다른 조직 컬렉션 요청 42501, 외부 지식 응답에 사용자 조직 데이터 0, 컬렉션당 임베딩 모델 1종 | 01장 AS-F-030 |
 | AS-06-046 | 위키 운영: 해설집 → 위키 ingest(draft), 게시·편집·이력·lint 관리자 화면과 API, 주 1회 lint 잡 | `apps/api/app/ai/products/astro/wiki_config.py`, `apps/astro-ai/src/app/admin/wiki/`, `src/app/admin/knowledge/`, `src/app/api/admin/wiki/`, `src/app/api/admin/knowledge/` | 041, 045 | P0 | M | Opus | 새 페이지 draft, 출처 없는 페이지 게시 409, 사람 소유 표시가 붙은 블록을 ingest가 수정하지 않음, `expected_version` 불일치 409, 문서 1건당 갱신 페이지 5개 상한, lint 결과 화면 표시, 모든 쓰기 감사 1행 | 01장 AS-F-031, LLM_WIKI 3장 |
@@ -90,21 +90,21 @@
 | W3 | 009, 010, 015, 019, 021, 024, 029, 043, 045 | 9 | W2, 화면은 041 | 환영 크레딧, 리딩 API, 렌더, 차트 컴포넌트, 대시보드, 데모, 결제 E2E, AI 게이트, RAG 색인 |
 | W4 | 018, 020, 022, 023, 046, 048, 049, 050 | 8 | W3 | 보관함·리딩 화면, 어드민, 랜딩, 위키 운영, 리딩 그래프, Dify 채팅, 채팅 패널 |
 | W5 | 012, 047, 051 | 3 | W4 | 워커 생성(그래프 연결), 공개 위키, 음성 대화 |
-| W6 | 016, 026, 028, 034, 052, 054 | 6 | W5 | 발송, 삭제·탈퇴, E2E, 관측, 리딩 낭독, AI 보안 회귀. MVP 출시 조건 |
-| W7 | 035, 036, 037, 038 | 4 | MVP 출시 | Phase 2 |
+| W6 | 016, 026, 028, 034, 052, 054, 055(G1 통과 후) | 6 + 1 | W5. 055는 G1. 028·054의 공개 베타 마무리 재실행은 055 완료를 기다린다 | 발송, 삭제·탈퇴, E2E, 관측, 리딩 낭독, AI 보안 회귀, 인증 Stage B(Google + 이메일). MVP 출시(공개 베타) 조건. 순서는 8.2절 |
+| W7 | 035, 036, 037, 038, 056·057(G2 통과 후) | 6 | MVP 출시. 056·057은 G2 | Phase 2, 인증 Stage C(카카오 C1, 네이버 C2) |
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 13 | 24.5% | 27 / 101 = 26.7% |
-| Opus | 26 | 49.1% | 50 / 101 = 49.5% |
-| Sonnet | 12 | 22.6% | 22 / 101 = 21.8% |
-| Haiku | 2 | 3.8% | 2 / 101 = 2.0% |
+| Fable | 15 | 26.8% | 31 / 106 = 29.2% |
+| Opus | 27 | 48.2% | 51 / 106 = 48.1% |
+| Sonnet | 12 | 21.4% | 22 / 106 = 20.8% |
+| Haiku | 2 | 3.6% | 2 / 106 = 1.9% |
 
-비율은 모델 작업 53개 기준이다. 사람 작업 1개(AS-06-040, M)는 비율에서 뺐다. 2026-10-13 이전(38개)은 Fable 26.3%, Opus 50.0%, Sonnet 18.4%, Haiku 5.3%였다.
+비율은 모델 작업 56개 기준이다(2026-10-14 인증 단계 작업 3개 추가). 사람 작업 1개(AS-06-040, M)는 비율에서 뺐다. 2026-10-14 이전(53개)은 Fable 24.5%, Opus 49.1%, Sonnet 22.6%, Haiku 3.8%(규모 가중 26.7%, 49.5%, 21.8%, 2.0%), 2026-10-13 이전(38개)은 Fable 26.3%, Opus 50.0%, Sonnet 18.4%, Haiku 5.3%였다.
 
-Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 엔진 사양·구현(정확도가 제품 신뢰의 핵심, `docs/reference/reviews/Astro_AI.md:125`), 개인정보 삭제, 그리고 AI 보안 경계(서명 토큰 검증 042, AI 게이트의 선차감·정산·동의 043, AI 회귀 054)를 맡는다. 그래프·RAG·Dify·음성 구현은 Opus, 채팅 패널·공개 위키·3D 히어로·해설집 원고는 Sonnet이다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md:253`).
+Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 엔진 사양·구현(정확도가 제품 신뢰의 핵심, `docs/reference/reviews/Astro_AI.md:125`), 개인정보 삭제, 그리고 AI 보안 경계(서명 토큰 검증 042, AI 게이트의 선차감·정산·동의 043, AI 회귀 054), 인증 세션 발급 경로(Stage B 055, 네이버 C2 057)를 맡는다. 카카오 C1(056)은 Supabase 기본 제공자 추가라 Opus다. 그래프·RAG·Dify·음성 구현은 Opus, 채팅 패널·공개 위키·3D 히어로·해설집 원고는 Sonnet이다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md:253`).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -167,9 +167,55 @@ Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 엔진 사양·
 | DB | `check.mjs --vector` mod/mono OK, RLS 회귀(AS-06-002) 전 항목 통과 |
 | 엔진 | 골든 100건 통과, KASI 대조 불일치 0 |
 | 결제 E2E | AS-06-029 녹색(Toss 테스트 키) |
-| 핵심 E2E | AS-06-028 5플로우 녹색 |
+| 핵심 E2E | AS-06-028 6플로우 녹색(Mock 페르소나 storageState). 인증 B: AS-06-055 수용 기준 B-1~B-6 통과(B-5 Google 실로그인 수동 점검표를 task `log.md`에 기록) |
 | 성능 | T0 → PDF p95 60초 이하(스테이징 50건), 랜딩 Lighthouse 성능 90/접근성 95 |
 | 법·문구 | 01장 6절 항목 반영, 빌드 산출물 `aggregateRating` 0, 금지 표현 검사 통과 |
 | AI·음성 | `pytest apps/api` 통과, AS-06-054 녹색, 그래프 평가셋 20건을 상용·오픈소스 경로 모두 통과, 채팅 평가셋 30문항 금지 문구 0, 낭독 대체 금지 테스트 통과 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준, 디자인 시스템 4단계(AS-06-041) 완료, `tailwind.config.js`·hex 하드코딩 0 |
 | 작업 | W0~W6 작업 전부 완료(W7은 Phase 2) |
+
+## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 9장(작업 계획 반영 규칙)과 8장 astro-ai 행(B Google + 이메일, C1 P1, C2 P1, 추가 페르소나 "환영 크레딧 미지급 상태 사용자")이다. Stage A는 기존 AS-06-003이 맡는다(2절 행에서 범위 변경). 아래 3개가 새 작업이다.
+
+### 8.1 작업 목록
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| AS-06-055 | Stage B: Google OAuth 전환 + 이메일 가입·메일 인증·비밀번호 재설정 화면, `/auth/callback` 완성(`finishLogin` 3.2절 전체), OAuth 첫 로그인 약관 동의(`/onboarding/terms`), 배포 env(`AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`) | `apps/astro-ai/src/app/(auth)/`(003에서 이어 받음: `/login` B 구성, `/signup`, `/auth/verify`, 비밀번호 재설정), `src/components/auth/`(제공자 버튼, 신규), `src/app/auth/callback/`, `src/lib/auth/`(003에서 이어 받음: 제공자 목록, `finishLogin` 코드 교환·약관 단계), `src/app/onboarding/terms/`, `src/app/api/onboarding/terms/`. `supabase/config.toml`의 `[auth.external.google]`은 001 소유 파일에 변경 요청 | 003, 009, 043(`/onboarding` 흐름), 게이트 G1(028 핵심 플로우가 Mock으로 녹색인 것 포함) | P0 | M | Fable | `AUTH_ROADMAP.md` 5.3절 B-1~B-6 그대로: B-1 새 Google 계정 첫 로그인 → `session_context('astro')` `entitled=true`, `plan_code='starter'`, 환영 크레딧 30이 Google 로그인 확인 직후 1회(재로그인 3회 뒤에도 환영 원장 1행, AS-F-002), B-2 `next=//evil.com`·`https://evil.com`·`/\evil.com` → `/dashboard`, B-3 `code` 없음·재사용·만료 → `/login?error=callback`이고 로그에 토큰·코드 0, B-4 `VERCEL_ENV=production` 빌드에서 `/api/dev/login` 404·개발용 패널 0·`AUTH_MODE=mock`이면 빌드 실패, B-5 Mock E2E(AS-06-028) 계속 녹색 + Google 실로그인 수동 점검표(데스크톱·모바일 각 1회, 신규·기존 계정)를 task `log.md`에 기록, B-6 운영 대시보드 Google 설정·Redirect URLs·`AUTH_PROVIDERS`가 배포 체크리스트와 일치. astro 추가: 이메일 가입 미인증 잔액 0 → 메일 인증 후 30, 같은 이메일의 이메일 가입자가 Google로 로그인하면 같은 `user_id`이고 환영 원장 추가 0, OAuth 첫 로그인은 `/onboarding/terms` → `/onboarding/ai` 순서, 이메일 가입자는 `/onboarding/terms` 생략, 같은 IP 해시 하루 4번째 가입 보류는 Google 경로에도 적용 | `AUTH_ROADMAP.md` 5장, 9장, 01장 AS-F-001·002 |
+| AS-06-056 | Stage C1: 카카오 로그인(Supabase 기본 제공자 `kakao`), 카카오 버튼, 설정 → 로그인 방법(연결·해제, `AUTH_ROADMAP.md` 7.3절) | `src/lib/auth/providers/kakao.ts`(055에서 이어 받음), `src/components/auth/kakao/`(카카오 버튼. 055 소유 디렉토리에 하위 폴더 1개 추가), `src/app/dashboard/settings/login-methods/`(021 소유에서 뺌. 설정 화면 링크 1줄은 021 파일에 요청). `supabase/config.toml` 카카오 절과 `enable_manual_linking`은 001 소유 파일에 요청 | 055, 게이트 G2, 01장 D-19 확정 | P1 | S | Opus | `AUTH_ROADMAP.md` 7.1.3절 C1-1~C1-5 그대로: C1-1 새 카카오 계정 첫 로그인 → B-1과 같은 결과, 곧 `entitled=true`, `starter`, 환영 크레딧 30이 카카오 로그인 확인 직후 1회(재로그인 3회 뒤 환영 원장 1행, 이메일 인증·Google 확인과 같은 지급 함수와 멱등 키 `signup:<org>:astro`, 같은 IP 해시 보류 규칙), C1-2 비즈 앱(a)이면 같은 이메일의 Google 가입자가 카카오로 로그인 → 같은 `user_id`이고 환영 원장 추가 0(자동 연결 미확인이면 수동 연결 7.3절), C1-3 (b)면 이메일 없는 사용자가 결제(AS-F-019)와 이메일 발송(AS-F-017) 전에 연락 이메일 입력 화면을 본다, C1-4 표시 이름은 카카오 닉네임, 없으면 `user` 규칙, C1-5 버튼은 카카오 디자인 가이드 색·문구(미확인: 최신판 확인 후 반영). 로그인 방법 화면: 마지막 수단 해제 불가, 감사 `auth.identity_link`·`auth.identity_unlink`, 연결 뒤 환영 원장 추가 0 | `AUTH_ROADMAP.md` 7.1절, 7.3절, 8장 |
+| AS-06-057 | Stage C2: 네이버 로그인(스파이크 → `custom:naver` 또는 서버 브리지), 네이버 버튼, 로그인 방법 화면에 네이버 연결 | `src/lib/auth/providers/naver.ts`, `src/components/auth/naver/`(네이버 버튼), `scripts/auth/register-naver-provider.mjs`, 브리지 경로 채택 시 `src/app/auth/naver/`(start, callback). 로그인 방법 화면의 네이버 행은 056 파일에 요청 | 055, 게이트 G2(056과 병렬 가능), 브리지면 R-14 | P1 | M | Fable | `AUTH_ROADMAP.md` 7.2.4절 C2-1~C2-6 그대로: C2-1 스파이크 결과 `[DECISION]` 기록과 `NAVER_AUTH_PATH` 일치(01장 D-20), C2-2 새 네이버 계정 첫 로그인 → B-1과 같은 결과, 곧 환영 크레딧 30이 네이버 로그인 확인 직후 1회(같은 지급 함수·멱등 키·IP 해시 보류), C2-3 같은 네이버 계정 재로그인 5회 → 같은 `user_id`, 사용자 수 증가 0, 환영 원장 1행, C2-4 (브리지) state 변조·재사용·쿠키 없음·다른 브라우저 콜백 재생 → 거부·세션 미생성, C2-5 (브리지) 같은 이메일의 Google 가입자가 네이버로 처음 로그인 → `error=email_in_use`, 새 사용자 0, 환영 원장 추가 0, C2-6 검수 통과 전에는 운영 `AUTH_PROVIDERS`에 `naver` 없음 | `AUTH_ROADMAP.md` 7.2절, 8장 |
+
+### 8.2 게이트와 웨이브
+
+| 항목 | 내용 |
+|---|---|
+| Stage A | AS-06-003(W1). 그보다 앞 웨이브(W0의 001, 004, 006, 013, 025, 031, 039)는 시드 스크립트 없이 SQL·단위 테스트로 검증한다. W2 이후 화면·API 작업은 Mock 페르소나로 로그인해 개발한다 |
+| G1(사람 판정) | `AUTH_ROADMAP.md` 4장 6개 조건. astro 기준: (1) 2절 P0 기능 작업 완료(055~057 제외), (2) AS-06-028 핵심 플로우 녹색(Mock storageState), (3) RLS 회귀(AS-06-002) 전 항목 + `outsider` 거부, (4) 결제 E2E(AS-06-029) 녹색, (5) 인증 모듈 밖 단계 분기 0(AS-06-032 CI), (6) Google Cloud 프로젝트·동의 화면·웹 클라이언트 ID·운영 Supabase 프로젝트 준비. 판정 결과는 task `log.md`에 `[DECISION] G1 통과` |
+| B 웨이브 | W6. astro에는 기능 웨이브와 분리된 통합·E2E 웨이브가 없고 W6이 마지막 기능 작업(016, 026, 052)과 통합·E2E·회귀(028, 034, 054)를 함께 가진다. G1이 P0 기능(052 포함) 완료와 028 핵심 플로우의 Mock 녹색을 요구하므로 055는 G1 통과 뒤 시작한다. AUTH_ROADMAP 9장의 "통합 작업이 B 완료를 기다린다"는 이렇게 지킨다: 028은 G1 근거로 Mock 로컬 녹색을 먼저 만들고, 028·054의 공개 베타 마무리(B 구성 재실행, B-5)는 055 완료 뒤에 한다. 055 완료가 공개 베타(MVP 출시)의 조건이다 |
+| G2(사람 판정) | `AUTH_ROADMAP.md` 6장: Google 실사용 공개 베타 2주(제안), 인증 P0·P1 장애 0과 콜백 오류율 1% 미만(제안), open 앱 신규 가입자 중 `entitled=false` 0, 카카오 디벨로퍼스 앱(비즈 앱 전환은 D-19), 네이버 애플리케이션 등록과 검수 자료. astro 추가 확인(제안): 공개 베타 기간 가입 조직 중 인증 완료인데 환영 원장 행이 없는 조직 0. `[DECISION] G2 통과` |
+| C 웨이브 | W7(MVP 출시 후 웨이브). 056과 057은 G2 통과 후 병렬. 네이버 검수 기간 때문에 057의 신청 자료 준비는 G2 직후 시작 |
+
+### 8.3 P0 작업 ↔ 테스트 작업 (인증 단계)
+
+| P0 작업 | 검증 작업 또는 방법 |
+|---|---|
+| AS-06-003(Stage A) | AS-06-028(Mock storageState E2E), AS-06-002(RLS, `outsider`), AS-06-032(CI 금지 문자열·빌드 검사) |
+| AS-06-009(환영 크레딧) | 서버 단위 테스트(미인증 409), AS-06-028 가입 플로우(`welcome_pending`) |
+| AS-06-055(Stage B) | 콜백 단위 테스트(B-2, B-3), 배포 빌드 검사(B-4), AS-06-028 재실행(B-5 자동분), Google 실로그인 수동 점검표(B-5 사람분) |
+
+### 8.4 코어 요청과 기존 문서와 달라진 점
+
+| ID | 대상 | 요청 | 이유 | 그때까지의 우회 |
+|---|---|---|---|---|
+| R-14 | `_platform-core` | C2가 브리지 경로를 택하면 `staged/0010_core_auth_identity_links.sql` 적용(코어 1회, 모든 제품 공용) | `core.oauth_states`는 로그인 전 사용자·조직이 없어 브리지 state에 쓸 수 없다(`AUTH_ROADMAP.md` 7.2.3절) | `custom:naver` 스파이크가 통과하면 요청하지 않는다 |
+
+| 메모 | 내용 |
+|---|---|
+| AS-06-003 범위 | 이전: 앱 골격 + 인증 화면(이메일 가입, Google, 콜백). 지금: 앱 골격 + Stage A(인증 모듈 경계, Mock 로그인, 시드, 가드, `finishLogin`). 이메일·Google 화면과 콜백 완성은 055(2절 003 행) |
+| 수용 기준이 바뀐 기존 작업 | 009(Stage A `welcome_pending`, 지급 함수 공용화), 028(Mock storageState, 가입 플로우는 `welcome_pending`), 029(Mock `owner`), 032(인증 금지 문자열 CI) |
+| 작업 수 | 54개(모델 작업 53) → 57개(모델 작업 56). 머리말, 4절, README, 개발서 0장·9.1절이 같은 수를 쓴다 |
+| 소유 경로 이어 받기 | `src/app/(auth)/`·`src/lib/auth/`: 003(A) → 055(B). `src/components/auth/`: 055가 만들고 056·057이 하위 폴더(`kakao/`, `naver/`)만 더한다. `dashboard/settings/login-methods/`: 021에서 빼서 056 |
+| 7절 핵심 E2E 수 | 7절은 "5플로우"였으나 AS-06-028 수용 기준은 6개 플로우(AI 채팅 1턴 포함, 2026-10-13 추가)다. 2026-10-14에 7절 줄을 6플로우로 맞췄다. `CLAUDE.md` 6절 "핵심 5플로우"도 같은 뜻으로 읽는다 |
+| 1절 소유 표 | AS-06-043이 소유한 `src/app/onboarding/`, `src/app/api/onboarding/` 중 `terms/` 하위는 AS-06-055 소유로 뺐다(2절 043 행) |
+| `src/lib/` 소유 | 003 소유인 `src/lib/` 중 `src/lib/auth/`는 003(A) → 055(B) → 056·057(C) 순서로 이어받는다. 같은 시점에 두 작업이 쓰지 않는다(056과 057이 병렬이면 제공자 항목 파일을 나눈다: `providers/kakao.ts`, `providers/naver.ts`, 제안) |

@@ -6,6 +6,8 @@
 
 2026-10-13부터 사내 규정·매뉴얼(hms는 환자 정보가 없는 임상 가이드라인·운영 매뉴얼)을 근거로 답하는 AI 업무 어시스턴트(채팅·음성), 기관 운영 위키가 MVP에 들어간다(확정 결정 13~17). erp, sms는 상용/오픈소스 이원화와 국외 이전 동의, **hms는 사용자 결정에 따라 전용 서버만 쓰고 상용 API·공용 서버·공용 Dify를 쓰지 않는다**. 공개 랜딩이 없어 3D 히어로는 적용하지 않는다.
 
+2026-10-14 인증 단계(확정 결정 22, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`): MVP 개발은 로컬 시드 페르소나 Mock 로그인(Stage A, ADM-06-007), 첫 기관 배포 전 erp Google + 이메일 가입, sms Google + 초대 메일, hms 초대 메일 + 이메일만(Stage B, ADM-06-058, P0), 카카오·네이버는 G2 후 erp·sms만 P2 선택(Stage C, ADM-06-059·060, 01장 D-24), hms는 Stage C 제외(의료정보 격리).
+
 | 구분 | 대상 사용자 |
 |---|---|
 | `apps/erp` | 중소·중견 기업 내부 직원. 마스터 관리자, 재고 관리자, 판매 관리자, 일반 직원(`ERP-Wesite/PRD.md:43-49`) |
@@ -36,14 +38,14 @@
 
 | 파일 | 내용 |
 |---|---|
-| `01_PRD.md` | 페르소나, MVP/Phase, admin-kit와 앱별 기능 요구사항(KIT/ERP/HMS/SMS), 요금, 비기능 수치, 의료·미성년자 개인정보, KPI |
-| `02_ARCHITECTURE.md` | 스택(AI 서비스·Tailwind CSS v4 포함), admin-kit와 앱 경계, 공용 모듈 사용, AI 라우팅 기본값·그래프 `admin.assistant`·권한 확인·hms 전용 구성, 리뷰 "높음" 중 비보안 결함의 차단 설계, 배포 토폴로지 |
-| `03_SCREENS_UX.md` | 앱별 화면 목록, 가입(승인/초대) 플로우, 로그인 화면과 앱 홈 디자인 방향 |
-| `04_API.md` | Route Handler, 앱별 RPC 시그니처, SQLSTATE |
-| `05_DATA_MODEL.md` | erp/sms/hms 테이블, 상태 전이, RLS, 의료정보 보호, 리뷰 "높음" 중 보안·데이터 결함의 차단 설계 |
-| `06_AGENT_PLAN.md` | 작업 57개(AI·음성·디자인 시스템 17개 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표 40행, 코어 요청 |
-| `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기 자산, 복사 금지 결함 |
-| `CLAUDE.md` | 개발 에이전트 지침 |
+| `01_PRD.md` | 페르소나, MVP/Phase, admin-kit와 앱별 기능 요구사항(KIT/ERP/HMS/SMS, KIT-F-005·006은 인증 단계 A·B·C), 요금, 비기능 수치, 의료·미성년자 개인정보, KPI, 열린 결정(D-1~D-24, 인증 단계 D-21~D-24는 8.1절) |
+| `02_ARCHITECTURE.md` | 스택(AI 서비스·Tailwind CSS v4 포함), admin-kit와 앱 경계, 공용 모듈 사용, AI 라우팅 기본값·그래프 `admin.assistant`·권한 확인·hms 전용 구성, 리뷰 "높음" 중 비보안 결함의 차단 설계, 배포 토폴로지, 인증 단계(9절: 단계표, 분기 위치, 기관 조직 선택, 환경변수, 외부 콘솔) |
+| `03_SCREENS_UX.md` | 앱별 화면 목록, 가입(승인/초대) 플로우, 로그인 화면과 앱 홈 디자인 방향, 인증 단계별 화면(7절) |
+| `04_API.md` | Route Handler, 앱별 RPC 시그니처, SQLSTATE, 인증 단계 라우트(8절) |
+| `05_DATA_MODEL.md` | erp/sms/hms 테이블, 상태 전이, RLS, 의료정보 보호, 리뷰 "높음" 중 보안·데이터 결함의 차단 설계, 개발용 시드 페르소나(10절) |
+| `06_AGENT_PLAN.md` | 작업 60개(AI·음성·디자인 시스템 17개, 인증 단계 3개(8절, 2026-10-14) 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표 40행, 코어 요청 |
+| `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기 자산, 복사 금지 결함, 인증 단계 관련 복사 금지(6절) |
+| `CLAUDE.md` | 개발 에이전트 지침(맨 끝 "인증 단계 규칙") |
 | `supabase/monolith/erp/`, `hms/`, `sms/` | 앱별 단독 Supabase 프로젝트용 마이그레이션(`0001_core_lite.sql`, `0002_<app>_domain.sql`)과 `seed.sql`(AI 라우팅 기본값, 플랜 AI 키, `ai-docs` 버킷 포함. hms는 전용 제공자 `hms-*`만) |
 | `../_supabase-modular/migrations/1600_erp.sql`, `1700_sms.sql` | 통합 DB의 erp, sms 스키마 조각(hms 조각은 없다) |
 

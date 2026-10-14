@@ -7,7 +7,7 @@
 | 주 사용자 | 인스타툰·웹툰 지망 작가, SNS 마케터, 지식 크리에이터 |
 | DB 스키마(모듈러 번호) | `toon`(2000) |
 | 개발 작업 수 | 69개(`products/toon-factory/06_AGENT_PLAN.md`, 인증 단계 B·C1·C2 3개 포함) |
-| 로그인 | 인증 단계: 개발 1단계는 Mock(로컬 시드 계정) → G1 후 Google·이메일(공개 베타 전) → G2 후 카카오·네이버. 순서와 실행 방법은 `toon-factory_develop.md` 13장 |
+| 로그인 | 인증 단계: 개발 1단계는 Mock(로컬 시드 계정) → G1 후 Google·이메일(공개 베타 전) → G2 후 카카오·네이버. 순서와 실행 방법은 `toon-factory_develop.md` 19장 |
 | 기획서 | [`products/toon-factory/`](../../products/toon-factory/) |
 | 참고 | 경쟁 서비스 비교는 `products/toon-factory/08_BENCHMARK.md`에 따로 있습니다. |
 

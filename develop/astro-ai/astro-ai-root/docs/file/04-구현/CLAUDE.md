@@ -4,7 +4,7 @@
 
 | 순서 | 문서 |
 |---|---|
-| 1 | `docs/file/03-설계/공용코어/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성), `DB_CONVENTIONS.md`(14장 pgvector), `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql` |
+| 1 | `docs/file/03-설계/공용코어/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성, 17장 인증 단계), `DB_CONVENTIONS.md`(14장 pgvector), `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·세션·시드 작업이면 `AUTH_ROADMAP.md`(이 문서 8절) |
 | 1-AI | AI·음성 작업이면 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 2 | 이 폴더 `01_PRD.md` → `02_ARCHITECTURE.md` → `05_DATA_MODEL.md` → `04_API.md` → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md`(자기 작업 행) → `07_SOURCE_MIGRATION.md` 4절 |
 | 3 | UI 작업이면 `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` astro-ai 절, 랜딩이면 `HERO_3D.md` |
@@ -41,15 +41,15 @@
 | `packages/saju-engine/` | 만세력 엔진(SPEC, fixtures, src, scripts) | 004, 005, 024(`src/demo/`), 030 |
 | `packages/astro-report/` | prompts, schema, rules / theme / templates / eval | 011 / 013 / 014 / 033 |
 | `packages/astro-crypto/` | PII 암호화 | 006 |
-| `apps/astro-ai/src/app/api/<폴더>/` | Route Handler | subjects·consents 007, billing 008, auth 009, readings 010, deliveries 016, admin 022, demo 024, account 026 |
-| `apps/astro-ai/src/app/` 화면 | 화면 | (auth) 003, dashboard/subjects 018, dashboard/readings 020, dashboard 나머지 021, admin 022, (marketing) 023, legal 025 |
+| `apps/astro-ai/src/app/api/<폴더>/` | Route Handler | dev 003(Stage A Mock 로그인), subjects·consents 007, billing 008, auth 009, readings 010, deliveries 016, admin 022, demo 024, account 026 |
+| `apps/astro-ai/src/app/` 화면 | 화면 | (auth) 003(Stage A) → 055(Stage B, `auth/callback`, `onboarding/terms` 포함) → 056·057(C), dashboard/subjects 018, dashboard/readings 020, dashboard 나머지 021(`settings/login-methods/`는 056), admin 022, (marketing) 023, legal 025 |
 | `apps/astro-ai/src/components/` | 컴포넌트 | ui 017, chart 019, subjects 018, reading 020 |
 | `apps/astro-worker/src/` | 워커 | index·generate·sweeper 012, render 015, delivery 016, purge 026, observability 034 |
 | `supabase/` | migrations·tests | 001, 002 |
 | `e2e/` | E2E | flows 028, billing 029, ai 054 |
 | `apps/api/` | 공용 ai-service와 설정 042, `app/ai/products/astro/knowledge.py` 045, `wiki_config.py` 046, `app/ai/graphs/astro_reading.py`·`app/ai/compliance/astro.py` 048, `app/ai/tools/astro/` 049, `tests/astro/security/` 054 | 042, 045, 046, 048, 049, 054 |
 | `apps/astro-ai/src/app/api/` AI·음성 | ai·internal·onboarding 043, voice 051(narrations 제외), voice/narrations 052, admin/wiki·admin/knowledge 046 | 043, 046, 051, 052 |
-| `apps/astro-ai/src/app/` AI 화면 | onboarding 043, dashboard/chat 050, (marketing)/wiki 047, admin/wiki·admin/knowledge 046, dev/components 017 | 017, 043, 046, 047, 050 |
+| `apps/astro-ai/src/app/` AI 화면 | onboarding 043(`terms/`는 055), dashboard/chat 050, (marketing)/wiki 047, admin/wiki·admin/knowledge 046, dev/components 017 | 017, 043, 046, 047, 050 |
 | `apps/astro-ai/src/components/` AI·3D | ai-chat 050, voice 051, narration 052, hero3d 053(`public/hero/` 포함) | 050~053 |
 | `apps/astro-ai/src/server/ai/`, `src/server/ai-pricing.ts` | 서명 토큰, HMAC, 마스킹, AI 단가 | 043 |
 | `content/knowledge/`, `scripts/knowledge/`, `scripts/ai-routing/`, `infra/dify/` | 해설집 044, 색인 045, 라우팅 스냅샷 054, Dify DSL 049 | 044, 045, 049, 054 |
@@ -100,7 +100,7 @@
 | `pytest apps/api` | 토큰·조직 격리·라우팅·그래프·채팅 평가셋(042, 045, 048, 049, 054) |
 | `pnpm test:ai` | AI 게이트 선차감·정산·환불, 낭독 대체 금지(043, 052, 054) |
 | `pnpm test:rls` | RLS 회귀(AS-06-002) |
-| `pnpm e2e` / `pnpm e2e:billing` | 핵심 5플로우 / Toss 테스트 키 결제 |
+| `pnpm e2e` / `pnpm e2e:billing` | 핵심 6플로우 / Toss 테스트 키 결제(Mock 페르소나 storageState, 8절) |
 | `pnpm lhci` | 랜딩 Lighthouse |
 
 완료 조건은 `06_AGENT_PLAN.md` 7절.
@@ -108,3 +108,21 @@
 ## 7. 금지 패턴
 
 `07_SOURCE_MIGRATION.md` 4절 요약: 크레딧 RPC를 브라우저에서 호출, 읽고-빼고-쓰는 차감, 웹훅만으로 지급, 클라이언트 금액 신뢰, `FOR ALL` 정책, role 확인 없는 service_role 액션, broadcast 진행률, 업로드 CSS를 렌더러에 투입, QuickChart 같은 외부 렌더러로 개인정보 전송, 생년월일시 평문 저장, 메모리 레이트 리밋, `\b` 한글 금지어 매칭, Edge Function 생성 경로, Puppeteer, 가상 후기·평점·카운터. AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 두기, 브라우저에서 Dify·FastAPI·제공자 직접 호출, Dify 입력에 토큰·개인정보, 생년월일 원문·실명 AI 전송, LLM의 격국·용신 판정과 수치 생성, 클라이언트 텍스트 그대로 TTS, 낭독 중 제공자 대체, 토큰 밖 3D 색·별 파티클, "Tailwind"만 적은 지시(v3 혼입).
+
+## 8. 인증 단계 규칙 (2026-10-14, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`. 단계 순서는 A Mock → G1 → B Google + 이메일 → G2 → C1 카카오, C2 네이버.
+
+| 항목 | 규칙 |
+|---|---|
+| 지금 단계 | 개발 시작 시 **Stage A**(Mock 로그인). 실제 제공자 버튼·이메일 가입 화면을 만들지 않는다. 로컬 `.env.local`에 `AUTH_MODE=mock`, `DEV_SEED_PASSWORD` |
+| 단계 분기 위치 | `AUTH_MODE`·`AUTH_PROVIDERS`·`NAVER_AUTH_PATH`를 읽는 코드는 `src/lib/auth/`, `src/app/(auth)/`(로그인 화면), `src/app/auth/callback/`(브리지면 `src/app/auth/naver/`), `src/app/api/dev/login/`에만. 기능 코드·워커·`apps/api`에 `if (mock)` 금지(CI 실패, AS-06-032) |
+| 세션 | 모든 단계에서 실제 Supabase JWT. `requireSession('astro')`·`proxy.ts`·RLS는 단계와 무관하게 같은 코드 |
+| 페르소나 | `supabase db reset` → `node scripts/dev/seed-users.mjs --app astro`(제품 훅 `seed-users.astro.mjs`) → `/login` 개발용 패널. 키: `owner`(잔액 30), `admin`·`member`·`viewer`, `outsider`(교차 테넌트), `no_app`, `suspended`, `ops`(운영자), `welcome_pending`(환영 크레딧 미지급, 첫 로그인 뒤 30). 표는 `05_DATA_MODEL.md` 10절 |
+| E2E | Playwright `globalSetup`이 페르소나마다 `POST /api/dev/login`을 불러 `storageState`를 저장하고 테스트는 그 상태로 시작한다. 실제 Google·카카오·네이버 로그인은 자동화하지 않는다(수동 점검표) |
+| 환영 크레딧 | 이메일 인증, Google, 카카오, 네이버 어느 경로든 "로그인 수단 확인 뒤 서버 함수 1개(`src/server/welcome-credits.ts`)가 `signup:<org>:astro`로 1회"(AS-F-002). 제공자별 지급 코드 금지 |
+| 금지 패턴 | 쿠키·localStorage·헤더에 역할·플랜·사용자 id를 적는 Mock(`mock-auth`, `nomad_role`, `nomad_plan`, `dev-user`), 원격 DB에 시드 계정 생성, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·로그·출력에 노출, 콜백 `next` 무검증, 이메일 일치만으로 계정 합치기, 페르소나 이메일로 권한 분기 |
+| 가드 | `isMockAuthAllowed()` = `AUTH_MODE=mock` + Supabase 호스트 `127.0.0.1`·`localhost` + `VERCEL_ENV`·`RAILWAY_ENVIRONMENT` 없음. 거짓이면 `/api/dev/login` 404, 패널 미렌더. `AUTH_MODE=mock`인데 판정이 거짓이면 기동 실패 |
+| 단계 전환 | 에이전트가 스스로 넘기지 않는다. 사람(대표님)이 G1·G2 조건(`AUTH_ROADMAP.md` 4장, 6장, `06_AGENT_PLAN.md` 8.2절)을 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 남긴 뒤에만 B·C 작업을 시작한다 |
+| 소유 경로 | 003: `src/lib/auth/`, `src/app/(auth)/`, `src/app/api/dev/login/`, `scripts/dev/`. 055: `src/app/(auth)/`·`src/lib/auth/`(003에서 이어 받음), `src/components/auth/`, `src/app/auth/callback/`, `src/app/onboarding/terms/`, `src/app/api/onboarding/terms/`. 056: `src/lib/auth/providers/kakao.ts`, `src/components/auth/kakao/`, `src/app/dashboard/settings/login-methods/`. 057: `src/lib/auth/providers/naver.ts`, `src/components/auth/naver/`, `scripts/auth/`, 브리지면 `src/app/auth/naver/`. `supabase/config.toml` 제공자 설정은 001 파일에 요청(06장 8절) |
+| 작업 ID | A: AS-06-003(W1). B: AS-06-055(P0, W6, G1 통과 후 시작. 028·054의 공개 베타 재실행이 055를 기다린다). C1: AS-06-056(P1, W7, G2 후). C2: AS-06-057(P1, W7, G2 후) |

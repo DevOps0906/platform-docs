@@ -23,7 +23,7 @@
 
 ## 2. 범위: MVP와 Phase
 
-확정 결정 7(MA:15)이 범위의 정본이다. 분석 원문의 "MVP는 A, B, C"(MA:725-728)와 "YouTube Live 폐기"(MA:598)는 확정 결정으로 대체되었다.
+확정 결정 7(MA:15)이 범위의 정본이다. 분석 원문의 "MVP는 A, B, C"(MA:725-728)와 "YouTube Live 폐기"(MA:598)는 확정 결정으로 대체되었다. 인증·조직·세션·라우트 보호는 MVP이고 로그인 수단은 단계로 켠다(확정 결정 22, 2026-10-14, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 0장·8장): MVP 개발은 Mock(Stage A, 로컬 시드 계정), 공개 베타 전 Google(+이메일)(Stage B, P0), 카카오·네이버는 G2 후(Stage C, C1 카카오 P1, C2 네이버 P1). 대행 고객 승인 화면(`/review/[token]`)은 단계와 무관하게 로그인 없음. 단계표는 9절(이 표에 행을 넣지 않은 이유는 9절 머리말).
 
 | 기능 | 범위 | 근거 |
 |---|---|---|
@@ -76,8 +76,8 @@
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| VD-F-001 | 가입·부트스트랩 | 통합 | Supabase Auth 이메일+Google. 가입 폼은 `signup_app='video'` 전송. 코어 트리거가 개인 조직·Starter 엔타이틀먼트·100크레딧 지급 | 가입 직후 `session_context('video')`가 `plan_code=starter`, `credit_balance=100` | BS #9, CORE_SPEC 2.2, PRC:23 |
-| VD-F-002 | 라우트 보호 | 통합 | `proxy.ts`가 `/dashboard/**`, `/api/**` 보호. 공개 예외: `/`, `/pricing`, `/legal/**`, `/landing/**`, `/lb/**`, `/r/**`, `/api/webhooks/**`, `/billing/success|fail`. Mock 로그인 없음 | 비로그인으로 `/dashboard` 접근 시 `/login` 302, `/landing/x` 200 | SM #6, BS #10 |
+| VD-F-001 | 가입·부트스트랩 | 통합 | Supabase Auth. 로그인 수단은 단계로 켠다(확정 결정 22, 9절): MVP 개발은 Mock(Stage A, 로컬 시드 계정 `owner` 등으로 실제 JWT), 공개 베타 전 Google + 이메일(Stage B, P0), 카카오·네이버는 G2 후(Stage C, P1). 이메일 가입 폼은 `signup_app='video'` 전송, OAuth 첫 로그인은 `/auth/callback`의 `finishLogin`이 `bootstrap_app_for_org('video')`를 1회 호출. 코어 트리거가 개인 조직·Starter 엔타이틀먼트·100크레딧 지급 | 가입 직후(A: `owner` 페르소나, B: 새 Google 계정) `session_context('video')`가 `plan_code=starter`, `credit_balance=100`. B는 `AUTH_ROADMAP.md` 5.3절 B-1~B-6, C1은 7.1.3절, C2는 7.2.4절을 그대로 따른다 | BS #9, CORE_SPEC 2.2, PRC:23, 확정 결정 22 |
+| VD-F-002 | 라우트 보호 | 통합 | `proxy.ts`가 `/dashboard/**`, `/api/**` 보호. 공개 예외: `/`, `/pricing`, `/legal/**`, `/landing/**`, `/lb/**`, `/r/**`, `/review/**`·`/api/review/**`(대행 고객 승인, 토큰, VD-F-123), `/api/webhooks/**`, `/billing/success|fail`, `/login`, `/api/dev/login`(A, 판정이 거짓이면 404), `/auth/callback`(B). 쿠키 역할 Mock 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(`/api/dev/login`, 배포 환경 404) | 비로그인으로 `/dashboard` 접근 시 `/login` 302, `/landing/x` 200, 배포 빌드에서 `/api/dev/login` 404 | SM #6, BS #10, 확정 결정 22 |
 | VD-F-003 | 플랜 게이팅 | 디벨롭 | 서버가 `entitled_plan_code` + `plans.features`로 Track, 언어, 채널 수, 플랫폼, 레이더 범위를 판정. DB도 `video.org_has_feature`로 Track D/F 쓰기를 막는다 | Starter 조직이 Track B 생성 요청 시 403 `VD009`. Starter가 `longform_projects` 직접 INSERT 시 42501 | PRC:116-143, SM #13 |
 | VD-F-010 | 플레이보드 랭킹 | 디벨롭 | KR/US/JP x 카테고리 x realtime/daily/weekly, 24시간 주기 수집. `weighted_score = views_24h x growth_rate 가중치`. 성장률을 계산할 수 없으면 `growth_rate=null`, `is_estimated=true`로 표시하고 난수를 쓰지 않는다 | 수집 행에 난수 지표 0건. UI에 "추정" 배지 | PRD 3-1, SM #17 |
 | VD-F-011 | 채널파인더 | 유지 | 구독자 상한, 최근 평균 조회수 하한, 기간 필터. 등급 S(>=15) A(10~14) B(5~9) C(2~4) D/F(<2) | 같은 입력에 같은 등급(단위 테스트) | PRD 3-2 |
@@ -109,7 +109,7 @@
 | VD-F-080 | 성과 수집 | 디벨롭 | YouTube Analytics 일 1회 스냅샷. 제휴 클릭은 `core.affiliate_clicks` 집계 | 대시보드 수치가 스냅샷과 일치, 더미 0건 | SM #17, BS #16 |
 | VD-F-090 | 결제 | 통합 | 코어 Toss 모듈: 주문 선저장 → 결제창 → confirm. 구독은 빌링키. Advanced는 `adv_pack_*` 할인 팩만 허용(서버 판정) | 금액 위조 요청 PM001. 결제 E2E 통과 | SM #2-3, BS #4-5 |
 | VD-F-091 | 크레딧 | 통합 | 선차감 → 잡 → 실패 자동 환불. 잔액 부족 402 + 필요량 표시 | 동시 50요청에 음수 잔액 0 | CORE_SPEC 4장 |
-| VD-F-092 | 팀 멤버 | 유지 | Advanced만 초대 화면(최대 5인, `team_members`) | Pro 조직 초대 API 403 | PRC:105 |
+| VD-F-092 | 팀 멤버 | 유지 | Advanced만 초대 화면(최대 5인, `team_members`) | Pro 조직 초대 API 403. Stage A는 Advanced 팀 페르소나 `adv_owner`·`adv_member`(05장 10절)로 확인 | PRC:105 |
 | VD-F-100 | AI 채널 코치 채팅 | 신규 | 로그인 사용자 전용. 대시보드 채팅 패널에서 "지난달 조회수가 떨어진 이유", "이 주제의 최근 트렌드", "내 채널 톤으로 훅 3개"를 묻는다. 근거는 조직 컬렉션(`video-performance`, `video-scripts`, `video-brand`)과 채널·브랜드 가이드 위키, 운영자 컬렉션(`video-trends`, `video-guide`)이다. 대화 매핑 경로(조직 데이터), 스트리밍, 답변마다 출처, "AI가 생성한 답변" 표시. 메시지 1,000자, 대화당 50턴(제안). 크레딧은 턴 선차감 후 정산(4.1절) | 답변에 출처 1개 이상 또는 "근거 자료를 찾지 못했습니다" 표시. 수치(조회수, 성장률)는 출처 없이 말하지 않는다. 응답이 전달되지 않은 턴은 선차감 전액 환불. 잔액 부족 402(`CR001`). Dify 장애 시 `/tools/answer-direct`로 답한다. 다른 사용자의 대화 id로 이어 쓰면 404 | `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:44-56`, `:121-130` |
 | VD-F-101 | RAG: 트렌드·채널 성과·과거 대본 | 신규 | 조직 컬렉션 3개: `video-performance`(업로드별 `analytics_snapshots` 요약: 제목, 채널, 언어, 조회·시청 시간 변화), `video-scripts`(완료된 productions·longform의 대본과 스토리라인), `video-brand`(위키 원본 문서). 운영자 컬렉션 2개(제품 공통 지식, 조직 구분 없음): `video-trends`(`trend_videos` 일 1회 요약, `is_estimated` 표시 포함), `video-guide`(Track 사용법, 플랫폼 정책 요약). 임베딩은 모두 오픈소스(`video.rag`, `video.knowledge`, 대체 없음, 02장 5절). 색인은 `analytics.sync`와 생산 완료 뒤 잡으로 자동 실행한다. 운영자 컬렉션은 Dify에 외부 지식 API로만 노출하고 조직 데이터는 노출하지 않는다 | 평가셋 40문항(제안)에서 상위 8개 안 정답 청크 재현율 0.8 이상(제안). 다른 조직 컬렉션 요청 42501. 외부 지식 응답에 사용자 조직 데이터 0. `is_estimated=true` 트렌드는 답변에서 "추정"으로 표시. 난수·더미 지표 색인 0 | `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:94-107` |
 | VD-F-102 | 채널·브랜드 가이드 위키 | 신규 | 조직·앱 단위 제품 지식 위키(조직 간 공유 없음). 원본: 사용자가 올린 브랜드·채널 문서, 채널 설정(역할, 언어, 국가), 조직 금지어(`banned_words`), 성과 상위 대본. ingest가 `entity`(채널), `concept`(톤·용어·금지어), `topic`(시리즈·포맷), `index` 페이지를 만든다. 사람이 고친 블록은 사람 소유로 표시되어 ingest가 덮어쓰지 않고, 저장은 `expected_version` 낙관적 잠금, 문서 1건당 갱신 페이지는 5개까지(`docs/file/03-설계/공용코어/LLM_WIKI.md:30-31`, `:47`). 주 1회 lint. 대본 그래프와 채팅이 근거로 쓴다 | 새 페이지는 `draft`로 만들고 owner/admin이 게시한 뒤에만 그래프 근거로 쓴다. 사람 소유 블록 수정 0. 버전 충돌 409. 출처 없는 페이지 게시 불가 | `docs/file/03-설계/공용코어/LLM_WIKI.md:12-47` |
@@ -258,7 +258,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `ai_script`)는 20
 
 | 항목 | 내용 |
 |---|---|
-| 개인정보 수집 | 이메일, 표시 이름, 결제 식별자(Toss), 연결 채널 식별자와 OAuth 토큰(암호문), 제휴 클릭의 IP 일 단위 솔트 해시·UA·국가. 목적: 서비스 제공, 결제, 업로드, 수익 통계 |
+| 개인정보 수집 | 이메일, 표시 이름, 결제 식별자(Toss), 연결 채널 식별자와 OAuth 토큰(암호문), 제휴 클릭의 IP 일 단위 솔트 해시·UA·국가, 로그인 제공자 식별자(단계별: Stage B Google 계정 식별자·이름·프로필 이미지 URL, Stage C1 카카오 계정 식별자·닉네임·프로필 이미지·비즈 앱이면 이메일, Stage C2 네이버 고유 id·이메일·이름·프로필 이미지. 제공자 토큰은 저장하지 않음, `AUTH_ROADMAP.md` 5.2·7.1.1·7.2.3절). 목적: 서비스 제공, 결제, 업로드, 수익 통계, 로그인 |
 | 보존과 삭제 | 5장 보존 표. 조직 삭제는 soft delete 후 30일 유예 뒤 `purge_organization`(SECURITY_BASELINE 12장). 채널 연결 해제 시 토큰 즉시 폐기(`revoke_credential`) |
 | 암호화 대상 | `core.encrypted_credentials`(YouTube/Meta/TikTok 토큰, 쿠팡·제휴 키), `core.billing_keys`. 제품 테이블에 평문 토큰 컬럼 없음 |
 | 제3자 제공 | OpenAI/Anthropic(OpenRouter 경유)에 대본·자막 텍스트, DeepL에 번역 텍스트, ElevenLabs에 TTS 텍스트, fal에 이미지 프롬프트, Suno에 곡 프롬프트, 플랫폼(YouTube/Meta/TikTok)에 영상·메타. 개인정보처리방침에 위탁·국외 이전으로 명시. AI 계층 추가(2026-10-13): 상용 AI 제공자(LLM: Anthropic, OpenAI, Google, OpenRouter / 음성: ElevenLabs)는 국외 이전에 동의한 조직의 요청에만 쓴다. 보내는 범위: 대본·주제·채팅 메시지, 채널 성과 요약(제목, 조회·시청 시간 수치), 브랜드 가이드 문서, 트렌드 요약, 대본 읽어 주기·내레이션 텍스트, 음성 질문 오디오(STT). 연결 채널의 OAuth 토큰, 이메일, 결제 정보, 원본 영상·오디오는 어떤 AI 제공자에도 보내지 않는다. 오픈소스 LLM·임베딩·음성 서버와 Dify는 운영사가 자체 운영한다(서버 위치·위탁 여부 구현 시 확인) |
@@ -354,7 +354,7 @@ nomad-blog의 채널 자동 게시 고지(`ch-2026-10-v1`)와 같은 구조다. 
 | D-2 | Track F 허용 플랜 | (a) Pro 이상(seed 현재값) (b) Basic 포함 | (a). Suno 엔진을 쓰는 E와 같은 등급 |
 | D-3 | Starter compliance | (a) 규칙 단계만 필수 (b) 검사 없음(PRC 그대로) | (a). "업로드 전 검증 필수"(PRD:710)와 플랜표(PRC:28) 충돌을 비용 0인 규칙 단계로 해소 |
 | D-4 | Advanced 30% 할인 | (a) adv_pack 4종 seed 추가 (b) 코어 주문에 할인 지원 | (a). 코어 변경 없음. 모듈러 seed 갱신은 2026-10-13 반영 완료. 할인율은 결정됨(2026-10-14, Price_Plans 반영): 20%(12,000 / 22,400 / 60,000 / 88,000원) |
-| D-5 | 네이버 로그인 | (a) MVP 제외 (b) naver_id 매핑 + 명시적 연결 | (a). Phase 2에서 (b), 이메일 자동 병합 금지(YSM #3) |
+| D-5 | 네이버 로그인 | (a) MVP 제외 (b) naver_id 매핑 + 명시적 연결 | 해소: 결정 22로 C2 확정(G2 후, VID-06-065, 경로는 8.1절 D-27). 이메일 자동 병합 금지(YSM #3) 유지 |
 | D-6 | 대용량 미디어 저장소 | (a) Supabase `video-media` 버킷 5GB (b) 외부 객체 저장소(R2 등) | (a)로 시작, 월 저장량 1TB 초과 시 (b) 검토(제안) |
 | D-7 | Track A 원본 권리 | 법률 검토 전 출시 범위 | 권리 근거 선언 + 신고 처리 절차를 갖추고 출시, 법률 검토 병행 |
 | D-8 | Suno 연동 방식 | 공식 API / 대행 API / 수동 업로드 | 공식 API 확인 전에는 사용자가 생성한 곡 파일 업로드 경로를 함께 둔다(제안) |
@@ -375,3 +375,30 @@ nomad-blog의 채널 자동 게시 고지(`ch-2026-10-v1`)와 같은 구조다. 
 | D-24 | 대행 기능 외부 판매 | (a) 내부 도구로만(운영사·Advanced 조직) (b) Phase 2에 대행사용 플랜(고객 포털 로그인, 화이트라벨 도메인, 고객별 과금·크레딧 분리) | (a)로 시작(사용자 결정 2026-10-13: 직접 대행 + 내부 도구). 직접 대행 고객 10곳 이상 운영 뒤 (b) 검토 |
 | D-25 | 고객 승인 링크 수단 | (a) 메일 링크(토큰 72시간) (b) 카카오 알림톡 (c) 고객 포털 로그인 | (a)(제안). (b)는 발신 프로필·템플릿 심사가 필요하고 (c)는 D-24 (b)와 함께 |
 | D-22 | 내레이션 TTS 호출 위치와 ElevenLabs 키 | (a) 오케스트레이터(서버 전용 TS 워커)가 `packages/core-voice`로 호출 (b) Next.js Route Handler만 호출(요청 시간 한도 안에서만 가능) | (a)(제안). 롱폼 10분 x 3언어 합성은 요청-응답 시간 안에 끝나지 않는다. `VOICE_ARCHITECTURE.md:79`의 "Next.js 서버에서만"을 "브라우저와 클라이언트 번들 밖의 서버 전용 프로세스"로 넓히는 확인을 코어에 요청(R-V6). 오픈소스 음성 서버 호출에는 잡에 묶인 서명 토큰이 필요하다(R-V5) |
+
+### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`다. 아래는 이 제품에서 정해야 할 것만 둔다. D-26은 위 표의 D-25 다음 번호다.
+
+| # | 항목 | 선택지 | 권고 |
+|---|---|---|---|
+| D-26 | 카카오 이메일 정책(C1, `AUTH_ROADMAP.md` 7.1.2절) | (a) 비즈 앱 전환 후 `account_email` 필수 동의 (b) 이메일 없이 허용(결제·알림 전에 연락 이메일을 따로 받음) | (a). 영수증·알림 메일·Google 가입자와의 계정 연결이 Google과 같아진다. 운영 주체의 사업자등록이 있으면 전환 비용은 서류 입력뿐(`AUTH_ROADMAP.md` 7.1.2절). (b)는 전환 전 임시로만 |
+| D-27 | 네이버 로그인 경로(C2) | (a) Supabase 커스텀 OAuth2 `custom:naver` (b) 서버 브리지 + 코어 `staged/0010_core_auth_identity_links.sql` | VID-06-065 첫 단계 스파이크(0.5일, `AUTH_ROADMAP.md` 7.2.2절)의 결과로 정한다. 커스텀 OAuth2가 네이버의 중첩 응답(`response.id`, `response.email`)을 읽는지는 미확인. 결과는 task `log.md` `[DECISION]`과 `NAVER_AUTH_PATH`에 남긴다 |
+| D-28 | 이메일+비밀번호 가입 유지 여부 | (a) 유지(Google과 함께 B단계에서 켬) (b) 제거(Google·카카오·네이버만) | (a). VD-F-001의 기존 결정(이메일+Google)을 바꾸지 않는다. 이메일 가입 화면·메일 인증·비밀번호 재설정 화면은 Stage A에서 만들지 않고 B 작업(VID-06-063)이 만든다 |
+| D-29 | 로그인용 Google OAuth 클라이언트와 채널 연결용(YouTube) OAuth 클라이언트 | (a) 별도 클라이언트(로그인은 Supabase 콜백, 범위 `openid email profile`만. 채널은 앱 콜백 `/api/channels/callback/youtube`와 YouTube 범위) (b) 한 클라이언트에 리디렉션 URI 두 개 | (a)(제안). 로그인 동의 화면에 YouTube 범위가 섞이지 않게 한다. 두 클라이언트가 같은 Google Cloud 프로젝트의 동의 화면을 공유하는지, 그때 검증 범위가 어떻게 되는지는 미확인. 환경변수 이름이 겹친다: 채널용은 앱 env `GOOGLE_CLIENT_ID/SECRET`(02장 8절), 로그인용은 `supabase/config.toml`의 `env(GOOGLE_CLIENT_ID)`(`AUTH_ROADMAP.md` 3.4절). 같은 셸에서 `supabase start`와 앱을 띄우면 값이 섞이므로 채널용 이름을 `YOUTUBE_CLIENT_ID/SECRET`로 바꿀지 VID-06-063 전에 정한다(제안) |
+
+D-5(네이버 로그인)는 결정 22로 C2 확정되어 해소했다. 기존 표에 카카오 관련 열린 결정은 없었다.
+
+## 9. 인증 단계 범위 (2026-10-14 추가, 확정 결정 22)
+
+2절 머리말(인증 범위)의 단계별 상세다. 2절 표에 행을 넣으면 4장 줄 번호가 밀려 외부 참조(`Price_Plans/nomad-video/PRICE_PLAN.md:13`의 `01_PRD.md:140-233`)가 어긋나므로 표 대신 이 절에 둔다. "로그인"은 이 제품 사용자(크리에이터, 대행 운영팀)의 계정 로그인만 뜻한다. 채널 연결 OAuth(YouTube·Meta·TikTok, `core.oauth_states`, VD-F-070)와 네이버 클립 업로드용 네이버 로그인 세션(Playwright, `CredentialVault` provider `naver`, VD-F-075)은 사용자 로그인과 별개이며 이 단계의 영향을 받지 않는다.
+
+| 단계 | 범위 | 언제 | 켜지는 로그인 | 우선순위 | 작업 |
+|---|---|---|---|---|---|
+| A | MVP 개발 | W0부터 G1까지 | 로컬 Supabase 시드 계정(페르소나) 원클릭 로그인. 제공자 버튼 없음. 쿠키 역할 Mock 금지 | P0 | VID-06-004 |
+| B | 공개 베타 전 필수 | G1(`AUTH_ROADMAP.md` 4장) 통과 후 | Google + 이메일(D-28). 배포 환경에서 Mock 차단 | P0 | VID-06-063 |
+| C1 | 출시 후 | G2(`AUTH_ROADMAP.md` 6장) 통과 후 | 카카오(Supabase 기본 제공자 `kakao`) | P1(`AUTH_ROADMAP.md` 8장 nomad-video 행) | VID-06-064 |
+| C2 | 출시 후 | G2 통과 후, C1과 병렬 가능 | 네이버(`custom:naver` 또는 브리지, D-27) | P1 | VID-06-065 |
+| 해당 없음 | 로그인 없는 흐름 | 단계와 무관 | 공개 랜딩 `/landing/[slug]`, 링크인바이오 `/lb/[handle]`, 단축 링크 `/r/[code]` 방문자, 대행 고객의 승인 화면 `/review/[token]`(토큰 소지자, VD-F-123)에는 로그인 버튼을 추가하지 않는다. 고객사 담당자는 계정을 만들지 않고 시드 페르소나도 없다. 고객 포털 로그인(D-24 (b), D-25 (c))은 Phase 2이며 이 로드맵 범위 밖이다 | - | - |
+
+Apple 로그인과 매직링크는 이 로드맵 범위 밖이다(`AUTH_ROADMAP.md` 1장).

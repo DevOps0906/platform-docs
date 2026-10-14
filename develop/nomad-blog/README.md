@@ -7,7 +7,7 @@
 | 주 사용자 | 제휴 수익 블로거, 블로그 여러 개를 운영하는 제휴 마케터, 소상공인 |
 | DB 스키마(모듈러 번호) | `blog`(1300) |
 | 개발 작업 수 | 59개(`products/nomad-blog/06_AGENT_PLAN.md`, 인증 단계 작업 BL-06-057~059 포함) |
-| 인증 단계 | Mock(개발 1단계) → Google(공개 베타 전) → 카카오·네이버(G2 후). 안내는 `nomad-blog_develop.md` 13절. 사용자 로그인과 블로그 채널(네이버·티스토리) 연결은 별개 |
+| 인증 단계 | Mock(개발 1단계) → Google(공개 베타 전) → 카카오·네이버(G2 후). 안내는 `nomad-blog_develop.md` 19장. 사용자 로그인과 블로그 채널(네이버·티스토리) 연결은 별개 |
 | 기획서 | [`products/nomad-blog/`](../../products/nomad-blog/) |
 
 ## 이 폴더의 파일

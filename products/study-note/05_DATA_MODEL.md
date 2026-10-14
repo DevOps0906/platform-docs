@@ -296,6 +296,8 @@ AI 기능별 기본값 행(정본 02장 5.3절): `notes.organize`, `notes.quiz`(
 | `unverified` | `auth.admin.createUser({ email_confirm: false, user_metadata: { signup_app: 'notes' } })` | `entitled=true`, 잔액 30이지만 `email_confirmed_at is null`. `POST /api/notes/runs`, `/api/ai/organize` 등 정리 실행 계열 403 `email_not_verified`(01장 NT-F-001). 읽기와 설정 저장은 가능 | NT-06-005, 024 |
 | `low_credit` | `signup_app: 'notes'`로 생성 후 service_role `consume_credits(org, 27, 'notes', 'dev_seed', p_idempotency_key => 'dev-seed:low_credit:<org>')` | 잔액 3. 예상 4 크레딧 실행에서 UI가 "1 크레딧이 부족합니다"(NT-F-011), 강제 요청은 402 `CR001`이고 고아 실행·잡 0 | NT-06-024 |
 
+훅은 모든 페르소나에 약관 동의 감사 기록(`notes_consent.terms`, 제안, 03장 7.3절)을 service_role로 남긴다. 이메일 가입자가 `/signup`에서 동의한 것과 같은 상태로 두어, B단계에서 생기는 `/onboarding/terms` 이동이 Mock E2E(NT-06-024)를 바꾸지 않게 한다.
+
 | 확인 필요 | 내용 |
 |---|---|
 | `unverified` 로그인 | 로컬 `supabase/config.toml`의 `[auth.email] enable_confirmations = true`에서는 미인증 계정의 `signInWithPassword`가 거부될 수 있다(미확인). 거부되면 이 페르소나는 Mock 로그인 대상에서 빼고, 이메일 인증 가드는 `email_confirmed_at`을 null로 둔 세션 객체를 넣는 단위 테스트(NT-06-005)와 B단계 이메일 가입 E2E(NT-06-053)로 확인한다. 결과는 NT-06-006 task `log.md` `[DECISION]`(06장 8.5절) |

@@ -7,7 +7,7 @@
 | 주 사용자 | 대행 제작 스튜디오 운영자(초대제 베타)와 하객 |
 | DB 스키마(모듈러 번호) | `microweb`(1500) |
 | 개발 작업 수 | 56개(`products/microweb-studio/06_AGENT_PLAN.md`, 인증 단계 B·C 작업 MW-06-054~056 포함) |
-| 로그인 단계 | Mock(Stage A, 개발 시작) → Google + 초대 메일(Stage B, G1 후) → 카카오·네이버(Stage C, G2 후, 선택). 하객은 로그인 없음. 안내서 13장 |
+| 로그인 단계 | Mock(Stage A, 개발 시작) → Google + 초대 메일(Stage B, G1 후) → 카카오·네이버(Stage C, G2 후, 선택). 하객·고객 시안·쇼룸 방문자는 로그인 없음, 단계와 무관. 안내서 19장 |
 | 기획서 | [`products/microweb-studio/`](../../products/microweb-studio/) |
 
 ## 이 폴더의 파일

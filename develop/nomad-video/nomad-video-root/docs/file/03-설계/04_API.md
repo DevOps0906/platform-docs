@@ -6,7 +6,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 인증 | 모든 `/api/**`(웹훅·공개 제외)는 진입부에서 `requireSession('video', { roles })`(SHARED_MODULES 2장). 조직은 세션에서 결정하고 요청 본문의 `orgId`를 받지 않는다(BS #5, #12) |
+| 인증 | 모든 `/api/**`(웹훅·공개 제외)는 진입부에서 `requireSession('video', { roles })`(SHARED_MODULES 2장). 조직은 세션에서 결정하고 요청 본문의 `orgId`를 받지 않는다(BS #5, #12). 세션은 모든 인증 단계(A Mock·B Google·C 카카오·네이버)에서 실제 Supabase JWT이고 `requireSession`은 같다. 로그인 경로는 8절(확정 결정 22) |
 | 입력 검증 | zod. Track `A-F`, 언어 `KO/JA/EN`, URL 도메인 허용 목록, `limit` 1~100 |
 | 멱등 | 생성·결제·업로드 요청 본문에 클라이언트 UUID `request_id` 필수. 서버는 `consume:video:<request_id>`, `job:video:<request_id>`로 사용. 같은 키 재요청은 기존 결과 반환 |
 | 크레딧 | 선차감은 Route Handler(service_role)에서 `consume_credits` → `enqueue_job(p_credit_ledger_id)`. 사용자 RPC 안에서 차감하지 않는다 |
@@ -289,3 +289,25 @@
 | FastAPI `AI_TOKEN_INVALID` | 서명, `aud`, scope, 만료, `jti` 재사용 | 401 |
 | 앱 코드 `WIKI_VERSION_CONFLICT` | 위키 저장 시 `expected_version`이 현재 버전과 다름(`docs/file/03-설계/공용코어/LLM_WIKI.md:31`) | 409 |
 | 코어 코드 | `42501`→403, `CR001`→402, `P0002`/`PM404`→404, `SB001`/`JB002`/`PM410`→409, `PM001`/`PM409`→409+운영 알림, `OA001`→400 | CORE_SPEC 15장 |
+
+## 8. 로그인 경로 (2026-10-14 추가, 확정 결정 22)
+
+정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 2장, 3.2절, 7.2.3절. 이 절의 경로는 사용자 계정 로그인만 다룬다. 채널 연결 OAuth(`POST /api/channels/connect`, `GET /api/channels/callback/[platform]`, `core.oauth_states`)와 네이버 클립 브라우저 로그인 세션(`POST /api/channels/connect/naver-clip`)은 2절 그대로이며 단계와 무관하다.
+
+| 메서드 경로 | 단계 | 역할 | 입력(zod 요약) | 출력 | 처리 | 오류 |
+|---|---|---|---|---|---|---|
+| POST `/api/dev/login` | A(로컬 전용) | 공개(판정이 참일 때만 존재) | `{ persona: 'owner'|'admin'|'member'|'viewer'|'outsider'|'no_app'|'suspended'|'ops'|'adv_owner'|'adv_member', next?: string }` | 302 `next`(화이트리스트) 또는 `/dashboard` | `isMockAuthAllowed()` 확인 → 쿠키 세션 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('video', next)` | 판정 거짓 → 404(존재 자체를 숨김). 알 수 없는 페르소나 422, 시드 안 됨 → 401 + "`node scripts/dev/seed-users.mjs --app video`를 먼저 실행하세요". 레이트 리밋 없음(로컬 전용) |
+| GET `/auth/callback` | B·C1·C2(`custom:naver`) | 공개 | `code`, `next?` | 302 | `finishLogin`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('video')` 1회 (3) `entitled=false`이면 video는 open 앱이므로 `rpc('bootstrap_app_for_org', { p_app_id: 'video' })` 1회 후 재조회(크레딧 멱등 `signup:<org>:video`) (4) `status` 분기: suspended 403 (5) `next`가 `/`로 시작하고 `//`·`@`·`\` 없을 때만, 아니면 `/dashboard`(첫 로그인이면 온보딩, 03장 7.3절). origin은 `NEXT_PUBLIC_APP_URL` 고정 (6) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login` |
+| GET `/auth/naver/start` | C2 브리지 채택 시만 | 공개 | `next?` | 302 네이버 authorize | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 서명 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 저장. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 429 |
+| GET `/auth/naver/callback` | C2 브리지 채택 시만 | 공개 | `code`, `state` | 302 | state 상수 시간 비교·쿠키 삭제 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(provider `naver`, 네이버 고유 id)로 사용자 찾기 → 없으면 같은 이메일 사용자 확인 → `generateLink`+`verifyOtp`로 세션 → `finishLogin`. 네이버 토큰은 저장하지 않는다 | state 불일치·없음·만료 → `/login?error=state`. 같은 이메일 기존 사용자 → `/login?error=email_in_use`(자동 병합 금지) |
+
+`core.oauth_states`는 브리지 state에 쓰지 않는다(로그인 전에는 사용자·조직이 없어 `user_id not null`을 채울 수 없다, `AUTH_ROADMAP.md` 7.2.3절). 채널 연결 state와 브리지 state는 저장소가 다르다.
+
+오류 코드(앱 코드, DB 미사용):
+
+| 코드 | 의미 | HTTP |
+|---|---|---|
+| `AUTH_CALLBACK_FAILED` | 콜백 코드 교환 실패. 사용자에게는 `/login?error=callback` | 302 |
+| `AUTH_STATE_INVALID` | (C2 브리지) state 불일치·재사용·만료 → `/login?error=state` | 302 |
+| `AUTH_EMAIL_IN_USE` | (C2 브리지) 같은 이메일의 다른 로그인 수단 사용자 존재 → `/login?error=email_in_use` | 302 |
+| `DEV_LOGIN_UNAVAILABLE` | Mock 판정 거짓. 응답 본문 없이 404 | 404 |

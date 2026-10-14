@@ -6,7 +6,8 @@
 |---|---|
 | 주 사용자 | 중소기업·병원·학교 직원(역할별) |
 | DB 스키마(모듈러 번호) | `erp`·`sms`(1600·1700), hms는 모놀리스 전용 |
-| 개발 작업 수 | 57개(`products/admin-suite/06_AGENT_PLAN.md`) |
+| 개발 작업 수 | 60개(`products/admin-suite/06_AGENT_PLAN.md`, 2026-10-14 인증 단계 작업 ADM-06-058~060 포함) |
+| 인증 단계 | 개발은 Mock 로그인(Stage A, 앱별 로컬 시드 계정)으로 시작 → G1 후 erp Google + 이메일, sms Google + 초대 메일, hms 초대 메일 + 이메일만(B) → G2 후 erp·sms만 카카오·네이버 선택(C, hms 제외). [`admin-suite_develop.md`](admin-suite_develop.md) 19장 |
 | 기획서 | [`products/admin-suite/`](../../products/admin-suite/) |
 | 참고 | 앱 3개라 묶음 안 `supabase/`가 erp·hms·sms 세 세트입니다. |
 

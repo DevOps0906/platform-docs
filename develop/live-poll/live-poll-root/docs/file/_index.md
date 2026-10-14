@@ -30,6 +30,7 @@
 | DOC-CORE-006 | 공용 코어: AI_ARCHITECTURE | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/공용코어/AI_ARCHITECTURE.md | - |
 | DOC-CORE-007 | 공용 코어: LLM_WIKI | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/공용코어/LLM_WIKI.md | - |
 | DOC-CORE-008 | 공용 코어: VOICE_ARCHITECTURE | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md | - |
+| DOC-CORE-009 | 공용 코어: AUTH_ROADMAP | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/공용코어/AUTH_ROADMAP.md | - |
 | DOC-DSN-001 | 디자인 기준: DESIGN_PRINCIPLES | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/DESIGN_PRINCIPLES.md | - |
 | DOC-DSN-002 | 디자인 기준: DESIGN_SYSTEM | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/DESIGN_SYSTEM.md | - |
 | DOC-DSN-003 | 디자인 기준: HERO_3D | 03 설계 | platform 기획(2026-10-13) | 원문 확인 | 초안 | 1.0 | docs/file/03-설계/디자인/HERO_3D.md | - |

@@ -20,6 +20,7 @@
 - [[sources/doc-core-006]] DOC-CORE-006 공용 코어: AI_ARCHITECTURE
 - [[sources/doc-core-007]] DOC-CORE-007 공용 코어: LLM_WIKI
 - [[sources/doc-core-008]] DOC-CORE-008 공용 코어: VOICE_ARCHITECTURE
+- [[sources/doc-core-009]] DOC-CORE-009 공용 코어: AUTH_ROADMAP
 - [[sources/doc-dsn-001]] DOC-DSN-001 디자인 기준: DESIGN_PRINCIPLES
 - [[sources/doc-dsn-002]] DOC-DSN-002 디자인 기준: DESIGN_SYSTEM
 - [[sources/doc-dsn-003]] DOC-DSN-003 디자인 기준: HERO_3D

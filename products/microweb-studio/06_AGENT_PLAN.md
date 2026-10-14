@@ -1,6 +1,6 @@
 # 06 에이전트 작업 계획: Microweb Studio
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 18개(MW-06-036~053)를 뒤에 붙였다. 기존 ID는 바꾸지 않았다. 내용이 바뀐 기존 작업은 002, 004, 011, 014, 016, 018~021, 023~026, 029, 030, 032다. 2026-10-14 개정: 인증 단계(확정 결정 22, `docs/products/_platform-core/AUTH_ROADMAP.md`) 작업 3개(MW-06-054~056)를 8절에 붙였고, 내용이 바뀐 기존 작업은 003(Stage A), 026, 032다. 작업 수는 56개(이전 53개)이고 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘었고 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24` 취지)를 지키려고 합치지 않았다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/products/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 18개(MW-06-036~053)를 뒤에 붙였다. 기존 ID는 바꾸지 않았다. 내용이 바뀐 기존 작업은 002, 004, 011, 014, 016, 018~021, 023~026, 029, 030, 032다. 2026-10-14 개정: 인증 단계(확정 결정 22, `docs/products/_platform-core/AUTH_ROADMAP.md`) 작업 3개(MW-06-054~056)를 8절에 붙였고, 내용이 바뀐 기존 작업은 003(Stage A), 026, 032, 034(CI 금지 문자열)다. 작업 수는 56개(이전 53개)이고 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘었고 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24` 취지)를 지키려고 합치지 않았다.
 
 ## 1. 원칙과 소유 경계
 
@@ -24,7 +24,7 @@
 |---|---|---|---|---|---|---|---|---|
 | MW-06-001 | 앱 스캐폴드: Next.js 16, TS strict, Tailwind CSS v4 빌드, lockfile, `.gitignore`, CI(tsc, lint, build) | `package.json`, `tsconfig.json`, `next.config.ts`, `.gitignore`, `.github/workflows/microweb-ci.yml` | 없음 | P0 | M | Haiku | `tsc --noEmit` 0오류, `latest` 의존성 0개, CI 녹색. 근거: 보일러플레이트 | premium 5장 #4, nexus #3, #6, webcraft #6, #10 |
 | MW-06-002 | DB 조각 적용, 모놀리스 변환 스크립트, 타입 생성(`--schema core,microweb`) | `supabase/`(링크), `scripts/db/`, `src/types/supabase.ts` | 없음 | P0 | S | Fable | 체커 mod/mono OK, 변환 결과가 저장된 `0002_microweb_domain.sql`과 diff 0. 근거: 데이터 모델. 2026-10-13: 20절(AI·음성 기본값, 방명록 음성 컬럼, `site_assets.kind` voice)이 변환 결과에 포함되고 `--vector` 체커가 mod/mono 모두 OK | 05장 9절, premium #5, #10 |
-| MW-06-003 | 인증 연결(Stage A, 2026-10-14 확정 결정 22): 인증 모듈 경계 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`, `AUTH_ROADMAP.md` 3.1절), Mock 로그인(`POST /api/dev/login`, `/login` 개발용 패널, 모든 화면 상단 `MOCK AUTH · 로컬 전용` 배지), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.microweb.mjs`(05장 10절 페르소나, `studio_access` 허용·미허용), env 가드(zod), core-db 클라이언트, `requireSession('microweb')`, `proxy.ts`, `studio_access` 가드, `/pending`, `/no-access`. 초대 메일 수락 화면·Google 버튼·`/auth/callback`은 B(MW-06-054)로 옮겼다 | `src/lib/auth/`, `src/server/auth/`, `src/proxy.ts`, `src/app/api/dev/login/`, `src/app/login/`(제공자 버튼 폴더 `providers/` 제외), `src/app/pending/`, `src/app/no-access/`, `scripts/dev/` | 001, 002 | P0 | M | Fable | `owner` 페르소나(허용 목록 있음) 로그인 → `session_context('microweb')` `entitled=true`, `/studio` 진입. `studio_denied` → `/pending`, `create_site` 42501. `no_app` → `/no-access`(invite 앱이라 `bootstrap_app_for_org` 호출 0). `outsider`로 owner 조직 sites 0행. 프로필 없으면 로그아웃. `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live` 빌드에서 `/api/dev/login` 404. 시드 2회 실행 후 결과 같음, `SUPABASE_URL`이 로컬이 아니면 exit 1. 인증 모듈·로그인 화면·콜백 밖 `AUTH_MODE` 참조 0(CI grep). 근거: 권한 | MW-F-024, `SECURITY_BASELINE.md` 11장, `AUTH_ROADMAP.md` 2장, 3.1절, 9장 |
+| MW-06-003 | 인증 연결(Stage A, 2026-10-14 확정 결정 22): 인증 모듈 경계 `src/lib/auth/`(`getAuthConfig`, `isMockAuthAllowed`, `listLoginOptions`, `finishLogin`, `AUTH_ROADMAP.md` 3.1절), Mock 로그인(`POST /api/dev/login`, `/login` 개발용 패널, 모든 화면 상단 `MOCK AUTH · 로컬 전용` 배지), `scripts/dev/seed-users.mjs` + 제품 훅 `seed-users.microweb.mjs`(05장 10절 페르소나, `studio_access` 허용·미허용), env 가드(zod), core-db 클라이언트, `requireSession('microweb')`, `proxy.ts`, `studio_access` 가드, `/pending`, `/no-access`. 초대 메일 수락 화면·Google 버튼·`/auth/callback`은 B(MW-06-054)로 옮겼다. 배지의 루트 레이아웃(`src/app/layout.tsx`) 장착과 `package.json` 스크립트 `db:seed-users`는 001에 1줄 요청 | `src/lib/auth/`, `src/server/auth/`, `src/proxy.ts`, `src/app/api/dev/login/`, `src/app/api/dev/logout/`, `src/app/login/`(제공자 버튼 폴더 `providers/` 제외), `src/app/pending/`, `src/app/no-access/`, `scripts/dev/` | 001, 002 | P0 | M | Fable | `owner` 페르소나(허용 목록 있음) 로그인 → `session_context('microweb')` `entitled=true`, `/studio` 진입. `studio_denied` → `/pending`, `create_site` 42501. `no_app` → `/no-access`(invite 앱이라 `bootstrap_app_for_org` 호출 0). `outsider`로 owner 조직 sites 0행. 프로필 없으면 로그아웃. `AUTH_MODE=mock VERCEL_ENV=production` 빌드 실패, `AUTH_MODE=live` 빌드에서 `/api/dev/login` 404. 시드 2회 실행 후 결과 같음, `SUPABASE_URL`이 로컬이 아니면 exit 1. 인증 모듈·로그인 화면·콜백 밖 `AUTH_MODE` 참조 0(CI grep). 근거: 권한 | MW-F-024, `SECURITY_BASELINE.md` 11장, `AUTH_ROADMAP.md` 2장, 3.1절, 9장 |
 | MW-06-004 | 블록 zod 스키마 17종, content 검증, 템플릿 레지스트리(필수 블록) | `src/engine/schema/` | 001 | P0 | M | Opus | 필수 블록 누락 content는 검증 실패, 모르는 블록 거부, 256KB 초과 거부. 근거: 데이터 계약 설계. 블록 JSON Schema 내보내기 파일(`greeting.voice_asset_id`, `guestbook.voice_enabled/voice_public` 포함)을 FastAPI 그래프가 읽을 수 있게 빌드 산출(MW-06-044 입력) | MW-F-001, premium #7 |
 | MW-06-005 | 블록 렌더러 이식(원본 섹션 7개 → 블록 17종), 갤러리 라이트박스·lazy, 미사용 코드 제거 | `src/engine/blocks/` | 004 | P0 | L | Sonnet | 원본 constants 없이 content JSON만으로 렌더, `scrollRef`·`mapUrl` 잔재 0, picsum 0. 근거: UI | MW-F-002~010, premium #8, #12 |
 | MW-06-006 | 템플릿 테마 토큰과 `wedding_classic` 테마, 모션(Ken Burns, 크로스페이드, reduced-motion) | `src/engine/themes/` | 004 | P0 | M | Sonnet | 테마 대비 4.5:1, reduced-motion에서 자동 모션 0. 근거: UI | 03장 6절 |
@@ -90,16 +90,17 @@
 | W6 | 054(G1 통과 후 먼저), 032, 035 | 3 | W5 완료, 054는 G1(032의 Mock E2E 녹색 포함) | Google + 초대 메일 로그인(Stage B), E2E와 체크리스트, 문서. MVP 출시 판정 |
 | W7(Phase 2) | 027, 028, 031, 055·056(G2 통과 후, P2 선택) | 5 | MVP 출시 + 셀프 단가 확정, 055·056은 G2 | 크레딧팩 결제, 돌잔치·부고장, 결제 E2E, 카카오·네이버 로그인(선택) |
 
-같은 웨이브 안 순서: W3의 021은 024의 카탈로그 컴포넌트와 052(W2)의 히어로를 쓰므로 024 머지 뒤 시작하고, 016은 007 뒤, 044는 041·039 뒤, 042는 041 뒤에 시작한다. 이전 W4(032, 035)는 W6, 이전 W5(027, 028, 031)는 W7이 됐다. W6의 054(Stage B)는 G1 판정(032의 Mock F1~F3 녹색 포함, 8절) 직후 웨이브 맨 앞에서 시작하고 032·035의 마무리는 054 완료를 기다린다.
+같은 웨이브 안 순서: W3의 021은 024의 카탈로그 컴포넌트와 052(W2)의 히어로를 쓰므로 024 머지 뒤 시작하고, 016·017은 007 뒤, 018은 014 뒤, 044는 041·039 뒤, 042는 041 뒤에 시작한다. W1의 034는 033 뒤, W4의 051은 050 뒤, W6의 035는 032 뒤, W7의 031은 027 뒤다. 이전 W4(032, 035)는 W6, 이전 W5(027, 028, 031)는 W7이 됐다. W6의 054(Stage B)는 G1 판정(032의 Mock F1~F3 녹색 포함, 8절) 직후 웨이브 맨 앞에서 시작하고 032·035의 마무리는 054 완료를 기다린다.
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
 | Fable | 13 (002, 003, 013, 016, 026, 027, 030, 039, 040, 051, 053, 054, 056) | 23.6% | 25/105 = 23.8% |
-| Opus | 23 (055 포함) | 41.8% | 44/105 = 41.9% |
-| Sonnet | 16 | 29.1% | 32/105 = 30.5% |
+| Opus | 23 (004, 007, 009, 010, 011, 012, 015, 017, 019, 023, 025, 031, 032, 033, 038, 042, 043, 044, 045, 046, 049, 050, 055) | 41.8% | 44/105 = 41.9% |
+| Sonnet | 16 (005, 006, 008, 014, 018, 020, 021, 024, 028, 034, 035, 036, 041, 047, 048, 052) | 29.1% | 32/105 = 30.5% |
 | Haiku | 3 (001, 022, 029) | 5.5% | 4/105 = 3.8% |
+| 합계 | 55(사람 작업 1개 제외, 전체 56개) | 100% | 105 |
 
 비율은 모델 작업 55개 기준이다. 사람 작업 1개(MW-06-037, M)는 비율에서 뺐다. 2026-10-14 이전(52개)은 Fable 21.2%, Opus 42.3%, Sonnet 30.8%, Haiku 5.8%(규모 가중 21.0/43.0/32.0/4.0%)였다. 2026-10-13 이전(35개)은 Fable 20.0%, Opus 40.0%, Sonnet 31.4%, Haiku 8.6%였다. Fable은 AI 보안 경계(서명 토큰 검증 039, AI 게이트의 선차감·정산·동의 040, 익명 하객 음성 051, AI 회귀 053)를 맡고, 그래프·RAG·Dify·음성 구현은 Opus, 채팅 시트·문구 제안 패널·3D 히어로·코퍼스 원고는 Sonnet이다(`docs/products/_platform-core/DOC_TEMPLATE.md:253`).
 
@@ -179,7 +180,9 @@
 
 ## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
 
-정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(0장 단계 요약, 8장 제품별 매트릭스 microweb 행 `:330`, 9장 작업 계획 반영 규칙)다. microweb은 초대제(`signup_policy='invite'`) 앱이라 B단계 로그인 수단은 Google + 초대 메일이고, 카카오·네이버는 P2 선택이다. 하객(`/i/*`)과 고객 시안(`/p/*`)은 로그인이 없으며 어느 단계에서도 로그인 버튼을 추가하지 않는다(`AUTH_ROADMAP.md:339`).
+정본은 `docs/products/_platform-core/AUTH_ROADMAP.md`(0장 단계 요약, 8장 제품별 매트릭스 microweb 행 `:330`, 9장 작업 계획 반영 규칙)다. microweb은 초대제(`signup_policy='invite'`) 앱이라 B단계 로그인 수단은 Google + 초대 메일이고, 카카오·네이버는 P2 선택이다. 하객(`/i/*`), 고객 시안(`/p/*`), 쇼룸 방문자는 로그인이 없으며 어느 단계에서도 로그인 버튼을 추가하지 않는다(`AUTH_ROADMAP.md:339`). 아래 작업은 `src/app/i/`, `src/app/p/`, `src/app/(showroom)/`, `src/app/api/public/`, `src/engine/`를 수정하지 않는다. A단계 추가 페르소나는 `studio_access` 허용(`owner`)·미허용(`studio_denied`)이다(05장 10절).
+
+### 8.1 단계와 작업
 
 | 단계 | 작업 | 진입 게이트 | 웨이브 |
 |---|---|---|---|
@@ -188,19 +191,35 @@
 | C1(카카오) | MW-06-055 | G2(`AUTH_ROADMAP.md` 6장) | W7(MVP 출시 후, G2 통과 후) |
 | C2(네이버) | MW-06-056 | G2 | W7(G2 통과 후, 055와 병렬 가능) |
 
+작업 목록(2절과 같은 열):
+
 | ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
 |---|---|---|---|---|---|---|---|---|
-| MW-06-054 | Stage B: Google OAuth 전환 + 초대 메일 수락 화면. 로그인 화면 Google 버튼(`prompt: 'select_account'`), 초대 링크 수락 경로, `/auth/callback`(`finishLogin` 전체: 코드 교환 → `session_context` → invite 앱이라 `bootstrap_app_for_org` 호출 없음 → `entitled=false`면 `/no-access` "초대받은 이메일로 로그인하세요" → 상태 분기 → `next` 화이트리스트 → 감사 `auth.login`), 첫 OAuth 로그인 뒤 약관 동의(스튜디오 온보딩 첫 단계, `/studio/onboarding/terms` 제안), 배포 env `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email` | `src/app/auth/callback/`, `src/app/login/providers/`, `src/app/auth/invite/`, `src/app/studio/onboarding/terms/` | 003, 026, G1 | P0 | M | Fable | `AUTH_ROADMAP.md` 5.3절 B-1~B-6 그대로: B-1(invite 앱: 초대받지 않은 새 Google 계정은 `entitled=false`이고 `/no-access`. 초대 메일과 같은 이메일의 Google 계정은 초대 사용자와 같은 `user_id`로 `/studio` 진입, 크레딧 원장 행 수 재로그인 3회 뒤에도 같음), B-2(`next=//evil.com`, `https://evil.com`, `/\evil.com` → `/studio`), B-3(`code` 없음·재사용·만료 → `/login?error=callback`, 로그에 토큰·코드 0), B-4(`VERCEL_ENV=production`에서 `/api/dev/login` 404, 개발용 패널 없음, `AUTH_MODE=mock` 빌드 실패), B-5(MW-06-032 Mock E2E 녹색 + 사람 수동 점검표 데스크톱·모바일 각 1회, 초대·비초대 계정, 결과는 task `log.md`), B-6(운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS`가 배포 체크리스트와 일치) | `AUTH_ROADMAP.md` 3.2절, 5장, 8장 |
-| MW-06-055 | Stage C1: 카카오 로그인(선택). Supabase 기본 제공자 `kakao`, 로그인 화면 카카오 버튼, `AUTH_PROVIDERS`에 `kakao` 추가, 설정 → 로그인 방법(연결·해제, `AUTH_ROADMAP.md` 7.3절) | `src/app/login/providers/kakao/`, `src/app/studio/settings/login/` | 054, G2 | P2 | S | Opus | `AUTH_ROADMAP.md` 7.1.3절 C1-1~C1-5 그대로. invite 앱이므로 C1-1의 "B-1과 같은 결과"는 비초대 카카오 계정 `/no-access`, 초대 이메일과 같은 이메일의 카카오 계정(비즈 앱 (a))은 같은 `user_id`. 이메일 정책은 01장 D-20 결정을 따른다 | `AUTH_ROADMAP.md` 7.1절, 8장 |
-| MW-06-056 | Stage C2: 네이버 로그인(선택, 스파이크 → `custom:naver` 또는 브리지). 스파이크 0.5일(`AUTH_ROADMAP.md` 7.2.2절), `scripts/auth/register-naver-provider.mjs`, 브리지 경로면 `/auth/naver/start`·`/auth/naver/callback`과 코어 요청 R-14 | `src/app/login/providers/naver/`, `src/app/auth/naver/`, `src/server/auth-bridge/`, `scripts/auth/` | 054, G2 | P2 | M | Fable | `AUTH_ROADMAP.md` 7.2.4절 C2-1~C2-6 그대로(C2-2는 invite 앱 기준 비초대 계정 `/no-access`). 네이버 검수 통과 전 운영 `AUTH_PROVIDERS`에 `naver` 없음 | `AUTH_ROADMAP.md` 7.2절, 8장 |
+| MW-06-054 | Stage B: Google OAuth 전환 + 초대 메일 수락 화면. 로그인 화면 Google 버튼(`prompt: 'select_account'`)과 이메일·비밀번호 로그인 폼(초대 수락 때 비밀번호를 정한 운영자, 공개 가입 폼 없음)·비밀번호 재설정, 초대 링크 수락 경로(`/auth/invite`: `verifyOtp` type invite → 비밀번호 설정(건너뛰기 가능, 제안) → `finishLogin`, 04장 8절), `/auth/callback`(`finishLogin` 전체: 코드 교환 → `session_context` → invite 앱이라 `bootstrap_app_for_org` 호출 없음 → `entitled=false`면 `/no-access` "초대받은 이메일로 로그인하세요" → 상태 분기 → `next` 화이트리스트 → 감사 `auth.login`), 첫 OAuth 로그인 뒤 약관 동의(스튜디오 온보딩 첫 단계, `/studio/onboarding/terms` 제안), 배포 env `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email` | `src/app/auth/callback/`, `src/app/login/providers/`(003이 비워 둔 하위 폴더: Google 버튼, 이메일 폼), `src/app/login/reset-password/`, `src/app/auth/invite/`, `src/app/studio/onboarding/terms/`(040 소유 `src/app/studio/onboarding/` 안에서 이 하위 경로만 단독 소유. 온보딩 첫 단계 연결은 040 파일에 1줄 요청), `supabase/config.toml`의 `[auth.external.google]`·`additional_redirect_urls`(002 링크 파일의 해당 절만), `docs/deploy/auth-checklist.md`(Supabase 초대 메일 템플릿 링크 포함). 시드 페르소나의 약관 동의 기록은 003 소유 `scripts/dev/seed-users.microweb.mjs`에 1줄 요청 | 003, 026, 040, G1 | P0 | M | Fable | `AUTH_ROADMAP.md` 5.3절 B-1~B-6 그대로: B-1(invite 앱: 초대받지 않은 새 Google 계정은 `entitled=false`이고 `/no-access`. 초대 메일과 같은 이메일의 Google 계정은 초대 사용자와 같은 `user_id`로 `/studio` 진입, 크레딧 원장 행 수 재로그인 3회 뒤에도 같음), B-2(`next=//evil.com`, `https://evil.com`, `/\evil.com` → `/studio`), B-3(`code` 없음·재사용·만료 → `/login?error=callback`, 로그에 토큰·코드 0), B-4(`VERCEL_ENV=production`에서 `/api/dev/login` 404, 개발용 패널 없음, `AUTH_MODE=mock` 빌드 실패), B-5(MW-06-032 Mock E2E 녹색 + 사람 수동 점검표 데스크톱·모바일 각 1회, 초대·비초대 계정, 결과는 task `log.md`), B-6(운영 대시보드 Google 설정, Redirect URLs, `AUTH_PROVIDERS`가 배포 체크리스트와 일치) | `AUTH_ROADMAP.md` 3.2절, 5장, 8장 |
+| MW-06-055 | Stage C1: 카카오 로그인(선택). Supabase 기본 제공자 `kakao`, 로그인 화면 카카오 버튼, `AUTH_PROVIDERS`에 `kakao` 추가, 설정 → 로그인 방법(연결·해제, `AUTH_ROADMAP.md` 7.3절) | `src/app/login/providers/kakao/`(054 완료 후 이어 받음, 버튼 목록 장착은 054 파일에 1줄 요청), `src/app/studio/settings/login/`(설정 화면 메뉴 링크는 040 소유 `settings/ai/` 쪽 파일에 1줄 요청), `supabase/config.toml`의 `[auth.external.kakao]` | 054. 진입 조건 G2(`[DECISION] G2 통과`), 01장 D-19(C단계 도입)·D-20 확정 | P2 | S | Opus | `AUTH_ROADMAP.md` 7.1.3절 C1-1~C1-5 그대로. invite 앱이므로 C1-1의 "B-1과 같은 결과"는 비초대 카카오 계정 `/no-access`, 초대 이메일과 같은 이메일의 카카오 계정(비즈 앱 (a))은 같은 `user_id`. 이메일 정책은 01장 D-20 결정을 따른다 | `AUTH_ROADMAP.md` 7.1절, 8장 |
+| MW-06-056 | Stage C2: 네이버 로그인(선택, 스파이크 → `custom:naver` 또는 브리지). 스파이크 0.5일(`AUTH_ROADMAP.md` 7.2.2절), `scripts/auth/register-naver-provider.mjs`, 브리지 경로면 `/auth/naver/start`·`/auth/naver/callback`과 코어 요청 R-14 | `src/app/login/providers/naver/`(054 완료 후 이어 받음), `src/app/auth/naver/`(브리지만), `src/server/auth-bridge/`(브리지만), `scripts/auth/`. 설정 → 로그인 방법의 네이버 행은 055가 그 화면을 만든 뒤 055 파일에 1줄 요청 | 054. 진입 조건 G2, 01장 D-19 확정, 브리지면 코어 R-14(8.3절) 적용 후 | P2 | M | Fable | `AUTH_ROADMAP.md` 7.2.4절 C2-1~C2-6 그대로(C2-2는 invite 앱 기준 비초대 계정 `/no-access`). 네이버 검수 통과 전 운영 `AUTH_PROVIDERS`에 `naver` 없음 | `AUTH_ROADMAP.md` 7.2절, 8장 |
+
+### 8.2 게이트
 
 | 게이트 | 판정 | microweb 확인 항목 |
 |---|---|---|
 | G1 | 사람이 판정, task `log.md`에 `[DECISION] G1 통과` | W0~W5 P0 작업 완료, MW-06-032의 F1~F3 Mock E2E 녹색, MW-06-030 RLS 스모크 87/87(`outsider`·`studio_denied` 거부 포함), 단계 분기 코드가 인증 모듈 밖 0건, Google Cloud 동의 화면·클라이언트 ID·운영 Supabase 준비(`AUTH_ROADMAP.md` 4장). 결제 E2E는 Phase 2라 G1 조건 아님 |
 | G2 | 사람이 판정, `[DECISION] G2 통과` | Google 실사용 2주(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안). invite 앱이라 6장 3번(`entitled=false` 0)은 "초대받은 사용자 중 `entitled=false` 0"으로 읽는다. 카카오·네이버를 실제로 켤지(P2 선택)는 G2 뒤 따로 결정 |
 
-| 코어 요청(6절 표에 행을 넣지 않고 여기 둔다) | 요청 | 이유 | 대상 |
+### 8.3 코어 요청 (6절 표에 이어서)
+
+| ID | 요청 | 이유 | 대상 |
 |---|---|---|---|
 | R-14 | MW-06-056이 브리지 경로를 택하면 코어 `staged/0010_core_auth_identity_links.sql` 적용 | 브리지는 네이버 고유 id로 사용자를 찾는다(`AUTH_ROADMAP.md` 7.2.3절). 코어는 한 번만 적용 | core |
 
-작업 수는 56개, 모델 작업 55개(사람 1개 제외)다. 비율은 4절 표(Fable 13, Opus 23, Sonnet 16, Haiku 3)다.
+### 8.4 기존 문서와 달라진 점
+
+| 항목 | 이전 | 지금 |
+|---|---|---|
+| MW-06-003 범위 | core-db 클라이언트, `requireSession`, `proxy.ts`, `studio_access` 가드, `/pending`, `src/app/login/` | Stage A(인증 모듈 경계, Mock 로그인, 시드 + 제품 훅, 가드, `finishLogin`) + `/no-access`. `src/app/login/`의 `providers/` 하위 폴더는 054 몫으로 비워 둔다. 규모 M 그대로 |
+| MW-06-026 | 초대·허용 목록 관리 | 같은 범위 + invite 앱 엔타이틀먼트를 service_role `bootstrap_app_for_org`로 부여한다는 점과 시드 `owner` 페르소나와 같은 결과를 수용 기준에 명시. 초대 수락 화면·콜백은 054 |
+| MW-06-032 | F1~F3, F5, F8 + 출시 체크리스트 | Mock 페르소나 `storageState`로 먼저 녹색(G1 근거), 054 뒤 재실행(B-5). 선행에 054(마무리 단계만) |
+| MW-06-034 | 위생 검사 | 인증 금지 문자열 CI 검사 추가 |
+| 온보딩 약관 단계 | 없음 | 054가 `src/app/studio/onboarding/terms/`를 만들고 040 소유 온보딩에 1줄 요청으로 연결(03장 7절) |
+| `/login` 소유 | 003 단독 | 003(A 패널) + 054(`providers/`, B) → 055·056이 자기 제공자 폴더를 이어 받음(직렬이라 동시 쓰기 없음) |
+| 작업 수 | 53개(모델 작업 52) | 56개(모델 작업 55, 사람 1). 4절 비율, README, 개발 문서(`docs/develop/microweb-studio/`) 작업 수를 같이 바꿨다 |

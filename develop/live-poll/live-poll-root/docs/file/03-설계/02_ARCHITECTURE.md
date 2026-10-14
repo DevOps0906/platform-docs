@@ -33,7 +33,7 @@
 | 모듈 | 디렉토리 | 책임 |
 |---|---|---|
 | 마케팅 | `apps/live-poll/src/app/(marketing)/` | 랜딩, 가격, 베타 가입 진입. 색인 허용 |
-| 진행자 인증 | `apps/live-poll/src/app/(auth)/` | 로그인, 가입(`signup_app='poll'`), 베타 약관 동의 |
+| 진행자 인증 | `apps/live-poll/src/app/(auth)/`, `src/lib/auth/`, `src/app/auth/callback/`, `src/app/api/dev/login/` | 로그인, 가입(`signup_app='poll'`), 베타 약관 동의. 인증 단계(A Mock → B Google → C 카카오·네이버) 분기는 `src/lib/auth/`·로그인 화면·콜백 라우트에만 둔다(9절, `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` 3.1절) |
 | 진행자 콘솔 | `apps/live-poll/src/app/(host)/` | 행사 목록, 행사 편집(문항/선택지), 진행 콘솔, Q&A 모더레이션, 결과/CSV, 설정(금칙어) |
 | 발표 화면 | `apps/live-poll/src/app/present/[eventId]/` | 전체화면 결과, 코드/QR. 진행자 세션 필요 |
 | 오버레이 | `apps/live-poll/src/app/overlay/[eventId]/` | OBS 브라우저 소스. 오버레이 키 |
@@ -81,7 +81,7 @@ AI 모듈 경계(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:5-14`를 �
 
 | 공용 모듈(`SHARED_MODULES.md`) | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth (2장) | 진행자 세션, `requireSession('poll')` | `(host)` 레이아웃, `api/host/*` | 청중에는 쓰지 않는다 |
+| auth (2장) | 진행자 세션, `requireSession('poll')`, 인증 단계 제공자 계약(`packages/core-auth/providers`, 앱은 `src/lib/auth/`) | `(host)` 레이아웃, `api/host/*`, `(auth)`, `auth/callback`, `api/dev/login` | 청중에는 쓰지 않는다. 세션은 모든 단계에서 실제 Supabase JWT(9절) |
 | org (3장) | 개인 조직, Phase 2 공동 진행자 초대 | 설정 화면 | 1인 1워크스페이스 |
 | toss (5장) | Phase 2 Pro/Business 구독 | `api/billing/*`(Phase 2) | 베타에는 비활성 |
 | webhooks (6장) | Phase 2 Toss 웹훅 | `api/webhooks/toss` | 결제 보조 경로 |
@@ -277,3 +277,82 @@ AI 도입(2026-10-13)이 위 차단 설계를 약화하지 않는 이유: (1) AI
 | `NEXT_PUBLIC_HERO3D_ENABLED` | 3D 히어로 전체 끄기 스위치(장애 대응) | 공개 | 기본 true. false면 정지 이미지 |
 
 AI 관련 변수는 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:160`의 목록을 따르며 `NEXT_PUBLIC_HERO3D_ENABLED` 말고는 모두 서버 전용이다. `AI_TOKEN_SECRET`(공유 비밀키)은 쓰지 않는다(EdDSA, `docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`). `SUPABASE_JWT_SECRET`은 5-1절 청중·오버레이 Realtime JWT 서명 전용이고 AI 서명 토큰과 별개다.
+
+## 9. 인증 단계 (2026-10-14 추가, 확정 결정 22)
+
+정본은 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(`docs/reference/00_MERGE_ANALYSIS.md:30` 확정 결정 22). 이 절은 live-poll(가입 정책 open)에 적용한 결과만 적는다. 로그인하는 사람은 진행자(행사 소유 조직의 owner/admin/member/viewer. 공동 진행자 초대 화면은 Phase 2)뿐이다.
+
+### 9.1 단계표
+
+| 단계 | 진행자 로그인 | 진입 게이트 | 이 제품 작업 | 근거 |
+|---|---|---|---|---|
+| A(MVP 개발) | 로컬 Supabase 시드 계정(페르소나) 원클릭 Mock. `signInWithPassword`로 실제 JWT를 받는다. 실제 제공자 버튼 없음 | W0부터 | LP-06-003(Stage A) | AUTH_ROADMAP 2장 |
+| B(공개 베타 전) | Google + 이메일(01장 LP-F-001). 배포 환경에서 Mock 차단 | G1 | LP-06-049 | AUTH_ROADMAP 4, 5장 |
+| C1 | 카카오(Supabase 기본 제공자 `kakao`) | G2 | LP-06-050 | AUTH_ROADMAP 6장, 7.1절 |
+| C2 | 네이버(`custom:naver` 또는 서버 브리지, 스파이크로 결정) | G2 | LP-06-051 | AUTH_ROADMAP 7.2절 |
+
+단계 전환은 사람(대표님)이 게이트를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 남긴 뒤에만 한다(06장 8.2절).
+
+### 9.2 코드 위치와 단계 분기 규칙
+
+| 위치 | 하는 일 | 단계 분기 허용 |
+|---|---|---|
+| `src/lib/auth/` | `getAuthConfig()`(env zod 검증, 잘못된 조합이면 기동 실패), `isMockAuthAllowed()`, `listLoginOptions('poll')`, `finishLogin('poll', next)`. C단계 제공자 파일 `providers/kakao.ts`, `providers/naver.ts` | 예 |
+| `src/app/(auth)/login/`, `signup/`, `reset-password/` | `listLoginOptions` 결과로 개발용 패널(A), Google 버튼과 이메일 폼(B), 카카오·네이버 버튼(C)을 렌더. 판정은 서버 컴포넌트에서 | 예 |
+| `src/app/auth/callback/` | 코드 교환 → `finishLogin` | 예 |
+| `src/app/api/dev/login/` | Stage A Mock 로그인(로컬 전용, 판정 거짓이면 404) | 예 |
+| `src/app/auth/naver/` | C2 브리지 경로를 택한 경우만 | 예 |
+| 그 밖의 모든 코드(`(host)`, `present`, `api/host/*`, `api/ai/*`, `api/voice/*`, 청중·오버레이 경로, 브로드캐스터, `apps/api`) | `requireSession('poll')`·`session_context`만 쓴다(청중·오버레이는 그것도 쓰지 않는다). `AUTH_MODE`·페르소나 이메일로 분기하지 않는다 | 아니오(CI grep, LP-06-003) |
+
+`finishLogin`은 AUTH_ROADMAP 3.2절 순서를 따른다: `session_context('poll')` 조회 → `entitled=false`면(poll은 open) `rpc('bootstrap_app_for_org', { p_app_id: 'poll' })` 1회 후 재조회 → `status` 분기(suspended 403. open 앱이라 pending 없음) → B 이후 약관 미동의면 `/onboarding`(03장 7.3절) → `next` 화이트리스트(기본 `/events`) → 감사 `auth.login`. 모놀리스(단독 `public`)는 앱 행이 1개라 가입 트리거가 자동 부트스트랩하므로 부트스트랩 단계가 아무 일도 하지 않는다. Mock 로그인(`/api/dev/login`)도 같은 함수를 거친다.
+
+| 불변 조건(이 제품) | 내용 |
+|---|---|
+| 세션 | 모든 단계에서 실제 Supabase Auth JWT. `requireSession('poll')`, `proxy.ts`, `(host)` 레이아웃 가드, 발표 화면(`/present`) 세션 검사는 단계와 무관하게 같은 코드다 |
+| 권한 | `session_context('poll')` 하나로 판정. 진행자 RPC(`create_event`, `transition_poll` 등)와 RLS는 `auth.uid()` 기준 그대로라 Mock에서 통과한 LP-06-026 스모크가 B·C에서도 유효하다 |
+
+### 9.3 환경변수 (AUTH_ROADMAP 3.3절 중 이 제품에 해당하는 것. 8절 표에 더한다)
+
+| 변수 | 단계 | 배치 | 누락 시 |
+|---|---|---|---|
+| `AUTH_MODE` | A·B·C | web(Next.js 서버). 브로드캐스터 워커·FastAPI(`apps/api`)에는 두지 않는다 | `live`. 로컬 `.env.example` 기본값은 `mock`. `mock`인데 Supabase 호스트가 루프백이 아니거나 `VERCEL_ENV`·`RAILWAY_ENVIRONMENT`가 있으면 기동 실패 |
+| `AUTH_PROVIDERS` | B·C | web | live 모드에서 로그인 수단 0개면 기동 실패. 운영 값: B `google,email`, C1 뒤 `google,email,kakao`, 네이버 검수 통과 뒤 `naver` 추가(C2-6) |
+| `DEV_SEED_PASSWORD` | A(로컬 전용) | web, 시드 스크립트(`scripts/dev/seed-users.mjs`). `NEXT_PUBLIC_*` 금지 | Mock 모드 기동 실패 |
+| `NEXT_PUBLIC_APP_URL` | B·C | web | 콜백 origin과 `next` 검증 기준(AUTH_ROADMAP 3.2절 5번). 없으면 live 모드 기동 실패(제안) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | B | 로컬 `supabase/config.toml`의 `env()`만. 원격은 Supabase 대시보드에만 입력(앱 env에 넣지 않음) | 로컬 Google 버튼 비활성 |
+| `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET` | C1 | 같은 방식 | 카카오 버튼 비활성 |
+| `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` | C2 | `supabase_custom`: 등록 스크립트만(앱 env 불필요). `bridge`: web 서버 전용 | 네이버 버튼 비활성 |
+| `NAVER_AUTH_PATH` | C2 | web | `supabase_custom` |
+| `AUTH_BRIDGE_SECRET` | C2 브리지 경로만 | web 서버 전용, 32바이트 이상 | 브리지 경로면 기동 실패 |
+
+브로드캐스터 워커와 FastAPI AI 서비스는 인증 단계 변수를 읽지 않는다. 워커는 service_role·워커 키로만, FastAPI는 EdDSA 서명 토큰(`sub`=진행자 사용자 id)으로만 호출되므로 진행자가 어떤 제공자로 로그인했는지 알 필요가 없다.
+
+### 9.4 외부 콘솔과 배포 토폴로지 (7절에 더한다)
+
+| 콘솔 | 단계 | 설정 위치와 값 | 비고 |
+|---|---|---|---|
+| Google Cloud(OAuth 동의 화면, 웹 클라이언트 ID) | B | 승인된 리디렉션 URI = `https://<project-ref>.supabase.co/auth/v1/callback`, 로컬 `http://127.0.0.1:54321/auth/v1/callback`. 범위 `openid`, `email`, `profile`만 | 앱 도메인이 아니라 Supabase 콜백. 공개 베타 전 "프로덕션" 게시(AUTH_ROADMAP 5.1절) |
+| Supabase 대시보드(Authentication) | B·C | Providers(Google, Kakao, 커스텀 `custom:naver`), URL Configuration: Site URL = 운영 도메인, Redirect URLs = `https://<도메인>/auth/callback`(Vercel 미리보기 도메인은 명시 등록, 와일드카드 지양) | 모듈러 통합 프로젝트면 다른 제품과 같은 대시보드를 쓰므로 Redirect URLs에 제품 도메인을 각각 등록한다 |
+| 카카오 디벨로퍼스 | C1 | REST API 키, Client Secret, Redirect URI = Supabase 콜백, 동의항목 `profile_nickname`, `profile_image`, (비즈 앱) `account_email` | 이메일 정책은 01장 D19 |
+| 네이버 개발자센터 | C2 | 애플리케이션 등록, 검수 신청(로그인 버튼부터 가입 완료까지 화면 캡처). Callback URL은 경로에 따라 Supabase 콜백(`supabase_custom`) 또는 `https://<도메인>/auth/naver/callback`(브리지) | 검수 전 "개발중" 상태에서는 등록된 테스트 아이디만 로그인 |
+| Vercel 환경변수 | A·B·C | 배포 환경은 `AUTH_MODE=live`. `DEV_SEED_PASSWORD`를 넣지 않는다 | `AUTH_MODE=mock VERCEL_ENV=production` 빌드는 실패해야 한다(AUTH_ROADMAP 2.4절) |
+
+```
+브라우저(진행자) ──> web(Vercel) /login ──signInWithOAuth──> Google·카카오(·네이버 custom) ──> Supabase /auth/v1/callback
+                                                                                              │ code
+브라우저(진행자) <── 세션 쿠키 <── web /auth/callback(exchangeCodeForSession → finishLogin) <───┘
+(C2 브리지) web /auth/naver/start ──> 네이버 authorize ──> web /auth/naver/callback ──> 세션 발급 → finishLogin
+(A, 로컬) web /api/dev/login ──signInWithPassword(시드 계정)──> 로컬 Supabase(127.0.0.1:54321)
+(청중·오버레이, 모든 단계) web /api/p/*, /api/overlay/* ──service_role RPC──> Supabase (Auth 미사용)
+```
+
+### 9.5 로그인 없는 사용자 흐름
+
+| 흐름 | 식별 | 단계와의 관계 |
+|---|---|---|
+| 청중(`/join`, `/e/[code]`, QR) | 서버 발급 참가자 토큰(httpOnly 쿠키, 01장 D2). `/api/p/*`가 service_role RPC를 부른다 | 단계와 무관. Supabase Auth 사용자가 아니므로 Mock 단계에서도 그대로 동작한다(로컬 Supabase의 service_role RPC만 쓴다) |
+| OBS 오버레이(`/overlay/[id]?k=`) | 오버레이 키. `/api/overlay/*` | 단계와 무관 |
+| 청중·오버레이 Realtime 구독 | 5-1절 청중·오버레이 JWT(`SUPABASE_JWT_SECRET` 서명, Supabase Auth 세션 아님) | 단계와 무관 |
+| 랜딩(`/`), 가격(`/pricing`) | 없음 | 단계와 무관. 헤더의 기존 진행자 "로그인" 링크만 유지 |
+
+이 흐름의 화면(`(participant)`, `overlay`, 발표 화면의 청중 노출부)과 라우트(`/api/p/*`, `/api/overlay/*`, `src/lib/realtime-auth/`)는 단계 전환 때 바꾸지 않고 로그인 버튼을 추가하지 않는다(AUTH_ROADMAP 8장 끝). LP-06-049 수용 기준에 "청중 입장·투표·오버레이 E2E가 B 전환 전후 같은 결과"가 있다.
