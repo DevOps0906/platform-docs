@@ -272,7 +272,7 @@ D:\WorkSpace\DEV\nomad-docs\
 |---|---|---|
 | 라우팅 기본값 | `select count(*) from public.ai_routing_settings where org_id is null and app_id = 'docs'` | 13 |
 | 강제 오픈소스 | `select feature, kind from public.ai_routing_settings where app_id = 'docs' and force_open_source` | `docs.minutes`/llm, `dify.aux`/llm, `meeting_minutes`/stt 3행 |
-| MVP 문서 유형 | `select count(*) from public.doc_types where phase = 'mvp' and is_active` | 9(현재 seed 기준. D-3 게이트는 8절 참고) |
+| MVP 문서 유형 | `select count(*) from public.doc_types where phase = 'mvp' and is_active` | 8(`dev_contract`는 D-3 법무 검토 전 비활성, 8절) |
 | 플랜 | `select code, signup_credits, monthly_credits, is_active from public.plans where app_id = 'docs'` | free 50/30 활성, pro 0/400 활성, team 0/1500 비활성 |
 | pgvector | `select extname from pg_extension where extname = 'vector'` | 1행 |
 
@@ -443,8 +443,8 @@ D:/WorkSpace/DEV/nomad-docs/docs/file 의 모든 파일(프로젝트 산출물)�
 DC-06-001: supabase/migrations 의 core_lite(SECTION 11·12 포함)와 nomad_docs_domain, seed 를 로컬 Supabase 에 적용하고
 타입을 생성한다(단독 프로젝트, public 스키마). 완료 조건 = ① supabase db reset 오류 0건
 ② pgvector 확장과 ai_*·voice_* 테이블 생성 확인, ai_routing_settings 의 app_id='docs' 행 13건,
-force_open_source 3건(docs.minutes, dify.aux, meeting_minutes) 확인 ③ doc_types 의 mvp 활성 9종 확인,
-dev_contract 의 D-3 비활성 처리 방안(로컬 seed 유지, 배포 단계 비활성)을 log.md 에 [DECISION] 으로 기록
+force_open_source 3건(docs.minutes, dify.aux, meeting_minutes) 확인 ③ doc_types 의 mvp 활성 8종 확인,
+dev_contract 가 seed 에서 비활성(is_active=false)이고 재실행해도 유지되는지 확인. supabase/tests/rls_smoke.sql 105항목 통과
 ④ 1.1절 I-12(직인 png|webp) 반영 확인 ⑤ supabase gen types typescript --local --schema public 결과를
 apps/web/src/types/supabase.ts 에 저장 ⑥ PGlite 체커(check.mjs --vector mono 0001 0002 seed) OK
 ⑦ 06_AGENT_PLAN.md 의 DC-06-001 수용 기준을 단독(모놀리스) 기준으로 충족.
@@ -665,7 +665,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 - [ ] (선택) 고문 모델을 Opus로 쓸 경우 `plan-challenger.md`를 `model: opus`로 변경(3절)
 - [ ] `_shared/project-profile.md` 작성(6절), `claude` 실행 후 `/agent-check`
 - [ ] 공용 인프라 준비: Dify, 오픈소스 LLM·임베딩·음성 서버(또는 모의 서버), 공용 렌더 서비스 확인
-- [ ] `supabase start` → `supabase db reset` 성공, 라우팅 13행·강제 오픈소스 3행·MVP 유형 9종 확인(7.1절)
+- [ ] `supabase start` → `supabase db reset` 성공, 라우팅 13행·강제 오픈소스 3행·MVP 활성 유형 8종(계약서 비활성) 확인(7.1절)
 - [ ] PGlite 체커 `--vector mono` OK(7.2절), RLS 스모크 105항목 수동 또는 러너로 확인(7.3절)
 - [ ] 결정 D-1~D-12 확정, 특히 D-3 계약서 게이트와 seed 처리안 기록, 산출물 "승인" 전환(8절)
 - [ ] W0 task 생성과 진행(9절)

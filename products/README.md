@@ -21,6 +21,7 @@
 | `toon-factory/` | 단독 | Toon-Factory | `toon` | 2000 |
 | `study-note/` | 단독 | study-note-organizer-codex-01 | `notes` | 2100 |
 | `website-floria/` | 단독 | WebSite | `site` | 2200 |
+| `nomad-docs/` (NOMAD Docs) | 신설 | 없음(설계 이식: flora-publishing, flora, SellingDocs, FortuneDocs) | `docs` | 2300 |
 
 ## 제품 폴더 표준 구성
 
