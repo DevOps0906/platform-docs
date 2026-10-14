@@ -533,3 +533,8 @@ export async function finishLogin(appId: string, next: string | null): Promise<s
 | B | `signInWithOAuth({ provider: 'google' })` → `/auth/callback`(`finishLogin`) |
 | C1 | `signInWithOAuth({ provider: 'kakao' })` → 같은 콜백 |
 | C2 | `signInWithOAuth({ provider: 'custom:naver' })` → 같은 콜백, 또는 브리지 `/auth/naver/start`·`/auth/naver/callback` |
+
+
+## 21. 공용 비즈니스 모듈 후보 (2026-10-15 제안, 미채택)
+
+리드·폼·퍼널(funnel), 알림(notify), Dify 공용 챗봇 위젯(chat-widget), 구글 시트 연동(sheets-sync), 분석(analytics), CRM, 운영 콘솔, 문의함, LMS, 예약·자원, 실험·쿠폰, 콘텐츠 블록 후보와 우선순위·DB 번호 범위(0100~0999)·로드맵은 `COMMON_MODULES_ROADMAP.md`에 있다. 채택 전에는 이 문서의 1~20장만 규격이다. 로그인 공용 모듈의 구현·전체 적용 절차는 `docs/develop/_shared/auth/README.md`.

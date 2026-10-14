@@ -524,6 +524,8 @@ baseline:
 
 정본: `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`(DOC-CORE-009, 확정 결정 22). 제품 적용값은 `docs/file/02-요구사항/01_PRD.md` CM-F-001·8.1절, `docs/file/03-설계/02_ARCHITECTURE.md` 9절, `03_SCREENS_UX.md` 7절, `04_API.md` 8절, `05_DATA_MODEL.md` 10절, `docs/file/01-관리/06_AGENT_PLAN.md` 8절, `docs/file/04-구현/CLAUDE.md` "인증 단계 규칙" 절, `docs/file/04-구현/07_SOURCE_MIGRATION.md` 6절입니다.
 
+외부 콘솔 설정 절차(화면별), 공식 문서 링크, 공용 모듈 `@nomad/core-auth` 구조와 "공용 모듈 완료 후 모든 제품 적용" 절차는 공용 지시서 `D:/WorkSpace/platform/docs/develop/_shared/auth/README.md`를 따릅니다(2026-10-15). 통합 DB 제품은 Google·카카오·네이버 앱을 1세트만 같이 쓰므로(지시서 1장 AUTH-D1) 이 장의 외부 설정은 그 세트가 이미 있으면 Redirect URLs에 이 제품 도메인을 더하는 것으로 끝납니다.
+
 처음 개발은 Mock 로그인으로 진행하고, MVP 기능이 모두 잘 동작하면 Google 로그인을 붙이고, 그것이 안정되면 카카오·네이버 로그인을 붙입니다. 세 단계 모두 세션은 실제 Supabase JWT라서 로그인 뒤 코드(권한, RLS, 크레딧)는 바뀌지 않습니다. 기존 기획의 MVP 카카오 로그인은 이 결정으로 C1 단계로 옮겼습니다. A·B 단계의 로그인 화면에는 카카오 버튼이 없습니다. 원본(nomad-ai-commerce)의 `mock-login`·`nomad_role`·`nomad_plan` 쿠키 권한은 복사 금지이고, 허용되는 Mock은 아래 시드 계정 로그인뿐입니다.
 
 ### 19.1 단계 요약
