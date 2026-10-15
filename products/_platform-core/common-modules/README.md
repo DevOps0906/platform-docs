@@ -7,12 +7,12 @@
 | 순서 | 모듈(패키지) | 스키마·번호 | 한 줄 | local-news 출처 | 첫 적용 제품(기준 구현) |
 |---|---|---|---|---|---|
 | 1 | [compliance](compliance.md) `@nomad/compliance` | `compliance` 0150 | 약관·개인정보처리방침 버전, 동의 기록, 사업자·법정 표기, 광고·AI 표시 라벨, 개인정보 열람·삭제 요청 | M7 일부 | website-floria·study-note(1단계) |
-| 2 | [media](media.md) `@nomad/media` | `media` 0250 | 업로드·크기별 사본·대체 텍스트·저작권·사용처 추적 | M1 일부 | website-floria(1단계) |
+| 2 | [media](media.md) `@nomad/media` | `media` 0250 | 업로드·크기별 사본·대체 텍스트·저작권·사용처 추적 | M1 일부 | flora-publishing(2단계, 원고·표지 업로드) |
 | 3 | [editorial](editorial.md) `@nomad/editorial` | `editorial` 0750 | 작성 → 검토 → 승인 → 예약 → 게시 → 수정 이력, 미리보기, 조회 집계 | M1 일부, M8 일부 | nomad-blog(3단계) |
 | 4 | [community](community.md) `@nomad/community` | `community` 0350 | 댓글·방명록·Q&A, 신고, 임시조치, 금칙어, 비회원 글 | M5 일부 | microweb-studio(4단계, 방명록) |
-| 5 | [search](search.md) `@nomad/search` | `search` 0450 | 한국어 검색 색인, 필터·정렬, 동의어, 검색 기록 | M8 일부 | nomad-docs |
+| 5 | [search](search.md) `@nomad/search` | `search` 0450 | 한국어 검색 색인, 필터·정렬, 동의어, 검색 기록 | M8 일부 | local-news(6단계, 기사 검색) |
 | 6 | [membership](membership.md) `@nomad/membership` | `membership` 0550 | 고객사의 최종 이용자(독자·수강생), 등급, 정기 구독·후원, 콘텐츠 접근 규칙(페이월) | M2 | local-news(6단계), 앞 제품이 채택하면 그 제품 |
-| 7 | [ads](ads.md) `@nomad/ads` | `ads` 0650 | 광고 슬롯·광고주·캠페인·소재 검수·노출 집계, 외부 광고망 태그 | M3 일부 | live-poll(4단계, 스폰서 배너) |
+| 7 | [ads](ads.md) `@nomad/ads` | `ads` 0650 | 광고 슬롯·광고주·캠페인·소재 검수·노출 집계, 외부 광고망 태그 | M3 일부 | local-news(6단계) |
 
 기존 로드맵 모듈 4개는 local-news 설계로 보강한다(`COMMON_MODULES_ROADMAP.md` 4.11절): **notify**(뉴스레터 목록·이중 동의·발송 회차·웹 푸시), **analytics**(콘텐츠 조회 이벤트 규격), **cms**(블록 에디터 규격, RSS·사이트맵·구조화 데이터·OG), **tenancy**(최종 이용자와 조직 멤버 분리, 테넌트 도메인별 로그인 주소 등록).
 
@@ -25,7 +25,7 @@
 | 제품(개발 단계) | compliance | media | editorial | community | search | membership | ads | notify | analytics | cms | tenancy |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | study-note(1) | ● | ○ | - | ○ 질문 | ○ | ○ 유료 강좌 | - | ● | ● | ○ | - |
-| website-floria(1) | ● | ● | ○ 사례·소식 | - | - | - | - | ● | ● | ● | - |
+| website-floria(1) | ● | ○ 정적 이미지 | ○ 사례·소식 | - | - | - | - | ● | ● | ● | - |
 | flora-publishing(2) | ● | ● | ○ 원고 버전 | ○ 독자 리뷰 | ○ | ○ 작가 멤버십 | - | ● | ● | ● | ○ |
 | astro-ai(2) | ● | ○ | - | - | - | - | - | ● | ● | ● | - |
 | nomad-video(3) | ● | ○ | ○ 업로드 예약 | - | - | - | - | ● | ● | ● | - |
@@ -36,11 +36,11 @@
 | toon-factory(4) | ● | ● | ○ 회차 게시 | ○ 회차 댓글 | - | ○ 유료 회차 | ○ | ● | ● | ● | - |
 | admin-suite(5) | ● | ○ | - | - | ○ | - | - | ● | - | - | ○ |
 | stock-dashboard(5) | ● | - | - | - | - | - | - | ● | ● | ● | - |
-| nomad-docs | ● | ○ 첨부 | ○ 문서 승인 | - | ● | - | - | ● | ● | ● | ○ |
+| nomad-docs | ● | ○ 첨부 | ○ 문서 승인 | - | ○ 문서·거래처 | - | - | ● | ● | ● | ○ |
 | arch-studio(설치형) | ● | ○ | - | - | ○ | - | - | ○ | ○ | - | - |
 | local-news(6) | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 
-판단 근거는 각 제품 README·01장의 기능 설명이며, 제품 개발 착수 때 다시 확인한다(●도 착수 때 범위를 확정). arch-studio는 설치형이라 서버 모듈을 쓰려면 라이선스 서버 쪽에서만 쓴다.
+2026-10-15 수정: 제품 표(SQL)를 다시 확인해 첫 적용 제품을 바로잡았다. media는 website-floria(업로드 기능 없음) → flora-publishing, search는 nomad-docs(현재는 RAG만) → local-news, ads는 live-poll(광고 기능 없음) → local-news. 제품별 적용 방법은 `docs/develop_V2/`. 판단 근거는 각 제품 README·01장의 기능 설명과 SQL 표이며, 제품 개발 착수 때 다시 확인한다(●도 착수 때 범위를 확정). arch-studio는 설치형이라 서버 모듈을 쓰려면 라이선스 서버 쪽에서만 쓴다.
 
 ## 2. DB 번호 배정 (제안, `COMMON_MODULES_ROADMAP.md` 3장 갱신)
 

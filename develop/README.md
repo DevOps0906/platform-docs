@@ -14,6 +14,8 @@
 
 기획 제품은 15개입니다. 14번째 arch-studio(설치형 건축 설계 앱)는 `products/arch-studio/`에 PRD 초안만 있고 개발 묶음은 아직 없습니다. 15번째 local-news(지역신문 멀티테넌트 SaaS, 2026-10-15)는 기획·개발 묶음이 모두 있습니다.
 
+공용모듈(compliance, media, community, search, membership, ads, editorial)을 쓰는 개발 방법은 제품마다 [`../develop_V2/`](../develop_V2/README.md)에 따로 있습니다. 설치 스크립트와 개발 묶음은 이 폴더(V1)를 그대로 쓰고, V2 개발서는 바뀌는 부분만 다룹니다.
+
 | 폴더 | 프로젝트 | 무엇을 하는 서비스인가 | 주 사용자 | 작업 수 |
 |---|---|---|---|---|
 | [`admin-suite/`](admin-suite/) | Admin Suite | 기관 내부 관리 시스템 3종 묶음입니다: ERP(재고·판매·인사), HMS 병원(예약·대기열·환자·검사), SMS 학교(학급·출석). 사내 규정 기반 AI 업무 어시스턴트 포함, 병원은 전용 서버만 씁니다. | 중소기업·병원·학교 직원(역할별) | 60 |

@@ -12,6 +12,7 @@
 | `pdf/` | `reviews/`의 PDF 변환본 | 인쇄·공유용 |
 | `products/` | 통합 기획서(제품 14개(arch-studio는 PRD 초안) + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
 | `develop/` | 제품별 개발 묶음(개발 가이드, setup 스크립트, 개발 폴더에 붙일 문서·DB) | 개발을 시작할 때 |
+| `develop_V2/` | 공용모듈(local-news에서 꺼낸 7개)을 쓰는 제품별 개발서. `develop/`의 설치·묶음은 그대로 쓰고 바뀌는 부분(채택 모듈, DB 순서, 추가·축소 작업)만 | 공용모듈로 개발할 때 |
 | `Price_Plans/` | 가격 플랜: 공용 가격 결정 방법(`_common/`) + 플랫폼별 폴더(제품 13개, 서비스 사업 Web-App-Agency) | 가격을 정하거나 바꿀 때 |
 | `Multi-tenant_Theming/` | 멀티테넌트 테마(화이트라벨) 공용 설계: 커스터마이징 5단계, 3계층 디자인 토큰, 코드·DB 구조, 코어 확장 SQL(제안)과 RLS 스모크, 적용 작업 계획, 판매·운영 | 고객사 로고·색·도메인으로 바꿔 판매하는 기능을 만들 때 |
 | `_tools/` | 리뷰 템플릿, md → PDF 변환 도구 | 리뷰를 추가할 때 |
@@ -33,6 +34,7 @@
 | study-note | 학습 노트 정리 | `products/study-note/` | `develop/study-note/` |
 | website-floria | 회사 홈페이지 | `products/website-floria/` | `develop/website-floria/` |
 | nomad-docs (NOMAD Docs) | 체크리스트로 계약서·요구사항정의서 등 실무 문서 자동 생성, CRM형 작업 공간 | `products/nomad-docs/` | `develop/nomad-docs/` |
+| local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(공용모듈 7개의 출처) | `products/local-news/` | `develop/local-news/` |
 | arch-studio (가칭) | 설치형 건축 설계 앱(법규 판정, AI 렌더, 시리얼 라이선스) | `products/arch-studio/`(PRD 초안) | 아직 없음 |
 
 공용: `products/_platform-core/`(인증·조직·크레딧·결제·잡·AI·음성 규격), `products/_design-guide/`
