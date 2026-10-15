@@ -67,7 +67,7 @@
 | 기능 판정 | `entitled_plan_code` + `plans.features`(01장 4절 키 표). DB 정책은 `video.org_has_feature` |
 | 차감 | `consume_credits(..., p_idempotency_key='consume:video:<request_id>')` → `enqueue_job(p_credit_ledger_id, p_idempotency_key='job:video:<request_id>')` |
 | 부분 환불 | `refund_credits(ledger_id, reason, amount, 'refund:<production_id>:<lang>')` |
-| Python 단계 | `core.enqueue_job(queue='video.media.cpu'|'video.media.gpu', parent_job_id=root)` → 결과 대기. Python은 `claim_jobs`만 |
+| Python 단계 | `core.enqueue_job(queue='video.media.cpu'\|'video.media.gpu', parent_job_id=root)` → 결과 대기. Python은 `claim_jobs`만 |
 | 채널 토큰 | `beginOAuth/completeOAuth`, `CredentialVault`. 페이로드에는 `credential_id`만 |
 | 제휴 | `createShortLink`, `disclosure`, `injectDisclosure`, `/r/[code]`는 `record_affiliate_click` |
 | 감사 | 제품 RPC가 이미 기록. 서버 쓰기 중 관리 동작은 `auditAsService` |
@@ -86,7 +86,7 @@
 | 스택 | Next.js 16 App Router, React 19, TS strict, Tailwind CSS v4(4.x 고정) + shadcn/ui(Tailwind v4 지원 버전), zod, TanStack Query, BullMQ, three.js + React Three Fiber + drei(React 19 호환 버전), 미디어 워커 Python 3.11, FastAPI AI 서비스 Python 3.12(제안) + LangChain/LangGraph. `latest` 태그 금지, lockfile 커밋(Python은 `uv.lock` 또는 고정 requirements, 제안) |
 | 검증 | 모든 입력 zod, env는 `src/lib/env.ts`, Python은 pydantic settings |
 | 타입 생성 | `supabase gen types typescript --local --schema core,video > apps/nomad-video/src/types/supabase.ts` |
-| 언어 키 | `'KO' | 'JA' | 'EN'` 상수 하나 |
+| 언어 키 | `'KO' \| 'JA' \| 'EN'` 상수 하나 |
 | 하위 프로세스 | 인자 배열, `--`, 타임아웃(01장 5절), 실패 시 kill |
 | 로깅 | 공용 logger, 토큰·카드·본문 전체 금지 |
 | 디자인 토큰 | `src/styles/tokens.css`(03장 4.3절 토큰 플랜, 3.2절 의미 기반 이름). 컴포넌트와 3D 재질에 hex 하드코딩 금지(`bg-[#...]` 린트 차단, 제안), 이모지 아이콘 금지(Lucide) |

@@ -54,16 +54,16 @@ YSM의 네이버 게시 로직은 Python(`[5f6d262] Youtube_shots_Maker/backend/
 | `workers/blog-worker/src/channels/{naver,tistory,wordpress}/` | 채널 어댑터(`ChannelPublisher` 계약, 04장 6절) | runtime |
 | `workers/blog-worker/src/handlers/` | 잡 핸들러(generate, publish, verify, brandconnect.*) | channels, server/render(공유 패키지로 추출) |
 | `supabase/` | 마이그레이션(모듈러 조각 사본), 테스트 | - |
-| `apps/api/` | FastAPI AI 서비스 | 공용 ai-service(`app/core`, `app/ai/llm`, `rag`, `wiki`, `tools` 공용 부분)를 그대로 쓰고 blog 확장만 둔다: `app/ai/graphs/blog_post_draft.py`, `app/ai/tools/blog/`(원고 컨텍스트 로더, 답변 모드 `write`, 단건 호출 `assist`), `app/ai/compliance/blog.py`, `app/ai/products/blog/`(컬렉션 이름, 프롬프트 로더, 위키 설정) | Supabase(service_role), AI 제공자, `packages/blog-rules` 언어 중립 파일 |
-| `packages/blog-rules/` | 공용 출력 규칙 | 금지 표현 `banned.json`(01장 6.5·6.7절), 한글 경계 규칙. TS 컴플라이언스와 FastAPI compliance 노드가 같은 파일을 읽는다 | 없음 |
-| `src/app/api/ai/`, `src/app/api/internal/`, `src/app/api/onboarding/`, `src/app/onboarding/`, `src/app/api/posts/[id]/ai-approve/` | AI 게이트 | 대화 생성, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, 서명 토큰·잡 토큰 발급, 정산 크론, 국외 이전 동의, 발행 전 승인 | `packages/ai-gateway`, `src/server/ai/` |
-| `src/app/api/voice/` | 음성 | consent, sessions, stt(받아쓰기·채팅 공용), tts | `packages/core-voice` |
-| `src/app/api/materials/`, `src/app/(app)/materials/` | 자료 | 업로드, 색인 상태, 삭제 | FastAPI `/rag/ingest` |
-| `src/app/api/wiki/`, `src/app/(app)/wiki/` | 위키 | 목록, 페이지, 이력, 점검 결과, 편집 저장 | FastAPI `/wiki/*` |
-| `src/app/(app)/assistant/`, `src/components/ai-chat/`, `src/components/dictation/`, `src/components/voice/` | AI UI | 도우미 채팅 패널, 마이크 버튼, 받아쓰기 삽입, 읽어 주기 플레이어 | `components/ui` |
-| `src/components/hero3d/`, `public/hero/` | 3D 히어로 | 원고 시트·채널 카드 장면, 모바일 시트 1장, 정지 이미지 | three.js, R3F, drei, 토큰 |
-| `src/styles/tokens.css`, `src/components/ui/`, `src/app/dev/components/` | 디자인 시스템 | `@theme` 토큰, 기본 컴포넌트, 미리보기(프로덕션 빌드 제외) | - |
-| `infra/dify/` | Dify 앱 정의 | `blog-chat` Chatflow DSL 내보내기(키·비밀 없음) | - |
+| `apps/api/` | FastAPI AI 서비스: 공용 ai-service(`app/core`, `app/ai/llm`, `rag`, `wiki`, `tools` 공용 부분)를 그대로 쓰고 blog 확장만 둔다: `app/ai/graphs/blog_post_draft.py`, `app/ai/tools/blog/`(원고 컨텍스트 로더, 답변 모드 `write`, 단건 호출 `assist`), `app/ai/compliance/blog.py`, `app/ai/products/blog/`(컬렉션 이름, 프롬프트 로더, 위키 설정) | Supabase(service_role), AI 제공자, `packages/blog-rules` 언어 중립 파일 |
+| `packages/blog-rules/` | 공용 출력 규칙: 금지 표현 `banned.json`(01장 6.5·6.7절), 한글 경계 규칙. TS 컴플라이언스와 FastAPI compliance 노드가 같은 파일을 읽는다 | 없음 |
+| `src/app/api/ai/`, `src/app/api/internal/`, `src/app/api/onboarding/`, `src/app/onboarding/`, `src/app/api/posts/[id]/ai-approve/` | AI 게이트: 대화 생성, 채팅 중계(Dify, 장애 시 FastAPI 직접), 턴 선차감·정산, 서명 토큰·잡 토큰 발급, 정산 크론, 국외 이전 동의, 발행 전 승인 | `packages/ai-gateway`, `src/server/ai/` |
+| `src/app/api/voice/` | 음성: consent, sessions, stt(받아쓰기·채팅 공용), tts | `packages/core-voice` |
+| `src/app/api/materials/`, `src/app/(app)/materials/` | 자료: 업로드, 색인 상태, 삭제 | FastAPI `/rag/ingest` |
+| `src/app/api/wiki/`, `src/app/(app)/wiki/` | 위키: 목록, 페이지, 이력, 점검 결과, 편집 저장 | FastAPI `/wiki/*` |
+| `src/app/(app)/assistant/`, `src/components/ai-chat/`, `src/components/dictation/`, `src/components/voice/` | AI UI: 도우미 채팅 패널, 마이크 버튼, 받아쓰기 삽입, 읽어 주기 플레이어 | `components/ui` |
+| `src/components/hero3d/`, `public/hero/` | 3D 히어로: 원고 시트·채널 카드 장면, 모바일 시트 1장, 정지 이미지 | three.js, R3F, drei, 토큰 |
+| `src/styles/tokens.css`, `src/components/ui/`, `src/app/dev/components/` | 디자인 시스템: `@theme` 토큰, 기본 컴포넌트, 미리보기(프로덕션 빌드 제외) | - |
+| `infra/dify/` | Dify 앱 정의: `blog-chat` Chatflow DSL 내보내기(키·비밀 없음) | - |
 
 AI 모듈 경계(`docs/products/_platform-core/AI_ARCHITECTURE.md:5-14`를 인용, 재정의하지 않음):
 

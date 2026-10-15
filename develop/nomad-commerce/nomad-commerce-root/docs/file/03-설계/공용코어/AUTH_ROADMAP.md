@@ -270,7 +270,7 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 | 네이버 방식 | OIDC가 아니라 OAuth 2.0. authorize `https://nid.naver.com/oauth2.0/authorize`, token `https://nid.naver.com/oauth2.0/token`, 사용자 정보 `https://openapi.naver.com/v1/nid/me` | [Ory: Sign in with Naver](https://www.ory.com/docs/integrates-with/social-sign-in/naver) |
 | 사용자 정보 형태 | 필드가 `response` 객체 아래에 중첩된다(`response.id`, `response.email`) | 같음 |
 | 위험 | Supabase 커스텀 OAuth2가 중첩 응답에서 id·email을 읽는지 문서에 없다 | **미확인 → 스파이크** |
-| 검수 | 검수 전에는 "개발중 상태"로 일반 사용자 로그인이 막힌다. 로그인 버튼부터 가입 완료까지의 화면 캡처를 제출한다 | [채널톡 클릭앤 도움말](https://docs.channel.io/clickn/ko/articles/네이버-아이디로-로그인-261c8aeb) |
+| 검수 | 검수 전에는 "개발중 상태"로 일반 사용자 로그인이 막힌다. 로그인 버튼부터 가입 완료까지의 화면 캡처를 제출한다 | [채널톡 클릭앤 도움말] (https://docs.channel.io/clickn/ko/articles/네이버-아이디로-로그인-261c8aeb) |
 
 #### 7.2.2 스파이크 (C2 작업의 첫 단계, 0.5일)
 

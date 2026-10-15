@@ -138,7 +138,7 @@ PK `(org_id, app_id, feature_key)`. `value` jsonb, `reason`, `expires_at`(만료
 | `is_valid_theme_tokens(jsonb)`, `is_valid_theme_fonts(jsonb)`, `is_theming_asset_path(uuid,text)` | IMMUTABLE 검증(CHECK용) | authenticated, service_role | boolean |
 | `theming_level_unchecked(org, app)` | DEFINER, 내부용 | service_role만 | 0~4. `app=null`이면 활성 엔타이틀먼트 중 최댓값. 조직 오버라이드 우선, 삭제된 조직·만료·정지 엔타이틀먼트는 0 |
 | `theming_level(org, app)` | DEFINER | authenticated, service_role | 멤버·운영자·서버에게만 실제 값, 그 외 0 |
-| `effective_features(org, app)` | DEFINER | authenticated, service_role | `plans.features || overrides`, 엔타이틀먼트 없으면 null, 비멤버 42501 |
+| `effective_features(org, app)` | DEFINER | authenticated, service_role | `plans.features \|\| overrides`, 엔타이틀먼트 없으면 null, 비멤버 42501 |
 | `resolve_tenant(hostname, slug, app)` | DEFINER, 공개 | anon, authenticated, service_role | `03_CODE_STRUCTURE.md` 2장 형식 jsonb(대표 도메인은 L2 이상, 내비게이션은 L2 이상, 확장 키는 L3 이상) 또는 null(단계 0, 없음, 비활성 도메인, 정지) |
 | `tenant_public_labels(org, app, locale)` | DEFINER, 공개 | anon, authenticated, service_role | 단계 ≥ 2이면 `{key: value}`, 아니면 `{}` |
 | `publish_tenant_theme(theme_id)` | DEFINER RPC | authenticated, service_role | 게시된 행. P0002, 42501, TM001, TM002 |

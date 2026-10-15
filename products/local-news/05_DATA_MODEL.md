@@ -263,25 +263,25 @@ core.organizations (참조: 신문사 = 조직)
 | | unpublished | published(재게시), draft, archived | DESK | first_published_at 불변 |
 | | archived | (없음) | - | - |
 | articles 불변 컬럼 | - | org_id, origin, created_by, created_at, first_published_at(정해진 뒤) | - | 22023 |
-| home_layouts.status | draft → scheduled/published/archived, scheduled → draft/published, published → archived | DESK `publish_home_layout` | 게시 시 이전 게시본 archived, version + 1, 감사 |
-| print_editions.status | draft → published/archived, published → archived | CHIEF `save_print_edition`(RPC 가 검사) | published_at |
-| staff.status | invited → active/removed, active → removed, removed → invited | `invite_staff`(CHIEF), `accept_staff_invite`(본인), `remove_staff` | 코어 `invite_member`·`accept_invite`·`remove_member`·`change_member_role` 동기화, 감사 |
-| newspapers.status | active ↔ suspended, → closed | 서버 `set_newspaper_status` | 감사. closed 는 종결 |
-| newspaper_applications.status | pending → approved/rejected/withdrawn | 서버 `approve_newspaper`·`reject_newspaper`, 신청자 `withdraw_newspaper_request` | 승인: 조직·owner·구독(trialing)·엔타이틀먼트(30일)·월 크레딧·신문사·발행인·기본 설정, 감사 |
-| readers.status | active → blocked/withdrawn, blocked → active/withdrawn, withdrawn → active | 본인 `ensure_reader`·`withdraw_reader`, CHIEF `set_reader_status` | 탈퇴 시 email null, 마케팅 동의 해제, 구독 해지. 멤버십이 남으면 탈퇴 NW004 |
-| memberships.status | pending → active/canceled/expired, active → past_due/canceled/expired, past_due → active/canceled/expired, canceled → active/expired | 서버 `record_membership` | started_at, canceled_at, ended_at, 수수료 스냅샷, 감사 |
-| donations.status | pending → paid/failed/canceled, paid → canceled/refunded | 서버 `record_donation` | 수수료 계산. 금액·주문번호 불변 |
-| ad_campaigns.status | draft → active/canceled, active → paused/ended, paused → active/ended | ADS `save_ad_campaign` | 감사 |
-| ad_creatives.status | pending_review → approved/rejected/archived, approved → archived/pending_review, rejected → pending_review/archived | ADS 저장(내용 변경 시 자동 pending_review), CHIEF `review_ad_creative` | 감사 |
-| local_listings.status | pending → approved/rejected/canceled, approved → active/canceled, active → expired/canceled | 독자 `submit_listing`, ADS `review_listing`, 서버 `activate_listing`(결제 후) | 기간·결제 기록 |
-| public_notices.status | draft → published/archived, published → archived | ADS+desk `save_public_notice` | published_at, archived_at |
-| newsletter_subscriptions.status | pending → confirmed/unsubscribed, confirmed → unsubscribed/bounced, unsubscribed/bounced → pending | 서버 `subscribe_newsletter`, 토큰 `confirm_newsletter`·`unsubscribe_newsletter` | confirmed_at, reconfirm_due_at 재계산, 확인 토큰 폐기 |
-| newsletter_issues.status | draft → scheduled/canceled, scheduled → draft/sending/canceled, sending → sent/failed | DESK 저장(draft, scheduled, canceled만), 서버 `record_newsletter_issue_status` | sent_at, 발송 후 내용 잠금 |
-| comments.status | visible → hidden/temp_blocked/deleted, hidden → visible/deleted, temp_blocked → visible/hidden/deleted | 독자 `report_comment`(권리침해 주장 → temp_blocked 30일, 신고 5건 → hidden), 작성자 `delete_my_comment`, DESK `moderate_comment` | temp_blocked_until, 신고 처리(actioned/dismissed), 감사 |
-| tips.status | new → reviewing/assigned/dismissed/spam, reviewing → assigned/used/dismissed/spam, assigned → reviewing/used/dismissed, spam → new | DESK `set_tip_status`, 배정 기자는 reviewing/used | 감사(개인정보 제외) |
-| life_events.status | pending → approved/rejected/withdrawn, approved → archived | DESK `review_life_event` | published_at |
-| correction_requests.status | received → reviewing/accepted/rejected/withdrawn, reviewing → accepted/rejected/withdrawn, accepted → published/withdrawn | CHIEF `respond_correction_request`(거부 사유 필수), DESK `record_article_correction`(청구 연결 시 published) | decided_at·notified_at·publish_due_at(= +7일), 기한 불변, 감사 |
-| events.status | draft → published/archived, published → canceled/archived, canceled → archived | EDITORIAL `save_event` | published_at |
+| home_layouts.status | (여러 상태) | draft → scheduled/published/archived, scheduled → draft/published, published → archived | DESK `publish_home_layout` | 게시 시 이전 게시본 archived, version + 1, 감사 |
+| print_editions.status | (여러 상태) | draft → published/archived, published → archived | CHIEF `save_print_edition`(RPC 가 검사) | published_at |
+| staff.status | (여러 상태) | invited → active/removed, active → removed, removed → invited | `invite_staff`(CHIEF), `accept_staff_invite`(본인), `remove_staff` | 코어 `invite_member`·`accept_invite`·`remove_member`·`change_member_role` 동기화, 감사 |
+| newspapers.status | (여러 상태) | active ↔ suspended, → closed | 서버 `set_newspaper_status` | 감사. closed 는 종결 |
+| newspaper_applications.status | (여러 상태) | pending → approved/rejected/withdrawn | 서버 `approve_newspaper`·`reject_newspaper`, 신청자 `withdraw_newspaper_request` | 승인: 조직·owner·구독(trialing)·엔타이틀먼트(30일)·월 크레딧·신문사·발행인·기본 설정, 감사 |
+| readers.status | (여러 상태) | active → blocked/withdrawn, blocked → active/withdrawn, withdrawn → active | 본인 `ensure_reader`·`withdraw_reader`, CHIEF `set_reader_status` | 탈퇴 시 email null, 마케팅 동의 해제, 구독 해지. 멤버십이 남으면 탈퇴 NW004 |
+| memberships.status | (여러 상태) | pending → active/canceled/expired, active → past_due/canceled/expired, past_due → active/canceled/expired, canceled → active/expired | 서버 `record_membership` | started_at, canceled_at, ended_at, 수수료 스냅샷, 감사 |
+| donations.status | (여러 상태) | pending → paid/failed/canceled, paid → canceled/refunded | 서버 `record_donation` | 수수료 계산. 금액·주문번호 불변 |
+| ad_campaigns.status | (여러 상태) | draft → active/canceled, active → paused/ended, paused → active/ended | ADS `save_ad_campaign` | 감사 |
+| ad_creatives.status | (여러 상태) | pending_review → approved/rejected/archived, approved → archived/pending_review, rejected → pending_review/archived | ADS 저장(내용 변경 시 자동 pending_review), CHIEF `review_ad_creative` | 감사 |
+| local_listings.status | (여러 상태) | pending → approved/rejected/canceled, approved → active/canceled, active → expired/canceled | 독자 `submit_listing`, ADS `review_listing`, 서버 `activate_listing`(결제 후) | 기간·결제 기록 |
+| public_notices.status | (여러 상태) | draft → published/archived, published → archived | ADS+desk `save_public_notice` | published_at, archived_at |
+| newsletter_subscriptions.status | (여러 상태) | pending → confirmed/unsubscribed, confirmed → unsubscribed/bounced, unsubscribed/bounced → pending | 서버 `subscribe_newsletter`, 토큰 `confirm_newsletter`·`unsubscribe_newsletter` | confirmed_at, reconfirm_due_at 재계산, 확인 토큰 폐기 |
+| newsletter_issues.status | (여러 상태) | draft → scheduled/canceled, scheduled → draft/sending/canceled, sending → sent/failed | DESK 저장(draft, scheduled, canceled만), 서버 `record_newsletter_issue_status` | sent_at, 발송 후 내용 잠금 |
+| comments.status | (여러 상태) | visible → hidden/temp_blocked/deleted, hidden → visible/deleted, temp_blocked → visible/hidden/deleted | 독자 `report_comment`(권리침해 주장 → temp_blocked 30일, 신고 5건 → hidden), 작성자 `delete_my_comment`, DESK `moderate_comment` | temp_blocked_until, 신고 처리(actioned/dismissed), 감사 |
+| tips.status | (여러 상태) | new → reviewing/assigned/dismissed/spam, reviewing → assigned/used/dismissed/spam, assigned → reviewing/used/dismissed, spam → new | DESK `set_tip_status`, 배정 기자는 reviewing/used | 감사(개인정보 제외) |
+| life_events.status | (여러 상태) | pending → approved/rejected/withdrawn, approved → archived | DESK `review_life_event` | published_at |
+| correction_requests.status | (여러 상태) | received → reviewing/accepted/rejected/withdrawn, reviewing → accepted/rejected/withdrawn, accepted → published/withdrawn | CHIEF `respond_correction_request`(거부 사유 필수), DESK `record_article_correction`(청구 연결 시 published) | decided_at·notified_at·publish_due_at(= +7일), 기한 불변, 감사 |
+| events.status | (여러 상태) | draft → published/archived, published → canceled/archived, canceled → archived | EDITORIAL `save_event` | published_at |
 
 ## 4. RLS 정책
 
@@ -482,7 +482,7 @@ AI·음성(`AI_ARCHITECTURE.md` 9장 "제품 AI 표는 꼭 필요할 때만"): �
 | 모놀리스 | `supabase/monolith/migrations/0002_tenant_theming.sql` | 891 | Theming 0011 변환본 |
 | 모놀리스 | `supabase/monolith/migrations/0003_local_news_domain.sql` | 5,142 | 2500 변환본 |
 | 모놀리스 seed | `supabase/monolith/seed.sql` | 78 | apps 1행, 플랜 5행, AI 라우팅 14행 + 체인 검사. 크레딧팩 없음 |
-| 테스트 | `supabase/monolith/tests/rls_smoke.sql`, `tests/run-smoke.mjs` | 1,093 / 131 | RLS·권한·워크플로 스모크 314항목(18절), PGlite 러너(`--target mono|mod`) |
+| 테스트 | `supabase/monolith/tests/rls_smoke.sql`, `tests/run-smoke.mjs` | 1,093 / 131 | RLS·권한·워크플로 스모크 314항목(18절), PGlite 러너(`--target mono\|mod`) |
 
 seed 플랜(모두 제안, 정본 후보 01장 4절, VAT 별도, 무제한 값 없음):
 

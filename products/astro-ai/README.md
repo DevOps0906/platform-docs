@@ -10,7 +10,7 @@
 | MVP | 사주 + 타로 + 통합 리딩, 크레딧팩 일회 결제(확정 결정 7, `docs/products/00_MERGE_ANALYSIS.md:16`) |
 | 플랜 정본 | Astro AI 단가표(확정 결정 8, `docs/products/00_MERGE_ANALYSIS.md:17`, `Astro AI/기획안/공통/PRD.md:29-58`) |
 | 서비스명 | 신비로운AI, 폴더 `astro-ai`(확정 결정 10, `docs/products/00_MERGE_ANALYSIS.md:19`) |
-| 로그인 단계 (2026-10-14) | MVP 개발은 Mock 로그인(Stage A, 로컬 시드 계정으로 실제 JWT) → G1 → 공개 베타 전 Google + 이메일(Stage B, P0) → G2 → 카카오(C1)·네이버(C2, 둘 다 P1). 환영 크레딧 30은 이메일 인증 또는 소셜 로그인 확인 뒤 같은 서버 함수가 1회 지급한다(AS-F-002). 정본 `docs/products/_platform-core/AUTH_ROADMAP.md` | 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`), 02장 9절 |
+| 로그인 단계 (2026-10-14) | MVP 개발은 Mock 로그인(Stage A, 로컬 시드 계정으로 실제 JWT) → G1 → 공개 베타 전 Google + 이메일(Stage B, P0) → G2 → 카카오(C1)·네이버(C2, 둘 다 P1). 환영 크레딧 30은 이메일 인증 또는 소셜 로그인 확인 뒤 같은 서버 함수가 1회 지급한다(AS-F-002). 정본 `docs/products/_platform-core/AUTH_ROADMAP.md` (근거: 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`), 02장 9절) |
 
 ## 2. 통합 근거
 

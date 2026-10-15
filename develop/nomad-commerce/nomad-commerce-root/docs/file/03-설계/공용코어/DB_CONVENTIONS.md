@@ -124,8 +124,8 @@ status text not null default 'draft'
 | SELECT 정책 | `core.is_org_member(org_id) and core.has_entitlement(org_id, '<app>')` | `README.md:111-112` |
 | 쓰기 기본값 "없음" | 쓰기는 service_role 또는 SECURITY DEFINER RPC. 사용자에게 쓰기 정책을 줄 때는 8장 조건을 만족해야 한다 | `migrations/0004_core_security.sql:718-720` |
 | 쓰기 정책에는 반드시 `with check` | `using`만 있는 UPDATE 정책은 org_id를 다른 조직으로 바꾸는 것을 막지 못한다 | `README.md:105` |
-| `FOR ALL` 정책 금지 | 플랜/크레딧 셀프 변경 결함의 원인(`docs/reference/00_MERGE_ANALYSIS.md:87`) |
-| 정책 안에서 `org_members`를 직접 조회하지 않는다 | SECURITY DEFINER 헬퍼(`is_org_member` 등)만 쓴다. 자기참조 재귀 42P17 방지(`migrations/0004_core_security.sql:13-14`, `00_MERGE_ANALYSIS.md:1145`) |
+| `FOR ALL` 정책 금지 | 플랜/크레딧 셀프 변경 결함의 원인 | `docs/reference/00_MERGE_ANALYSIS.md:87` |
+| 정책 안에서 `org_members`를 직접 조회하지 않는다 | SECURITY DEFINER 헬퍼(`is_org_member` 등)만 쓴다. 자기참조 재귀 42P17 방지 | `migrations/0004_core_security.sql:13-14`, `00_MERGE_ANALYSIS.md:1145` |
 | 삭제는 owner/admin | `core.has_org_role(org_id, array['owner','admin'])` | `README.md:117-118` |
 | 공개 읽기 | anon에게 SELECT를 주는 테이블은 `is_public`/`status='published'` 같은 명시 컬럼으로 필터하고 비공개 컬럼은 뷰로 가린다 | `migrations/0004_core_security.sql:749-754` 패턴 |
 | 플랫폼 운영자 | `core.is_platform_admin()`을 SELECT 정책에 OR로 더할 수 있다. 쓰기는 service_role로 | `:737` |
@@ -212,7 +212,7 @@ grant execute on function blog.publish_post(uuid) to authenticated;
 | 규칙 | 내용 | 근거 |
 |---|---|---|
 | 컬럼 | `idempotency_key text unique`(nullable) | `migrations/0003_core_credits.sql:42`, `migrations/0005_core_jobs_storage.sql:36` |
-| 검사 패턴 | `pg_advisory_xact_lock(hashtext('<domain>:' || key))` → 기존 행 조회 → 있으면 반환, 없으면 INSERT | `migrations/0003_core_credits.sql:160-167` |
+| 검사 패턴 | `pg_advisory_xact_lock(hashtext('<domain>:' \|\| key))` → 기존 행 조회 → 있으면 반환, 없으면 INSERT | `migrations/0003_core_credits.sql:160-167` |
 | 키 형식 | `<domain>:<app>:<external id>`. 코어 형식은 `CORE_SPEC.md` 4.4 | `:426`, `:431`, `:593` |
 | 외부 요청 id | 클라이언트가 요청마다 UUID `request_id`를 보낸다. 서버는 그것으로 `consume:<app>:<request_id>`, `job:<app>:<request_id>`를 만든다 | `SHARED_MODULES.md` 18장 |
 | 웹훅 | `(provider, event_id)` 유니크가 멱등 키 역할 | `migrations/0002_core_billing.sql:200` |

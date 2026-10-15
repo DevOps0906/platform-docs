@@ -249,11 +249,11 @@ AI 진단·리서치 요약·브리핑 생성은 `core.jobs` 잡이 아니다. 1
 | Supabase(모놀리스) | 전용 프로젝트, 서울 리전(제안) | Postgres 직접 접속은 워커만, 나머지는 PostgREST |
 | `quote-relay` | Railway(상주 1개, 베타) | 공개 HTTPS(SSE). 토큰 없는 요청 401. 증권사로 아웃바운드 WebSocket |
 | `stock-jobs` | Railway(상주 1개) | 공개 포트 없음. Supabase(service_role), 증권사 REST, DART |
-| `apps/api`(FastAPI AI 서비스) | Railway(상주 1개) | 공개 HTTPS. 서명 토큰 또는 내부 키가 없으면 401(Dify HTTP 노드와 Vercel이 호출하므로 private network만으로는 부족) | Supabase(service_role), 상용 LLM API, 공용 GPU 서버(`oss-llm`, `oss-embed`), DART |
-| Dify(공용) | 운영사 자체 호스팅(`D:\WorkSpace\DEV\platform-dify\`, 제안) | 콘솔은 운영자만(2단계 인증) | Next.js → Dify Chat API(앱 키), Dify → FastAPI `/tools/*`, `/v1/chat/completions`, `/dify/retrieval`(내부 키) |
-| 공용 GPU 서버 | 운영사 자체 호스팅(`oss-llm` vLLM, `oss-embed`, `oss-voice`) | 비공개(서명 토큰·내부 키) | FastAPI(LLM·임베딩), Next.js(음성) |
-| ElevenLabs | 외부 SaaS(국외) | - | Next.js 서버만(TS SDK) |
-| LLM·임베딩 제공자 | Anthropic, OpenAI, Google, OpenRouter(국외, 동의한 조직만) | - | FastAPI 라우터에서만 호출. Next.js와 워커에는 LLM 키가 없다 |
+| `apps/api`(FastAPI AI 서비스) | Railway(상주 1개) | 공개 HTTPS. 서명 토큰 또는 내부 키가 없으면 401(Dify HTTP 노드와 Vercel이 호출하므로 private network만으로는 부족). 연결: Supabase(service_role), 상용 LLM API, 공용 GPU 서버(`oss-llm`, `oss-embed`), DART |
+| Dify(공용) | 운영사 자체 호스팅(`D:\WorkSpace\DEV\platform-dify\`, 제안) | 콘솔은 운영자만(2단계 인증). 연결: Next.js → Dify Chat API(앱 키), Dify → FastAPI `/tools/*`, `/v1/chat/completions`, `/dify/retrieval`(내부 키) |
+| 공용 GPU 서버 | 운영사 자체 호스팅(`oss-llm` vLLM, `oss-embed`, `oss-voice`) | 비공개(서명 토큰·내부 키). 연결: FastAPI(LLM·임베딩), Next.js(음성) |
+| ElevenLabs | 외부 SaaS(국외) | -. 연결: Next.js 서버만(TS SDK) |
+| LLM·임베딩 제공자 | Anthropic, OpenAI, Google, OpenRouter(국외, 동의한 조직만) | -. 연결: FastAPI 라우터에서만 호출. Next.js와 워커에는 LLM 키가 없다 |
 | 경계 | 브라우저 → (Next API, quote-relay SSE)만. 브라우저는 증권사, LLM, 워커 내부 API를 직접 부르지 않는다 | |
 
 ## 8. 환경변수

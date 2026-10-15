@@ -18,7 +18,7 @@
 | **확장 포인트·슬롯(Extension Point / Slot)** | 특정 화면·로직만 고객사 전용으로 교체 | 고급 커스텀 |
 | 국내 SI 용어 | 구축형(설치형, 모델 A) / 임대형(SaaS, 모델 C) / 솔루션 커스터마이징 | 견적·제안서 |
 
-자세한 용어와 비교는 [`01_CONCEPTS.md`](01_CONCEPTS.md).
+자세한 용어와 비교는 [`01_CONCEPTS.md`] (01_CONCEPTS.md).
 
 ## 1. 커스터마이징 5단계 (화이트라벨 단계 = `theming_level`)
 
@@ -76,7 +76,7 @@
     └── 서체: heading / body / mono — URL이 아니라 앱 서체 레지스트리 키(pretendard, noto-sans-kr …)
 ```
 
-로고에서 색을 뽑아 토큰을 만들고 WCAG AA 대비를 자동 보정하는 규칙, 다크 모드 처리, shadcn/ui 변수 연결은 [`02_DESIGN_TOKENS.md`](02_DESIGN_TOKENS.md).
+로고에서 색을 뽑아 토큰을 만들고 WCAG AA 대비를 자동 보정하는 규칙, 다크 모드 처리, shadcn/ui 변수 연결은 [`02_DESIGN_TOKENS.md`] (02_DESIGN_TOKENS.md).
 
 ## 4. 코드 구조 (Next.js App Router, 제품 저장소 기준)
 
@@ -106,13 +106,13 @@ apps/<제품>/src/
 └── styles/tokens.css              원시·의미 토큰 기본값(Tailwind CSS v4 @theme, 라이트/다크)
 ```
 
-요청 흐름, 캐시, 슬롯·라벨·메뉴 구현 규칙, 린트 규칙은 [`03_CODE_STRUCTURE.md`](03_CODE_STRUCTURE.md).
+요청 흐름, 캐시, 슬롯·라벨·메뉴 구현 규칙, 린트 규칙은 [`03_CODE_STRUCTURE.md`] (03_CODE_STRUCTURE.md).
 
 ## 5. DB 구조
 
 ### 5.1 먼저: 모든 테이블의 멀티테넌트 기본 규칙 (코어에 이미 있음)
 
-테마보다 먼저 **데이터가 테넌트별로 나뉘어 있어야** 합니다. 이 저장소 코어가 이미 이 구조이고, 새 제품 테이블은 아래를 그대로 지킵니다(상세 [`04_DATA_MODEL.md`](04_DATA_MODEL.md) 1장, `products/_platform-core/DB_CONVENTIONS.md`).
+테마보다 먼저 **데이터가 테넌트별로 나뉘어 있어야** 합니다. 이 저장소 코어가 이미 이 구조이고, 새 제품 테이블은 아래를 그대로 지킵니다(상세 [`04_DATA_MODEL.md`] (04_DATA_MODEL.md) 1장, `products/_platform-core/DB_CONVENTIONS.md`).
 
 | 구성요소 | 규칙 |
 |---|---|
@@ -160,13 +160,13 @@ Storage: public-assets/<org_id>/theming/<theme_id>/<slot>.<ext>   (기존 버킷
 
 **판매 모델과 DB**: 모델 C(공유 SaaS)와 모델 B(고객사 전용 Supabase)는 **같은 마이그레이션**을 씁니다. B는 그 DB에 조직이 1개일 뿐입니다. 그래서 C 고객이 B로 올라갈 때 코드 변경 없이 데이터만 옮깁니다(`products/_supabase-modular/ARCHITECTURE.md` 4.2절). 모델 A(설치형)는 Supabase 대신 로컬 저장이므로 해석 함수 대신 같은 JSON 형식의 설정 파일을 읽습니다.
 
-테이블별 컬럼·RLS·상태 전이·SQLSTATE·모놀리스 변환은 [`04_DATA_MODEL.md`](04_DATA_MODEL.md).
+테이블별 컬럼·RLS·상태 전이·SQLSTATE·모놀리스 변환은 [`04_DATA_MODEL.md`] (04_DATA_MODEL.md).
 
 ## 6. 런타임과 운영
 
 | 항목 | 규칙 | 상세 |
 |---|---|---|
-| 테넌트 식별 순서 | ① 활성 커스텀 도메인 ② `<slug>.<플랫폼 도메인>` 서브도메인 ③ 로그인 사용자의 현재 조직(앱 내부 화면) ④ 없으면 플랫폼 기본 | [`05_RUNTIME_AND_DOMAINS.md`](05_RUNTIME_AND_DOMAINS.md) 1장 |
+| 테넌트 식별 순서 | ① 활성 커스텀 도메인 ② `<slug>.<플랫폼 도메인>` 서브도메인 ③ 로그인 사용자의 현재 조직(앱 내부 화면) ④ 없으면 플랫폼 기본 | [`05_RUNTIME_AND_DOMAINS.md`] (05_RUNTIME_AND_DOMAINS.md) 1장 |
 | 캐시 | 해석 결과를 `tenant:<org_id>`·`host:<hostname>` 태그로 캐시, 게시·도메인 변경 시 무효화 | 2장 |
 | 깜빡임 방지 | 테마 CSS는 서버가 `<head>`에 직접 넣는다. 클라이언트에서 불러와 바꾸지 않는다 | 3장 |
 | 커스텀 도메인 | Vercel 프로젝트 도메인 API로 추가 → 고객이 DNS 설정 → 검증 워커가 상태 갱신 | 4장 |
@@ -177,13 +177,13 @@ Storage: public-assets/<org_id>/theming/<theme_id>/<slot>.<ext>   (기존 버킷
 
 | 순서 | 할 일 | 산출물 | 상세 |
 |---|---|---|---|
-| 0 | 이 문서 승인 → `0011` SQL을 `_supabase-modular/migrations/`로 옮김(코어 변경 = Fable 담당, 전 제품 RLS 회귀 통과 후) | 코어 마이그레이션 | [`06_ADOPTION_PLAN.md`](06_ADOPTION_PLAN.md) 1장 |
+| 0 | 이 문서 승인 → `0011` SQL을 `_supabase-modular/migrations/`로 옮김(코어 변경 = Fable 담당, 전 제품 RLS 회귀 통과 후) | 코어 마이그레이션 | [`06_ADOPTION_PLAN.md`] (06_ADOPTION_PLAN.md) 1장 |
 | 1 | 제품 `tokens.css`를 3계층으로 정리하고 하드코딩 색 제거(`bg-[#…]` 린트) | 토큰화된 UI | MT-02 |
 | 2 | `packages/core-tenancy` + `proxy.ts`·`layout.tsx` 연결 | L1 동작 | MT-03~05 |
 | 3 | 브랜딩 설정 화면(로고 업로드·색 추출·대비 검사·미리보기·게시) | 셀프서비스 L1 | MT-06~08 |
 | 4 | 라벨·메뉴·피처 오버라이드·커스텀 도메인 | L2 | MT-09~12 |
 | 5 | 슬롯 레지스트리, 확장 훅 | L3/L4 | MT-13~14 |
-| 6 | 운영 SOP·가격 연결 | 판매 | [`07_SALES_AND_OPERATIONS.md`](07_SALES_AND_OPERATIONS.md) |
+| 6 | 운영 SOP·가격 연결 | 판매 | [`07_SALES_AND_OPERATIONS.md`] (07_SALES_AND_OPERATIONS.md) |
 
 **지금 당장 할 최소 단위(MVP)**: 0~3단계(L1)만. 이것만으로 "로고 주시면 귀사 전용 플랫폼" 판매가 가능합니다. L2 이후는 실제 고객 요청이 2번 이상 반복될 때 만듭니다.
 
@@ -191,13 +191,13 @@ Storage: public-assets/<org_id>/theming/<theme_id>/<slot>.<ext>   (기존 버킷
 
 | 파일 | 내용 |
 |---|---|
-| [`01_CONCEPTS.md`](01_CONCEPTS.md) | 용어 사전, 5단계 판단 기준, 판매 모델 A/B/C 매핑, 포크·설정·전용 DB 비교, 원칙과 금지 |
-| [`02_DESIGN_TOKENS.md`](02_DESIGN_TOKENS.md) | 3계층 토큰, 테넌트 허용 목록, 로고 슬롯 규격, 로고→팔레트 자동 생성, 대비 보정, 서체, 다크 모드, 메일·OG |
-| [`03_CODE_STRUCTURE.md`](03_CODE_STRUCTURE.md) | 패키지·앱 폴더 트리, proxy·layout 흐름, 라벨·메뉴·슬롯, 관리 화면, 린트·테스트 |
-| [`04_DATA_MODEL.md`](04_DATA_MODEL.md) | ERD, 테이블 상세, RLS·권한 표, 함수, 상태 전이, SQLSTATE, Storage, 모놀리스·모델 B |
-| [`05_RUNTIME_AND_DOMAINS.md`](05_RUNTIME_AND_DOMAINS.md) | 요청 흐름, 캐시 무효화, 커스텀 도메인 연결, 이메일, SEO, 장애 폴백 |
-| [`06_ADOPTION_PLAN.md`](06_ADOPTION_PLAN.md) | 작업 목록(MT-01~16, 소유 경로·의존성·수용 기준), 웨이브, 제품별 적용 순서, 열린 결정 |
-| [`07_SALES_AND_OPERATIONS.md`](07_SALES_AND_OPERATIONS.md) | 단계별 상품·가격 연결, 고객 온보딩 체크리스트, 운영 SOP, 자동화, 린 검증 |
+| [`01_CONCEPTS.md`] (01_CONCEPTS.md) | 용어 사전, 5단계 판단 기준, 판매 모델 A/B/C 매핑, 포크·설정·전용 DB 비교, 원칙과 금지 |
+| [`02_DESIGN_TOKENS.md`] (02_DESIGN_TOKENS.md) | 3계층 토큰, 테넌트 허용 목록, 로고 슬롯 규격, 로고→팔레트 자동 생성, 대비 보정, 서체, 다크 모드, 메일·OG |
+| [`03_CODE_STRUCTURE.md`] (03_CODE_STRUCTURE.md) | 패키지·앱 폴더 트리, proxy·layout 흐름, 라벨·메뉴·슬롯, 관리 화면, 린트·테스트 |
+| [`04_DATA_MODEL.md`] (04_DATA_MODEL.md) | ERD, 테이블 상세, RLS·권한 표, 함수, 상태 전이, SQLSTATE, Storage, 모놀리스·모델 B |
+| [`05_RUNTIME_AND_DOMAINS.md`] (05_RUNTIME_AND_DOMAINS.md) | 요청 흐름, 캐시 무효화, 커스텀 도메인 연결, 이메일, SEO, 장애 폴백 |
+| [`06_ADOPTION_PLAN.md`] (06_ADOPTION_PLAN.md) | 작업 목록(MT-01~16, 소유 경로·의존성·수용 기준), 웨이브, 제품별 적용 순서, 열린 결정 |
+| [`07_SALES_AND_OPERATIONS.md`] (07_SALES_AND_OPERATIONS.md) | 단계별 상품·가격 연결, 고객 온보딩 체크리스트, 운영 SOP, 자동화, 린 검증 |
 | [`supabase/0011_core_tenant_theming.sql`](supabase/0011_core_tenant_theming.sql) | 코어 확장 마이그레이션(제안). 모듈러 그대로, 모놀리스는 `core.`→`public.` 치환 |
 | [`supabase/tests/tenant_theming_smoke.sql`](supabase/tests/tenant_theming_smoke.sql) | RLS·권한 회귀 91항목(제품 `rls_smoke.sql`과 같은 형식) |
 | [`supabase/tests/run-smoke.mjs`](supabase/tests/run-smoke.mjs) | PGlite 러너(Supabase 없이 실행) |

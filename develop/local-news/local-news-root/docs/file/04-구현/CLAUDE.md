@@ -41,7 +41,7 @@
 | 요청 진입 | `src/proxy.ts`가 Host로 그룹을 정하고 `resolve_tenant` 결과를 헤더로 넘긴다(클라이언트 헤더 무시). 편집국 Route Handler는 `requireSession('news')` 후 `news.is_newsroom(org, 역할)` |
 | 테넌트 | `src/lib/tenancy/`의 `getTenant()`만. 테넌트 slug·org_id를 코드에 쓰지 않는다 |
 | 캐시 | 태그는 `src/lib/cache/tags.ts`만(`news:<org>:home`, `news:<org>:article:<id>` 등). 게시·수정·게시 취소는 게시 파이프라인 잡이 무효화한다 |
-| 잡 | `jobs.enqueue({ queue: 'news.publish'|'news.newsletter'|'news.ingest'|'news.ai'|'news.stats'|'news.domain', idempotencyKey: 'job:news:<request_id>' })`(02장 4절) |
+| 잡 | `jobs.enqueue({ queue: 'news.publish'\|'news.newsletter'\|'news.ingest'\|'news.ai'\|'news.stats'\|'news.domain', idempotencyKey: 'job:news:<request_id>' })`(02장 4절) |
 | 조회수 | `/api/r/view` → 서버 묶음 → `news.increment_article_views`(service). 클라이언트가 직접 올리지 않는다 |
 | 감사 | 편집국 쓰기는 RPC 안에서 기록. 독자 행위는 감사하지 않는다(독자는 조직 멤버가 아님) |
 | Storage | 경로 첫 폴더 = org_id(`public-assets/<org>/news/…`, `org-files/<org>/news/…`). 제보·정정 첨부는 서버 업로드만 |

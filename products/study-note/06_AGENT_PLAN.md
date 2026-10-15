@@ -182,11 +182,11 @@ P0 작업과 대응 테스트: 001(CI 자체 검사), 002 → 003, 005 → 003·
 | C-3 | 계정(조직) 삭제 요청 RPC 또는 문서화된 service_role 절차 | 30일 유예 삭제 UX 구현에 필요 | 중간 |
 | C-4 | 모듈러 `seed.sql`의 notes 행 병합: Free `features`, `pro` 플랜, 크레딧팩 2종(비활성) | 해결(2026-10-13 코어 반영 완료): 모듈러 seed가 모놀리스 seed와 일치. 조각의 보충은 안전망으로 유지 | 완료 |
 | C-5 | `confirm_payment_order` 금액 불일치 시 `failed` 주문이 롤백되는 알려진 결함 | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가. 제품은 PM001 시 별도 호출(지급 없음 + 알림) | 완료 |
-| C-6 | `_supabase-modular/seed.sql` | notes free/pro `features`에 AI 키(`ai_chat`, `ai_chat_turns_per_day`, `ai_subjects_max`, `ai_docs_max`, `ai_doc_max_chars`, `lecture_note`, `lecture_max_minutes`, `voice_chat`, `quiz_voice`) 추가 | seed가 `2100_notes.sql`보다 나중에 실행되면 14.2절 병합 UPDATE가 덮어써진다 | 서버가 누락 키를 기본값으로 읽는다(01장 4.2절) |
-| C-7 | 공용 ai-service | (a) OpenAI 호환 `/v1/chat/completions`의 `model` 값을 기능 키로 해석 (b) 위키 사람 편집 저장 엔드포인트(`AI_ARCHITECTURE.md` 8장 목록에 없음) (c) 제품 확장 엔드포인트 설치 위치 `app/ai/products/notes/`(문서 삭제, 과목 purge, 단답 채점) (d) 잡 소비자 표준(큐 `<app>.ai`) | Dify 보조 노드 라우팅(`dify.aux`)과 사용자 위키 편집, 삭제·채점 | (a) Dify에 기능별 모델 이름을 따로 등록 (b)(c)(d) notes 확장에 임시 구현(NT-06-035, 038, 039) |
-| C-8 | core-voice, `core.voice_jobs` | (a) 기능별 강제 오픈소스일 때 상용 대체 금지 동작과 조각(청크) STT 호출 계약을 `VoiceAdapter`에 명시 (b) 필요해지면 `voice_jobs`에 조각 순번 열 | 강의 녹음 조각 STT가 `lecture_note`(강제 오픈소스)로 나뉘어 들어온다(05장 6절) | (a) 라우팅이 이미 상용을 걸러 낸다. (b) 순번은 Storage 경로에 둔다 |
-| C-9 | `_design-guide` 3D 키트 | 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/products/_design-guide/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
-| C-10 | 공용 Dify, `purge_organization` | (a) 공용 Dify에 `notes-chat` 앱 생성, 내부 키 환경 변수, 로그 보존 30일, 대화 삭제 API 확인 (b) 계정 삭제 시 AI 표 연쇄 + Storage(`org-files`, `voice-audio`) + Dify 대화 정리 절차 | 공용 인프라는 코어 소유. 삭제 권리(01장 NT-F-031) | (a) 장애 시 `/tools/answer-direct`. (b) 06장 C-3과 함께 service_role 절차로 문서화 |
+| C-6 | `_supabase-modular/seed.sql`: notes free/pro `features`에 AI 키(`ai_chat`, `ai_chat_turns_per_day`, `ai_subjects_max`, `ai_docs_max`, `ai_doc_max_chars`, `lecture_note`, `lecture_max_minutes`, `voice_chat`, `quiz_voice`) 추가 | seed가 `2100_notes.sql`보다 나중에 실행되면 14.2절 병합 UPDATE가 덮어써진다 | 서버가 누락 키를 기본값으로 읽는다(01장 4.2절) |
+| C-7 | 공용 ai-service: (a) OpenAI 호환 `/v1/chat/completions`의 `model` 값을 기능 키로 해석 (b) 위키 사람 편집 저장 엔드포인트(`AI_ARCHITECTURE.md` 8장 목록에 없음) (c) 제품 확장 엔드포인트 설치 위치 `app/ai/products/notes/`(문서 삭제, 과목 purge, 단답 채점) (d) 잡 소비자 표준(큐 `<app>.ai`) | Dify 보조 노드 라우팅(`dify.aux`)과 사용자 위키 편집, 삭제·채점 | (a) Dify에 기능별 모델 이름을 따로 등록 (b)(c)(d) notes 확장에 임시 구현(NT-06-035, 038, 039) |
+| C-8 | core-voice, `core.voice_jobs`: (a) 기능별 강제 오픈소스일 때 상용 대체 금지 동작과 조각(청크) STT 호출 계약을 `VoiceAdapter`에 명시 (b) 필요해지면 `voice_jobs`에 조각 순번 열 | 강의 녹음 조각 STT가 `lecture_note`(강제 오픈소스)로 나뉘어 들어온다(05장 6절) | (a) 라우팅이 이미 상용을 걸러 낸다. (b) 순번은 Storage 경로에 둔다 |
+| C-9 | `_design-guide` 3D 키트: 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/products/_design-guide/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
+| C-10 | 공용 Dify, `purge_organization`: (a) 공용 Dify에 `notes-chat` 앱 생성, 내부 키 환경 변수, 로그 보존 30일, 대화 삭제 API 확인 (b) 계정 삭제 시 AI 표 연쇄 + Storage(`org-files`, `voice-audio`) + Dify 대화 정리 절차 | 공용 인프라는 코어 소유. 삭제 권리(01장 NT-F-031) | (a) 장애 시 `/tools/answer-direct`. (b) 06장 C-3과 함께 service_role 절차로 문서화 |
 
 ## 7. 완료 정의
 

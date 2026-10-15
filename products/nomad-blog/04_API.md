@@ -38,7 +38,7 @@
 | DELETE `/api/channels/:id` | owner/admin | - | `{ channel_account }` | 0 | `blog.disconnect_channel_account` | 403 |
 | POST `/api/affiliate/accounts` | owner/admin | `{ provider, partner_id?, access_key?, secret_key?, label? }` | `{ account }` | 0 | `CredentialVault.put` + `AffiliateApi.connectAccount` | 422 |
 | GET `/api/affiliate/search` | member+, `affiliate` | `?provider=coupang&q=&limit≤20` | `{ products }` | 0 | 어댑터 `searchProducts` | 409 PROVIDER_NO_SEARCH(텐핑 등) |
-| POST `/api/posts/:id/affiliate-links` | member+ | `{ provider, product | manual_url, placement, position }` | `{ link_id, short_url, affiliate_url, card }` | 0 | `createShortLink`(source_app blog, source_ref post id) + `post_affiliate_links` INSERT(service) | 422 URL_NOT_ALLOWED |
+| POST `/api/posts/:id/affiliate-links` | member+ | `{ provider, product \| manual_url, placement, position }` | `{ link_id, short_url, affiliate_url, card }` | 0 | `createShortLink`(source_app blog, source_ref post id) + `post_affiliate_links` INSERT(service) | 422 URL_NOT_ALLOWED |
 | DELETE `/api/posts/:id/affiliate-links/:linkId` | member+ | - | 204 | 0 | 매핑 DELETE(service). `affiliate_links`는 `is_active=false` | - |
 | GET `/api/affiliate/stats` | owner/admin | `?range=7d\|30d` | `{ by_link, by_post, by_provider }` | 0 | `affiliate_clicks` 집계 | - |
 | PUT `/api/settings/disclosure` | owner/admin | `{ provider, body(10~300자, 이해관계 단어 포함) }` | `{ id }` | 0 | `core.upsert_affiliate_disclosure(org, provider, 'blog_top', body)` | 422 DISCLOSURE_WEAK |
