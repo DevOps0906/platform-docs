@@ -126,6 +126,7 @@
 
 - Supabase 대시보드 Redirect URLs에 `<앱 스킴>://auth/callback`(제품별)을 등록한다(코어 요청 T-C6).
 - 딥링크로 들어온 URL은 신뢰하지 않는다. 앱이 직전에 시작한 로그인 시도(PKCE verifier 보유)에 대한 콜백만 처리한다.
+- 첫 적용 제품 arch-studio는 이 흐름을 열린 결정 D-15(권고: 커스텀 스킴 딥링크, 막히면 루프백, 이메일은 앱 안 폼)와 D-16(시리얼은 계정 조직에 귀속, 활성화는 로그인 계정으로만)으로 이미 정했다(`docs/products/arch-studio/01_PRD.md` 8장). 다른 제품은 이 결정을 기본값으로 쓴다.
 
 ### 5.2 세션과 클라우드 API
 
@@ -160,7 +161,7 @@ export interface SecureStore {
 | B Google | 서버 콜백에서 `exchangeCodeForSession` | 시스템 브라우저 + PKCE + 딥링크 → 앱에서 `exchangeCodeForSession`(5.1절). Supabase Redirect URLs에 앱 스킴·Universal Link를 와일드카드 없이 명시 등록(`AUTH_ROADMAP.md:195`의 원칙, 코어 요청 T-C6) |
 | C1 카카오 | Supabase 기본 제공자 `kakao` | B와 같은 흐름(시스템 브라우저 웹 로그인). 카카오톡 앱 간 로그인은 카카오 네이티브 SDK가 필요해 범위 밖(제안) |
 | C2 네이버 | `custom:naver` 또는 서버 브리지(스파이크로 결정) | `custom:naver`가 채택되면 B와 같은 흐름. 서버 브리지 경로는 세션이 시스템 브라우저 쿠키에 생기므로 앱으로 넘기는 1회용 교환 코드 설계가 따로 필요하다(코어 요청 T-C7). 그 전까지 셸 앱은 네이버를 제공하지 않는다 |
-| 모듈 위치 | `packages/core-auth/providers`, 제품 `src/lib/auth/` | 같은 모듈에 셸용 구현(딥링크 수신, 클라이언트 교환, 보안 저장소)을 추가한다. 기능 코드에 `if (tauri)`·`if (mock)` 금지(`AUTH_ROADMAP.md:23`) |
+| 모듈 위치 | `@nomad/core-auth`(`develop/_shared/auth/README.md` 3장): Route Handler·서버 컴포넌트 팩토리, `finishLogin` | 셸에는 Route Handler가 없으므로 딥링크 수신, 클라이언트 교환, 보안 저장소는 core-auth 밖 `packages/shell-bridge`에 둔다(공용 인증 가이드의 arch-studio 메모 "앱 복귀 방식을 패키지 밖에 추가", `develop/_shared/auth/README.md:233`). 교환 직후 셸은 서버의 `finishLogin`을 Bearer로 한 번 호출해 제공자 허용 검사, `no_profile` 처리, 감사 `auth.login`을 웹과 같은 코드로 거친다(코어 요청 T-C8). 기능 코드에 `if (tauri)`·`if (mock)` 금지(`AUTH_ROADMAP.md:23`) |
 | iOS 추가 | 해당 없음 | 제3자 소셜 로그인을 넣으면 Apple 로그인 대안 제공 의무 여부를 확인(Capacitor 가이드 2장 2번) |
 
 ## 6. 클라우드 API 호출 규약
@@ -185,7 +186,7 @@ export interface SecureStore {
 
 ## 8. 설치형 판매 공통: 라이선스와 업데이트
 
-설치형으로 파는 제품(영구 라이선스, 연간 업데이트)은 arch-studio 규격(`docs/products/arch-studio/01_PRD.md:115`)을 공통 기준으로 쓴다.
+설치형으로 파는 제품(영구 라이선스, 연간 업데이트)은 arch-studio 규격(`docs/products/arch-studio/01_PRD.md:117`)을 공통 기준으로 쓴다.
 
 | 항목 | 공통 규격 |
 |---|---|
@@ -276,6 +277,7 @@ export interface NativeBridge {
 | live-poll | 낮음~중간 | 진행자용 발표·방송 오버레이 창(항상 위, 투명 창) | 없음 | 창 제어 | Phase 3. 청중은 웹(QR) 유지 |
 | study-note | 낮음 | 오프라인 노트 | 노트 초안 | 없음 | 웹 유지 |
 | nomad-blog | 낮음 | 해당 없음 | 없음 | 없음 | 웹 유지. 로컬 브라우저 자동화로 발행하는 방식은 플랫폼 약관 위험이 커 셸 도입 근거로 삼지 않는다 |
+| local-news | 낮음 | 해당 없음(편집국 CMS·독자 사이트 모두 웹) | 없음 | 없음 | 웹 유지. 신문사별 브랜드 데스크톱 앱 수요는 없다고 본다(제안) |
 | astro-ai, microweb-studio, website-floria | 없음 | 해당 없음 | 없음 | 없음 | 웹(또는 모바일, Capacitor 가이드) |
 
 판매 모델과의 관계: 셸 앱을 만드는 것과 설치형으로 파는 것(판매 모델 A, `Price_Plans/_common/PRICING_PRINCIPLES.md:68`)은 별개다. 구독형 SaaS 제품도 데스크톱 셸을 가질 수 있고, 그때는 라이선스 파일 없이 세션 + 서버 엔타이틀먼트로 판정한다(8장 마지막 행). 각 제품의 판매 모델 A 결정은 `Price_Plans/<제품>/PRICE_PLAN.md`가 정본이다: arch-studio는 설치형이 본체, admin-suite hms는 "예"(`Price_Plans/admin-suite/PRICE_PLAN.md:89`), nomad-docs는 "장기 검토"(`Price_Plans/nomad-docs/PRICE_PLAN.md:99`), 나머지 제품은 "아니오"다. 위 표의 Phase 2·3 권고는 "구독형 데스크톱 클라이언트"를 뜻하며 판매 모델을 바꾸지 않는다.
@@ -323,7 +325,7 @@ export interface NativeBridge {
 
 ### 13.3 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
 
-현재 개발 묶음 생성 스크립트(`develop/_shared/tools/build_root.py:85-87`)는 이 폴더를 `docs/reference/`로 복사하지 않는다. 묶음에 넣기 전까지는 platform-docs 원본 경로를 지시한다.
+현재 개발 묶음 생성 스크립트(`develop/_shared/tools/build_root.py:91-98`)는 이 폴더를 `docs/reference/`로 복사하지 않는다. 묶음에 넣기 전까지는 platform-docs 원본 경로를 지시한다.
 
 ```
 D:/WorkSpace/DEV/<제품>/docs/file 의 모든 파일과 D:/WorkSpace/platform/docs/Tauri/README.md 를 최대한 자세히 읽고 분석한다.
@@ -371,6 +373,7 @@ D:/WorkSpace/DEV/<제품>/docs/file 의 모든 파일과 D:/WorkSpace/platform/d
 | T-C4 | 라이선스 서명 키 규격(키 id, 교체, 공개키 배포)과 업데이트 서명키 관리 | 8장 |
 | T-C5 | BYOK 데스크톱 예외 여부 | `docs/products/_platform-core/SECURITY_BASELINE.md:121`은 BYOK를 금지하지만 판매 모델 A 정의는 "고객 API 키"를 전제한다(`Price_Plans/_common/PRICING_PRINCIPLES.md:68`). 둘 중 하나를 고쳐야 한다(arch-studio는 크레딧 게이트웨이 방식으로 BYOK 없이 설계, `docs/products/arch-studio/01_PRD.md` 4장) |
 | T-C6 | Supabase Auth Redirect URLs에 제품별 앱 스킴 등록 절차 | 5.1절 |
+| T-C8 | 셸 앱용 로그인 마무리 엔드포인트: 클라이언트 `exchangeCodeForSession` 뒤 Bearer로 부르면 `finishLogin`(제공자 허용 검사, 프로필 상태, 감사 `auth.login`, 첫 로그인 경로)을 실행하고 이동할 경로를 돌려준다 | 5.4절. 웹 콜백(`/auth/callback`)과 같은 검사를 한 구현으로 유지 |
 | T-C7 | 네이버 서버 브리지 경로를 쓸 경우 앱으로 세션을 넘기는 1회용 교환 코드(짧은 만료, 1회 소비, PKCE 검증값 결합) | 5.4절, `docs/products/_platform-core/AUTH_ROADMAP.md` 7.2절 |
 
 ## 16. 출처 (확인일 2026-10-14)

@@ -86,7 +86,7 @@ Tauri 가이드 2장의 검토(소셜 로그인은 시스템 브라우저, 토�
 |---|---|
 | 알림 목록 | 알림 종류마다: 트리거(어떤 서버 이벤트), 대상, 문구, 딥링크 목적지, 빈도 상한 |
 | 정보성과 광고성 구분 | 결과 완료·결제·보안 알림은 정보성. 할인·이벤트·재방문 유도는 광고성. 광고성은 수신 동의, 야간(오후 9시~오전 8시) 전송 별도 동의, 주기적 수신 동의 확인, "(광고)" 표기가 필요하다(정보통신망법, 법무 확인 필요) |
-| 동의 기록 | 동의·철회 시각과 고지문 버전을 `core.audit_log`에 남긴다(`docs/products/_platform-core/SECURITY_BASELINE.md` 9장 방식) |
+| 동의 기록 | 수신 동의는 공용 알림 모듈 notify의 `notify.preferences`(사용자·채널·주제별 동의)에 두고, 동의 증빙(시각, 고지문 버전)은 compliance 모듈 `consents`에 남긴다(`docs/products/_platform-core/COMMON_MODULES_ROADMAP.md` 4.1절, `:237`). notify가 출시되기 전에는 `core.audit_log`에 같은 정보를 남긴다 |
 | 금지 | 푸시 문구에도 제품 금지 문구표(`01_PRD.md` 6.1절)를 적용한다. 운세·투자 제품은 단정·보장 표현 금지 |
 | 측정 | 푸시 동의율, 알림 클릭률, 알림으로 인한 앱 삭제율 |
 
@@ -175,14 +175,17 @@ Tauri 가이드 2장의 검토(소셜 로그인은 시스템 브라우저, 토�
 
 ### 4.5 푸시 구현
 
+푸시는 공용 알림 모듈 notify의 채널 하나로 만든다. notify는 제품이 `notify.send({ template, to, data, channel })` 하나만 부르고 채널 선택·재시도·수신 동의·발송 기록을 모듈이 맡는 구조이며, 이메일·알림톡·SMS·인앱이 MVP, 웹 푸시가 확장 채널로 잡혀 있다(`docs/products/_platform-core/COMMON_MODULES_ROADMAP.md` 4.1절). 네이티브 앱 푸시는 그 옆에 채널 `push`를 더하는 방식으로 넣고, 제품이 따로 푸시 테이블이나 전송 코드를 만들지 않는다.
+
 | 구성 | 내용 |
 |---|---|
-| 기기 토큰 저장 | 코어에 기기 토큰 테이블이 없다. `core.push_devices`(org_id, user_id, app_id, platform, token 해시와 암호화 원문, last_seen_at, revoked_at)를 코어 요청 M-C1로 올린다. 제품 스키마에 따로 만들지 않는다(`docs/products/_platform-core/DB_CONVENTIONS.md:239`: 코어 테이블 재정의 금지와 같은 취지) |
-| 전송 | 서버 잡 `push.send`(코어 요청 M-C2). 워커가 FCM HTTP v1·APNs로 전송. 서비스 계정 키는 워커 환경변수에만 |
-| 트리거 | 제품 이벤트(잡 완료, 결제 확정, 승인 요청)가 `push.send` 잡을 enqueue. 클라이언트가 다른 사용자에게 푸시를 보내는 경로는 만들지 않는다 |
+| 기기 토큰 저장 | notify 보강안에 웹 푸시 구독 표 `notify.push_subscriptions`(VAPID, 브라우저별 endpoint)가 이미 계획되어 있다(`docs/products/_platform-core/COMMON_MODULES_ROADMAP.md:237`). 새 표를 만들지 않고 이 표에 `platform`(web, ios, android)과 네이티브 토큰(해시 + 암호화 원문), `last_seen_at`, `revoked_at`을 더하는 확장을 모듈 요청 M-C1로 올린다. 등록·폐기 RPC는 본인 기기만(RLS). 제품 스키마에 따로 만들지 않는다 |
+| 전송 | notify의 큐 `notify.send`가 채널 `push`일 때 FCM HTTP v1·APNs로 보낸다(모듈 요청 M-C2). 서비스 계정 키는 워커 환경변수에만. 웹 푸시(VAPID) 채널과 같은 템플릿·동의·발송 기록을 쓴다 |
+| 트리거 | 제품 이벤트(잡 완료, 결제 확정, 승인 요청)가 `notify.send`를 호출한다. 클라이언트가 다른 사용자에게 푸시를 보내는 경로는 만들지 않는다 |
 | 딥링크 | 알림 payload에는 목적지 경로와 id만. 본문·개인정보·금액을 넣지 않는다 |
-| 동의 | 3.4절. 광고성 알림은 별도 동의 플래그가 없으면 잡 단계에서 거부 |
+| 동의 | 3.4절. notify가 `notify.preferences`로 광고성 동의·야간 동의를 확인하고, 없으면 발송하지 않는다 |
 | 토큰 정리 | 전송 실패(토큰 무효) 시 `revoked_at` 기록, 로그아웃 시 해당 기기 토큰 폐기 |
+| 웹 푸시와의 관계 | PWA 웹 푸시로 먼저 검증하는 제품(local-news NW-F-038, astro-ai 등)은 앱이 생겨도 같은 템플릿과 동의를 쓴다. 사용자가 웹과 앱 둘 다 켜면 notify가 중복 발송을 막는다(제안: 같은 사용자·같은 메시지는 앱 우선 1회) |
 
 ### 4.6 오프라인과 로컬 데이터
 
@@ -253,6 +256,7 @@ Tauri 가이드 4장(정본 위치 A~D, 동기화 규약)을 그대로 쓴다. �
 | flora-publishing | 낮음 | 오디오 재생 | 원고 열람, 낭독 듣기 | (c) | Phase 3 |
 | nomad-blog | 낮음 | 푸시(발행 결과) | 발행 현황 | (c) | 웹 유지(PWA 웹 푸시로 대체) |
 | arch-studio | 낮음 | 카메라(대지 사진), 파일 | 제안서·렌더 열람, 대지 사진 첨부 | (c)(설치형 판매) | Phase 3. 3D 편집은 데스크톱 전용 |
+| local-news | 중간~큼 | 독자: 속보 푸시. 기자: 현장 사진·녹음 업로드 | 독자 앱은 기사 열람·속보 알림, 기자 앱은 취재 사진·녹음 업로드와 데스크 승인 알림 | 독자 앱 (c), 유료 멤버십·페이월을 앱 안에서 팔면 (a) 대상. 기자 앱 (c) | Phase 2 이후. 독자 푸시는 PWA 웹 푸시(NW-F-038, P1)로 먼저 검증. 신문사마다 이름이 다른 화이트라벨 앱(Multi-tenant_Theming)을 스토어에 따로 올리는 방식은 Apple 지침 4.2.6(템플릿 앱) 제한 여부를 먼저 확인한다(원문 확인 필요) |
 | website-floria | 없음 | 없음 | 해당 없음 | 해당 없음 | 웹 유지 |
 
 ## 6. 개발 지시사항 (에이전트용)
@@ -262,7 +266,7 @@ Tauri 가이드 4장(정본 위치 A~D, 동기화 규약)을 그대로 쓴다. �
 | 조건 | 내용 |
 |---|---|
 | PRD | 3장 표들이 제품 `01_PRD.md`에 채워져 있고, 결제 전략(3.3절)이 결정되어 있다 |
-| 코어 | T-C1(Bearer 세션), T-C2(CORS)가 반영되어 있다. 푸시를 쓰면 M-C1, M-C2도 |
+| 코어 | T-C1(Bearer 세션), T-C2(CORS), T-C8(셸 로그인 마무리)이 반영되어 있다. 푸시를 쓰면 notify 모듈과 M-C1, M-C2도 |
 | 계정 | Apple Developer, Google Play Console, Firebase 프로젝트(FCM용) 준비 |
 | 웹 선행 | `apps/web`에 딥링크 검증 파일과 모바일 OAuth 콜백 페이지(필요 시) 배포 |
 
@@ -279,7 +283,7 @@ Tauri 가이드 4장(정본 위치 A~D, 동기화 규약)을 그대로 쓴다. �
 | M-005 | 모바일 레이아웃(하단 탭, 안전 영역, SystemBars) | `apps/mobile/src/layout/**` | Sonnet | 노치·제스처 바 기기에서 겹침 0 |
 | M-006 | 제품 모바일 범위 화면 이식 | `packages/features/**`(제품 기능 디렉터리) | Sonnet | PRD 모바일 범위 표의 화면 전부 동작 |
 | M-007 | 푸시: 권한 요청 시점, 토큰 등록, 수신·딥링크 이동 | `packages/features/push/**` | Opus | 토큰 등록·폐기, 알림 탭 시 목적지 이동, 광고성 알림 동의 없으면 미수신 |
-| M-008 | 서버 푸시 잡(`push.send`) 소비 | 워커 핸들러(코어 요청 M-C2 반영 후) | Opus | 무효 토큰 자동 폐기, payload에 본문·개인정보 0 |
+| M-008 | 제품 이벤트에서 `notify.send`(채널 `push`) 호출 연결 | 제품 이벤트 핸들러(모듈 요청 M-C2 반영 후) | Opus | 무효 토큰 자동 폐기, payload에 본문·개인정보 0 |
 | M-009 | 계정 삭제 화면(코어 삭제 절차 연결) | `packages/features/account/**` | Opus | 앱에서 삭제 요청 → 30일 유예 안내 → 철회 가능 |
 | M-010 | 오프라인 대기열(제품에 B·C 분류가 있을 때) | `packages/features/offline/**` | Opus | 비행기 모드에서 작업 → 복귀 후 전송, 충돌 시 병합 화면 |
 | M-011 | 빌드·서명·테스트 배포 자동화 | CI 설정 | Sonnet | 태그로 TestFlight·Play 내부 테스트 업로드 |
@@ -290,7 +294,7 @@ Tauri 가이드 4장(정본 위치 A~D, 동기화 규약)을 그대로 쓴다. �
 
 ### 6.3 요청 프롬프트 예시 (베이스 `_templates/dev-request-prompt.md` 형식)
 
-개발 묶음 생성 스크립트(`develop/_shared/tools/build_root.py:85-87`)가 이 폴더를 복사하지 않으므로, 묶음에 넣기 전까지는 platform-docs 원본 경로를 지시한다.
+개발 묶음 생성 스크립트(`develop/_shared/tools/build_root.py:91-98`)가 이 폴더를 복사하지 않으므로, 묶음에 넣기 전까지는 platform-docs 원본 경로를 지시한다.
 
 ```
 D:/WorkSpace/DEV/<제품>/docs/file 의 모든 파일과 D:/WorkSpace/platform/docs/Capacitor/README.md, D:/WorkSpace/platform/docs/Tauri/README.md 2장을 최대한 자세히 읽고 분석한다.
@@ -333,9 +337,9 @@ supabase/ 와 코어 패키지는 수정하지 않는다.
 
 | ID | 요청 | 이유 |
 |---|---|---|
-| T-C1, T-C2, T-C6, T-C7 | Bearer 세션, CORS 규격, 앱 Redirect URL 등록, 네이버 브리지용 교환 코드(Tauri 가이드 15장과 같음) | 앱은 쿠키 세션을 쓰지 않고 콜백을 앱에서 받는다 |
-| M-C1 | `core.push_devices` 테이블과 등록·폐기 RPC(RLS: 본인 기기만) | 4.5절 |
-| M-C2 | 잡 `push.send`와 워커 전송 모듈(FCM HTTP v1, APNs), 광고성 동의 검사 | 4.5절, 3.4절 |
+| T-C1, T-C2, T-C6, T-C7, T-C8 | Bearer 세션, CORS 규격, 앱 Redirect URL 등록, 네이버 브리지용 교환 코드, 셸 로그인 마무리 엔드포인트(Tauri 가이드 15장과 같음) | 앱은 쿠키 세션을 쓰지 않고 콜백을 앱에서 받는다 |
+| M-C1 | notify `notify.push_subscriptions`를 네이티브 토큰까지 받도록 확장(`platform` web·ios·android), 등록·폐기 RPC(RLS: 본인 기기만) | 4.5절. 공용 모듈 요청이라 `COMMON_MODULES_ROADMAP.md` 8장 절차를 따른다 |
+| M-C2 | notify 채널 `push`(FCM HTTP v1, APNs) 전송과 웹 푸시·앱 푸시 중복 방지 | 4.5절, 3.4절 |
 | M-C3 | 스토어 인앱결제 영수증 검증과 `payment_orders` 확장(Phase 3, (a) 전략 제품이 생길 때) | 3.3절 |
 | M-C4 | 계정 삭제 요청·철회 RPC를 앱에서 호출할 수 있게 공개 범위 정리 | 2장 6번 |
 
