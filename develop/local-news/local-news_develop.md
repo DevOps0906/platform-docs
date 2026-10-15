@@ -429,6 +429,8 @@ review role worker 의 서브 에이전트는 review-expert 가 진행한다.
 | M7 compliance-desk | `docs/file/03-설계/모듈/M7_compliance-desk.md` | `D:/WorkSpace/platform/docs/develop/local-news/modules/M7_compliance-desk.md` | 022, 034 |
 | M8 search-analytics | `docs/file/03-설계/모듈/M8_search-analytics.md` | `D:/WorkSpace/platform/docs/develop/local-news/modules/M8_search-analytics.md` | 035 |
 
+공용모듈 전환: M1~M8의 제품 무관 부분은 공용모듈 7개로 정의됐습니다(`D:/WorkSpace/platform/docs/develop/_shared/modules/README.md`, 06장 R-11). 1차는 `news` 스키마로 만들고 공용 v1.0 출시 후 전환합니다.
+
 규칙: 모듈은 자기 표만 쓰고, 다른 모듈은 공개 함수나 잡으로만 부릅니다. 두 번째 제품이 같은 모듈을 쓰게 되면 `D:/WorkSpace/platform/docs/products/_platform-core/COMMON_MODULES_ROADMAP.md` 3장 공용 스키마로 꺼냅니다(예: M4 → `notify` 0100).
 
 ## 21. 멀티테넌트(화이트라벨)와 도메인

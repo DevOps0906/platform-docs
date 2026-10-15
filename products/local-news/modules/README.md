@@ -91,6 +91,21 @@
 
 ## 5. 추출 계획 (두 번째 제품이 쓰면 공용 스키마로)
 
+**2026-10-15 갱신**: 이 표의 추출 대상은 공용모듈 기획서로 확정됐다(`docs/products/_platform-core/common-modules/README.md`, 개발서 `docs/develop/_shared/modules/README.md`). 아래 "공용 스키마(번호)" 열은 그 문서의 번호표가 우선한다.
+
+| 모듈 | 공용모듈(번호) | local-news에 남는 것 |
+|---|---|---|
+| M1 | media(0250), editorial(0750), cms(0800, 블록 규격) | 기사 확장 표(유형·바이라인·섹션·지역), 홈 편집, 지면, 라이브, 이관 |
+| M2 | membership(0550) | 기사 단위 페이월 문구 |
+| M3 | ads(0650) | 업소 디렉토리, 지자체 공고 |
+| M4 | notify(0100, 보강) | 아침 브리핑 자동 구성 |
+| M5 | community(0350), support(0700, 제보) | 경조사, 선거 댓글 정책(가드) |
+| M6 | cms(0800, SEO 보강) | 뉴스 사이트맵, NewsArticle, 전재 계약, 포털 전송 |
+| M7 | compliance(0150, `kr_newspaper` 프로필·라벨) | 자체기사 비율, 정정·반론보도, 선거 모드 |
+| M8 | search(0450), editorial(조회 집계), analytics(보강) | 지원사업 리포트 |
+
+1차 개발은 계속 `news` 스키마로 하고(06장 작업 그대로), 공용 패키지 v1.0이 나오면 아래 절차로 전환한다.
+
 원칙: 처음 쓰는 제품 안 `src/modules/<모듈>/`에 만들고, 두 번째 제품이 쓸 때 패키지와 공용 스키마로 꺼낸다(`docs/products/_platform-core/COMMON_MODULES_ROADMAP.md:40`). 추출 전까지 다른 제품은 이 모듈을 복사하지 않는다.
 
 | 모듈 | 추출 대상 | 공용 스키마(번호) | 추출 조건(제안) | 뉴스 전용으로 남는 것 |
@@ -121,7 +136,7 @@
 | MQ-1 | 독자 결제 주문·빌링키 저장 위치: 코어 `payment_orders`·`billing_keys`는 "조직이 플랫폼에 내는 돈"(customerKey `org_<id>` 고정, `docs/products/_platform-core/SHARED_MODULES.md:163`)이라 독자 결제와 맞지 않는다 | M2 표에 주문 id·상태를 두고 빌링키는 `core.encrypted_credentials`에 저장. 코어에 "주체=독자" 확장을 요청할지 D-4와 함께 결정 | M2, D-4 |
 | MQ-2 | 이벤트 outbox 표를 둘지 | 1차는 잡 enqueue + 주기 재조정(02장 4절과 같음). 유실이 문제 되면 `news.event_outbox` 추가 | 전 모듈 |
 | MQ-3 | 금칙어·댓글 기본값 등 M5 설정이 M1 표(`newspapers.banned_words`, `newspapers.comments_enabled`, 05장 SQL)에 있다 | 쓰기는 M1 매체·설정 RPC로만, 해석(금칙어 매칭·댓글 허용 판정)은 M5. 추출 때 M5 설정 표로 분리 | M1, M5 |
-| MQ-4 | `ads` 공용 스키마 번호 범위 | 추출 시점에 결정(지금 정하지 않음) | M3 |
+| MQ-4 | `ads` 공용 스키마 번호 범위 | 해결(2026-10-15): `ads` 0650~0699(`docs/products/_platform-core/common-modules/README.md` 2장) | M3 |
 | MQ-5 | 장 사이 이름 불일치 | 해결(2026-10-15): 02·04장을 05장 SQL(오류 코드 NW001~NW015, 반려 = `draft`, 댓글 `hidden`, 경조사 `personnel`·`people`, 정정 `rebuttal`, `record_donation`·`record_membership`, `register_`·`revoke_push_subscription`)에 맞췄다 | 전 모듈 |
 | MQ-6 | 검색 필터(섹션·지역·기간)가 `news.search_articles` 인자에 없음 | 인자 추가(변경 제안) 또는 1차는 필터 없이 | M8 |
 | MQ-7 | 대시보드 "유입" 지표에 필요한 유입 분류 컬럼이 `article_view_hourly`에 없음 | 1차 미제공, 필요 시 버킷 키 확장 | M8 |

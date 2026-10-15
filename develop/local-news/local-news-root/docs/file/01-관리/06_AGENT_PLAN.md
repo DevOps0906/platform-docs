@@ -142,8 +142,9 @@ P0 작업과 테스트 대응은 7절 표에 있다.
 | R-6 | 모듈러 통합 `seed.sql`에 `news` 앱·플랜·라우팅 행 | `_supabase-modular/seed.sql` | 지금은 조각이 `on conflict do nothing`으로 넣는다 | 조각 안 `@@MODULAR_ONLY` 절 |
 | R-7 | `REFERENCES.md`에 local-news 절, `HERO_3D.md`에 local-news 행(독자 사이트 미적용) | `_design-guide` | 03장 4절 레퍼런스가 뉴스 벤치마크라 기존 목록에 없다 | 03장 4절에 출처 직접 기재 |
 | R-8 | `COMMON_MODULES_ROADMAP.md` notify 추출 시 M4 뉴스레터·푸시를 기준 구현으로 | `_platform-core` | 두 번째 제품이 쓰면 공용화(2장 원칙) | M4는 `news` 스키마 안 |
-| R-9 | 광고 모듈(M3) 공용 스키마 번호 범위 | `_platform-core` | `COMMON_MODULES_ROADMAP.md` 3장 표에 `ads`가 없다 | 추출 시 결정 |
+| R-9 | 광고 모듈(M3) 공용 스키마 번호 범위 | `_platform-core` | 해결(2026-10-15): `ads` 0650(`common-modules/README.md` 2장) | - |
 | R-10 | 네이버 브리지를 택하면 `staged/0010_core_auth_identity_links.sql` 적용 | `_platform-core` | `AUTH_ROADMAP.md` 7.2.3절 | 독자 C2는 `supabase_custom` 우선(02장 9절) |
+| R-11 | 공용모듈 7개(compliance, media, editorial, community, search, membership, ads) v1.0 출시 후 local-news 전환 | `D:/WorkSpace/platform/docs/products/_platform-core/common-modules/`, `develop/_shared/modules/` | M1~M8 제품 무관 부분을 공용으로 정의함(2026-10-15) | 1차는 `news` 스키마, 이름·계약은 공용 기획서와 같은 뜻으로 |
 
 ## 7. 완료 정의
 

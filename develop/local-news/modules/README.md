@@ -169,3 +169,13 @@ apps/web/src/app/api/r/..., api/newsroom/..., api/webhooks/...   얇은 Route Ha
 - [ ] 외부 설정: Resend/SES 도메인 인증, VAPID 키, Turnstile, Search Console 사이트맵 제출(모듈 지시서 4장)
 - [ ] 웨이브 3: P1 수용 기준, Toss 자동결제 계약이 있는 시범 신문사 1곳에서 실결제 점검
 - [ ] 추출 후보 모듈별로 "두 번째 제품" 여부 분기마다 확인, 6.4절 갱신
+
+## 공용모듈로 전환 (2026-10-15 추가)
+
+M1~M8 중 제품 무관 부분은 공용모듈 7개(compliance, media, editorial, community, search, membership, ads)와 기존 공용모듈 보강(notify, analytics, cms, tenancy)으로 정의됐다. 대응표는 `products/local-news/modules/README.md` 5장, 개발 방법은 `develop/_shared/modules/README.md`.
+
+| 시점 | 할 일 |
+|---|---|
+| 지금(1차) | 06장 작업대로 `news` 스키마에 만든다. 단 표·함수·이벤트 이름과 공개 API 모양은 공용모듈 기획서와 같은 뜻이 되도록(나중 전환 비용을 줄임) |
+| 공용 v1.0 출시 후 | `develop/_shared/modules/README.md` 5.2절 절차로 모듈마다 전환. `news.<표>`는 호환 뷰로 한 릴리스 유지 |
+| 확인 | 전환 후 RLS 스모크(314 + 모듈 스모크), local-news E2E 녹색 |
