@@ -18,7 +18,16 @@
 | 10 | **booking** 예약·자원 | 자원·가용 시간·예약(중복 금지)·리마인더·예약금 | admin-suite hms(병원 자체 구현), arch-studio 상담, microweb·website-floria 상담 | 3차 |
 | 11 | **growth** 실험·쿠폰·추천 | 기능 플래그, A/B 실험, 쿠폰, 추천 코드 | flora 헤드라인 실험(PB-06-063), 결제 있는 제품 | 4차 |
 | 12 | **cms** 콘텐츠 블록 | 공지·FAQ·블로그·랜딩 블록, SEO 메타, 사이트맵 | 랜딩이 있는 제품 | 4차 |
+| 13 | **compliance** 법정 표기·동의·라벨 | 정책 문서 버전, 동의 기록, 사업자·법정 표기 프로필, 광고·AI 표시 라벨(privacy-center 흡수) | 15개 전부 | 1차 |
+| 14 | **media** 미디어 라이브러리 | 업로드·크기별 사본·대체 텍스트·저작권·사용처 | 이미지를 쓰는 제품 9개 이상 | 1차 |
+| 15 | **editorial** 콘텐츠 워크플로 | 초안 → 검토 → 승인 → 예약 게시, 수정 이력, AI 초안 사람 승인 | nomad-blog, local-news, flora·toon·website-floria 후보 | 3차 |
+| 16 | **community** 댓글·방명록 | 댓글·방명록·신고·임시조치·금칙어 | microweb-studio, local-news, 후보 4개 | 4차 |
+| 17 | **search** 한국어 검색 | 색인·필터·공개 범위 | nomad-docs, local-news, 후보 4개 | 4차 |
+| 18 | **membership** 최종 이용자·구독 | 고객사의 고객(독자·수강생), 등급, 정기 구독·후원, 페이월 | local-news, flora·study-note·toon 후보 | 5차 |
+| 19 | **ads** 광고 | 슬롯·캠페인·소재 검수·노출 집계·외부망 태그 | local-news, live-poll·toon·nomad-blog 후보 | 4차 |
 | - | ERP | 범용 ERP 모듈은 만들지 않음(4.8절). admin-suite ERP를 제품으로 쓰고, 필요한 조각은 booking + 결제(코어)로 | - | 보류 |
+
+13~19번은 local-news 기획에서 꺼낸 모듈이다(2026-10-15 추가, 대표님 승인 범위: 7개 전부, 각 제품 문서는 적용표만). 기획서는 `common-modules/` 폴더, 개발서는 `docs/develop/_shared/modules/`, 15개 제품 적용표는 `common-modules/README.md` 1장.
 
 **추천안**: 개발 전에 노코드로 리드·챗봇·시트 흐름을 1~2주 검증하고(5장 Phase 0), 결과가 나오면 **notify → funnel → chat-widget → sheets-sync(내보내기)**를 flora-publishing과 함께 첫 묶음으로 만듭니다. 이 4개는 모든 제품의 매출 입구(문의·사전예약·상담)를 담당하고 재사용 제품 수가 가장 많습니다. CRM·LMS·예약은 각각 쓰는 제품이 실제 개발에 들어갈 때 그 제품 안에서 먼저 만들고 꺼냅니다("두 번째 제품이 쓸 때 공용화" 원칙). 이 모듈 묶음은 대표님의 NOMAD Funnel Engine 구상(패턴 A 인바운드 리드 + CRM, B 예약·자원·ERP, C 교육·LMS)과 그대로 겹치므로, Funnel Engine을 이 모듈들의 첫 번째 "판매 제품"으로 삼는 것을 함께 권합니다(6장).
 
@@ -37,7 +46,7 @@
 
 | 원칙 | 내용 |
 |---|---|
-| 두 번째 사용 때 공용화 | 처음 쓰는 제품 안 `src/modules/<모듈>/`에 만들고, 두 번째 제품이 쓸 때 패키지로 꺼낸다. 처음부터 범용으로 설계하지 않는다 |
+| 두 번째 사용 때 공용화 | 처음 쓰는 제품 안 `src/modules/<모듈>/`에 만들고, 두 번째 제품이 쓸 때 패키지로 꺼낸다. 처음부터 범용으로 설계하지 않는다. 예외(제안 CMX-1): 13~19번은 계약을 먼저 정했으므로 첫 적용 제품이 처음부터 패키지로 만든다(MVP 범위는 그 제품이 쓰는 만큼) |
 | 데이터 정본은 DB | 시트·HubSpot·Dify는 사본이거나 화면이다. 조직 데이터의 정본은 Supabase(RLS) |
 | 같은 경계 규칙 | 모든 모듈은 `SHARED_MODULES.md` 18장(재정의 금지, service_role 서버만, 멱등 키, 실패 숨기기 금지)과 `SECURITY_BASELINE.md`를 따른다 |
 | 외부 도구 우선 검토 | 분석(PostHog·GA4), 이메일 발송(Resend·SES), 알림톡(솔라피·NHN Cloud 등 비즈메시지 대행사)은 직접 만들지 않고 어댑터만 둔다 |
@@ -64,19 +73,30 @@ analytics는 점수가 높지만 직접 만드는 부분이 얇아(외부 도구
 
 ## 3. DB 배치 (제안)
 
-모듈러 통합 DB에서 코어(`0000~0099`)와 제품(`1000~2399`) 사이의 빈 범위 `0100~0999`를 공용 비즈니스 모듈에 줍니다. 모놀리스 제품은 `MONOLITH_CORE_LITE.sql`처럼 쓰는 모듈만 `public`으로 변환해 넣습니다(`DB_CONVENTIONS.md` 12장 규칙).
+모듈러 통합 DB에서 코어(`0000~0099`)와 제품(`1000~2599`) 사이의 빈 범위 `0100~0999`를 공용 비즈니스 모듈에 줍니다. 모놀리스 제품은 `MONOLITH_CORE_LITE.sql`처럼 쓰는 모듈만 `public`으로 변환해 넣습니다(`DB_CONVENTIONS.md` 12장 규칙).
 
 | 범위 | 스키마 | 모듈 |
 |---|---|---|
-| 0100~0199 | `notify` | 알림 |
-| 0200~0299 | `funnel` | 리드·폼·퍼널 |
-| 0300~0399 | `crm` | CRM |
-| 0400~0499 | `sync` | 외부 시트·연동 작업 |
-| 0500~0599 | `lms` | 강좌·수강 |
-| 0600~0699 | `booking` | 예약·자원 |
-| 0700~0799 | `support` | 문의함 |
-| 0800~0899 | `cms` | 콘텐츠 블록 |
-| 0900~0999 | `growth` | 플래그·실험·쿠폰·추천 |
+| 0100~0149 | `notify` | 알림 |
+| 0150~0199 | `compliance` | 법정 표기·동의·라벨(2026-10-15 추가) |
+| 0200~0249 | `funnel` | 리드·폼·퍼널 |
+| 0250~0299 | `media` | 미디어(추가) |
+| 0300~0349 | `crm` | CRM |
+| 0350~0399 | `community` | 댓글·신고(추가) |
+| 0400~0449 | `sync` | 외부 시트·연동 작업 |
+| 0450~0499 | `search` | 검색(추가) |
+| 0500~0549 | `lms` | 강좌·수강 |
+| 0550~0599 | `membership` | 최종 이용자·구독(추가) |
+| 0600~0649 | `booking` | 예약·자원 |
+| 0650~0699 | `ads` | 광고(추가, local-news R-9 해결) |
+| 0700~0749 | `support` | 문의함 |
+| 0750~0799 | `editorial` | 콘텐츠 워크플로(추가) |
+| 0800~0849 | `cms` | 콘텐츠 블록 |
+| 0850~0899 | (예비) | - |
+| 0900~0949 | `growth` | 플래그·실험·쿠폰·추천 |
+| 0950~0999 | (예비) | - |
+
+2026-10-15: 기존 100 단위 범위를 앞 50개로 줄이고 뒤 50개에 local-news 유래 모듈을 넣었다(조각 파일이 아직 없어 영향 없음, 제안 CMX-2). 의존 순서(media → editorial·community·ads)가 번호 순서와 맞는다.
 
 `erp`는 이미 admin-suite가 `1600`에서 쓰므로 공용 모듈 이름으로 쓰지 않습니다. chat-widget, analytics, ops-console은 새 스키마 없이 코어 표(`ai_*`, `audit_log` 등)를 씁니다. 모든 모듈 표는 `org_id`·`app_id`를 갖고 코어 RLS 헬퍼(`is_org_member` 등)를 씁니다.
 
@@ -202,11 +222,22 @@ Funnel Engine 패턴 B(예약·자원·ERP)도 (c)로 충분합니다. 회계·�
 |---|---|---|
 | ops-console | 13개 제품이 운영자 화면을 따로 만들면 크레딧 조정·환불·원고 열람 같은 위험한 권한이 제품마다 달라진다. flora 운영 콘솔(PB-06-062: `platform_admin`만, 조회마다 감사, 원가 필드는 운영자 API에만)을 기준으로 꺼낸다 | 사용자 조회, 조직·엔타이틀먼트, 크레딧 조정(감사 필수), 잡 재실행, 감사 열람 |
 | support | 폼 문의·챗봇 이관·이메일 문의가 한곳에 모여야 응답 누락이 없다 | 티켓, 담당자 배정, 상태, 메모, 답장(notify) |
-| privacy-center | 개인정보 열람·정정·삭제 요청, 마케팅 수신 동의 관리, 탈퇴 시 데이터 처리를 제품마다 다르게 만들면 법적 위험 | 동의 이력 화면, 탈퇴 요청 → `purge_organization` 흐름, 데이터 내보내기(JSON·CSV) |
+| privacy-center(→ compliance로 흡수, 2026-10-15) | 개인정보 열람·정정·삭제 요청, 마케팅 수신 동의 관리, 탈퇴 시 데이터 처리를 제품마다 다르게 만들면 법적 위험 | 동의 이력 화면, 탈퇴 요청 → `purge_organization` 흐름, 데이터 내보내기(JSON·CSV) |
 | growth | 가격·헤드라인 실험과 쿠폰은 매출에 바로 영향 | 기능 플래그, 쿠폰 코드(Toss 금액 차감), 추천 코드(코어 affiliate와 연결) |
 | cms | 공지·FAQ·블로그를 배포 없이 고치려면 필요. 챗봇 visitor 모드의 FAQ 원본으로도 쓴다 | 공지·FAQ·페이지, SEO 메타, 사이트맵 |
 | multi-tenant theming | 화이트라벨(고객사 로고·색에 맞춰 플랫폼을 바꾸는 맞춤 개발)은 이미 공용 기준으로 두기로 정했다. 위 모듈의 화면이 모두 디자인 토큰만 쓰면 그대로 적용된다 | 테마 토큰 세트, 조직별 로고·도메인 |
 | i18n | 4개 제품이 다국어를 언급 | 메시지 파일 규격, 날짜·통화 형식(낮은 우선순위) |
+
+### 4.11 local-news에서 꺼낸 모듈과 기존 모듈 보강 (2026-10-15)
+
+신규 7개는 모듈별 기획서가 정본이다: [compliance](common-modules/compliance.md), [media](common-modules/media.md), [editorial](common-modules/editorial.md), [community](common-modules/community.md), [search](common-modules/search.md), [membership](common-modules/membership.md), [ads](common-modules/ads.md). 기존 모듈 4개는 local-news 설계로 아래를 보강한다.
+
+| 기존 모듈 | local-news에서 더하는 것 | 출처 |
+|---|---|---|
+| notify | (1) 뉴스레터 목록·이중 동의 구독(확인 메일, 동의 증빙은 compliance `consents`) (2) 발송 회차(issue: 본문, 대상 목록, 예약, 발송 통계 오픈·클릭) (3) 웹 푸시 구독(VAPID, 브라우저별 endpoint, 만료 정리) (4) 한 번 클릭 수신 거부(`List-Unsubscribe`, `List-Unsubscribe-Post` 헤더) (5) 광고성 메일 제목 `(광고)` 표기·야간 발송 금지는 compliance `has_consent`·라벨로 판정. 표 추가: `notify.lists`, `notify.list_subscriptions`, `notify.issues`, `notify.push_subscriptions` | local-news M4(`newsletter_lists`, `newsletter_subscriptions`, `newsletter_issues`, `push_subscriptions`), 요청 R-8 |
+| analytics | 콘텐츠 이벤트 규격 추가: `content.entry.viewed`(서버 수집, editorial 조회 집계와 같은 봇 필터), `ads.creative.impressed`·`.clicked`(ads 집계와 별도로 외부 도구 전송은 선택), 지원사업·광고주 리포트용 내보내기(CSV) 패턴 | local-news M8 |
+| cms | (1) 블록 본문 JSON 규격(문단·소제목·사진(media id)·인용·표·임베드·구분선)을 editorial과 공유, 블록 렌더러는 cms가 소유 (2) SEO 생성기: 일반 사이트맵, RSS 2.0, JSON-LD(Article·BreadcrumbList·Organization), OG 이미지(media `og_1200x630`), canonical (3) 테넌트별 `robots.txt`와 AI 크롤러 허용·차단 설정 | local-news M1(블록 에디터)·M6(배포·SEO). 뉴스 사이트맵·NewsArticle·포털 전송은 local-news에 남김 |
+| tenancy(Multi-tenant Theming) | (1) **최종 이용자와 조직 멤버 분리**: 고객사의 고객은 membership `end_users`, 조직 멤버로 넣지 않는다 (2) 테넌트 커스텀 도메인 활성화 때 로그인 Redirect URL 개별 등록 잡(와일드카드는 플랫폼 소유 서브도메인만) (3) 해석 실패·비활성 도메인은 플랫폼 브랜드로 콘텐츠를 보이지 않는 오류 화면 (4) 공개 콘텐츠는 anon 키 서버 클라이언트로 읽어 ISR 캐시 공유 | local-news 02장 10절, 07장 6절, 요청 R-4 |
 
 ## 5. 실행 로드맵 (린 순서)
 
@@ -217,6 +248,8 @@ Funnel Engine 패턴 B(예약·자원·ERP)도 (c)로 충분합니다. 회계·�
 | 2 관리 모듈 | nomad-docs 개발과 함께 | crm v1, support v1, ops-console v1, chat-widget lead 모드 | 리드 → 거래 → 계약 흐름, 운영 콘솔 2개 제품 적용 |
 | 3 교육·예약 | study-note·arch-studio 개발과 함께 | lms v1, booking v1 | 강좌 판매 1건, 상담 예약 1건 |
 | 4 성장 | 출시 후 | growth, cms, privacy-center 확장, sheets 양방향 | 실험 1건 결과 |
+
+local-news 유래 7개의 차례: compliance·media는 Phase 1(1단계 제품 website-floria·study-note와 함께), editorial은 nomad-blog와, community·ads는 4단계 제품(microweb-studio, live-poll)과, search는 nomad-docs와, membership은 local-news 또는 먼저 채택한 제품과 함께 만든다(`docs/develop/_shared/modules/README.md` 3장).
 
 Phase 0은 지금 바로 할 수 있고, 그 결과가 Phase 1의 필드·템플릿·문구를 정합니다.
 
@@ -240,6 +273,7 @@ Phase 0은 지금 바로 할 수 있고, 그 결과가 Phase 1의 필드·템플
 | M-D4 | LMS 영상 호스팅 | Vimeo / Cloudflare Stream / Mux / YouTube 비공개 | lms 착수 때 비용·DRM 비교 |
 | M-D5 | 알림톡 대행사 | 솔라피 / NHN Cloud / 기타 | notify 착수 때 단가·API 비교(미확인) |
 | M-D6 | 시트 연동 범위 | `drive.file`(권고) / `spreadsheets` | `drive.file` |
+| M-D7 | local-news 유래 7개 관련 결정 | CMX-1(공용화 시점), CMX-2(번호 재배정), CMX-3(검색 엔진), CMX-4(최종 이용자 결제 수취) | `common-modules/README.md` 6장 |
 
 ## 8. 채택되면 반영할 곳
 

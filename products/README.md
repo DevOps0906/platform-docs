@@ -255,3 +255,7 @@ PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`)
 | 제품 | 06장 작업 | A(Mock) | B(Google) | C1 카카오 | C2 네이버 | RLS 스모크(모놀리스 / 모듈러) | 문서 경로 검사(참조 / 누락) |
 |---|---|---|---|---|---|---|---|
 | local-news | 56 | NW-06-004, 023 | NW-06-052(편집국), 053(독자) | NW-06-054(독자 P1, 편집국 P2 선택) | NW-06-055(같음) | 314/314 / 314/314 | 477 / 0 |
+
+## 공용모듈 7개 추가 (2026-10-15)
+
+local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용모듈로 정의했다: compliance(0150), media(0250), community(0350), search(0450), membership(0550), ads(0650), editorial(0750). 기획서 `_platform-core/common-modules/`(15개 제품 × 11개 모듈 적용표 포함), 개발서 `../develop/_shared/modules/`, 로드맵 `_platform-core/COMMON_MODULES_ROADMAP.md` 4.11절. 각 제품 문서는 고치지 않았고, 제품 개발 착수 때 적용표를 보고 06장에 반영한다.
