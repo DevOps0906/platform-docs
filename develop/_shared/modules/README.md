@@ -5,12 +5,12 @@
 | 모듈 | 개발서 | 기획서 | 첫 적용 제품(기준 구현) |
 |---|---|---|---|
 | compliance | [`compliance.md`](compliance.md) | `products/_platform-core/common-modules/compliance.md` | website-floria·study-note |
-| media | [`media.md`](media.md) | `products/_platform-core/common-modules/media.md` | website-floria |
+| media | [`media.md`](media.md) | `products/_platform-core/common-modules/media.md` | flora-publishing |
 | editorial | [`editorial.md`](editorial.md) | `products/_platform-core/common-modules/editorial.md` | nomad-blog |
 | community | [`community.md`](community.md) | `products/_platform-core/common-modules/community.md` | microweb-studio |
-| search | [`search.md`](search.md) | `products/_platform-core/common-modules/search.md` | nomad-docs |
+| search | [`search.md`](search.md) | `products/_platform-core/common-modules/search.md` | local-news |
 | membership | [`membership.md`](membership.md) | `products/_platform-core/common-modules/membership.md` | local-news(앞 제품이 채택하면 그 제품) |
-| ads | [`ads.md`](ads.md) | `products/_platform-core/common-modules/ads.md` | live-poll |
+| ads | [`ads.md`](ads.md) | `products/_platform-core/common-modules/ads.md` | local-news |
 
 ## 1. 먼저 정할 것 (사람 결정)
 
@@ -57,11 +57,11 @@ nomad-modules/
 | 차례 | 모듈 | 함께 개발하는 제품 | 끝나는 조건 |
 |---|---|---|---|
 | 1 | compliance v1(정책·동의·`kr_business` 프로필·라벨) | website-floria, study-note(1단계) | 두 제품 가입·푸터·마케팅 동의 동작, 계약 테스트 녹색 |
-| 2 | media v1 | website-floria(1단계), flora(2단계에서 두 번째 적용) | 업로드 → 사본 → 대체 텍스트 필수 동작 |
+| 2 | media v1 | flora-publishing(2단계), 두 번째 적용 nomad-docs 또는 nomad-commerce | 업로드 → 사본 → 대체 텍스트 필수 동작 |
 | 3 | editorial v1 | nomad-blog(3단계) | 초안 → 승인 → 예약 게시, AI 초안 사람 승인 강제 |
 | 4 | community v1 | microweb-studio(4단계, 방명록) | 비회원 글·신고·임시조치 |
-| 4 | ads v1 | live-poll(4단계, 스폰서 배너) | 슬롯 높이 예약, 노출·클릭 집계, 리포트 CSV |
-| 5 | search v1 | nomad-docs | 한국어 부분 일치, 공개 범위 판정 |
+| 6 | search v1 | local-news(6단계) 또는 먼저 채택한 제품 | 한국어 부분 일치, 공개 범위 판정 |
+| 6 | ads v1 | local-news(6단계) | 슬롯 높이 예약, 노출·클릭 집계, 리포트 CSV |
 | 6 | membership v1 | local-news(6단계) 또는 먼저 채택한 제품 | 고객사 가맹 키로 정기결제·후원·페이월 |
 | 6 | local-news 전환 | local-news | M1~M8을 공용 패키지로 바꿔도 E2E 녹색(`develop/local-news/modules/README.md`) |
 
@@ -115,12 +115,12 @@ nomad-modules/
 
 | 제품 | 주의 |
 |---|---|
-| website-floria | 방문자 로그인 없음 → compliance는 문의 폼 동의 기록(subject `email`)과 푸터만 |
+| website-floria | compliance 기준 구현. 방문자 로그인 없음 → 문의·뉴스레터 동의 기록(subject `email`)과 푸터. 이미지는 정적 자산이라 media 미적용 |
 | study-note | membership(유료 강좌)은 lms 모듈 착수 때 함께 판단 |
-| flora-publishing | media 두 번째 적용 제품(v1.0 출시 조건). 인쇄용 원본은 media 밖 |
+| flora-publishing | media 기준 구현(원고·표지 업로드). 인쇄용 산출물(PDF·ePub)은 media 밖 |
 | nomad-blog | editorial 기준 구현. 외부 플랫폼 발행(네이버·티스토리)은 제품 기능으로 editorial `published` 이벤트를 구독 |
 | microweb-studio | community 방명록은 비회원 + 비밀번호. 하객 개인정보 최소 수집 |
-| live-poll | ads는 발표 화면(OBS 오버레이)용 슬롯. 실시간 Q&A는 community 검수 규칙만 쓰고 전달은 제품 실시간 채널 |
+| live-poll | 지금 기획에 광고 기능이 없어 ads는 후보만. 실시간 Q&A는 community 금칙어 검사만 쓰고 전달·검수 화면은 제품 것 |
 | toon-factory | 유료 회차를 하면 membership `access_rules`(target `toon.episode`) |
 | admin-suite | hms는 의료정보 격리로 공용모듈 표에 환자 데이터를 넣지 않음(compliance 동의 기록만) |
 | arch-studio | 설치형. 라이선스 서버 쪽에서 compliance(약관·동의)만 |

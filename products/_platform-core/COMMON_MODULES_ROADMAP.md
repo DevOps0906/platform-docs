@@ -22,9 +22,9 @@
 | 14 | **media** 미디어 라이브러리 | 업로드·크기별 사본·대체 텍스트·저작권·사용처 | 이미지를 쓰는 제품 9개 이상 | 1차 |
 | 15 | **editorial** 콘텐츠 워크플로 | 초안 → 검토 → 승인 → 예약 게시, 수정 이력, AI 초안 사람 승인 | nomad-blog, local-news, flora·toon·website-floria 후보 | 3차 |
 | 16 | **community** 댓글·방명록 | 댓글·방명록·신고·임시조치·금칙어 | microweb-studio, local-news, 후보 4개 | 4차 |
-| 17 | **search** 한국어 검색 | 색인·필터·공개 범위 | nomad-docs, local-news, 후보 4개 | 4차 |
+| 17 | **search** 한국어 검색 | 색인·필터·공개 범위 | local-news, nomad-docs 등 후보 5개 | 5차 |
 | 18 | **membership** 최종 이용자·구독 | 고객사의 고객(독자·수강생), 등급, 정기 구독·후원, 페이월 | local-news, flora·study-note·toon 후보 | 5차 |
-| 19 | **ads** 광고 | 슬롯·캠페인·소재 검수·노출 집계·외부망 태그 | local-news, live-poll·toon·nomad-blog 후보 | 4차 |
+| 19 | **ads** 광고 | 슬롯·캠페인·소재 검수·노출 집계·외부망 태그 | local-news, live-poll·toon·nomad-blog 후보 | 5차 |
 | - | ERP | 범용 ERP 모듈은 만들지 않음(4.8절). admin-suite ERP를 제품으로 쓰고, 필요한 조각은 booking + 결제(코어)로 | - | 보류 |
 
 13~19번은 local-news 기획에서 꺼낸 모듈이다(2026-10-15 추가, 대표님 승인 범위: 7개 전부, 각 제품 문서는 적용표만). 기획서는 `common-modules/` 폴더, 개발서는 `docs/develop/_shared/modules/`, 15개 제품 적용표는 `common-modules/README.md` 1장.
@@ -249,7 +249,7 @@ Funnel Engine 패턴 B(예약·자원·ERP)도 (c)로 충분합니다. 회계·�
 | 3 교육·예약 | study-note·arch-studio 개발과 함께 | lms v1, booking v1 | 강좌 판매 1건, 상담 예약 1건 |
 | 4 성장 | 출시 후 | growth, cms, privacy-center 확장, sheets 양방향 | 실험 1건 결과 |
 
-local-news 유래 7개의 차례: compliance·media는 Phase 1(1단계 제품 website-floria·study-note와 함께), editorial은 nomad-blog와, community·ads는 4단계 제품(microweb-studio, live-poll)과, search는 nomad-docs와, membership은 local-news 또는 먼저 채택한 제품과 함께 만든다(`docs/develop/_shared/modules/README.md` 3장).
+local-news 유래 7개의 차례: compliance는 Phase 1(website-floria·study-note와 함께), media는 flora-publishing과, editorial은 nomad-blog와, community는 microweb-studio와, search·membership·ads는 local-news(또는 먼저 채택한 제품)와 함께 만든다(`docs/develop/_shared/modules/README.md` 3장).
 
 Phase 0은 지금 바로 할 수 있고, 그 결과가 Phase 1의 필드·템플릿·문구를 정합니다.
 

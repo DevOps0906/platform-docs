@@ -259,3 +259,5 @@ PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`)
 ## 공용모듈 7개 추가 (2026-10-15)
 
 local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용모듈로 정의했다: compliance(0150), media(0250), community(0350), search(0450), membership(0550), ads(0650), editorial(0750). 기획서 `_platform-core/common-modules/`(15개 제품 × 11개 모듈 적용표 포함), 개발서 `../develop/_shared/modules/`, 로드맵 `_platform-core/COMMON_MODULES_ROADMAP.md` 4.11절. 각 제품 문서는 고치지 않았고, 제품 개발 착수 때 적용표를 보고 06장에 반영한다.
+
+제품별로 공용모듈을 적용하는 개발서는 `../develop_V2/<제품>/<제품>_develop_v2.md`(2026-10-15, 첫 적용 제품 수정: media → flora-publishing, search·ads → local-news).
