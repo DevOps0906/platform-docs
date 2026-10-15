@@ -35,6 +35,7 @@ nomad-modules/
 │   │   ├── src/schema.ts            zod 입력 검증, 공용 타입
 │   │   ├── sql/<번호>_<스키마>.sql   모듈러 통합 조각(정본)
 │   │   ├── sql/to_monolith.py       단독 프로젝트용 public 변환(local-news 변환 스크립트와 같은 방식)
+│   │   ├── sql/monolith/<번호>_<스키마>.sql   단독(모놀리스) 프로젝트용 변환본. 제품은 이 파일을 복사한다(develop_V2/_shared/V2_RULES.md 3장)
 │   │   ├── sql/tests/rls_smoke.sql  RLS 스모크
 │   │   ├── test/contract/           모든 제품이 그대로 돌리는 계약 테스트
 │   │   └── CHANGELOG.md             버전마다 "제품이 할 일"

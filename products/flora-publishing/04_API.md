@@ -30,7 +30,7 @@
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 코어 RPC | 오류 |
 |---|---|---|---|---|---|---|
 | `GET /api/session` | 로그인 | - | `SessionContext` | 0 | `session_context` | 401 |
-| `POST /api/books` | member+ / F | `{ title?, source:'wizard'|'seed', seed_key? }` | `{ book }` | 0 | - | 409 `PB001`(쿼터) |
+| `POST /api/books` | member+ / F | `{ title?, source:'wizard'\|'seed', seed_key? }` | `{ book }` | 0 | - | 409 `PB001`(쿼터) |
 | `GET /api/books` | 멤버 / F | `?status&trash=bool&cursor` | `{ items, next }` | 0 | - | - |
 | `PATCH /api/books/[id]` | member+ / F | 콘텐츠 컬럼 부분집합(`step_state`, `current_step`, `format_key`, `layout_settings`, `tone`, `plan_brief`, `book_info`, `cover_image_id`, `status`) | `{ book }` | 0 | - | 409 `22023`, `PB006`, `PB011` |
 | `DELETE /api/books/[id]` | owner/admin / F | - | `{ ok }`(soft delete) | 0 | `write_audit` | 404 |
@@ -39,8 +39,8 @@
 | `POST /api/books/[id]/plans` | member+ / F | `{ request_id, target_reader?, emphasis_tone? }` | `{ plans: [3] }` | 2 | 같음 | 402, 502 |
 | `POST /api/books/[id]/toc` | member+ / F | `{ request_id, chapters 1..20, sections_per_chapter 1..10, paragraphs 1..5 }` | `{ tocs: [3] }`(저장 안 함) | 2 | 같음 | 402, 403 `plan_limit`(설정값이 플랜 초과) |
 | `PUT /api/books/[id]/structure` | member+ / F | `{ chapters: [{ id?, title, sections: [{ id?, title, paragraph_target }] }] }` | `{ chapters }` | 0 | - | 409 `PB002~PB004`, `PB005`(생성 중 섹션 삭제) |
-| `POST /api/books/[id]/sections/[sid]/generate` | member+ / F(quality는 B) | `{ request_id, mode:'fast'|'quality', overwrite?:bool }` | SSE `delta`, `done{ section }`. 본문이 있는 소제목에 `overwrite=true`면 저장하지 않고 `done{ suggestion }`(Diff, 2026-10-14) | 1/2 | 같음 | 402, 403, 409 `PB005`, 409 `generation_active` |
-| `POST /api/books/[id]/assist` | member+ / B `writing_assist` | `{ request_id, section_id, action:'continue'|'expand'|'refine'|'custom', selection_text ≤ 2000, instruction? ≤ 500 }` | SSE, `done{ suggestion }`(저장 안 함, Diff 적용은 클라이언트가 PATCH) | 1 | 같음 | 402, 403, 422 |
+| `POST /api/books/[id]/sections/[sid]/generate` | member+ / F(quality는 B) | `{ request_id, mode:'fast'\|'quality', overwrite?:bool }` | SSE `delta`, `done{ section }`. 본문이 있는 소제목에 `overwrite=true`면 저장하지 않고 `done{ suggestion }`(Diff, 2026-10-14) | 1/2 | 같음 | 402, 403, 409 `PB005`, 409 `generation_active` |
+| `POST /api/books/[id]/assist` | member+ / B `writing_assist` | `{ request_id, section_id, action:'continue'\|'expand'\|'refine'\|'custom', selection_text ≤ 2000, instruction? ≤ 500 }` | SSE, `done{ suggestion }`(저장 안 함, Diff 적용은 클라이언트가 PATCH) | 1 | 같음 | 402, 403, 422 |
 | `PATCH /api/books/[id]/sections/[sid]` | member+ / F | `{ title?, body_html?, paragraph_target?, revision }` | `{ section }` | 0 | - | 409 `stale_revision`, `PB005` |
 | `POST /api/books/[id]/write-all` | member+ / B `write_all` | `{ request_id, mode, overwrite: bool, section_ids?, chapter_ids? }`(`overwrite`는 본문이 있는 소제목도 대상에 넣되 결과는 제안으로만 돌려준다) | `{ run, estimated_credits }` | 소제목별 2/4(그래프 초안, 01장 4.6절. 챕터 단위 자식 잡) | `enqueue_job` | 402(예상치 부족), 409 `generation_active` |
 | `POST /api/books/[id]/refine-all` | member+ / B `writing_assist` | `{ request_id, mode }` | `{ run, chunks }` | 청크별 | `enqueue_job` | 402, 409 |
@@ -48,7 +48,7 @@
 | `POST /api/books/[id]/covers` | member+ / F | `{ request_id, style, bg_color?, font_style? }` | `{ covers: [3], job_id }` | 6 | `consume_credits`, `enqueue_job` | 402 |
 | `POST /api/books/[id]/metadata` | member+ / F | `{ request_id }` | `{ book_info }`(저장 전 제안) | 1 | `consume/refund_credits` | 409 `manuscript_empty` |
 | `GET /api/books/[id]/preview` | 멤버 / F | `?pages=1..10` | `text/html`(sandbox iframe용) | 0 | - | 429 |
-| `POST /api/books/[id]/exports` | member+ / F | `{ request_id, format:'pdf'|'epub', options:{ toc:bool, running_header:bool, ai_notice:bool } }` | `{ export, reused: bool }` | PDF 2 / ePub 1 / 재사용 0 | `consume_credits`, `enqueue_job` | 402, 403 `plan_limit`(월 한도), 409 `manuscript_empty` |
+| `POST /api/books/[id]/exports` | member+ / F | `{ request_id, format:'pdf'\|'epub', options:{ toc:bool, running_header:bool, ai_notice:bool } }` | `{ export, reused: bool }` | PDF 2 / ePub 1 / 재사용 0 | `consume_credits`, `enqueue_job` | 402, 403 `plan_limit`(월 한도), 409 `manuscript_empty` |
 | `GET /api/exports/[id]/download` | 멤버 / F | - | 302 → 서명 URL(7일) | 0 | - | 404, 410 `expired` |
 | `POST /api/uploads` | member+ / B `upload` | `{ file_name, ext, bytes ≤ 20MB, rights_confirmed: true }` | `{ upload_id, signed_upload_url, token }` | 0 | - | 413, 415, 403 |
 | `POST /api/uploads/[id]/complete` | member+ / B | - | `{ upload, job_id }` | 0 | `enqueue_job` | 413(실제 크기), 415(매직바이트) |
@@ -56,7 +56,7 @@
 | `POST /api/seeds/[seed_key]/duplicate` | member+ / F | - | `{ book }` | 0 | - | 409 `PB001` |
 | `POST /api/personas/blend` | member+ / B `persona_blend` | `{ request_id, name, base_persona_ids ≤ 3, sample_text ≤ 5000 }` | `{ persona }` | 3 | `consume/refund_credits` | 402, 403 |
 | `PATCH /api/settings` | 본인 / F | `{ theme_key?, favorite_persona_ids?, llm_mode? }` | `{ settings }` | 0 | - | 409 `PB008` |
-| `POST /api/billing/orders` | owner/admin | `{ kind:'credit_pack'|'subscription', code }` | `{ orderId, amountKrw, customerKey, expiresAt }` | 0 | 서버 `payment_orders` INSERT | 403, 404 |
+| `POST /api/billing/orders` | owner/admin | `{ kind:'credit_pack'\|'subscription', code }` | `{ orderId, amountKrw, customerKey, expiresAt }` | 0 | 서버 `payment_orders` INSERT | 403, 404 |
 | `POST /api/billing/confirm` | owner/admin | `{ paymentKey, orderId, amount }` | `{ payment, balance }` | 지급 | Toss confirm → `confirm_payment_order` | 409 `PM001`(+ Toss 취소 요청), `PM409`, `PM410` |
 | `POST /api/billing/billing-key` | owner/admin | `{ authKey }` | `{ card_masked, subscription }` | 0 | 빌링키 발급 → 첫 주문 → `confirm_payment_order` | 402 결제 실패 |
 | `POST /api/billing/subscription/cancel` | owner/admin | - | `{ subscription }`(해지 예약) | 0 | `apply_subscription_transition` | 409 `SB001` |
@@ -294,10 +294,10 @@ AI·음성 코어 RPC 인용(제품 AI RPC는 새로 만들지 않는다): `set_
 | `GET /api/agents` | 멤버 / F | - | `{ agents: [{ key, name, description, actions: [{ key, label, unit_credits, feature, locked, approval }] }] }`(플랜 잠금은 서버 features로 계산) | 0 | - | - |
 | `POST /api/agent-tasks` | member+ / 동작별 | `{ request_id, agent, action, book_id?, scope?: { chapter_ids?, section_ids?, selection? }, options?: { mode?, overwrite?, style?, format? } }` | 동기 동작: 기존 응답 + `{ task }`. 비동기: `{ task, job_id?, run_id? }`. 스트리밍 동작(`section_generate`, `assist_*`, `examples`, `style_check`, `source_check`)은 이 경로로 시작하지 않고 기존 SSE 경로를 쓴다(같은 행이 생긴다) | 레지스트리 단가(01장 4.3·4.6절) | 기존 처리와 같음 | 404 `agent_unknown`, 403 `agent_unavailable`·`plan_required`, 402, 409 `generation_active` |
 | `GET /api/agent-tasks` | 멤버 / F | `?book_id&agent&status&approval=pending&cursor&limit≤50` | `{ items: [task], next }`(최근순) | 0 | - | - |
-| `GET /api/agent-tasks/[id]` | 멤버 / F | - | `{ task, timeline: [{ at, kind: 'queued'|'started'|'step'|'finished'|'decided', label, detail? }], review?: { items: [{ section_id, kind: 'suggestion'|'ai_draft'|'note', title, before_html?, after_html?, note? }] }, credits: { estimated, used, refunded } }`. `review`는 검수 대기일 때만, 본문은 같은 조직 멤버에게만(RLS 세션으로 읽는다) | 0 | - | 404 |
+| `GET /api/agent-tasks/[id]` | 멤버 / F | - | `{ task, timeline: [{ at, kind: 'queued'\|'started'\|'step'\|'finished'\|'decided', label, detail? }], review?: { items: [{ section_id, kind: 'suggestion'\|'ai_draft'\|'note', title, before_html?, after_html?, note? }] }, credits: { estimated, used, refunded } }`. `review`는 검수 대기일 때만, 본문은 같은 조직 멤버에게만(RLS 세션으로 읽는다) | 0 | - | 404 |
 | `POST /api/agent-tasks/[id]/cancel` | member+ / F | - | `{ task }` | 0(대기분 환불) | `request_generation_cancel`(실행 단위 작업) 또는 `cancel_job` | 409 `PB007`, 409(동기 작업은 취소 없음) |
 | `POST /api/agent-tasks/[id]/retry` | member+ / 동작별 | `{ request_id }` | `{ task }`(새 행, `retry_of`, `attempt+1`, 범위는 02장 10.4절: 실패분, 취소면 남은 것까지) | 재시도 범위만 새로 차감 | 기존 처리 | 409 `PB013`, 409 `retry_exists`, 409 `refund_missing`, 402 |
-| `POST /api/agent-tasks/[id]/decision` | member+ / F | `{ decision: 'approved'|'partially_applied'|'rejected', applied_section_ids?: uuid[], approved_draft_ids?: uuid[], rejected_draft_ids?: uuid[], note? ≤ 500 }`. 제안 반영은 클라이언트가 먼저 `PATCH sections`(revision)로 하고 서버가 `applied_section_ids`의 revision 상승을 확인한다. 빈 소제목 AI 초안은 서버가 승인분 `gen_status='edited'`, 거부분 본문 비움·`empty`로 바꾼다(`generated`인 것만). 그 뒤 결정 기록 | `{ task }` | 0 | `publishing.decide_agent_task` | 409 `PB012`, 409 `stale_revision`, 422(partially_applied인데 목록 없음) |
+| `POST /api/agent-tasks/[id]/decision` | member+ / F | `{ decision: 'approved'\|'partially_applied'\|'rejected', applied_section_ids?: uuid[], approved_draft_ids?: uuid[], rejected_draft_ids?: uuid[], note? ≤ 500 }`. 제안 반영은 클라이언트가 먼저 `PATCH sections`(revision)로 하고 서버가 `applied_section_ids`의 revision 상승을 확인한다. 빈 소제목 AI 초안은 서버가 승인분 `gen_status='edited'`, 거부분 본문 비움·`empty`로 바꾼다(`generated`인 것만). 그 뒤 결정 기록 | `{ task }` | 0 | `publishing.decide_agent_task` | 409 `PB012`, 409 `stale_revision`, 422(partially_applied인데 목록 없음) |
 
 ### 9.2 내부
 
@@ -314,8 +314,8 @@ AI·음성 코어 RPC 인용(제품 AI RPC는 새로 만들지 않는다): `set_
 | `GET /api/admin/trace/[id]` | `id` = agent_task id 또는 job id | `{ request, jobs, ai_runs: [{ graph, status, steps }], usage: [{ provider, model, calls, cost_usd_micros, fallback }], results: { saved, suggested, failed }, ledger: [{ entry_type, amount, refund_of }] }`(본문·프롬프트·토큰 값 없음) | 404 |
 | `POST /api/admin/tasks/[id]/retry` | `{ request_id, reason ≥ 10자 }` | `{ task }`(`origin='admin_retry'`) | 409 `refund_missing`, `retry_exists`, `PB013` |
 | `GET /api/admin/agents` | `?from&to` | `{ rows: [{ agent, action, runs, success_rate, p95_ms, top_errors: [{ code, count }] }] }` | - |
-| `GET /api/admin/costs` | `?from&to&group_by=model|agent|org|feature` | `{ rows: [{ key, calls, cost_usd_micros, cost_krw, credits_consumed, margin }] }`. `group_by=agent`는 작업 없는 채팅·음성을 `conversational` 행으로 둔다(합계 = 전체 `ai_usage`) | - |
-| `GET /api/admin/users`, `POST /api/admin/users/[id]/status` | `{ status: 'active'|'suspended', reason ≥ 10자 }` | `{ profile }` + 감사 | 409(자기 자신 정지) |
+| `GET /api/admin/costs` | `?from&to&group_by=model\|agent\|org\|feature` | `{ rows: [{ key, calls, cost_usd_micros, cost_krw, credits_consumed, margin }] }`. `group_by=agent`는 작업 없는 채팅·음성을 `conversational` 행으로 둔다(합계 = 전체 `ai_usage`) | - |
+| `GET /api/admin/users`, `POST /api/admin/users/[id]/status` | `{ status: 'active'\|'suspended', reason ≥ 10자 }` | `{ profile }` + 감사 | 409(자기 자신 정지) |
 | `GET /api/admin/books` | `?status&org_id&export_failed=bool` | 본문 제외 컬럼 | - |
 | `POST /api/admin/books/[id]/manuscript-view` | `{ reason ≥ 10자 }` | 이용자가 허용한 경우만 10분 서명 미리보기 URL + 감사 `admin.manuscript_view` | 403 `manuscript_access_denied` |
 | `GET /api/admin/settings` | - | 라우팅 기본값, 플랜 features(읽기 전용) | - |

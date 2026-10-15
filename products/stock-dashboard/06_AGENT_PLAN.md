@@ -139,12 +139,12 @@
 | R-3 | `confirm_payment_order` 금액 불일치 시 주문 `failed` 기록(알려진 결함, `DB_CONVENTIONS.md:296`) | 해결(2026-10-13 코어 반영 완료): `fail_payment_order` 추가 | PM001 시 별도 호출 후 취소·감사·알림(04장 5절) |
 | R-4 | `adjust_credits`(`CORE_SPEC.md:237`) | Phase 2 환불 시 미사용 크레딧 조정 | Phase 2 전까지 불필요 |
 | R-5 | 공용 패키지 `packages/core-auth`의 vault가 `provider` 접두사 규칙(`broker:<broker>:<env>`)을 허용하는지 확인 | 연결별 자격증명 구분 | 제품 규칙으로 사용 |
-| R-6 | `_supabase-modular/seed.sql` | stock beta·pro `features`에 `ai_chat`, `ai_chat_turns_per_day`, `ai_research_per_day`, `voice_chat`, `briefing` 추가 | seed가 1900보다 나중에 실행되면 14.3절 병합 UPDATE가 덮어써진다 | 서버가 누락 키를 기본값으로 읽는다(01_PRD 4.3절) |
-| R-7 | ai-service | (a) OpenAI 호환 `/v1/chat/completions`의 `model` 값을 기능 키로 해석 (b) 위키 페이지 사람 편집 저장 엔드포인트(`AI_ARCHITECTURE.md` 8장 목록에 없음) | Dify 분류 노드 라우팅(`dify.aux`)과 관리자 위키 편집 | (a) Dify에 기능별 모델 이름을 따로 등록 (b) `app/ai/products/stock/wiki_config.py`에 임시 구현 |
-| R-8 | ai-service 라우터 | 제공자를 지정해 호출하는 옵션(Phase 2 3사 비교용). 동의·강제 오픈소스 필터는 유지 | 체인 순서 대체로는 같은 입력을 3개 모델에 보낼 수 없다 | Phase 2 착수 때까지 불필요 |
-| R-9 | `_design-guide` 3D 키트 | 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/products/_design-guide/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
-| R-10 | 공용 Dify | `stock-chat` 앱 생성, 내부 키 환경 변수, 외부 지식 `stock-wiki` 등록, 로그 보존 30일 | 공용 인프라는 코어 소유 | 없음(필수). 장애 시 `/tools/answer-direct` |
-| R-11 | core-voice | 기능별 대체 금지 옵션(`feature='briefing'`)과 "시작 제공자 고정" 동작을 `VoiceAdapter` 계약에 명시 | `VOICE_ARCHITECTURE.md` 3장 대체 금지를 코드 계약으로 강제 | 브리핑 Route Handler가 체인 첫 제공자 하나만 넘겨 호출 |
+| R-6 | `_supabase-modular/seed.sql`: stock beta·pro `features`에 `ai_chat`, `ai_chat_turns_per_day`, `ai_research_per_day`, `voice_chat`, `briefing` 추가 | seed가 1900보다 나중에 실행되면 14.3절 병합 UPDATE가 덮어써진다 | 서버가 누락 키를 기본값으로 읽는다(01_PRD 4.3절) |
+| R-7 | ai-service: (a) OpenAI 호환 `/v1/chat/completions`의 `model` 값을 기능 키로 해석 (b) 위키 페이지 사람 편집 저장 엔드포인트(`AI_ARCHITECTURE.md` 8장 목록에 없음) | Dify 분류 노드 라우팅(`dify.aux`)과 관리자 위키 편집 | (a) Dify에 기능별 모델 이름을 따로 등록 (b) `app/ai/products/stock/wiki_config.py`에 임시 구현 |
+| R-8 | ai-service 라우터: 제공자를 지정해 호출하는 옵션(Phase 2 3사 비교용). 동의·강제 오픈소스 필터는 유지 | 체인 순서 대체로는 같은 입력을 3개 모델에 보낼 수 없다 | Phase 2 착수 때까지 불필요 |
+| R-9 | `_design-guide` 3D 키트: 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/products/_design-guide/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
+| R-10 | 공용 Dify: `stock-chat` 앱 생성, 내부 키 환경 변수, 외부 지식 `stock-wiki` 등록, 로그 보존 30일 | 공용 인프라는 코어 소유 | 없음(필수). 장애 시 `/tools/answer-direct` |
+| R-11 | core-voice: 기능별 대체 금지 옵션(`feature='briefing'`)과 "시작 제공자 고정" 동작을 `VoiceAdapter` 계약에 명시 | `VOICE_ARCHITECTURE.md` 3장 대체 금지를 코드 계약으로 강제 | 브리핑 Route Handler가 체인 첫 제공자 하나만 넘겨 호출 |
 
 ## 7. 완료 정의
 

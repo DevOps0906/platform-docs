@@ -206,10 +206,10 @@
 | 웹 앱(Next.js) | Vercel. 공개 페이지는 정적 생성(SSG), 콘솔과 API는 서버 | 브라우저 → Vercel. service_role 키는 Vercel 서버 환경변수에만 있다 |
 | DB/Auth | Supabase 프로젝트. 모듈러는 통합 프로젝트, 모놀리스는 전용 프로젝트 | 브라우저는 anon 키로 콘솔(로그인 사용자)만 접근. 공개 쓰기는 항상 Route Handler 경유 |
 | 알림 워커 | Railway 소형 프로세스(제안). 또는 Vercel Cron 대신 Supabase 스케줄. `CRON_SECRET` 공개 라우트는 금지. 주 1회 위키 lint 호출도 맡는다 | 워커 → Supabase(service_role), 워커 → 메일 사업자, 워커 → Next.js `/api/internal/wiki-lint`(워커 키). 워커는 LLM 키가 없다 |
-| `apps/api`(FastAPI AI 서비스) | Railway | 공개 HTTPS. 서명 토큰 또는 내부 키가 없으면 401(Dify HTTP 노드와 Vercel이 호출하므로 private network만으로는 부족). 다음 호출자: Next.js(서명 토큰), Dify(내부 키) | Supabase(service_role), 상용 LLM API, 공용 GPU 서버(`oss-llm`, `oss-embed`) |
-| Dify(공용) | 운영사 자체 호스팅(`D:\WorkSpace\DEV\platform-dify\`, 제안) | 콘솔은 운영자만(2단계 인증) | Next.js → Dify Chat API(앱 키), Dify → FastAPI `/tools/*`, `/v1/chat/completions`(내부 키) |
-| 공용 GPU 서버 | 운영사 자체 호스팅(`oss-llm` vLLM, `oss-embed`, `oss-voice`) | 비공개(서명 토큰·내부 키) | FastAPI(LLM·임베딩), Next.js(음성) |
-| ElevenLabs | 외부 SaaS(국외) | - | Next.js 서버만(TS SDK). 운영자 조직이 국외 이전에 동의한 경우에만 호출 |
+| `apps/api`(FastAPI AI 서비스) | Railway | 공개 HTTPS. 서명 토큰 또는 내부 키가 없으면 401(Dify HTTP 노드와 Vercel이 호출하므로 private network만으로는 부족). 다음 호출자: Next.js(서명 토큰), Dify(내부 키). 연결: Supabase(service_role), 상용 LLM API, 공용 GPU 서버(`oss-llm`, `oss-embed`) |
+| Dify(공용) | 운영사 자체 호스팅(`D:\WorkSpace\DEV\platform-dify\`, 제안) | 콘솔은 운영자만(2단계 인증). 연결: Next.js → Dify Chat API(앱 키), Dify → FastAPI `/tools/*`, `/v1/chat/completions`(내부 키) |
+| 공용 GPU 서버 | 운영사 자체 호스팅(`oss-llm` vLLM, `oss-embed`, `oss-voice`) | 비공개(서명 토큰·내부 키). 연결: FastAPI(LLM·임베딩), Next.js(음성) |
+| ElevenLabs | 외부 SaaS(국외) | -. 연결: Next.js 서버만(TS SDK). 운영자 조직이 국외 이전에 동의한 경우에만 호출 |
 | 메일 | 사업자 미정(D-6) | 서버에서만 호출 |
 | CAPTCHA | Turnstile(제안, 미확인) | 서버가 `siteverify`로 검증. 문의·구독 제출과 **상담 시작(대화 생성)**에 쓴다 |
 | 렌더 서비스 | 없음(WeasyPrint 등 불필요) | - |

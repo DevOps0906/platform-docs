@@ -277,8 +277,8 @@ OAuth state 위조 결함(`docs/products/00_MERGE_ANALYSIS.md:526`, `:614`)의 �
 | 사용자 읽기 | `core.credential_summaries` 뷰(암호문 제외, 멤버십 필터) | `:634-639` |
 | 사용자 쓰기 | `revoke_credential(id)`만(owner/admin). 암호문을 비우고 revoked로 바꾼다 | `:642-661` |
 | 서버 쓰기 | service_role이 INSERT/UPDATE. 토큰 갱신 시 `last_refreshed_at`, 실패 시 `status='error'`, `last_error` | 표 컬럼 |
-| 키 교체 | 제안: 새 버전 키를 환경변수에 추가 → 워커가 `key_version < 현재`인 행을 복호화·재암호화 → 구 키 제거. 복호화 실패 행은 `status='error'` |
-| 대상 | SNS OAuth 토큰, 마켓 API 키, Toss 빌링키(별도 표), 제휴 제공자 키, 증권사 키(stock-dashboard) |
+| 키 교체 | 제안: 새 버전 키를 환경변수에 추가 → 워커가 `key_version < 현재`인 행을 복호화·재암호화 → 구 키 제거. 복호화 실패 행은 `status='error'` | - |
+| 대상 | SNS OAuth 토큰, 마켓 API 키, Toss 빌링키(별도 표), 제휴 제공자 키, 증권사 키(stock-dashboard) | - |
 
 ## 9. 잡과 워커
 
@@ -319,8 +319,8 @@ OAuth state 위조 결함(`docs/products/00_MERGE_ANALYSIS.md:526`, `:614`)의 �
 | 버킷 | `org-files`(비공개 50MB), `exports`(비공개 200MB, 서명 URL), `public-assets`(공개 읽기, 10MB 이미지만) | `:322-327` |
 | 정책 | `org-files`: 멤버 읽기/쓰기, 삭제는 업로더 본인 또는 owner/admin. `exports`: 서버만 쓰고 멤버는 읽기. `public-assets`: 누구나 읽기, 멤버는 자기 조직 폴더에만 쓰기 | `:330-362` |
 | 폴더 판정 | `core.storage_org_id(name)`이 첫 세그먼트를 uuid로 파싱, 아니면 null → 정책 실패 | `:308-320` |
-| 서명 URL | `exports`는 서명 URL로만 내려 준다. 유효기간 7일(주석 `:306`) |
-| 보존 | 원본 영상은 작업 완료 후 24시간 내 삭제(`NOMAD Shorts Maker/PRD.md` 16장). 다른 제품의 보존 기간은 01_PRD에서 정한다 |
+| 서명 URL | `exports`는 서명 URL로만 내려 준다. 유효기간 7일 | 주석 `:306` |
+| 보존 | 원본 영상은 작업 완료 후 24시간 내 삭제(`NOMAD Shorts Maker/PRD.md` 16장). 다른 제품의 보존 기간은 01_PRD에서 정한다 | - |
 
 ## 11. 감사 로그
 
@@ -332,16 +332,16 @@ OAuth state 위조 결함(`docs/products/00_MERGE_ANALYSIS.md:526`, `:614`)의 �
 | 읽기 | owner/admin과 platform_admin만 | `:771-773` |
 | 기록 대상(최소) | 멤버 초대/역할 변경/제거/소유권 이전, 프로필 승인, 구독 전이, 자격증명 revoke, 잡 취소, 대가성 문구 편집, 브랜드커넥트 위험 동의. 추가로 제품은 결제 환불, 플랜 수동 변경(manual entitlement), 데이터 내보내기, 관리자 화면의 모든 쓰기를 기록한다 | 코어 함수 내부 호출 + 제안 |
 | action 이름 | `<entity>.<verb>` 소문자 점 표기(`org_member.invite`, `subscription.canceled`) | 코어 함수 사용 예 |
-| 보존 | 제안: 2년. hms는 admin-suite 01_PRD에서 별도 결정(`docs/products/_supabase-modular/README.md:89`) |
+| 보존 | 제안: 2년. hms는 admin-suite 01_PRD에서 별도 결정 | `docs/products/_supabase-modular/README.md:89` |
 
 ## 12. 레이트 리밋
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
 | 함수 | `core.rate_limit_hit(key, limit, window_seconds) returns (allowed, remaining, reset_at)`. 고정 윈도우, 호출 1회 = 1히트 | `migrations/0004_core_security.sql:678-699` |
-| 키 규약 | `<app>:<route>:<org_id 또는 ip_hash>` (제안) |
-| 적용 대상 | 생성 API, 로그인/가입, 웹훅 수신, `/r/[code]` 리다이렉트, 비회원 데모(`docs/products/00_MERGE_ANALYSIS.md:379`, `:432`) |
-| Redis가 있는 제품 | video처럼 Upstash Redis를 쓰는 제품은 Redis 카운터를 써도 된다. 키 규약은 같게 한다 |
+| 키 규약 | `<app>:<route>:<org_id 또는 ip_hash>` (제안) | - |
+| 적용 대상 | 생성 API, 로그인/가입, 웹훅 수신, `/r/[code]` 리다이렉트, 비회원 데모 | `docs/products/00_MERGE_ANALYSIS.md:379`, `:432` |
+| Redis가 있는 제품 | video처럼 Upstash Redis를 쓰는 제품은 Redis 카운터를 써도 된다. 키 규약은 같게 한다 | - |
 | 정리 | `purge_rate_limit_buckets()` 매일 | `:701-716` |
 
 ## 13. 제휴마케팅(affiliate) 모듈
@@ -376,7 +376,7 @@ OAuth state 위조 결함(`docs/products/00_MERGE_ANALYSIS.md:526`, `:614`)의 �
 | 대가성 문구 위치 | 공정위 "추천·보증 등에 관한 표시·광고 심사지침"에 따라 제목 또는 본문 시작 부분에 둔다. blog는 글 상단(blog_top), video는 설명란 첫 줄(video_description)과 고정 댓글(video_pinned_comment). 네이버 클립(`naver_clip`)은 설명란·고정 댓글 구조가 확인되지 않아, video 앱이 `video_description` 문구를 **제목 앞머리 + 첫 번째 해시태그(#광고 등)**로 렌더한다(영상은 제목·영상 내·첫 해시태그 표시 원칙). placement 값은 늘리지 않는다 | 확정 결정 12·18, `seed.sql:114-115` |
 | 끌 수 없음 | 사용자는 문구를 편집할 수 있지만 비울 수 없다(CHECK 10자). 삽입을 끄는 설정은 제품 UI에도 두지 않는다 | `:121`, `:288` |
 | 단축 링크 | `/r/[code]` 라우트가 service_role로 `record_affiliate_click`을 호출하고 302 리다이렉트. 레이트 리밋 적용 | 7, 12장 |
-| UTM | `utm` jsonb에 `utm_source=<app>`, `utm_medium=affiliate`, `utm_campaign=<source_ref>`, `utm_content=<provider>`를 넣고 제휴 URL에 붙인다(제안). 제공자가 UTM을 허용하지 않으면 생략 |
+| UTM | `utm` jsonb에 `utm_source=<app>`, `utm_medium=affiliate`, `utm_campaign=<source_ref>`, `utm_content=<provider>`를 넣고 제휴 URL에 붙인다(제안). 제공자가 UTM을 허용하지 않으면 생략 | - |
 | 브랜드커넥트 | Playwright 어댑터는 blog가 소유. 완전 자동 지원은 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의가 필수. 실제 제출은 `core.jobs` `job_type='brandconnect.apply'` 워커가 하고, 상태 전이는 트리거가 강제한다. 레이트 리밋(계정당 5건/시간)은 blog·video 요청을 합산한다 | `:13-15`, `:139-142` |
 | 클립형 캠페인 | 네이버 브랜드커넥트는 클립 크리에이터와 캠페인사의 제휴를 지원한다([이코노미스트 2025-06](https://economist.co.kr/article/view/ecn202506130009)). 클립형 지원서는 video가 만든다(`target_kind='clip'`, `source_app='video'`, `target_url`=클립 채널 주소). video는 같은 `brandconnect.apply` 잡을 cross-app으로 요청하고, 워커는 blog의 어댑터로 제출한다(`SHARED_MODULES.md` 17장). 같은 네이버 계정의 `affiliate_accounts` 행과 위험 동의를 공유한다 | 확정 결정 19 |
 | 쇼핑 커넥트 | 네이버 브랜드커넥트의 어필리에이트 솔루션(스마트스토어 상품 홍보, 판매 실적 수익 공유, [네이버 보도자료](https://www.navercorp.com/media/pressReleasesDetail?seq=33116)). provider `naver_shopping_connect`로 이미 있다 | 확정 결정 12 |

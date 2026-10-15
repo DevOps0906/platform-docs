@@ -123,7 +123,7 @@
 | 2 | 위키 페이지 | 본문, 출처 문서, 관련 링크, 백링크 읽기. "AI가 정리한 문서" 표시 | 링크 `[[slug]]`는 `wiki_links` | 삭제된 페이지로 가는 링크: 깨진 링크 표시 |
 | 3 | 같은 화면 | [편집] → 문단 수정 → 저장 | `PUT /api/ai/wiki/pages/[...slug]`(`expected_version`). 고친 블록에 사람 소유 표시 | 409 `WIKI_VERSION_CONFLICT`: 최신본을 다시 읽고 병합 안내 |
 | 4 | 같은 화면 | 에이전트의 제안 개정 초안 보기 → 적용 또는 무시 | 사람 소유 블록은 제안으로만 남는다 | - |
-| 5 | `/app/subjects/[sid]/lint` | [위키 점검](예상 크레딧 표시) | `POST /api/ai/wiki/lint` → `notes.ai.wiki_lint` 잡 | 402, 실패 시 환불 |
+| 5 | `/app/subjects/[sid]/lint` | [위키 점검] (예상 크레딧 표시) | `POST /api/ai/wiki/lint` → `notes.ai.wiki_lint` 잡 | 402, 실패 시 환불 |
 
 ### 2.11 AI 온보딩(국외 이전 동의)
 
@@ -462,7 +462,7 @@ reduced-motion이면 0~5단계 없이 정지 이미지와 정리본 예시(형�
 | 단계 | 구성 | 렌더 조건 | 작업 |
 |---|---|---|---|
 | A | "개발용 로그인" 패널: 페르소나 버튼 목록(05장 10절: `owner`, `admin`, `member`, `viewer`, `outsider`, `no_app`, `suspended`, `ops`, `unverified`, `low_credit`), 현재 로그인 페르소나, 로그아웃. 모든 화면 상단 고정 배지 `MOCK AUTH · 로컬 전용`(색은 `tokens.css` 상태 토큰만, 대비 4.5:1, 텍스트로 읽힌다). 실제 제공자 버튼과 `/signup` 링크는 없다 | 서버 컴포넌트에서 `isMockAuthAllowed()`가 참일 때만. 거짓이면 패널 코드를 렌더하지 않는다 | NT-06-006 |
-| B | "Google로 계속하기" 버튼 + 이메일·비밀번호 폼(01장 D-22), [가입하기](`/signup`), [비밀번호를 잊었나요?]. 가입 화면의 만 14세 이상 체크는 이메일 가입에만, Google은 7.3절 | `AUTH_PROVIDERS`에 `google`, `email` | NT-06-053 |
+| B | "Google로 계속하기" 버튼 + 이메일·비밀번호 폼(01장 D-22), [가입하기] (`/signup`), [비밀번호를 잊었나요?]. 가입 화면의 만 14세 이상 체크는 이메일 가입에만, Google은 7.3절 | `AUTH_PROVIDERS`에 `google`, `email` | NT-06-053 |
 | C | 카카오·네이버 버튼 추가(카카오 버튼 색·문구는 카카오 디자인 가이드, 미확인. 네이버는 검수 통과 전 운영에 노출하지 않는다, C2-6) | `AUTH_PROVIDERS`에 `kakao`, `naver` | NT-06-054, 055 |
 
 버튼 순서(B·C): Google → 카카오 → 네이버 → 구분선 → 이메일 폼(제안: 이 제품 페르소나가 IT 교육 수강생·직장인이라 Google 계정 보유가 가장 흔하다고 보지만 측정값은 없다).

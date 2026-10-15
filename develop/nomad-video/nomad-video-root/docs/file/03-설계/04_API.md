@@ -25,7 +25,7 @@
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 코어 RPC | 오류 |
 |---|---|---|---|---|---|---|
 | GET `/api/session` | 로그인 | - | SessionContext | - | `session_context` | 401 |
-| POST `/api/billing/orders` | owner/admin | `{kind, planCode?|packCode?, request_id}` | `{orderId, amountKrw, customerKey}` | - | INSERT `payment_orders` | 403(adv 팩 비Advanced), 409 |
+| POST `/api/billing/orders` | owner/admin | `{kind, planCode?\|packCode?, request_id}` | `{orderId, amountKrw, customerKey}` | - | INSERT `payment_orders` | 403(adv 팩 비Advanced), 409 |
 | POST `/api/billing/confirm` | owner/admin | `{paymentKey, orderId, amount}` | 결제 결과 | - | `confirm_payment_order` | PM001/PM409 → 409 + 취소, PM404 → 404 |
 | POST `/api/billing/billing-key` | owner/admin | `{authKey}` | `{cardMasked}` | - | billing_keys INSERT(서버) | 400 |
 | POST `/api/billing/cancel` | owner/admin | `{reason}` | 구독 | - | `apply_subscription_transition` | SB001 → 409 |
@@ -56,7 +56,7 @@
 | POST `/api/music/[id]/distribution` | member+ | `{status, note?, isrc?}` | 곡 | 0 | `video.set_music_distribution_status` | 22023 → 409 |
 | POST `/api/library` | Pro+ member+ | `{title, artist, licenseType, licenseProofPath, audioPath, licenseExpiresAt?, youtubeMonetizationAllowed, attributionText?}` | 라이브러리 곡 | 0 | RLS insert(파일은 org-files 업로드 후 경로) | 23514 |
 | POST `/api/playlists` | Pro+ member+ | `{title, mood, targetDurationMin, language}` | 플리 | 0 | RLS insert | 42501 → 403 |
-| PUT `/api/playlists/[id]/items` | member+ | `{items: [{musicTrackId?|libraryTrackId?}]}` | 항목 | 0 | RLS insert/update/delete(트랜잭션) | VD005, VD006 |
+| PUT `/api/playlists/[id]/items` | member+ | `{items: [{musicTrackId?\|libraryTrackId?}]}` | 항목 | 0 | RLS insert/update/delete(트랜잭션) | VD005, VD006 |
 | POST `/api/playlists/[id]/render` | Pro+ | `{request_id}` | rootJobId | 20/35/95 | consume, enqueue `playlist.render` | 409(합계 시간 목표 ±5% 밖) |
 | POST `/api/uploads` | member+ | `{outputId, channelId?, platform, title, description, tags, visibility, scheduledAt?, paidPromotion, affiliateLinkIds[], brandconnectApplicationId?, request_id}` | upload(draft, 문구 삽입 완료) | 0 | `effective_disclosure`, affiliate 링크, uploads INSERT(service). `naver_clip`은 `injectDisclosure(..., { target: 'title_hashtag' })`로 `disclosure_title`·`disclosure_hashtag`를 채움. 지원서는 `accepted` 상태만 연결 | VD008, VD002, VD015(클립 동의 없음) → 409, 23514(문구 누락) → 422 |
 | POST `/api/uploads/[id]/check` | member+ | `{request_id}` | 검사 결과 | 1(LLM 단계) | consume, enqueue `compliance.check` | - |
@@ -64,7 +64,7 @@
 | POST `/api/uploads/[id]/schedule` | member+ | `{scheduledAt}` | upload(scheduled) | 1/채널 | consume, enqueue `upload.<platform>`(run_after). 네이버 클립은 계정당 3건/시간·15건/일 넘으면 다음 가능 시각으로 `run_after` | VD008, VD016(고객 승인 필요) → 409 |
 | POST `/api/uploads/[id]/client-review` | member+, `features.agency` | `{ttlHours?: 1~336, note?}` | `{reviewId, expiresAt, linkSentTo}` | 0 | 서버가 32바이트 토큰 생성 → sha256 → `video.open_client_review`(service) → 고객 담당자 메일(링크 원문은 응답·로그에 남기지 않음, 메일 실패 시 1회만 링크 표시) | VD008, VD016(고객 미연결) → 409 |
 | GET `/review/[token]` (페이지) | 공개(토큰) | - | 미리보기(서명 URL 10분), 제목·설명·태그·대가성 문구, 고객명 | 0 | 서버가 토큰 해시로 조회(service), `rate_limit` IP 해시당 30회/10분 | 404(없음·만료·이미 결정은 같은 화면 "사용할 수 없는 링크") |
-| POST `/api/review/[token]` | 공개(토큰) | `{decision: 'approved'|'changes_requested', reviewerName(1~40자), comment?(<=2000자)}` | `{decision}` | 0 | `video.decide_client_review`(service), 담당자 알림 | VD008 → 409, 404 |
+| POST `/api/review/[token]` | 공개(토큰) | `{decision: 'approved'\|'changes_requested', reviewerName(1~40자), comment?(<=2000자)}` | `{decision}` | 0 | `video.decide_client_review`(service), 담당자 알림 | VD008 → 409, 404 |
 | POST `/api/uploads/[id]/cancel` | member+ | - | upload | 환불 | `video.cancel_upload` | VD008 |
 | GET/POST `/api/affiliate/accounts` | owner/admin | `{provider, partnerId?, apiKey?, secretKey?}` | 계정 | 0 | credential INSERT + affiliate_accounts INSERT(service) | 422 |
 | GET `/api/affiliate/search` | member+ | `{provider='coupang', q}` | 상품 | 0 | 어댑터 | 501(capability 없음) |
@@ -78,8 +78,8 @@
 | GET `/api/analytics` | 전 역할 | `{from, to, channelId?, clientId?}` | 집계 | 0 | RLS select | - |
 | GET/POST `/api/clients` | 조회 전 역할 / 생성 owner/admin, `features.agency` | `{name, brandName?, businessNo?, contact{name,email,phone}, packageCode, contractStart?, contractEnd?, monthlyQuota?, reviewRequired, reportDay, notes?}` | 고객 | 0 | RLS select / insert | 42501 → 403, 23505 → 409(같은 이름) |
 | PATCH/DELETE `/api/clients/[id]` | owner/admin | 위 필드 일부 | 고객 | 0 | RLS update / delete | 42501 → 403 |
-| POST `/api/clients/[id]/status` | owner/admin | `{status: 'active'|'paused'|'ended'}` | 고객 | 0 | `video.set_client_status` | 22023 → 409 |
-| POST/DELETE `/api/clients/[id]/channels` | owner/admin | `{channelId, ownership: 'client'|'agency'}` | 고객 채널 | 0 | RLS insert / delete | VD002 → 403, 23505 → 409(다른 고객에 묶임) |
+| POST `/api/clients/[id]/status` | owner/admin | `{status: 'active'\|'paused'\|'ended'}` | 고객 | 0 | `video.set_client_status` | 22023 → 409 |
+| POST/DELETE `/api/clients/[id]/channels` | owner/admin | `{channelId, ownership: 'client'\|'agency'}` | 고객 채널 | 0 | RLS insert / delete | VD002 → 403, 23505 → 409(다른 고객에 묶임) |
 | GET `/api/clients/[id]/reports` | 전 역할 | - | 월별 리포트 목록 + PDF 서명 URL | 0 | RLS select, Storage 서명 URL | - |
 | POST `/api/clients/[id]/reports` | owner/admin | `{periodMonth: 'YYYY-MM', request_id}` | `{reportId, jobId}` | 0 | service upsert `client_reports`(generating) + enqueue `client_report.build` | 409(생성 중) |
 | POST `/api/clients/[id]/reports/[reportId]/sent` | owner/admin | - | 리포트(sent) | 0 | service update + 감사 `client_report.sent` | 22023 |
@@ -96,20 +96,20 @@
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 서명 토큰 scope / 호출 대상 | 코어 RPC·테이블 | 오류 |
 |---|---|---|---|---|---|---|---|
 | POST `/api/onboarding/ai-consent` | owner/admin | `{ granted: boolean, notice_version, external_notice_ack: boolean }`(서버 상수와 같아야 함) | 204 | 0 | 없음 | 사용자 세션 `rpc('set_ai_cross_border_ack', { p_org_id, p_ack, p_notice_version })`, 외부 서비스 고지 확인은 `write_audit('ai.external_notice_ack')` | 409 `CONSENT_VERSION_MISMATCH`, 403 |
-| POST `/api/ai/conversations` | 전 역할, `features.ai_chat` | `{ context_ref?: 'channel:<uuid>'|'upload:<uuid>'|'production:<uuid>', channel: 'text'|'voice' }` | `{ conversation_id }` | 0 | 없음 | `ai_conversations` INSERT(service_role, `dify_user`=HMAC(org:user)). `context_ref` 대상은 같은 조직만(대화에는 저장하지 않고 Dify 입력과 이후 요청에서 전달) | 404 대상, 403 플랜 |
+| POST `/api/ai/conversations` | 전 역할, `features.ai_chat` | `{ context_ref?: 'channel:<uuid>'\|'upload:<uuid>'\|'production:<uuid>', channel: 'text'\|'voice' }` | `{ conversation_id }` | 0 | 없음 | `ai_conversations` INSERT(service_role, `dify_user`=HMAC(org:user)). `context_ref` 대상은 같은 조직만(대화에는 저장하지 않고 Dify 입력과 이후 요청에서 전달) | 404 대상, 403 플랜 |
 | POST `/api/ai/chat` | 대화 주인 | `{ conversation_id, request_id, message(1..1000) }` | SSE `delta`, `citations`, `fallback`, `usage{credits}`, `done` / `error` | 선차감 3, 정산 1~5 | Dify Chat API(`user=dify_user`, 입력 `platform_conversation_id`). Dify 장애 시 FastAPI `/tools/answer-direct`(scope `chat rag wiki`, `conv`=대화 id, `feat=chat`) | `rate_limit_hit` 3종, `consume_credits(conv:<id>:turn:<n>)`, 사용자 `ai_messages` INSERT, 정산 `consume_credits`/`refund_credits` + `ai_usage.settled_at` | 402 `CR001`, 404 대화, 409 `AI_CONVERSATION_CLOSED`, 429 `AI_DAILY_LIMIT`/`RATE_LIMITED`, 503 `AI_UNAVAILABLE`(환불됨) |
 | POST `/api/ai/conversations/[id]/close` | 대화 주인 | - | 204 | 0 | - | `ai_conversations.status='closed'` | 404 |
 | DELETE `/api/ai/conversations/[id]` | 대화 주인 | - | 204 | 0 | Dify 대화 삭제 API(구현 시 확인) | 대화·메시지 삭제(service_role), 감사 `ai.conversation.delete` | 404 |
-| POST `/api/ai/script` | member+, 정밀 모드는 `features.ai_script` | `{ track: 'B'|'C'|'D', mode: 'precise', topic, languages[], channel_id?, longform_id?, request_id }` | `{ run_id, plans: [...] }`(`trend`·`plan` 끝, interrupt에서 대기) | 선차감 5(숏폼) / 8(롱폼). 주제 점수 60 게이트 선행(VD010) | 그래프 `video.script`(scope `graph:video.script`, `feat=video.script`, `jti` 1회) | `consume_credits(run:<ai_run_id>)`, `core.ai_runs` | 403 `VD009`, 409 `VD010`, 402, 429, 503(환불됨) |
+| POST `/api/ai/script` | member+, 정밀 모드는 `features.ai_script` | `{ track: 'B'\|'C'\|'D', mode: 'precise', topic, languages[], channel_id?, longform_id?, request_id }` | `{ run_id, plans: [...] }`(`trend`·`plan` 끝, interrupt에서 대기) | 선차감 5(숏폼) / 8(롱폼). 주제 점수 60 게이트 선행(VD010) | 그래프 `video.script`(scope `graph:video.script`, `feat=video.script`, `jti` 1회) | `consume_credits(run:<ai_run_id>)`, `core.ai_runs` | 403 `VD009`, 409 `VD010`, 402, 429, 503(환불됨) |
 | POST `/api/ai/script/[run_id]/resume` | 실행 주인(또는 owner/admin) | `{ plan_index, edits? }` | `{ status: 'running' }` 그리고 `GET`으로 결과 | 0(선차감에 포함) | 같은 그래프 thread 재개(새 `jti`) | `core.ai_runs` | 404, 409 `VD014`(만료·이미 재개) |
 | GET `/api/ai/script/[run_id]` | 실행 주인(또는 owner/admin) | - | `{ status, plans?, script?, metadata? }` | 0 | - | 서버가 `created_by` 본인 또는 owner/admin만 허용(`core.ai_runs` select 정책은 조직 멤버 전체, `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0008_core_ai.sql:616-627`) | 404 |
 | POST `/api/wiki/documents` | owner/admin | multipart md(2MB 이하), `{ title }` | `{ document_id }` | 0 | FastAPI `/rag/ingest`(scope `rag`, 조직 컬렉션 `video-brand`) | 조직 Storage `org-files`, 감사 `wiki.upload` | 409 중복, 413, 403 |
 | POST `/api/wiki/ingest`, POST `/api/wiki/lint` | owner/admin | `{ document_ids?: uuid[] }` | `{ run_id }` | ingest 2 / lint 1 | FastAPI `/wiki/ingest`, `/wiki/lint`(scope `wiki`) | `consume_credits(run:<ai_run_id>)` | 402, 403 |
-| PATCH `/api/wiki/pages/[...slug]` | owner/admin | `{ expected_version, body_md?, status?: 'published'|'archived', reason(5자 이상) }` | 페이지 | 0 | FastAPI 위키 저장(`editor_kind='user'`, 고친 블록에 사람 소유 표시, scope `wiki`, 06장 R-V9) | 감사 `wiki.publish`/`wiki.edit` | 403, 409 출처 없는 페이지 게시, 409 `WIKI_VERSION_CONFLICT` |
+| PATCH `/api/wiki/pages/[...slug]` | owner/admin | `{ expected_version, body_md?, status?: 'published'\|'archived', reason(5자 이상) }` | 페이지 | 0 | FastAPI 위키 저장(`editor_kind='user'`, 고친 블록에 사람 소유 표시, scope `wiki`, 06장 R-V9) | 감사 `wiki.publish`/`wiki.edit` | 403, 409 출처 없는 페이지 게시, 409 `WIKI_VERSION_CONFLICT` |
 | POST `/api/voice/consent` | 전 역할 | `{ notice_version }` | 204 | 0 | - | 감사 `voice.notice_ack` | 409 `CONSENT_VERSION_MISMATCH` |
 | POST `/api/voice/sessions` | 전 역할, `features.voice_chat` | `{ conversation_id? }` | `{ session_id }` | 0 | - | `voice_sessions` INSERT | 403 `VOICE_CONSENT_REQUIRED` |
-| POST `/api/voice/stt` | 세션 주인 | multipart `{ audio(webm/ogg/mp4, 5MB 이하, 60초 이하), session_id, feature: 'voice_chat'|'dictation', request_id }` | `{ text, duration_seconds, provider }` | 녹음 길이 기준 선차감, 실제 정산 | `resolve_ai_route(org,'video',feature,'stt')` → ElevenLabs SDK 또는 오픈소스 `/stt`(scope `voice`) | `consume_credits(voice:<request_id>)`, `voice_jobs`(`store_audio=false`), `ai_usage` | 403 `VOICE_CONSENT_REQUIRED`, 413 `VOICE_TOO_LONG`, 402, 429, 503(환불됨) |
-| POST `/api/voice/tts` | 대상 주인 | `{ source: 'message'|'script_run', id, section?, request_id }`(텍스트는 DB의 assistant 메시지 또는 `ai_runs` 대본에서만 읽는다. 임의 텍스트 낭독 금지) | `audio/mpeg` 스트림 | 글자 수 기준 선차감·정산 | `voice_chat`/`tts` 체인(대체 허용) | `voice_jobs`, `consume_credits(voice:<request_id>)` | 404, 402, 503(환불됨) |
+| POST `/api/voice/stt` | 세션 주인 | multipart `{ audio(webm/ogg/mp4, 5MB 이하, 60초 이하), session_id, feature: 'voice_chat'\|'dictation', request_id }` | `{ text, duration_seconds, provider }` | 녹음 길이 기준 선차감, 실제 정산 | `resolve_ai_route(org,'video',feature,'stt')` → ElevenLabs SDK 또는 오픈소스 `/stt`(scope `voice`) | `consume_credits(voice:<request_id>)`, `voice_jobs`(`store_audio=false`), `ai_usage` | 403 `VOICE_CONSENT_REQUIRED`, 413 `VOICE_TOO_LONG`, 402, 429, 503(환불됨) |
+| POST `/api/voice/tts` | 대상 주인 | `{ source: 'message'\|'script_run', id, section?, request_id }`(텍스트는 DB의 assistant 메시지 또는 `ai_runs` 대본에서만 읽는다. 임의 텍스트 낭독 금지) | `audio/mpeg` 스트림 | 글자 수 기준 선차감·정산 | `voice_chat`/`tts` 체인(대체 허용) | `voice_jobs`, `consume_credits(voice:<request_id>)` | 404, 402, 503(환불됨) |
 | POST `/api/voice/sample` | member+ | `{ language, provider, voice_id, text(1..100), request_id }` | `audio/mpeg` 스트림 | 선차감 1 | `narration`/`tts`에서 선택한 제공자 하나, 대체 없음(scope `voice`). 사용자가 보낸 100자 이하 텍스트만 허용(남용은 선차감과 레이트 리밋으로 제한) | `voice_jobs`(feature `narration`), `consume_credits(voice:<request_id>)` | 409 `VOICE_PROVIDER_UNAVAILABLE`, 402, 429 |
 | POST `/api/internal/ai-token` | 오케스트레이터(`X-Worker-Key`) | `{ job_id }` | `{ token, expires_at }` | 0 | 발급만: scope는 잡 유형이 정한다(`ai.script`→`graph:video.script`, `ai.tts`→`voice`, `ai.rag_ingest`·`ai.trend_ingest`→`rag`, `ai.wiki_*`→`wiki`, `ai.step`→`graph:video.step`). `org`·`sub`는 `core.jobs` 행의 `org_id`·`created_by` | `core.jobs` 조회(`status='running'`, `app_id='video'`, 허용 job_type) | 401 `INTERNAL_KEY_INVALID`, 409 잡 상태, 429 |
 | POST `/api/internal/ai-settle` | 오케스트레이터(`X-Worker-Key`, 5분 주기) | - | `{ settled, refunded }` | 정산 | - | `ai_usage`(`settled_at is null`, 10분 경과), `consume_credits`/`refund_credits`, 만료된 정밀 모드 대기 실행(24시간) 환불 | 401 |
@@ -152,27 +152,27 @@
 
 | `job_type` | payload | result | progress 메시지 예 |
 |---|---|---|---|
-| `production.run` | `{production_id, track, mode, source_id?, topic?, languages[], options{silence_cut, layer_composite, watermark}, script{mode, script_run_id?}, voice{provider, voice_id_by_lang}}`. `voice.provider`는 `auto`를 시작 때 해석한 확정값(`elevenlabs`|`oss-voice`)을 다시 써 넣고 이후 단계는 이 값만 쓴다 | `{outputs: [{language, output_id, status}], refunded_credits}` | `"stt"`, `"translate:JA"`, `"encode:KO"` |
+| `production.run` | `{production_id, track, mode, source_id?, topic?, languages[], options{silence_cut, layer_composite, watermark}, script{mode, script_run_id?}, voice{provider, voice_id_by_lang}}`. `voice.provider`는 `auto`를 시작 때 해석한 확정값(`elevenlabs`\|`oss-voice`)을 다시 써 넣고 이후 단계는 이 값만 쓴다 | `{outputs: [{language, output_id, status}], refunded_credits}` | `"stt"`, `"translate:JA"`, `"encode:KO"` |
 | `source.download` | `{source_id, url, platform}` | `{storage_path, duration_sec, phash, likes_count, title_original}` | `"download 40%"` |
-| `media.stt` | `{input_path, language_hint?: 'zh'|'ko'|'en'|'ja', word_timestamps: true, usage: {feature: 'video.stt', production_id}}` | `{segments: [{start, end, text}], language, transcript_path, audio_seconds, provider: 'oss-voice', model}` (워커가 `core.ai_usage` 행도 기록) | `"whisper 60%"` |
+| `media.stt` | `{input_path, language_hint?: 'zh'\|'ko'\|'en'\|'ja', word_timestamps: true, usage: {feature: 'video.stt', production_id}}` | `{segments: [{start, end, text}], language, transcript_path, audio_seconds, provider: 'oss-voice', model}` (워커가 `core.ai_usage` 행도 기록) | `"whisper 60%"` |
 | `media.separate` | `{input_path}` | `{vocals_path, accompaniment_path}` | - |
 | `media.silence_cut` | `{input_path, threshold_db: -30, min_silence_sec: 0.5}` | `{output_path, removed_sec, cut_map: [[start,end]]}` | - |
-| `media.compose` | `{video_path, audio_path, ass_path, emphasis_ass_path?, reaction_layer?, template_path?, watermark: bool, size: '1080x1920'|'1920x1080'}` | `{output_path}` | - |
-| `media.encode` | `{input_path, preset: 'short'|'longform', fps: 30|60}` | `{output_path, duration_sec, bytes}` | - |
+| `media.compose` | `{video_path, audio_path, ass_path, emphasis_ass_path?, reaction_layer?, template_path?, watermark: bool, size: '1080x1920'\|'1920x1080'}` | `{output_path}` | - |
+| `media.encode` | `{input_path, preset: 'short'\|'longform', fps: 30\|60}` | `{output_path, duration_sec, bytes}` | - |
 | `media.kenburns` | `{images: [{path, duration_sec}], size}` | `{output_path}` | - |
 | `media.watermark_remove` | `{input_path, region?}` | `{output_path}` | - |
 | `media.loop` | `{audio_path, image_path, size: '1920x1080'}` | `{output_path, duration_sec}` | - |
 | `media.playlist_concat` | `{items: [{audio_path, duration_sec}], image_path, crossfade_sec: 2, target_sec}` | `{output_path, timestamps: [{position, start_sec}]}` | `"concat 12/20"` |
 | `media.highlight_cut` | `{input_path, start_sec, end_sec, reframe: '9:16'}` | `{output_path}` | - |
-| `ai.translate` | `{segments, source_lang, target_lang, tone: 'dopamine'|'reviewer'|'neutral'}` | `{segments}` | - |
-| `ai.script` | `{track, mode: 'quick'|'precise', topic, languages[], structure: {hook:15, body:30, cta:5}, channel_id?, script_run_id?}` 또는 `{longform_id, mode}` | `{script_run_id, script}` 또는 `{script_run_id, sections: 10}` + `{metadata: {title, description_body, tags}}`(대가성 문구 자리는 비어 있음) | `"trend"`, `"plan"`, `"script"`, `"compliance"`, `"metadata"` |
-| `ai.tts` | `{text_segments, language, provider: 'elevenlabs'|'oss-voice', voice_id, narration_group_id}` (provider·voice는 시작 때 고정된 값. 대체 없음) | `{audio_path, duration_sec, voice_job_ids: [], provider, voice_id}` | `"tts 2/3"` |
-| `ai.step` | `{kind: 'translate'|'analyze'|'bling'|'compliance_llm'|'playlist_meta', input, request_id}` (D-20 (a): FastAPI 그래프 `video.step`) | `{output, run_id}` | - |
+| `ai.translate` | `{segments, source_lang, target_lang, tone: 'dopamine'\|'reviewer'\|'neutral'}` | `{segments}` | - |
+| `ai.script` | `{track, mode: 'quick'\|'precise', topic, languages[], structure: {hook:15, body:30, cta:5}, channel_id?, script_run_id?}` 또는 `{longform_id, mode}` | `{script_run_id, script}` 또는 `{script_run_id, sections: 10}` + `{metadata: {title, description_body, tags}}`(대가성 문구 자리는 비어 있음) | `"trend"`, `"plan"`, `"script"`, `"compliance"`, `"metadata"` |
+| `ai.tts` | `{text_segments, language, provider: 'elevenlabs'\|'oss-voice', voice_id, narration_group_id}` (provider·voice는 시작 때 고정된 값. 대체 없음) | `{audio_path, duration_sec, voice_job_ids: [], provider, voice_id}` | `"tts 2/3"` |
+| `ai.step` | `{kind: 'translate'\|'analyze'\|'bling'\|'compliance_llm'\|'playlist_meta', input, request_id}` (D-20 (a): FastAPI 그래프 `video.step`) | `{output, run_id}` | - |
 | `ai.trend_ingest` | `{countries: ['KR','US','JP'], periods}` (운영자 조직) | `{collection_id, chunks}` | - |
-| `ai.rag_ingest` | `{collection: 'video-performance'|'video-scripts'|'video-brand', source_ids: [], full?: bool}` | `{document_ids, chunks, skipped_over_limit}` | - |
+| `ai.rag_ingest` | `{collection: 'video-performance'\|'video-scripts'\|'video-brand', source_ids: [], full?: bool}` | `{document_ids, chunks, skipped_over_limit}` | - |
 | `ai.wiki_ingest` / `ai.wiki_lint` | `{document_ids?}` / `{}` | `{run_id, pages_changed}` / `{run_id, findings}` | - |
 | `ai.settle` | `{}` | `{settled, refunded}` | - |
-| `ai.image` | `{prompts: [], size, model: 'flux-pro'|'flux-ultra'}` | `{image_paths: []}` | - |
+| `ai.image` | `{prompts: [], size, model: 'flux-pro'\|'flux-ultra'}` | `{image_paths: []}` | - |
 | `longform.render` | `{longform_id, languages[]}` | `{outputs: [{language, output_id}]}` | `"section 4/10"` |
 | `longform.highlights` | `{longform_id, output_id}` | `{highlights: [{rank, start_sec, end_sec, output_id}]}` | - |
 | `music.generate` | `{music_track_id, genre, prompt, mood?, bpm?}` | `{audio_path, cover_path, output_id, duration_sec}` | - |
@@ -296,7 +296,7 @@
 
 | 메서드 경로 | 단계 | 역할 | 입력(zod 요약) | 출력 | 처리 | 오류 |
 |---|---|---|---|---|---|---|
-| POST `/api/dev/login` | A(로컬 전용) | 공개(판정이 참일 때만 존재) | `{ persona: 'owner'|'admin'|'member'|'viewer'|'outsider'|'no_app'|'suspended'|'ops'|'adv_owner'|'adv_member', next?: string }` | 302 `next`(화이트리스트) 또는 `/dashboard` | `isMockAuthAllowed()` 확인 → 쿠키 세션 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('video', next)` | 판정 거짓 → 404(존재 자체를 숨김). 알 수 없는 페르소나 422, 시드 안 됨 → 401 + "`node scripts/dev/seed-users.mjs --app video`를 먼저 실행하세요". 레이트 리밋 없음(로컬 전용) |
+| POST `/api/dev/login` | A(로컬 전용) | 공개(판정이 참일 때만 존재) | `{ persona: 'owner'\|'admin'\|'member'\|'viewer'\|'outsider'\|'no_app'\|'suspended'\|'ops'\|'adv_owner'\|'adv_member', next?: string }` | 302 `next`(화이트리스트) 또는 `/dashboard` | `isMockAuthAllowed()` 확인 → 쿠키 세션 서버 클라이언트로 `signInWithPassword(<페르소나 이메일>, DEV_SEED_PASSWORD)` → `finishLogin('video', next)` | 판정 거짓 → 404(존재 자체를 숨김). 알 수 없는 페르소나 422, 시드 안 됨 → 401 + "`node scripts/dev/seed-users.mjs --app video`를 먼저 실행하세요". 레이트 리밋 없음(로컬 전용) |
 | GET `/auth/callback` | B·C1·C2(`custom:naver`) | 공개 | `code`, `next?` | 302 | `finishLogin`: (1) `exchangeCodeForSession`(PKCE) (2) `session_context('video')` 1회 (3) `entitled=false`이면 video는 open 앱이므로 `rpc('bootstrap_app_for_org', { p_app_id: 'video' })` 1회 후 재조회(크레딧 멱등 `signup:<org>:video`) (4) `status` 분기: suspended 403 (5) `next`가 `/`로 시작하고 `//`·`@`·`\` 없을 때만, 아니면 `/dashboard`(첫 로그인이면 온보딩, 03장 7.3절). origin은 `NEXT_PUBLIC_APP_URL` 고정 (6) 감사 `auth.login`(provider, 첫 로그인 여부, 토큰·코드 없음) | `code` 없음·재사용·만료 → `/login?error=callback`. 프로필 없음 → 로그아웃 후 `/login` |
 | GET `/auth/naver/start` | C2 브리지 채택 시만 | 공개 | `next?` | 302 네이버 authorize | 32바이트 state를 HttpOnly·Secure·SameSite=Lax 서명 쿠키(HMAC `AUTH_BRIDGE_SECRET`, 10분)에 저장. 레이트 리밋 `auth:naver:<ip 해시>` 10회/10분 | 429 |
 | GET `/auth/naver/callback` | C2 브리지 채택 시만 | 공개 | `code`, `state` | 302 | state 상수 시간 비교·쿠키 삭제 → 토큰 교환 → `/v1/nid/me`(`resultcode='00'`) → `core.auth_identity_links`(provider `naver`, 네이버 고유 id)로 사용자 찾기 → 없으면 같은 이메일 사용자 확인 → `generateLink`+`verifyOtp`로 세션 → `finishLogin`. 네이버 토큰은 저장하지 않는다 | state 불일치·없음·만료 → `/login?error=state`. 같은 이메일 기존 사용자 → `/login?error=email_in_use`(자동 병합 금지) |

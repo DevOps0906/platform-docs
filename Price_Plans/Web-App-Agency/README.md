@@ -32,11 +32,11 @@
 | 파일 | 내용 |
 |---|---|
 | [`PRICE_PLAN.md`](PRICE_PLAN.md) | 가격 플랜 정본: 초기·중기·장기 가격표, 유지보수, 리드 옵션, 매출 목표 |
-| [`01_MARKET_BENCHMARK.md`](01_MARKET_BENCHMARK.md) | 크몽 시장 단가, 블로그 스킨 시장, 에이전시 모델 5종 벤치마크 |
-| [`02_SERVICE_CATALOG.md`](02_SERVICE_CATALOG.md) | 상품 등급 T1~T7, 모션 레벨, 개발 범위 구분, 제작기간, AI 에이전트 배치 |
-| [`03_HOSTING_DATA.md`](03_HOSTING_DATA.md) | 호스팅 방식 비교, DB가 가격에 주는 영향, 구글시트 vs Supabase, 멀티테넌트 리드 DB |
-| [`04_OPERATIONS.md`](04_OPERATIONS.md) | 계약·견적·범위·결제·수정 규칙, 납품 워크플로우, 자동화, 개인정보 필수 사항 |
-| [`05_ROADMAP.md`](05_ROADMAP.md) | 린 실행 순서, KPI, 열린 결정 |
+| [`01_MARKET_BENCHMARK.md`] (01_MARKET_BENCHMARK.md) | 크몽 시장 단가, 블로그 스킨 시장, 에이전시 모델 5종 벤치마크 |
+| [`02_SERVICE_CATALOG.md`] (02_SERVICE_CATALOG.md) | 상품 등급 T1~T7, 모션 레벨, 개발 범위 구분, 제작기간, AI 에이전트 배치 |
+| [`03_HOSTING_DATA.md`] (03_HOSTING_DATA.md) | 호스팅 방식 비교, DB가 가격에 주는 영향, 구글시트 vs Supabase, 멀티테넌트 리드 DB |
+| [`04_OPERATIONS.md`] (04_OPERATIONS.md) | 계약·견적·범위·결제·수정 규칙, 납품 워크플로우, 자동화, 개인정보 필수 사항 |
+| [`05_ROADMAP.md`] (05_ROADMAP.md) | 린 실행 순서, KPI, 열린 결정 |
 
 ## 4. 저장소 안 관련 문서
 

@@ -138,7 +138,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 소비 | `core.consume_oauth_state`. 미소비·미만료만. 재사용은 `OA001` | `:561-581` |
 | redirect_to | 상대 경로만. 오픈 리다이렉트 금지 | `:549-551` |
 | PKCE | 지원 제공자는 `code_verifier` 사용 | `:515` |
-| 콜백 인증 | 콜백 라우트는 state로 사용자/조직을 확정한다. 콜백 요청의 쿠키 세션에만 의존하지 않는다(세션 없는 콜백 결함, `docs/products/00_MERGE_ANALYSIS.md:614`) |
+| 콜백 인증 | 콜백 라우트는 state로 사용자/조직을 확정한다. 콜백 요청의 쿠키 세션에만 의존하지 않는다 | 세션 없는 콜백 결함, `docs/products/00_MERGE_ANALYSIS.md:614` |
 
 ## 8. 레이트 리밋
 
@@ -169,11 +169,11 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 
 | 규칙 | 내용 | 근거 |
 |---|---|---|
-| 경계 검증 | Route Handler 입력은 zod로 검증. `any` 캐스팅으로 Supabase 타입을 우회하지 않는다(`docs/products/00_MERGE_ANALYSIS.md:1164`) |
-| HTML sanitize | 사용자 원고, 에디터 출력은 서버에서 sanitize 후 저장·렌더(`:99`, `:107`, `:213`) |
-| SSRF | WeasyPrint `url_fetcher`는 허용 목록(자체 Storage)만(`:108`, `:213`). 외부 상품 URL 크롤링(amazon 공급자)은 사설 IP 차단 + 리다이렉트 제한(`:882`) |
-| 업로드 | MIME과 크기를 서버가 재검사. 경로는 서버가 생성(`<org>/<app>/<entity>/<uuid>`). 사용자 입력 파일명을 경로에 쓰지 않는다(경로 조작 결함 `:132`) |
-| 외부 데이터 전송 | 사용자 데이터를 제3자 렌더러(QuickChart 등)로 보내지 않는다(`:115`) |
+| 경계 검증 | Route Handler 입력은 zod로 검증. `any` 캐스팅으로 Supabase 타입을 우회하지 않는다 | `docs/products/00_MERGE_ANALYSIS.md:1164` |
+| HTML sanitize | 사용자 원고, 에디터 출력은 서버에서 sanitize 후 저장·렌더 | `:99`, `:107`, `:213` |
+| SSRF | WeasyPrint `url_fetcher`는 허용 목록(자체 Storage)만(`:108`, `:213`). 외부 상품 URL 크롤링(amazon 공급자)은 사설 IP 차단 + 리다이렉트 제한 | `:882` |
+| 업로드 | MIME과 크기를 서버가 재검사. 경로는 서버가 생성(`<org>/<app>/<entity>/<uuid>`). 사용자 입력 파일명을 경로에 쓰지 않는다 | 경로 조작 결함 `:132` |
+| 외부 데이터 전송 | 사용자 데이터를 제3자 렌더러(QuickChart 등)로 보내지 않는다 | `:115` |
 | 금지어/컴플라이언스 | 발행 전 compliance 모듈 게이트. FAIL은 서버가 차단 | `SHARED_MODULES.md` 13장 |
 
 ## 11. 클라이언트 경계
@@ -196,9 +196,9 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | 의료정보 | hms는 모놀리스 강제, 감사 범위와 보존은 admin-suite 01_PRD | `docs/products/_supabase-modular/README.md:80-89` |
 | IP | 원문 저장 금지, 일 단위 솔트 해시 | `migrations/0006_core_affiliate.sql:88` |
 | 삭제 | 조직 soft delete(`deleted_at`) → 유예 기간 → `purge_organization`. 유예 기간은 제안 30일 | `migrations/0003_core_credits.sql:636-652` |
-| 원본 미디어 보존 | video 원본 24시간 내 삭제(`NOMAD Shorts Maker/PRD.md` 16장). 다른 제품은 01_PRD에서 정함 |
-| 로그 | 애플리케이션 로그에 토큰, 카드정보, 본문 전체를 남기지 않는다 |
-| 법/고지 | 개인정보처리방침, 이용약관, 제휴 대가성 문구, 생성물 저작권 안내는 01_PRD 법/개인정보 절에 명시한다 |
+| 원본 미디어 보존 | video 원본 24시간 내 삭제(`NOMAD Shorts Maker/PRD.md` 16장). 다른 제품은 01_PRD에서 정함 | - |
+| 로그 | 애플리케이션 로그에 토큰, 카드정보, 본문 전체를 남기지 않는다 | - |
+| 법/고지 | 개인정보처리방침, 이용약관, 제휴 대가성 문구, 생성물 저작권 안내는 01_PRD 법/개인정보 절에 명시한다 | - |
 
 ## 13. 배포와 운영
 

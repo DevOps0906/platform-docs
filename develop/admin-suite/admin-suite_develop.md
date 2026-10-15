@@ -210,7 +210,7 @@ D:\WorkSpace\DEV\admin-suite\
 | API(AI) | FastAPI(Python 3.12 제안), LangChain, LangGraph + `langgraph-checkpoint-postgres` | 같은 곳 |
 | 워커 | 없음(도메인 쓰기는 동기 RPC, AI 색인은 FastAPI 내부 큐) | `02_ARCHITECTURE.md` 4절 |
 | DB | Supabase 프로젝트 3개(erp, hms, sms), `public` 스키마, pgvector | `05_DATA_MODEL.md` 8절 |
-| 명령 | `pnpm install / dev / build / lint / typecheck / test:rls / test:e2e / test:ai / db:types --app <erp|hms|sms>`, `uv sync`, `uvicorn app.main:app --reload`, `pytest apps/api`, `supabase --workdir <앱별 프로젝트 폴더> start / db reset`(7절, 구현 시 확인) | 제안 |
+| 명령 | `pnpm install / dev / build / lint / typecheck / test:rls / test:e2e / test:ai / db:types --app <erp\|hms\|sms>`, `uv sync`, `uvicorn app.main:app --reload`, `pytest apps/api`, `supabase --workdir <앱별 프로젝트 폴더> start / db reset`(7절, 구현 시 확인) | 제안 |
 | 모델 핀 | claude-main `claude-opus-5-5`, claude-reviewer `claude-sonnet-5-5`(변경하지 않음, 무결성 점검 INV13 대상) | 베이스 `_shared/backends.json` |
 
 버전은 `latest`로 두지 않고 lockfile로 고정합니다. 특히 **Tailwind는 반드시 v4**입니다(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 6절).
@@ -224,7 +224,7 @@ D:\WorkSpace\DEV\admin-suite\
 | 1 | 앱마다 CLI용 프로젝트 폴더를 만듭니다. `supabase/<app>/`의 `migrations/`, `seed.sql`을 CLI가 읽을 수 있는 위치로 연결(복사 또는 링크)하고, `config.toml`의 `project_id`와 포트를 앱마다 다르게 둡니다(예: `admin-suite-erp`, `admin-suite-hms`, `admin-suite-sms`) | 포트 충돌 방지. ADM-06-005가 `scripts/db/`에 래퍼를 둡니다 |
 | 2 | `supabase --workdir <앱 프로젝트 폴더> start` | Docker로 앱 1개의 로컬 Supabase 기동. 3개를 동시에 켜면 메모리가 많이 듭니다. 필요한 앱만 켭니다 |
 | 3 | `supabase --workdir <앱 프로젝트 폴더> db reset` | `migrations/`를 타임스탬프 순서로 적용하고 `seed.sql`을 넣습니다 |
-| 4 | `pnpm db:types --app <erp|hms|sms>` | 앱별 타입 생성(내부에서 `supabase gen types typescript --local` 계열 사용, 출력 경로는 제안: `apps/<app>/src/types/database.ts`) |
+| 4 | `pnpm db:types --app <erp\|hms\|sms>` | 앱별 타입 생성(내부에서 `supabase gen types typescript --local` 계열 사용, 출력 경로는 제안: `apps/<app>/src/types/database.ts`) |
 
 - `--workdir`이 가리키는 폴더에서 CLI가 `supabase/config.toml`을 찾는 구조인지, `supabase/<app>/`를 그대로 가리킬 수 있는지는 설치한 CLI 버전의 도움말로 구현 시 확인합니다.
 - 각 `core_lite`에는 SECTION 11(AI, pgvector)과 SECTION 12(음성)가 들어 있습니다. hms의 SECTION 11은 공용 제공자를 비활성화하고 `hms-*`만 활성으로 둡니다(`0001_core_lite.sql:2020-2034`). 각 `seed.sql` 끝에 AI 라우팅 기본값(erp 8행, sms 8행, hms 7행), 플랜 AI 키, `ai-docs` 버킷, 체인 검사가 있습니다.

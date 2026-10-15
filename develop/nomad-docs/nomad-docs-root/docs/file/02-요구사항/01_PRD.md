@@ -146,7 +146,7 @@ AI 설계 정본은 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_
 | code | 이름 | 위험 | 생성 방식 | 단계 | 패키지 | 필수 입력(`required_fields`) | 섹션 구성 요약(`structure`) |
 |---|---|---|---|---|---|---|---|
 | `quote` | 견적서 | low | template | MVP | O | `client_party`, `self_party.biz_reg_no`, `line_items>=1`, `quote.valid_until`, `vat_rate_bp` | 머리(fixed), 수신·발신(table), 비용 내역(table), 합계·VAT(table), 조건·유효기간(variable) |
-| `sow` | 과업지시서(SOW) | low | hybrid | MVP | O | `project.name`, `project.start_date`, `project.end_date`, `requirements(accepted|proposed)>=1`, `artifacts(milestone)>=1`, `artifacts(deliverable)>=1` | 개요(ai), 범위(ai, 요구사항 요약), 제외 범위(ai), 일정(table), 산출물(table), 역할(variable) |
+| `sow` | 과업지시서(SOW) | low | hybrid | MVP | O | `project.name`, `project.start_date`, `project.end_date`, `requirements(accepted\|proposed)>=1`, `artifacts(milestone)>=1`, `artifacts(deliverable)>=1` | 개요(ai), 범위(ai, 요구사항 요약), 제외 범위(ai), 일정(table), 산출물(table), 역할(variable) |
 | `req_spec` | 요구사항정의서 | low | hybrid | MVP | O | `profile.service_summary`, `requirements>=1`, `nfr` 그룹 필수 항목 | 개요(ai), 용어 정의(variable, 위키), 기능 요구사항(table), 비기능(table), 제약(table), 수용 기준(table) |
 | `wbs` | WBS·일정표 | low | template | MVP | O | `artifacts(milestone)>=1`, 각 마일스톤 시작·종료일 | 단계별 작업(table), 일정(table), 산출물 연결(table) |
 | `screen_list` | 화면목록·메뉴구조도 | low | hybrid | MVP | O | `artifacts(screen)>=1` | 메뉴 트리(table), 화면 목록(table), 화면 설명(ai) |

@@ -80,7 +80,7 @@ id, org_id, poll_id(복합 FK), position, label(1~120자), created_at, updated_a
 
 ### 2.5 `poll.votes` (조각:184)
 
-id bigint identity(변경 감지 단조 번호), org_id, event_id, poll_id, participant_id, option_ids uuid[](0~10), rating smallint, created_at. 제약: unique(poll_id, participant_id), 선택지와 평점 중 정확히 하나. UPDATE 없음(투표 변경 불가).
+id bigint identity(변경 감지 단조 번호), org_id, event_id, poll_id, participant_id, option_ids uuid[] (0~10), rating smallint, created_at. 제약: unique(poll_id, participant_id), 선택지와 평점 중 정확히 하나. UPDATE 없음(투표 변경 불가).
 
 ### 2.6 `poll.poll_results` (조각:204)
 

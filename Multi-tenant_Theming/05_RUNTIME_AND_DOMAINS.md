@@ -33,7 +33,7 @@
 | 다크 모드 선택 스크립트(`data-theme`)는 `<head>` 맨 앞 인라인(nonce) | 다크 깜빡임 방지(기존 방식 유지) |
 | 공개 랜딩(`(marketing)`)도 테넌트가 있으면 테넌트 브랜드. 단 플랫폼 마케팅 문구(제품 소개, 가격)는 테넌트 도메인에서 숨김 | 고객사 도메인에서 우리 회사 가격표가 보이면 화이트라벨이 깨진다 |
 | "Powered by"는 단계 설정으로 제어(제안: L1 표시, L2 이상 숨김 가능 = `features.hide_powered_by`) | 상품 차등 |
-| 메타데이터: `title` 템플릿 `%s | <brand_name>`, `og:site_name`, `manifest.name`, `theme_color` | 공유·설치 시 브랜드 |
+| 메타데이터: `title` 템플릿 `%s \| <brand_name>`, `og:site_name`, `manifest.name`, `theme_color` | 공유·설치 시 브랜드 |
 
 ## 4. 커스텀 도메인 연결 (L2)
 

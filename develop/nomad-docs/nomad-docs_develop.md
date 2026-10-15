@@ -592,7 +592,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | queued → collecting → drafting(섹션별) → assembling → linting → done | `generation_runs.progress`(ai-service가 `docs.report_generation_progress`로 기록, Realtime) | 단계 레일 + 용지에 섹션 줄이 차례로 그려짐, 패키지는 문서별 레인 |
 
 - 시간 기반 가짜 진행률을 쓰지 않습니다. 서버가 단계를 보내지 않으면 화면도 움직이지 않습니다.
-- 대기 중에만 [취소](`docs.cancel_generation`). reduced-motion이면 단계 목록만 바뀝니다.
+- 대기 중에만 [취소] (`docs.cancel_generation`). reduced-motion이면 단계 목록만 바뀝니다.
 - 그래프 쪽 진행 보고는 DC-06-022(생성 그래프)의 수용 기준에 들어 있습니다. 화면(062)은 022·027 뒤에 시작합니다.
 
 ### 13.5 시각 레퍼런스: Awwwards · Dribbble (정본: `docs/file/03-설계/디자인/REFERENCES.md`, `DESIGN_PRINCIPLES.md` 1단계, 제품 선택은 `03_SCREENS_UX.md` 4.1절)

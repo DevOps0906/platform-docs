@@ -54,7 +54,7 @@
 |---|---|
 | 스택 | Next.js 16, React 19, Tailwind CSS v4(4.x), shadcn/ui(Tailwind v4 지원 버전), `@supabase/ssr` 0.12, zod, lucide-react, AI 서비스 FastAPI(Python 3.12 제안) + LangChain/LangGraph. `latest` 태그 금지, lockfile 커밋(Python은 `uv.lock` 또는 고정 requirements, 제안) |
 | 린트 | `pnpm lint`(`eslint .`), `no-explicit-any` 오류 |
-| 타입 생성 | `pnpm db:types --app erp|sms|hms` (모듈러 `--schema core,erp` 등, 모놀리스 public) |
+| 타입 생성 | `pnpm db:types --app erp\|sms\|hms` (모듈러 `--schema core,erp` 등, 모놀리스 public) |
 | 디자인 토큰 | `apps/<app>/src/theme/tokens.css`(03장 3.2절, 4.3절, 의미 기반 이름). 컴포넌트 안 hex 하드코딩 금지(`bg-[#...]` 린트 차단), 이모지 아이콘 금지, `alert()` 금지 |
 | SQL 변경 | 조각을 고치면 `tools/admin-suite/to-monolith.py`로 erp/sms 모놀리스를 재생성하고 체커를 돌린다 |
 

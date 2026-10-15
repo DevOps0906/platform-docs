@@ -62,7 +62,7 @@
 | Route Handler 진입 | `const ctx = await requireSession('publishing')` 후 zod 검증, `rate_limit_hit` |
 | 기능 게이팅 | `web/src/server/features`의 `feature(ctx, key)`(키 없으면 Free 기본값, 01장 4.4절) |
 | 크레딧 | `credits.consume({ idempotencyKey: 'consume:publishing:<request_id>' })`, 동기 호출은 `withCredits` |
-| 잡 | `jobs.enqueue({ queue: 'publishing.llm'|'publishing.media'|'publishing.doc'|'publishing.render'|'publishing.events', jobType, idempotencyKey: 'job:publishing:<request_id>', creditLedgerId })` |
+| 잡 | `jobs.enqueue({ queue: 'publishing.llm'\|'publishing.media'\|'publishing.doc'\|'publishing.render'\|'publishing.events', jobType, idempotencyKey: 'job:publishing:<request_id>', creditLedgerId })` |
 | 진행률 | 클라이언트는 `core.jobs`, `publishing.generation_runs`, `publishing.sections` Realtime 구독 |
 | 웹훅 비밀 | `CredentialVault.put/get`(provider `outbound_webhook`), 평문 컬럼 금지 |
 | 감사 | 사용자 경로는 `write_audit`(RPC 내부에서 이미 기록), 서버 경로(환불, 운영자 조정, 탈퇴)는 service INSERT |
