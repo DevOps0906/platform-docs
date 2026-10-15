@@ -1,72 +1,164 @@
-# platform-docs — 통합 플랫폼 기획·개발 문서 저장소
+# platform-docs — NOMAD 통합 플랫폼 기획·개발 문서 저장소
 
-여러 SaaS 프로젝트의 코드 리뷰를 바탕으로 제품을 통합 기획하고, 제품마다 바로 개발을 시작할 수 있는
-개발 묶음(설치 스크립트 + 근거 문서 + DB)을 담은 저장소입니다. 코드는 없고 문서와 SQL만 있습니다.
-로컬 위치는 `D:\WorkSpace\platform\docs`를 기준으로 합니다(문서 안 경로가 이 위치를 씁니다).
+여러 SaaS 프로젝트의 코드 리뷰를 근거로 제품을 통합 기획하고, 제품마다 바로 개발을 시작할 수 있는 개발 묶음(설치 스크립트 + 근거 문서 + DB)과 가격·화이트라벨·데스크톱·모바일 공용 설계를 담은 저장소입니다. **앱 코드는 없고 문서(Markdown)와 SQL만** 있습니다. 실제 개발은 이 저장소가 아니라 개발 묶음을 붙인 별도 개발 폴더에서 합니다(6장).
 
-## 1. 폴더 구성
+로컬 위치는 `D:\WorkSpace\platform\docs`를 기준으로 합니다. 문서 안의 경로가 이 위치를 씁니다.
 
-| 폴더 | 내용 | 언제 보나 |
+## 0. 한눈에 보기 (2026-10-15 기준)
+
+| 항목 | 수 | 위치 |
 |---|---|---|
-| `reviews/` | 원본 프로젝트 25개의 코드 리뷰(결함, 이식할 자산) | 왜 이렇게 기획했는지 근거를 볼 때 |
-| `pdf/` | `reviews/`의 PDF 변환본 | 인쇄·공유용 |
-| `products/` | 통합 기획서(제품 14개(arch-studio는 PRD 초안) + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
-| `develop/` | 제품별 개발 묶음(개발 가이드, setup 스크립트, 개발 폴더에 붙일 문서·DB) | 개발을 시작할 때 |
-| `develop_V2/` | 공용모듈(local-news에서 꺼낸 7개)을 쓰는 제품별 개발서. `develop/`의 설치·묶음은 그대로 쓰고 바뀌는 부분(채택 모듈, DB 순서, 추가·축소 작업)만 | 공용모듈로 개발할 때 |
-| `Price_Plans/` | 가격 플랜: 공용 가격 결정 방법(`_common/`) + 플랫폼별 폴더(제품 14개, 서비스 사업 Web-App-Agency) | 가격을 정하거나 바꿀 때 |
-| `Multi-tenant_Theming/` | 멀티테넌트 테마(화이트라벨) 공용 설계: 커스터마이징 5단계, 3계층 디자인 토큰, 코드·DB 구조, 코어 확장 SQL(제안)과 RLS 스모크, 적용 작업 계획, 판매·운영 | 고객사 로고·색·도메인으로 바꿔 판매하는 기능을 만들 때 |
-| `_tools/` | 리뷰 템플릿, md → PDF 변환 도구 | 리뷰를 추가할 때 |
-| `Tauri/` | 데스크톱(설치형) 앱 공용 가이드: 구조, 로컬 SQLite와 Supabase 데이터 배치, 인증·결제·라이선스·업데이트, 제품별 적용, 개발 지시 | 제품을 Windows·macOS 앱으로 만들 때 |
-| `Capacitor/` | 모바일 앱 공용 가이드: 기획 지시사항(스토어 정책, 결제 전략, 푸시, 개인정보), 개발 방법 지시사항, 제품별 적용 | 제품을 iOS·Android 앱으로 만들 때 |
+| 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
+| 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
+| 기획 제품 | 15개(완성 14 + arch-studio PRD 초안) | `products/<제품>/` |
+| 개발 묶음 | 14개, 작업 합계 821개 | `develop/<제품>/` |
+| 공용모듈 개발서(V2) | 15개 | `develop_V2/<제품>/` |
+| 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
+| 가격 플랜 | 제품 14개 + 서비스 사업 1개 | `Price_Plans/` |
+| 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
+| 통합 DB 조각 | 코어 10개 + 제품 15개 | `products/_supabase-modular/migrations/` |
+| 전체 파일 | 1,392개(이 중 934개는 `develop/*/*-root/`에 생성된 사본) | - |
 
-## 2. 제품 목록
+## 1. 문서가 흐르는 순서
 
-| 제품 | 한 줄 | 기획서 | 개발 묶음 |
+이 저장소의 문서는 아래 순서로 만들어졌고, 앞 단계가 뒤 단계의 근거입니다.
+
+```
+reviews/  원본 25개 코드 리뷰(결함, 이식할 자산)
+   │
+   ▼
+products/00_MERGE_ANALYSIS.md  통합 분석 + 확정 결정 22개(분석 본문보다 우선)
+   │
+   ├──▶ products/_platform-core/   공용 코어 규격(인증·조직·크레딧·결제·잡·AI·음성·보안·DB 규칙)
+   ├──▶ products/_design-guide/    디자인 시스템, 3D 히어로, 레퍼런스
+   ├──▶ products/_supabase-modular/ 통합 DB(core + 제품 스키마)
+   │
+   ▼
+products/<제품>/  제품 기획서 01~07 + CLAUDE.md + 모놀리스 SQL     ← 무엇을 만드는가(정본)
+   │
+   ├──▶ Price_Plans/<제품>/   가격 분석·단계별 계획(요금 정본은 각 01_PRD 4장)
+   │
+   ▼
+develop/<제품>/   개발 안내서 + setup 스크립트 + <제품>-root/(기획서 사본 묶음)   ← 어떻게 시작하는가
+develop_V2/<제품>/  공용모듈을 쓸 때 바뀌는 부분만 적은 개발서
+   │
+   ▼
+D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code 멀티에이전트로 개발)
+
+공용 설계(모든 제품이 필요할 때 참조): Multi-tenant_Theming/  Tauri/  Capacitor/  common-modules/
+```
+
+## 2. 폴더 지도
+
+| 폴더 | 무엇이 있나 | 성격 | 언제 보나 |
 |---|---|---|---|
-| flora-publishing | AI 전자책 출판 | `products/flora-publishing/` | `develop/flora-publishing/` |
-| astro-ai (신비로운AI) | 사주·타로 리딩 | `products/astro-ai/` | `develop/astro-ai/` |
-| nomad-video (NOMAD AI Factory) | 숏폼 영상 제작·업로드, 쇼츠 대행 | `products/nomad-video/` | `develop/nomad-video/` |
-| nomad-blog | 블로그 자동화 | `products/nomad-blog/` | `develop/nomad-blog/` |
-| nomad-commerce | 커머스 상세페이지·콘텐츠 | `products/nomad-commerce/` | `develop/nomad-commerce/` |
-| microweb-studio | 청첩장·마이크로 웹 | `products/microweb-studio/` | `develop/microweb-studio/` |
-| admin-suite | ERP·학교·병원 관리 | `products/admin-suite/` | `develop/admin-suite/` |
-| live-poll | 실시간 투표(Slido형) | `products/live-poll/` | `develop/live-poll/` |
-| stock-dashboard | 주식 대시보드 | `products/stock-dashboard/` | `develop/stock-dashboard/` |
-| toon-factory | 웹툰·캐릭터 생성 | `products/toon-factory/` | `develop/toon-factory/` |
-| study-note | 학습 노트 정리 | `products/study-note/` | `develop/study-note/` |
-| website-floria | 회사 홈페이지 | `products/website-floria/` | `develop/website-floria/` |
-| nomad-docs (NOMAD Docs) | 체크리스트로 계약서·요구사항정의서 등 실무 문서 자동 생성, CRM형 작업 공간 | `products/nomad-docs/` | `develop/nomad-docs/` |
-| local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(공용모듈 7개의 출처) | `products/local-news/` | `develop/local-news/` |
-| arch-studio (가칭) | 설치형 건축 설계 앱(법규 판정, AI 렌더, 시리얼 라이선스) | `products/arch-studio/`(PRD 초안) | 아직 없음 |
+| [`reviews/`](reviews/) | 원본 프로젝트 25개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
+| [`pdf/`](pdf/) | `reviews/`의 PDF 변환본 25개 | 근거 사본 | 인쇄·공유 |
+| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 15개 기획서 | **정본** | 무엇을 만들지 볼 때 |
+| [`Price_Plans/`](Price_Plans/README.md) | 공용 가격 결정 방법(`_common/`), 제품별 가격 플랜, 서비스 사업 Web-App-Agency | 분석·계획(요금 정본은 01_PRD 4장) | 가격을 정하거나 바꿀 때 |
+| [`develop/`](develop/README.md) | 제품별 개발 안내서, setup 스크립트(`.sh`/`.ps1`), 개발 폴더에 붙일 묶음(`<제품>-root/`), 공용 설치 가이드(`_shared/`) | 묶음은 생성물(`build_root.py`) | 개발을 시작할 때 |
+| [`develop_V2/`](develop_V2/README.md) | 공용모듈 7개를 쓰는 제품별 개발서, V2 공통 규칙, 생성 스크립트 | 생성물(`gen_v2.py`) | 공용모듈로 개발할 때 |
+| [`Multi-tenant_Theming/`](Multi-tenant_Theming/README.md) | 화이트라벨 공용 설계: 커스터마이징 5단계(L0~L5), 디자인 토큰 3계층, 커스텀 도메인, 코어 확장 SQL `0011`(제안)과 RLS 스모크 | 공용 설계(제안) | 고객사 브랜드로 바꿔 팔 때 |
+| [`Tauri/`](Tauri/README.md) | 데스크톱 앱 공용 가이드: 로컬 SQLite와 Supabase 정본 배치, 인증(시스템 브라우저 + PKCE), 결제·라이선스·업데이트, 제품별 적용, 작업 분해 | 공용 설계(초안) | Windows·macOS 앱으로 만들 때 |
+| [`Capacitor/`](Capacitor/README.md) | 모바일 앱 공용 가이드: 기획 지시(스토어 정책, 결제 전략, 푸시 동의, 개인정보)와 개발 지시(설정, 플러그인, 인증, 푸시, 출시) | 공용 설계(초안) | iOS·Android 앱으로 만들 때 |
+| [`_tools/`](_tools/README.md) | 리뷰 작성 템플릿, md → PDF 변환기 | 도구 | 원본 리뷰를 추가할 때 |
 
-공용: `products/_platform-core/`(인증·조직·크레딧·결제·잡·AI·음성 규격), `products/_design-guide/`
-(디자인 시스템, 3D 히어로, Awwwards·Dribbble 레퍼런스), `products/_supabase-modular/`(통합 DB: `core` + 제품 스키마).
+### 2.1 `products/` 안쪽
 
-제품별 상세 설명(무엇을 하는 서비스인지, 주 사용자, DB 스키마, 작업 수)은 [`develop/README.md`](develop/README.md)에 모아 두었고, 각 폴더를 열면 그 폴더의 README가 함께 보입니다.
-
-## 3. 기획 읽는 순서
-
-1. `products/README.md`(전체 인덱스와 진행 상태) → `products/00_MERGE_ANALYSIS.md`(확정 결정 표)
-2. 제품 폴더 `README.md` → `01_PRD.md`(기능·요금·열린 결정) → `03_SCREENS_UX.md`(화면) → `06_AGENT_PLAN.md`(작업 계획)
-3. 대표님이 결정할 항목은 각 제품 `01_PRD.md` 8절 "열린 결정"에 모여 있습니다.
-
-| 파일(모든 제품 공통) | 내용 |
+| 경로 | 내용 |
 |---|---|
-| `README.md` | 한 줄 정의, 통합 근거, 원본 매핑, 문서 목록 |
-| `01_PRD.md` | 페르소나, MVP·Phase 범위, 기능 요구사항과 수용 기준, 요금, 열린 결정 |
-| `02_ARCHITECTURE.md` | 스택, 모듈 경계, 잡·워커, AI 라우팅, 배포, 환경변수 |
-| `03_SCREENS_UX.md` | 화면 목록, 사용자 플로우, 디자인 시스템, 메인페이지 |
-| `04_API.md` | Route Handler, RPC, 잡 계약, 오류 코드 |
-| `05_DATA_MODEL.md` | 테이블, RLS, 함수, 모놀리스·모듈러 차이 |
-| `06_AGENT_PLAN.md` | 작업 목록(작업 ID, 소유 경로, 의존성, 권장 모델, 수용 기준), 웨이브 |
+| [`00_MERGE_ANALYSIS.md`](products/00_MERGE_ANALYSIS.md) | 통합 전 기능 분석과 확정 결정 22개. 상단 결정 표가 본문보다 우선 |
+| [`_platform-core/`](products/_platform-core/README.md) | 공용 코어 규격: `CORE_SPEC`, `SHARED_MODULES`, `SECURITY_BASELINE`, `DB_CONVENTIONS`, `DOC_TEMPLATE`(제품 문서 장 구조), `AI_ARCHITECTURE`, `VOICE_ARCHITECTURE`, `LLM_WIKI`, `AUTH_ROADMAP`(인증 단계), `COMMON_MODULES_ROADMAP`, `MONOLITH_CORE_LITE.sql`, `staged/`(승인 전 코어 SQL) |
+| [`_platform-core/common-modules/`](products/_platform-core/common-modules/README.md) | 공용모듈 7개 기획(compliance, media, editorial, community, search, membership, ads)과 15개 제품 적용표 |
+| [`_design-guide/`](products/_design-guide/README.md) | 디자인 원칙·시스템, 3D 히어로 표준, 관리자 대시보드 패턴, Awwwards·Dribbble 레퍼런스, 디자인 스킬 |
+| [`_supabase-modular/`](products/_supabase-modular/README.md) | 통합 DB: 코어 `0000~0009` + 제품 조각, seed, 검증 기록 |
+| [`_tools-sqlcheck/`](products/_tools-sqlcheck/README.md) | PGlite로 SQL 적용을 검사하는 도구(`node check.mjs --vector ...`) |
+| `<제품>/` | 제품 기획서(2.2절 표준 구성) |
+| [`_PRODUCT_AGENT_BRIEF.md`](products/_PRODUCT_AGENT_BRIEF.md), [`_STRUCTURE_CHECK.md`](products/_STRUCTURE_CHECK.md) | 기획 에이전트 공통 지시, 구조 점검 기록 |
+
+### 2.2 제품 기획서 표준 구성 (모든 제품 공통)
+
+| 파일 | 내용 |
+|---|---|
+| `README.md` | 한 줄 정의, 통합 근거, 원본 매핑, 문서 목록, DB 구조 선택 |
+| `01_PRD.md` | 페르소나, MVP·Phase 범위, 기능 요구사항과 수용 기준, **요금(4장, 정본)**, 법·개인정보, KPI, **열린 결정(8장)** |
+| `02_ARCHITECTURE.md` | 스택, 모듈 경계, 잡·워커, AI 라우팅, 리뷰 "높음" 결함의 차단 설계, 배포, 환경변수 |
+| `03_SCREENS_UX.md` | 화면 목록, 사용자 플로우, 메인페이지(3D 히어로) 디자인 방향 |
+| `04_API.md` | Route Handler, RPC, 잡 계약, 웹훅, 오류 코드 |
+| `05_DATA_MODEL.md` | 테이블, RLS, 함수, 상태 전이, 모놀리스·모듈러 차이 |
+| `06_AGENT_PLAN.md` | 작업 목록(작업 ID, 소유 경로, 의존성, 권장 모델, 수용 기준), 웨이브, 공용 모듈 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본에서 가져올 것·버릴 것, 복사 금지 결함 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
-| `supabase/monolith/` | 단독 Supabase 프로젝트용 마이그레이션·seed(·RLS 테스트) |
+| `supabase/monolith/` | 단독 Supabase 프로젝트용 마이그레이션·seed·RLS 스모크 |
 
-## 4. 개발하는 방법 (모든 제품 공통)
+일부 제품은 추가 문서가 있습니다: nomad-video `08_AGENCY_OPERATIONS.md`(쇼츠 대행 운영), toon-factory `08_BENCHMARK.md`(경쟁 비교), local-news `modules/`(모듈 M1~M8)와 `research/`(디자인 벤치마크, 시장·법규).
 
-개발은 이 저장소에서 하지 않습니다. 멀티에이전트 베이스 레포를 복사해 제품별 개발 폴더를 만들고,
-이 저장소의 개발 묶음을 그 위에 붙인 뒤 그 폴더에서 Claude Code로 개발합니다.
+### 2.3 `develop/_shared/` (모든 개발 묶음이 같이 쓰는 설치 가이드)
+
+| 경로 | 내용 |
+|---|---|
+| [`auth/`](develop/_shared/auth/README.md) | 소셜 로그인 개발 지시서(Google·카카오·네이버), 공용 인증 패키지 `@nomad/core-auth` 구성, 제품별 적용 순서 |
+| [`modules/`](develop/_shared/modules/README.md) | 공용모듈 7개 개발 지시서(패키지 저장소 `nomad-modules` 구성, 버전·출시 규칙) |
+| [`dify/`](develop/_shared/dify/README.md), [`llm/`](develop/_shared/llm/README.md), [`voice/`](develop/_shared/voice/README.md) | 공용 Dify, LLM 키·오픈소스 LLM 서버·라우팅, 음성 서버 |
+| [`llm-wiki/`](develop/_shared/llm-wiki/) | 개발용 프로젝트 위키 스킬 원본 |
+| [`tools/build_root.py`](develop/_shared/tools/build_root.py) | `products/`를 고친 뒤 `<제품>-root/` 묶음을 다시 만드는 스크립트 |
+
+## 3. 제품 목록 (15개)
+
+개발 순서는 `develop/README.md` "권장 개발 순서"를 따릅니다(0단계 = 공용 코어). 작업 수는 V1 개발 묶음 기준입니다.
+
+| 제품 | 무엇을 하는 서비스인가 | 스키마(번호) | 개발 순서 | 작업 수 | 기획 · 개발 · 가격 |
+|---|---|---|---|---|---|
+| study-note (Study Note) | 수업·회의 원문을 AI 2개가 정리하고 하나의 학습 일지로 합침 | `notes`(2100) | 1 | 55 | [기획](products/study-note/) · [개발](develop/study-note/) · [가격](Price_Plans/study-note/PRICE_PLAN.md) |
+| website-floria (Floria) | 식물 설치 브랜드 홈페이지 + 문의·뉴스레터 운영 콘솔 | `site`(2200) | 1 | 49 | [기획](products/website-floria/) · [개발](develop/website-floria/) · [가격](Price_Plans/website-floria/PRICE_PLAN.md) |
+| flora-publishing (FLORA Publishing) | 1인 작가가 AI와 기획·집필·판형 조정을 거쳐 인쇄 PDF·ePub 완성 | `publishing`(1000) | 2 | 65 | [기획](products/flora-publishing/) · [개발](develop/flora-publishing/) · [가격](Price_Plans/flora-publishing/PRICE_PLAN.md) |
+| astro-ai (신비로운AI) | 사주 원국 + 타로 3장 AI 해설을 A4 책자형 PDF 리포트로 | `astro`(1100) | 2 | 57 | [기획](products/astro-ai/) · [개발](develop/astro-ai/) · [가격](Price_Plans/astro-ai/PRICE_PLAN.md) |
+| nomad-docs (NOMAD Docs) | 체크리스트 한 번으로 견적서·요구사항정의서·계약서 등 실무 문서 묶음 생성, CRM형 작업 공간 | `docs`(2300) | 2 이후 | 65 | [기획](products/nomad-docs/) · [개발](develop/nomad-docs/) · [가격](Price_Plans/nomad-docs/PRICE_PLAN.md) |
+| nomad-video (NOMAD AI Factory) | 숏폼·롱폼·Lofi·플리 자동 생산과 다채널 배포, 쇼츠 대행 | `video`(1200) | 3 | 65 | [기획](products/nomad-video/) · [개발](develop/nomad-video/) · [가격](Price_Plans/nomad-video/PRICE_PLAN.md) |
+| nomad-blog (NOMAD Blog) | 키워드 하나로 블로그 원고 + 제휴 카드 + 대가성 문구, 예약 발행 | `blog`(1300) | 3 | 59 | [기획](products/nomad-blog/) · [개발](develop/nomad-blog/) · [가격](Price_Plans/nomad-blog/PRICE_PLAN.md) |
+| nomad-commerce (NOMAD Commerce) | 셀러용 상품 소싱·AI 상세페이지·마켓 업로드 | `commerce`(1400) | 3 | 60 | [기획](products/nomad-commerce/) · [개발](develop/nomad-commerce/) · [가격](Price_Plans/nomad-commerce/PRICE_PLAN.md) |
+| microweb-studio (Microweb Studio) | 모바일 청첩장 등 마이크로웹 템플릿 엔진 + 대행 제작 쇼룸 | `microweb`(1500) | 4 | 56 | [기획](products/microweb-studio/) · [개발](develop/microweb-studio/) · [가격](Price_Plans/microweb-studio/PRICE_PLAN.md) |
+| live-poll (Live Poll) | Slido형 실시간 투표·Q&A, 방송 오버레이 | `poll`(1800) | 4 | 51 | [기획](products/live-poll/) · [개발](develop/live-poll/) · [가격](Price_Plans/live-poll/PRICE_PLAN.md) |
+| toon-factory (Toon Factory) | 이야기 → 콘티 → 캐릭터 모듈 조립 → 인스타툰·웹툰·9:16 영상 | `toon`(2000) | 4 | 69 | [기획](products/toon-factory/) · [개발](develop/toon-factory/) · [가격](Price_Plans/toon-factory/PRICE_PLAN.md) |
+| admin-suite (Admin Suite) | ERP·병원(HMS)·학교(SMS) 내부 관리 3종, 사내 규정 AI 어시스턴트 | `erp`(1600), `sms`(1700), hms는 단독 | 5 | 60 | [기획](products/admin-suite/) · [개발](develop/admin-suite/) · [가격](Price_Plans/admin-suite/PRICE_PLAN.md) |
+| stock-dashboard (Stock Dashboard) | 본인 증권 계좌(1차 모의투자) 대시보드 + AI 포트폴리오 진단, 초대제 | `stock`(1900) | 5 | 54 | [기획](products/stock-dashboard/) · [개발](develop/stock-dashboard/) · [가격](Price_Plans/stock-dashboard/PRICE_PLAN.md) |
+| local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(화이트라벨), 공용모듈 7개의 출처 | `news`(2500) | 6 | 56 | [기획](products/local-news/) · [개발](develop/local-news/) · [가격](Price_Plans/local-news/PRICE_PLAN.md) |
+| arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱: 법규 엔벨로프 실시간 판정, AI 렌더, 제안서, 시리얼 영구 라이선스 | `arch`(2400, 제안) | 미정(설치형) | - | [기획](products/arch-studio/)(README·01_PRD만) · 개발 묶음 없음 · 가격 플랜 없음(요금은 01_PRD 4장) |
+
+모든 제품이 같은 공용 기반(로그인·조직, 크레딧·결제, 잡 워커, AI 계층, 음성)을 쓰고, 공개 랜딩이 있는 제품은 3D 히어로를 씁니다. 제품별 상세 설명은 [`develop/README.md`](develop/README.md), 공용모듈 채택 현황은 [`develop_V2/README.md`](develop_V2/README.md)에 있습니다.
+
+## 4. 어느 문서가 정본인가
+
+같은 내용이 여러 곳에 있을 때 아래 순서로 판단합니다.
+
+| 주제 | 정본 | 사본·참고 | 규칙 |
+|---|---|---|---|
+| 큰 방향 | `products/00_MERGE_ANALYSIS.md` 상단 확정 결정 | 분석 본문, 제품 문서 | 확정 결정과 다른 범위는 제품 문서에 쓰지 않는다 |
+| 공용 규격 | `products/_platform-core/` | 제품 문서의 인용 | 제품이 공용 규격을 재정의하지 않는다. 바꿀 것은 제품 `06_AGENT_PLAN.md` 6절 "공용 모듈 요청"에 적는다 |
+| 제품 기능 | `products/<제품>/01~07` | `develop/<제품>/<제품>-root/docs/file/` | `-root`는 `build_root.py`가 만든 사본이다. 직접 고치지 않고 `products/`를 고친 뒤 다시 만든다 |
+| 요금·크레딧 | 제품 `01_PRD.md` 4장 + seed | `Price_Plans/<제품>/PRICE_PLAN.md` | 가격 플랜에서 바꾸기로 정하면 01_PRD 4장과 seed를 함께 고친다 |
+| DB | `products/_supabase-modular/migrations/<번호>_<스키마>.sql`(모듈러 조각) | 제품 `supabase/monolith/` | 모놀리스는 변환본이다 |
+| 공용모듈 개발서 | `develop_V2/<제품>/` | - | `gen_v2.py`가 제품 06장을 읽어 만든다. 06장을 고치면 다시 실행한다 |
+| 인증 | `products/_platform-core/AUTH_ROADMAP.md`(확정 결정 22) | `develop/_shared/auth/README.md`(개발 지시) | 전 제품 같은 단계: A Mock → G1 → B Google(+이메일·초대) → G2 → C1 카카오·C2 네이버 |
+| 표기 | `products/_platform-core/DOC_TEMPLATE.md` 0장 | - | 근거 없는 수치·정책은 "제안", 확인하지 않은 외부 사실은 "미확인" |
+
+## 5. 목적별 읽는 순서
+
+| 목적 | 순서 |
+|---|---|
+| 저장소 전체 파악 | 이 문서 → [`products/README.md`](products/README.md)(인덱스와 진행 상태) → `00_MERGE_ANALYSIS.md` 확정 결정 표 |
+| 제품 하나 이해 | 제품 `README.md` → `01_PRD.md`(대표님 결정은 8장 "열린 결정") → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md` |
+| 가격 결정 | [`Price_Plans/_common/PRICING_PRINCIPLES.md`](Price_Plans/_common/PRICING_PRINCIPLES.md) → 제품 `PRICE_PLAN.md` → 제품 `01_PRD.md` 4장 |
+| 개발 시작 | [`develop/README.md`](develop/README.md) → `develop/<제품>/<제품>_develop.md` → setup 스크립트(6장) |
+| 공용모듈로 개발 | [`develop_V2/README.md`](develop_V2/README.md) → `develop_V2/_shared/V2_RULES.md` → 제품 V2 개발서 → [`develop/_shared/modules/`](develop/_shared/modules/README.md) |
+| 로그인 구현 | `AUTH_ROADMAP.md` → [`develop/_shared/auth/README.md`](develop/_shared/auth/README.md) → 제품 개발서 19장 |
+| 화이트라벨 판매 | [`Multi-tenant_Theming/README.md`](Multi-tenant_Theming/README.md) → `06_ADOPTION_PLAN.md` → `07_SALES_AND_OPERATIONS.md` |
+| 데스크톱·모바일 앱 | [`Tauri/README.md`](Tauri/README.md) 2장(웹 SDK 사용 시 주의점) → 12장(제품별 적용), [`Capacitor/README.md`](Capacitor/README.md) 3장(기획 지시) → 5장(제품별 적용) |
+| 원본 리뷰 추가 | [`_tools/README.md`](_tools/README.md) → `REVIEW_TEMPLATE.md` → `PDF_GUIDE.md` |
+
+## 6. 개발하는 방법 (모든 제품 공통)
+
+개발은 이 저장소에서 하지 않습니다. 멀티에이전트 베이스 레포를 복사해 제품별 개발 폴더를 만들고, 이 저장소의 개발 묶음을 그 위에 붙인 뒤 그 폴더에서 Claude Code로 개발합니다.
 
 ```
 D:\WorkSpace\platform\docs\develop\<제품>\          ← 이 저장소(안내서, 스크립트, 묶음)
@@ -90,35 +182,28 @@ D:\WorkSpace\DEV\<제품>\                             ← 개발 폴더(여기�
 | 4 결정 | 착수 전 결정 확정, 산출물 상태를 "승인"으로 | 개발 가이드 8장 |
 | 5 작업 | `06_AGENT_PLAN.md`의 작업을 웨이브(W0부터) 순서로 task로 만들어 요청 프롬프트로 지시 | 개발 가이드 9장 |
 | 6 반복 | 계획 공격 → 구현 → 리뷰 → 위키 갱신 → 완료, 웨이브가 끝나면 다음 웨이브 | 개발 가이드 10장 |
+| 7 공용모듈(선택) | 채택한 공용모듈이 있으면 `develop_V2/<제품>/` 개발서의 바뀌는 작업·DB 순서를 따른다 | `develop_V2/_shared/V2_RULES.md` |
 
-개발 가이드: `develop/<제품>/<제품>_develop.md`
+에이전트 구성: 주 Opus(claude-main), 리뷰 Sonnet(claude-reviewer), 계획 공격 Fable(plan-challenger), 구현 Sonnet(도메인 expert). 작업마다 `06_AGENT_PLAN.md` 2절 "수용 기준"이 완료 조건이고, P0 작업은 대응 테스트 작업이 통과해야 완료입니다. 구현이 기획과 달라지면 코드를 조용히 맞추지 말고 산출물을 고치는 task를 따로 만듭니다.
 
-## 5. 예시: NOMAD Docs로 첫 작업까지
+개발 묶음(`<제품>-root/`)에는 `products/`의 기획서·공용 코어·디자인 문서만 들어갑니다. `Price_Plans/`, `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/`, 공용모듈 기획서는 묶음에 복사되지 않으므로 지시할 때 `D:/WorkSpace/platform/docs/...` 원본 경로를 적습니다.
 
-### 5.1 설치
+### 6.1 예시: NOMAD Docs로 첫 작업까지
 
-PowerShell:
+설치(PowerShell 또는 Git Bash):
 ```powershell
 pwsh -File D:\WorkSpace\platform\docs\develop\nomad-docs\setup-nomad-docs.ps1 -DryRun   # 할 일만 출력
 pwsh -File D:\WorkSpace\platform\docs\develop\nomad-docs\setup-nomad-docs.ps1          # 실제 실행
 ```
-Git Bash:
 ```bash
 bash /d/WorkSpace/platform/docs/develop/nomad-docs/setup-nomad-docs.sh --dry-run
 bash /d/WorkSpace/platform/docs/develop/nomad-docs/setup-nomad-docs.sh
 ```
-마지막에 `결과: PASS=17 FAIL=0`과 `== ALL PASS ==`가 나오면 `D:\WorkSpace\DEV\nomad-docs\`가 준비된 것입니다.
-대상 폴더가 이미 있으면 스크립트는 덮어쓰지 않고 멈춥니다.
+마지막에 `결과: PASS=17 FAIL=0`과 `== ALL PASS ==`가 나오면 `D:\WorkSpace\DEV\nomad-docs\`가 준비된 것입니다. 대상 폴더가 이미 있으면 스크립트는 덮어쓰지 않고 멈춥니다.
 
-### 5.2 프로필과 에이전트 확인
+프로필과 에이전트: `_shared/project-profile.md`에 스택(Next.js 16.2.x, React 19.2, Tailwind CSS v4, shadcn/ui, FastAPI 0.115 + Python 3.12, Supabase 등, 값은 개발 가이드 6장 표)을 적고, 개발 폴더에서 `claude` → `/agent-check`로 에이전트를 확인합니다.
 
-1. `D:\WorkSpace\DEV\nomad-docs\_shared\project-profile.md`에 스택을 적습니다(Next.js 16.2.x, React 19.2,
-   Tailwind CSS v4, shadcn/ui, FastAPI 0.115 + Python 3.12, Supabase 등. 값은 개발 가이드 6장 표).
-2. 개발 폴더에서 `claude`를 실행하고 `/agent-check`로 에이전트를 확인합니다.
-   주 Opus(claude-main), 리뷰 Sonnet(claude-reviewer), 계획 공격 Fable(plan-challenger), 구현 Sonnet(도메인 expert).
-
-### 5.3 로컬 DB
-
+로컬 DB:
 ```bash
 cd /d/WorkSpace/DEV/nomad-docs
 supabase start
@@ -133,14 +218,9 @@ supabase gen types typescript --local --schema public > apps/web/src/types/supab
 | `select count(*) from public.doc_types where phase = 'mvp' and is_active` | 8(계약서 `dev_contract`는 법무 검토 전 비활성) |
 | `select code, signup_credits, monthly_credits, is_active from public.plans where app_id = 'docs'` | free 50/30, pro 0/400, team 0/1500 비활성 |
 
-RLS 권한 테스트 105개는 `supabase/tests/rls_smoke.sql`에 있습니다(실행법: 개발 가이드 7.3절).
+RLS 권한 테스트 105개는 `supabase/tests/rls_smoke.sql`에 있습니다(실행법: 개발 가이드 7.3절). W0는 결정 없이 시작할 수 있고, 계약서 공개(D-3 법무 검토)와 요금(D-4 베타 원가 측정 후)은 해당 웨이브 전에 정합니다.
 
-### 5.4 착수 전 결정 (`docs/file/02-요구사항/01_PRD.md` 8절)
-
-W0는 결정 없이 시작할 수 있습니다. 계약서 공개(D-3 법무 검토), 요금(D-4 베타 원가 측정 후)은 해당 웨이브 전에 정합니다.
-
-### 5.5 첫 task 만들기와 지시 (W0의 DC-06-001)
-
+첫 task(W0의 DC-06-001):
 ```
 tasks/DC-06-001-db-apply/
 ├── task.md      baseline(근거 산출물 ID), workers_approved, write_scope: supabase/**, apps/web/src/types/**
@@ -171,8 +251,6 @@ review role worker 는 claude-reviewer 가 진행한다.
 review role worker 의 서브 에이전트는 plan-challenger, review-expert 가 병렬 진행한다.
 ```
 
-### 5.6 이후 순서
-
 | 웨이브 | 작업(예) | 끝나면 생기는 것 |
 |---|---|---|
 | W0 | 001 DB, 004 web 골격, 005 워커 골격, 008 디자인 레퍼런스 | 로컬 DB, 빈 앱 골격 |
@@ -181,24 +259,40 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | W5~W7 | 편집기·채팅 → 위키·KPI → 통합·E2E·AI 보안 회귀 | 공개 베타(MVP) |
 | W8 | 연동(n8n, HubSpot, ERP), 숏폼 대행 패키지 | Phase 2 |
 
-작업마다 `06_AGENT_PLAN.md` 2절의 "수용 기준"이 완료 조건이고, P0 작업은 대응 테스트 작업이 통과해야 완료입니다.
-구현이 기획과 달라지면 코드를 조용히 맞추지 말고 산출물을 고치는 task를 따로 만듭니다.
+## 7. 규칙
 
-## 6. 규칙
-
-- 공용 폴더(`_platform-core/`, `_design-guide/`, `_supabase-modular/`)는 제품 작업에서 고치지 않고 각 제품 `06_AGENT_PLAN.md` 6절 "공용 모듈 요청"에 적습니다.
-- DB 정본은 모듈러 조각(`_supabase-modular/migrations/<번호>_<스키마>.sql`)이고, 제품 모놀리스는 변환본입니다.
-- 원격 DB 적용(`supabase db push`)은 사람이 확인 후 실행합니다.
-- 기술 스택은 Tailwind CSS v4 고정(v3 문법·`tailwind.config.js` 금지).
-- 로그인은 전 제품 같은 단계로 켭니다: A Mock 로그인(로컬 Supabase 시드 계정으로 실제 로그인, MVP 개발) → G1 → B Google OAuth(+이메일·초대 메일, 공개 베타 전) → G2 → C1 카카오·C2 네이버. 쿠키에 역할을 적는 Mock은 금지입니다. 정본 [`products/_platform-core/AUTH_ROADMAP.md`](products/_platform-core/AUTH_ROADMAP.md)(확정 결정 22).
-- 이 저장소 변경은 브랜치 → PR → main 병합으로 합니다.
-
-## 7. 현재 상태 (2026-10-14)
-
-| 항목 | 상태 |
+| 규칙 | 내용 |
 |---|---|
-| 기획 | 14개 제품 완료(local-news 포함), arch-studio는 PRD 초안. 인증 단계(확정 결정 22) 15개 제품 반영 완료. 공용모듈 7개 기획(`products/_platform-core/common-modules/`). 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
-| 개발 묶음 | 14개 제품 완료(`develop/`), 공용모듈을 쓰는 V2 개발서 15개(`develop_V2/`) |
-| 남은 결정 | 각 제품 `01_PRD.md` 8절. 공용 과제는 `products/README.md` "남은 코어 과제" |
-| 가격 플랜 | `Price_Plans/` 생성. Web-App-Agency 초안, 제품 14개(정본은 각 PRD 4장) |
-| 멀티테넌트 테마 | `Multi-tenant_Theming/` 설계 완료. 코어 확장 SQL `0011`은 제안(staged), PGlite 적용 OK·RLS 스모크 91/91(모듈러·모놀리스). 코어 반영은 승인 후(`06_ADOPTION_PLAN.md` 1장) |
+| 공용 폴더 보호 | `_platform-core/`, `_design-guide/`, `_supabase-modular/`는 제품 작업에서 고치지 않고 제품 `06_AGENT_PLAN.md` 6절 "공용 모듈 요청"에 적는다 |
+| 생성물 직접 수정 금지 | `develop/<제품>/<제품>-root/`(`build_root.py`), `develop_V2/<제품>/`(`gen_v2.py`)는 원본을 고친 뒤 스크립트로 다시 만든다 |
+| DB | 정본은 모듈러 조각이고 제품 모놀리스는 변환본이다. 원격 DB 적용(`supabase db push`)은 사람이 확인 후 실행한다. SQL은 `products/_tools-sqlcheck`로 적용 검사를 통과해야 한다 |
+| 스택 | Tailwind CSS v4 고정(v3 문법·`tailwind.config.js` 금지). 의존성 버전 고정, `latest` 금지 |
+| 로그인 | 전 제품 같은 단계(A Mock → G1 → B Google → G2 → C1 카카오·C2 네이버). 쿠키에 역할을 적는 Mock 금지. 정본 [`AUTH_ROADMAP.md`](products/_platform-core/AUTH_ROADMAP.md) |
+| 비밀 | `service_role`, LLM·결제 키는 서버 전용. 사용자 API 키(BYOK)는 만들지 않는다(`SECURITY_BASELINE.md` 5장) |
+| 표기 | 한국어, Markdown 표만(HTML·이모지 금지), 근거는 `상대경로:줄번호`, 근거 없는 수치·정책은 "제안", 확인하지 않은 외부 사실은 "미확인" |
+| 변경 절차 | 이 저장소 변경은 브랜치 → PR → main 병합으로 한다 |
+
+## 8. 현재 상태와 남은 일 (2026-10-15)
+
+| 영역 | 상태 |
+|---|---|
+| 기획 | 14개 제품 완료(01~07, CLAUDE.md, SQL), arch-studio는 README·01_PRD 초안. 인증 단계(확정 결정 22) 15개 제품 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
+| 통합 DB | 코어 `0000~0009` + 제품 조각 15개(`1000~2300`, `2500_news`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
+| 개발 묶음 | 14개 제품(작업 821개), 공용모듈 V2 개발서 15개 |
+| 공용모듈 | 7개 기획·개발 지시서 완료(상태: 제안). 패키지 저장소 `nomad-modules`는 아직 없음 |
+| 가격 | 제품 14개 + Web-App-Agency 초안(정본은 각 PRD 4장) |
+| 화이트라벨 | `Multi-tenant_Theming/` 설계 완료, 코어 확장 SQL `0011`은 제안(PGlite 적용·RLS 스모크 91/91 통과). 코어 반영은 승인 후 |
+| 데스크톱·모바일 | `Tauri/`, `Capacitor/` 공용 가이드 초안. 코어 요청 T-C1~T-C8, M-C1~M-C4 미반영 |
+
+### 8.1 저장소 점검에서 확인한 빈 곳
+
+| # | 빈 곳 | 영향 | 다음 할 일 |
+|---|---|---|---|
+| 1 | arch-studio에 02~07, `CLAUDE.md`, SQL, `develop/arch-studio/`, `Price_Plans/arch-studio/`가 없다(`develop_V2/arch-studio/` 개발서만 있음) | 개발 착수 불가 | 02_ARCHITECTURE부터 작성. Tauri 1주 기술 스파이크 결과 반영 |
+| 2 | `DB_CONVENTIONS.md` 2장 번호 표와 `_supabase-modular/README.md`에 `2400 arch`(제안), `2500 news`(조각 있음) 행이 없다 | 번호 충돌 위험 | 코어 문서에 두 행 추가 |
+| 3 | 승인 전 코어 SQL 2개: `products/_platform-core/staged/0010_core_auth_identity_links.sql`(네이버 브리지용), `Multi-tenant_Theming/supabase/0011_core_tenant_theming.sql` | local-news 등 의존 제품 착수 지연 | 각각 C2 스파이크 결과, `06_ADOPTION_PLAN.md` 승인으로 결정 |
+| 4 | 코어 요청 미반영: 일회성 상품 결제(설치형 판매), 셸 앱 Bearer 세션·CORS, 푸시 채널, `adjust_credits` 등(`products/README.md` "남은 코어 과제") | 설치형·앱·일부 크레딧 기능 착수 불가 | 코어 요청을 한 PR로 모아 처리 |
+| 5 | 판매 모델 A(설치형) 정의가 "고객 API 키"를 전제하지만 `SECURITY_BASELINE.md`는 BYOK를 금지한다(`Price_Plans/_common/PRICING_PRINCIPLES.md` A행, Tauri 가이드 T-C5) | 설치형 제품 설계 기준 불명확 | 둘 중 하나를 고친다(arch-studio는 크레딧 게이트웨이 방식) |
+| 6 | 개발 묶음에 `Price_Plans/`, `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/`, 공용모듈 기획서가 들어가지 않는다 | 에이전트가 원본 경로를 따로 지시받아야 함 | 필요하면 `build_root.py`의 참조 목록에 추가 |
+
+남은 결정은 각 제품 `01_PRD.md` 8장, 공용 과제는 [`products/README.md`](products/README.md) "남은 코어 과제"에 있습니다.
