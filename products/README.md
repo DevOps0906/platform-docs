@@ -24,6 +24,7 @@
 | `nomad-docs/` (NOMAD Docs) | 신설 | 없음(설계 이식: flora-publishing, flora, SellingDocs, FortuneDocs) | `docs` | 2300 |
 | `arch-studio/` (Arch Studio, 가칭) | 신설(설치형 데스크톱 + 시리얼 라이선스) | 없음(설계 이식: nomad-docs, flora-publishing, `_platform-core` AI 계층) | `arch`(제안) | 2400(제안) |
 | `local-news/` (로컬뉴스 클라우드, 가칭) | 신설(멀티테넌트 SaaS, 화이트라벨) | 없음(설계 이식: `Multi-tenant_Theming`, `_platform-core`, 언론사 디자인 벤치마크) | `news` | 2500 |
+| `book-trailer/` (NOMAD Book Trailer, 가칭) | 신설 | 없음(설계 이식: nomad-video, toon-factory, flora-publishing, nomad-docs. 리뷰 NOMAD Shorts Maker, Toon-Factory) | `trailer` | 2600 |
 
 ## 제품 폴더 표준 구성
 | 파일 | 내용 |
@@ -73,6 +74,7 @@
 | 8 | local-news(15번째 제품, 멀티테넌트 지역신문 SaaS) 기획·개발 묶음 | 완료 | 아래 "local-news 추가", PR #20·#21 |
 | 9 | 공용모듈 7개(local-news 유래) 기획서·개발서, 제품별 V2 개발서 | 완료 | 아래 "공용모듈 7개 추가", `_platform-core/common-modules/`, `../develop_V2/`, PR #22·#23 |
 | 10 | 저장소 전체 점검과 수정(표 깨짐, 오래된 숫자) | 완료 | 아래 "2026-10-15 저장소 점검" |
+| 11 | book-trailer(16번째 제품, 북트레일러 자동화) 기획·디자인 시스템·개발 묶음·가격 플랜 | 완료 | 아래 "book-trailer 추가" |
 
 ## 제품별 결과
 
@@ -277,3 +279,19 @@ local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용�
 | 개발 묶음 경로 검사 14개 제품 | 누락 0 |
 | 06장 작업 ID·웨이브 | 중복·누락 0 |
 | 수정 | 표 안 코드의 `\|` 이스케이프(GitHub에서 칸이 밀려 내용이 사라지던 98행), 칸 수가 헤더와 다른 표 41행, 링크로 잘못 렌더되던 버튼 표기 49곳, 제품 수(13 → 14)·작업 수 표기 |
+
+## book-trailer 추가 (2026-10-15)
+
+16번째 제품 `book-trailer/`(NOMAD Book Trailer, 가칭)를 추가했다. 원고를 넣으면 훅 브리프 3안, 장르 트레일러 문법 6종 스토리보드, 장면 이미지·내레이션·자막·음악, 규격 4종 + 표지 루프 렌더(Remotion), 구매 링크 클릭 측정까지 하는 북트레일러 자동화 SaaS다. 다른 제품과 달리 디자인 시스템을 별도 문서 `08_DESIGN_SYSTEM.md`(앱 토큰 층 + 영상 토큰 층)로 둔다. 개발 묶음 `../develop/book-trailer/`, 가격 플랜 `../Price_Plans/book-trailer/`. 위 합계 표에는 넣지 않았다.
+
+| 제품 | 06장 작업 | A(Mock) | B(Google) | C1 카카오 | C2 네이버 | RLS 스모크(모놀리스 / 모듈러) | 문서 경로 검사(참조 / 누락) |
+|---|---|---|---|---|---|---|---|
+| book-trailer | 60 | TR-06-004 | TR-06-053 | TR-06-054(P1) | TR-06-055(P1) | 124/124 / 124/124 | 399 / 0 |
+
+| 점검 | 결과 |
+|---|---|
+| 통합 DB: 코어 0000~0009 + seed + 제품 조각 16개(1000~2300, 2500, 2600) | 정순·역순 적용 OK(`check.mjs --vector`) |
+| 모놀리스 0001 + 0002 + seed | 적용 OK |
+| 리뷰 "높음" 차단 설계 | 18건(NOMAD Shorts Maker 12, Toon-Factory 6) = 05장 7절 10 + 02장 6절 8 |
+| `build_root.py` | book-trailer 등록, 선택 기획서 `08_DESIGN_SYSTEM.md`(DOC-DES-005), `###` 수준 "초기값" 절 읽기 추가. 기존 제품 초기값 출력 변화 없음 |
+| 남은 공용 요청 | R-T1~R-T8(`book-trailer/06_AGENT_PLAN.md` 6절): 모듈러 seed, `DB_CONVENTIONS.md` 2600·`TR` 등록, 서점 제휴 범용화, 잡 토큰 표준화, 인증 매트릭스 행, sns-uploader 소비자, REFERENCES 절, 렌더러 공용화 |

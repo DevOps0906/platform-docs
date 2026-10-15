@@ -32,6 +32,7 @@ Price_Plans/
 | Web-App-Agency | 서비스(대행) | [`Web-App-Agency/PRICE_PLAN.md`](Web-App-Agency/PRICE_PLAN.md) | 초안 | 이 폴더가 정본(제품 DB 없음) |
 | admin-suite | 제품 SaaS | [`admin-suite/PRICE_PLAN.md`](admin-suite/PRICE_PLAN.md) | 초안 | `products/admin-suite/01_PRD.md` 4장 |
 | astro-ai | 제품 SaaS | [`astro-ai/PRICE_PLAN.md`](astro-ai/PRICE_PLAN.md) | 초안 | `products/astro-ai/01_PRD.md` 4장 |
+| book-trailer | 제품 SaaS + 대행 | [`book-trailer/PRICE_PLAN.md`](book-trailer/PRICE_PLAN.md) | 초안 | `products/book-trailer/01_PRD.md` 4장 |
 | flora-publishing | 제품 SaaS | [`flora-publishing/PRICE_PLAN.md`](flora-publishing/PRICE_PLAN.md) | 초안 | `products/flora-publishing/01_PRD.md` 4장 |
 | live-poll | 제품 SaaS | [`live-poll/PRICE_PLAN.md`](live-poll/PRICE_PLAN.md) | 초안 | `products/live-poll/01_PRD.md` 4장 |
 | local-news | 제품 SaaS(멀티테넌트) | [`local-news/PRICE_PLAN.md`](local-news/PRICE_PLAN.md) | 초안 | `products/local-news/01_PRD.md` 4장 |
