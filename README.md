@@ -100,7 +100,6 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`auth/`](develop/_shared/auth/README.md) | 소셜 로그인 개발 지시서(Google·카카오·네이버), 공용 인증 패키지 `@nomad/core-auth` 구성, 제품별 적용 순서 |
 | [`modules/`](develop/_shared/modules/README.md) | 공용모듈 7개 개발 지시서(패키지 저장소 `nomad-modules` 구성, 버전·출시 규칙) |
 | [`dify/`](develop/_shared/dify/README.md), [`llm/`](develop/_shared/llm/README.md), [`voice/`](develop/_shared/voice/README.md) | 공용 Dify, LLM 키·오픈소스 LLM 서버·라우팅, 음성 서버 |
-| [`llm-wiki/`](develop/_shared/llm-wiki/) | 개발용 프로젝트 위키 스킬 원본 |
 | [`tools/build_root.py`](develop/_shared/tools/build_root.py) | `products/`를 고친 뒤 `<제품>-root/` 묶음을 다시 만드는 스크립트 |
 
 ## 3. 제품 목록 (16개)

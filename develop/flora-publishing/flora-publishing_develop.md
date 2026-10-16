@@ -24,7 +24,7 @@ D:\WorkSpace\platform\docs\develop\flora-publishing\        platform에 남는 �
                 │ setup 스크립트가 복사(flora-publishing-root 폴더 자체가 아니라 안의 내용물)
                 ▼
 D:\WorkSpace\DEV\flora-publishing\                            베이스를 복사해 만든 개발 폴더
-├── docs\  supabase\  infra\  .claude\skills\llm-wiki\  ← flora-publishing-root에서 들어온 것(기존 폴더와 합쳐짐)
+├── docs\  supabase\  infra\  ← flora-publishing-root에서 들어온 것(기존 폴더와 합쳐짐)
 └── apps\  _shared\  _templates\  .claude\agents\  init-project.sh ...  ← 베이스에 원래 있던 것
 ```
 
@@ -136,7 +136,7 @@ D:\WorkSpace\DEV\flora-publishing\                            베이스를 복�
 | `docs/products/flora-publishing/supabase/monolith/migrations/0001_core_lite.sql` | `supabase/migrations/20261013000001_core_lite.sql` | - | DB |
 | `docs/products/flora-publishing/supabase/monolith/migrations/0002_publishing_domain.sql` | `supabase/migrations/20261013000002_publishing_domain.sql` | - | DB |
 | `docs/products/flora-publishing/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB(플랜, 크레딧팩, AI 라우팅 12행) |
-| `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
+| (베이스 제공) | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 규칙·스킬. 묶음에 없고 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)가 제공한다 |
 | (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 25개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 채팅 앱 설정 |
 
@@ -154,7 +154,7 @@ D:\WorkSpace\DEV\flora-publishing\
 │   │                                          nextjs-expert·fastapi-expert·supabase-expert(→Sonnet), review-expert(Sonnet)
 │   ├── commands\agent-check.md       [베이스]
 │   └── skills\ deliverable-first, nextjs-expert, fastapi-expert, supabase-expert, frontend-design, ui-ux-pro-max  [베이스]
-│              llm-wiki\SKILL.md      [묶음] 개발 위키 스킬
+│              llm-wiki\SKILL.md      [베이스] 개발 위키 스킬
 ├── _shared\                          [베이스] project-profile.md, orchestrator-rules.md, check-invariants.sh, adapters\ ...
 ├── _templates\                       [베이스] task.md, worker-brief.md ...
 ├── apps\
@@ -165,7 +165,7 @@ D:\WorkSpace\DEV\flora-publishing\
 ├── docs\
 │   ├── reference\ 00_MERGE_ANALYSIS.md, reviews\(리뷰 4건)   [묶음]
 │   ├── file\ _index.md(25개), 01-관리, 02-요구사항, 03-설계(공용코어 9개(AUTH_ROADMAP 포함), 디자인 5개 + DESIGN.md, COMPONENTS.md), 04-구현   [묶음]
-│   └── wiki\ WIKI_SCHEMA.md, index.md, log.md, sources\(25개)  [묶음] 개발 위키
+│   └── wiki\ index.md, log.md, sources\(25개)  [묶음] 개발 위키 · WIKI_SCHEMA.md [베이스]
 ├── infra\dify\README.md              [묶음] 채팅 앱 설정 설명서(DSL은 publishing-chat.yml로 추가)
 ├── supabase\ migrations\(20261013000001_core_lite.sql, 20261013000002_publishing_domain.sql), seed.sql   [묶음]
 └── tasks\  _local\                   [베이스] 작업 데이터(git 추적 안 함)

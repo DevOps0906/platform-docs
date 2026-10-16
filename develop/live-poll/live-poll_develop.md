@@ -24,7 +24,7 @@ D:\WorkSpace\platform\docs\develop\live-poll\        platform에 남는 안내�
                 │ setup 스크립트가 복사(live-poll-root 폴더 자체가 아니라 안의 내용물)
                 ▼
 D:\WorkSpace\DEV\live-poll\                            베이스를 복사해 만든 개발 폴더
-├── docs\  supabase\  infra\  .claude\skills\llm-wiki\  ← live-poll-root에서 들어온 것(기존 폴더와 합쳐짐)
+├── docs\  supabase\  infra\  ← live-poll-root에서 들어온 것(기존 폴더와 합쳐짐)
 └── apps\  _shared\  _templates\  .claude\agents\  init-project.sh ...  ← 베이스에 원래 있던 것
 ```
 
@@ -143,7 +143,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/live-poll/supabase/monolith/migrations/0001_core_lite.sql` | `supabase/migrations/20261013000001_core_lite.sql` | - | DB |
 | `docs/products/live-poll/supabase/monolith/migrations/0002_poll_domain.sql` | `supabase/migrations/20261013000002_poll_domain.sql` | - | DB |
 | `docs/products/live-poll/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB |
-| `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
+| (베이스 제공) | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 규칙·스킬. 묶음에 없고 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)가 제공한다 |
 | (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 25개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 어시스턴트 앱 설정 |
 
@@ -167,7 +167,7 @@ D:\WorkSpace\DEV\live-poll\
 │   ├── commands\agent-check.md       [베이스]
 │   └── skills\
 │       ├── deliverable-first, nextjs-expert, fastapi-expert, supabase-expert, frontend-design, ui-ux-pro-max   [베이스]
-│       └── llm-wiki\SKILL.md         [묶음] 개발 위키 스킬
+│       └── llm-wiki\SKILL.md         [베이스] 개발 위키 스킬
 ├── _shared\
 │   ├── project-profile.md            [베이스] 6절에서 채움
 │   ├── orchestrator-rules.md  routing.md  approval-policy.md  system-invariants.md  design-basis.md  learnings.md   [베이스]
@@ -194,7 +194,7 @@ D:\WorkSpace\DEV\live-poll\
 │   │   │   ├── 공용코어\ 9개(AUTH_ROADMAP 포함)            [묶음]
 │   │   │   └── 디자인\ 5개 + DESIGN.md, COMPONENTS.md     [묶음]
 │   │   └── 04-구현\CLAUDE.md, 07_SOURCE_MIGRATION.md     [묶음]
-│   └── wiki\WIKI_SCHEMA.md, index.md, log.md, sources\  [묶음] 개발 위키
+│   └── wiki\index.md, log.md, sources\  [묶음] 개발 위키 · WIKI_SCHEMA.md [베이스]
 ├── infra\dify\README.md              [묶음] 어시스턴트 앱 설정 설명서(DSL은 poll-assistant.yml로 추가)
 ├── supabase\
 │   ├── README.md                     [베이스]

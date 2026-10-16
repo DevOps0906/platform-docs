@@ -23,7 +23,7 @@ D:\WorkSpace\platform\docs\develop\local-news\        platform에 남는 안내�
                 │ setup 스크립트가 복사
                 ▼
 D:\WorkSpace\DEV\local-news\                            베이스를 복사해 만든 개발 폴더
-├── docs\  supabase\  infra\  .claude\skills\llm-wiki\  ← local-news-root에서 들어온 것
+├── docs\  supabase\  infra\  ← local-news-root에서 들어온 것
 └── apps\  _shared\  _templates\  .claude\agents\  init-project.sh ...  ← 베이스에 원래 있던 것
 ```
 
@@ -121,7 +121,7 @@ D:\WorkSpace\DEV\local-news\                            베이스를 복사해 �
 ```
 D:\WorkSpace\DEV\local-news\
 ├── CLAUDE.md  init-project.sh  _shared\  _templates\  .claude\agents\      [베이스]
-├── .claude\skills\llm-wiki\SKILL.md                                         [묶음]
+├── .claude\skills\llm-wiki\SKILL.md                                         [베이스]
 ├── apps\web\   apps\api\                                                    [베이스] 코드 없음(W0 스캐폴딩)
 ├── docs\
 │   ├── file\_index.md, 01-관리\, 02-요구사항\, 03-설계\(공용코어\, 디자인\, 모듈\), 04-구현\   [묶음]

@@ -24,7 +24,7 @@ D:\WorkSpace\platform\docs\develop\admin-suite\        platform에 남는 안내
                 │ setup 스크립트가 복사(admin-suite-root 폴더 자체가 아니라 안의 내용물)
                 ▼
 D:\WorkSpace\DEV\admin-suite\                          베이스를 복사해 만든 개발 폴더(모노레포 1개)
-├── docs\  supabase\  infra\  .claude\skills\llm-wiki\  ← admin-suite-root에서 들어온 것(기존 폴더와 합쳐짐)
+├── docs\  supabase\  infra\  ← admin-suite-root에서 들어온 것(기존 폴더와 합쳐짐)
 └── apps\  _shared\  _templates\  .claude\agents\  init-project.sh ...  ← 베이스에 원래 있던 것
 ```
 
@@ -144,7 +144,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/admin-suite/supabase/monolith/erp/seed.sql` | `supabase/erp/seed.sql` | - | DB(erp) |
 | `docs/products/admin-suite/supabase/monolith/hms/` 같은 3개 | `supabase/hms/migrations/...`, `supabase/hms/seed.sql` | - | DB(hms) |
 | `docs/products/admin-suite/supabase/monolith/sms/` 같은 3개 | `supabase/sms/migrations/...`, `supabase/sms/seed.sql` | - | DB(sms) |
-| `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
+| (베이스 제공) | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 규칙·스킬. 묶음에 없고 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)가 제공한다 |
 | (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 24개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | erp, sms 채팅 앱 설정 |
 
@@ -170,7 +170,7 @@ D:\WorkSpace\DEV\admin-suite\
 │   ├── commands\agent-check.md       [베이스]
 │   └── skills\
 │       ├── deliverable-first, nextjs-expert, fastapi-expert, supabase-expert, frontend-design, ui-ux-pro-max   [베이스]
-│       └── llm-wiki\SKILL.md         [묶음] 개발 위키 스킬
+│       └── llm-wiki\SKILL.md         [베이스] 개발 위키 스킬
 ├── _shared\                          [베이스] project-profile.md(6절에서 채움), orchestrator-rules.md, check-invariants.sh, adapters\ ...
 ├── _templates\                       [베이스] task.md, task-folder.md, worker-brief.md, ...
 ├── apps\
@@ -185,7 +185,7 @@ D:\WorkSpace\DEV\admin-suite\
 │   ├── ai\md2pdf\                    [베이스] 문서 PDF 변환 도구
 │   ├── reference\                    [묶음] 00_MERGE_ANALYSIS.md, reviews\ 4개
 │   ├── file\                         [묶음] _index.md(24개), 01-관리, 02-요구사항, 03-설계(공용코어 8개, 디자인 5개 + DESIGN.md, COMPONENTS.md), 04-구현
-│   └── wiki\                         [묶음] WIKI_SCHEMA.md, index.md, log.md, sources\ 24개
+│   └── wiki\                         [묶음] index.md, log.md, sources\ 24개 · WIKI_SCHEMA.md [베이스]
 ├── supabase\
 │   ├── README.md                     [베이스]
 │   ├── erp\migrations\ 2개 + seed.sql    [묶음] ERP 프로젝트용

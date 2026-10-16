@@ -24,7 +24,7 @@ D:\WorkSpace\platform\docs\develop\book-trailer\       platform에 남는 안내
                 │ setup 스크립트가 복사(안의 내용물)
                 ▼
 D:\WorkSpace\DEV\book-trailer\                           베이스를 복사해 만든 개발 폴더
-├── docs\  supabase\  infra\  .claude\skills\llm-wiki\  ← book-trailer-root에서 들어온 것
+├── docs\  supabase\  infra\  ← book-trailer-root에서 들어온 것
 └── apps\  _shared\  _templates\  .claude\agents\  init-project.sh ...  ← 베이스에 원래 있던 것
 ```
 
@@ -149,7 +149,7 @@ setup 스크립트는 커밋, 원격 푸시, 의존성 설치, 원격 DB 변경�
 | `.../0002_trailer_domain.sql` | `supabase/migrations/20261013000002_trailer_domain.sql` | - | DB(도메인 17테이블, 카탈로그 seed: 문법 6, 템플릿 6, runtime_config 8) |
 | `.../monolith/seed.sql` | `supabase/seed.sql` | - | apps 1행, 플랜 free/creator/publisher, 크레딧팩 3종, AI 라우팅 16행 |
 | `.../monolith/tests/rls_smoke.sql` | `supabase/tests/rls_smoke.sql` | - | RLS·권한 회귀 124항목 |
-| `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
+| (베이스 제공) | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 규칙·스킬. 묶음에 없고 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)가 제공한다 |
 | (생성) 위키 초기 페이지, Dify 앱 설명서 | `docs/wiki/`, `infra/dify/README.md` | - | 산출물 요약 27개, 채팅 앱 설정 |
 
 - 묶음은 `D:\WorkSpace\platform\docs\develop\_shared\tools\build_root.py book-trailer`로 만들었습니다(2026-10-15, 산출물 27개, SQL 4개). 같은 날 이 스크립트에 book-trailer 등록 행(`REVIEWS`, `APP_ID`)과 선택 기획서 `08_DESIGN_SYSTEM.md`(DOC-DES-005), `###` 수준 "초기값" 절 읽기를 추가했습니다. 다른 제품의 묶음 결과는 바뀌지 않습니다(nomad-docs·local-news 초기값 동일 확인).
@@ -162,7 +162,7 @@ setup 스크립트는 커밋, 원격 푸시, 의존성 설치, 원격 DB 변경�
 ```
 D:\WorkSpace\DEV\book-trailer\
 ├── CLAUDE.md  init-project.sh  INSTALL.md  README.md      [베이스]
-├── .claude\agents\  commands\  skills\                     [베이스] + skills\llm-wiki\ [묶음]
+├── .claude\agents\  commands\  skills\                     [베이스] (llm-wiki 포함)
 ├── _shared\  _templates\                                   [베이스]
 ├── apps\
 │   ├── web\                          [베이스] Next.js(W0에서 스캐폴딩)
@@ -175,7 +175,7 @@ D:\WorkSpace\DEV\book-trailer\
 │   │   ├── 02-요구사항\01_PRD.md
 │   │   ├── 03-설계\02~05, 08_DESIGN_SYSTEM.md, 공용코어\(9), 디자인\(6 + DESIGN.md, COMPONENTS.md)
 │   │   └── 04-구현\CLAUDE.md, 07_SOURCE_MIGRATION.md
-│   └── wiki\                         [묶음] WIKI_SCHEMA, index, log, sources\(27)
+│   └── wiki\                         [묶음] index, log, sources\(27) · WIKI_SCHEMA.md [베이스]
 ├── infra\dify\README.md              [묶음] DSL은 TR-06-040이 trailer-chat.yml로 추가
 ├── supabase\migrations\(2), seed.sql, tests\rls_smoke.sql   [묶음]
 └── tasks\  _local\                   [베이스]
