@@ -4,29 +4,31 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 랜딩(메인) | 누구나 | - | P0 |
-| `/sample` | 샘플 리포트(PDF 첫 4쪽 이미지 + 목차) | 누구나 | - | P0 |
-| `/pricing` | 크레딧 단가와 팩(랜딩 앵커와 같은 컴포넌트) | 누구나 | - | P0 |
-| `/legal/terms`, `/legal/privacy`, `/legal/refund`, `/legal/disclaimer` | 법적 고지 | 누구나 | - | P0 |
-| `/login`, `/signup`, `/auth/callback`, `/auth/verify` | 인증, 이메일 인증 안내. 단계별 표시(7절): A `/login` 개발용 패널만(`/signup`·`/auth/verify` 미구현), B Google 버튼 + 이메일 폼·`/signup`·`/auth/verify`·`/auth/callback`, C 카카오·네이버 버튼 추가 | 비로그인 | - | P0 |
-| `/dashboard` | 홈 | owner(본인) | starter 이상 | P0 |
-| `/dashboard/subjects`, `/dashboard/subjects/new`, `/dashboard/subjects/[id]` | 보관함 목록, 등록, 상세(원국·대운·리딩 목록) | owner | starter | P0 |
-| `/dashboard/readings/new` | 리딩 시작 스테퍼(종류 → 대상/카드 → 질문·테마 → 확인) | owner | starter, `features.readings` | P0 |
-| `/dashboard/readings/[id]` | 진행률 → 결과(웹 뷰어, PDF 받기, 재생성, 발송 상태) | owner | starter | P0 |
-| `/dashboard/history` | 리딩 히스토리(필터: 종류, 기간, 대상) | owner | starter | P1 |
-| `/dashboard/credits` | 잔액, 크레딧팩 구매, 원장 | owner | starter | P0 |
-| `/billing/success`, `/billing/fail` | Toss 복귀 | owner | - | P0 |
-| `/dashboard/settings` | 기본 테마, 이메일 발송, 동의 관리, 데이터 내보내기, 탈퇴 | owner | starter | P1 |
-| `/admin` | 어드민 홈(오늘 리딩·실패·매출·발송 실패) | `platform_admin` | - | P1 |
-| `/admin/users`, `/admin/payments`, `/admin/deliveries` | 유저 조회·크레딧 지급, 결제·환불, 발송 모니터 | `platform_admin` | - | P1 |
-| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | owner | starter | P0 |
-| 채팅 패널(모든 `/dashboard/*` 오른쪽 시트), `/dashboard/chat` | AI 채팅(텍스트·음성), 대화 목록 | owner | `features.ai_chat` | P0 |
-| `/wiki`, `/wiki/[...slug]` | 사주 용어·해석 위키(목록·검색, 페이지) | 누구나 | - | P0 |
-| `/admin/knowledge` | 해설집 문서 업로드, 색인 상태 | `platform_admin` | - | P0 |
-| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 페이지 검수·게시, 변경 이력, 점검 결과 | `platform_admin` | - | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
+화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩(메인) | 고유(3D 히어로) | - | 누구나 | - | P0 |
+| `/sample` | 샘플 리포트(PDF 첫 4쪽 이미지 + 목차) | 고유 | - | 누구나 | - | P0 |
+| `/pricing` | 크레딧 단가와 팩(랜딩 앵커와 같은 컴포넌트) | 고유 | - | 누구나 | - | P0 |
+| `/legal/terms`, `/legal/privacy`, `/legal/refund`, `/legal/disclaimer` | 법적 고지 | 고유 | - | 누구나 | - | P0 |
+| `/login`, `/signup`, `/auth/callback`, `/auth/verify` | 인증, 이메일 인증 안내. 단계별 표시(7절): A `/login` 개발용 패널만(`/signup`·`/auth/verify` 미구현), B Google 버튼 + 이메일 폼·`/signup`·`/auth/verify`·`/auth/callback`, C 카카오·네이버 버튼 추가 | 고유 | - | 비로그인 | - | P0 |
+| `/dashboard` | 홈 | B 변형(최근 리딩) + 새 리딩 | V-E(#16) | owner(본인) | starter 이상 | P0 |
+| `/dashboard/subjects`, `/dashboard/subjects/new`, `/dashboard/subjects/[id]` | 보관함 목록, 등록, 상세(원국·대운·리딩 목록) | B → G페이지 + 등록 폼 | V-E(#16) | owner | starter | P0 |
+| `/dashboard/readings/new` | 리딩 시작 스테퍼(종류 → 대상/카드 → 질문·테마 → 확인) | I | V-E(#16) | owner | starter, `features.readings` | P0 |
+| `/dashboard/readings/[id]` | 진행률 → 결과(웹 뷰어, PDF 받기, 재생성, 발송 상태) | N → G(결과) | V-E(#16) | owner | starter | P0 |
+| `/dashboard/history` | 리딩 히스토리(필터: 종류, 기간, 대상) | B | V-E(#16) | owner | starter | P1 |
+| `/dashboard/credits` | 잔액, 크레딧팩 구매, 원장 | H(잔액·원장) | V-E(#16) | owner | starter | P0 |
+| `/billing/success`, `/billing/fail` | Toss 복귀 | 고유 | - | owner | - | P0 |
+| `/dashboard/settings` | 기본 테마, 이메일 발송, 동의 관리, 데이터 내보내기, 탈퇴 | H | - | owner | starter | P1 |
+| `/admin` | 어드민 홈(오늘 리딩·실패·매출·발송 실패) | C → B | V-B | `platform_admin` | - | P1 |
+| `/admin/users`, `/admin/payments`, `/admin/deliveries` | 유저 조회·크레딧 지급, 결제·환불, 발송 모니터 | B + N(발송 모니터) | - | `platform_admin` | - | P1 |
+| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | 고유 | - | owner | starter | P0 |
+| 채팅 패널(모든 `/dashboard/*` 오른쪽 시트), `/dashboard/chat` | AI 채팅(텍스트·음성), 대화 목록 | A의 AI 패널 + B(목록) | - | owner | `features.ai_chat` | P0 |
+| `/wiki`, `/wiki/[...slug]` | 사주 용어·해석 위키(목록·검색, 페이지) | B → G페이지 | - | 누구나 | - | P0 |
+| `/admin/knowledge` | 해설집 문서 업로드, 색인 상태 | B | - | `platform_admin` | - | P0 |
+| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 페이지 검수·게시, 변경 이력, 점검 결과 | B + J(문서형) | - | `platform_admin` | - | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 고유 | - | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
 
 리딩 상세(`/dashboard/readings/[id]`)에는 낭독 플레이어와 "이 리포트에 대해 묻기"가 붙는다(3.1절).
 

@@ -222,4 +222,4 @@
 | MW-06-034 | 위생 검사 | 인증 금지 문자열 CI 검사 추가 |
 | 온보딩 약관 단계 | 없음 | 054가 `src/app/studio/onboarding/terms/`를 만들고 040 소유 온보딩에 1줄 요청으로 연결(03장 7절) |
 | `/login` 소유 | 003 단독 | 003(A 패널) + 054(`providers/`, B) → 055·056이 자기 제공자 폴더를 이어 받음(직렬이라 동시 쓰기 없음) |
-| 작업 수 | 53개(모델 작업 52) | 56개(모델 작업 55, 사람 1). 4절 비율, README, 개발 문서(`docs/develop/microweb-studio/`) 작업 수를 같이 바꿨다 |
+| 작업 수 | 53개(모델 작업 52) | 56개(모델 작업 55, 사람 1). 4절 비율, README, 개발 문서(`D:/WorkSpace/platform/docs/develop/microweb-studio/`) 작업 수를 같이 바꿨다 |

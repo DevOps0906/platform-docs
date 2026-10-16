@@ -6,29 +6,31 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 랜딩 | 누구나 | - | P0 |
-| `/pricing` | 요금 | 누구나 | - | P0 |
-| `/login`, `/signup`, `/reset`, `/auth/callback` | 인증. 단계별(7절): A `/login` 개발용 패널만(로컬 전용, `/signup`·`/reset`은 B에서 구현), B Google 버튼 + 이메일 폼·`/signup`·`/reset`·`/auth/callback`, C 카카오·네이버 버튼 추가 | 비로그인 | - | P0(A·B), P1(C) |
-| `/legal/terms`, `/legal/privacy`, `/legal/ai`, `/legal/asset-license` | 약관, 처리방침, AI 이용 고지, 에셋 이용 허락 | 누구나 | - | P0 |
-| `/app` | 작품 목록 | member 이상 | free, pro | P0 |
-| `/app/onboarding` | 템플릿 3종 선택(첫 진입) | owner | free, pro | P0 |
-| `/app/series/new` | 작품 만들기(형식, 제목, 스타일 팩, 캐스트) | member 이상 | free(1개), pro(20개) | P0 |
-| `/app/series/[seriesId]` | 회차 목록 + 캐스트 | member 이상 | free, pro | P0 |
-| `/app/series/[seriesId]/episodes/[episodeId]/storyboard` | AI 콘티 | member 이상 | free, pro(크레딧) | P0 |
-| `/editor/[episodeId]` | 에디터 | member 이상(viewer 읽기 전용) | free, pro | P0 |
-| `/editor/[episodeId]?panel=export` | 내보내기 패널 | member 이상 | png는 free, 나머지 pro | P0 |
-| `/app/library` | 내 에셋(AI 배경) | member 이상 | free, pro | P1 |
-| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | owner | free, pro | P0 |
-| 채팅 시트(`/app/*`, `/editor/*` 오른쪽 시트), `/app/chat` | 창작 어시스턴트 채팅(텍스트·음성), 대화 목록 | member 이상 | `features.ai_chat` | P0 |
-| `/app/series/[seriesId]/wiki`, `/app/series/[seriesId]/wiki/[...slug]` | 작품 설정 위키(캐릭터 바이블): 목록, 페이지, 편집, 이력, 점검 결과 | member 이상(viewer 읽기) | free, pro(크레딧) | P0 |
-| `/app/series/[seriesId]/notes` | 설정 노트(텍스트·마크다운) 목록·추가·삭제, 색인 상태 | member 이상 | free, pro | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
-| `/app/exports` | 내보내기 기록과 다운로드 | member 이상 | free, pro | P0 |
-| `/app/billing`, `/app/billing/success`, `/app/billing/fail` | 플랜, 크레딧팩, 결제 결과 | owner, admin | - | P0 |
-| `/app/settings` | 프로필, 계정 삭제. C단계부터 "로그인 방법"(연결된 제공자, 연결·해제, 7.4절) | owner(로그인 방법은 본인) | - | P1 |
-| `/admin/catalog` | 팩/캐릭터/에셋 목록, 라이선스 검증, 공개 | platform_admin | - | P0 |
+화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩 | 고유(3D 히어로) | - | 누구나 | - | P0 |
+| `/pricing` | 요금 | 고유 | - | 누구나 | - | P0 |
+| `/login`, `/signup`, `/reset`, `/auth/callback` | 인증. 단계별(7절): A `/login` 개발용 패널만(로컬 전용, `/signup`·`/reset`은 B에서 구현), B Google 버튼 + 이메일 폼·`/signup`·`/reset`·`/auth/callback`, C 카카오·네이버 버튼 추가 | 고유 | - | 비로그인 | - | P0(A·B), P1(C) |
+| `/legal/terms`, `/legal/privacy`, `/legal/ai`, `/legal/asset-license` | 약관, 처리방침, AI 이용 고지, 에셋 이용 허락 | 고유 | - | 누구나 | - | P0 |
+| `/app` | 작품 목록 | M(작품 표지) + 새로 만들기 | - | member 이상 | free, pro | P0 |
+| `/app/onboarding` | 템플릿 3종 선택(첫 진입) | I(템플릿 선택) | - | owner | free, pro | P0 |
+| `/app/series/new` | 작품 만들기(형식, 제목, 스타일 팩, 캐스트) | I | 캐스트 선택에만 V-H(#24) | member 이상 | free(1개), pro(20개) | P0 |
+| `/app/series/[seriesId]` | 회차 목록 + 캐스트 | B(회차) + M(캐스트) | 캐스트에만 V-H(#24) | member 이상 | free, pro | P0 |
+| `/app/series/[seriesId]/episodes/[episodeId]/storyboard` | AI 콘티 | J 변형(폼 + 결과 표) + N | - | member 이상 | free, pro(크레딧) | P0 |
+| `/editor/[episodeId]` | 에디터 | J | - | member 이상(viewer 읽기 전용) | free, pro | P0 |
+| `/editor/[episodeId]?panel=export` | 내보내기 패널 | J의 내보내기 패널 | - | member 이상 | png는 free, 나머지 pro | P0 |
+| `/app/library` | 내 에셋(AI 배경) | M | - | member 이상 | free, pro | P1 |
+| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | 고유 | - | owner | free, pro | P0 |
+| 채팅 시트(`/app/*`, `/editor/*` 오른쪽 시트), `/app/chat` | 창작 어시스턴트 채팅(텍스트·음성), 대화 목록 | A의 AI 패널, F 변형 | - | member 이상 | `features.ai_chat` | P0 |
+| `/app/series/[seriesId]/wiki`, `/app/series/[seriesId]/wiki/[...slug]` | 작품 설정 위키(캐릭터 바이블): 목록, 페이지, 편집, 이력, 점검 결과 | B + J(문서형) | - | member 이상(viewer 읽기) | free, pro(크레딧) | P0 |
+| `/app/series/[seriesId]/notes` | 설정 노트(텍스트·마크다운) 목록·추가·삭제, 색인 상태 | B + N(색인) | - | member 이상 | free, pro | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 고유 | - | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
+| `/app/exports` | 내보내기 기록과 다운로드 | B + N | - | member 이상 | free, pro | P0 |
+| `/app/billing`, `/app/billing/success`, `/app/billing/fail` | 플랜, 크레딧팩, 결제 결과 | H | - | owner, admin | - | P0 |
+| `/app/settings` | 프로필, 계정 삭제. C단계부터 "로그인 방법"(연결된 제공자, 연결·해제, 7.4절) | H | - | owner(로그인 방법은 본인) | - | P1 |
+| `/admin/catalog` | 팩/캐릭터/에셋 목록, 라이선스 검증, 공개 | B → G페이지 | - | platform_admin | - | P0 |
 
 ## 2. 사용자 플로우
 

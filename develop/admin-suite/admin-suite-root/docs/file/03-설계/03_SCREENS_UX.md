@@ -3,67 +3,69 @@
 ## 1. 정보 구조와 화면 목록
 
 플랜 접근 열: 세 앱 모두 기능 게이팅은 수량 한도(01장 4절)뿐이라 화면 단위 플랜 제한이 없다("전체"). Phase 2 엑셀 내보내기 버튼만 `export_xlsx`로 숨긴다.
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
 
 ### 1.1 공통(admin-kit 제공, 앱마다 같은 경로)
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/login` | 로그인. 단계별(7절): A 개발용 로그인 패널(페르소나 버튼)만 + 상단 `MOCK AUTH · 로컬 전용` 배지, B erp·sms Google + 이메일 / hms 이메일만(D-21 전), C erp·sms 카카오·네이버 추가(P2 선택, hms 제외) | 비로그인 | 전체 | P0 |
-| `/signup` | 가입(ERP만 공개, HMS/SMS는 초대 링크 전용). Stage B부터 화면 구현(A에는 없음, Mock `join_requested` 페르소나로 대체). OAuth 가입은 `/login`의 같은 버튼 | 비로그인 | 전체 | P0 |
-| `/pending` | 승인 대기 안내 + 가입 코드 입력 + 요청 상태 | 로그인(pending) | 전체 | P0 |
-| `/invite/accept` | 초대 수락. A는 초대 대기 페르소나가 로그인한 상태에서 수락 버튼만, B에서 초대 메일 링크의 비밀번호 설정과 OAuth 첫 로그인 약관 동의(7.3절)를 더한다 | 초대받은 본인 | 전체 | P0 |
-| `/no-access` | 접근 권한 없음(워크스페이스 없음, 정지). Stage B부터 invite 앱(sms, hms)에서 초대와 다른 이메일로 OAuth 로그인한 경우 "초대받은 이메일로 로그인하세요" 안내(7.2절) | 로그인 | 전체 | P0 |
-| `/settings/account` | 계정(이름, 비밀번호, 로그아웃). Stage C 도입 시 erp·sms에 "로그인 방법" 구역 추가(7.4절, hms 없음) | 전원 | 전체 | P0 |
-| `/settings/audit` | 감사 로그 | owner/admin | 전체 | P1 |
-| `/settings/billing` | 플랜과 구독(erp, sms) | owner | 전체 | P2 |
-| 채팅 패널(모든 앱 화면 오른쪽 시트), `/assistant` | AI 업무 어시스턴트(텍스트·음성), 대화 목록 | 로그인 + 허용 컬렉션이 1개 이상인 역할(SMS student 제외) | `features.ai_assistant`, 질문은 `ai_turns_per_day`(사용자 하루)·`ai_turns_per_month`(조직 월), 음성은 `ai_voice` | P0 |
-| `/settings/ai` | AI 처리 방식(상용 AI 국외 이전 동의 / 국내 오픈소스만). **hms에는 없음** | owner | 전체 | P0 |
-| `/settings/knowledge` | 규정·매뉴얼 문서 업로드, 색인 상태, 컬렉션 | 앱 관리자(erp master_admin, sms admin, hms admin) | `ai_docs_max` | P0 |
-| `/wiki`, `/wiki/[...slug]` | 기관 운영 위키 목록·페이지(허용 컬렉션 범위만 표시) | 허용 컬렉션 역할 | `ai_wiki` | P0 |
-| `/settings/wiki` | 위키 검수·게시, 변경 이력, 점검 결과 | 앱 관리자 | `ai_wiki` | P0 |
-| `/settings/ai-usage` | AI 사용량·한도 | 앱 관리자 | 전체 | P1 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/login` | 로그인. 단계별(7절): A 개발용 로그인 패널(페르소나 버튼)만 + 상단 `MOCK AUTH · 로컬 전용` 배지, B erp·sms Google + 이메일 / hms 이메일만(D-21 전), C erp·sms 카카오·네이버 추가(P2 선택, hms 제외) | 고유 | - | 비로그인 | 전체 | P0 |
+| `/signup` | 가입(ERP만 공개, HMS/SMS는 초대 링크 전용). Stage B부터 화면 구현(A에는 없음, Mock `join_requested` 페르소나로 대체). OAuth 가입은 `/login`의 같은 버튼 | 고유 | - | 비로그인 | 전체 | P0 |
+| `/pending` | 승인 대기 안내 + 가입 코드 입력 + 요청 상태 | 고유 | - | 로그인(pending) | 전체 | P0 |
+| `/invite/accept` | 초대 수락. A는 초대 대기 페르소나가 로그인한 상태에서 수락 버튼만, B에서 초대 메일 링크의 비밀번호 설정과 OAuth 첫 로그인 약관 동의(7.3절)를 더한다 | 고유 | - | 초대받은 본인 | 전체 | P0 |
+| `/no-access` | 접근 권한 없음(워크스페이스 없음, 정지). Stage B부터 invite 앱(sms, hms)에서 초대와 다른 이메일로 OAuth 로그인한 경우 "초대받은 이메일로 로그인하세요" 안내(7.2절) | 고유 | - | 로그인 | 전체 | P0 |
+| `/settings/account` | 계정(이름, 비밀번호, 로그아웃). Stage C 도입 시 erp·sms에 "로그인 방법" 구역 추가(7.4절, hms 없음) | H | - | 전원 | 전체 | P0 |
+| `/settings/audit` | 감사 로그 | H + B | V-D(#26) | owner/admin | 전체 | P1 |
+| `/settings/billing` | 플랜과 구독(erp, sms) | H | - | owner | 전체 | P2 |
+| 채팅 패널(모든 앱 화면 오른쪽 시트), `/assistant` | AI 업무 어시스턴트(텍스트·음성), 대화 목록 | A의 AI 패널 + B(목록) | - | 로그인 + 허용 컬렉션이 1개 이상인 역할(SMS student 제외) | `features.ai_assistant`, 질문은 `ai_turns_per_day`(사용자 하루)·`ai_turns_per_month`(조직 월), 음성은 `ai_voice` | P0 |
+| `/settings/ai` | AI 처리 방식(상용 AI 국외 이전 동의 / 국내 오픈소스만). **hms에는 없음** | H | - | owner | 전체 | P0 |
+| `/settings/knowledge` | 규정·매뉴얼 문서 업로드, 색인 상태, 컬렉션 | H + B | - | 앱 관리자(erp master_admin, sms admin, hms admin) | `ai_docs_max` | P0 |
+| `/wiki`, `/wiki/[...slug]` | 기관 운영 위키 목록·페이지(허용 컬렉션 범위만 표시) | B → G페이지 | - | 허용 컬렉션 역할 | `ai_wiki` | P0 |
+| `/settings/wiki` | 위키 검수·게시, 변경 이력, 점검 결과 | H + B + J(편집기) | - | 앱 관리자 | `ai_wiki` | P0 |
+| `/settings/ai-usage` | AI 사용량·한도 | H + L(사용량) | - | 앱 관리자 | 전체 | P1 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 고유 | - | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
 
 ### 1.2 ERP
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/dashboard` | 대시보드(지표, 위험 재고, 최근 변동, 판매 추이) | 전원 | 전체(추이 기간은 `sales_trend_days`) | P0 |
-| `/inventory` | 상품 목록 + 입출고/조정 | master_admin, inventory_manager, sales_manager(조회+출고) | 전체 | P0 |
-| `/inventory/[id]` | 상품 상세 + 이동 이력 | 위와 같음 | 전체 | P1 |
-| `/sales` | 판매 목록, 등록, 완료, 취소 | master_admin, sales_manager | 전체 | P0 |
-| `/hr` | 임직원 목록, 권한 변경 모달 | master_admin | 전체 | P0 |
-| `/hr/requests` | 가입 요청 승인/거절, 가입 코드 | master_admin | `max_members` | P0 |
-| `/hr/departments` | 부서 트리 | master_admin | 전체 | P1 |
-| `/me` | 내 정보(전화 수정) | 전원 | 전체 | P1 |
-| `/settings` | 회사 설정 | master_admin | 전체 | P2 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/dashboard` | 대시보드(지표, 위험 재고, 최근 변동, 판매 추이) | C → B | V-B(#31) | 전원 | 전체(추이 기간은 `sales_trend_days`) | P0 |
+| `/inventory` | 상품 목록 + 입출고/조정 | B + G시트 | V-D(#26) | master_admin, inventory_manager, sales_manager(조회+출고) | 전체 | P0 |
+| `/inventory/[id]` | 상품 상세 + 이동 이력 | G | - | 위와 같음 | 전체 | P1 |
+| `/sales` | 판매 목록, 등록, 완료, 취소 | B | V-D(#26) | master_admin, sales_manager | 전체 | P0 |
+| `/hr` | 임직원 목록, 권한 변경 모달 | B | V-D(#26) | master_admin | 전체 | P0 |
+| `/hr/requests` | 가입 요청 승인/거절, 가입 코드 | B | V-D(#26) | master_admin | `max_members` | P0 |
+| `/hr/departments` | 부서 트리 | 고유(부서 트리) | - | master_admin | 전체 | P1 |
+| `/me` | 내 정보(전화 수정) | H | - | 전원 | 전체 | P1 |
+| `/settings` | 회사 설정 | H | - | master_admin | 전체 | P2 |
 
 ### 1.3 HMS
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/dashboard` | 관리자 대시보드 | admin | 전체 | P1 |
-| `/queue` | 실시간 대기열 + 가용 토글 | doctor, admin | 전체 | P0 |
-| `/calendar` | 예약 캘린더(월/주/일) | staff, admin(조회+생성), doctor(조회) | 전체 | P0 |
-| `/patients` | 환자 목록/검색/등록 | staff, doctor, admin | 전체 | P0 |
-| `/patients/[id]` | 환자 상세(원무 정보) | staff, admin | 전체 | P0 |
-| `/patients/[id]/chart` | 환자 360 차트(진료기록, 검사) | doctor | 전체 | P0 |
-| `/lab` | 검사 작업 목록 + 결과 입력/승인 | lab_tech, doctor | 전체 | P0 |
-| `/billing` | 수납 | staff, admin | 전체 | P1 |
-| `/staff` | 직원 초대/역할/상태 | admin | `max_staff` | P0 |
-| `/settings/access-log` | 의료정보 접근 기록 | admin | 전체 | P0 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/dashboard` | 관리자 대시보드 | C → B | - | admin | 전체 | P1 |
+| `/queue` | 실시간 대기열 + 가용 토글 | D(의사별 열) | - | doctor, admin | 전체 | P0 |
+| `/calendar` | 예약 캘린더(월/주/일) | E | - | staff, admin(조회+생성), doctor(조회) | 전체 | P0 |
+| `/patients` | 환자 목록/검색/등록 | B → G페이지 | V-D(#26) | staff, doctor, admin | 전체 | P0 |
+| `/patients/[id]` | 환자 상세(원무 정보) | G | - | staff, admin | 전체 | P0 |
+| `/patients/[id]/chart` | 환자 360 차트(진료기록, 검사) | G(진료 타임라인) | - | doctor | 전체 | P0 |
+| `/lab` | 검사 작업 목록 + 결과 입력/승인 | B + G시트(입력 패널) | V-D(#26) | lab_tech, doctor | 전체 | P0 |
+| `/billing` | 수납 | B | V-D(#26) | staff, admin | 전체 | P1 |
+| `/staff` | 직원 초대/역할/상태 | B | V-D(#26) | admin | `max_staff` | P0 |
+| `/settings/access-log` | 의료정보 접근 기록 | B(접근 기록) | V-D(#26) | admin | 전체 | P0 |
 
 ### 1.4 SMS
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/admin/dashboard` | 출석 통계 + 학급별 출석률 + 실시간 피드 | admin, teacher | 전체 | P0 |
-| `/admin/attendance` | 출석 체크 보드 | admin, teacher | 전체 | P0 |
-| `/admin/classes` | 학급 CRUD | admin(쓰기), teacher(조회) | `max_classes` | P0 |
-| `/admin/subjects` | 과목 CRUD | admin(쓰기), teacher(조회) | 전체 | P0 |
-| `/admin/members` | 교사/학생 초대, 학급 배정, 역할·상태 | admin | `max_students` | P0 |
-| `/admin/trend` | 출석 추이 | admin, teacher | `attendance_trend_days` | P1 |
-| `/student/dashboard` | 내 출석 요약 + 오늘 과목 + 실시간 알림 | student | 전체 | P0 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/admin/dashboard` | 출석 통계 + 학급별 출석률 + 실시간 피드 | B 변형(오늘 출결) + 숫자 1~2개 | - | admin, teacher | 전체 | P0 |
+| `/admin/attendance` | 출석 체크 보드 | O(출석 그리드) | V-D(#26) | admin, teacher | 전체 | P0 |
+| `/admin/classes` | 학급 CRUD | B | V-D(#26) | admin(쓰기), teacher(조회) | `max_classes` | P0 |
+| `/admin/subjects` | 과목 CRUD | B | V-D(#26) | admin(쓰기), teacher(조회) | 전체 | P0 |
+| `/admin/members` | 교사/학생 초대, 학급 배정, 역할·상태 | B + G시트 | V-D(#26) | admin | `max_students` | P0 |
+| `/admin/trend` | 출석 추이 | L | - | admin, teacher | `attendance_trend_days` | P1 |
+| `/student/dashboard` | 내 출석 요약 + 오늘 과목 + 실시간 알림 | 고유(내 출석 요약) | - | student | 전체 | P0 |
 
 ## 2. 사용자 플로우
 

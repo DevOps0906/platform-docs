@@ -12,72 +12,74 @@
 
 역할은 코어 조직 역할 owner/admin/member/viewer(`docs/products/_platform-core/CORE_SPEC.md:71`)와 운영자 `platform_admin`(`docs/products/_platform-core/CORE_SPEC.md:69`)을 쓴다. viewer는 모든 프로젝트 화면을 읽기 전용으로 본다(생성·편집·확정 버튼 숨김, 제안). 플랜 접근은 `core.plans.features` 키(01장 4절: `projects_max`, `formats`, `watermark`, `doc_phase`, `members_max`, `integrations`, `approvals`, `share_links`)로 판정하며 화면 잠금은 UX 보조이고 서버(`DC006`)가 정본이다.
 
+화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
 ### 1.1 공개, 인증, 온보딩
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 메인페이지(랜딩, 동적 3D 히어로 + 3D 영상, DC-F-041, DC-F-049) | 누구나 | - | P0 |
-| `/pricing` | 요금(Free, Pro, 크레딧팩, 작업별 크레딧 표) | 누구나 | - | P0 |
-| `/legal/terms`, `/legal/privacy`, `/legal/ai-notice`, `/legal/contract-notice` | 이용약관, 개인정보처리방침, AI 처리 고지, 계약서 초안 고지(법률 자문 아님) | 누구나 | - | P0 |
-| `/signup`, `/login`, `/reset-password` | 가입, 로그인, 비밀번호 재설정(DC-F-001). 단계별(7절): A는 `/login` 개발용 패널만(`/signup`, `/reset-password` 없음), B는 Google 버튼 + 이메일 폼·가입·재설정, C는 카카오·네이버 버튼 추가 | 비로그인 | - | P0 |
-| `/auth/callback` | 이메일 인증·OAuth 콜백(B부터, `finishLogin`. A는 `/api/dev/login`이 같은 함수를 거친다) | - | - | P0 |
-| `/onboarding/terms` | 약관 동의(OAuth 첫 로그인처럼 가입 폼을 거치지 않은 사용자, B부터, 7.3절) | 로그인 전원 | 전 플랜 | P0 |
-| `/onboarding/ai` | AI 처리 방식 선택과 국외 이전 동의(DC-F-025) | 로그인 owner(그 외 역할은 결과만 보기) | 전 플랜 | P0 |
-| `/onboarding/company` | 자사 정보 빠른 입력(`docs.parties` kind `self`, 문서번호 형식 기본값 확인) | 로그인 owner/admin | 전 플랜 | P0 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 메인페이지(랜딩, 동적 3D 히어로 + 3D 영상, DC-F-041, DC-F-049) | 고유(3D 히어로) | - | 누구나 | - | P0 |
+| `/pricing` | 요금(Free, Pro, 크레딧팩, 작업별 크레딧 표) | 고유 | - | 누구나 | - | P0 |
+| `/legal/terms`, `/legal/privacy`, `/legal/ai-notice`, `/legal/contract-notice` | 이용약관, 개인정보처리방침, AI 처리 고지, 계약서 초안 고지(법률 자문 아님) | 고유 | - | 누구나 | - | P0 |
+| `/signup`, `/login`, `/reset-password` | 가입, 로그인, 비밀번호 재설정(DC-F-001). 단계별(7절): A는 `/login` 개발용 패널만(`/signup`, `/reset-password` 없음), B는 Google 버튼 + 이메일 폼·가입·재설정, C는 카카오·네이버 버튼 추가 | 고유 | - | 비로그인 | - | P0 |
+| `/auth/callback` | 이메일 인증·OAuth 콜백(B부터, `finishLogin`. A는 `/api/dev/login`이 같은 함수를 거친다) | 고유 | - | - | - | P0 |
+| `/onboarding/terms` | 약관 동의(OAuth 첫 로그인처럼 가입 폼을 거치지 않은 사용자, B부터, 7.3절) | 고유 | - | 로그인 전원 | 전 플랜 | P0 |
+| `/onboarding/ai` | AI 처리 방식 선택과 국외 이전 동의(DC-F-025) | 고유 | - | 로그인 owner(그 외 역할은 결과만 보기) | 전 플랜 | P0 |
+| `/onboarding/company` | 자사 정보 빠른 입력(`docs.parties` kind `self`, 문서번호 형식 기본값 확인) | I(첫 설정) | V-K(#23) | 로그인 owner/admin | 전 플랜 | P0 |
 
 ### 1.2 작업 공간
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/app` | 대시보드(최근 프로젝트, 재생성 필요 문서, 진행 중 잡, 잔액, 플랜 사용량, 연동 알림) | owner/admin/member/viewer | 전 플랜 | P0 |
-| `/app/pipeline?view=board\|table` | CRM형 파이프라인 보드·표(프로젝트를 단계 열로, DC-F-047, 3.26절) | 전원 | 전 플랜 | P0 |
-| 전역 ⌘K / Ctrl+K | 커맨드 팔레트(프로젝트·거래처·문서 검색, "새 견적서" 같은 명령, DC-F-047) | 전원(명령은 역할에 따라 숨김) | 전 플랜 | P0 |
-| `/app/projects/[pid]/activity` | 프로젝트 활동 타임라인(생성·버전·확정·업로드, DC-F-047) | 전원 | 전 플랜 | P1 |
-| 생성 진행 오버레이(문서 목록·패키지·편집기 위) | 문서 생성 단계별 진행 애니메이션(DC-F-048, 3.27절) | 전원(취소는 시작한 사람·owner/admin) | 전 플랜 | P0 |
-| `/app/parties`, `/app/parties/[id]` | 거래처(당사자) 목록·상세(DC-F-003). 상세는 거래처 360(프로젝트·문서·금액·활동, DC-F-047) | 읽기 전원, 쓰기 member 이상 | 전 플랜 | P0 |
-| `/app/projects` | 프로젝트 목록(상태 필터, 보관 탭) | 전원 | 전 플랜(생성 한도 `projects_max`) | P0 |
-| `/app/projects/new` | 프로젝트 만들기(유형, 기간, 예산, 거래처, 시작 방식: 체크리스트 / RFP 올리기) | member 이상 | `projects_max` | P0 |
-| `/app/projects/[pid]` | 프로젝트 홈(진행 단계, 정본 요약, 문서 묶음 상태, 다음 행동) | 전원 | 전 플랜 | P0 |
-| `/app/projects/[pid]/checklist?step=1..3` | 체크리스트 마법사 3단계 + 효과 미리보기 패널(DC-F-005, DC-F-006) | 쓰기 member 이상, viewer 읽기 | 전 플랜 | P0 |
-| `/app/projects/[pid]/requirements` | 요구사항 보드(FR/NFR/CON, MoSCoW, 상태, DC-F-007) | 쓰기 member 이상 | 전 플랜 | P0 |
-| `/app/projects/[pid]/artifacts?kind=screen` | 산출물 항목(화면, 마일스톤, 산출물 탭, DC-F-008) | 쓰기 member 이상 | 전 플랜 | P0 |
-| `/app/projects/[pid]/costs` | 비용 항목과 합계(DC-F-009) | 쓰기 member 이상 | 전 플랜 | P0 |
-| `/app/projects/[pid]/documents` | 문서 목록(유형, 상태, 버전, 재생성 필요, 문서번호) | 전원 | 전 플랜(Phase 2 유형은 `doc_phase`) | P0 |
-| `/app/projects/[pid]/package` | 패키지 생성기(`outsourcing_basic`, DC-F-012. Phase 2 content 프로젝트는 `shorts_agency`, DC-F-046) | member 이상 | 전 플랜 | P0 |
-| `/app/projects/[pid]/documents/[did]` | 문서 편집기(Tiptap, 섹션, 고정 섹션 잠금, AI Diff 카드, lint·compliance 패널, DC-F-013, DC-F-016) | 편집 member 이상, viewer 읽기 | 전 플랜(AI 제안은 저위험 유형만) | P0 |
-| `/app/projects/[pid]/documents/[did]/versions?a=..&b=..` | 버전 이력과 두 버전 비교(DC-F-014) | 전원 | 전 플랜 | P0 |
-| 편집기 위 대화 상자 | 확정 대화 상자(문서번호, 게이트, WARN 확인, DC-F-015) | member 이상(제안: Phase 2 승인 흐름이 켜지면 승인자) | 전 플랜 | P0 |
-| `/app/projects/[pid]/exports` | 내보내기 기록(PDF, DOCX, ZIP, 만료, DC-F-018) | 전원(만들기는 member 이상) | `formats`, `watermark` | P0 |
-| `/app/projects/[pid]/trace` | 요구사항 추적표 보기(DC-F-017) | 전원 | 전 플랜 | P0 |
-| `/app/projects/[pid]/uploads` | 자료 올리기·색인 상태(RFP, 참고 자료, DC-F-021) | 올리기 member 이상 | 전 플랜 | P0 |
-| `/app/projects/[pid]/uploads/[uid]/review` | RFP 추출 결과 검토(체크 후보·요구사항 후보 채택/거절, DC-F-022) | member 이상 | 전 플랜 | P0 |
-| `/app/projects/[pid]/meetings`, `/app/projects/[pid]/meetings/new` | 회의 녹음·업로드 → 회의록 + 요구사항 후보(DC-F-026) | member 이상 | 전 플랜 | P0 |
-| 오른쪽 시트(모든 `/app` 화면), `/app/chat` | 프로젝트 Q&A 채팅 + 음성(DC-F-023, DC-F-027), 대화 목록 | 전원(viewer 포함, 읽기 질문만) | 전 플랜 | P0 |
-| `/app/projects/[pid]/wiki`, `/app/projects/[pid]/wiki/[...slug]`, `/app/projects/[pid]/wiki/lint` | 프로젝트 용어 위키 목록·페이지·이력·점검(DC-F-024) | 읽기 전원, 편집 member 이상 | 전 플랜 | P0 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/app` | 대시보드(최근 프로젝트, 재생성 필요 문서, 진행 중 잡, 잔액, 플랜 사용량, 연동 알림) | B 변형(오늘 처리할 일) + N | V-D | owner/admin/member/viewer | 전 플랜 | P0 |
+| `/app/pipeline?view=board\|table` | CRM형 파이프라인 보드·표(프로젝트를 단계 열로, DC-F-047, 3.26절) | D + B(표 전환) | V-D(표 보기) | 전원 | 전 플랜 | P0 |
+| 전역 ⌘K / Ctrl+K | 커맨드 팔레트(프로젝트·거래처·문서 검색, "새 견적서" 같은 명령, DC-F-047) | A의 커맨드 팔레트 | - | 전원(명령은 역할에 따라 숨김) | 전 플랜 | P0 |
+| `/app/projects/[pid]/activity` | 프로젝트 활동 타임라인(생성·버전·확정·업로드, DC-F-047) | G(활동 타임라인) | - | 전원 | 전 플랜 | P1 |
+| 생성 진행 오버레이(문서 목록·패키지·편집기 위) | 문서 생성 단계별 진행 애니메이션(DC-F-048, 3.27절) | N 변형(오버레이) | - | 전원(취소는 시작한 사람·owner/admin) | 전 플랜 | P0 |
+| `/app/parties`, `/app/parties/[id]` | 거래처(당사자) 목록·상세(DC-F-003). 상세는 거래처 360(프로젝트·문서·금액·활동, DC-F-047) | B → G페이지(거래처 360) | V-D | 읽기 전원, 쓰기 member 이상 | 전 플랜 | P0 |
+| `/app/projects` | 프로젝트 목록(상태 필터, 보관 탭) | B | V-D | 전원 | 전 플랜(생성 한도 `projects_max`) | P0 |
+| `/app/projects/new` | 프로젝트 만들기(유형, 기간, 예산, 거래처, 시작 방식: 체크리스트 / RFP 올리기) | I(폼 1장) | - | member 이상 | `projects_max` | P0 |
+| `/app/projects/[pid]` | 프로젝트 홈(진행 단계, 정본 요약, 문서 묶음 상태, 다음 행동) | G | - | 전원 | 전 플랜 | P0 |
+| `/app/projects/[pid]/checklist?step=1..3` | 체크리스트 마법사 3단계 + 효과 미리보기 패널(DC-F-005, DC-F-006) | I + 미리보기 패널 | V-K(#23) | 쓰기 member 이상, viewer 읽기 | 전 플랜 | P0 |
+| `/app/projects/[pid]/requirements` | 요구사항 보드(FR/NFR/CON, MoSCoW, 상태, DC-F-007) | B + G시트(D 전환) | V-D | 쓰기 member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/artifacts?kind=screen` | 산출물 항목(화면, 마일스톤, 산출물 탭, DC-F-008) | B(탭) | V-D | 쓰기 member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/costs` | 비용 항목과 합계(DC-F-009) | O | - | 쓰기 member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/documents` | 문서 목록(유형, 상태, 버전, 재생성 필요, 문서번호) | B | V-D | 전원 | 전 플랜(Phase 2 유형은 `doc_phase`) | P0 |
+| `/app/projects/[pid]/package` | 패키지 생성기(`outsourcing_basic`, DC-F-012. Phase 2 content 프로젝트는 `shorts_agency`, DC-F-046) | N(묶음 실행) | - | member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/documents/[did]` | 문서 편집기(Tiptap, 섹션, 고정 섹션 잠금, AI Diff 카드, lint·compliance 패널, DC-F-013, DC-F-016) | J(문서형) + 검사 패널 | - | 편집 member 이상, viewer 읽기 | 전 플랜(AI 제안은 저위험 유형만) | P0 |
+| `/app/projects/[pid]/documents/[did]/versions?a=..&b=..` | 버전 이력과 두 버전 비교(DC-F-014) | B + 고유(버전 비교) | - | 전원 | 전 플랜 | P0 |
+| 편집기 위 대화 상자 | 확정 대화 상자(문서번호, 게이트, WARN 확인, DC-F-015) | 고유(확정 게이트) | - | member 이상(제안: Phase 2 승인 흐름이 켜지면 승인자) | 전 플랜 | P0 |
+| `/app/projects/[pid]/exports` | 내보내기 기록(PDF, DOCX, ZIP, 만료, DC-F-018) | B + N | - | 전원(만들기는 member 이상) | `formats`, `watermark` | P0 |
+| `/app/projects/[pid]/trace` | 요구사항 추적표 보기(DC-F-017) | B(추적 매트릭스) | V-D | 전원 | 전 플랜 | P0 |
+| `/app/projects/[pid]/uploads` | 자료 올리기·색인 상태(RFP, 참고 자료, DC-F-021) | B + N(색인) | - | 올리기 member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/uploads/[uid]/review` | RFP 추출 결과 검토(체크 후보·요구사항 후보 채택/거절, DC-F-022) | 고유(원문 + 후보 2단) | - | member 이상 | 전 플랜 | P0 |
+| `/app/projects/[pid]/meetings`, `/app/projects/[pid]/meetings/new` | 회의 녹음·업로드 → 회의록 + 요구사항 후보(DC-F-026) | B + 고유(녹음) | - | member 이상 | 전 플랜 | P0 |
+| 오른쪽 시트(모든 `/app` 화면), `/app/chat` | 프로젝트 Q&A 채팅 + 음성(DC-F-023, DC-F-027), 대화 목록 | A의 AI 패널, F 변형 | - | 전원(viewer 포함, 읽기 질문만) | 전 플랜 | P0 |
+| `/app/projects/[pid]/wiki`, `/app/projects/[pid]/wiki/[...slug]`, `/app/projects/[pid]/wiki/lint` | 프로젝트 용어 위키 목록·페이지·이력·점검(DC-F-024) | B + J(문서형) | - | 읽기 전원, 편집 member 이상 | 전 플랜 | P0 |
 
 ### 1.3 연동, 설정, 결제, 계정, 운영
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/app/integrations` | 연동 홈(연결 목록, 상태, 마지막 동기화) | owner/admin | 전 플랜(목록은 `integrations` 값으로 잠금 표시) | P0 |
-| `/app/integrations/csv` | CSV/Excel 가져오기 마법사(거래처, 비용 단가표, DC-F-028) | owner/admin/member | `integrations` 에 `csv`(Free 포함) | P0 |
-| `/app/integrations/connect/[provider]` | HubSpot, admin-suite ERP, n8n 연결(DC-F-030~032) | owner/admin | team(Phase 2) | P2 |
-| `/app/integrations/[cid]/mappings` | 필드 매핑(`docs.field_mappings`) | owner/admin | team(Phase 2), CSV 매핑은 마법사 안에서 전 플랜 | P2 |
-| `/app/integrations/[cid]/sync` | 동기화 기록(`docs.sync_runs`), 외부 변경 충돌 목록 | owner/admin | team(Phase 2) | P2 |
-| `/app/integrations/webhooks` | 발신 웹훅(엔드포인트, 이벤트, 전송 기록, DC-F-029) | owner/admin | pro 이상(Phase 2) | P2 |
-| `/app/settings/workspace` | 워크스페이스(이름, 기본 일단가, VAT 기본, 기본값) | owner/admin(member 읽기) | 전 플랜 | P0 |
-| `/app/settings/company` | 자사 정보(`parties` kind `self`) | owner/admin | 전 플랜 | P0 |
-| `/app/settings/seal` | 직인 이미지 등록·미리보기 | owner/admin | 전 플랜 | P0 |
-| `/app/settings/numbering` | 문서번호 형식과 연도별 현황 | owner/admin | 전 플랜 | P0 |
-| `/app/settings/ai` | AI 처리 방식 변경·철회(국외 이전) | owner | 전 플랜 | P0 |
-| `/app/settings/members` | 구성원 초대·역할(Phase 2 team) | owner/admin | `members_max` 2 이상(team) | P2 |
-| `/app/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제, C단계, 7.4절) | 본인(전 역할) | 전 플랜 | P1 |
-| `/app/billing`, `/app/billing/success`, `/app/billing/fail` | 잔액(plan/pack), 사용 내역, 크레딧팩, Pro 구독, Toss 복귀(DC-F-038) | owner(admin 읽기, 제안) | 전 플랜 | P0 |
-| 대화 상자(문서 생성 진입점) | 고위험 문서 고지 모달(DC-F-020) | owner/admin/member(동의는 조직 1회) | 전 플랜 | P0 |
-| `/app/account` | 계정, 데이터 내보내기, 계정·워크스페이스 삭제(DC-F-042) | 본인(워크스페이스 삭제는 owner) | 전 플랜 | P0 |
-| `/admin/catalog`, `/admin/catalog/doc-types/[code]`, `/admin/catalog/checklist`, `/admin/catalog/clauses` | 운영자 카탈로그 관리(유형 버전, 체크리스트 항목·효과, 조항 게시, DC-F-040) | platform_admin | - | P0 |
-| `/admin/ops` | 운영 상한(`docs.runtime_config`), 실패 잡, 일일 플랫폼 크레딧 사용량(DC-F-039) | platform_admin | - | P1 |
-| `/dev/components` | 컴포넌트 미리보기(디자인 시스템 3단계, 개발 환경만) | 개발자 | - | P0 |
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/app/integrations` | 연동 홈(연결 목록, 상태, 마지막 동기화) | B | - | owner/admin | 전 플랜(목록은 `integrations` 값으로 잠금 표시) | P0 |
+| `/app/integrations/csv` | CSV/Excel 가져오기 마법사(거래처, 비용 단가표, DC-F-028) | I | V-K(#23) | owner/admin/member | `integrations` 에 `csv`(Free 포함) | P0 |
+| `/app/integrations/connect/[provider]` | HubSpot, admin-suite ERP, n8n 연결(DC-F-030~032) | I | V-K(#23) | owner/admin | team(Phase 2) | P2 |
+| `/app/integrations/[cid]/mappings` | 필드 매핑(`docs.field_mappings`) | O | - | owner/admin | team(Phase 2), CSV 매핑은 마법사 안에서 전 플랜 | P2 |
+| `/app/integrations/[cid]/sync` | 동기화 기록(`docs.sync_runs`), 외부 변경 충돌 목록 | N + B | - | owner/admin | team(Phase 2) | P2 |
+| `/app/integrations/webhooks` | 발신 웹훅(엔드포인트, 이벤트, 전송 기록, DC-F-029) | B + G시트 | - | owner/admin | pro 이상(Phase 2) | P2 |
+| `/app/settings/workspace` | 워크스페이스(이름, 기본 일단가, VAT 기본, 기본값) | H | - | owner/admin(member 읽기) | 전 플랜 | P0 |
+| `/app/settings/company` | 자사 정보(`parties` kind `self`) | H | - | owner/admin | 전 플랜 | P0 |
+| `/app/settings/seal` | 직인 이미지 등록·미리보기 | H | - | owner/admin | 전 플랜 | P0 |
+| `/app/settings/numbering` | 문서번호 형식과 연도별 현황 | H | - | owner/admin | 전 플랜 | P0 |
+| `/app/settings/ai` | AI 처리 방식 변경·철회(국외 이전) | H | - | owner | 전 플랜 | P0 |
+| `/app/settings/members` | 구성원 초대·역할(Phase 2 team) | H | - | owner/admin | `members_max` 2 이상(team) | P2 |
+| `/app/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제, C단계, 7.4절) | H | - | 본인(전 역할) | 전 플랜 | P1 |
+| `/app/billing`, `/app/billing/success`, `/app/billing/fail` | 잔액(plan/pack), 사용 내역, 크레딧팩, Pro 구독, Toss 복귀(DC-F-038) | H | - | owner(admin 읽기, 제안) | 전 플랜 | P0 |
+| 대화 상자(문서 생성 진입점) | 고위험 문서 고지 모달(DC-F-020) | 고유(고지 모달) | - | owner/admin/member(동의는 조직 1회) | 전 플랜 | P0 |
+| `/app/account` | 계정, 데이터 내보내기, 계정·워크스페이스 삭제(DC-F-042) | H | - | 본인(워크스페이스 삭제는 owner) | 전 플랜 | P0 |
+| `/admin/catalog`, `/admin/catalog/doc-types/[code]`, `/admin/catalog/checklist`, `/admin/catalog/clauses` | 운영자 카탈로그 관리(유형 버전, 체크리스트 항목·효과, 조항 게시, DC-F-040) | B → G페이지 | V-D | platform_admin | - | P0 |
+| `/admin/ops` | 운영 상한(`docs.runtime_config`), 실패 잡, 일일 플랫폼 크레딧 사용량(DC-F-039) | H + N(실패 잡) | - | platform_admin | - | P1 |
+| `/dev/components` | 컴포넌트 미리보기(디자인 시스템 3단계, 개발 환경만) | 고유 | - | 개발자 | - | P0 |
 
 사이드바(프로젝트 안): 개요, 체크리스트, 요구사항, 화면·일정, 비용, 문서, 추적표, 자료, 회의, 위키. 프로젝트 밖: 대시보드, 거래처, 프로젝트, 연동, 설정, 결제. 사이드바 순서는 정본 데이터 → 문서 순서(설계 기준서 2장 원칙 1 "입력 한 번, 문서 여러 개")를 따른다.
 

@@ -239,8 +239,8 @@ AI 도입(2026-10-13)이 위 차단 설계를 약화하지 않는 이유: (1) AI
 | 브로드캐스터 | Railway 서울 인근 리전(미확인: Railway 리전 목록), 2대(리더 1) | 아웃바운드만: Supabase DB(pooler, service_role)와 Realtime HTTP API |
 | 스케줄 | 브로드캐스터 프로세스 내부 크론 | `CRON_SECRET` 공개 라우트 방식 금지(`SECURITY_BASELINE.md` 13장). 워커가 호출하는 `/api/internal/*`는 워커 키(`POLL_WORKER_INTERNAL_KEY`) 헤더로 보호하고 공개 크론 라우트가 아니다 |
 | AI 서비스(FastAPI) | Railway(브로드캐스터와 별도 서비스) | 공개 접근 불가에 가깝게 구성(서명 토큰 또는 Dify 내부 키 + 대화 매핑만 수락). 아웃바운드: Supabase(service_role), 상용 AI 제공자, 오픈소스 LLM·임베딩·음성 서버 |
-| 공용 Dify | 운영사 자체 호스팅 1개(`D:\WorkSpace\DEV\platform-dify\`, 제안, 설치 `docs/develop/_shared/dify/`) | Next.js·FastAPI에서만 접근. 콘솔 계정 최소화·2단계 인증, 로그 30일 |
-| 공용 GPU 서버 | `D:\WorkSpace\DEV\platform-llm\`, `platform-voice\`(제안, 설치 `docs/develop/_shared/llm/`, `voice/`) | FastAPI·Next.js(서명 토큰 scope `voice`)에서만 접근. 개발 중 미준비면 라우팅을 상용만 쓰되 청중 원문 단계는 건너뛰고 AI 정리 기능을 비활성화한다 |
+| 공용 Dify | 운영사 자체 호스팅 1개(`D:\WorkSpace\DEV\platform-dify\`, 제안, 설치 `D:/WorkSpace/platform/docs/develop/_shared/dify/`) | Next.js·FastAPI에서만 접근. 콘솔 계정 최소화·2단계 인증, 로그 30일 |
+| 공용 GPU 서버 | `D:\WorkSpace\DEV\platform-llm\`, `platform-voice\`(제안, 설치 `D:/WorkSpace/platform/docs/develop/_shared/llm/`, `voice/`) | FastAPI·Next.js(서명 토큰 scope `voice`)에서만 접근. 개발 중 미준비면 라우팅을 상용만 쓰되 청중 원문 단계는 건너뛰고 AI 정리 기능을 비활성화한다 |
 
 트래픽이 늘어 Realtime 부하가 다른 제품에 영향을 주면 모놀리스(`supabase/monolith/`)로 분리한다(README 5장).
 

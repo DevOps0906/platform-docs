@@ -6,31 +6,33 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 랜딩 | 누구나 | - | P0 |
-| `/pricing` | 가격 | 누구나 | - | P0 |
-| `/terms`, `/privacy` | 약관, 개인정보처리방침 | 누구나 | - | P0 |
-| `/login`, `/signup`, `/auth/callback` | 로그인, 가입, OAuth 콜백(화면 없음). 인증 단계별 구성(7절): A 개발용 패널(`/signup` 없음), B Google + 이메일 폼·`/signup`, C 카카오·네이버 버튼 | 누구나 | - | P0(C는 P1) |
-| `/dashboard` | 대시보드 | owner/admin/member/viewer | 전 플랜 | P0 |
-| `/posts` | 원고 목록(상태 필터) | 전 역할 | 전 플랜 | P0 |
-| `/posts/new` | 새 원고(키워드 → 생성 마법사) | owner/admin/member | 전 플랜 | P0 |
-| `/posts/[id]` | 에디터(3단: 개요 / 본문 / 보조 패널) | 편집은 owner/admin/member, viewer는 읽기 | 전 플랜 | P0 |
-| `/posts/[id]/publish` | 발행 시트(채널 선택, 검사, 예약) | owner/admin/member | 예약은 Pro 이상 | P0 |
-| `/calendar` | 발행 캘린더 | 전 역할 | Pro 이상(Free는 즉시 발행 목록만) | P0 |
-| `/channels` | 채널 계정, 연결, 위험 동의 | 보기 전 역할, 연결·동의·해제는 owner/admin | 전 플랜(수 제한) | P0 |
-| `/affiliate` | 제휴 계정, 링크, 클릭 통계 | 통계 클릭 상세는 owner/admin(`affiliate_clicks` 정책) | 전 플랜 | P0 |
-| `/brandconnect` | 캠페인 탐색, 지원 목록 | 동의는 owner/admin, 지원은 member 이상 | Pro 이상 | P0 |
-| `/settings/disclosure` | 대가성 문구 편집 | owner/admin | 전 플랜 | P0 |
-| `/settings/members`, `/settings/activity` | 멤버, 활동 기록 | owner/admin | Business(멤버 초대) | P1 |
-| `/billing` | 플랜, 결제, 크레딧팩, 원장 | owner/admin | 전 플랜 | P0 |
-| `/r/[code]` | 제휴 리다이렉트(화면 없음) | 누구나 | - | P0 |
-| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만), 설정에서도 변경 | owner/admin | 전 플랜 | P0 |
-| `/posts/[id]/review` | AI 초안 발행 전 확인(승인/반려) | owner/admin/member | 전 플랜 | P0 |
-| 에디터 보조 패널 "도우미" 탭, `/assistant` | AI 글쓰기 도우미 채팅(텍스트·음성), 대화 목록 | owner/admin/member | `features.ai_chat` | P0 |
-| `/materials` | 브랜드·상품·캠페인 자료 업로드, 색인 상태 | 보기 전 역할, 업로드·삭제는 owner/admin/member | 개수는 `features.rag_documents` | P0 |
-| `/wiki`, `/wiki/[...slug]` | 토픽·키워드 위키(목록, 페이지, 이력), `/wiki/lint` 점검 결과 | 보기 전 역할, 편집은 member 이상 | Pro 이상(`features.product_wiki`) | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩 | 고유(3D 히어로) | - | 누구나 | - | P0 |
+| `/pricing` | 가격 | 고유 | - | 누구나 | - | P0 |
+| `/terms`, `/privacy` | 약관, 개인정보처리방침 | 고유 | - | 누구나 | - | P0 |
+| `/login`, `/signup`, `/auth/callback` | 로그인, 가입, OAuth 콜백(화면 없음). 인증 단계별 구성(7절): A 개발용 패널(`/signup` 없음), B Google + 이메일 폼·`/signup`, C 카카오·네이버 버튼 | 고유 | - | 누구나 | - | P0(C는 P1) |
+| `/dashboard` | 대시보드 | E 변형(7일 예약) + 처리할 일 | 제휴 카드에만 V-B(#51) | owner/admin/member/viewer | 전 플랜 | P0 |
+| `/posts` | 원고 목록(상태 필터) | B → J | - | 전 역할 | 전 플랜 | P0 |
+| `/posts/new` | 새 원고(키워드 → 생성 마법사) | I | - | owner/admin/member | 전 플랜 | P0 |
+| `/posts/[id]` | 에디터(3단: 개요 / 본문 / 보조 패널) | J + A의 AI 패널 | 보조 패널에만 V-L(#53) | 편집은 owner/admin/member, viewer는 읽기 | 전 플랜 | P0 |
+| `/posts/[id]/publish` | 발행 시트(채널 선택, 검사, 예약) | I 변형(옆 시트) | - | owner/admin/member | 예약은 Pro 이상 | P0 |
+| `/calendar` | 발행 캘린더 | E | - | 전 역할 | Pro 이상(Free는 즉시 발행 목록만) | P0 |
+| `/channels` | 채널 계정, 연결, 위험 동의 | B | - | 보기 전 역할, 연결·동의·해제는 owner/admin | 전 플랜(수 제한) | P0 |
+| `/affiliate` | 제휴 계정, 링크, 클릭 통계 | B + L(클릭 통계) | V-B(#51) | 통계 클릭 상세는 owner/admin(`affiliate_clicks` 정책) | 전 플랜 | P0 |
+| `/brandconnect` | 캠페인 탐색, 지원 목록 | B(탭: 캠페인·지원) | - | 동의는 owner/admin, 지원은 member 이상 | Pro 이상 | P0 |
+| `/settings/disclosure` | 대가성 문구 편집 | H | - | owner/admin | 전 플랜 | P0 |
+| `/settings/members`, `/settings/activity` | 멤버, 활동 기록 | H | - | owner/admin | Business(멤버 초대) | P1 |
+| `/billing` | 플랜, 결제, 크레딧팩, 원장 | H | - | owner/admin | 전 플랜 | P0 |
+| `/r/[code]` | 제휴 리다이렉트(화면 없음) | - | - | 누구나 | - | P0 |
+| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만), 설정에서도 변경 | 고유 | - | owner/admin | 전 플랜 | P0 |
+| `/posts/[id]/review` | AI 초안 발행 전 확인(승인/반려) | 고유(원고 + 검사 목록) | - | owner/admin/member | 전 플랜 | P0 |
+| 에디터 보조 패널 "도우미" 탭, `/assistant` | AI 글쓰기 도우미 채팅(텍스트·음성), 대화 목록 | A의 AI 패널 | V-L(#53) | owner/admin/member | `features.ai_chat` | P0 |
+| `/materials` | 브랜드·상품·캠페인 자료 업로드, 색인 상태 | B | - | 보기 전 역할, 업로드·삭제는 owner/admin/member | 개수는 `features.rag_documents` | P0 |
+| `/wiki`, `/wiki/[...slug]` | 토픽·키워드 위키(목록, 페이지, 이력), `/wiki/lint` 점검 결과 | B + J(문서형) | - | 보기 전 역할, 편집은 member 이상 | Pro 이상(`features.product_wiki`) | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 고유 | - | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
 
 ## 2. 사용자 플로우
 

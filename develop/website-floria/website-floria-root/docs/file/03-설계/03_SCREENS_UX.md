@@ -6,32 +6,34 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 브랜드 단일 페이지(Hero, Collections, Process, Archive, Ethos, 문의 CTA, Footer) | 누구나 | 해당 없음 | P0 |
-| `/contact` | 문의 폼 전체 화면 | 누구나 | 해당 없음 | P0 |
-| `/privacy` | 개인정보처리방침 | 누구나 | 해당 없음 | P0 |
-| `/newsletter/confirm` | 구독 확인(토큰 검증 후 버튼 1개) | 누구나(토큰 필요) | 해당 없음 | P0 |
-| `/newsletter/unsubscribe` | 구독 해지(토큰 검증 후 버튼 1개) | 누구나(토큰 필요) | 해당 없음 | P0 |
-| `not-found` | 헤더/푸터 유지 404 | 누구나 | 해당 없음 | P0 |
-| `/admin/login` | 운영자 로그인(가입 링크 없음). 단계별: A 개발용 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B "Google로 계속하기" + 이메일·비밀번호 폼(초대 메일 수락 후), C 제외. 화면 콜백 `/auth/callback`(B), 초대받지 않은 계정 `/admin/no-access`(A·B) — 7절 | 비로그인 | 해당 없음 | P0 |
-| `/admin/no-access` | 엔타이틀먼트 없음 안내 + 로그아웃(콘솔 레이아웃 없음, 7.2절). A는 `no_app` 페르소나로 확인 | 로그인 | 해당 없음 | P0 |
-| `/admin/accept-invite`, `/admin/reset-password` | 초대 메일 수락(비밀번호 설정), 비밀번호 재설정. Stage B에서 만든다(7.1절) | 초대 링크·재설정 링크 | 해당 없음 | P0(B) |
-| `/auth/callback` | OAuth 콜백(화면 없음, `finishLogin` 후 이동, 04장 8절) | 누구나 | 해당 없음 | P0(B) |
-| `/admin` | 문의 목록으로 리다이렉트. 등록된 사이트가 없으면 "초대가 필요합니다" 안내 | owner, admin, member | `app_entitlements` 활성 + 등록된 사이트 1개 이상 | P0 |
-| `/admin/inquiries` | 문의 목록(상태/종류 필터) | owner, admin, member | 같음 | P0 |
-| `/admin/inquiries/[id]` | 문의 상세, 상태 변경, 메모, 삭제(owner/admin) | owner, admin, member(삭제는 owner/admin) | 같음 | P0 |
-| `/admin/subscribers` | 구독자 목록, 삭제 요청 처리(owner/admin) | owner, admin, member(처리는 owner/admin) | 같음 | P1 |
-| `/admin/settings` | 사이트 설정(owner/admin만 변경) | owner, admin | 같음 | P1 |
-| (위젯) | AI 상담 패널. 모든 `(site)` 페이지 우하단 버튼으로 열림. `accepts_ai_chat`이 켜진 사이트에만 DOM에 존재 | 누구나(로그인 없음) | 해당 없음 | P0 |
-| `/guide` | 브랜드 지식 목록(위키 `published`만) | 누구나 | 해당 없음 | P1 |
-| `/guide/[...slug]` | 지식 페이지(식물, 재료, 시공 방식) | 누구나 | 해당 없음 | P1 |
-| `/admin/ai` | AI 설정: 상담·음성 스위치, 국외 이전 동의, 사용량, 미답변 질문 | owner, admin(변경), member(읽기) | `app_entitlements` 활성 + 등록된 사이트 | P0 |
-| `/admin/knowledge` | 지식 문서 상태(pending/indexing/ready/failed), 업로드, 재색인 | owner, admin | 같음 | P0 |
-| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 검수·게시·이력, 주간 점검 결과 | owner, admin | 같음 | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크). 개발 전용, 프로덕션 빌드에서 404 | 개발자 | 해당 없음 | P0 |
-| `/weddings` | 웨딩 전용 페이지 | 누구나 | 해당 없음 | P2(MVP는 `/#archive` 앵커) |
-| `/journal` | 글 목록(MDX) | 누구나 | 해당 없음 | P2(Phase 3). 만들기 전에는 GNB에 넣지 않는다 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 브랜드 단일 페이지(Hero, Collections, Process, Archive, Ethos, 문의 CTA, Footer) | 고유(3D 히어로) | - | 누구나 | 해당 없음 | P0 |
+| `/contact` | 문의 폼 전체 화면 | 고유 | - | 누구나 | 해당 없음 | P0 |
+| `/privacy` | 개인정보처리방침 | 고유 | - | 누구나 | 해당 없음 | P0 |
+| `/newsletter/confirm` | 구독 확인(토큰 검증 후 버튼 1개) | 고유 | - | 누구나(토큰 필요) | 해당 없음 | P0 |
+| `/newsletter/unsubscribe` | 구독 해지(토큰 검증 후 버튼 1개) | 고유 | - | 누구나(토큰 필요) | 해당 없음 | P0 |
+| `not-found` | 헤더/푸터 유지 404 | 고유 | - | 누구나 | 해당 없음 | P0 |
+| `/admin/login` | 운영자 로그인(가입 링크 없음). 단계별: A 개발용 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B "Google로 계속하기" + 이메일·비밀번호 폼(초대 메일 수락 후), C 제외. 화면 콜백 `/auth/callback`(B), 초대받지 않은 계정 `/admin/no-access`(A·B) — 7절 | 고유 | - | 비로그인 | 해당 없음 | P0 |
+| `/admin/no-access` | 엔타이틀먼트 없음 안내 + 로그아웃(콘솔 레이아웃 없음, 7.2절). A는 `no_app` 페르소나로 확인 | 고유 | - | 로그인 | 해당 없음 | P0 |
+| `/admin/accept-invite`, `/admin/reset-password` | 초대 메일 수락(비밀번호 설정), 비밀번호 재설정. Stage B에서 만든다(7.1절) | 고유 | - | 초대 링크·재설정 링크 | 해당 없음 | P0(B) |
+| `/auth/callback` | OAuth 콜백(화면 없음, `finishLogin` 후 이동, 04장 8절) | - | - | 누구나 | 해당 없음 | P0(B) |
+| `/admin` | 문의 목록으로 리다이렉트. 등록된 사이트가 없으면 "초대가 필요합니다" 안내 | - | - | owner, admin, member | `app_entitlements` 활성 + 등록된 사이트 1개 이상 | P0 |
+| `/admin/inquiries` | 문의 목록(상태/종류 필터) | B + G시트 | - | owner, admin, member | 같음 | P0 |
+| `/admin/inquiries/[id]` | 문의 상세, 상태 변경, 메모, 삭제(owner/admin) | G시트 | - | owner, admin, member(삭제는 owner/admin) | 같음 | P0 |
+| `/admin/subscribers` | 구독자 목록, 삭제 요청 처리(owner/admin) | B | - | owner, admin, member(처리는 owner/admin) | 같음 | P1 |
+| `/admin/settings` | 사이트 설정(owner/admin만 변경) | H | - | owner, admin | 같음 | P1 |
+| (위젯) | AI 상담 패널. 모든 `(site)` 페이지 우하단 버튼으로 열림. `accepts_ai_chat`이 켜진 사이트에만 DOM에 존재 | 고유 | - | 누구나(로그인 없음) | 해당 없음 | P0 |
+| `/guide` | 브랜드 지식 목록(위키 `published`만) | 고유 | - | 누구나 | 해당 없음 | P1 |
+| `/guide/[...slug]` | 지식 페이지(식물, 재료, 시공 방식) | 고유 | - | 누구나 | 해당 없음 | P1 |
+| `/admin/ai` | AI 설정: 상담·음성 스위치, 국외 이전 동의, 사용량, 미답변 질문 | H | - | owner, admin(변경), member(읽기) | `app_entitlements` 활성 + 등록된 사이트 | P0 |
+| `/admin/knowledge` | 지식 문서 상태(pending/indexing/ready/failed), 업로드, 재색인 | B | - | owner, admin | 같음 | P0 |
+| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 검수·게시·이력, 주간 점검 결과 | B → G페이지 | - | owner, admin | 같음 | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크). 개발 전용, 프로덕션 빌드에서 404 | 고유 | - | 개발자 | 해당 없음 | P0 |
+| `/weddings` | 웨딩 전용 페이지 | 고유 | - | 누구나 | 해당 없음 | P2(MVP는 `/#archive` 앵커) |
+| `/journal` | 글 목록(MDX) | 고유 | - | 누구나 | 해당 없음 | P2(Phase 3). 만들기 전에는 GNB에 넣지 않는다 |
 
 viewer 역할은 콘솔에서 `/admin/settings`의 읽기 전용 화면 외에는 개인정보를 볼 수 없다(RLS와 일치, 05_DATA_MODEL.md 4장).
 

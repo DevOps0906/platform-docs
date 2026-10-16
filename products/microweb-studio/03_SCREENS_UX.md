@@ -4,36 +4,38 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 쇼룸 랜딩 | 누구나 | - | P0 |
-| `/templates` | 템플릿 카탈로그(출시 + 준비 중) | 누구나 | - | P0 |
-| `/templates/[code]` | 템플릿 상세, 샘플 미리보기 | 누구나 | - | P0 |
-| `/portfolio` | 포트폴리오(마이크로웹, 웹, 상세페이지 탭) | 누구나 | - | P1 |
-| `/pricing` | 통합 가격표 | 누구나 | - | P0 |
-| `/simulator` | 업종 x 등급 x 디바이스 시뮬레이터 | 누구나 | - | P1 |
-| `/contact` | 견적 문의 | 누구나 | - | P0 |
-| `/i/[slug]` | 하객 공개 페이지 | 누구나(게시 중만) | - | P0 |
-| `/p/[token]` | 고객 시안 확인 | 토큰 소지자 | - | P0 |
-| `/login` | 운영자 로그인. 단계별(7절): A 개발용 패널(페르소나 버튼, 로컬 전용), B Google 버튼 + 이메일·비밀번호 로그인(공개 가입 없음) + 비밀번호 재설정, `/auth/callback`(B, 화면 없음), C 카카오·네이버 버튼(P2 선택) | 초대받은 사용자 | - | P0 |
-| `/auth/invite` | 초대 메일 링크 도착 → 비밀번호 설정(건너뛰기 가능) → 약관(B부터, 7절) | 초대받은 사용자 | - | P0 |
-| `/studio/onboarding/terms` | 첫 로그인 약관 동의(B부터, 7절). 다음 단계가 `/studio/onboarding/ai` | 로그인 사용자 | free | P0 |
-| `/studio` | 대시보드(오늘 할 일: 새 문의, 승인 대기, 만료 임박) | owner/admin/member + studio_access | free | P0 |
-| `/studio/sites`, `/studio/sites/new`, `/studio/sites/[id]` | 사이트 목록, 생성, 편집기 | 같음 | free | P0 |
-| `/studio/sites/[id]/guests` | 방명록 관리, RSVP 표와 CSV | 같음(삭제 owner/admin) | free | P0 |
-| `/studio/leads`, `/studio/leads/[id]` | 문의 목록, 상세 | 같음 | free | P0 |
-| `/studio/orders` | 제작 주문 장부 | owner/admin 쓰기, member 읽기 | free | P0 |
-| `/studio/billing` | 크레딧 잔액, 팩 구매(Phase 2) | owner/admin | self_service | P2 |
-| `/pending`, `/403`, `/no-access` | 접근 안내(`/pending` 허용 목록 없음, `/no-access` 엔타이틀먼트 없음 = 초대받지 않은 이메일로 로그인, 7절) | 로그인 사용자 | - | P0 |
-| `/studio/onboarding/ai` | AI 처리 방식 선택(국외 이전 동의) | owner/admin | free | P0 |
-| `/studio/settings/ai` | AI 처리 방식 변경·철회, AI 사용량 | owner/admin | free | P1 |
-| `/studio/settings/login` | 로그인 방법(연결된 제공자, 연결·해제). C단계를 켤 때만(7절, P2 선택) | 로그인한 본인(역할 무관) | free | P2 |
-| (편집기 패널) AI 문구 제안 | 문구·구성 제안 실행, 3안 비교, 적용 | member 이상 | `features.ai_copy` | P0 |
-| (우측 시트) 제작 상담 | AI 채팅·음성 질문 | member 이상 | `features.ai_chat` | P0 |
-| `/studio/chat` | 지난 상담 대화 목록 | 본인 | `features.ai_chat` | P1 |
-| `/studio/wiki`, `/studio/wiki/[...slug]` | 이벤트 종류별 문구 위키(읽기) | member 이상 | free | P1 |
-| `/studio/admin/knowledge`, `/studio/admin/wiki` | 코퍼스 색인, 위키 검수·게시·lint (지식 조직 관리) | platform_admin | - | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크 스크린샷) | 개발 빌드만 | - | P0 |
+화면 표의 `패턴` 열은 `_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 쇼룸 랜딩 | 고유(3D 히어로) | V-G | 누구나 | - | P0 |
+| `/templates` | 템플릿 카탈로그(출시 + 준비 중) | M(템플릿 그리드) | V-G | 누구나 | - | P0 |
+| `/templates/[code]` | 템플릿 상세, 샘플 미리보기 | 고유(샘플 미리보기) | V-G | 누구나 | - | P0 |
+| `/portfolio` | 포트폴리오(마이크로웹, 웹, 상세페이지 탭) | M(탭) | V-J(#66) | 누구나 | - | P1 |
+| `/pricing` | 통합 가격표 | 고유 | - | 누구나 | - | P0 |
+| `/simulator` | 업종 x 등급 x 디바이스 시뮬레이터 | 고유(시뮬레이터) | - | 누구나 | - | P1 |
+| `/contact` | 견적 문의 | 고유 | - | 누구나 | - | P0 |
+| `/i/[slug]` | 하객 공개 페이지 | 고유(하객 페이지) | - | 누구나(게시 중만) | - | P0 |
+| `/p/[token]` | 고객 시안 확인 | 고유(시안 확인) | - | 토큰 소지자 | - | P0 |
+| `/login` | 운영자 로그인. 단계별(7절): A 개발용 패널(페르소나 버튼, 로컬 전용), B Google 버튼 + 이메일·비밀번호 로그인(공개 가입 없음) + 비밀번호 재설정, `/auth/callback`(B, 화면 없음), C 카카오·네이버 버튼(P2 선택) | 고유 | - | 초대받은 사용자 | - | P0 |
+| `/auth/invite` | 초대 메일 링크 도착 → 비밀번호 설정(건너뛰기 가능) → 약관(B부터, 7절) | 고유 | - | 초대받은 사용자 | - | P0 |
+| `/studio/onboarding/terms` | 첫 로그인 약관 동의(B부터, 7절). 다음 단계가 `/studio/onboarding/ai` | 고유 | - | 로그인 사용자 | free | P0 |
+| `/studio` | 대시보드(오늘 할 일: 새 문의, 승인 대기, 만료 임박) | B 변형(오늘 처리할 일) | - | owner/admin/member + studio_access | free | P0 |
+| `/studio/sites`, `/studio/sites/new`, `/studio/sites/[id]` | 사이트 목록, 생성, 편집기 | B, I(생성), J(편집기) | - | 같음 | free | P0 |
+| `/studio/sites/[id]/guests` | 방명록 관리, RSVP 표와 CSV | B | - | 같음(삭제 owner/admin) | free | P0 |
+| `/studio/leads`, `/studio/leads/[id]` | 문의 목록, 상세 | B → G페이지 | - | 같음 | free | P0 |
+| `/studio/orders` | 제작 주문 장부 | B | - | owner/admin 쓰기, member 읽기 | free | P0 |
+| `/studio/billing` | 크레딧 잔액, 팩 구매(Phase 2) | H | - | owner/admin | self_service | P2 |
+| `/pending`, `/403`, `/no-access` | 접근 안내(`/pending` 허용 목록 없음, `/no-access` 엔타이틀먼트 없음 = 초대받지 않은 이메일로 로그인, 7절) | 고유 | - | 로그인 사용자 | - | P0 |
+| `/studio/onboarding/ai` | AI 처리 방식 선택(국외 이전 동의) | 고유 | - | owner/admin | free | P0 |
+| `/studio/settings/ai` | AI 처리 방식 변경·철회, AI 사용량 | H | - | owner/admin | free | P1 |
+| `/studio/settings/login` | 로그인 방법(연결된 제공자, 연결·해제). C단계를 켤 때만(7절, P2 선택) | H | - | 로그인한 본인(역할 무관) | free | P2 |
+| (편집기 패널) AI 문구 제안 | 문구·구성 제안 실행, 3안 비교, 적용 | J의 AI 패널 | - | member 이상 | `features.ai_copy` | P0 |
+| (우측 시트) 제작 상담 | AI 채팅·음성 질문 | A의 AI 패널 | - | member 이상 | `features.ai_chat` | P0 |
+| `/studio/chat` | 지난 상담 대화 목록 | F 변형(대화 목록) | - | 본인 | `features.ai_chat` | P1 |
+| `/studio/wiki`, `/studio/wiki/[...slug]` | 이벤트 종류별 문구 위키(읽기) | B → G페이지(문서) | - | member 이상 | free | P1 |
+| `/studio/admin/knowledge`, `/studio/admin/wiki` | 코퍼스 색인, 위키 검수·게시·lint (지식 조직 관리) | B + N(색인) + J | - | platform_admin | - | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크 스크린샷) | 고유 | - | 개발 빌드만 | - | P0 |
 
 ## 2. 사용자 플로우
 

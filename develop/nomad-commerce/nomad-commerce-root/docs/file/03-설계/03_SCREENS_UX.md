@@ -4,36 +4,38 @@
 
 역할: 1인 1워크스페이스라 owner가 기본. member는 생성·편집, viewer는 읽기만(서버 판정). 플랜 접근은 `01_PRD.md` 4.4절 features.
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 랜딩 | 공개 | - | P0 |
-| `/pricing` | 가격 | 공개 | - | P0 |
-| `/legal/terms`, `/legal/privacy`, `/legal/ai-notice` | 약관·처리방침·AI 고지 | 공개 | - | P0 |
-| `/login`, `/auth/callback` | 로그인. 단계별(7절): A 개발용 페르소나 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B Google 버튼 + 이메일 폼(가입·재설정 포함), C 카카오·네이버 버튼. `/auth/callback`은 B부터 | 공개 | - | P0(A·B), C는 P1 |
-| `/dashboard` | 대시보드(KPI, 환율, 최근 작업) | 멤버 | 전 플랜 | P0 |
-| `/products` | 상품DB 목록 | 멤버 | 전 플랜 | P0 |
-| `/products/new`, `/products/[id]` | 수동 등록·편집 | owner/admin/member | 전 플랜 | P0 |
-| `/sourcing` | 가져오기(아마존 탭, 엑셀 탭, 가져오기 이력) | owner/admin/member | 전 플랜 | P0 |
-| `/sourcing/imports/[id]` | 엑셀 컬럼 매핑·결과 | owner/admin/member | 전 플랜 | P0 |
-| `/detail-pages` | 상세페이지 목록 + 큐 패널 | 멤버 | 전 플랜 | P0 |
-| `/detail-pages/[id]` | 결과 뷰어(슬롯 카드, 마켓 미리보기, 인라인 편집, compliance) | 멤버(편집은 member 이상) | 전 플랜 | P0 |
-| 모달 `생성` | 개별/다중 생성 | owner/admin/member | 유형·슬롯 세트는 features | P0 |
-| `/listings` | 등록 폼 목록 | 멤버 | 전 플랜 | P0 |
-| `/listings/[id]` | 등록 폼(6단계) | owner/admin/member | 전 플랜 | P0 |
-| `/uploads` | 업로드 이력·실패 로그 | 멤버 | `market_api` | P0 |
-| `/exports` | 내보내기 목록(엑셀/ZIP) | 멤버 | 엑셀 starter+, ZIP 전 플랜 | P0 |
-| `/settings/markets` | 마켓 계정 슬롯 | owner/admin | `market_slots` | P0 |
-| `/settings/shipping` | 배송·반품 템플릿 | owner/admin/member | 전 플랜 | P0 |
-| `/settings/banned-words` | 금지어 사전(기본 + 조직 추가) | 보기 멤버, 편집 owner/admin | 전 플랜 | P1 |
-| `/billing` | 플랜, 결제수단, 크레딧 원장, 크레딧팩 | owner/admin | 전 플랜 | P0 |
-| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | owner/admin | 전 플랜 | P0 |
-| 채팅 패널(모든 `(app)` 화면 오른쪽 시트), `/chat` | 셀러 어시스턴트 채팅(텍스트·음성), 대화 목록 | 멤버 | `features.ai_chat` | P0 |
-| 내레이션 패널(`/detail-pages/[id]`, `/products` 행 동작), `/narrations` | 쇼츠 내레이션 만들기·재생·받기, 내 내레이션 목록(`voice_jobs` 본인 행) | member 이상 | `features.shorts_narration` | P0 / P1 |
-| `/wiki`, `/wiki/[...slug]` | 마켓 규칙 위키(쿠팡, 스마트스토어 목록·검색, 페이지) | 공개(D-9 결정 전 기본) | - | P0 |
-| `/admin/knowledge` | 마켓 규칙 원고 업로드, 색인 상태 | `platform_admin` | - | P0 |
-| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 페이지 검수·게시, 변경 이력, 점검 결과 | `platform_admin` | - | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
-| `/shorts`(영상 렌더·결합), `/automation` | 쇼츠 영상, 자동화 | - | Phase 2 | P2 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩 | 고유(3D 히어로) | - | 공개 | - | P0 |
+| `/pricing` | 가격 | 고유 | - | 공개 | - | P0 |
+| `/legal/terms`, `/legal/privacy`, `/legal/ai-notice` | 약관·처리방침·AI 고지 | 고유 | - | 공개 | - | P0 |
+| `/login`, `/auth/callback` | 로그인. 단계별(7절): A 개발용 페르소나 패널 + `MOCK AUTH · 로컬 전용` 배지(로컬만), B Google 버튼 + 이메일 폼(가입·재설정 포함), C 카카오·네이버 버튼. `/auth/callback`은 B부터 | 고유 | - | 공개 | - | P0(A·B), C는 P1 |
+| `/dashboard` | 대시보드(KPI, 환율, 최근 작업) | C → B | V-B(#31) | 멤버 | 전 플랜 | P0 |
+| `/products` | 상품DB 목록 | B + O | V-D(#26, #43) | 멤버 | 전 플랜 | P0 |
+| `/products/new`, `/products/[id]` | 수동 등록·편집 | G | V-M(#45) | owner/admin/member | 전 플랜 | P0 |
+| `/sourcing` | 가져오기(아마존 탭, 엑셀 탭, 가져오기 이력) | B | V-D | owner/admin/member | 전 플랜 | P0 |
+| `/sourcing/imports/[id]` | 엑셀 컬럼 매핑·결과 | I | - | owner/admin/member | 전 플랜 | P0 |
+| `/detail-pages` | 상세페이지 목록 + 큐 패널 | B + N(큐 패널) | V-D | 멤버 | 전 플랜 | P0 |
+| `/detail-pages/[id]` | 결과 뷰어(슬롯 카드, 마켓 미리보기, 인라인 편집, compliance) | J | - | 멤버(편집은 member 이상) | 전 플랜 | P0 |
+| 모달 `생성` | 개별/다중 생성 | 고유(생성 모달) | - | owner/admin/member | 유형·슬롯 세트는 features | P0 |
+| `/listings` | 등록 폼 목록 | B | V-D | 멤버 | 전 플랜 | P0 |
+| `/listings/[id]` | 등록 폼(6단계) | I | V-K(#23) | owner/admin/member | 전 플랜 | P0 |
+| `/uploads` | 업로드 이력·실패 로그 | N | V-D | 멤버 | `market_api` | P0 |
+| `/exports` | 내보내기 목록(엑셀/ZIP) | B + N | V-D | 멤버 | 엑셀 starter+, ZIP 전 플랜 | P0 |
+| `/settings/markets` | 마켓 계정 슬롯 | H | - | owner/admin | `market_slots` | P0 |
+| `/settings/shipping` | 배송·반품 템플릿 | H | - | owner/admin/member | 전 플랜 | P0 |
+| `/settings/banned-words` | 금지어 사전(기본 + 조직 추가) | H | - | 보기 멤버, 편집 owner/admin | 전 플랜 | P1 |
+| `/billing` | 플랜, 결제수단, 크레딧 원장, 크레딧팩 | H | V-K | owner/admin | 전 플랜 | P0 |
+| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만) | 고유 | - | owner/admin | 전 플랜 | P0 |
+| 채팅 패널(모든 `(app)` 화면 오른쪽 시트), `/chat` | 셀러 어시스턴트 채팅(텍스트·음성), 대화 목록 | A의 AI 패널 + B | V-L | 멤버 | `features.ai_chat` | P0 |
+| 내레이션 패널(`/detail-pages/[id]`, `/products` 행 동작), `/narrations` | 쇼츠 내레이션 만들기·재생·받기, 내 내레이션 목록(`voice_jobs` 본인 행) | 고유(패널) + B | - | member 이상 | `features.shorts_narration` | P0 / P1 |
+| `/wiki`, `/wiki/[...slug]` | 마켓 규칙 위키(쿠팡, 스마트스토어 목록·검색, 페이지) | B → G페이지 | - | 공개(D-9 결정 전 기본) | - | P0 |
+| `/admin/knowledge` | 마켓 규칙 원고 업로드, 색인 상태 | B + N | V-D | `platform_admin` | - | P0 |
+| `/admin/wiki`, `/admin/wiki/[...slug]`, `/admin/wiki/lint` | 위키 페이지 검수·게시, 변경 이력, 점검 결과 | B + J(문서형) | V-D | `platform_admin` | - | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계) | 고유 | - | 개발 환경만(프로덕션 빌드 제외) | - | P0 |
+| `/shorts`(영상 렌더·결합), `/automation` | 쇼츠 영상, 자동화 | M + N, K | - | - | Phase 2 | P2 |
 
 ## 2. 사용자 플로우
 

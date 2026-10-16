@@ -72,7 +72,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 |---|---|---|---|---|
 | `docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 장 구조와 표 컬럼(PRD 기능 표, 아키텍처, API, 데이터 모델, 작업 표) | 동작(문서 표준) | 참고(`req_spec`·`sow`·설계서류 섹션 구조와 표 컬럼) | `tpl/templates/req_spec/v1/structure.json`, `sow`, Phase 2 `api_spec`·`db_design` | `docs/file/03-설계/공용코어/DOC_TEMPLATE.md:36-335` |
 | 수용 기준 작성 규칙("무엇을 하면 무엇이 보인다", 수치 포함) | 동작 | 참고 | 요구사항 `acceptance_criteria` 도움말, lint `L-UNTRACED` | `docs/file/03-설계/공용코어/DOC_TEMPLATE.md:20` |
-| `docs/develop/_shared/tools/build_root.py`의 산출물 등록부(ID, 산출물명, 단계, 상태, 버전, 경로, 상위 ID) | 동작(스크립트) | 참고(데이터 모델만) | `documents`(상태·버전·`supersedes_document_id`), `trace_links`(상위 연결) | `docs/develop/_shared/tools/build_root.py:9`, `:214` |
+| `D:/WorkSpace/platform/docs/develop/_shared/tools/build_root.py`의 산출물 등록부(ID, 산출물명, 단계, 상태, 버전, 경로, 상위 ID) | 동작(스크립트) | 참고(데이터 모델만) | `documents`(상태·버전·`supersedes_document_id`), `trace_links`(상위 연결) | `D:/WorkSpace/platform/docs/develop/_shared/tools/build_root.py:9`, `:214` |
 | `D:/WorkSpace/platform/docs/products/_STRUCTURE_CHECK.md` 품질 점검(필수 파일, 장 구조, 이모지/HTML, 경로, 차단 설계 표) | 동작(점검 결과) | 참고(점검 항목 → lint 규칙) | `tpl/templates/*/v1/lint_rules.json`(필수 섹션, `L-REQUIRED-CLAUSE`), DC-06-021 | `D:/WorkSpace/platform/docs/products/_STRUCTURE_CHECK.md:5-26`, `docs/file/03-설계/공용코어/DOC_TEMPLATE.md:337-351` |
 | 내부 개발 전용 표기(모델 배정, `경로:줄` 근거, P0~P2 등급의 의미) | 동작 | 폐기 | - | DS-23 |
 

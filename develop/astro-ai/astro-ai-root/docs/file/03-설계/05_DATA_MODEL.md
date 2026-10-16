@@ -360,4 +360,4 @@ RLS 스모크 결과(사용자 A·B 서로 다른 조직, X는 엔타이틀먼�
 | IP 해시 보류와 반복 실행 | 같은 IP 해시 하루 3회 초과 보류(AS-F-002)는 실제로 지급할 때만 센다(제안: 멱등 키로 이미 지급된 조직이면 `rate_limit_hit`을 부르지 않는다). 로컬에서는 모든 페르소나가 같은 IP라, 먼저 세면 E2E를 반복할 때 `welcome_pending`·`no_app` 지급이 보류된다 |
 | 재시드 | 멱등: 이미 있는 이메일은 건너뛰고 역할·상태만 맞춘다. `welcome_pending`이 한 번 로그인해 30을 받은 뒤 미지급 상태로 되돌리려면 `supabase db reset` 후 다시 시드한다(원장은 append-only라 훅이 회수하지 않는다) |
 | 도메인 데이터 | 보관함 대상·리딩·대화는 시드하지 않는다(제안). E2E가 각 페르소나로 API를 호출해 만든다 |
-| 모놀리스/모듈러 | 이 개발은 단독 `public` 모놀리스(01장 D-9, `docs/develop/astro-ai/astro-ai_develop.md` 1절)라 `no_app`도 자동 부트스트랩되어 402 경로를 볼 수 없다. 402·부트스트랩 검증은 모듈러 통합 DB에서만 의미가 있다(`--app`을 여러 번 주면 두 번째 앱부터 `bootstrap_app_for_org`) |
+| 모놀리스/모듈러 | 이 개발은 단독 `public` 모놀리스(01장 D-9, `D:/WorkSpace/platform/docs/develop/astro-ai/astro-ai_develop.md` 1절)라 `no_app`도 자동 부트스트랩되어 402 경로를 볼 수 없다. 402·부트스트랩 검증은 모듈러 통합 DB에서만 의미가 있다(`--app`을 여러 번 주면 두 번째 앱부터 `bootstrap_app_for_org`) |

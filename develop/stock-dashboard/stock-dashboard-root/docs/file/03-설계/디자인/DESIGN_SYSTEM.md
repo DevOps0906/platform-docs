@@ -106,11 +106,12 @@
 ```
 대상: <경로와 화면 이름> (예: /customers 고객 목록)
 패턴: <DASHBOARD_PATTERNS.md 코드> (예: B + G시트)
+시각: <DASHBOARD_VISUAL.md 코드와 카탈로그 번호, 적용 영역> / 적합도: <적합·일부·부적합> / 기본 테마: <라이트·다크> (예: V-C(#9), 종목 상세에만 V-A)
 빼거나 바꿀 것: <패턴 필수 요소 중 이 화면에서 빼거나 바꾸는 것과 이유, 없으면 "없음">
 데이터: <테이블·RPC·Route Handler> (04_API.md, 05_DATA_MODEL.md의 해당 절)
-근거: 03_SCREENS_UX.md 해당 행, DASHBOARD_PATTERNS.md 해당 패턴 절, COMPONENTS.md
+근거: 03_SCREENS_UX.md 해당 행, DASHBOARD_PATTERNS.md 해당 패턴 절, DASHBOARD_VISUAL.md 1장 분석 결과, COMPONENTS.md
 스택: Next.js <버전>, React <버전>, Tailwind CSS v4.<x>, shadcn/ui <버전>, <패턴 라이브러리와 버전>
 상태: 기본·로딩·빈 상태·오류·권한 없음 (DASHBOARD_PATTERNS.md 6장)
 금지: components/ui 밖에서 새 기본 컴포넌트 만들기, hex 직접 사용, 새 토큰 임의 추가, tailwind.config.js
-검증: 라이트/다크 × 컴팩트/기본 스크린샷, 375px 폭, 키보드만으로 주 행동 수행
+검증: 라이트/다크 × 컴팩트/기본 스크린샷, 375px 폭, 키보드만으로 주 행동 수행, DASHBOARD_VISUAL.md 10장 체크리스트
 ```

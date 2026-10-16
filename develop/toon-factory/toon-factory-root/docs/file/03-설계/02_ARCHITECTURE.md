@@ -276,7 +276,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 | 워커 | Railway 컨테이너 1~2개(`services/toon-worker`, FFmpeg + 글꼴 포함 이미지) | 공개 포트 없음. Supabase에 service_role로만 접속 |
 | DB/Storage/Realtime | Supabase(모듈러 통합 프로젝트) | `toon` 스키마를 `[api].schemas`에 추가 |
 | AI 서비스 | Railway `apps/api`(FastAPI) | 공개 포트는 Dify와 Next.js·워커용 내부 주소만. 서명 토큰 공개키(JWKS)로 검증 |
-| 공용 Dify·GPU 서버 | 운영사 자체 호스팅(`D:\WorkSpace\DEV\platform-dify\`, `platform-llm\`, `platform-voice\`, 제안) | 설치는 `docs/develop/_shared/dify/`, `llm/`, `voice/` 문서 |
+| 공용 Dify·GPU 서버 | 운영사 자체 호스팅(`D:\WorkSpace\DEV\platform-dify\`, `platform-llm\`, `platform-voice\`, 제안) | 설치는 `D:/WorkSpace/platform/docs/develop/_shared/dify/`, `llm/`, `voice/` 문서 |
 | 외부 | Toss, fal, LLM·음성 제공자 | LLM은 FastAPI만, ElevenLabs는 Next.js만, fal은 워커만 호출 |
 
 네트워크 경계: 브라우저는 Supabase(anon key, RLS)와 Next Route Handler만 호출한다. 원본 에셋과 내보내기 결과는 서명 URL로만 내려간다. 워커는 입력을 DB에서 읽고 결과를 Storage에 쓴다. 웹훅(Toss, fal)은 Vercel Route Handler가 받아 `core.webhook_events`에 기록한다.

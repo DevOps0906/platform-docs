@@ -8,116 +8,118 @@
 
 열 설명: 역할은 `news.staff.role`(publisher, editor, desk, reporter, contributor, ad_manager)과 독자 상태(방문자, 독자, 멤버)다. 플랜 접근은 `core.plans.features` 키(01장 4절)로 적는다. 패턴은 `DASHBOARD_PATTERNS.md:16-34` 코드이고, 공개 독자 화면은 그 문서의 대상이 아니라서 "공개(4절)"로 적는다.
 
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
 ### 1.1 독자 사이트 (테넌트 도메인, 라우트 그룹 `(reader)`)
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 |
-|---|---|---|---|---|---|
-| `/` | 메인(템플릿 A/B/C 중 신문사가 고른 것, 4절) | 누구나 | 전 플랜 | P0 | 공개(4절) |
-| `/section/[slug]` | 섹션 목록(톱 1 + 목록, 페이지네이션) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/region/[slug]` | 지역(시·군·읍면) 목록 | 누구나 | 전 플랜 | P0 | 공개 |
-| `/tag/[slug]` | 태그 목록 | 누구나 | 전 플랜 | P0 | 공개 |
-| `/article/[id]/[slug]` | 기사 상세(3.7절). `/article/[id]`는 canonical로 308 | 누구나(프리미엄 본문은 멤버, P1) | 전 플랜 | P0 | 공개 |
-| `/reporter/[id]` | 기자 페이지(소개, 이메일, 최근 기사) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/search` | 기사 검색(기간·섹션·지역 필터) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/most-read` | 많이 본 뉴스(1시간·24시간 탭) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/print`, `/print/[date]` | 지면보기(PDF 뷰어, 날짜 선택) | 누구나 | `news_print_pdf`(Pro) | P1 | 공개 |
-| `/life/obituaries`, `/life/people`, `/life/news`, `/life/weddings` | 경조사: 부고, 인사, 동정, 화촉 | 누구나 | 전 플랜 | P1 | 공개 |
-| `/life/apply` | 경조사 게재 신청(유료 게재 옵션) | 누구나(로그인 권장) | 전 플랜 | P1 | 공개 |
-| `/events`, `/events/[id]` | 행사·축제 캘린더 | 누구나 | 전 플랜 | P1 | 공개 |
-| `/notices`, `/notices/[id]` | 지자체 공고 목록 | 누구나 | 전 플랜 | P1 | 공개 |
-| `/directory`, `/directory/apply` | 지역 업소 디렉토리, 업주 셀프 광고 신청 | 누구나 / 신청은 독자 | 업소 셀프 광고 Standard 이상 | P1 | 공개 |
-| `/tips` | 제보·투고(첨부, 연락처, 동의) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/corrections` | 정정·반론·추후보도 청구 폼 + 게재된 정정보도 목록 | 누구나 | 전 플랜 | P0 | 공개 |
-| `/newsletter` | 뉴스레터 목록·구독(이중 동의) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/newsletter/confirm`, `/newsletter/unsubscribe`, `/newsletter/reconsent` | 구독 확정, 해지, 2년 재확인(토큰, 버튼 1개, GET으로 상태를 바꾸지 않음) | 토큰 보유자 | 전 플랜 | P0 | 공개 |
-| `/membership`, `/membership/success`, `/membership/fail` | 후원·유료 멤버십, 결제 복귀 | 누구나 / 결제는 독자 | 신문사 Toss 가맹 설정 시. Starter는 독자 결제 수수료 3%(`news_reader_fee_bps`) | P1 | 공개 |
-| `/login` | 독자 로그인(단계별, 7.2절) | 비로그인 | 전 플랜 | P0 | 공개 |
-| `/auth/callback` | 독자 OAuth·매직 링크 콜백(D-3 방식에 따라 호스트가 다름, 7.2절) | - | - | P0 | 없음 |
-| `/account`, `/account/consent` | 내 정보(구독, 멤버십, 댓글, 로그인 방법, 탈퇴), 첫 로그인 약관 동의 | 독자 | 전 플랜 | P0 | 공개 |
-| `/about` | 매체 소개(필요적 게재사항 전체, 기사 배열 방침 선택) | 누구나 | 전 플랜 | P0 | 공개 |
-| `/advertise` | 광고 안내·문의 | 누구나 | 전 플랜 | P1 | 공개 |
-| `/policy/youth`, `/policy/privacy`, `/policy/ethics`, `/policy/terms`, `/policy/comments`, `/policy/ai` | 청소년보호정책, 개인정보처리방침, 윤리강령, 독자 이용약관, 댓글 운영원칙, AI 이용 고지 | 누구나 | 전 플랜 | P0(댓글은 P1) | 공개 |
-| `/rss`, `/rss/[section]` | RSS 2.0 | 누구나 | 전 플랜 | P0 | 없음 |
-| `/sitemap-news.xml`, `/sitemap.xml`, `/robots.txt`, `/llms.txt` | 뉴스 사이트맵(최근 2일, 1,000개), 일반 사이트맵, 크롤러 정책(NW-F-045는 P1) | 누구나 | 전 플랜 | P0 | 없음 |
-| `/unavailable` | 매체정보 미완성·해지·정지 신문사의 공개 차단 안내(5절) | 누구나 | - | P0 | 공개 |
+| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 | 시각 |
+|---|---|---|---|---|---|---|
+| `/` | 메인(템플릿 A/B/C 중 신문사가 고른 것, 4절) | 누구나 | 전 플랜 | P0 | 공개(4절) | - |
+| `/section/[slug]` | 섹션 목록(톱 1 + 목록, 페이지네이션) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/region/[slug]` | 지역(시·군·읍면) 목록 | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/tag/[slug]` | 태그 목록 | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/article/[id]/[slug]` | 기사 상세(3.7절). `/article/[id]`는 canonical로 308 | 누구나(프리미엄 본문은 멤버, P1) | 전 플랜 | P0 | 공개 | - |
+| `/reporter/[id]` | 기자 페이지(소개, 이메일, 최근 기사) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/search` | 기사 검색(기간·섹션·지역 필터) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/most-read` | 많이 본 뉴스(1시간·24시간 탭) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/print`, `/print/[date]` | 지면보기(PDF 뷰어, 날짜 선택) | 누구나 | `news_print_pdf`(Pro) | P1 | 공개 | - |
+| `/life/obituaries`, `/life/people`, `/life/news`, `/life/weddings` | 경조사: 부고, 인사, 동정, 화촉 | 누구나 | 전 플랜 | P1 | 공개 | - |
+| `/life/apply` | 경조사 게재 신청(유료 게재 옵션) | 누구나(로그인 권장) | 전 플랜 | P1 | 공개 | - |
+| `/events`, `/events/[id]` | 행사·축제 캘린더 | 누구나 | 전 플랜 | P1 | 공개 | - |
+| `/notices`, `/notices/[id]` | 지자체 공고 목록 | 누구나 | 전 플랜 | P1 | 공개 | - |
+| `/directory`, `/directory/apply` | 지역 업소 디렉토리, 업주 셀프 광고 신청 | 누구나 / 신청은 독자 | 업소 셀프 광고 Standard 이상 | P1 | 공개 | - |
+| `/tips` | 제보·투고(첨부, 연락처, 동의) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/corrections` | 정정·반론·추후보도 청구 폼 + 게재된 정정보도 목록 | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/newsletter` | 뉴스레터 목록·구독(이중 동의) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/newsletter/confirm`, `/newsletter/unsubscribe`, `/newsletter/reconsent` | 구독 확정, 해지, 2년 재확인(토큰, 버튼 1개, GET으로 상태를 바꾸지 않음) | 토큰 보유자 | 전 플랜 | P0 | 공개 | - |
+| `/membership`, `/membership/success`, `/membership/fail` | 후원·유료 멤버십, 결제 복귀 | 누구나 / 결제는 독자 | 신문사 Toss 가맹 설정 시. Starter는 독자 결제 수수료 3%(`news_reader_fee_bps`) | P1 | 공개 | - |
+| `/login` | 독자 로그인(단계별, 7.2절) | 비로그인 | 전 플랜 | P0 | 공개 | - |
+| `/auth/callback` | 독자 OAuth·매직 링크 콜백(D-3 방식에 따라 호스트가 다름, 7.2절) | - | - | P0 | 없음 | - |
+| `/account`, `/account/consent` | 내 정보(구독, 멤버십, 댓글, 로그인 방법, 탈퇴), 첫 로그인 약관 동의 | 독자 | 전 플랜 | P0 | 공개 | - |
+| `/about` | 매체 소개(필요적 게재사항 전체, 기사 배열 방침 선택) | 누구나 | 전 플랜 | P0 | 공개 | - |
+| `/advertise` | 광고 안내·문의 | 누구나 | 전 플랜 | P1 | 공개 | - |
+| `/policy/youth`, `/policy/privacy`, `/policy/ethics`, `/policy/terms`, `/policy/comments`, `/policy/ai` | 청소년보호정책, 개인정보처리방침, 윤리강령, 독자 이용약관, 댓글 운영원칙, AI 이용 고지 | 누구나 | 전 플랜 | P0(댓글은 P1) | 공개 | - |
+| `/rss`, `/rss/[section]` | RSS 2.0 | 누구나 | 전 플랜 | P0 | 없음 | - |
+| `/sitemap-news.xml`, `/sitemap.xml`, `/robots.txt`, `/llms.txt` | 뉴스 사이트맵(최근 2일, 1,000개), 일반 사이트맵, 크롤러 정책(NW-F-045는 P1) | 누구나 | 전 플랜 | P0 | 없음 | - |
+| `/unavailable` | 매체정보 미완성·해지·정지 신문사의 공개 차단 안내(5절) | 누구나 | - | P0 | 공개 | - |
 
 ### 1.2 편집국 콘솔 (`newsroom.<플랫폼 도메인>`, 라우트 그룹 `(newsroom)`)
 
 로그인·신청 화면을 뺀 모든 경로는 조직 slug 접두 `/[org]` 아래에 있다(제안: 현재 신문사를 쿠키가 아니라 경로로 정해 두 신문사에 속한 기자의 권한 혼동을 막는다. 02장에서 확정). 표는 접두를 생략한다.
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 |
-|---|---|---|---|---|---|
-| `/login`, `/signup`, `/accept-invite`, `/reset-password`, `/auth/callback` | 편집국 로그인(7.1절). `/signup`은 B단계 개설 신청자용 | 비로그인 | - | P0 | 고유 |
-| `/no-access`, `/pending`, `/suspended` | 엔타이틀먼트 없음(개설 신청 링크), 개설 심사 중·반려 사유, 정지 | 로그인 | - | P0 | 고유 |
-| `/apply` | 신문사 개설 신청(등록증 업로드, NW-F-001) | 로그인(엔타이틀먼트 없음) | - | P0 | I |
-| `/onboarding` | 승인 뒤 설정 4단계: 매체정보 → 브랜딩 → 섹션·지역 → 첫 기사 | publisher, editor | 전 플랜 | P0 | I |
-| `/dashboard` | 홈: 오늘 처리할 일 + 숫자 2개 + 많이 본 기사(3.1절) | 전 역할(contributor는 내 초안만) | 전 플랜 | P0 | C 변형(5장 "처리할 일") |
-| `/articles` | 기사 목록(상태·유형·섹션·기자·기간 필터, 저장된 뷰) | 전 역할(contributor는 자기 것만) | 전 플랜 | P0 | B → G페이지 |
-| `/articles/new`, `/articles/[id]/edit` | 기사 에디터(3.2절) | publisher, editor, desk, reporter, contributor(자기 초안) | 전 플랜 | P0 | J |
-| `/articles/[id]` | 기사 상세: 버전 이력, 수정·정정 기록, 조회 추이 | 전 역할 | 전 플랜 | P0 | G |
-| `/review` | 데스크 승인 대기열(3.3절) | publisher, editor, desk | 전 플랜 | P0 | B + G시트 |
-| `/schedule` | 예약 게시·엠바고 캘린더 | publisher, editor, desk | 전 플랜 | P1 | E |
-| `/home-editor` | 홈 편집(3.4절) | publisher, editor, desk | 전 플랜 | P0 | J |
-| `/press-releases` | 보도자료 접수함 → AI 초안(NW-F-050) | publisher, editor, desk, reporter | `ai_monthly_credits` | P0 | F |
-| `/live/[id]` | 라이브 기사 업데이트 타임라인 입력 | publisher, editor, desk, reporter | 전 플랜 | P1 | J |
-| `/print-editions` | 지면 PDF 업로드·발행일 | publisher, editor | `news_print_pdf`(Pro) | P1 | M |
-| `/media` | 미디어 라이브러리(저작권·출처·alt 필수) | 전 역할 | `news_storage_gb` | P0 | M |
-| `/taxonomy/sections`, `/taxonomy/regions`, `/taxonomy/tags` | 섹션(섹션 컬러), 시·군·읍면 탭 목록, 태그 | publisher, editor | 전 플랜 | P0 | B |
-| `/staff` | 구성원·초대·역할(NW-F-004) | publisher, editor(초대), publisher(역할 변경) | `news_staff_max` | P0 | B + G시트 |
-| `/readers` | 독자 목록(가입일, 동의 상태, 멤버십). 개인정보 최소 표시 | publisher, editor | 전 플랜 | P1 | B + G시트 |
-| `/newsletter`, `/newsletter/issues/[id]` | 뉴스레터 목록·구독자 수·발송 이력, 호 편집(아침 브리핑 자동 구성) | publisher, editor, desk | `news_newsletter_monthly` | P0 | B + N / J |
-| `/membership` | 등급·후원 내역·정산 대사 | publisher, editor | 전 플랜(Toss 설정 필요) | P1 | B |
-| `/ads`, `/ads/campaigns/[id]`, `/ads/report` | 광고 슬롯·캠페인·소재, 캠페인 상세, 노출·클릭 리포트 | publisher, ad_manager | 전 플랜(외부 광고망 태그 P1) | P0 | B → G페이지 / L |
-| `/listings` | 업소 디렉토리 신청 검수·게재 | publisher, ad_manager | Standard 이상 | P1 | B + G시트 |
-| `/notices` | 지자체 공고 게재·게재 증빙 리포트 | publisher, ad_manager, editor | 전 플랜 | P1 | B |
-| `/life-events` | 경조사 신청 검토·게시 | publisher, editor, desk | 전 플랜 | P1 | B + G시트 |
-| `/events` | 행사 캘린더 관리 | publisher, editor, desk, reporter | 전 플랜 | P1 | E |
-| `/tips` | 제보함(미처리·배정·완료) | publisher, editor, desk | 전 플랜 | P0 | F |
-| `/comments` | 댓글 모더레이션(신고, 임시조치, 금칙어, AI 보조 표시) | publisher, editor, desk | 전 플랜 | P1 | F |
-| `/corrections`, `/corrections/[id]` | 정정·반론·추후보도 청구 처리(SLA 타이머) | publisher, editor | 전 플랜 | P0 | B → G페이지 |
-| `/compliance` | 컴플라이언스 대시보드(3.5절) | publisher, editor, desk(읽기) | 전 플랜 | P0 | C |
-| `/election` | 선거 모드(기간, 필수 표시 템플릿, 댓글 정책) | publisher, editor | 전 플랜 | P1 | H |
-| `/analytics` | 조회·유입·기자별·섹션별 분석 | publisher, editor, desk | 전 플랜 | P1 | L |
-| `/reports` | 지원사업·ABC 리포트 패키지(NW-F-061) | publisher | `news_support_reports`(Pro) | P1 | L |
-| `/assistant` | AI 어시스턴트 대화 목록 + 채팅(3.6절). 콘솔 오른쪽 패널로도 열림 | 전 역할(contributor 제외, 제안) | `ai_monthly_credits` | P0 | A의 AI 패널 + F 변형 |
-| `/knowledge` | 사내 규정·표기 원칙 문서 업로드·색인 상태 | publisher, editor | 전 플랜 | P0 | B |
-| `/wiki`, `/wiki/[...slug]`, `/wiki/lint` | 사내 규정 위키 목록·페이지·이력·점검 결과(`LLM_WIKI.md:37-47`) | 열람 전 역할, 편집 publisher·editor | 전 플랜 | P1 | B → G페이지 |
-| `/import` | 기존 CMS 기사 이관(RSS·CSV·XML·사이트맵, 리디렉션 맵, NW-F-063) | publisher | Standard 이상 1회 무료 | P1 | I + N |
-| `/settings/profile` | 매체정보(필요적 게재사항, NW-F-002) | publisher, editor | 전 플랜 | P0 | H |
-| `/settings/branding` | 브랜딩(Theming L1: 로고, 색, 서체 프리셋, 미리보기) | publisher, editor | `theming_level` ≥ 1 | P0 | J |
-| `/settings/domains` | 서브도메인 표시, 커스텀 도메인 연결·상태 | publisher | 커스텀은 `news_custom_domains`(Standard 1, Pro 3) | P0(서브) / P1(커스텀) | H |
-| `/settings/site` | 사이트 설정: 댓글 기본값(D-6), 페이월 규칙, 발신 이름, 광고망 태그, AI 크롤러 정책, 메뉴 라벨(L2) | publisher, editor | 메뉴 라벨은 `theming_level` ≥ 2 | P0 | H |
-| `/settings/syndication` | 통신사 전재 계약(출처, 만료일) | publisher, editor | 전 플랜 | P1 | B |
-| `/settings/payments` | 독자 결제(신문사 자기 Toss 가맹 키 등록, D-4) | publisher | 전 플랜 | P1 | H |
-| `/settings/ai` | AI 처리 방식(국외 이전 동의), 월 크레딧 사용량 | publisher | 전 플랜 | P0 | H |
-| `/settings/account` | 내 계정, 로그인 방법(C단계) | 본인 | - | P0 | H |
-| `/billing` | 플랜, AI 크레딧, 결제 내역, 독자 결제 수수료 청구 | publisher | 전 플랜 | P0 | H |
-| `/export` | 해지·데이터 내보내기(NW-F-064) | publisher | 전 플랜 | P1 | H + N |
+| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 | 시각 |
+|---|---|---|---|---|---|---|
+| `/login`, `/signup`, `/accept-invite`, `/reset-password`, `/auth/callback` | 편집국 로그인(7.1절). `/signup`은 B단계 개설 신청자용 | 비로그인 | - | P0 | 고유 | - |
+| `/no-access`, `/pending`, `/suspended` | 엔타이틀먼트 없음(개설 신청 링크), 개설 심사 중·반려 사유, 정지 | 로그인 | - | P0 | 고유 | - |
+| `/apply` | 신문사 개설 신청(등록증 업로드, NW-F-001) | 로그인(엔타이틀먼트 없음) | - | P0 | I | - |
+| `/onboarding` | 승인 뒤 설정 4단계: 매체정보 → 브랜딩 → 섹션·지역 → 첫 기사 | publisher, editor | 전 플랜 | P0 | I | - |
+| `/dashboard` | 홈: 오늘 처리할 일 + 숫자 2개 + 많이 본 기사(3.1절) | 전 역할(contributor는 내 초안만) | 전 플랜 | P0 | C 변형(5장 "처리할 일") | - |
+| `/articles` | 기사 목록(상태·유형·섹션·기자·기간 필터, 저장된 뷰) | 전 역할(contributor는 자기 것만) | 전 플랜 | P0 | B → G페이지 | - |
+| `/articles/new`, `/articles/[id]/edit` | 기사 에디터(3.2절) | publisher, editor, desk, reporter, contributor(자기 초안) | 전 플랜 | P0 | J | - |
+| `/articles/[id]` | 기사 상세: 버전 이력, 수정·정정 기록, 조회 추이 | 전 역할 | 전 플랜 | P0 | G | - |
+| `/review` | 데스크 승인 대기열(3.3절) | publisher, editor, desk | 전 플랜 | P0 | B + G시트 | - |
+| `/schedule` | 예약 게시·엠바고 캘린더 | publisher, editor, desk | 전 플랜 | P1 | E | - |
+| `/home-editor` | 홈 편집(3.4절) | publisher, editor, desk | 전 플랜 | P0 | J | - |
+| `/press-releases` | 보도자료 접수함 → AI 초안(NW-F-050) | publisher, editor, desk, reporter | `ai_monthly_credits` | P0 | F | - |
+| `/live/[id]` | 라이브 기사 업데이트 타임라인 입력 | publisher, editor, desk, reporter | 전 플랜 | P1 | J | - |
+| `/print-editions` | 지면 PDF 업로드·발행일 | publisher, editor | `news_print_pdf`(Pro) | P1 | M | - |
+| `/media` | 미디어 라이브러리(저작권·출처·alt 필수) | 전 역할 | `news_storage_gb` | P0 | M | - |
+| `/taxonomy/sections`, `/taxonomy/regions`, `/taxonomy/tags` | 섹션(섹션 컬러), 시·군·읍면 탭 목록, 태그 | publisher, editor | 전 플랜 | P0 | B | - |
+| `/staff` | 구성원·초대·역할(NW-F-004) | publisher, editor(초대), publisher(역할 변경) | `news_staff_max` | P0 | B + G시트 | - |
+| `/readers` | 독자 목록(가입일, 동의 상태, 멤버십). 개인정보 최소 표시 | publisher, editor | 전 플랜 | P1 | B + G시트 | - |
+| `/newsletter`, `/newsletter/issues/[id]` | 뉴스레터 목록·구독자 수·발송 이력, 호 편집(아침 브리핑 자동 구성) | publisher, editor, desk | `news_newsletter_monthly` | P0 | B + N / J | - |
+| `/membership` | 등급·후원 내역·정산 대사 | publisher, editor | 전 플랜(Toss 설정 필요) | P1 | B | - |
+| `/ads`, `/ads/campaigns/[id]`, `/ads/report` | 광고 슬롯·캠페인·소재, 캠페인 상세, 노출·클릭 리포트 | publisher, ad_manager | 전 플랜(외부 광고망 태그 P1) | P0 | B → G페이지 / L | V-B |
+| `/listings` | 업소 디렉토리 신청 검수·게재 | publisher, ad_manager | Standard 이상 | P1 | B + G시트 | - |
+| `/notices` | 지자체 공고 게재·게재 증빙 리포트 | publisher, ad_manager, editor | 전 플랜 | P1 | B | - |
+| `/life-events` | 경조사 신청 검토·게시 | publisher, editor, desk | 전 플랜 | P1 | B + G시트 | - |
+| `/events` | 행사 캘린더 관리 | publisher, editor, desk, reporter | 전 플랜 | P1 | E | - |
+| `/tips` | 제보함(미처리·배정·완료) | publisher, editor, desk | 전 플랜 | P0 | F | - |
+| `/comments` | 댓글 모더레이션(신고, 임시조치, 금칙어, AI 보조 표시) | publisher, editor, desk | 전 플랜 | P1 | F | - |
+| `/corrections`, `/corrections/[id]` | 정정·반론·추후보도 청구 처리(SLA 타이머) | publisher, editor | 전 플랜 | P0 | B → G페이지 | - |
+| `/compliance` | 컴플라이언스 대시보드(3.5절) | publisher, editor, desk(읽기) | 전 플랜 | P0 | C | - |
+| `/election` | 선거 모드(기간, 필수 표시 템플릿, 댓글 정책) | publisher, editor | 전 플랜 | P1 | H | - |
+| `/analytics` | 조회·유입·기자별·섹션별 분석 | publisher, editor, desk | 전 플랜 | P1 | L | V-N |
+| `/reports` | 지원사업·ABC 리포트 패키지(NW-F-061) | publisher | `news_support_reports`(Pro) | P1 | L | - |
+| `/assistant` | AI 어시스턴트 대화 목록 + 채팅(3.6절). 콘솔 오른쪽 패널로도 열림 | 전 역할(contributor 제외, 제안) | `ai_monthly_credits` | P0 | A의 AI 패널 + F 변형 | - |
+| `/knowledge` | 사내 규정·표기 원칙 문서 업로드·색인 상태 | publisher, editor | 전 플랜 | P0 | B | - |
+| `/wiki`, `/wiki/[...slug]`, `/wiki/lint` | 사내 규정 위키 목록·페이지·이력·점검 결과(`LLM_WIKI.md:37-47`) | 열람 전 역할, 편집 publisher·editor | 전 플랜 | P1 | B → G페이지 | - |
+| `/import` | 기존 CMS 기사 이관(RSS·CSV·XML·사이트맵, 리디렉션 맵, NW-F-063) | publisher | Standard 이상 1회 무료 | P1 | I + N | - |
+| `/settings/profile` | 매체정보(필요적 게재사항, NW-F-002) | publisher, editor | 전 플랜 | P0 | H | - |
+| `/settings/branding` | 브랜딩(Theming L1: 로고, 색, 서체 프리셋, 미리보기) | publisher, editor | `theming_level` ≥ 1 | P0 | J | - |
+| `/settings/domains` | 서브도메인 표시, 커스텀 도메인 연결·상태 | publisher | 커스텀은 `news_custom_domains`(Standard 1, Pro 3) | P0(서브) / P1(커스텀) | H | - |
+| `/settings/site` | 사이트 설정: 댓글 기본값(D-6), 페이월 규칙, 발신 이름, 광고망 태그, AI 크롤러 정책, 메뉴 라벨(L2) | publisher, editor | 메뉴 라벨은 `theming_level` ≥ 2 | P0 | H | - |
+| `/settings/syndication` | 통신사 전재 계약(출처, 만료일) | publisher, editor | 전 플랜 | P1 | B | - |
+| `/settings/payments` | 독자 결제(신문사 자기 Toss 가맹 키 등록, D-4) | publisher | 전 플랜 | P1 | H | - |
+| `/settings/ai` | AI 처리 방식(국외 이전 동의), 월 크레딧 사용량 | publisher | 전 플랜 | P0 | H | - |
+| `/settings/account` | 내 계정, 로그인 방법(C단계) | 본인 | - | P0 | H | - |
+| `/billing` | 플랜, AI 크레딧, 결제 내역, 독자 결제 수수료 청구 | publisher | 전 플랜 | P0 | H | - |
+| `/export` | 해지·데이터 내보내기(NW-F-064) | publisher | 전 플랜 | P1 | H + N | - |
 
 사이드바 그룹(권한 없는 메뉴는 숨긴다, `DASHBOARD_PATTERNS.md:48`): 홈 / 기사(기사, 승인 대기, 예약, 보도자료, 홈 편집, 미디어) / 독자(뉴스레터, 멤버십, 제보, 댓글, 경조사, 행사) / 광고(광고, 업소, 공고) / 준수(컴플라이언스, 정정 청구, 선거 모드) / 분석(분석, 리포트) / AI(어시스턴트, 규정 문서, 위키) / 설정. 승인 대기·제보·SLA 임박 정정 청구는 메뉴 옆 개수 배지.
 
 ### 1.3 운영 콘솔 (`ops.<플랫폼 도메인>`(제안, 02장), 라우트 그룹 `(ops)`, 비운영자 404)
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 |
-|---|---|---|---|---|---|
-| `/` | 운영 홈: 심사 대기, 도메인 오류, 잡 실패, AI 원가 | platform_admin | - | P0 | C |
-| `/applications`, `/applications/[id]` | 개설 신청 심사(등록증 열람, 승인·반려 사유) | platform_admin | - | P0 | B + G시트 |
-| `/newspapers`, `/newspapers/[id]` | 신문사 목록·상세(플랜, 엔타이틀먼트, 매체정보 완성 여부, 테마 버전, 정지) | platform_admin | - | P0 | B → G페이지 |
-| `/domains` | 커스텀 도메인 상태(pending, verifying, active, failed, removed) | platform_admin | - | P0 | N |
-| `/jobs`, `/jobs/[id]` | 잡 큐(`news.publish`, `news.newsletter`, `news.ingest`, `news.ai`, `news.stats`, `news.domain`) | platform_admin | - | P0 | N |
-| `/ai` | AI 사용량·원가·실패율(기능 키별) | platform_admin | - | P1 | L |
-| `/audit` | 감사 로그 | platform_admin | - | P1 | B |
+| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 | 시각 |
+|---|---|---|---|---|---|---|
+| `/` | 운영 홈: 심사 대기, 도메인 오류, 잡 실패, AI 원가 | platform_admin | - | P0 | C | - |
+| `/applications`, `/applications/[id]` | 개설 신청 심사(등록증 열람, 승인·반려 사유) | platform_admin | - | P0 | B + G시트 | - |
+| `/newspapers`, `/newspapers/[id]` | 신문사 목록·상세(플랜, 엔타이틀먼트, 매체정보 완성 여부, 테마 버전, 정지) | platform_admin | - | P0 | B → G페이지 | - |
+| `/domains` | 커스텀 도메인 상태(pending, verifying, active, failed, removed) | platform_admin | - | P0 | N | - |
+| `/jobs`, `/jobs/[id]` | 잡 큐(`news.publish`, `news.newsletter`, `news.ingest`, `news.ai`, `news.stats`, `news.domain`) | platform_admin | - | P0 | N | - |
+| `/ai` | AI 사용량·원가·실패율(기능 키별) | platform_admin | - | P1 | L | - |
+| `/audit` | 감사 로그 | platform_admin | - | P1 | B | - |
 
 ### 1.4 플랫폼 사이트 (루트 도메인, 라우트 그룹 `(marketing)`)
 
 신문사를 대상으로 한 B2B 소개 페이지다. 02장의 `(marketing)` 라우트 그룹(루트 도메인, `x-host-kind=marketing`)이다. 테넌트 도메인에서는 렌더하지 않는다(`Multi-tenant_Theming/05_RUNTIME_AND_DOMAINS.md:34`, 고객사 도메인에 플랫폼 가격표 노출 금지).
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 |
-|---|---|---|---|---|---|
-| `/` | 플랫폼 소개 랜딩(4.10절, 3D 선택) | 누구나 | - | P1 | 공개(4.10절) |
-| `/pricing` | 요금(01장 4절) | 누구나 | - | P1 | 공개 |
-| `/legal/*` | 서비스 이용약관(신문사), 개인정보 처리 위탁 안내, 사업자 정보 | 누구나 | - | P0 | 공개 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크 × 테넌트 시험 테마 3종), 프로덕션 404 | 개발 | - | P0 | 없음 |
+| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 | 패턴 | 시각 |
+|---|---|---|---|---|---|---|
+| `/` | 플랫폼 소개 랜딩(4.10절, 3D 선택) | 누구나 | - | P1 | 공개(4.10절) | - |
+| `/pricing` | 요금(01장 4절) | 누구나 | - | P1 | 공개 | - |
+| `/legal/*` | 서비스 이용약관(신문사), 개인정보 처리 위탁 안내, 사업자 정보 | 누구나 | - | P0 | 공개 | - |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크 × 테넌트 시험 테마 3종), 프로덕션 404 | 개발 | - | P0 | 없음 | - |
 
 ## 2. 사용자 플로우
 

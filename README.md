@@ -17,7 +17,7 @@
 | 가격 플랜 | 제품 15개 + 서비스 사업 1개(arch-studio는 아직 없음, 요금은 01_PRD 4장) | `Price_Plans/` |
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
-| 전체 파일 | 1,507개(이 중 1,001개는 `develop/*/*-root/`에 생성된 사본) | - |
+| 전체 파일 | 1,557개(이 중 1,033개는 `develop/*/*-root/`에 생성된 사본) | - |
 
 ## 1. 문서가 흐르는 순서
 

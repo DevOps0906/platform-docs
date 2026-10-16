@@ -8,35 +8,37 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 메인페이지(랜딩) | 누구나 | - | P0 |
-| `/pricing` | 요금 | 누구나 | - | P0 |
-| `/legal/terms`, `/legal/privacy`, `/legal/refund`, `/legal/ai-notice`, `/legal/business` | 법무 페이지 5종 | 누구나 | - | P0 |
-| `/login`, `/signup`, `/reset-password` | 인증(단계별, 7절): A는 `/login` 개발용 패널만(`/signup`, `/reset-password` 없음), B는 Google 버튼 + 이메일 폼·가입·재설정, C는 카카오·네이버 버튼 추가 | 비로그인 | - | P0 |
-| `/auth/callback` | OAuth/이메일 인증 콜백(B부터, `finishLogin`. A는 `/api/dev/login`이 같은 함수를 거친다) | - | - | P0 |
-| `/pending`, `/suspended` | 계정 상태 안내 | 로그인 | - | P1 |
-| `/dashboard` | 홈(새 책 만들기 2버튼, 시드 3종, 최근 책) | owner/admin/member/viewer | 전 플랜 | P0 |
-| `/dashboard/books` | 내 책 목록(상태 필터, 휴지통 탭) | 위와 같음 | 전 플랜 | P0 |
-| `/dashboard/books/new` | 시작 방식 선택(AI로 만들기, 원고 업로드, 시드) | owner/admin/member | 업로드는 Basic | P0 |
-| `/dashboard/books/new/upload` | 원고 업로드와 구조 미리보기 | owner/admin/member | Basic | P0 |
-| `/books/[id]/wizard?step=1..10` | 10단계 위저드 | 멤버(viewer는 읽기 전용) | 전 플랜(단계 내 기능별 게이팅) | P0 |
-| `/books/[id]/editor` | 원고 편집기(전체 화면, 목차 사이드 + 본문 + AI 툴바) | owner/admin/member | 보조 집필은 Basic | P0 |
-| `/books/[id]/finish` | 완성: 미리보기, PDF/ePub 내보내기, 내보내기 기록 | 멤버 | 전 플랜(워터마크·월 한도) | P0 |
-| `/dashboard/personas` | 페르소나 보관함(60종, 즐겨찾기, 나만의 페르소나) | 멤버 | 합성은 Basic | P1 |
-| `/dashboard/settings` | 계정, 화면 테마, 생성 모드 기본값, 계정 삭제 | 본인 | 전 플랜 | P0 |
-| `/dashboard/settings/webhooks` | 알림 연동(아웃바운드 웹훅) | owner/admin | Basic | P1 |
-| `/dashboard/billing` | 사용량·결제: 플랜, 잔액(plan/pack), 크레딧 사용 내역, 에이전트별 사용량(2026-10-14, `agent_tasks` 기준), 결제 내역, 팩 구매, 구독 관리 | owner/admin | 전 플랜 | P0 |
-| `/dashboard/agents` | AI 에이전트(탭: 에이전트, 검수 대기, 실행 이력, 대화). 8.5절 | 멤버(viewer는 읽기 전용) | 동작별 게이팅 | 검수 대기·실행 이력 P0, 새 작업 폼 P1 |
-| `/dashboard/agents/tasks/[id]` | 작업 상세(타임라인, 결과 검수, 실패 원인·환불, 재시도) | 멤버 | 전 플랜 | P0 |
-| `/dashboard/billing/success`, `/fail` | Toss 결제 복귀 | owner/admin | - | P0 |
-| `/admin` | 운영 콘솔 운영 홈(8.6절) | platform_admin | - | P1 |
-| `/admin/users`, `/admin/books`, `/admin/agents`, `/admin/jobs`, `/admin/jobs/[id]`, `/admin/billing`, `/admin/settings`, `/admin/audit` | 사용자·권한, 출판 프로젝트, 에이전트·AI 운영, 작업 큐, 실행 추적, 결제·크레딧·원가, 플랫폼 설정(열람), 감사 로그(8.6절) | platform_admin | - | P1 |
-| `/onboarding` | AI 처리 방식 선택(국외 이전 동의) | 로그인 owner | - | P0 |
-| `/books/[id]/wiki`, `/books/[id]/wiki/[...slug]` | 책 설정집(캐릭터, 용어, 문체) 목록·페이지·변경 이력·점검 | owner/admin/member | `book_wiki`(Free 포함) | P0 |
-| `/dashboard/chat` | 글쓰기 도우미 대화 목록(PB-06-050 소유 경로 유지. 2026-10-14부터 `/dashboard/agents`의 [대화] 탭이 같은 목록 컴포넌트를 재사용한다) | 로그인 | `ai_chat` | P1 |
-| `/dev/components` | 컴포넌트 미리보기(개발용, 프로덕션 빌드 제외) | 개발 | - | P0 |
-| `/b/[slug]` | 공개 책 페이지 | 누구나 | 소유 조직 Basic | P2 |
+화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 메인페이지(랜딩) | 고유(3D 히어로) | - | 누구나 | - | P0 |
+| `/pricing` | 요금 | 고유 | - | 누구나 | - | P0 |
+| `/legal/terms`, `/legal/privacy`, `/legal/refund`, `/legal/ai-notice`, `/legal/business` | 법무 페이지 5종 | 고유 | - | 누구나 | - | P0 |
+| `/login`, `/signup`, `/reset-password` | 인증(단계별, 7절): A는 `/login` 개발용 패널만(`/signup`, `/reset-password` 없음), B는 Google 버튼 + 이메일 폼·가입·재설정, C는 카카오·네이버 버튼 추가 | 고유 | - | 비로그인 | - | P0 |
+| `/auth/callback` | OAuth/이메일 인증 콜백(B부터, `finishLogin`. A는 `/api/dev/login`이 같은 함수를 거친다) | - | - | - | - | P0 |
+| `/pending`, `/suspended` | 계정 상태 안내 | 고유 | - | 로그인 | - | P1 |
+| `/dashboard` | 홈(새 책 만들기 2버튼, 시드 3종, 최근 책) | B 변형(오늘 할 일) | - | owner/admin/member/viewer | 전 플랜 | P0 |
+| `/dashboard/books` | 내 책 목록(상태 필터, 휴지통 탭) | B | - | 위와 같음 | 전 플랜 | P0 |
+| `/dashboard/books/new` | 시작 방식 선택(AI로 만들기, 원고 업로드, 시드) | I | - | owner/admin/member | 업로드는 Basic | P0 |
+| `/dashboard/books/new/upload` | 원고 업로드와 구조 미리보기 | I | - | owner/admin/member | Basic | P0 |
+| `/books/[id]/wizard?step=1..10` | 10단계 위저드 | I | - | 멤버(viewer는 읽기 전용) | 전 플랜(단계 내 기능별 게이팅) | P0 |
+| `/books/[id]/editor` | 원고 편집기(전체 화면, 목차 사이드 + 본문 + AI 툴바) | J + A의 AI 패널 | - | owner/admin/member | 보조 집필은 Basic | P0 |
+| `/books/[id]/finish` | 완성: 미리보기, PDF/ePub 내보내기, 내보내기 기록 | G + N(내보내기) | - | 멤버 | 전 플랜(워터마크·월 한도) | P0 |
+| `/dashboard/personas` | 페르소나 보관함(60종, 즐겨찾기, 나만의 페르소나) | M(카드 그리드) | - | 멤버 | 합성은 Basic | P1 |
+| `/dashboard/settings` | 계정, 화면 테마, 생성 모드 기본값, 계정 삭제 | H | - | 본인 | 전 플랜 | P0 |
+| `/dashboard/settings/webhooks` | 알림 연동(아웃바운드 웹훅) | H | - | owner/admin | Basic | P1 |
+| `/dashboard/billing` | 사용량·결제: 플랜, 잔액(plan/pack), 크레딧 사용 내역, 에이전트별 사용량(2026-10-14, `agent_tasks` 기준), 결제 내역, 팩 구매, 구독 관리 | H | - | owner/admin | 전 플랜 | P0 |
+| `/dashboard/agents` | AI 에이전트(탭: 에이전트, 검수 대기, 실행 이력, 대화). 8.5절 | N | - | 멤버(viewer는 읽기 전용) | 동작별 게이팅 | 검수 대기·실행 이력 P0, 새 작업 폼 P1 |
+| `/dashboard/agents/tasks/[id]` | 작업 상세(타임라인, 결과 검수, 실패 원인·환불, 재시도) | G + N(타임라인) | - | 멤버 | 전 플랜 | P0 |
+| `/dashboard/billing/success`, `/fail` | Toss 결제 복귀 | 고유 | - | owner/admin | - | P0 |
+| `/admin` | 운영 콘솔 운영 홈(8.6절) | C → N | - | platform_admin | - | P1 |
+| `/admin/users`, `/admin/books`, `/admin/agents`, `/admin/jobs`, `/admin/jobs/[id]`, `/admin/billing`, `/admin/settings`, `/admin/audit` | 사용자·권한, 출판 프로젝트, 에이전트·AI 운영, 작업 큐, 실행 추적, 결제·크레딧·원가, 플랫폼 설정(열람), 감사 로그(8.6절) | B + G, N(작업 큐) | - | platform_admin | - | P1 |
+| `/onboarding` | AI 처리 방식 선택(국외 이전 동의) | 고유 | - | 로그인 owner | - | P0 |
+| `/books/[id]/wiki`, `/books/[id]/wiki/[...slug]` | 책 설정집(캐릭터, 용어, 문체) 목록·페이지·변경 이력·점검 | B + J(문서형) | - | owner/admin/member | `book_wiki`(Free 포함) | P0 |
+| `/dashboard/chat` | 글쓰기 도우미 대화 목록(PB-06-050 소유 경로 유지. 2026-10-14부터 `/dashboard/agents`의 [대화] 탭이 같은 목록 컴포넌트를 재사용한다) | F 변형(대화 목록) | - | 로그인 | `ai_chat` | P1 |
+| `/dev/components` | 컴포넌트 미리보기(개발용, 프로덕션 빌드 제외) | 고유 | - | 개발 | - | P0 |
+| `/b/[slug]` | 공개 책 페이지 | 고유 | - | 누구나 | 소유 조직 Basic | P2 |
 
 채팅 패널은 경로가 아니라 에디터·위저드 오른쪽 시트다(3.1절). 설정집은 에디터 사이드의 "설정집" 탭에서도 열린다.
 

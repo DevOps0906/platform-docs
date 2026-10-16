@@ -6,33 +6,35 @@
 
 모든 앱 화면은 앱 셸(A): 왼쪽 내비게이션(홈, 책, 코치, 설정), 상단 잔액·조직 전환·도움말.
 
-| 경로 | 화면 | 패턴 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|---|
-| `/` | 랜딩 | 고유(3D 히어로) | 공개 | - | P0 |
-| `/samples` | 샘플 트레일러(자사 도서 실제 결과) | M | 공개 | - | P0 |
-| `/pricing` | 요금 | 고유 | 공개 | - | P0 |
-| `/login`, `/auth/callback`, `/onboarding/terms`, `/onboarding/ai` | 로그인, 약관 동의, 국외 이전 동의 | 고유 | 공개 | - | P0 |
-| `/home` | 최근 작업물 + "새 책" 주 행동 | M + 최근 목록(`DASHBOARD_PATTERNS.md` 5장 "만드는 도구") | 멤버 | 전체 | P0 |
-| `/books` | 책 목록 | B | 멤버 | 전체 | P0 |
-| `/books/new` | 책 등록 마법사(원고 → 서지 → 권리 → 표지·키트) | I | owner/admin/member | 전체 | P0 |
-| `/books/[id]` | 책 상세(개요, 트레일러, 구매 링크·성과, 키트) | G | 멤버(viewer 읽기) | 전체 | P0 |
-| `/books/[id]/wiki` | 책 설정 위키 | B + J(문서형) | 멤버 | 전체 | P0 |
-| `/trailers/new?book=` | 트레일러 만들기(문법·템플릿·포맷·길이·스포일러·목소리) | I(2단계) | owner/admin/member | 전체(포맷·길이 잠금 표시) | P0 |
-| `/trailers/[id]/brief` | 브리프 3안 비교·선택·고쳐 쓰기 | 고유(`BriefCompare`) | 멤버 | 전체 | P0 |
-| `/trailers/[id]/studio` | 작업실: 장면 스트립 + 미리보기 + 속성 | J | 멤버(viewer 읽기 전용) | 전체 | P0 |
-| `/trailers/[id]/renders` | 렌더 기록·진행·내려받기 | N + M | 멤버 | 전체 | P0 |
-| `/trailers/[id]/publish` | 메타데이터 팩, 단축 링크, ZIP, YouTube 업로드(P1) | G | 멤버 | 업로드 creator+ | P0 / P1 |
-| `/coach` | 코치 채팅 전체 화면(책 선택) | F 변형(대화 목록 + 본문) | 멤버 | 전체 | P0 |
-| `/settings/profile`, `/settings/org`, `/settings/members` | 계정·조직·멤버 | H | owner/admin(멤버는 profile만) | 멤버 초대 publisher | P0 / P1 |
-| `/settings/billing` | 플랜·크레딧·결제 내역 | H | owner/admin | 전체 | P0 |
-| `/settings/brand-kits` | 조직 기본 키트 | H | owner/admin/member | 전체 | P0 |
-| `/settings/ai` | 국외 이전 동의, 음성 고지 | H | owner/admin | 전체 | P0 |
-| `/settings/login-methods` | 로그인 수단 연결(C단계) | H | 본인 | 전체 | P1 |
-| `/settings/channels` | YouTube 채널 연결 | H | owner/admin | creator+ | P1 |
-| `/review/[token]` | 외부 승인(로그인 없음) | 고유 | 토큰 | publisher | P1 |
-| `/ops/catalog` | 운영자 카탈로그(문법·템플릿·음악·라이선스) | B + G | 플랫폼 관리자 | - | P0 |
-| `/legal/terms`, `/legal/privacy`, `/legal/ai` | 약관, 개인정보, AI 표시 안내 | 고유 | 공개 | - | P0 |
-| `/dev/components` | 컴포넌트 미리보기(프로덕션 빌드 제외) | 고유 | 개발 | - | P0 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩 | 고유(3D 히어로) | - | 공개 | - | P0 |
+| `/samples` | 샘플 트레일러(자사 도서 실제 결과) | M | - | 공개 | - | P0 |
+| `/pricing` | 요금 | 고유 | - | 공개 | - | P0 |
+| `/login`, `/auth/callback`, `/onboarding/terms`, `/onboarding/ai` | 로그인, 약관 동의, 국외 이전 동의 | 고유 | - | 공개 | - | P0 |
+| `/home` | 최근 작업물 + "새 책" 주 행동 | M + 최근 목록(`DASHBOARD_PATTERNS.md` 5장 "만드는 도구") | - | 멤버 | 전체 | P0 |
+| `/books` | 책 목록 | B | - | 멤버 | 전체 | P0 |
+| `/books/new` | 책 등록 마법사(원고 → 서지 → 권리 → 표지·키트) | I | - | owner/admin/member | 전체 | P0 |
+| `/books/[id]` | 책 상세(개요, 트레일러, 구매 링크·성과, 키트) | G | V-B(#51), 성과 탭만 | 멤버(viewer 읽기) | 전체 | P0 |
+| `/books/[id]/wiki` | 책 설정 위키 | B + J(문서형) | - | 멤버 | 전체 | P0 |
+| `/trailers/new?book=` | 트레일러 만들기(문법·템플릿·포맷·길이·스포일러·목소리) | I(2단계) | - | owner/admin/member | 전체(포맷·길이 잠금 표시) | P0 |
+| `/trailers/[id]/brief` | 브리프 3안 비교·선택·고쳐 쓰기 | 고유(`BriefCompare`) | - | 멤버 | 전체 | P0 |
+| `/trailers/[id]/studio` | 작업실: 장면 스트립 + 미리보기 + 속성 | J | - | 멤버(viewer 읽기 전용) | 전체 | P0 |
+| `/trailers/[id]/renders` | 렌더 기록·진행·내려받기 | N + M | - | 멤버 | 전체 | P0 |
+| `/trailers/[id]/publish` | 메타데이터 팩, 단축 링크, ZIP, YouTube 업로드(P1) | G | - | 멤버 | 업로드 creator+ | P0 / P1 |
+| `/coach` | 코치 채팅 전체 화면(책 선택) | F 변형(대화 목록 + 본문) | - | 멤버 | 전체 | P0 |
+| `/settings/profile`, `/settings/org`, `/settings/members` | 계정·조직·멤버 | H | - | owner/admin(멤버는 profile만) | 멤버 초대 publisher | P0 / P1 |
+| `/settings/billing` | 플랜·크레딧·결제 내역 | H | - | owner/admin | 전체 | P0 |
+| `/settings/brand-kits` | 조직 기본 키트 | H | - | owner/admin/member | 전체 | P0 |
+| `/settings/ai` | 국외 이전 동의, 음성 고지 | H | - | owner/admin | 전체 | P0 |
+| `/settings/login-methods` | 로그인 수단 연결(C단계) | H | - | 본인 | 전체 | P1 |
+| `/settings/channels` | YouTube 채널 연결 | H | - | owner/admin | creator+ | P1 |
+| `/review/[token]` | 외부 승인(로그인 없음) | 고유 | - | 토큰 | publisher | P1 |
+| `/ops/catalog` | 운영자 카탈로그(문법·템플릿·음악·라이선스) | B + G | - | 플랫폼 관리자 | - | P0 |
+| `/legal/terms`, `/legal/privacy`, `/legal/ai` | 약관, 개인정보, AI 표시 안내 | 고유 | - | 공개 | - | P0 |
+| `/dev/components` | 컴포넌트 미리보기(프로덕션 빌드 제외) | 고유 | - | 개발 | - | P0 |
 
 ## 2. 사용자 플로우
 
