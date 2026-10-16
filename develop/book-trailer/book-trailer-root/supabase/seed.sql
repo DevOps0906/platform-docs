@@ -13,8 +13,8 @@ on conflict (id) do update
 
 -- @monolith-seed-begin (모놀리스 변환 시 이 표시부터 @monolith-seed-end 까지는 seed.sql 이 소유한다)
 -- =====================================================================
--- 12. 플랜·크레딧팩(01_PRD 4장, 전부 제안). 모듈러 seed.sql 에 trailer 행이 들어오기 전(코어 요청 R-T1)에도 가입이 되도록
---     do nothing 으로 넣는다. seed.sql 이 나중에 같은 키로 upsert 하면 그 값이 최종이다. 가격은 VAT 포함(B2C SaaS).
+-- 12. 플랜·크레딧팩(01_PRD 4장, 전부 제안). 모듈러 seed.sql 에도 같은 행이 있다(코어 요청 R-T1, 2026-10-16 반영). seed 순서와 무관하게
+--     가입이 되도록 여기서도 do nothing 으로 넣는다. seed.sql 이 나중에 같은 키로 upsert 하면 그 값이 최종이다. 가격은 VAT 포함(B2C SaaS).
 -- =====================================================================
 insert into public.plans (app_id, code, name, description, price_krw, billing_interval, monthly_credits, signup_credits, carry_over, features, is_default, is_active, sort_order) values
   ('trailer', 'free', 'Free', '30초 세로 트레일러 1편 체험', 0, 'month', 0, 60, false,

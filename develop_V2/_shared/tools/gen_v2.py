@@ -326,6 +326,26 @@ PRODUCTS = {
                  ('046', '축소', '법무 페이지 본문은 `policy_documents` seed')],
         dec=[],
     ),
+    'book-trailer': dict(
+        name='NOMAD Book Trailer(가칭)', app='trailer', pfx='TR', stage='4',
+        domain=['20261013000002_trailer_domain.sql'],
+        mods={
+            'compliance': dict(st='채택', role='', deps=['051', '016', '031'],
+                use='법적 고지 페이지(약관, 개인정보, AI 표시 안내, 051), 가입 동의, 국외 이전 동의(016), 엔드카드 AI 표시 문구(031)',
+                rep='법적 고지 본문 → `policy_documents`(kind `terms`, `privacy`, `ai_notice`, `refund`), 가입·국외 이전 동의 → `consents`(purpose `cross_border_ai` 등), 엔드카드 AI 표시 문구 → `label_definitions`(`ai_generated`, `ai_voice`) 텍스트',
+                keep='책별 권리 확인(`trailer.books.rights_ack_*`, 감사 로그), 음악 권리 확인, 렌더 `ai_label` CHECK와 표시 여부 판정(`start_render`), 메타데이터 대가성 문구 트리거',
+                inj='`profileKind: kr_ecommerce`(유료 플랜 판매), `signupConsents: { required: [terms, privacy, refund], optional: [marketing_email, cross_border_ai] }`'),
+            'media': dict(st='보류', why='원고·표지·사용자 음악은 책·트레일러에 하나씩 붙는 고정 경로 파일이고 경로를 CHECK로 강제한다. 장면 에셋은 렌더 스냅샷이 경로를 고정해야 해서 공용 자산의 삭제·교체 흐름과 맞지 않는다', when='여러 책에서 같은 이미지·로고를 다시 쓰는 라이브러리가 필요할 때(브랜드 키트 로고, Phase 2 화이트라벨)'),
+            'editorial': dict(st='보류', why='외부 승인 링크(057)는 로그인 없는 저자 1명의 승인·수정 요청이 핵심이라 editorial 1단 승인(조직 멤버 주체)과 다르다', when='publisher 팀 안에서 마케터 → 편집장 다단계 승인을 만들 때'),
+            'search': dict(st='보류', why='책·트레일러 목록 필터와 책별 RAG(022)로 충분', when='출판사 계정의 책이 수백 권을 넘을 때'),
+        },
+        extra='notify(렌더 완료·승인 링크 만료 알림, 052), analytics(퍼널 이벤트만. 구매 링크 클릭은 제품 `link_clicks`), cms(랜딩·샘플 페이지)는 기존 로드맵대로. 화이트라벨(Phase 2)은 tenancy 검토.',
+        db=[('`trailer.*`', '변경 없음. 가입·국외 이전 동의 기록은 `compliance.consents`에 새로 쌓는다. 책 권리 확인(`books.rights_ack_*`)과 음악 권리 확인(`trailers.music_rights_ack*`)은 책·트레일러 단위 확인이라 제품에 남긴다')],
+        changes=[('051', '축소', '법적 고지 본문은 `policy_documents` seed, 화면은 `LegalFooter`·`ConsentCheckboxes`. 페이지 배치와 AI 표시 안내 원고만 제품'),
+                 ('016', '연결', '국외 이전 동의를 `recordConsent(cross_border_ai)`로도 남긴다. 코어 `set_ai_cross_border_ack` 호출은 그대로'),
+                 ('031', '연결', '엔드카드 AI 표시 문구는 `label_definitions` 텍스트를 읽어 렌더 스냅샷에 고정. 표시 여부 판정과 `ai_label` CHECK는 제품 그대로')],
+        dec=[('V2-TR-1', '책 권리 확인 고지문(`rights-2026-10-v1`) 본문 버전을 compliance로 옮길지', '본문 버전만 `policy_documents` 제품 kind(`rights_notice`, compliance 확장 요청)로, 책별 확인 기록은 제품 표 유지')],
+    ),
     'local-news': dict(
         name='로컬뉴스 클라우드(가칭)', app='news', pfx='NW', stage='6',
         domain=['20261013000002_tenant_theming.sql(유지)', '20261013000003_local_news_domain.sql'],
@@ -646,7 +666,7 @@ def gen_index():
     a('|---|---|')
     a('| [`_shared/V2_RULES.md`](_shared/V2_RULES.md) | V2 공통 규칙: V1과의 관계, DB 파일 순서·이름, V2 작업 만드는 법, 요청 프롬프트, 공용모듈 저장소가 없을 때 |')
     a('| [`_shared/tools/gen_v2.py`](_shared/tools/gen_v2.py) | 제품별 개발서와 이 색인을 만드는 스크립트. 06장을 고친 뒤 다시 실행하면 V2 작업 웨이브가 따라 바뀝니다 |')
-    a('| `products/_platform-core/common-modules/` | 공용모듈 기획서(무엇을 만드는가)와 15개 제품 적용표 |')
+    a('| `products/_platform-core/common-modules/` | 공용모듈 기획서(무엇을 만드는가)와 16개 제품 적용표 |')
     a('| `develop/_shared/modules/` | 공용모듈 개발 지시서(패키지를 어떻게 만드는가) |')
     a('')
     a('## 1. 제품별 개발서')

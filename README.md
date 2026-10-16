@@ -199,7 +199,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 항목 | 상태 |
 |---|---|
 | 기획 | 15개 제품 완료(local-news, book-trailer 포함), arch-studio는 PRD 초안. 인증 단계(확정 결정 22) 15개 제품 반영 완료. 공용모듈 7개 기획(`products/_platform-core/common-modules/`). 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
-| 개발 묶음 | 15개 제품 완료(`develop/`, book-trailer 2026-10-15 추가), 공용모듈을 쓰는 V2 개발서 15개(`develop_V2/`, book-trailer는 아직 없음) |
+| 개발 묶음 | 15개 제품 완료(`develop/`, book-trailer 2026-10-15 추가), 공용모듈을 쓰는 V2 개발서 16개(`develop_V2/`, book-trailer 2026-10-16 추가) |
 | 남은 결정 | 각 제품 `01_PRD.md` 8절. 공용 과제는 `products/README.md` "남은 코어 과제" |
 | 가격 플랜 | `Price_Plans/` 생성. Web-App-Agency 초안, 제품 15개(정본은 각 PRD 4장) |
 | 멀티테넌트 테마 | `Multi-tenant_Theming/` 설계 완료. 코어 확장 SQL `0011`은 제안(staged), PGlite 적용 OK·RLS 스모크 91/91(모듈러·모놀리스). 코어 반영은 승인 후(`06_ADOPTION_PLAN.md` 1장) |

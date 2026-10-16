@@ -55,7 +55,7 @@ AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용, 재정의하지 않음):
 |---|---|
 | 브라우저 ↔ 서버 | 브라우저는 `/api/ai/*`, `/api/voice/*`만. Dify·FastAPI·제공자 직접 호출 금지 |
 | Next.js ↔ FastAPI·음성 서버 | EdDSA 서명 토큰(`iss=trailer`, `aud=platform-ai:trailer`, scope는 04장 2.1절). 개인키는 Next.js만 |
-| 오케스트레이터 ↔ FastAPI·음성 서버 | 오케스트레이터는 개인키가 없다. `/api/internal/ai-token`에서 running 잡에 묶인 토큰(scope `graph:trailer.*`, `voice`, `parse`)을 받는다(nomad-video R-V5와 같은 코어 표준화 요청 R-T4) |
+| 오케스트레이터 ↔ FastAPI·음성 서버 | 오케스트레이터는 개인키가 없다. `/api/internal/ai-token`에서 running 잡에 묶인 토큰(scope `graph:trailer.*`, `voice`, `parse`)을 받는다(`AI_ARCHITECTURE.md` 1장 잡 토큰 규칙. `parse` scope는 2026-10-16 R-T4로 추가) |
 | Dify ↔ FastAPI | `platform_conversation_id` + 내부 키 + 대화 매핑만 |
 | 3D | `src/components/hero3d/`만 three.js를 import |
 

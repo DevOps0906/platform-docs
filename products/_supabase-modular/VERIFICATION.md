@@ -204,3 +204,17 @@ core 권한 상승 시도(B 세션).
 | 재현 | `cd docs/products/_tools-sqlcheck && node check.mjs --vector A ../_supabase-modular/migrations/000*.sql ../_supabase-modular/seed.sql ../_supabase-modular/migrations/1*.sql ../_supabase-modular/migrations/2*.sql` (`pglite-vec`는 `_tools-sqlcheck/package.json`에 설치되어 있음) |
 | 한계 | PGlite의 pgvector는 인덱스 성능(HNSW 실측)과 대용량 검색을 검증하지 못한다. 로컬 Supabase에서 한 번 더 확인 권장(9장 6번과 같은 한계) |
 
+## 11. 추가 검증: 2600 trailer (book-trailer, 2026-10-16)
+
+| 항목 | 결과 |
+|---|---|
+| 추가·변경 파일 | `migrations/2600_trailer.sql`(신규), `seed.sql`(앱 `trailer` 행, 플랜 free·creator·publisher, 팩 300·1000·3000. 코어 요청 R-T1), `config.toml.example`(`news`, `trailer` 노출), `README.md`·`ARCHITECTURE.md`(번호 표, 구조 선택 행) |
+| 통합 순서 A(코어 → seed → 제품 조각 16개) | 27개 파일 모두 OK(`check.mjs --vector`) |
+| 통합 순서 B(코어 → 제품 조각 → seed) | OK. seed가 뒤에 와도 조각의 do nothing 행이 seed 값으로 갱신된다 |
+| 역순(코어 → seed → 제품 조각 2600 → 1000) | OK |
+| 모놀리스 `book-trailer/supabase/monolith`(0001 core_lite + 0002 trailer_domain + seed) | OK |
+| seed 대조(5장 방식) | 모듈러 `seed.sql`의 trailer 플랜·팩 값과 features가 조각 12절·모놀리스 `seed.sql`과 같다(같은 원문에서 복사) |
+| RLS·권한 스모크 | `book-trailer/supabase/monolith/tests/rls_smoke.sql` 124/124(모듈러: 코어 + seed + 2600, 모놀리스). 러너 `run-smoke.mjs --target mod\|mono` |
+| 재현 | `cd docs/products/_tools-sqlcheck && node check.mjs --vector A ../_supabase-modular/migrations/000*.sql ../_supabase-modular/seed.sql ../_supabase-modular/migrations/[12]*.sql`, `cd docs && node products/book-trailer/supabase/monolith/tests/run-smoke.mjs --target mod` |
+| 한계 | 9장 6번과 같다(PGlite는 PostgREST·Storage API·pg_cron 실동작을 흉내만 낸다) |
+

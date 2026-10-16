@@ -21,6 +21,7 @@
 - website-floria (Floria, 보태닉 건축 브랜드 웹사이트)
 - 확인했지만 표에 넣지 않은 Awwwards 후보
 - nomad-docs (NOMAD Docs, 체크리스트 기반 실무 문서 생성)
+- book-trailer (NOMAD Book Trailer, 원고 기반 북트레일러 자동화)
 
 ## 출처
 - `docs/file/03-설계/디자인/REFERENCES.md`

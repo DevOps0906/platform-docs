@@ -335,6 +335,7 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 | study-note(`notes`) | open | 수강생·강사 | - | Google + 이메일 | P1 | P1 |
 | website-floria(`site`) | invite | 운영자(방문자는 로그인 없음) | `provision_site` 완료·미완료 | Google + 초대 메일 | 제외 | 제외 |
 | nomad-docs(`docs`) | open | 프리랜서·에이전시 | - | Google + 이메일 | P1 | P1 |
+| book-trailer(`trailer`) | open | 1인 출판사·작가·출판사 마케터 | creator 플랜 owner, publisher 팀(owner·member·viewer) | Google + 이메일 | P1 | P1 |
 | arch-studio(`arch`, 제안) | open(앱은 시리얼 라이선스, 계정은 크레딧·클라우드 기능용) | 소규모 건축사사무소·전원주택 시공사 실무자 | 체험 중·체험 만료, 영구(업데이트 유효·만료 폴백), 월 구독, 기기 2대 활성화 완료(PRD 4.3·4.4절 상태) | Google + 이메일(데스크톱은 시스템 브라우저 로그인 후 앱 복귀, PRD D-15) | P2 선택(유료 B2B 실무 도구라 시리얼·영수증·세금계산서를 이메일로 보내므로 이메일 확보가 우선이고, 데스크톱 앱 복귀 경로를 제공자마다 검증해야 한다. 베타 가입 전환 데이터로 P1 승격 판단) | P2 선택(같음) |
 
 로그인 없는 사용자(하객, 청중, 방문자)의 흐름은 단계와 무관하다. 그 화면에 로그인 버튼을 추가하지 않는다.
@@ -382,3 +383,9 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 | 제품 | 로그인 대상 | A | B | C1 카카오 | C2 네이버 | 비고 |
 |---|---|---|---|---|---|---|
 | local-news | 편집국 + 독자(신문사별 `news.readers`) | NW-06-004, 023 | NW-06-052, 053 | NW-06-054 | NW-06-055 | 독자 P1, 편집국 P2 선택. 커스텀 도메인 Redirect URL은 활성화 때 개별 등록. 코어 요청 R-1·R-2·R-3·R-10(`products/local-news/06_AGENT_PLAN.md` 6절) |
+
+### 11.2 book-trailer 추가 (2026-10-16)
+
+| 제품 | 로그인 대상 | A | B | C1 카카오 | C2 네이버 | 비고 |
+|---|---|---|---|---|---|---|
+| book-trailer | 작가·출판사(외부 승인 링크의 저자는 로그인 없음) | TR-06-004 | TR-06-053 | TR-06-054 | TR-06-055 | 로그인용 Google 클라이언트와 YouTube 채널 연결용 클라이언트를 나눈다(`products/book-trailer/01_PRD.md` D-17). 페르소나는 `products/book-trailer/05_DATA_MODEL.md` 10절 |

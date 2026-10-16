@@ -294,4 +294,5 @@ local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용�
 | 모놀리스 0001 + 0002 + seed | 적용 OK |
 | 리뷰 "높음" 차단 설계 | 18건(NOMAD Shorts Maker 12, Toon-Factory 6) = 05장 7절 10 + 02장 6절 8 |
 | `build_root.py` | book-trailer 등록, 선택 기획서 `08_DESIGN_SYSTEM.md`(DOC-DES-005), `###` 수준 "초기값" 절 읽기 추가. 기존 제품 초기값 출력 변화 없음 |
-| 남은 공용 요청 | R-T1~R-T8(`book-trailer/06_AGENT_PLAN.md` 6절): 모듈러 seed, `DB_CONVENTIONS.md` 2600·`TR` 등록, 서점 제휴 범용화, 잡 토큰 표준화, 인증 매트릭스 행, sns-uploader 소비자, REFERENCES 절, 렌더러 공용화 |
+| 공용 요청(2026-10-16 후속) | R-T1 모듈러 seed, R-T2 `DB_CONVENTIONS.md`·`_supabase-modular` 번호 표(2400 arch 제안, 2500 news, 2600 trailer)와 SQLSTATE(`NW`, `TR`), R-T4 잡 토큰 `parse` scope, R-T5 `AUTH_ROADMAP.md` 8장·11.2절, R-T6 `SHARED_MODULES.md` sns-uploader 소비자, R-T7 `REFERENCES.md` 절·`HERO_3D.md` 소재 행 반영. 남은 것은 R-T3(서점 제휴 범용화), R-T8(렌더러 공용화), 둘 다 Phase 2 |
+| 후속 정리(2026-10-16) | 공용모듈 적용표 행과 V2 개발서(`../develop_V2/book-trailer/`, compliance만 채택), Capacitor·Tauri 제품 표 행, `_STRUCTURE_CHECK.md`(점검 1~7 통과), `_supabase-modular/VERIFICATION.md` 11장, 공용 문서가 바뀌어 15개 제품 개발 묶음 재생성(경로 누락 0) |

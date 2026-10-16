@@ -18,7 +18,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 nomad-video 설계의 이
 | 같은 목소리 규칙(첫 결과로 제공자·보이스 고정, 같은 엔진 재시도만, 샘플 대체 없음) | 기획만 | 이식(규칙 문장 그대로, 대상 테이블만 `trailers`) | `orch/src/steps/tts/`, `trailer.trailers.voice`(jsonb) | `docs/products/nomad-video/02_ARCHITECTURE.md:227-238` |
 | compliance 노드(그래프 마지막, FAIL 차단·WARN 확인) | 기획만 | 참고(규칙 사전은 출판 도메인으로 새로 작성) | `api/app/ai/compliance/trailer.py`, `packages/trailer-rules/` | `docs/products/nomad-video/02_ARCHITECTURE.md:214` |
 | 고객 승인 링크(토큰 sha256, 만료, 로그인 없는 재생·결정) | 기획만 | 참고 | `trailer.reviews`, `web/src/app/review/` | `docs/products/nomad-video/01_PRD.md` 3.1절 VD-F-123 |
-| 오케스트레이터 잡 토큰(running 잡에 묶인 토큰을 내부 경로에서 발급) | 기획만 | 참고(코어 표준화 요청 R-T4) | `orch/src/core/token.ts` | `docs/products/nomad-video/02_ARCHITECTURE.md:58-80` |
+| 오케스트레이터 잡 토큰(running 잡에 묶인 토큰을 내부 경로에서 발급) | 기획만 | 참고(`AI_ARCHITECTURE.md` 1장 잡 토큰 규칙, `parse` scope는 R-T4로 추가) | `orch/src/core/token.ts` | `docs/products/nomad-video/02_ARCHITECTURE.md:58-80` |
 | 크레딧 단가 구조(서버 상수가 정본, DB는 받은 값만 차감), 이미지 3·업로드 1 | 기획만 | 참고 | `web/src/server/pricing.ts` | `docs/products/nomad-video/01_PRD.md:175`, `:184`, `:189` |
 | sns-uploader(YouTube 업로드) | 기획만 | 참고(소비자로 호출만, 소유는 nomad-video) | `orch/src/steps/upload/` | `docs/products/_platform-core/SHARED_MODULES.md` 11장 |
 | BullMQ FlowProducer 단계 체인, Python 미디어 워커 | 기획만 | 폐기 | - | TS-01 |

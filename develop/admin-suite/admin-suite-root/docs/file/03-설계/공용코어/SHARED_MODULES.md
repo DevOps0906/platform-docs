@@ -42,7 +42,7 @@
 | llm gateway | _platform-core (sellingstudio 구현 기준). 2026-10-13부터 라우터 본체는 ai-service | 전 제품 | `ai_usage`, `consume_credits`, `resolve_ai_route` |
 | fal client | _platform-core (sellingstudio 구현 기준) | video, commerce, toon, publishing(표지), astro(테마 이미지) | `jobs`, `webhook_events`, `ai_usage` |
 | weasyprint render | flora-publishing | astro-ai, nomad-docs(DOCX·공문서 프리셋은 nomad-docs 코어 요청 C-1) | `jobs`, Storage `exports` |
-| sns uploader | nomad-video | nomad-commerce(2단계), nomad-blog(인스타 포스팅) | `encrypted_credentials`, `oauth_states`, `jobs` |
+| sns uploader | nomad-video | nomad-commerce(2단계), nomad-blog(인스타 포스팅), book-trailer(YouTube 업로드, P1) | `encrypted_credentials`, `oauth_states`, `jobs` |
 | automation-core | _platform-core | video, commerce, (blog) | `jobs`(parent_job_id), `webhook_events` |
 | compliance | _platform-core | video(LLM 판정), commerce(금지어), blog | `ai_usage` |
 | storage | _platform-core | 전 제품 | 버킷 3개, `storage_org_id` |
@@ -291,7 +291,7 @@ astro-ai는 같은 계약으로 사주/타로 PDF를 렌더한다. 테마 미리
 
 | 항목 | 내용 |
 |---|---|
-| 소유 / 소비 | nomad-video / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:821`), nomad-blog(인스타 포스팅, `:642`) |
+| 소유 / 소비 | nomad-video / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:821`), nomad-blog(인스타 포스팅, `:642`), book-trailer(YouTube 업로드 P1, `D:/WorkSpace/platform/docs/products/book-trailer/02_ARCHITECTURE.md` 3절, TR-06-058) |
 | 기준 자산 | Shorts Maker `lib/platforms/*`, `channels/oauth-manager.ts`, YSM `account_manager`(AES-GCM). 이식 전에 0키 폴백, state 결함, tsc 오류를 먼저 고친다(`:955`) |
 | 플랫폼 | YouTube Data API v3(resumable 업로드), Instagram Reels/Threads(Meta Graph), TikTok Content Posting(`NOMAD Shorts Maker/PRD.md` 10-3), 네이버 클립(`naver_clip`, 확정 결정 18) |
 | 네이버 클립 | 공식 업로드 API 미확인(2026-10-13 기준. 클립 크리에이터 PC 웹 업로드만 확인). Playwright로 사용자 네이버 계정에 로그인해 PC 웹에서 업로드한다. OAuth가 없으므로 `connect()`는 로그인 세션(쿠키)을 `encrypted_credentials`에 저장하는 흐름이고, 원본 `NOMAD Shorts Maker/src/skill/playwright-engine/naver-login.ts`를 재사용한다. 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의(고지문 버전 `clip-2026-10-v1`)가 없으면 업로드 잡을 만들지 않는다. 잡 `upload.naver_clip`. `pinComment`·`quota`는 지원하지 않음(capabilities로 표시), `fetchStats`는 PC 웹 화면 수집(제안). 공식 API가 확인되면 같은 `UploaderAdapter`로 교체한다 |

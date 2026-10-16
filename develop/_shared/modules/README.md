@@ -125,6 +125,7 @@ nomad-modules/
 | toon-factory | 유료 회차를 하면 membership `access_rules`(target `toon.episode`) |
 | admin-suite | hms는 의료정보 격리로 공용모듈 표에 환자 데이터를 넣지 않음(compliance 동의 기록만) |
 | arch-studio | 설치형. 라이선스 서버 쪽에서 compliance(약관·동의)만 |
+| book-trailer | compliance만 채택. 책별 권리 확인과 렌더 AI 표시 판정은 제품에 남기고, 엔드카드 AI 표시 문구만 `label_definitions`에서 읽는다. media는 렌더 스냅샷 경로 고정 때문에 보류(`develop_V2/book-trailer/`) |
 | local-news | 모든 모듈의 출처. 1차는 `news` 스키마로 만들고 공용 v1.0이 나오면 전환(`develop/local-news/modules/README.md`) |
 
 ### 5.4 적용 현황표 (개발 시작 후 갱신)

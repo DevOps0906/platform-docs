@@ -41,6 +41,7 @@
 | microweb-studio | 모듈러 | 유지 | 대행 제작 단계에서는 데이터가 작음 |
 | website-floria | 모듈러(폼 백엔드만) | 유지 | 문의/뉴스레터 테이블 1~2개 |
 | nomad-docs | 모듈러 | 유지 | 크레딧·AI 계층·렌더 서비스를 다른 제품과 공유. 고객 기밀(RFP·회의록)은 제품 스키마 RLS와 강제 오픈소스 라우팅으로 격리 |
+| book-trailer | 모듈러 | 출판사 설치형은 모놀리스 | FLORA 가져오기(`publishing` 스키마 읽기, P1), 공용 ai-service·sns-uploader·크레딧팩 공유. 미출간 원고는 Storage + 오픈소스 우선 라우팅으로 보호(`book-trailer/README.md` 5장) |
 | stock-dashboard | 모놀리스 | 재검토 | 개인용, 증권사 키 보관, 법적 검토 전. 격리가 안전 |
 | admin-suite ERP | 모듈러 | 고객사별 모놀리스 | 1개 고객사까지는 통합, 고객사가 늘면 고객사별 프로젝트 |
 | admin-suite School | 모듈러 | 고객사별 모놀리스 | 위와 같음 |

@@ -4,7 +4,7 @@
 
 ## 1. 개요와 ERD
 
-스키마 `trailer`, 앱 id `trailer`, 번호 범위 2600~2699(`DB_CONVENTIONS.md` 2장 다음 빈 범위, 2400 arch-studio 제안·2500 news 다음. 표 등록은 코어 요청 R-T2). SQLSTATE 접두사 `TR`(스키마 머리글자, `DB_CONVENTIONS.md` 1장 규칙).
+스키마 `trailer`, 앱 id `trailer`, 번호 범위 2600~2699(`DB_CONVENTIONS.md` 2장 다음 빈 범위, 2400 arch-studio 제안·2500 news 다음. 2026-10-16 표 등록 완료, 공용 모듈 요청 R-T2). SQLSTATE 접두사 `TR`(스키마 머리글자, `DB_CONVENTIONS.md` 1장 규칙).
 
 ```
 core.organizations ─┬─ trailer.books ──────────────┬─ trailer.purchase_links ── trailer.link_clicks (service)
@@ -211,14 +211,14 @@ Storage(2600:2072): `trailer-media` 멤버 읽기(자기 조직 폴더 + 엔타�
 | `link_clicks_link_idx (link_id, clicked_at desc)`, `link_clicks_org_idx` | 링크·태그별 기간 집계 |
 | `purchase_links_book_idx (book_id, sort_order)` | 엔드카드 CTA(첫 활성 링크) |
 
-예상 규모(제안): 조직당 책 100, 트레일러 2,000, 장면 4만, 클릭 월 수십만. 클릭 집계는 일 단위 머티리얼라이즈 뷰를 P1에 검토한다(R-T6).
+예상 규모(제안): 조직당 책 100, 트레일러 2,000, 장면 4만, 클릭 월 수십만. 클릭 집계는 일 단위 머티리얼라이즈 뷰를 P1에 검토한다(TR-06-019 수용 기준의 통계 7/30일 응답 시간으로 판단).
 
 ## 6. 코어 참조
 
 | 코어 객체 | 용도 | 비고 |
 |---|---|---|
 | `core.organizations`, `org_members`, `has_org_role`, `is_org_member`, `has_entitlement`, `is_platform_admin` | 조직·권한 | ALTER 없음 |
-| `core.app_entitlements`, `core.plans` | 플랜 features(`trailer.plan_features`) | trailer 플랜 3행은 조각 12절이 do nothing으로 넣는다(모듈러 seed 반영은 R-T1) |
+| `core.app_entitlements`, `core.plans` | 플랜 features(`trailer.plan_features`) | trailer 플랜 3행은 조각 12절이 do nothing으로 넣는다(모듈러 `seed.sql`에도 같은 행이 있다. 2026-10-16 R-T1 반영) |
 | `core.consume_credits`, `credit_ledger` | 선차감(`consume:trailer:run:<rid>`, `consume:trailer:render:<request_id>`) | 환불은 `core.fail_job`(refund_on_failure) |
 | `core.enqueue_job`, `jobs`, `cancel_job` | 큐 `trailer.ai`, `trailer.render`(멱등 `job:trailer:...`) | `reconcile_runs`가 잡 상태를 실행·렌더에 반영 |
 | `core.write_audit` | 권리 확인, 승인 링크, FLORA 가져오기 | |

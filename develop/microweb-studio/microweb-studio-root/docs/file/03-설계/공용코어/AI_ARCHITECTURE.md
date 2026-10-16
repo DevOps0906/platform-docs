@@ -36,7 +36,7 @@ Dify는 우리 조직 구조를 모른다. 조직 구분은 두 가지로만 한
 |---|---|
 | 형식 | JWT, **EdDSA(Ed25519)**. 개인키는 각 제품 Next.js 서버에만 두고, FastAPI·음성 서버는 공개키(JWKS)로 검증만 한다. 한 곳이 유출돼도 다른 제품 토큰을 위조할 수 없다 |
 | 클레임 | `iss=<app>`(발급 제품), `aud=platform-ai:<app>`, `org`, `app`, `sub`(로그인 사용자 id 또는 `visitor:<visitor_key>`), `conv`(플랫폼 대화 id), `feat`(기능 키), `scope`(`chat`, `rag`, `wiki`, `graph:<name>`, `voice`), `jti`, `iat`, `exp` |
-| 수명 | 10분(제안). 만료되면 Next.js가 새로 발급한다. **잡 토큰**(워커·오케스트레이터 → FastAPI): 같은 EdDSA 토큰을 제품 Next.js가 내부 엔드포인트(워커 키 인증)로 발급하며 `sub=job:<job_id>`, `scope`는 잡 유형이 정한 하나(`graph:<name>`, `rag`, `wiki`, `voice`), 대상 잡이 `running`일 때만 발급, `org`·`app`은 잡 행에서 가져오고, `jti` 1회 사용(2026-10-13 교차 검토 반영) |
+| 수명 | 10분(제안). 만료되면 Next.js가 새로 발급한다. **잡 토큰**(워커·오케스트레이터 → FastAPI): 같은 EdDSA 토큰을 제품 Next.js가 내부 엔드포인트(워커 키 인증)로 발급하며 `sub=job:<job_id>`, `scope`는 잡 유형이 정한 하나(`graph:<name>`, `rag`, `wiki`, `voice`, `parse`(원고·문서 파싱 엔드포인트, 2026-10-16 book-trailer R-T4)), 대상 잡이 `running`일 때만 발급, `org`·`app`은 잡 행에서 가져오고, `jti` 1회 사용(2026-10-13 교차 검토 반영) |
 | 검증 | 서명, `exp`, `iss`, `aud`(자기 app만 수락), `scope`를 확인하고 토큰의 `org`·`app`으로만 DB를 조회한다. 요청 본문의 org 값은 무시한다 |
 | 재사용 방지 | `jti` 1회 사용: 그래프 실행, `/rag/ingest`, `/wiki/ingest`처럼 비용이 크거나 쓰기가 일어나는 요청 |
 | 키 교체 | 키 id(`kid`)를 두고 JWKS에 이전 키를 한 주기 동안 함께 게시한다(제안) |

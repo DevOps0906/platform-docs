@@ -337,9 +337,9 @@ node products/book-trailer/supabase/monolith/tests/run-smoke.mjs --target mod   
 | Opus | 골격, 그래프 4종, 파서, 계약 스키마, 이미지·TTS 단계, 컴포지션, 테스트 설계, 운영 콘솔 | `claude-main` 설계 → `nextjs-expert`·`fastapi-expert`(Sonnet) 구현 |
 | Sonnet | 디자인 시스템 구현, 화면, 미리보기, 랜딩·3D | `nextjs-expert` |
 | Haiku | CI(049), 법적 고지(051) | 오케스트레이터 직접 |
-| 사람 | 디자인 비주얼 검토(010), G1·G2 판정 | 대표님 |
+| 사람 | 디자인 비주얼 검토 판정(010, 준비는 Sonnet), G1·G2 판정 | 대표님 |
 
-작업 수 비율(60개, `06_AGENT_PLAN.md` 4절): Fable 10(16.7%), Opus 34(56.7%), Sonnet 13(21.7%), Haiku 2(3.3%), 사람 1(1.7%).
+작업 수 비율(60개, `06_AGENT_PLAN.md` 4절): Fable 10(16.7%), Opus 34(56.7%), Sonnet 14(23.3%, TR-06-010 판정은 사람), Haiku 2(3.3%). 규모 가중(합계 119)은 Fable 17.6%, Opus 56.3%, Sonnet 24.4%, Haiku 1.7%입니다.
 
 ### 9.3 task 폴더 만들기
 
@@ -499,7 +499,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 앱 | AI book app | https://dribbble.com/shots/23707376-AI-book-app | AI 결과 여러 안 나란히 + 하나 고르기 | 브리프 3안 비교 |
 
 - 같은 레퍼런스를 다른 제품도 씁니다. 03장 4.1절 "다른 제품의 쓰임" 열과 다르게 가져옵니다.
-- 이 제품 전용 후보(북트레일러·출판 마케팅 사이트)는 URL을 확인한 뒤 `REFERENCES.md`에 먼저 추가합니다(공용 모듈 요청 R-T7).
+- 이 표는 `REFERENCES.md` book-trailer 절(2026-10-16 추가)과 같습니다. 이 제품 전용 후보(북트레일러·출판 마케팅 사이트)는 URL을 확인한 뒤 그 절에 먼저 추가합니다.
 - 영감용이지 복제용이 아닙니다. Dribbble 링크는 작업 전에 브라우저에서 한 번 엽니다.
 
 ## 14. 원본 이식
@@ -519,7 +519,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 키 위치 | LLM 키는 `apps/api`에만. fal·ElevenLabs는 오케스트레이터(ElevenLabs는 web 서버 음성 대화도). 서명 개인키는 web 서버만. 렌더러에는 AI 키 없음 |
 | sns-uploader | YouTube 업로드(P1)는 nomad-video 소유 공용 모듈의 소비자 |
 | 렌더러 | 지금은 이 제품 소유. toon-factory MP4·nomad-video와 공유할지 R-T8에서 판단 |
-| 남은 공용 요청 | R-T1 모듈러 seed, R-T2 번호·SQLSTATE 등록, R-T3 서점 제휴 범용화, R-T4 잡 토큰 표준화, R-T5 인증 매트릭스 행, R-T6 sns-uploader 소비자, R-T7 REFERENCES 절, R-T8 렌더러 공용화(`06_AGENT_PLAN.md` 6절) |
+| 공용 요청 | R-T1(모듈러 seed), R-T2(번호·SQLSTATE), R-T4(잡 토큰 `parse` scope), R-T5(인증 매트릭스), R-T6(sns-uploader 소비자), R-T7(REFERENCES 절)은 2026-10-16 반영. 남은 것은 R-T3 서점 제휴 범용화, R-T8 렌더러 공용화(둘 다 Phase 2, `06_AGENT_PLAN.md` 6절) |
 
 ## 16. 검증과 완료 정의
 

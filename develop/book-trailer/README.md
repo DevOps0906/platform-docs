@@ -19,6 +19,7 @@
 | [`book-trailer_develop.md`](book-trailer_develop.md) | 개발 방법 안내서. 0장부터 순서대로 따라간다 |
 | `setup-book-trailer.sh` / `setup-book-trailer.ps1` | 베이스 레포를 복사해 개발 폴더 `D:\WorkSpace\DEV\book-trailer\`를 만들고 아래 묶음을 붙이는 설치 스크립트(Git Bash / PowerShell). 먼저 `--dry-run` / `-DryRun`으로 확인한다 |
 | `book-trailer-root/` | 개발 폴더 루트에 붙는 내용(`docs/file` 근거 산출물 27개, `docs/wiki`, `supabase`, `infra`, `.claude/skills/llm-wiki`). 직접 고치지 않고 `../_shared/tools/build_root.py book-trailer`로 다시 만든다 |
+| [`../../develop_V2/book-trailer/`](../../develop_V2/book-trailer/book-trailer_develop_v2.md) | 공용모듈 적용판(V2). compliance만 채택하고 media·editorial·search는 보류한 이유와 바뀌는 작업 3개 |
 
 ## 시작하기
 

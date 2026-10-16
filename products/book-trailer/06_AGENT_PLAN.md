@@ -26,7 +26,7 @@
 | TR-06-007 | 디자인 레퍼런스 확정(1단계) | `docs/file/03-설계/디자인/DESIGN.md` 1절 | 없음 | P0 | S | Sonnet | 08장 1절과 03장 4.1절 표 반영, 고문(Fable) 검토 기록 | `DESIGN_SYSTEM.md` 4장 |
 | TR-06-008 | 앱 토큰 `tokens.css`(2단계) | `web/src/styles/tokens.css` | 007 | P0 | S | Sonnet | 08장 3.7절 값 그대로. 라이트·다크 대비 AA(axe). `tailwind.config.js` 없음 | 08장 3장 |
 | TR-06-009 | 기본 컴포넌트 + `/dev/components` | `web/src/components/ui/**`, `web/src/app/dev/components/**` | 008 | P0 | L | Sonnet | 08장 11.1·11.3절 배리언트 전부, 라이트/다크 x 컴팩트/기본 스크린샷 | 08장 11장 |
-| TR-06-010 | 비주얼 검토(3단계, 사람) | (산출물) 스크린샷 수정 기록 | 009 | P0 | M | 사람 | 컴포넌트마다 상태·크기 배리언트를 보고 수치 수정 기록 | `DESIGN_SYSTEM.md` 4장 3단계 |
+| TR-06-010 | 비주얼 검토(3단계, 판정은 사람) | (산출물) 스크린샷 수정 기록 | 009 | P0 | M | Sonnet | 컴포넌트마다 상태·크기 배리언트를 보고 수치 수정 기록 | `DESIGN_SYSTEM.md` 4장 3단계 |
 | TR-06-011 | 정답 확정(4단계) | `docs/file/03-설계/디자인/{DESIGN,COMPONENTS}.md` | 010 | P0 | S | Opus | 문서가 코드 토큰·컴포넌트와 일치 | `DESIGN_SYSTEM.md` 4장 4단계 |
 | TR-06-012 | 영상 토큰과 계약 스키마(TS) | `comp/src/{tokens,schema}/**`, `comp/package.json` | 007 | P0 | M | Opus | 캔버스·타입·모션·안전 영역·`minReadMs` 상수, 04장 4.2~4.4절 zod 스키마. 단위 테스트(포맷별 `u` 계산, 노출 시간) | 08장 5·7장, 04장 4절 |
 | TR-06-013 | 결제·플랜 게이팅·크레딧 단가 상수 | `web/src/server/billing/**`, `web/src/server/pricing.ts`, `web/src/app/api/billing/**`, `web/src/app/api/webhooks/toss/**` | 003 | P0 | M | Fable | 01장 4장 단가표 단위 테스트. PM001이면 `fail_payment_order` + 취소. 웹훅 서명 없으면 401 | 리뷰 SM #2, #6, Toon #11 |
@@ -65,7 +65,7 @@
 | TR-06-046 | 통합 흐름 테스트(업로드 → 분석 → 브리프 → 스토리보드 → 에셋 → 렌더 → 내려받기) | `tests/integration/**` | 031, 039 | P0 | M | Opus | 가짜 제공자(LLM·fal·TTS 목) + 실제 DB·렌더러로 끝까지 통과, 실패 주입 시 환불 | 리뷰 SM #15 |
 | TR-06-047 | 렌더 품질 회귀: 결정성, 안전 영역, 한글 서체, 벤치마크 | `rend/tests/**`, `comp/tests/**` | 031 | P0 | M | Opus | 같은 스냅샷 프레임 해시 일치, 장면 8 x 포맷 4 스냅샷, 글자 상자 안전 영역 침범 0, 렌더 시간 측정 기록 | 08장 14장 |
 | TR-06-048 | E2E 인증 페르소나 globalSetup + 주요 화면 E2E | `e2e/setup/**`, `e2e/app/**` | 004, 036 | P0 | M | Opus | 페르소나별 `storageState`, viewer 읽기 전용, 무료 체험 흐름 E2E | `AUTH_ROADMAP.md` 2장, 리뷰 Toon #12 |
-| TR-06-049 | CI 게이트(tsc, lint, build, pytest, sqlcheck, 모드 분기 금지 검색, hex 린트) | `.github/workflows/**`, `scripts/ci/**` | 001 | P0 | S | Haiku | 하나라도 실패하면 머지 불가 | 리뷰 SM #5, #11, #14, #15 |
+| TR-06-049 | CI 게이트(tsc, lint, build, pytest, sqlcheck, 모드 분기 금지 검색, hex 린트) | `.github/workflows/**`, `scripts/ci/**` | 001 | P0 | S | Haiku | 하나라도 실패하면 머지 불가. 인증 금지 문자열(`mock-auth`, `nomad_role`, `nomad_plan`, 쿠키·localStorage 역할·플랜) 0건, 인증 모듈 밖 `AUTH_MODE` 참조 0건, `AUTH_MODE=mock`으로 배포 빌드 시 실패 | 리뷰 SM #5, #11, #14, #15, `AUTH_ROADMAP.md` 2장 |
 | TR-06-050 | 탈퇴·책 삭제 purge | `web/src/server/account/**`, `web/src/app/api/account/**`, `orch/src/steps/purge/**` | 019 | P0 | M | Opus | 30일 뒤 Storage·청크·위키·렌더 0건 | TR-F-121 |
 | TR-06-051 | 법적 고지 페이지·문구(약관, 개인정보, AI 표시 안내) | `web/src/app/legal/**`, `web/src/content/legal/**` | 009 | P0 | S | Haiku | 01장 6장 항목 전부 반영, 금지 문구 검사 통과 | 01장 6장 |
 | TR-06-052 | 크론: 정산, 보존 만료, reconcile, 승인 만료 | `orch/src/cron/**` | 005, 031 | P0 | S | Opus | 02장 4절 스케줄 표 동작, 만료 7일 전 알림 | 02장 4절 |
@@ -98,10 +98,11 @@
 |---|---|---|---|
 | Fable | 10 | 16.7% | 17.6% (21/119) |
 | Opus | 34 | 56.7% | 56.3% (67/119) |
-| Sonnet | 13 | 21.7% | 22.7% (27/119) |
+| Sonnet | 14 | 23.3% | 24.4% (29/119) |
 | Haiku | 2 | 3.3% | 1.7% (2/119) |
-| 사람 | 1 | 1.7% | 1.7% (2/119) |
 | 합계 | 60 | 100% | 119 |
+
+TR-06-010은 준비(스크린샷 표, 수정 기록 양식)를 Sonnet이 하고 판정은 사람(대표님)이 한다(`DESIGN_SYSTEM.md` 4장 3단계).
 
 ## 5. 리뷰 작업 흡수표
 
@@ -151,6 +152,19 @@
 | R-T6 | `SHARED_MODULES.md` 11장 sns-uploader 소비자 목록에 trailer 추가 | `_platform-core/SHARED_MODULES.md` | YouTube 업로드(P1) | W7 전 |
 | R-T7 | `REFERENCES.md`에 book-trailer 절 추가(북트레일러·출판 마케팅 사이트 URL 확인 후) | `_design-guide/REFERENCES.md` | 지금은 다른 제품 후보를 다른 방식으로만 인용한다(03장 4.1절) | W1-D |
 | R-T8 | Remotion 렌더러를 공용 렌더 서비스로 승격 검토 | `_platform-core` | toon-factory MP4, nomad-video Track C/D가 같은 렌더러를 쓸 수 있다. 라이선스는 조직 단위(D-2) | Phase 2 |
+
+반영 현황(2026-10-16):
+
+| # | 상태 | 반영 위치 |
+|---|---|---|
+| R-T1 | 반영 | `_supabase-modular/seed.sql`(앱 행, 플랜 3, 팩 3. 조각 12절은 그대로 do nothing) |
+| R-T2 | 반영 | `DB_CONVENTIONS.md` 1장 SQLSTATE(`TR`, 함께 빠져 있던 `NW`·`AR` 제안), 2장 번호 표(2400 arch 제안, 2500 news, 2600 trailer), `_supabase-modular/README.md`·`ARCHITECTURE.md`·`config.toml.example` |
+| R-T3 | 남음 | Phase 2. 서점 제휴 수요 확인 후 |
+| R-T4 | 반영 | 잡 토큰 규칙은 `AI_ARCHITECTURE.md` 1장에 이미 있었다(2026-10-13). 이 제품이 쓰는 `parse` scope만 추가 |
+| R-T5 | 반영 | `AUTH_ROADMAP.md` 8장 매트릭스 행, 11.2절, `develop/_shared/auth/README.md` 적용 순서 표 |
+| R-T6 | 반영 | `SHARED_MODULES.md` 소유·소비 표와 11장 |
+| R-T7 | 반영 | `REFERENCES.md` book-trailer 절(기존 URL 5개, 다른 참고 포인트), `HERO_3D.md` 5장 소재 행 |
+| R-T8 | 남음 | Phase 2. toon-factory MP4 착수 시 판단 |
 
 ## 7. 완료 정의
 
