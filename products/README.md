@@ -22,7 +22,7 @@
 | `study-note/` | 단독 | study-note-organizer-codex-01 | `notes` | 2100 |
 | `website-floria/` | 단독 | WebSite | `site` | 2200 |
 | `nomad-docs/` (NOMAD Docs) | 신설 | 없음(설계 이식: flora-publishing, flora, SellingDocs, FortuneDocs) | `docs` | 2300 |
-| `arch-studio/` (Arch Studio, 가칭) | 신설(설치형 데스크톱 + 시리얼 라이선스) | 없음(설계 이식: nomad-docs, flora-publishing, `_platform-core` AI 계층) | `arch`(제안) | 2400(제안) |
+| `arch-studio/` (Arch Studio, 가칭) | 신설(설치형 데스크톱 + 시리얼 라이선스, 정보 입력 → 도면 자동 생성) | 없음(설계 이식: nomad-docs, flora-publishing, `_platform-core` AI 계층) | `arch` | 2400 |
 | `local-news/` (로컬뉴스 클라우드, 가칭) | 신설(멀티테넌트 SaaS, 화이트라벨) | 없음(설계 이식: `Multi-tenant_Theming`, `_platform-core`, 언론사 디자인 벤치마크) | `news` | 2500 |
 | `book-trailer/` (NOMAD Book Trailer, 가칭) | 신설 | 없음(설계 이식: nomad-video, toon-factory, flora-publishing, nomad-docs. 리뷰 NOMAD Shorts Maker, Toon-Factory) | `trailer` | 2600 |
 
@@ -75,6 +75,7 @@
 | 9 | 공용모듈 7개(local-news 유래) 기획서·개발서, 제품별 V2 개발서 | 완료 | 아래 "공용모듈 7개 추가", `_platform-core/common-modules/`, `../develop_V2/`, PR #22·#23 |
 | 10 | 저장소 전체 점검과 수정(표 깨짐, 오래된 숫자) | 완료 | 아래 "2026-10-15 저장소 점검" |
 | 11 | book-trailer(16번째 제품, 북트레일러 자동화) 기획·디자인 시스템·개발 묶음·가격 플랜 | 완료 | 아래 "book-trailer 추가" |
+| 12 | arch-studio(14번째 제품, 설치형 AI 건축 설계실무 앱, 정보 입력 → 도면 자동 생성) 기획 01~07·DB·개발 묶음 | 완료(2026-10-16) | 아래 "arch-studio 추가", `../develop/arch-studio/` |
 
 ## 제품별 결과
 
@@ -114,6 +115,7 @@
 | 4 | microweb-studio, live-poll, toon-factory | 독립 도메인이다 |
 | 5 | admin-suite, stock-dashboard | 의료정보·금융 규제 확인이 먼저 필요하다 |
 | 6 | local-news | 코어 요청 R-1~R-10(독자 인증, Theming 승격)이 먼저 필요하다 |
+| 코어 이후 | arch-studio | 설치형 데스크톱이라 다른 제품에 의존하지 않고 공용 코어(데스크톱 Bearer 세션 R-A6, 일회성 결제 C-1 등)만 먼저 필요하다. 개발 전에 2일 도면 스파이크(AR-06-019)와 샘플 도면 랜딩으로 먼저 검증한다 |
 
 ## 남은 코어 과제
 
@@ -296,3 +298,14 @@ local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용�
 | `build_root.py` | book-trailer 등록, 선택 기획서 `08_DESIGN_SYSTEM.md`(DOC-DES-005), `###` 수준 "초기값" 절 읽기 추가. 기존 제품 초기값 출력 변화 없음 |
 | 공용 요청(2026-10-16 후속) | R-T1 모듈러 seed, R-T2 `DB_CONVENTIONS.md`·`_supabase-modular` 번호 표(2400 arch 제안, 2500 news, 2600 trailer)와 SQLSTATE(`NW`, `TR`), R-T4 잡 토큰 `parse` scope, R-T5 `AUTH_ROADMAP.md` 8장·11.2절, R-T6 `SHARED_MODULES.md` sns-uploader 소비자, R-T7 `REFERENCES.md` 절·`HERO_3D.md` 소재 행 반영. 남은 것은 R-T3(서점 제휴 범용화), R-T8(렌더러 공용화), 둘 다 Phase 2 |
 | 후속 정리(2026-10-16) | 공용모듈 적용표 행과 V2 개발서(`../develop_V2/book-trailer/`, compliance만 채택), Capacitor·Tauri 제품 표 행, `_STRUCTURE_CHECK.md`(점검 1~7 통과), `_supabase-modular/VERIFICATION.md` 11장, 공용 문서가 바뀌어 15개 제품 개발 묶음 재생성(경로 누락 0) |
+
+## arch-studio 추가 (2026-10-16)
+
+14번째 제품 `arch-studio/`(Arch Studio, 가칭)의 기획 01~07과 `CLAUDE.md`, DB(`_supabase-modular/migrations/2400_arch.sql`, 모놀리스 `arch-studio/supabase/monolith/`), 개발 묶음(`../develop/arch-studio/`)을 완료했다. 설치형 데스크톱(Tauri 2) + 시리얼 라이선스이고, 대지·요구 정보를 넣으면 로컬 엔진이 법규 판정과 배치도·면적도·일조 단면·평면 시트(DXF·SVG·PDF)를 0크레딧으로 자동 생성한다(`arch-studio/01_PRD.md` 9장).
+
+| 항목 | 결과 |
+|---|---|
+| 06장 작업 | 66개(AR-06-001~064 + AR-V2-01·02, 웨이브 W0~W8 + W0-D) |
+| RLS 스모크(모듈러 / 모놀리스) | 125/125 / 125/125 |
+| 05장 확정 후 맞춘 것 | 04장 RPC 표(`latest_cost_catalog`, `purge_expired`, `reconcile_runs`, `p_org` 선택 인자, jsonb 반환형), SQLSTATE `AR034`(일일 플랫폼 크레딧 상한), 02장 `SITE_LOOKUP_HASH_KEY`·크론, 위키 읽기 경로 `GET /api/ai/wiki/pages` |
+| 공용 요청 | C-1(일회성 주문 종류, 영구 라이선스 판매 전 필수), R-A1~R-A14(`arch-studio/06_AGENT_PLAN.md` 6장) |
