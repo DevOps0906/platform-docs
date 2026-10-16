@@ -369,7 +369,7 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 
 ## 11. 구현 지시서와 전체 적용 (2026-10-15 추가)
 
-이 문서는 "무엇을 언제"를 정한다. "어떻게 만드는가"(Google Auth Platform·카카오 디벨로퍼스·네이버 개발자센터 화면별 설정과 공식 링크, 공용 모듈 `@nomad/core-auth` 파일 구성, 테스트, 버전·출시, 14개 제품 적용 순서와 절차)는 `docs/develop/_shared/auth/README.md`가 정본이다.
+이 문서는 "무엇을 언제"를 정한다. "어떻게 만드는가"(Google Auth Platform·카카오 디벨로퍼스·네이버 개발자센터 화면별 설정과 공식 링크, 공용 모듈 `@nomad/core-auth` 파일 구성, 테스트, 버전·출시, 14개 제품 적용 순서와 절차)는 `D:/WorkSpace/platform/docs/develop/_shared/auth/README.md`가 정본이다.
 
 | 항목 | 이 문서와의 관계 |
 |---|---|

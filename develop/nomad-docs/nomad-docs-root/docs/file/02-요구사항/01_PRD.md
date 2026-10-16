@@ -327,7 +327,7 @@ dev 전용 항목(`profile.platforms`, `project_type.build_kind`, `feat.*` 개�
 
 ## 4. 요금과 크레딧
 
-모든 가격은 원화, VAT 포함이다(B2C SaaS 기본, `docs/Price_Plans/_common/PRICING_PRINCIPLES.md` 7장, 2026-10-14 결정). 단계별 인상 계획은 `docs/Price_Plans/nomad-docs/PRICE_PLAN.md` 6장. 모든 금액·크레딧은 제안이다(D-4). 이유: 신규 제품이라 원가 측정 전이고 확정 결정 8이 이 제품의 플랜 정본을 지정하지 않았다(`docs/reference/00_MERGE_ANALYSIS.md:16`). 플랜·팩 정본은 이 절이고 모듈러 `seed.sql` 반영은 코어 요청 C-3이다(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md:235`).
+모든 가격은 원화, VAT 포함이다(B2C SaaS 기본, `D:/WorkSpace/platform/docs/Price_Plans/_common/PRICING_PRINCIPLES.md` 7장, 2026-10-14 결정). 단계별 인상 계획은 `D:/WorkSpace/platform/docs/Price_Plans/nomad-docs/PRICE_PLAN.md` 6장. 모든 금액·크레딧은 제안이다(D-4). 이유: 신규 제품이라 원가 측정 전이고 확정 결정 8이 이 제품의 플랜 정본을 지정하지 않았다(`docs/reference/00_MERGE_ANALYSIS.md:16`). 플랜·팩 정본은 이 절이고 모듈러 `seed.sql` 반영은 코어 요청 C-3이다(`docs/file/03-설계/공용코어/DB_CONVENTIONS.md:235`).
 
 ### 4.1 플랜
 
@@ -341,7 +341,7 @@ dev 전용 항목(`profile.platforms`, `project_type.build_kind`, `feat.*` 개�
 
 | 키 | 의미 | free | pro | team | 키가 없을 때 | 사용 위치 |
 |---|---|---|---|---|---|---|
-| `projects_max` | 활성(archived 제외) 프로젝트 수 | 2 | 50 | 300(2026-10-14 결정: 판매 문구 "무제한" 금지, `docs/Price_Plans/_common/PRICING_PRINCIPLES.md` 6장. null은 운영 조직 수동 부여용으로만 트리거가 계속 처리) | 2 | 프로젝트 생성 API, `DC006` |
+| `projects_max` | 활성(archived 제외) 프로젝트 수 | 2 | 50 | 300(2026-10-14 결정: 판매 문구 "무제한" 금지, `D:/WorkSpace/platform/docs/Price_Plans/_common/PRICING_PRINCIPLES.md` 6장. null은 운영 조직 수동 부여용으로만 트리거가 계속 처리) | 2 | 프로젝트 생성 API, `DC006` |
 | `formats` | 허용 내보내기 형식 | ["pdf"] | ["pdf","docx","zip"] | ["pdf","docx","zip"] | ["pdf"] | 내보내기 API |
 | `watermark` | PDF 워터마크 강제 | true | false | false | true | 렌더 옵션(서버가 결정) |
 | `doc_phase` | 허용 문서 유형 단계 | "mvp" | "mvp" | "phase2" | "mvp" | 생성 API, 카탈로그 표시 |
@@ -540,7 +540,7 @@ nomad-video와의 경계: 고객사·고객 승인·성과 수집 같은 대행 
 | D-1 | 브랜드명 | (a) NOMAD Docs (b) 한글 브랜드(예: "노마드 문서함") (c) 기능형 이름 | (a)로 베타. 폴더·app id(`docs`)는 브랜드와 무관하게 유지 |
 | D-2 | MVP 문서 범위 | (a) 8종 유지(계약서 포함) (b) 계약서 제외 6종 + 추적표 | (a) 설계·구현은 8종, 공개는 D-3 게이트로 계약서만 늦출 수 있게 한다 |
 | D-3 | 계약서 출시 게이트 | (a) 법무 검토 완료 전 `dev_contract` 비활성 (b) 고지만으로 출시 | (a). 변호사법 관련 위험 미확인 |
-| D-4 | 요금 확정 | (a) 4장 제안값 (b) 베타 2주 원가 측정 후 확정 | (b). 지금 값은 문서 단위 상대 비율만 의미 있다. 일부 결정됨(2026-10-14, Price_Plans 반영): VAT 포함 표기, `team` `projects_max` 300. 크레딧 단가 보정(RFP·채팅)은 (b) 그대로 베타 실측 후(`docs/Price_Plans/nomad-docs/PRICE_PLAN.md` 10장 DC-P-4) |
+| D-4 | 요금 확정 | (a) 4장 제안값 (b) 베타 2주 원가 측정 후 확정 | (b). 지금 값은 문서 단위 상대 비율만 의미 있다. 일부 결정됨(2026-10-14, Price_Plans 반영): VAT 포함 표기, `team` `projects_max` 300. 크레딧 단가 보정(RFP·채팅)은 (b) 그대로 베타 실측 후(`D:/WorkSpace/platform/docs/Price_Plans/nomad-docs/PRICE_PLAN.md` 10장 DC-P-4) |
 | D-5 | HWPX 시점 | (a) Phase 3 (b) Phase 2(공공·정부지원 수요) | (a). 렌더 엔진·양식 검증 비용이 크다. D-12를 당기면 (b) 재검토 |
 | D-6 | 첫 CRM | (a) HubSpot (b) 국내 CRM | (a). 공개 API·OAuth 문서가 있다고 알려져 있으나 약관·한도 미확인. 국내 고객 인터뷰 후 (b) 추가 |
 | D-7 | 전자서명 제공자 | 국내외 제공자 후보 비교 | Phase 3 착수 전 API·요금·법적 효력 확인(미확인) |

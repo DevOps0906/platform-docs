@@ -1,6 +1,6 @@
 # local-news 공통모듈 기획서 색인 (M1~M8)
 
-작성일 2026-10-15. 로컬뉴스 클라우드(가칭, app id `news`)의 공통모듈 8개를 정의한다. 1차는 모두 `news` 스키마 안 모듈별 절로 만들고, 다른 제품이 쓰기 시작하면 `D:/WorkSpace/platform/docs/products/_platform-core/COMMON_MODULES_ROADMAP.md` 3장 공용 스키마로 꺼낸다(`D:/WorkSpace/platform/docs/products/_platform-core/COMMON_MODULES_ROADMAP.md:40`, `:65-81`). 이 폴더는 모듈 경계·계약·규칙만 적고, 표의 컬럼 정본은 `docs/file/03-설계/05_DATA_MODEL.md`, 라우트·오류 코드 정본은 `docs/file/03-설계/04_API.md`, 기능 수용 기준 정본은 `docs/file/02-요구사항/01_PRD.md` 3절이다. 개발 순서·디렉토리·테스트는 `docs/develop/local-news/modules/README.md`.
+작성일 2026-10-15. 로컬뉴스 클라우드(가칭, app id `news`)의 공통모듈 8개를 정의한다. 1차는 모두 `news` 스키마 안 모듈별 절로 만들고, 다른 제품이 쓰기 시작하면 `D:/WorkSpace/platform/docs/products/_platform-core/COMMON_MODULES_ROADMAP.md` 3장 공용 스키마로 꺼낸다(`D:/WorkSpace/platform/docs/products/_platform-core/COMMON_MODULES_ROADMAP.md:40`, `:65-81`). 이 폴더는 모듈 경계·계약·규칙만 적고, 표의 컬럼 정본은 `docs/file/03-설계/05_DATA_MODEL.md`, 라우트·오류 코드 정본은 `docs/file/03-설계/04_API.md`, 기능 수용 기준 정본은 `docs/file/02-요구사항/01_PRD.md` 3절이다. 개발 순서·디렉토리·테스트는 `D:/WorkSpace/platform/docs/develop/local-news/modules/README.md`.
 
 | 문서 형식 근거 | 이 폴더에서 따르는 것 |
 |---|---|
@@ -91,7 +91,7 @@
 
 ## 5. 추출 계획 (두 번째 제품이 쓰면 공용 스키마로)
 
-**2026-10-15 갱신**: 이 표의 추출 대상은 공용모듈 기획서로 확정됐다(`D:/WorkSpace/platform/docs/products/_platform-core/common-modules/README.md`, 개발서 `docs/develop/_shared/modules/README.md`). 아래 "공용 스키마(번호)" 열은 그 문서의 번호표가 우선한다.
+**2026-10-15 갱신**: 이 표의 추출 대상은 공용모듈 기획서로 확정됐다(`D:/WorkSpace/platform/docs/products/_platform-core/common-modules/README.md`, 개발서 `D:/WorkSpace/platform/docs/develop/_shared/modules/README.md`). 아래 "공용 스키마(번호)" 열은 그 문서의 번호표가 우선한다.
 
 | 모듈 | 공용모듈(번호) | local-news에 남는 것 |
 |---|---|---|

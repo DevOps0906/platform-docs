@@ -2,7 +2,7 @@
 
 2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 17개(PB-06-039~055)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 001·002·005·008(수용 기준 보강), 011·012·013·014·019(LLM 호출 경로를 ai-service로), 021~024(선행에 042 추가, 024의 MASTER.md는 040으로 이동), 025·029·034·036·037·038(수용 기준 보강)이다. 2026-10-14 확정 결정 22(`docs/reference/00_MERGE_ANALYSIS.md:30`)로 PB-06-006의 범위를 인증 Stage A(Mock 로그인)로 바꾸고 인증 단계 작업 3개(PB-06-056 Stage B, 057 C1 카카오, 058 C2 네이버, 8절)를 더했으며 005·034·037(수용 기준)도 함께 고쳤다. 2026-10-14 FLORA 개편(검토용)으로 에이전트·운영 작업 7개(PB-06-059~065, 9절)를 더하고 002·009·022·023·024·027·029·037·039·040·041·044의 범위·수용 기준·소유 경로를 보강했다. 작업 수 65개(모델 작업 64)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
 
-작성일 2026-10-12. 작업 ID는 `PB-06-###`. 모델 기준은 `docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 1장(Fable: 결제·권한·RLS·데이터 모델, Opus: 기능·API·테스트, Sonnet: UI·문서·설정, Haiku: 보일러플레이트·문구·체크). 경로는 앱 저장소 기준 `apps/flora-publishing/`를 생략해 `web/`, `worker/`, `engine/`, `api/`(FastAPI AI 서비스, 공용 ai-service의 `apps/api`)로 적는다. 개발 폴더에서는 `web/`→`apps/web`, `api/`→`apps/api`로 대응시킨다(`docs/develop/flora-publishing/flora-publishing_develop.md` 5절).
+작성일 2026-10-12. 작업 ID는 `PB-06-###`. 모델 기준은 `docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 1장(Fable: 결제·권한·RLS·데이터 모델, Opus: 기능·API·테스트, Sonnet: UI·문서·설정, Haiku: 보일러플레이트·문구·체크). 경로는 앱 저장소 기준 `apps/flora-publishing/`를 생략해 `web/`, `worker/`, `engine/`, `api/`(FastAPI AI 서비스, 공용 ai-service의 `apps/api`)로 적는다. 개발 폴더에서는 `web/`→`apps/web`, `api/`→`apps/api`로 대응시킨다(`D:/WorkSpace/platform/docs/develop/flora-publishing/flora-publishing_develop.md` 5절).
 
 ## 1. 원칙과 소유 경계
 

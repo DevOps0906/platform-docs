@@ -226,7 +226,7 @@ compliance 노드(마지막, `AI_ARCHITECTURE.md` 6장 "compliance 뒤에는 비
 | orchestrator | Railway 1(CPU 1~2 vCPU) | 외부: fal, ElevenLabs, 공용 음성 서버, FastAPI, Supabase(service_role), Next.js `/api/internal/*`(내부 키) |
 | renderer | Railway 2(각 4 vCPU·8GB, 제안) Docker: Node 20 + Chrome Headless Shell + 서체 | 외부: Supabase(service_role, Storage)만 |
 | apps/api | Railway 1(CPU) | 공용 GPU 서버(`oss-llm`, `oss-embed`), 상용 LLM, Supabase(service_role), Dify에서 내부 키 호출 수신 |
-| Dify, GPU 음성·LLM 서버 | 운영사 자체 호스팅(공용) | `docs/develop/_shared/{dify,voice,llm}/` |
+| Dify, GPU 음성·LLM 서버 | 운영사 자체 호스팅(공용) | `D:/WorkSpace/platform/docs/develop/_shared/{dify,voice,llm}/` |
 | Supabase | 모듈러 프로젝트 1개(출시) | 모놀리스는 고객 전용 설치형(05장 8절) |
 
 렌더러 확장: 큐 대기 p95가 5분을 넘으면 인스턴스 추가(제안). Remotion Lambda(AWS)는 쓰지 않는다(Railway 단일 클라우드 유지, 비용 예측). 렌더 결과는 Storage `exports`로만 나가고 렌더러는 공개 포트가 없다.

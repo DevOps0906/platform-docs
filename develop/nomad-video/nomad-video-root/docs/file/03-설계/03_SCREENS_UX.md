@@ -6,46 +6,48 @@
 
 대시보드는 모두 `/dashboard/**` 아래에 둔다. 공개 경로(`/landing`, `/lb`, `/r`)와 겹치지 않게 하기 위해서다(BS #10).
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 마케팅 랜딩 | 공개 | - | P0 |
-| `/pricing` | 요금 | 공개 | - | P0 |
-| `/login`, `/signup`, `/auth/callback` | 인증. 단계별 표시(7절): A 개발용 로그인 패널 + 상단 `MOCK AUTH · 로컬 전용` 배지(`/signup` 없음), B Google 버튼 + 이메일 폼(`/signup`·비밀번호 재설정은 B에서 생김), C 카카오·네이버 버튼. `/auth/callback`은 B부터 | 공개 | - | P0 |
-| `/legal/terms`, `/legal/privacy` | 약관, 개인정보처리방침 | 공개 | - | P0 |
-| `/landing/[slug]` | Track B 공개 랜딩 | 공개 | 소유 조직 Basic+ | P0 |
-| `/lb/[handle]` | 링크인바이오 | 공개 | 전 플랜 | P0 |
-| `/r/[code]` | 제휴 단축 링크(302) | 공개 | - | P0 |
-| `/billing/success`, `/billing/fail` | 결제 복귀 | 로그인 | - | P0 |
-| `/dashboard` | 홈(진행 중 잡, 크레딧, 채널 쿼터, 최근 산출물) | 전 역할 | 전 플랜 | P0 |
-| `/dashboard/radar` | 레이더(플레이보드/채널파인더/블링 탭) | 전 역할 | Basic+(탭별 플랜) | P0 |
-| `/dashboard/sources` | 소싱 목록·추가 | owner/admin/member | 전 플랜 | P0 |
-| `/dashboard/shorts`, `/dashboard/shorts/new`, `/dashboard/shorts/[id]` | Track A/B/C 생산 | owner/admin/member(viewer 읽기) | A 전 플랜, B/C Basic+ | P0 |
-| `/dashboard/longform`, `/dashboard/longform/[id]` | Track D 스토리보드 | 같음 | Pro+ | P0 |
-| `/dashboard/music`, `/dashboard/music/[id]` | Track E 곡 | 같음 | Pro+ | P0 |
-| `/dashboard/playlists`, `/dashboard/playlists/[id]` | Track F 큐레이션 | 같음 | Pro+ | P0 |
-| `/dashboard/library` | 라이선스 곡 등록 | 같음 | Pro+ | P0 |
-| `/dashboard/channels` | 채널 연결·역할·쿼터 | owner/admin(변경), 전 역할(조회) | 전 플랜(수 제한) | P0 |
-| `/dashboard/publish`, `/dashboard/publish/[uploadId]` | 업로드 큐·캘린더, 검사·제휴 미리보기 | owner/admin/member | 전 플랜 | P0 |
-| `/dashboard/monetize` | 제휴 계정·링크·클릭 통계 | owner/admin(계정), member(링크) | 전 플랜 | P0 |
-| `/dashboard/monetize/landings` | 랜딩 관리 | owner/admin/member | Basic+ | P0 |
-| `/dashboard/monetize/link-in-bio` | 링크인바이오 편집 | owner/admin | 전 플랜 | P0 |
-| `/dashboard/monetize/disclosures` | 대가성 문구 편집(끄기 없음) | owner/admin | 전 플랜 | P0 |
-| `/dashboard/monetize/brandconnect` | 브랜드커넥트 클립 캠페인 목록(blog 스캔 결과 중 클립형), blog에서 넘어온 캠페인(handoff), 지원 확인·상태 | owner/admin/member | Pro+(`brandconnect_clip`) | P1 |
-| `/dashboard/channels/[id]/clip-consent` | 네이버 클립 자동 업로드 위험 고지·동의(01장 6.5절) | owner/admin | Pro+ | P0 |
-| `/dashboard/clients`, `/dashboard/clients/[id]` | 대행 고객 목록·상세(채널, 브랜드 가이드, 생산, 승인 대기, 리포트 탭) | owner/admin(쓰기), 전 역할(조회) | Advanced(`agency`) | P1 |
-| `/review/[token]` | 고객 승인 공개 화면(로그인 없음): 미리보기, 제목·설명·해시태그, 대가성 문구, 승인/수정 요청 | 토큰 소지자 | - | P1 |
-| `/dashboard/analytics` | 채널·게시물·제휴 성과 | 전 역할 | 전 플랜 | P1 |
-| `/dashboard/credits` | 잔액·원장 | 전 역할 | 전 플랜 | P0 |
-| `/dashboard/billing` | 플랜·결제·크레딧팩 | owner/admin | 전 플랜 | P0 |
-| `/dashboard/settings`, `/dashboard/settings/team` | 조직 설정, 팀 | owner/admin | 팀은 Advanced | P1 |
-| `/dashboard/automation` | 캔버스(저장만) | owner/admin/member | Advanced | P2 |
-| `/onboarding/terms` | 첫 OAuth 로그인 뒤 약관 동의(B부터, 7.3절). 이메일 가입자와 A 시드 계정은 건너뜀 | 본인 | 전 플랜 | P0 |
-| `/dashboard/settings/login-methods` | 로그인 방법 연결·해제(C부터, 7.4절) | 본인(전 역할) | 전 플랜 | P1 |
-| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만), 외부 서비스(DeepL, fal, Suno) 고지 | owner/admin | 전 플랜 | P0 |
-| 채팅 패널(모든 `/dashboard/*` 오른쪽 시트), `/dashboard/chat` | AI 채널 코치(텍스트·음성), 대화 목록 | 전 역할(대화는 본인만) | `features.ai_chat` | P0 |
-| `/dashboard/wiki`, `/dashboard/wiki/[...slug]`, `/dashboard/wiki/lint` | 채널·브랜드 가이드 위키(목록·검색, 페이지, 변경 이력, 점검 결과), 가이드 문서 업로드 | 읽기 전 역할, 쓰기·게시 owner/admin | 전 플랜 | P0 |
-| `/dashboard/settings/ai` | AI 처리 방식 변경, 기본 내레이션 엔진, 음성 처리 고지 다시 보기 | owner/admin | 전 플랜 | P0 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계). 프로덕션 빌드 제외 | 개발 환경만 | - | P0 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 마케팅 랜딩 | 고유(3D 히어로) | - | 공개 | - | P0 |
+| `/pricing` | 요금 | 고유 | - | 공개 | - | P0 |
+| `/login`, `/signup`, `/auth/callback` | 인증. 단계별 표시(7절): A 개발용 로그인 패널 + 상단 `MOCK AUTH · 로컬 전용` 배지(`/signup` 없음), B Google 버튼 + 이메일 폼(`/signup`·비밀번호 재설정은 B에서 생김), C 카카오·네이버 버튼. `/auth/callback`은 B부터 | 고유 | - | 공개 | - | P0 |
+| `/legal/terms`, `/legal/privacy` | 약관, 개인정보처리방침 | 고유 | - | 공개 | - | P0 |
+| `/landing/[slug]` | Track B 공개 랜딩 | 고유 | - | 공개 | 소유 조직 Basic+ | P0 |
+| `/lb/[handle]` | 링크인바이오 | 고유 | - | 공개 | 전 플랜 | P0 |
+| `/r/[code]` | 제휴 단축 링크(302) | 고유(화면 없음) | - | 공개 | - | P0 |
+| `/billing/success`, `/billing/fail` | 결제 복귀 | 고유 | V-K | 로그인 | - | P0 |
+| `/dashboard` | 홈(진행 중 잡, 크레딧, 채널 쿼터, 최근 산출물) | N + 오늘 처리할 일 | V-B | 전 역할 | 전 플랜 | P0 |
+| `/dashboard/radar` | 레이더(플레이보드/채널파인더/블링 탭) | B | V-D | 전 역할 | Basic+(탭별 플랜) | P0 |
+| `/dashboard/sources` | 소싱 목록·추가 | B | V-D | owner/admin/member | 전 플랜 | P0 |
+| `/dashboard/shorts`, `/dashboard/shorts/new`, `/dashboard/shorts/[id]` | Track A/B/C 생산 | B, I(new), N(상세) | - | owner/admin/member(viewer 읽기) | A 전 플랜, B/C Basic+ | P0 |
+| `/dashboard/longform`, `/dashboard/longform/[id]` | Track D 스토리보드 | B → J | - | 같음 | Pro+ | P0 |
+| `/dashboard/music`, `/dashboard/music/[id]` | Track E 곡 | M → G페이지 | - | 같음 | Pro+ | P0 |
+| `/dashboard/playlists`, `/dashboard/playlists/[id]` | Track F 큐레이션 | B → G페이지 | - | 같음 | Pro+ | P0 |
+| `/dashboard/library` | 라이선스 곡 등록 | B + G시트 | - | 같음 | Pro+ | P0 |
+| `/dashboard/channels` | 채널 연결·역할·쿼터 | B | V-D | owner/admin(변경), 전 역할(조회) | 전 플랜(수 제한) | P0 |
+| `/dashboard/publish`, `/dashboard/publish/[uploadId]` | 업로드 큐·캘린더, 검사·제휴 미리보기 | E + B → G페이지 | - | owner/admin/member | 전 플랜 | P0 |
+| `/dashboard/monetize` | 제휴 계정·링크·클릭 통계 | B | V-B | owner/admin(계정), member(링크) | 전 플랜 | P0 |
+| `/dashboard/monetize/landings` | 랜딩 관리 | B | - | owner/admin/member | Basic+ | P0 |
+| `/dashboard/monetize/link-in-bio` | 링크인바이오 편집 | J | - | owner/admin | 전 플랜 | P0 |
+| `/dashboard/monetize/disclosures` | 대가성 문구 편집(끄기 없음) | O | - | owner/admin | 전 플랜 | P0 |
+| `/dashboard/monetize/brandconnect` | 브랜드커넥트 클립 캠페인 목록(blog 스캔 결과 중 클립형), blog에서 넘어온 캠페인(handoff), 지원 확인·상태 | B + G시트 | - | owner/admin/member | Pro+(`brandconnect_clip`) | P1 |
+| `/dashboard/channels/[id]/clip-consent` | 네이버 클립 자동 업로드 위험 고지·동의(01장 6.5절) | 고유 | - | owner/admin | Pro+ | P0 |
+| `/dashboard/clients`, `/dashboard/clients/[id]` | 대행 고객 목록·상세(채널, 브랜드 가이드, 생산, 승인 대기, 리포트 탭) | B → G페이지 | V-D | owner/admin(쓰기), 전 역할(조회) | Advanced(`agency`) | P1 |
+| `/review/[token]` | 고객 승인 공개 화면(로그인 없음): 미리보기, 제목·설명·해시태그, 대가성 문구, 승인/수정 요청 | 고유 | - | 토큰 소지자 | - | P1 |
+| `/dashboard/analytics` | 채널·게시물·제휴 성과 | L | V-N(#68), V-B(#74) | 전 역할 | 전 플랜 | P1 |
+| `/dashboard/credits` | 잔액·원장 | B | V-C | 전 역할 | 전 플랜 | P0 |
+| `/dashboard/billing` | 플랜·결제·크레딧팩 | H | V-K | owner/admin | 전 플랜 | P0 |
+| `/dashboard/settings`, `/dashboard/settings/team` | 조직 설정, 팀 | H | - | owner/admin | 팀은 Advanced | P1 |
+| `/dashboard/automation` | 캔버스(저장만) | K | - | owner/admin/member | Advanced | P2 |
+| `/onboarding/terms` | 첫 OAuth 로그인 뒤 약관 동의(B부터, 7.3절). 이메일 가입자와 A 시드 계정은 건너뜀 | 고유 | - | 본인 | 전 플랜 | P0 |
+| `/dashboard/settings/login-methods` | 로그인 방법 연결·해제(C부터, 7.4절) | H | - | 본인(전 역할) | 전 플랜 | P1 |
+| `/onboarding/ai` | AI 처리 방식 선택(상용 AI 국외 이전 동의 또는 국내 오픈소스만), 외부 서비스(DeepL, fal, Suno) 고지 | 고유 | - | owner/admin | 전 플랜 | P0 |
+| 채팅 패널(모든 `/dashboard/*` 오른쪽 시트), `/dashboard/chat` | AI 채널 코치(텍스트·음성), 대화 목록 | A의 AI 패널 + B | V-L | 전 역할(대화는 본인만) | `features.ai_chat` | P0 |
+| `/dashboard/wiki`, `/dashboard/wiki/[...slug]`, `/dashboard/wiki/lint` | 채널·브랜드 가이드 위키(목록·검색, 페이지, 변경 이력, 점검 결과), 가이드 문서 업로드 | B + J(문서형) | - | 읽기 전 역할, 쓰기·게시 owner/admin | 전 플랜 | P0 |
+| `/dashboard/settings/ai` | AI 처리 방식 변경, 기본 내레이션 엔진, 음성 처리 고지 다시 보기 | H | - | owner/admin | 전 플랜 | P0 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크, 디자인 시스템 3단계). 프로덕션 빌드 제외 | 고유 | - | 개발 환경만 | - | P0 |
 
 대본 기획 미리보기(정밀 모드)는 별도 경로 없이 `/dashboard/shorts/new`와 `/dashboard/longform/[id]` 안의 패널이다(3.1절).
 

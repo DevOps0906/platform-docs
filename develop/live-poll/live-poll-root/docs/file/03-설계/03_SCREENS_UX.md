@@ -4,28 +4,30 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 랜딩 | 누구나 | - | P0 |
-| `/pricing` | 가격(베타 무료 + Phase 2 예고) | 누구나 | - | P1 |
-| `/login`, `/signup`, `/auth/callback` | 진행자 로그인/베타 가입. 인증 단계별 구성(7절): A 개발용 로그인 패널(페르소나 버튼, `/signup`은 `/login`으로 이동), B Google 버튼 + 이메일 폼, C 카카오·네이버 버튼 추가. `/auth/callback`은 B부터 OAuth 콜백(화면 없음, 이동만) | 누구나 | - | P0 |
-| `/events` | 행사 목록 | owner/admin/member/viewer | 모든 플랜 | P0 |
-| `/events/new` | 행사 만들기 | owner/admin/member | 모든 플랜 | P0 |
-| `/events/[id]/edit` | 행사 편집(문항, 선택지, 설정) | owner/admin/member | 모든 플랜 | P0 |
-| `/events/[id]/live` | 진행자 콘솔(진행, 결과, Q&A 모더레이션, 참가자) | owner/admin/member | 모든 플랜 | P0 |
-| `/events/[id]/results` | 결과 보존 화면 + CSV | owner/admin/member/viewer | `export_csv` | P1 |
-| `/settings` | 금칙어, 계정 | owner/admin | 모든 플랜 | P1 |
-| `/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제). C단계부터(7.4절) | 로그인한 진행자 본인(역할 무관) | 모든 플랜 | P1 |
-| `/present/[id]` | 발표 화면(전체화면) | 진행자 세션 | 모든 플랜 | P0 |
-| `/overlay/[id]?k=` | OBS 오버레이 | 오버레이 키 | `overlay` | P0 |
-| `/join` | 코드 입력 | 청중 | - | P0 |
-| `/e/[code]` | 청중 화면(입장 → 대기 → 투표 → 결과, Q&A 탭, 음성 질문 마이크) | 청중(참가자 쿠키) | `voice_question`(음성 마이크) | P0 |
-| `/onboarding` | AI 처리 방식 선택(국외 이전 동의). B단계부터 OAuth 첫 로그인이면 첫 단계에 베타 약관 동의(7절) | owner/admin | 모든 플랜 | P0 |
-| `/events/[id]/materials` | 행사 자료 업로드·색인 상태 | owner/admin/member | `materials_max_docs`, `materials_max_mb` | P1 |
-| `/wiki`, `/wiki/[...slug]` | 행사 위키 목록·페이지·이력·점검(진행자 전용) | owner/admin/member(편집), viewer(읽기) | `event_wiki` | P1 |
-| (패널) 어시스턴트 | 진행자 콘솔·편집 화면의 오른쪽 시트. 별도 경로 없음 | owner/admin/member | `ai_chat` | P0 |
-| (패널) Q&A AI 정리 | 진행자 콘솔의 Q&A 영역 안 패널. 별도 경로 없음 | owner/admin/member | `qna_assist` | P1 |
-| `/dev/components` | 컴포넌트 미리보기(개발 전용, 프로덕션 빌드 제외) | 개발자 | - | P0 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩 | 고유(3D 히어로) | - | 누구나 | - | P0 |
+| `/pricing` | 가격(베타 무료 + Phase 2 예고) | 고유 | - | 누구나 | - | P1 |
+| `/login`, `/signup`, `/auth/callback` | 진행자 로그인/베타 가입. 인증 단계별 구성(7절): A 개발용 로그인 패널(페르소나 버튼, `/signup`은 `/login`으로 이동), B Google 버튼 + 이메일 폼, C 카카오·네이버 버튼 추가. `/auth/callback`은 B부터 OAuth 콜백(화면 없음, 이동만) | 고유 | - | 누구나 | - | P0 |
+| `/events` | 행사 목록 | B | - | owner/admin/member/viewer | 모든 플랜 | P0 |
+| `/events/new` | 행사 만들기 | I | V-K(#23) | owner/admin/member | 모든 플랜 | P0 |
+| `/events/[id]/edit` | 행사 편집(문항, 선택지, 설정) | J | - | owner/admin/member | 모든 플랜 | P0 |
+| `/events/[id]/live` | 진행자 콘솔(진행, 결과, Q&A 모더레이션, 참가자) | 고유(진행자 콘솔) | V-A(#62) | owner/admin/member | 모든 플랜 | P0 |
+| `/events/[id]/results` | 결과 보존 화면 + CSV | L | V-B | owner/admin/member/viewer | `export_csv` | P1 |
+| `/settings` | 금칙어, 계정 | H | - | owner/admin | 모든 플랜 | P1 |
+| `/settings/login-methods` | 로그인 방법(연결된 제공자, 연결·해제). C단계부터(7.4절) | H | - | 로그인한 진행자 본인(역할 무관) | 모든 플랜 | P1 |
+| `/present/[id]` | 발표 화면(전체화면) | 고유(발표 화면) | V-F | 진행자 세션 | 모든 플랜 | P0 |
+| `/overlay/[id]?k=` | OBS 오버레이 | 고유(오버레이) | V-F(#33) | 오버레이 키 | `overlay` | P0 |
+| `/join` | 코드 입력 | 고유 | V-E | 청중 | - | P0 |
+| `/e/[code]` | 청중 화면(입장 → 대기 → 투표 → 결과, Q&A 탭, 음성 질문 마이크) | 고유(청중 화면) | V-E | 청중(참가자 쿠키) | `voice_question`(음성 마이크) | P0 |
+| `/onboarding` | AI 처리 방식 선택(국외 이전 동의). B단계부터 OAuth 첫 로그인이면 첫 단계에 베타 약관 동의(7절) | I | - | owner/admin | 모든 플랜 | P0 |
+| `/events/[id]/materials` | 행사 자료 업로드·색인 상태 | B + N | - | owner/admin/member | `materials_max_docs`, `materials_max_mb` | P1 |
+| `/wiki`, `/wiki/[...slug]` | 행사 위키 목록·페이지·이력·점검(진행자 전용) | B + J(문서형) | - | owner/admin/member(편집), viewer(읽기) | `event_wiki` | P1 |
+| (패널) 어시스턴트 | 진행자 콘솔·편집 화면의 오른쪽 시트. 별도 경로 없음 | A의 AI 패널 | V-L | owner/admin/member | `ai_chat` | P0 |
+| (패널) Q&A AI 정리 | 진행자 콘솔의 Q&A 영역 안 패널. 별도 경로 없음 | 고유(콘솔 Q&A 패널) | V-L | owner/admin/member | `qna_assist` | P1 |
+| `/dev/components` | 컴포넌트 미리보기(개발 전용, 프로덕션 빌드 제외) | 고유 | - | 개발자 | - | P0 |
 
 `/present`, `/overlay`, `/join`, `/e/*`, `/events/*`, `/wiki/*`, `/onboarding`는 `noindex`(분석:1261).
 

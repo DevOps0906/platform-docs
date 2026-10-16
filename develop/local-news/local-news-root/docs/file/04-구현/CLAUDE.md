@@ -10,7 +10,7 @@
 | 1-AI | AI·음성 작업이면 `AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 1-MT | 테넌트·브랜딩·도메인 작업이면 `Multi-tenant_Theming/README.md`, `03_CODE_STRUCTURE.md`, `05_RUNTIME_AND_DOMAINS.md` |
 | 2 | 이 폴더 `README.md`, `01_PRD.md`(기능 ID, 플랜 features 키) → `02_ARCHITECTURE.md`(경계, 잡, 9·10절) → `04_API.md`(계약) → `05_DATA_MODEL.md`(표, RLS, RPC, SQLSTATE) |
-| 3 | 맡은 모듈의 기획서 `modules/M<n>_*.md`와 개발서 `docs/develop/local-news/modules/M<n>_*.md` |
+| 3 | 맡은 모듈의 기획서 `modules/M<n>_*.md`와 개발서 `D:/WorkSpace/platform/docs/develop/local-news/modules/M<n>_*.md` |
 | 4 | 화면 작업이면 `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4절 템플릿 3종), `DASHBOARD_PATTERNS.md`. 독자 사이트에 3D 히어로를 쓰지 않는다(01장 D-11) |
 | 5 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 복사 금지(`07_SOURCE_MIGRATION.md` 4·6절) |
 

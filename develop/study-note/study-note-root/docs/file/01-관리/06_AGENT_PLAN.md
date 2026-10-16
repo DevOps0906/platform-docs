@@ -246,7 +246,7 @@ C1·C2는 P1이라 7절 완료 정의의 P0 표에 넣지 않고 각 작업 수�
 
 ### 8.5 첫 제품 메모: Stage A 시드 스크립트 실전 검증
 
-study-note는 개발 순서상 첫 번째 제품이다(`docs/develop/study-note/README.md:12` "공용 코어를 먼저 실전 검증하는 제품"). 그래서 NT-06-006의 `scripts/dev/seed-users.mjs`가 `AUTH_ROADMAP.md` 2.3절 시드 스크립트 계약(로컬 호스트 확인, `auth.admin.createUser` → 가입 트리거, `invite_member`·`accept_invite` 실제 RPC 경로, 멱등, 출력 표)과 2.4절 가드를 처음 실전에서 확인하는 곳이다.
+study-note는 개발 순서상 첫 번째 제품이다(`D:/WorkSpace/platform/docs/develop/study-note/README.md:12` "공용 코어를 먼저 실전 검증하는 제품"). 그래서 NT-06-006의 `scripts/dev/seed-users.mjs`가 `AUTH_ROADMAP.md` 2.3절 시드 스크립트 계약(로컬 호스트 확인, `auth.admin.createUser` → 가입 트리거, `invite_member`·`accept_invite` 실제 RPC 경로, 멱등, 출력 표)과 2.4절 가드를 처음 실전에서 확인하는 곳이다.
 
 | 할 일 | 기록 |
 |---|---|

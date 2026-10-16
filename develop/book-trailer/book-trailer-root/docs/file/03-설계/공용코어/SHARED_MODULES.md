@@ -15,8 +15,8 @@
 | `packages/core-voice` | 음성 어댑터(ElevenLabs SDK + 오픈소스 음성 서버 클라이언트), 19장 | TS |
 | `packages/ai-gateway` | Next.js `/api/ai/*`, `/api/voice/*` 공통 구현(서명 토큰 발급, 크레딧, 중계), 19장 | TS |
 | `services/ai-service` (제품별 `apps/api`) | FastAPI: llm 라우터, rag, wiki, graphs, tools, 19장 | Python/FastAPI |
-| `services/dify` (공용 1개) | 자체 호스팅 Dify, 설치 `docs/develop/_shared/dify/` | Docker |
-| `services/voice-server`, `services/llm-server` (공용 GPU) | 오픈소스 음성 서버, vLLM 서버, 설치 `docs/develop/_shared/voice/`, `llm/` | Docker/GPU |
+| `services/dify` (공용 1개) | 자체 호스팅 Dify, 설치 `D:/WorkSpace/platform/docs/develop/_shared/dify/` | Docker |
+| `services/voice-server`, `services/llm-server` (공용 GPU) | 오픈소스 음성 서버, vLLM 서버, 설치 `D:/WorkSpace/platform/docs/develop/_shared/voice/`, `llm/` | Docker/GPU |
 | `packages/core-jobs` | jobs 클라이언트와 워커 루프, storage 헬퍼 | TS |
 | `packages/core-affiliate` | affiliate 어댑터, 단축 링크, 대가성 문구 삽입 | TS |
 | `packages/automation-core` | React Flow 서버 실행 엔진, 노드 레지스트리, n8n/Make 브릿지 | TS |
@@ -501,8 +501,8 @@ export interface AffiliateApi {
 |---|---|---|---|---|---|
 | ai-gateway | _platform-core / 전 제품 | Next.js `/api/ai/chat`, `/api/ai/rag/*`, `/api/ai/wiki/*`, `/api/ai/graphs/*`. 인증, 엔타이틀먼트, 대화 매핑 기록, 크레딧 선차감과 정산, EdDSA 서명 토큰 발급, Dify·FastAPI 중계 | `ai_conversations`, `ai_messages`, `ai_usage`, `consume_credits`, `refund_credits` | 선차감 부족은 `CR001`. 실행 실패는 선차감 전액 `refund_credits`, 성공은 실제 사용량으로 정산(`ai_usage.settled_at`). 장애를 mock 응답으로 숨기지 않는다 | `AI_ARCHITECTURE.md` 1, 2, 7장 |
 | ai-service | _platform-core / ai-gateway, Dify | FastAPI `llm/`(라우터), `rag/`, `wiki/`, `graphs/`, `tools/`, `compliance/`. EdDSA 서명 토큰(공개키 검증) 또는 Dify 내부 키 + 대화 매핑만 신뢰 | `ai_providers`, `ai_model_prices`, `ai_routing_settings`, `ai_collections`, `ai_documents`, `ai_chunks`, `ai_runs`, `ai_run_steps`, `match_ai_chunks`, `resolve_ai_route`, `set_ai_routing`, `ai_filter_chain`, 스키마 `ai_runtime` | 제공자 오류는 체인의 다음으로 대체하고 `ai_usage.status='fallback'`. 모두 실패면 `error` + 환불. 강제 오픈소스 범위와 국외 이전 동의(`AI002`)가 없는 조직은 상용(국외)으로 대체하지 않음. hms는 전용 `hms-llm`, `hms-embed` 사용 | `AI_ARCHITECTURE.md` 4, 5, 6, 8장 |
-| dify | _platform-core(공용 자체 호스팅 1개) / ai-gateway | 제품별 Chatflow 앱. 토큰을 넘기지 않고 대화 매핑을 쓴다: Dify `user`=서버가 만든 `dify_user`, 입력 변수 `platform_conversation_id`, HTTP 요청 노드가 내부 키로 FastAPI `/tools/*` 호출 | 없음. 대화 id만 `ai_conversations.dify_conversation_id`에 연결 | Dify 장애 시 ai-gateway가 FastAPI `/tools/answer-direct`를 서명 토큰으로 직접 호출. Dify DB는 조직 데이터 저장소로 관리하고 조직 판단은 Dify에 두지 않는다. hms는 공용 Dify를 쓰지 않는다 | `AI_ARCHITECTURE.md` 3장, `docs/develop/_shared/dify/README.md` |
-| core-voice | _platform-core / 전 제품 | `VoiceAdapter.stt/tts` 하나의 인터페이스에 `elevenlabs`, `oss-voice` 구현 2개. Next.js `/api/voice/*` | `voice_sessions`, `voice_jobs`, `expire_voice_audio`, 버킷 `voice-audio`, `ai_usage`(kind `stt`, `tts`) | 체인 다음 제공자로 대체하고 `voice_jobs.fallback_from` 기록. 국외(ElevenLabs) 대체는 조직 동의가 있을 때만. 같은 목소리 연속 기능은 대체 없이 실패 + 환불. hms는 전용 `hms-voice` 서버만 사용 | `VOICE_ARCHITECTURE.md`, `docs/develop/_shared/voice/README.md` |
+| dify | _platform-core(공용 자체 호스팅 1개) / ai-gateway | 제품별 Chatflow 앱. 토큰을 넘기지 않고 대화 매핑을 쓴다: Dify `user`=서버가 만든 `dify_user`, 입력 변수 `platform_conversation_id`, HTTP 요청 노드가 내부 키로 FastAPI `/tools/*` 호출 | 없음. 대화 id만 `ai_conversations.dify_conversation_id`에 연결 | Dify 장애 시 ai-gateway가 FastAPI `/tools/answer-direct`를 서명 토큰으로 직접 호출. Dify DB는 조직 데이터 저장소로 관리하고 조직 판단은 Dify에 두지 않는다. hms는 공용 Dify를 쓰지 않는다 | `AI_ARCHITECTURE.md` 3장, `D:/WorkSpace/platform/docs/develop/_shared/dify/README.md` |
+| core-voice | _platform-core / 전 제품 | `VoiceAdapter.stt/tts` 하나의 인터페이스에 `elevenlabs`, `oss-voice` 구현 2개. Next.js `/api/voice/*` | `voice_sessions`, `voice_jobs`, `expire_voice_audio`, 버킷 `voice-audio`, `ai_usage`(kind `stt`, `tts`) | 체인 다음 제공자로 대체하고 `voice_jobs.fallback_from` 기록. 국외(ElevenLabs) 대체는 조직 동의가 있을 때만. 같은 목소리 연속 기능은 대체 없이 실패 + 환불. hms는 전용 `hms-voice` 서버만 사용 | `VOICE_ARCHITECTURE.md`, `D:/WorkSpace/platform/docs/develop/_shared/voice/README.md` |
 | llm-wiki | _platform-core / 전 제품, 개발 환경 | 제품 위키는 FastAPI `wiki/`(ingest, compile, query, lint), 개발 위키는 스킬 `.claude/skills/llm-wiki/` | `wiki_pages`, `wiki_links`, `wiki_revisions`(수정·삭제 불가, `purge_wiki_page`만 예외) | 위키가 원본과 충돌하면 원본이 정본. ingest 실패는 잡 재시도 후 `failed`, 사용량만큼만 차감 | `LLM_WIKI.md`, 베이스 `.claude/skills/llm-wiki/SKILL.md` |
 
 공통 규칙: 브라우저에서 Dify, FastAPI, LLM, 음성 제공자를 직접 호출하지 않는다. 서명 토큰은 EdDSA다. 개인키 `AI_TOKEN_PRIVATE_KEY`는 제품 Next.js만, FastAPI·음성 서버는 공개키(`AI_TOKEN_JWKS_URL`)만 갖는다(`SECURITY_BASELINE.md` 16장).
@@ -537,4 +537,4 @@ export async function finishLogin(appId: string, next: string | null): Promise<s
 
 ## 21. 공용 비즈니스 모듈 후보 (2026-10-15 제안, 미채택)
 
-리드·폼·퍼널(funnel), 알림(notify), Dify 공용 챗봇 위젯(chat-widget), 구글 시트 연동(sheets-sync), 분석(analytics), CRM, 운영 콘솔, 문의함, LMS, 예약·자원, 실험·쿠폰, 콘텐츠 블록 후보와 우선순위·DB 번호 범위(0100~0999)·로드맵은 `COMMON_MODULES_ROADMAP.md`에 있다. 채택 전에는 이 문서의 1~20장만 규격이다. 로그인 공용 모듈의 구현·전체 적용 절차는 `docs/develop/_shared/auth/README.md`.
+리드·폼·퍼널(funnel), 알림(notify), Dify 공용 챗봇 위젯(chat-widget), 구글 시트 연동(sheets-sync), 분석(analytics), CRM, 운영 콘솔, 문의함, LMS, 예약·자원, 실험·쿠폰, 콘텐츠 블록 후보와 우선순위·DB 번호 범위(0100~0999)·로드맵은 `COMMON_MODULES_ROADMAP.md`에 있다. 채택 전에는 이 문서의 1~20장만 규격이다. 로그인 공용 모듈의 구현·전체 적용 절차는 `D:/WorkSpace/platform/docs/develop/_shared/auth/README.md`.

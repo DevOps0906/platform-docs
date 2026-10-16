@@ -56,7 +56,7 @@ interface VoiceAdapter {
 | TTS | 상업 이용이 허용되고 한국어를 지원하는 모델만. 구현 시 라이선스 원문과 품질을 확인해 `core.ai_model_prices.license`에 기록 |
 | 금지 | 비상업 라이선스 모델은 유료 서비스에 쓰지 않는다. 예: F5-TTS 공개 가중치(CC-BY-NC), Coqui XTTS(CPML). 워크스페이스의 `flora/f5-tts`는 내부 실험용으로만 쓴다 |
 | 인증 | Next.js가 발급한 EdDSA 서명 토큰(`AI_ARCHITECTURE.md` 2절, `scope=voice`, `aud=platform-ai:<app>`)만 받는다. 음성 서버는 공개키(JWKS)로 검증만 하고 공유 비밀키를 갖지 않는다 |
-| 배포 | Docker + NVIDIA GPU(NVIDIA Container Toolkit). Windows 개발은 WSL2 + Docker Desktop. 설치 문서 `docs/develop/_shared/voice/` |
+| 배포 | Docker + NVIDIA GPU(NVIDIA Container Toolkit). Windows 개발은 WSL2 + Docker Desktop. 설치 문서 `D:/WorkSpace/platform/docs/develop/_shared/voice/` |
 | TTS 후보 | 아래 표. 후보일 뿐이며 채택 전에 라이선스 원문과 한국어 품질을 확인한다 |
 | 제한 | 요청당 최대 길이(STT 10분, TTS 5,000자, 제안), 파일 크기 50MB, 조직·사용자 레이트 리밋 |
 

@@ -47,7 +47,7 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 | flora v1 | `docs/reference/reviews/flora.md` | 약 55%(`docs/reference/reviews/flora.md:23`) | export 경로 교훈(WeasyPrint 단일화, Noto CJK 폰트), 업로드 파서 | Word 호환 HTML(.doc), Typst, 페르소나, n8n 전역 키 |
 | SellingDocs | `docs/reference/reviews/SellingDocs.md` | 약 35%(`docs/reference/reviews/SellingDocs.md:20`) | "구조화 JSON → HTML 템플릿 → PDF" 파이프라인, 크레딧 원자 차감 교훈, 챕터(섹션) 분리 생성 | 단일 JSON 일괄 생성, Next/Vercel 안의 WeasyPrint |
 | FortuneDocs | `docs/reference/reviews/FortuneDocs.md` | 약 40%(`docs/reference/reviews/FortuneDocs.md:21`) | "결정적 값은 서버 계산, LLM은 해석만" 원칙(`:47`), 구조화 리포트 → PDF | 만세력·사주 도메인 |
-| platform-docs 문서 표준 | `docs/file/03-설계/공용코어/DOC_TEMPLATE.md`, `docs/develop/_shared/tools/build_root.py`, `D:/WorkSpace/platform/docs/products/_STRUCTURE_CHECK.md` | 기획만 | `req_spec`·`sow`·설계서류의 장 구조와 표 컬럼, 산출물 ID·등록부(상태·버전·상위 ID) 모델, 품질 점검표 → lint 규칙 | 내부 개발 전용 표기(모델 배정, `경로:줄` 근거) |
+| platform-docs 문서 표준 | `docs/file/03-설계/공용코어/DOC_TEMPLATE.md`, `D:/WorkSpace/platform/docs/develop/_shared/tools/build_root.py`, `D:/WorkSpace/platform/docs/products/_STRUCTURE_CHECK.md` | 기획만 | `req_spec`·`sow`·설계서류의 장 구조와 표 컬럼, 산출물 ID·등록부(상태·버전·상위 ID) 모델, 품질 점검표 → lint 규칙 | 내부 개발 전용 표기(모델 배정, `경로:줄` 근거) |
 | admin-suite ERP | `D:/WorkSpace/platform/docs/products/admin-suite/`, `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1600_erp.sql` | 기획만 | 연동 대상 스키마(`erp.products`, `erp.sales`, `erp.employees`) | 없음(읽기만) |
 
 ## 4. 문서 목록

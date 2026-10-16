@@ -6,29 +6,31 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 랜딩 | 비로그인 | 전체 | P0 |
-| `/signup`, `/login` | 가입, 로그인. 인증 단계별 표시(7절): A `/login` 개발용 패널만(로컬 전용, `/signup` 없음), B Google 버튼 + 이메일 폼(`/signup`, 비밀번호 재설정), C 카카오·네이버 버튼 추가. `/auth/callback`(B부터, 화면 없음, 7.2절) | 비로그인 | 전체 | P0(A·B), C는 P1 |
-| `/verify` | 이메일 인증 안내(Stage B부터. A의 시드 계정은 인증 완료 상태라 보이지 않는다) | 로그인 | 전체 | P0 |
-| `/app` | 작업실(입력 + 결과 카드) | owner/admin/member | free, pro | P0 |
-| `/app/history` | 보관함 목록, 검색, 휴지통 탭 | 같음 | 같음 | P1 |
-| `/app/history/[id]` | 일지 상세(카드 3장 복원) | 같음 | 같음 | P1 |
-| `/app/settings` | 모델 3종, 테마, 데이터 내보내기, 계정 삭제 | 같음 | 등급별 모델 | P0 |
-| `/app/billing` | 잔액, 사용 내역, 플랜/크레딧팩 구매 | owner | free, pro | P1(Phase 2 결제) |
-| `/admin/models` | 모델 카탈로그 관리 | platform_admin | - | P1(Phase 2) |
-| `/terms`, `/privacy` | 약관, 개인정보처리방침 | 전체 | - | P0 |
-| `/onboarding/ai` | AI 처리 방식과 국외 이전 동의 | 로그인(이메일 인증 직후) | 전체 | P0 |
-| `/app/notes` | 노트·교재 목록, 업로드, 색인 상태 | owner/admin/member | free, pro | P0 |
-| `/app/notes/[id]` | 노트 상세(요약, 연결된 개념, 퀴즈, 이 노트에 대해 묻기) | 같음 | 같음 | P0 |
-| `/app/subjects` | 과목 목록, 과목 만들기 | 같음 | 같음 | P0 |
-| `/app/subjects/[sid]` | 과목 홈(위키 목차, 문서, 최근 정리) | 같음 | 같음 | P0 |
-| `/app/subjects/[sid]/wiki/[...slug]` | 위키 페이지 보기·편집·이력·백링크 | 같음 | 같음 | P0 |
-| `/app/subjects/[sid]/lint` | 위키 점검 결과 | 같음 | 같음 | P1 |
-| `/app/quiz/[run_id]` | 퀴즈 풀이(텍스트·음성) | 같음 | 같음 | P0 |
-| `/app/lecture` | 강의 녹음 → 노트 생성 | 같음 | `lecture_note` | P0 |
-| `/app/chat` | 대화 목록(채팅 패널은 `/app` 어디서나 열린다) | 같음 | `ai_chat` | P0 |
-| `/dev/components` | 컴포넌트 미리보기(디자인 시스템 확인용, 개발 환경만) | 개발자 | - | P0 |
+화면 표의 `패턴` 열은 `_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 랜딩 | 고유(3D 히어로) | - | 비로그인 | 전체 | P0 |
+| `/signup`, `/login` | 가입, 로그인. 인증 단계별 표시(7절): A `/login` 개발용 패널만(로컬 전용, `/signup` 없음), B Google 버튼 + 이메일 폼(`/signup`, 비밀번호 재설정), C 카카오·네이버 버튼 추가. `/auth/callback`(B부터, 화면 없음, 7.2절) | 고유 | - | 비로그인 | 전체 | P0(A·B), C는 P1 |
+| `/verify` | 이메일 인증 안내(Stage B부터. A의 시드 계정은 인증 완료 상태라 보이지 않는다) | 고유 | - | 로그인 | 전체 | P0 |
+| `/app` | 작업실(입력 + 결과 카드) | 고유(입력 + 결과 카드) | V-L(#53) | owner/admin/member | free, pro | P0 |
+| `/app/history` | 보관함 목록, 검색, 휴지통 탭 | B | - | 같음 | 같음 | P1 |
+| `/app/history/[id]` | 일지 상세(카드 3장 복원) | G | - | 같음 | 같음 | P1 |
+| `/app/settings` | 모델 3종, 테마, 데이터 내보내기, 계정 삭제 | H | - | 같음 | 등급별 모델 | P0 |
+| `/app/billing` | 잔액, 사용 내역, 플랜/크레딧팩 구매 | H | - | owner | free, pro | P1(Phase 2 결제) |
+| `/admin/models` | 모델 카탈로그 관리 | B + G시트 | - | platform_admin | - | P1(Phase 2) |
+| `/terms`, `/privacy` | 약관, 개인정보처리방침 | 고유 | - | 전체 | - | P0 |
+| `/onboarding/ai` | AI 처리 방식과 국외 이전 동의 | 고유 | - | 로그인(이메일 인증 직후) | 전체 | P0 |
+| `/app/notes` | 노트·교재 목록, 업로드, 색인 상태 | B + N(색인) | - | owner/admin/member | free, pro | P0 |
+| `/app/notes/[id]` | 노트 상세(요약, 연결된 개념, 퀴즈, 이 노트에 대해 묻기) | G + A의 AI 패널 | V-L(#53) | 같음 | 같음 | P0 |
+| `/app/subjects` | 과목 목록, 과목 만들기 | B | - | 같음 | 같음 | P0 |
+| `/app/subjects/[sid]` | 과목 홈(위키 목차, 문서, 최근 정리) | G | - | 같음 | 같음 | P0 |
+| `/app/subjects/[sid]/wiki/[...slug]` | 위키 페이지 보기·편집·이력·백링크 | J(문서형) | - | 같음 | 같음 | P0 |
+| `/app/subjects/[sid]/lint` | 위키 점검 결과 | B | - | 같음 | 같음 | P1 |
+| `/app/quiz/[run_id]` | 퀴즈 풀이(텍스트·음성) | 고유(퀴즈 풀이) | - | 같음 | 같음 | P0 |
+| `/app/lecture` | 강의 녹음 → 노트 생성 | 고유(녹음) + N | - | 같음 | `lecture_note` | P0 |
+| `/app/chat` | 대화 목록(채팅 패널은 `/app` 어디서나 열린다) | F 변형(대화 목록) | - | 같음 | `ai_chat` | P0 |
+| `/dev/components` | 컴포넌트 미리보기(디자인 시스템 확인용, 개발 환경만) | 고유 | - | 개발자 | - | P0 |
 
 ## 2. 사용자 플로우
 

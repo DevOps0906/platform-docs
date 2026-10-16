@@ -4,36 +4,38 @@
 
 ## 1. 정보 구조와 화면 목록
 
-| 경로 | 화면 | 역할 접근 | 플랜 접근 | 우선순위 |
-|---|---|---|---|---|
-| `/` | 초대 전용 안내(noindex) | 누구나 | - | P1 |
-| `/login` | 로그인. 단계별(7절): A 개발용 로그인 패널(시드 페르소나, 로컬 전용) / B Google + 이메일+비밀번호(매직링크는 01_PRD D-22) / C 카카오·네이버(P2 선택) | 누구나 | - | P0 |
-| `/invite/[token]` | 초대 수락(가입 또는 로그인 후 수락). A는 시드가 출력한 초대 링크 + 개발용 패널 로그인, B는 "Google로 계속하기" 또는 이메일 가입·로그인(7절). 토큰 흐름은 단계와 무관 | 누구나 | - | P0 |
-| `/onboarding/disclaimer` | 투자 고지, AI 국외 이전 동의 | 로그인 + 베타 | beta | P0 |
-| `/dashboard` | 포트폴리오 홈(증권사/Total 탭, 장 시간 바, KPI, 보유 그리드, 우측 AI 패널 요약) | owner/member | beta | P0 |
-| `/dashboard?symbol=<code>` | 종목 상세 모달 | owner/member | beta | P1 |
-| `/trades` | 매매 일지(필터, 메모, CSV) | owner/member | beta | P1 |
-| `/ai` | AI 진단 실행과 이력 | owner/member | beta | P0 |
-| `/ai/[id]` | 진단 리포트 상세 | owner/member | beta | P1 |
-| `/settings/connections` | 증권사 연결 추가/해제/동기화 | owner/admin(추가·해제), member(조회) | beta | P0 |
-| `/settings/account` | 계정, 동의 이력, 데이터 내려받기, 탈퇴 | 본인 | beta | P1 |
-| `/legal/terms`, `/legal/privacy`, `/legal/disclaimer` | 약관, 처리방침, 투자 고지 전문 | 누구나 | - | P0 |
-| `/admin/beta` | 초대 발급/회수, 베타 회수 | platform_admin | - | P1 |
-| `/admin/ops` | 동기화 오류, 전역 킬 스위치 | platform_admin | - | P1 |
-| `/research` | 리서치 요약(종목·기간 선택, 진행, 결과, 이력) | owner/member | beta(`ai_chat`) | P0 |
-| `/research/[id]` | 요약 결과 상세(출처, 공시 접수일) | owner/member | beta | P1 |
-| (전역) 채팅 패널 | 공시·용어 도우미. 대시보드 우측 시트(375px에서 전체 화면). 텍스트 + 음성 | owner/member | beta(`ai_chat`, `voice_chat`) | P0 |
-| `/chat` | 지난 대화 목록 | owner/member | beta | P1 |
-| `/briefing` | 브리핑 생성과 낭독 | owner/member | beta(`briefing`) | P1 |
-| `/wiki`, `/wiki/[...slug]` | 주식 용어·공시 해설 위키(로그인한 베타 사용자만, D-16) | owner/member | beta | P1 |
-| `/admin/knowledge` | 해설집 업로드·공시 색인 상태 | platform_admin | - | P1 |
-| `/admin/wiki`, `/admin/wiki/lint` | 위키 검수·게시·이력, 주간 점검 결과 | platform_admin | - | P1 |
-| `/dev/components` | 컴포넌트 미리보기(라이트/다크 스크린샷용, 프로덕션 빌드에서 제외) | 개발 | - | P0 |
-| `/leaderboard` | 내부 리더보드(Phase 2) | owner/member | pro(`leaderboard`) | P2 |
-| `/ai/compare` | 3사 비교(Phase 2) | owner/member | pro(`ai_compare`) | P2 |
-| `/settings/billing` | 플랜과 결제(Phase 2) | owner | - | P2 |
-| `/orders` | 모의주문 내역과 주문 패널(Phase 3) | owner/admin | pro(`paper_orders`) | P2 |
-| `/settings/limits` | 주문 한도, 킬 스위치(Phase 3) | owner/admin | pro | P2 |
+화면 표의 `패턴` 열은 `docs/file/03-설계/디자인/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `D:/WorkSpace/platform/docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+
+| 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
+|---|---|---|---|---|---|---|
+| `/` | 초대 전용 안내(noindex) | 고유(3D 히어로) | - | 누구나 | - | P1 |
+| `/login` | 로그인. 단계별(7절): A 개발용 로그인 패널(시드 페르소나, 로컬 전용) / B Google + 이메일+비밀번호(매직링크는 01_PRD D-22) / C 카카오·네이버(P2 선택) | 고유 | - | 누구나 | - | P0 |
+| `/invite/[token]` | 초대 수락(가입 또는 로그인 후 수락). A는 시드가 출력한 초대 링크 + 개발용 패널 로그인, B는 "Google로 계속하기" 또는 이메일 가입·로그인(7절). 토큰 흐름은 단계와 무관 | 고유 | - | 누구나 | - | P0 |
+| `/onboarding/disclaimer` | 투자 고지, AI 국외 이전 동의 | 고유 | - | 로그인 + 베타 | beta | P0 |
+| `/dashboard` | 포트폴리오 홈(증권사/Total 탭, 장 시간 바, KPI, 보유 그리드, 우측 AI 패널 요약) | C → B | V-C(#9) | owner/member | beta | P0 |
+| `/dashboard?symbol=<code>` | 종목 상세 모달 | G(종목 모달) | V-A(차트 영역만) | owner/member | beta | P1 |
+| `/trades` | 매매 일지(필터, 메모, CSV) | B | V-D | owner/member | beta | P1 |
+| `/ai` | AI 진단 실행과 이력 | N + B(이력) | V-L(#54) | owner/member | beta | P0 |
+| `/ai/[id]` | 진단 리포트 상세 | G | V-L(#54) | owner/member | beta | P1 |
+| `/settings/connections` | 증권사 연결 추가/해제/동기화 | H + N(동기화) | - | owner/admin(추가·해제), member(조회) | beta | P0 |
+| `/settings/account` | 계정, 동의 이력, 데이터 내려받기, 탈퇴 | H | - | 본인 | beta | P1 |
+| `/legal/terms`, `/legal/privacy`, `/legal/disclaimer` | 약관, 처리방침, 투자 고지 전문 | 고유 | - | 누구나 | - | P0 |
+| `/admin/beta` | 초대 발급/회수, 베타 회수 | B | V-D | platform_admin | - | P1 |
+| `/admin/ops` | 동기화 오류, 전역 킬 스위치 | N | V-D | platform_admin | - | P1 |
+| `/research` | 리서치 요약(종목·기간 선택, 진행, 결과, 이력) | N + B(이력) | V-L(#54) | owner/member | beta(`ai_chat`) | P0 |
+| `/research/[id]` | 요약 결과 상세(출처, 공시 접수일) | G | V-L(#54) | owner/member | beta | P1 |
+| (전역) 채팅 패널 | 공시·용어 도우미. 대시보드 우측 시트(375px에서 전체 화면). 텍스트 + 음성 | A의 AI 패널 | V-L(#54) | owner/member | beta(`ai_chat`, `voice_chat`) | P0 |
+| `/chat` | 지난 대화 목록 | B | V-L(#54) | owner/member | beta | P1 |
+| `/briefing` | 브리핑 생성과 낭독 | N + 고유(플레이어) | V-L(#54) | owner/member | beta(`briefing`) | P1 |
+| `/wiki`, `/wiki/[...slug]` | 주식 용어·공시 해설 위키(로그인한 베타 사용자만, D-16) | B → G페이지 | - | owner/member | beta | P1 |
+| `/admin/knowledge` | 해설집 업로드·공시 색인 상태 | B + N | V-D | platform_admin | - | P1 |
+| `/admin/wiki`, `/admin/wiki/lint` | 위키 검수·게시·이력, 주간 점검 결과 | B + J(문서형) | V-D | platform_admin | - | P1 |
+| `/dev/components` | 컴포넌트 미리보기(라이트/다크 스크린샷용, 프로덕션 빌드에서 제외) | 고유 | - | 개발 | - | P0 |
+| `/leaderboard` | 내부 리더보드(Phase 2) | B | V-D | owner/member | pro(`leaderboard`) | P2 |
+| `/ai/compare` | 3사 비교(Phase 2) | L | V-L(#54) | owner/member | pro(`ai_compare`) | P2 |
+| `/settings/billing` | 플랜과 결제(Phase 2) | H | V-K | owner | - | P2 |
+| `/orders` | 모의주문 내역과 주문 패널(Phase 3) | B + 주문 패널 | V-K | owner/admin | pro(`paper_orders`) | P2 |
+| `/settings/limits` | 주문 한도, 킬 스위치(Phase 3) | H | - | owner/admin | pro | P2 |
 
 ## 2. 사용자 플로우
 
