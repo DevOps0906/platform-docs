@@ -66,7 +66,7 @@ AI 요약: 원고를 1회 분석해 장 요약·인물·주제와 RAG 색인을 
 | `supabase/` | `monolith/migrations/0001_core_lite.sql`(코어 축소판), `0002_trailer_domain.sql`(도메인), `monolith/seed.sql`(앱·플랜·크레딧팩·카탈로그), `monolith/tests/rls_smoke.sql`(RLS·권한 회귀 124항목) + `run-smoke.mjs`(PGlite 러너, `--target mod\|mono`) |
 | `../_supabase-modular/migrations/2600_trailer.sql` | 모듈러 조각(스키마 `trailer`, 번호 2600~2699). 모놀리스 0002와 같은 도메인 모델 |
 
-관련 폴더: `Price_Plans/book-trailer/PRICE_PLAN.md`(요금·판매 모델), `develop/book-trailer/`(개발 착수 가이드, 설치 스크립트, 개발 루트 번들).
+관련 폴더: `Price_Plans/book-trailer/`(요금·판매 모델 `PRICE_PLAN.md`, 개발 전 대행 검증 키트 `01`~`04`), `develop/book-trailer/`(개발 착수 가이드, 설치 스크립트, 개발 루트 번들).
 
 ## 5. DB 구조 선택
 
