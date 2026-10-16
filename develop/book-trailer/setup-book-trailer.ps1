@@ -56,7 +56,7 @@ else {
   } finally { Pop-Location }
 }
 
-Say "[3/6] $Product-root 내용물 붙여넣기(docs, supabase, infra, .claude)"
+Say "[3/6] $Product-root 내용물 붙여넣기(docs, supabase, infra)"
 if ($DryRun) { Say "  (dry-run) Copy-Item `"$Pkg\*`" `"$Target`" -Recurse -Force" }
 else { Copy-Item -Path (Join-Path $Pkg '*') -Destination $Target -Recurse -Force }
 # 숨김 폴더(.claude)는 와일드카드에 포함되지 않을 수 있어 따로 복사한다
@@ -87,7 +87,7 @@ function Set-AgentModel([string]$File, [string]$Model) {
 }
 $Agents = Join-Path $Target '.claude\agents'
 if ($DryRun) {
-  Say '  (dry-run) .claude\agents\plan-challenger.md  model: opus -> model: claude-fable-5-1'
+  Say '  (dry-run) .claude\agents\plan-challenger.md  model: claude-fable-5-1 (베이스 기본값과 같음, 확인용 재지정)'
   Say '  (dry-run) .claude\agents\{nextjs,fastapi,supabase}-expert.md  frontmatter 에 model: sonnet 추가'
 } else {
   Set-AgentModel (Join-Path $Agents 'plan-challenger.md') 'claude-fable-5-1'

@@ -7,7 +7,7 @@
 # 하는 일(순서대로)
 #   1) 베이스 원본을 개발 폴더로 복사한다(원본은 읽기만 한다)
 #   2) 복사본 안의 init-project.sh 로 초기화한다(--reset-git: 템플릿 git 이력을 끊는다)
-#   3) stock-dashboard-root 안의 내용물(docs, supabase, infra, .claude)을 복사본 루트에 붙여넣는다
+#   3) stock-dashboard-root 안의 내용물(docs, supabase, infra)을 복사본 루트에 붙여넣는다
 #   4) 복사본의 docs/etc(베이스 설명서 PDF)를 지운다
 #   5) 에이전트 모델을 주 Opus / 부 Sonnet / 고문 Fable 구성으로 맞춘다(복사본의 .claude/agents 만)
 #   6) 무결성 점검을 다시 실행한다
@@ -54,7 +54,7 @@ else
   ( cd "$TARGET" && bash init-project.sh "$PRODUCT" --reset-git ) || fail "init-project.sh 실패. 위 메시지를 확인하세요"
 fi
 
-say "[3/6] $PRODUCT-root 내용물 붙여넣기(docs, supabase, infra, .claude)"
+say "[3/6] $PRODUCT-root 내용물 붙여넣기(docs, supabase, infra)"
 run "cp -r \"$PKG/.\" \"$TARGET/\""
 
 say "[4/6] docs/etc 삭제(베이스 설명서 PDF, 제품 개발에 쓰지 않음)"
@@ -62,7 +62,7 @@ run "rm -rf \"$TARGET/docs/etc\""
 
 say "[5/6] 에이전트 모델 지정: plan-challenger=Fable(고문), 도메인 expert 3개=Sonnet(부)"
 if [ "$DRY" = 1 ]; then
-  say "  (dry-run) .claude/agents/plan-challenger.md  model: opus -> model: claude-fable-5-1"
+  say "  (dry-run) .claude/agents/plan-challenger.md  model: claude-fable-5-1 (베이스 기본값과 같음, 확인용 재지정)"
   say "  (dry-run) .claude/agents/{nextjs,fastapi,supabase}-expert.md  frontmatter 에 model: sonnet 추가"
 else
   PYTHONUTF8=1 "$PY" - "$TARGET/.claude/agents" <<'PY'

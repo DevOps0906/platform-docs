@@ -65,5 +65,5 @@ docs/wiki/
 | 갱신 시점 | task 완료 시 오케스트레이터가 스킬을 실행해 관련 modules·decisions 페이지와 log를 갱신한다. 산출물이 바뀌면 sources 페이지를 갱신한다 |
 | 점검 | 웨이브가 끝날 때 lint를 실행해 낡은 페이지와 깨진 링크를 정리한다 |
 | 초기 페이지 | `docs/develop/<제품>/<제품>-root/docs/wiki/`에 기획서로부터 만든 초기 페이지를 넣어 둔다 |
-| 스킬 | `.claude/skills/llm-wiki/SKILL.md`: ingest·query·lint 절차와 페이지 템플릿. 원본은 `docs/develop/_shared/llm-wiki/` |
+| 스킬 | `.claude/skills/llm-wiki/SKILL.md`: ingest·query·lint 절차와 페이지 템플릿. 정본은 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)의 `.claude/skills/llm-wiki/`와 `docs/wiki/WIKI_SCHEMA.md`이며, 개발 폴더는 setup이 베이스를 복사할 때 함께 받는다 |
 | 비밀 | 키·토큰 값, 개인정보를 위키에 쓰지 않는다 |

@@ -24,7 +24,7 @@ D:\WorkSpace\platform\docs\develop\nomad-docs\        platform에 남는 안내�
                 │ setup 스크립트가 복사(nomad-docs-root 폴더 자체가 아니라 안의 내용물)
                 ▼
 D:\WorkSpace\DEV\nomad-docs\                            베이스를 복사해 만든 개발 폴더
-├── docs\  supabase\  infra\  .claude\skills\llm-wiki\  ← nomad-docs-root에서 들어온 것(기존 폴더와 합쳐짐)
+├── docs\  supabase\  infra\  ← nomad-docs-root에서 들어온 것(기존 폴더와 합쳐짐)
 └── apps\  _shared\  _templates\  .claude\agents\  init-project.sh ...  ← 베이스에 원래 있던 것
 ```
 
@@ -119,7 +119,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 
 **주의: 반드시 복사본 안의 스크립트를 실행해야 합니다.** 스크립트는 자기 파일이 있는 폴더를 초기화합니다(`init-project.sh:10`, `ROOT=스크립트 위치`). 베이스 원본 폴더의 스크립트를 실행하면 원본이 초기화되고, `--reset-git`이면 원본의 git 이력이 지워집니다.
 
-**고문 모델 바꾸기**: 스크립트 5단계는 고문(`plan-challenger`)을 Fable(`claude-fable-5-1`)로 지정합니다. 고문을 Opus로 쓰려면 setup이 끝난 뒤 복사본의 `.claude/agents/plan-challenger.md` frontmatter를 `model: opus`(베이스 원래 값)로 되돌리면 됩니다. 이 문서의 "고문(Fable)"은 그 경우 "고문(Opus)"으로 읽습니다. claude-main·claude-reviewer의 모델 핀은 바꾸지 않습니다(6절).
+**고문 모델 바꾸기**: 스크립트 5단계는 고문(`plan-challenger`)을 Fable(`claude-fable-5-1`)로 지정합니다. 고문을 Opus로 쓰려면 setup이 끝난 뒤 복사본의 `.claude/agents/plan-challenger.md` frontmatter를 `model: claude-opus-5-5`로 바꾸면 됩니다(베이스 기본값도 Fable이며, 5단계는 같은 값을 다시 지정합니다). 이 문서의 "고문(Fable)"은 그 경우 "고문(Opus)"으로 읽습니다. claude-main·claude-reviewer의 모델 핀은 바꾸지 않습니다(6절).
 
 ## 4. 2단계: 묶음 붙여넣기 (setup 스크립트가 처리)
 
@@ -152,7 +152,7 @@ setup 스크립트는 다음 6단계를 순서대로 처리합니다. 대상 폴
 | `docs/products/nomad-docs/supabase/monolith/migrations/0002_nomad_docs_domain.sql` | `supabase/migrations/20261013000002_nomad_docs_domain.sql` | - | DB(도메인, 테이블 28·뷰 1·함수 34, 카탈로그 seed 포함) |
 | `docs/products/nomad-docs/supabase/monolith/seed.sql` | `supabase/seed.sql` | - | DB(apps 1행, 플랜 free/pro/team, 크레딧팩 3종, AI 라우팅 13행) |
 | `docs/products/nomad-docs/supabase/monolith/tests/rls_smoke.sql` | `supabase/tests/rls_smoke.sql` | - | RLS·권한 회귀 105항목 |
-| `docs/develop/_shared/llm-wiki/` | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 |
+| (베이스 제공) | `docs/wiki/WIKI_SCHEMA.md`, `.claude/skills/llm-wiki/SKILL.md` | - | 개발 위키 규칙·스킬. 묶음에 없고 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)가 제공한다 |
 | (생성) 개발 위키 초기 페이지 | `docs/wiki/index.md`, `log.md`, `sources/*.md` | - | 산출물 요약 24개 |
 | (생성) Dify 앱 설명서 | `infra/dify/README.md` | - | 채팅 앱 설정 |
 
@@ -179,7 +179,7 @@ D:\WorkSpace\DEV\nomad-docs\
 │   ├── commands\agent-check.md       [베이스]
 │   └── skills\
 │       ├── deliverable-first, nextjs-expert, fastapi-expert, supabase-expert, frontend-design, ui-ux-pro-max   [베이스]
-│       └── llm-wiki\SKILL.md         [묶음] 개발 위키 스킬
+│       └── llm-wiki\SKILL.md         [베이스] 개발 위키 스킬
 ├── _shared\
 │   ├── project-profile.md            [베이스] 6절에서 채움
 │   ├── orchestrator-rules.md  routing.md  approval-policy.md  system-invariants.md  design-basis.md  learnings.md   [베이스]
@@ -210,7 +210,7 @@ D:\WorkSpace\DEV\nomad-docs\
 │   │   │   ├── 공용코어\ 9개(AUTH_ROADMAP 포함)            [묶음]
 │   │   │   └── 디자인\ 5개 + DESIGN.md, COMPONENTS.md     [묶음]
 │   │   └── 04-구현\CLAUDE.md, 07_SOURCE_MIGRATION.md     [묶음]
-│   └── wiki\WIKI_SCHEMA.md, index.md, log.md, sources\  [묶음] 개발 위키(sources 24개)
+│   └── wiki\index.md, log.md, sources\  [묶음] 개발 위키(sources 24개) · WIKI_SCHEMA.md [베이스]
 ├── infra\dify\README.md              [묶음] 채팅 앱 설정 설명서(DSL은 DC-06-034가 docs-chat.yml로 추가)
 ├── supabase\
 │   ├── README.md                     [베이스]

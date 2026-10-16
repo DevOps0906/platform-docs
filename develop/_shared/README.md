@@ -9,5 +9,5 @@
 | [`dify/README.md`](dify/README.md) | 공용 Dify(AI 채팅·운영 서버) 설치·운영 가이드. 제품마다 앱 1개를 만든다 |
 | [`llm/README.md`](llm/README.md) | LLM 키, 오픈소스 LLM 서버(vLLM), 기능별 모델 라우팅 설정(상용·오픈소스 이원화) |
 | [`voice/README.md`](voice/README.md) | 공용 음성 서버와 ElevenLabs 설정(음성 대화, STT·TTS) |
-| [`llm-wiki/`](llm-wiki/) | 개발용 프로젝트 위키 스킬 원본(`SKILL.md`)과 규칙(`WIKI_SCHEMA.md`). 각 제품 묶음의 `.claude/skills/llm-wiki/`로 복사된다 |
+| (이동) `llm-wiki` | 개발 위키 스킬(`SKILL.md`)·규칙(`WIKI_SCHEMA.md`)의 정본은 멀티에이전트 베이스(`MultiAgent-Service-Fullstack-Tree-Framwork`)로 옮겼다(2026-10-16). 묶음에 넣지 않는다 |
 | [`tools/build_root.py`](tools/build_root.py) | 제품별 `<제품>-root/` 묶음을 다시 만드는 스크립트. 기획서(`products/`)를 고친 뒤 실행한다: `python -I build_root.py <제품>`, 경로 검사: `--check <제품>` |

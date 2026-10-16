@@ -7,7 +7,8 @@ usage: python -I build_root.py <제품> [<제품> ...]      (UTF-8 환경: PYTHO
   1) 기획서 9개, 공용 코어 문서, 디자인 가이드, 통합 분석, 해당 리뷰를 베이스의 산출물 체계(docs/file 단계 폴더)로 복사
   2) 복사본 안의 문서 경로를 새 위치로 바꾸고, 복사하지 않은 파일은 platform 절대경로로 바꾼다(원본은 읽기만 한다)
   3) docs/file/_index.md(산출물 등록부) 완성본 생성
-  4) 디자인 시스템 초기 템플릿(DESIGN.md, COMPONENTS.md), 개발 위키 초기 페이지, llm-wiki 스킬, Dify 앱 설명서 생성
+  4) 디자인 시스템 초기 템플릿(DESIGN.md, COMPONENTS.md), 개발 위키 초기 페이지(index·log·sources), Dify 앱 설명서 생성
+     (llm-wiki 스킬과 WIKI_SCHEMA.md 는 멀티에이전트 베이스가 제공하므로 묶음에 넣지 않는다)
   5) 단독 배포용 SQL을 Supabase CLI 이름(타임스탬프)으로 복사
 """
 import io
@@ -212,9 +213,6 @@ def build(prod):
     write(f'{out}/docs/file/_index.md', INDEX_TMPL.format(prod=prod, rows=rows))
 
     # 개발 위키 초기 페이지
-    shared = f'{DEV}/_shared/llm-wiki'
-    write(f'{out}/docs/wiki/WIKI_SCHEMA.md', read(f'{shared}/WIKI_SCHEMA.md'))
-    write(f'{out}/.claude/skills/llm-wiki/SKILL.md', read(f'{shared}/SKILL.md'))
     src_pages = []
     for d, n, s, p in index_rows:
         body = read(f'{out}/{p}')
@@ -231,6 +229,8 @@ def build(prod):
 
 
 PATH_RE = re.compile(r'(?<![\w/.-])(docs/(?:file|reference|wiki)/[^\s`\'"|)\]:,;<>]+\.md)')
+# 베이스(멀티에이전트 베이스 저장소)가 개발 폴더에 제공하는 파일 — 묶음에 없어도 누락으로 보지 않는다
+BASE_PROVIDED = {'docs/wiki/WIKI_SCHEMA.md'}
 ABS_RE = re.compile(r'(D:/WorkSpace/platform/[^\s`\'"|)\]:,;<>]+)')
 
 
@@ -244,7 +244,7 @@ def check(prod):
             t = read(os.path.join(dp, f))
             for m in PATH_RE.finditer(t):
                 n += 1
-                if not os.path.exists(f'{out}/{m.group(1)}'):
+                if m.group(1) not in BASE_PROVIDED and not os.path.exists(f'{out}/{m.group(1)}'):
                     missing.append((os.path.relpath(os.path.join(dp, f), out), m.group(1)))
             for m in ABS_RE.finditer(t):
                 n += 1
