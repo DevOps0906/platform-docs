@@ -36,12 +36,13 @@ REVIEWS = {
     'website-floria': ['WebSite.md'],
     'nomad-docs': ['SellingDocs.md', 'flora.md', 'FortuneDocs.md'],
     'local-news': [],  # 신규 기획(원본·리뷰 없음, 2026-10-15)
+    'book-trailer': ['NOMAD_Shorts_Maker.md', 'Toon-Factory.md'],  # 신규 기획, 이식 원천 리뷰(2026-10-15)
 }
 APP_ID = {
     'astro-ai': 'astro', 'flora-publishing': 'publishing', 'nomad-video': 'video', 'nomad-blog': 'blog',
     'nomad-commerce': 'commerce', 'microweb-studio': 'microweb', 'admin-suite': 'erp, hms, sms', 'live-poll': 'poll',
     'stock-dashboard': 'stock', 'toon-factory': 'toon', 'study-note': 'notes', 'website-floria': 'site',
-    'nomad-docs': 'docs', 'local-news': 'news',
+    'nomad-docs': 'docs', 'local-news': 'news', 'book-trailer': 'trailer',
 }
 
 PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
@@ -54,6 +55,10 @@ PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
     ('05_DATA_MODEL.md', '03-설계', 'DOC-DES-004', '데이터설계서'),
     ('CLAUDE.md', '04-구현', 'DOC-IMP-001', '개발지침'),
     ('07_SOURCE_MIGRATION.md', '04-구현', 'DOC-IMP-002', '원본 이식 계획'),
+]
+# 제품 폴더에 있을 때만 옮기는 기획서(2026-10-15 book-trailer부터). 기존 ID를 바꾸지 않도록 새 번호를 쓴다.
+OPTIONAL_PRODUCT_DOCS = [
+    ('08_DESIGN_SYSTEM.md', '03-설계', 'DOC-DES-005', '디자인시스템설계서'),
 ]
 CORE_DOCS = ['CORE_SPEC.md', 'SHARED_MODULES.md', 'SECURITY_BASELINE.md', 'DB_CONVENTIONS.md', 'DOC_TEMPLATE.md',
              'AI_ARCHITECTURE.md', 'LLM_WIKI.md', 'VOICE_ARCHITECTURE.md',
@@ -77,6 +82,9 @@ def plan(prod):
     items = []
     for f, stage, did, name in PRODUCT_DOCS:
         items.append((f'{P}/{prod}/{f}', f'docs/file/{stage}/{f}', did, name, stage))
+    for f, stage, did, name in OPTIONAL_PRODUCT_DOCS:
+        if os.path.isfile(f'{P}/{prod}/{f}'):
+            items.append((f'{P}/{prod}/{f}', f'docs/file/{stage}/{f}', did, name, stage))
     for i, f in enumerate(CORE_DOCS, 1):
         items.append((f'{P}/_platform-core/{f}', f'docs/file/03-설계/공용코어/{f}', f'DOC-CORE-{i:03d}', f'공용 코어: {f[:-3]}', '03-설계'))
     for i, f in enumerate(DESIGN_DOCS, 1):
@@ -132,16 +140,25 @@ def sql_sets(prod):
     return [(base, 'supabase')]
 
 
-def design_seed(screens, name, prod):
-    """03장의 "#### <번호> <name> 초기값" 절 본문(다음 #### 이하 제목 전까지)을 DESIGN.md/COMPONENTS.md 초기본으로 만든다."""
-    m = re.search(r'^#### [0-9.]+ ' + re.escape(name) + r' 초기값[^\n]*\n(.*?)(?=^#{1,4} )', screens + '\n#### ', re.S | re.M)
-    if not m:
-        return None
-    kind = '디자인 토큰' if name == 'DESIGN.md' else '컴포넌트·배리언트 명세'
-    return (f'# {name} — {prod} {kind} (초기값: 화면설계서 3장에서 복사)\n\n'
-            '> 정답 소스는 코드다(`apps/web/src/styles/tokens.css`, `apps/web/src/components/ui/`). 이 문서는 코드에서 갱신하고, 다르면 코드가 이긴다.\n'
-            '> 규칙: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`. 출처: `docs/file/03-설계/03_SCREENS_UX.md` 같은 이름의 "초기값" 절.\n\n'
-            + m.group(1).strip() + '\n')
+def design_seed(sources, name, prod):
+    """기획서의 "### 또는 #### <번호> <name> 초기값" 절 본문(같은 수준 이상 다음 제목 전까지)을 DESIGN.md/COMPONENTS.md 초기본으로 만든다.
+
+    sources: [(묶음 안 경로, 본문)] 순서대로 찾는다(03_SCREENS_UX.md 먼저, 있으면 08_DESIGN_SYSTEM.md).
+    """
+    for path, text in sources:
+        m = re.search(r'^(#{3,4}) [0-9.]+ ' + re.escape(name) + r' 초기값[^\n]*\n', text, re.M)
+        if not m:
+            continue
+        level = len(m.group(1))
+        rest = text[m.end():] + '\n' + '#' * level + ' '
+        body = re.match(r'(.*?)(?=^#{1,%d} )' % level, rest, re.S | re.M).group(1)
+        kind = '디자인 토큰' if name == 'DESIGN.md' else '컴포넌트·배리언트 명세'
+        origin = '화면설계서 3장' if path.endswith('03_SCREENS_UX.md') else f'기획서 `{path}`'
+        return (f'# {name} — {prod} {kind} (초기값: {origin}에서 복사)\n\n'
+                '> 정답 소스는 코드다(`apps/web/src/styles/tokens.css`, `apps/web/src/components/ui/`). 이 문서는 코드에서 갱신하고, 다르면 코드가 이긴다.\n'
+                f'> 규칙: `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`. 출처: `{path}` 같은 이름의 "초기값" 절.\n\n'
+                + body.strip() + '\n')
+    return None
 
 
 def headings(text):
@@ -162,11 +179,13 @@ def build(prod):
 
     # 디자인 시스템 초기 템플릿(DESIGN_SYSTEM.md 9절)
     # 03_SCREENS_UX.md 에 "#### ... DESIGN.md 초기값" / "#### ... COMPONENTS.md 초기값" 절이 있으면 그 내용으로 채운다(선택).
-    screens = read(f'{P}/{prod}/03_SCREENS_UX.md')
+    seeds = [('docs/file/03-설계/03_SCREENS_UX.md', read(f'{P}/{prod}/03_SCREENS_UX.md'))]
+    if os.path.isfile(f'{P}/{prod}/08_DESIGN_SYSTEM.md'):
+        seeds.append(('docs/file/03-설계/08_DESIGN_SYSTEM.md', read(f'{P}/{prod}/08_DESIGN_SYSTEM.md')))
     write(f'{out}/docs/file/03-설계/디자인/DESIGN.md',
-          design_seed(screens, 'DESIGN.md', prod) or DESIGN_TMPL.format(prod=prod))
+          design_seed(seeds, 'DESIGN.md', prod) or DESIGN_TMPL.format(prod=prod))
     write(f'{out}/docs/file/03-설계/디자인/COMPONENTS.md',
-          design_seed(screens, 'COMPONENTS.md', prod) or COMPONENTS_TMPL.format(prod=prod))
+          design_seed(seeds, 'COMPONENTS.md', prod) or COMPONENTS_TMPL.format(prod=prod))
     index_rows.append(('DOC-DSN-006', '디자인 토큰 정의(DESIGN.md)', '03-설계', 'docs/file/03-설계/디자인/DESIGN.md'))
     index_rows.append(('DOC-DSN-007', '컴포넌트·배리언트 명세(COMPONENTS.md)', '03-설계', 'docs/file/03-설계/디자인/COMPONENTS.md'))
 

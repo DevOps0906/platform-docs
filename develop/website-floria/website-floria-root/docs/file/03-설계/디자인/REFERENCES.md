@@ -336,3 +336,26 @@
 | 앱 | Linear | 서비스 사이트 | https://linear.app/ | 키보드 우선, ⌘K 명령 팔레트, 빠른 화면 전환 | 이슈 트래커 개념, 다크 기본 테마 | 명령 팔레트, 단축키 |
 
 이 네 행은 Awwwards·Dribbble이 아니라 서비스 공식 사이트다. 실제 앱 화면은 로그인 뒤에 있으므로 패턴은 공개된 제품 소개 화면 기준으로만 참고하고, 화면을 캡처해 자산으로 쓰지 않는다.
+
+---
+
+## book-trailer (NOMAD Book Trailer, 원고 기반 북트레일러 자동화)
+
+추가일 2026-10-16(book-trailer 공용 모듈 요청 R-T7). 아래 URL은 모두 이 파일의 다른 제품 절에 이미 있는 것(같은 확인 결과)이며, 원래 제품과 다른 참고 포인트로 쓴다(이 파일 "다른 제품 간 공유" 규칙). 북트레일러·출판 마케팅 전문 사이트 후보는 URL을 직접 열어 확인한 뒤 이 절에 더한다(아직 없음).
+
+방향 요약: 대상은 원고와 표지는 있지만 영상 제작은 낯선 1인 출판사·작가·출판사 마케터다. 랜딩은 "책의 띠지가 예고편 화면이 된다"를 실제 렌더 결과로 보여 준다. 로그인 후 화면은 장면 단위 작업실(미리보기 + 장면 띠 + 속성)과 브리프 비교다.
+
+| 항목 | 내용 |
+|---|---|
+| 기존 토큰 | 신설 제품이라 원본 토큰 없음. 제품 `03_SCREENS_UX.md` 4.3절 토큰 플랜(교정지 #EEF0F2, 인쇄 먹 #1A1C21, 형광 밑줄 #F5D547, 상영관 #202227, 연필심 #5E6470), 정본 `08_DESIGN_SYSTEM.md` 3장 |
+| 피할 인상 | 영화관 레드카펫·필름 릴 클립아트, 보라 그라디언트, 크림 + 세리프 + 테라코타(생성형 기본값 1번), 큰 숫자 히어로, 다중 트랙 타임라인 편집기 흉내 |
+| UUPM 쿼리 | `search.py "book trailer video generator publisher author saas" --design-system -p "book-trailer"` |
+
+| 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 |
+|---|---|---|---|---|---|---|
+| 랜딩 | Codapress Publishing (Honorable Mention) | Awwwards | https://www.awwwards.com/sites/codapress-publishing | 표지 목록을 고르면 그 책의 결과물이 열리는 갤러리 동선(표지 → 트레일러 재생) | 원형 캐러셀과 GSAP 스크롤 연출 반복 | `/samples`, 랜딩 샘플 섹션 |
+| 랜딩 | Physical Matter by Runway (Honorable Mention) | Awwwards | https://www.awwwards.com/sites/physical-matter-by-runway | 미리 렌더한 무음 루프 영상을 포스터 이미지와 함께 쓰는 구성 | 생성 영상 갤러리 전체 화면 그리드 | 히어로 3D 영상 단계(`HERO_3D.md` 6절) |
+| 랜딩 | Join Radio (SOTD) | Awwwards | https://www.awwwards.com/sites/join-radio | 선택에 따라 배경과 그래픽이 바뀌는 방식 → 장르 문법 6종을 고르면 같은 문장이 그 문법의 서체·모션으로 바뀌는 섹션 | 라디오 브랜드 색, 시간대 콘셉트 | 랜딩 "장르 문법" 섹션 |
+| 앱 | Video Editing Dashboard | Dribbble | https://dribbble.com/shots/25186663-Video-Editing-Dashboard | 미리보기와 하단 가로 스트립의 위계(스트립은 트랙이 아니라 장면 칸 한 줄) | 다중 트랙 타임라인, 파형 겹침 | 작업실 장면 띠 |
+| 앱 | AI book app | Dribbble | https://dribbble.com/shots/23707376-AI-book-app | AI 결과를 여러 안으로 나란히 보여 주고 하나를 고르게 하는 구조 | 일러스트 책 표지 장식, 둥근 카드 키트 | 브리프 3안 비교 |
+

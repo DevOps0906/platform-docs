@@ -228,6 +228,7 @@ Supabase가 2026-04에 커스텀 OAuth/OIDC 제공자를 내놓아 네이버를 
 | 4 | live-poll(`poll`) | open | Google + 이메일 | P1 | LP-06-003 / 049 / 050 / 051 | 진행자만 로그인. 청중·오버레이는 단계 무관 |
 | 4 | toon-factory(`toon`) | open | Google + 이메일 | P1 | TN-06-004·027 / 067 / 068 / 069 | - |
 | 4 | nomad-docs(`docs`) | open | Google + 이메일 | P1 | DC-06-014 / 063 / 064 / 065 | 회사 정보 온보딩이 약관 단계 다음 |
+| 4 | book-trailer(`trailer`) | open | Google + 이메일 | P1 | TR-06-004 / 053 / 054 / 055 | 로그인용 Google 클라이언트와 YouTube 채널 연결용 클라이언트를 나눔. 외부 승인 링크(`/review/[token]`)는 로그인 없음 |
 | 5 | admin-suite(`erp`, `sms`, `hms`) | approval / invite / invite | erp·sms Google + 이메일·초대, hms 이메일만 | erp·sms P2 선택, hms 제외 | ADM-06-007 / 058 / 059 / 060 | `resolveOrg`로 기관 조직 선택. hms는 단독 프로젝트라 제공자 앱을 따로 만들지 않음(이메일만) |
 | 5 | stock-dashboard(`stock`) | invite | Google + 초대 링크 | P2 선택 | ST-06-006·009 / 052 / 053 / 054 | 모놀리스 단독 프로젝트: Google 클라이언트를 따로 만든다 |
 | - | arch-studio(`arch`) | open | Google + 이메일 | P2 선택 | 06장 작성 시 정함 | 데스크톱 앱(Tauri)이라 앱 복귀 방식(01장 D-15: 딥링크·루프백)을 패키지 밖에 추가 |

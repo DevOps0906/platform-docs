@@ -26,6 +26,8 @@ schemas = [
   "notes",
   "site",
   "docs",
+  "news",
+  "trailer",
 ]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000

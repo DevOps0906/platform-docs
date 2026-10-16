@@ -4,7 +4,7 @@
 -- 정본: 각 제품 docs/products/<제품>/01_PRD.md 4장(요금과 크레딧). 플랜/팩/features 값은 각 제품
 --   모놀리스 seed(docs/products/<제품>/supabase/monolith/seed.sql)와 같게 맞춘다(3단계 대조, VERIFICATION.md 5장).
 --   금액과 크레딧 중 "제안" 표시는 각 01_PRD.md 4장의 근거를 따른다. 확정 시 모놀리스 seed와 이 파일을 함께 갱신한다.
--- 제품 조각(1300 blog, 1600 erp, 1700 sms, 1900 stock, 2100 notes, 2300 docs)도 자기 플랜을 on conflict do nothing 으로 넣는다.
+-- 제품 조각(1300 blog, 1600 erp, 1700 sms, 1900 stock, 2100 notes, 2300 docs, 2600 trailer)도 자기 플랜을 on conflict do nothing 으로 넣는다.
 --   이 파일은 on conflict do update 이므로 seed 를 조각 앞에 돌리든 뒤에 돌리든 최종 값은 이 파일 값이다.
 -- 반복 실행 가능(upsert).
 -- =====================================================================
@@ -23,7 +23,8 @@ insert into core.apps (id, name, schema_name, signup_policy, status) values
   ('toon',       'Toon Factory',         'toon',       'open', 'beta'),
   ('notes',      'Study Note',           'notes',      'open', 'beta'),
   ('site',       'Website Floria',       'site',       'invite', 'beta'),
-  ('docs',       'NOMAD Docs',           'docs',       'open', 'beta')
+  ('docs',       'NOMAD Docs',           'docs',       'open', 'beta'),
+  ('trailer',    'NOMAD Book Trailer',   'trailer',    'open', 'beta')
 on conflict (id) do update
   set name = excluded.name, schema_name = excluded.schema_name, signup_policy = excluded.signup_policy, status = excluded.status;
 
@@ -143,7 +144,17 @@ insert into core.plans (app_id, code, name, description, price_krw, billing_inte
    false, true, 1),
   ('docs', 'team', 'Team', null, 59000, 'month', 1500, 0, false,
    '{"projects_max": 300, "formats": ["pdf", "docx", "zip"], "watermark": false, "doc_phase": "phase2", "members_max": 5, "integrations": ["csv", "webhook", "hubspot", "admin_suite_erp", "n8n"], "approvals": true, "share_links": true, "ai_chat_turns_per_day": 500, "minutes_max_minutes": 180, "storage_mb": 20000}',
-   false, false, 2)
+   false, false, 2),
+  -- trailer (book-trailer/01_PRD.md 4장, 전부 제안, VAT 포함. 2026-10-16 코어 요청 R-T1 반영)
+  ('trailer', 'free', 'Free', '30초 세로 트레일러 1편 체험', 0, 'month', 0, 60, false,
+   '{"max_books": 1, "max_trailers_per_book": 1, "formats": ["vertical_9_16"], "max_resolution": "720p", "max_duration_s": 30, "watermark": true, "brand_kits_max": 1, "members_max": 1, "approval_links": false, "priority_render": false, "premium_templates": false, "music_upload": false, "sns_upload": false, "flora_import": false, "ai_chat": true, "ai_chat_turns_per_day": 20, "voice_chat": true, "storage_mb": 300}',
+   true, true, 0),
+  ('trailer', 'creator', 'Creator', '작가·1인 출판사', 29000, 'month', 800, 0, false,
+   '{"max_books": 10, "max_trailers_per_book": 5, "formats": ["vertical_9_16", "landscape_16_9", "square_1_1", "portrait_4_5", "cover_loop"], "max_resolution": "1080p", "max_duration_s": 90, "watermark": false, "brand_kits_max": 5, "members_max": 1, "approval_links": false, "priority_render": false, "premium_templates": true, "music_upload": true, "sns_upload": true, "flora_import": true, "ai_chat": true, "ai_chat_turns_per_day": 200, "voice_chat": true, "storage_mb": 5000}',
+   false, true, 1),
+  ('trailer', 'publisher', 'Publisher', '출판사·에이전시 팀', 99000, 'month', 3000, 0, false,
+   '{"max_books": 100, "max_trailers_per_book": 20, "formats": ["vertical_9_16", "landscape_16_9", "square_1_1", "portrait_4_5", "cover_loop"], "max_resolution": "1080p", "max_duration_s": 90, "watermark": false, "brand_kits_max": 30, "members_max": 5, "approval_links": true, "priority_render": true, "premium_templates": true, "music_upload": true, "sns_upload": true, "flora_import": true, "ai_chat": true, "ai_chat_turns_per_day": 500, "voice_chat": true, "storage_mb": 30000}',
+   false, true, 2)
 on conflict (app_id, code) do update
   set name = excluded.name, description = excluded.description, price_krw = excluded.price_krw,
       billing_interval = excluded.billing_interval, monthly_credits = excluded.monthly_credits,
@@ -192,7 +203,11 @@ insert into core.credit_packs (app_id, code, name, credits, price_krw, is_active
   -- docs
   ('docs', 'pack_100',  '100 크레딧',   100,  4900,  true, 1),
   ('docs', 'pack_300',  '300 크레딧',   300,  12900, true, 2),
-  ('docs', 'pack_1000', '1,000 크레딧', 1000, 39000, true, 3)
+  ('docs', 'pack_1000', '1,000 크레딧', 1000, 39000, true, 3),
+  -- trailer
+  ('trailer', 'pack_300',  '300 크레딧',   300,  11900, true, 1),
+  ('trailer', 'pack_1000', '1,000 크레딧', 1000, 35000, true, 2),
+  ('trailer', 'pack_3000', '3,000 크레딧', 3000, 95000, true, 3)
 on conflict (app_id, code) do update
   set name = excluded.name, credits = excluded.credits, price_krw = excluded.price_krw, is_active = excluded.is_active, sort_order = excluded.sort_order;
 

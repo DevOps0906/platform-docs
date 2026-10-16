@@ -4,20 +4,20 @@
 
 로컬 위치는 `D:\WorkSpace\platform\docs`를 기준으로 합니다. 문서 안의 경로가 이 위치를 씁니다.
 
-## 0. 한눈에 보기 (2026-10-15 기준)
+## 0. 한눈에 보기 (2026-10-16 기준)
 
 | 항목 | 수 | 위치 |
 |---|---|---|
 | 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
-| 기획 제품 | 15개(완성 14 + arch-studio PRD 초안) | `products/<제품>/` |
-| 개발 묶음 | 14개, 작업 합계 821개 | `develop/<제품>/` |
-| 공용모듈 개발서(V2) | 15개 | `develop_V2/<제품>/` |
+| 기획 제품 | 16개(완성 15 + arch-studio PRD 초안) | `products/<제품>/` |
+| 개발 묶음 | 15개, 작업 합계 881개 | `develop/<제품>/` |
+| 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
 | 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
-| 가격 플랜 | 제품 14개 + 서비스 사업 1개 | `Price_Plans/` |
+| 가격 플랜 | 제품 15개 + 서비스 사업 1개 | `Price_Plans/` |
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
-| 통합 DB 조각 | 코어 10개 + 제품 15개 | `products/_supabase-modular/migrations/` |
-| 전체 파일 | 1,392개(이 중 934개는 `develop/*/*-root/`에 생성된 사본) | - |
+| 통합 DB 조각 | 코어 10개 + 제품 16개 | `products/_supabase-modular/migrations/` |
+| 전체 파일 | 1,507개(이 중 1,001개는 `develop/*/*-root/`에 생성된 사본) | - |
 
 ## 1. 문서가 흐르는 순서
 
@@ -54,7 +54,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 |---|---|---|---|
 | [`reviews/`](reviews/) | 원본 프로젝트 25개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
 | [`pdf/`](pdf/) | `reviews/`의 PDF 변환본 25개 | 근거 사본 | 인쇄·공유 |
-| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 15개 기획서 | **정본** | 무엇을 만들지 볼 때 |
+| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 16개 기획서 | **정본** | 무엇을 만들지 볼 때 |
 | [`Price_Plans/`](Price_Plans/README.md) | 공용 가격 결정 방법(`_common/`), 제품별 가격 플랜, 서비스 사업 Web-App-Agency | 분석·계획(요금 정본은 01_PRD 4장) | 가격을 정하거나 바꿀 때 |
 | [`develop/`](develop/README.md) | 제품별 개발 안내서, setup 스크립트(`.sh`/`.ps1`), 개발 폴더에 붙일 묶음(`<제품>-root/`), 공용 설치 가이드(`_shared/`) | 묶음은 생성물(`build_root.py`) | 개발을 시작할 때 |
 | [`develop_V2/`](develop_V2/README.md) | 공용모듈 7개를 쓰는 제품별 개발서, V2 공통 규칙, 생성 스크립트 | 생성물(`gen_v2.py`) | 공용모듈로 개발할 때 |
@@ -70,7 +70,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`00_MERGE_ANALYSIS.md`](products/00_MERGE_ANALYSIS.md) | 통합 전 기능 분석과 확정 결정 22개. 상단 결정 표가 본문보다 우선 |
 | [`_platform-core/`](products/_platform-core/README.md) | 공용 코어 규격: `CORE_SPEC`, `SHARED_MODULES`, `SECURITY_BASELINE`, `DB_CONVENTIONS`, `DOC_TEMPLATE`(제품 문서 장 구조), `AI_ARCHITECTURE`, `VOICE_ARCHITECTURE`, `LLM_WIKI`, `AUTH_ROADMAP`(인증 단계), `COMMON_MODULES_ROADMAP`, `MONOLITH_CORE_LITE.sql`, `staged/`(승인 전 코어 SQL) |
 | [`_platform-core/common-modules/`](products/_platform-core/common-modules/README.md) | 공용모듈 7개 기획(compliance, media, editorial, community, search, membership, ads)과 15개 제품 적용표 |
-| [`_design-guide/`](products/_design-guide/README.md) | 디자인 원칙·시스템, 3D 히어로 표준, 관리자 대시보드 패턴, Awwwards·Dribbble 레퍼런스, 디자인 스킬 |
+| [`_design-guide/`](products/_design-guide/README.md) | 디자인 원칙·시스템, 3D 히어로 표준, 관리자 대시보드 구조 패턴(A~O)과 시각 아키타입(V-A~V-N, 필수 분석 절차), Awwwards·Dribbble 레퍼런스, 디자인 스킬 |
 | [`_supabase-modular/`](products/_supabase-modular/README.md) | 통합 DB: 코어 `0000~0009` + 제품 조각, seed, 검증 기록 |
 | [`_tools-sqlcheck/`](products/_tools-sqlcheck/README.md) | PGlite로 SQL 적용을 검사하는 도구(`node check.mjs --vector ...`) |
 | `<제품>/` | 제품 기획서(2.2절 표준 구성) |
@@ -91,7 +91,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 마이그레이션·seed·RLS 스모크 |
 
-일부 제품은 추가 문서가 있습니다: nomad-video `08_AGENCY_OPERATIONS.md`(쇼츠 대행 운영), toon-factory `08_BENCHMARK.md`(경쟁 비교), local-news `modules/`(모듈 M1~M8)와 `research/`(디자인 벤치마크, 시장·법규).
+일부 제품은 추가 문서가 있습니다: nomad-video `08_AGENCY_OPERATIONS.md`(쇼츠 대행 운영), toon-factory `08_BENCHMARK.md`(경쟁 비교), local-news `modules/`(모듈 M1~M8)와 `research/`(디자인 벤치마크, 시장·법규), book-trailer `08_DESIGN_SYSTEM.md`(앱 토큰 층 + 영상 토큰 층).
 
 ### 2.3 `develop/_shared/` (모든 개발 묶음이 같이 쓰는 설치 가이드)
 
@@ -103,7 +103,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`llm-wiki/`](develop/_shared/llm-wiki/) | 개발용 프로젝트 위키 스킬 원본 |
 | [`tools/build_root.py`](develop/_shared/tools/build_root.py) | `products/`를 고친 뒤 `<제품>-root/` 묶음을 다시 만드는 스크립트 |
 
-## 3. 제품 목록 (15개)
+## 3. 제품 목록 (16개)
 
 개발 순서는 `develop/README.md` "권장 개발 순서"를 따릅니다(0단계 = 공용 코어). 작업 수는 V1 개발 묶음 기준입니다.
 
@@ -123,6 +123,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | admin-suite (Admin Suite) | ERP·병원(HMS)·학교(SMS) 내부 관리 3종, 사내 규정 AI 어시스턴트 | `erp`(1600), `sms`(1700), hms는 단독 | 5 | 60 | [기획](products/admin-suite/) · [개발](develop/admin-suite/) · [가격](Price_Plans/admin-suite/PRICE_PLAN.md) |
 | stock-dashboard (Stock Dashboard) | 본인 증권 계좌(1차 모의투자) 대시보드 + AI 포트폴리오 진단, 초대제 | `stock`(1900) | 5 | 54 | [기획](products/stock-dashboard/) · [개발](develop/stock-dashboard/) · [가격](Price_Plans/stock-dashboard/PRICE_PLAN.md) |
 | local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(화이트라벨), 공용모듈 7개의 출처 | `news`(2500) | 6 | 56 | [기획](products/local-news/) · [개발](develop/local-news/) · [가격](Price_Plans/local-news/PRICE_PLAN.md) |
+| book-trailer (NOMAD Book Trailer, 가칭) | 원고 → 훅 브리프 3안 → 장르 문법 스토리보드 → 규격 4종 + 표지 루프 트레일러 렌더(Remotion) → 구매 링크 클릭 측정 | `trailer`(2600) | 4(대행 판매로 수요 검증 후) | 60 | [기획](products/book-trailer/) · [개발](develop/book-trailer/) · [가격](Price_Plans/book-trailer/PRICE_PLAN.md) |
 | arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱: 법규 엔벨로프 실시간 판정, AI 렌더, 제안서, 시리얼 영구 라이선스 | `arch`(2400, 제안) | 미정(설치형) | - | [기획](products/arch-studio/)(README·01_PRD만) · 개발 묶음 없음 · 가격 플랜 없음(요금은 01_PRD 4장) |
 
 모든 제품이 같은 공용 기반(로그인·조직, 크레딧·결제, 잡 워커, AI 계층, 음성)을 쓰고, 공개 랜딩이 있는 제품은 3D 히어로를 씁니다. 제품별 상세 설명은 [`develop/README.md`](develop/README.md), 공용모듈 채택 현황은 [`develop_V2/README.md`](develop_V2/README.md)에 있습니다.
@@ -272,15 +273,15 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 표기 | 한국어, Markdown 표만(HTML·이모지 금지), 근거는 `상대경로:줄번호`, 근거 없는 수치·정책은 "제안", 확인하지 않은 외부 사실은 "미확인" |
 | 변경 절차 | 이 저장소 변경은 브랜치 → PR → main 병합으로 한다 |
 
-## 8. 현재 상태와 남은 일 (2026-10-15)
+## 8. 현재 상태와 남은 일 (2026-10-16)
 
 | 영역 | 상태 |
 |---|---|
-| 기획 | 14개 제품 완료(01~07, CLAUDE.md, SQL), arch-studio는 README·01_PRD 초안. 인증 단계(확정 결정 22) 15개 제품 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
-| 통합 DB | 코어 `0000~0009` + 제품 조각 15개(`1000~2300`, `2500_news`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
-| 개발 묶음 | 14개 제품(작업 821개), 공용모듈 V2 개발서 15개 |
+| 기획 | 15개 제품 완료(01~07, CLAUDE.md, SQL. book-trailer는 08_DESIGN_SYSTEM 추가), arch-studio는 README·01_PRD 초안. 인증 단계(확정 결정 22) 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
+| 통합 DB | 코어 `0000~0009` + 제품 조각 16개(`1000~2300`, `2500_news`, `2600_trailer`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
+| 개발 묶음 | 15개 제품(작업 881개, book-trailer 2026-10-15 추가), 공용모듈 V2 개발서 16개 |
 | 공용모듈 | 7개 기획·개발 지시서 완료(상태: 제안). 패키지 저장소 `nomad-modules`는 아직 없음 |
-| 가격 | 제품 14개 + Web-App-Agency 초안(정본은 각 PRD 4장) |
+| 가격 | 제품 15개 + Web-App-Agency 초안(정본은 각 PRD 4장) |
 | 화이트라벨 | `Multi-tenant_Theming/` 설계 완료, 코어 확장 SQL `0011`은 제안(PGlite 적용·RLS 스모크 91/91 통과). 코어 반영은 승인 후 |
 | 데스크톱·모바일 | `Tauri/`, `Capacitor/` 공용 가이드 초안. 코어 요청 T-C1~T-C8, M-C1~M-C4 미반영 |
 
@@ -289,10 +290,9 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | # | 빈 곳 | 영향 | 다음 할 일 |
 |---|---|---|---|
 | 1 | arch-studio에 02~07, `CLAUDE.md`, SQL, `develop/arch-studio/`, `Price_Plans/arch-studio/`가 없다(`develop_V2/arch-studio/` 개발서만 있음) | 개발 착수 불가 | 02_ARCHITECTURE부터 작성. Tauri 1주 기술 스파이크 결과 반영 |
-| 2 | `DB_CONVENTIONS.md` 2장 번호 표와 `_supabase-modular/README.md`에 `2400 arch`(제안), `2500 news`(조각 있음) 행이 없다 | 번호 충돌 위험 | 코어 문서에 두 행 추가 |
-| 3 | 승인 전 코어 SQL 2개: `products/_platform-core/staged/0010_core_auth_identity_links.sql`(네이버 브리지용), `Multi-tenant_Theming/supabase/0011_core_tenant_theming.sql` | local-news 등 의존 제품 착수 지연 | 각각 C2 스파이크 결과, `06_ADOPTION_PLAN.md` 승인으로 결정 |
-| 4 | 코어 요청 미반영: 일회성 상품 결제(설치형 판매), 셸 앱 Bearer 세션·CORS, 푸시 채널, `adjust_credits` 등(`products/README.md` "남은 코어 과제") | 설치형·앱·일부 크레딧 기능 착수 불가 | 코어 요청을 한 PR로 모아 처리 |
-| 5 | 판매 모델 A(설치형) 정의가 "고객 API 키"를 전제하지만 `SECURITY_BASELINE.md`는 BYOK를 금지한다(`Price_Plans/_common/PRICING_PRINCIPLES.md` A행, Tauri 가이드 T-C5) | 설치형 제품 설계 기준 불명확 | 둘 중 하나를 고친다(arch-studio는 크레딧 게이트웨이 방식) |
-| 6 | 개발 묶음에 `Price_Plans/`, `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/`, 공용모듈 기획서가 들어가지 않는다 | 에이전트가 원본 경로를 따로 지시받아야 함 | 필요하면 `build_root.py`의 참조 목록에 추가 |
+| 2 | 승인 전 코어 SQL 2개: `products/_platform-core/staged/0010_core_auth_identity_links.sql`(네이버 브리지용), `Multi-tenant_Theming/supabase/0011_core_tenant_theming.sql` | local-news 등 의존 제품 착수 지연 | 각각 C2 스파이크 결과, `06_ADOPTION_PLAN.md` 승인으로 결정 |
+| 3 | 코어 요청 미반영: 일회성 상품 결제(설치형 판매), 셸 앱 Bearer 세션·CORS, 푸시 채널, `adjust_credits` 등(`products/README.md` "남은 코어 과제") | 설치형·앱·일부 크레딧 기능 착수 불가 | 코어 요청을 한 PR로 모아 처리 |
+| 4 | 판매 모델 A(설치형) 정의가 "고객 API 키"를 전제하지만 `SECURITY_BASELINE.md`는 BYOK를 금지한다(`Price_Plans/_common/PRICING_PRINCIPLES.md` A행, Tauri 가이드 T-C5) | 설치형 제품 설계 기준 불명확 | 둘 중 하나를 고친다(arch-studio는 크레딧 게이트웨이 방식) |
+| 5 | 개발 묶음에 `Price_Plans/`, `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/`, 공용모듈 기획서가 들어가지 않는다 | 에이전트가 원본 경로를 따로 지시받아야 함 | 필요하면 `build_root.py`의 참조 목록에 추가 |
 
 남은 결정은 각 제품 `01_PRD.md` 8장, 공용 과제는 [`products/README.md`](products/README.md) "남은 코어 과제"에 있습니다.

@@ -6,7 +6,7 @@
 |---|---|
 | [`_shared/V2_RULES.md`](_shared/V2_RULES.md) | V2 공통 규칙: V1과의 관계, DB 파일 순서·이름, V2 작업 만드는 법, 요청 프롬프트, 공용모듈 저장소가 없을 때 |
 | [`_shared/tools/gen_v2.py`](_shared/tools/gen_v2.py) | 제품별 개발서와 이 색인을 만드는 스크립트. 06장을 고친 뒤 다시 실행하면 V2 작업 웨이브가 따라 바뀝니다 |
-| `products/_platform-core/common-modules/` | 공용모듈 기획서(무엇을 만드는가)와 15개 제품 적용표 |
+| `products/_platform-core/common-modules/` | 공용모듈 기획서(무엇을 만드는가)와 16개 제품 적용표 |
 | `develop/_shared/modules/` | 공용모듈 개발 지시서(패키지를 어떻게 만드는가) |
 
 ## 1. 제품별 개발서
@@ -21,6 +21,7 @@
 | 3 | nomad-blog | [`nomad-blog_develop_v2.md`](nomad-blog/nomad-blog_develop_v2.md) | compliance, media, editorial | editorial | 5 | 5 |
 | 3 | nomad-commerce | [`nomad-commerce_develop_v2.md`](nomad-commerce/nomad-commerce_develop_v2.md) | compliance, media | - | 3 | 3 |
 | 3 | nomad-video | [`nomad-video_develop_v2.md`](nomad-video/nomad-video_develop_v2.md) | compliance | - | 2 | 3 |
+| 4 | book-trailer | [`book-trailer_develop_v2.md`](book-trailer/book-trailer_develop_v2.md) | compliance | - | 2 | 3 |
 | 4 | live-poll | [`live-poll_develop_v2.md`](live-poll/live-poll_develop_v2.md) | compliance, community(부분) | - | 3 | 2 |
 | 4 | microweb-studio | [`microweb-studio_develop_v2.md`](microweb-studio/microweb-studio_develop_v2.md) | compliance, media, community | community | 5 | 5 |
 | 4 | toon-factory | [`toon-factory_develop_v2.md`](toon-factory/toon-factory_develop_v2.md) | compliance, media | - | 3 | 3 |
@@ -35,7 +36,7 @@
 
 | 모듈 | 기준 구현 제품 | 다음에 쓰는 제품 |
 |---|---|---|
-| compliance | website-floria | study-note, astro-ai, flora-publishing, nomad-docs, nomad-blog, nomad-commerce, nomad-video, live-poll, microweb-studio, toon-factory, admin-suite, stock-dashboard, local-news, arch-studio |
+| compliance | website-floria | study-note, astro-ai, flora-publishing, nomad-docs, nomad-blog, nomad-commerce, nomad-video, book-trailer, live-poll, microweb-studio, toon-factory, admin-suite, stock-dashboard, local-news, arch-studio |
 | media | flora-publishing | nomad-docs, nomad-blog, nomad-commerce, microweb-studio, toon-factory, local-news |
 | community | microweb-studio | live-poll, local-news |
 | search | local-news | - |
