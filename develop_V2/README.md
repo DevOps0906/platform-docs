@@ -28,7 +28,7 @@
 | 5 | admin-suite | [`admin-suite_develop_v2.md`](admin-suite/admin-suite_develop_v2.md) | compliance | - | 2 | 3 |
 | 5 | stock-dashboard | [`stock-dashboard_develop_v2.md`](stock-dashboard/stock-dashboard_develop_v2.md) | compliance | - | 2 | 2 |
 | 6 | local-news | [`local-news_develop_v2.md`](local-news/local-news_develop_v2.md) | compliance, media, community, search, membership, ads, editorial | search, membership, ads | 12 | 10 |
-| 설치형(미정) | arch-studio | [`arch-studio_develop_v2.md`](arch-studio/arch-studio_develop_v2.md) | compliance | - | 2 | 0 |
+| 코어 이후(설치형) | arch-studio | [`arch-studio_develop_v2.md`](arch-studio/arch-studio_develop_v2.md) | compliance | - | 2 | 5 |
 
 ## 2. 공용모듈이 만들어지는 순서
 

@@ -10,13 +10,13 @@
 |---|---|---|
 | 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
-| 기획 제품 | 16개(완성 15 + arch-studio PRD 초안) | `products/<제품>/` |
-| 개발 묶음 | 15개, 작업 합계 881개 | `develop/<제품>/` |
+| 기획 제품 | 16개(모두 01~07 완료) | `products/<제품>/` |
+| 개발 묶음 | 16개, 작업 합계 947개 | `develop/<제품>/` |
 | 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
 | 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
-| 가격 플랜 | 제품 15개 + 서비스 사업 1개 | `Price_Plans/` |
+| 가격 플랜 | 제품 15개 + 서비스 사업 1개(arch-studio는 아직 없음, 요금은 01_PRD 4장) | `Price_Plans/` |
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
-| 통합 DB 조각 | 코어 10개 + 제품 16개 | `products/_supabase-modular/migrations/` |
+| 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 전체 파일 | 1,507개(이 중 1,001개는 `develop/*/*-root/`에 생성된 사본) | - |
 
 ## 1. 문서가 흐르는 순서
@@ -123,7 +123,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | stock-dashboard (Stock Dashboard) | 본인 증권 계좌(1차 모의투자) 대시보드 + AI 포트폴리오 진단, 초대제 | `stock`(1900) | 5 | 54 | [기획](products/stock-dashboard/) · [개발](develop/stock-dashboard/) · [가격](Price_Plans/stock-dashboard/PRICE_PLAN.md) |
 | local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(화이트라벨), 공용모듈 7개의 출처 | `news`(2500) | 6 | 56 | [기획](products/local-news/) · [개발](develop/local-news/) · [가격](Price_Plans/local-news/PRICE_PLAN.md) |
 | book-trailer (NOMAD Book Trailer, 가칭) | 원고 → 훅 브리프 3안 → 장르 문법 스토리보드 → 규격 4종 + 표지 루프 트레일러 렌더(Remotion) → 구매 링크 클릭 측정 | `trailer`(2600) | 4(대행 판매로 수요 검증 후) | 60 | [기획](products/book-trailer/) · [개발](develop/book-trailer/) · [가격](Price_Plans/book-trailer/PRICE_PLAN.md) |
-| arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱: 법규 엔벨로프 실시간 판정, AI 렌더, 제안서, 시리얼 영구 라이선스 | `arch`(2400, 제안) | 미정(설치형) | - | [기획](products/arch-studio/)(README·01_PRD만) · 개발 묶음 없음 · 가격 플랜 없음(요금은 01_PRD 4장) |
+| arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱(Windows, Tauri 2): 정보 입력 → 도면 자동 생성(DXF·SVG·PDF), 법규 엔벨로프 판정, AI 렌더, 제안서, 시리얼 라이선스 | `arch`(2400) | 공용 코어 다음 언제든(설치형, 도면 스파이크 먼저) | 66 | [기획](products/arch-studio/) · [개발](develop/arch-studio/) · 가격 플랜 없음(요금은 01_PRD 4장) |
 
 모든 제품이 같은 공용 기반(로그인·조직, 크레딧·결제, 잡 워커, AI 계층, 음성)을 쓰고, 공개 랜딩이 있는 제품은 3D 히어로를 씁니다. 제품별 상세 설명은 [`develop/README.md`](develop/README.md), 공용모듈 채택 현황은 [`develop_V2/README.md`](develop_V2/README.md)에 있습니다.
 
@@ -276,9 +276,9 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | 영역 | 상태 |
 |---|---|
-| 기획 | 15개 제품 완료(01~07, CLAUDE.md, SQL. book-trailer는 08_DESIGN_SYSTEM 추가), arch-studio는 README·01_PRD 초안. 인증 단계(확정 결정 22) 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
-| 통합 DB | 코어 `0000~0009` + 제품 조각 16개(`1000~2300`, `2500_news`, `2600_trailer`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
-| 개발 묶음 | 15개 제품(작업 881개, book-trailer 2026-10-15 추가), 공용모듈 V2 개발서 16개 |
+| 기획 | 16개 제품 완료(01~07, CLAUDE.md, SQL. book-trailer는 08_DESIGN_SYSTEM 추가, arch-studio는 2026-10-16 완료). 인증 단계(확정 결정 22) 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
+| 통합 DB | 코어 `0000~0009` + 제품 조각 17개(`1000~2300`, `2400_arch`, `2500_news`, `2600_trailer`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
+| 개발 묶음 | 16개 제품(작업 947개, book-trailer 2026-10-15·arch-studio 2026-10-16 추가), 공용모듈 V2 개발서 16개 |
 | 공용모듈 | 7개 기획·개발 지시서 완료(상태: 제안). 패키지 저장소 `nomad-modules`는 아직 없음 |
 | 가격 | 제품 15개 + Web-App-Agency 초안(정본은 각 PRD 4장) |
 | 화이트라벨 | `Multi-tenant_Theming/` 설계 완료, 코어 확장 SQL `0011`은 제안(PGlite 적용·RLS 스모크 91/91 통과). 코어 반영은 승인 후 |
@@ -288,7 +288,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | # | 빈 곳 | 영향 | 다음 할 일 |
 |---|---|---|---|
-| 1 | arch-studio에 02~07, `CLAUDE.md`, SQL, `develop/arch-studio/`, `Price_Plans/arch-studio/`가 없다(`develop_V2/arch-studio/` 개발서만 있음) | 개발 착수 불가 | 02_ARCHITECTURE부터 작성. Tauri 1주 기술 스파이크 결과 반영 |
+| 1 | arch-studio에 `Price_Plans/arch-studio/`가 없다(기획 01~07·SQL·개발 묶음은 2026-10-16 완료) | 가격 분석 근거 없음 | 가격 플랜 작성. 개발은 2일 도면 스파이크(AR-06-019)부터 |
 | 2 | 승인 전 코어 SQL 2개: `products/_platform-core/staged/0010_core_auth_identity_links.sql`(네이버 브리지용), `Multi-tenant_Theming/supabase/0011_core_tenant_theming.sql` | local-news 등 의존 제품 착수 지연 | 각각 C2 스파이크 결과, `06_ADOPTION_PLAN.md` 승인으로 결정 |
 | 3 | 코어 요청 미반영: 일회성 상품 결제(설치형 판매), 셸 앱 Bearer 세션·CORS, 푸시 채널, `adjust_credits` 등(`products/README.md` "남은 코어 과제") | 설치형·앱·일부 크레딧 기능 착수 불가 | 코어 요청을 한 PR로 모아 처리 |
 | 4 | 판매 모델 A(설치형) 정의가 "고객 API 키"를 전제하지만 `SECURITY_BASELINE.md`는 BYOK를 금지한다(`Price_Plans/_common/PRICING_PRINCIPLES.md` A행, Tauri 가이드 T-C5) | 설치형 제품 설계 기준 불명확 | 둘 중 하나를 고친다(arch-studio는 크레딧 게이트웨이 방식) |
