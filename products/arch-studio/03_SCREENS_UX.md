@@ -87,7 +87,7 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | `/projects/:id/program` 체크리스트 | 가족 구성·생활 방식·예산 체크 | `packages/program` 결정적 함수 → 실 목록·목표 면적표(AR-F-011) | - |
-| 1-대화 | 같은 화면 오른쪽 대화형 입력 패널 | 요구를 문장으로 입력하거나 마이크로 말하기 → "후보 만들기"(2 크레딧, 음성은 STT 분당 1 추가) | `POST /api/voice/stt`(음성) → `POST /api/ai/intake` → `arch.start_ai_run('intake')` → 잡 `arch.intake` → 결과 `arch.intake_runs`, Realtime | `CR001` → 402 시트. `AR032` 스키마 검증 실패(1회 재시도 후) → "요구를 정리하지 못했습니다. 크레딧 2를 돌려드렸습니다." 마이크 거부 → 텍스트 입력 안내 |
+| 1-대화 | 같은 화면 오른쪽 대화형 입력 패널 | 요구를 문장으로 입력하거나 마이크로 말하기 → "후보 만들기"(2 크레딧, 음성은 STT 분당 1 추가) | `POST /api/voice/stt`(음성) → `POST /api/ai/intake`(`source='chat'`) → `arch.start_ai_run(.., 'intake', 'intake_text', ..)` → 잡 `arch.intake` → 결과 `arch.intake_runs`, Realtime | `CR001` → 402 시트. `AR032` 스키마 검증 실패(1회 재시도 후) → "요구를 정리하지 못했습니다. 크레딧 2를 돌려드렸습니다." 마이크 거부 → 텍스트 입력 안내 |
 | 2-대화 | 패널의 "AI 추출 후보" 목록 | 항목별 "채택" 또는 "버리기" | 채택한 항목만 체크리스트 답·면적표 행에 반영(AR-F-034 `:376`) | 채택 안 한 후보는 반영 0(테스트) |
 | 2 | 면적표(O) | 행 면적 수정, 행 잠금 | `program.user_locked_rows` → 다시 계산해도 덮어쓰지 않음 | 합계가 엔벨로프 최대치 초과 → "엔벨로프 안에서 최대 <값>㎡입니다" 경고 |
 | 3 | `/projects/:id/model` "매스 자동 제안" 대화상자 | 목표 연면적·층수 확인 → 제안 받기 | `packages/massing` 결정적 격자 탐색 → 후보 3안(건폐 최대, 일조 여유, 정형 평면), 모두 판정 PASS(AR-F-033, p95 3초) | 만족 안 없음 → "엔벨로프 안에서 최대 <값>㎡" 안내 + 목표 조정 버튼 |
@@ -113,13 +113,13 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 | 단계 | 화면 | 사용자 행동 | 시스템 동작 | 실패 분기 |
 |---|---|---|---|---|
 | 1 | `/projects/:id/render` | 시점 고르기, 재질·시간대·계절 프리셋, 품질(표준 3·고품질 5) | "보내는 것: 뷰포트 깊이·윤곽 이미지 1장. 도면·3D 원본은 보내지 않습니다" 표시(AR-F-013 `:55`, `docs/Tauri/README.md:91`) | 체험·`render_max_px=1024` → 고품질 잠금 안내 |
-| 2 | 같은 화면 | "렌더 만들기" | `POST /api/ai/render` → `arch.start_ai_run('render')` → 잡 `arch.render`(fal) → `arch.renders`, Realtime 진행 | `CR001` 402, `AR030` 동시 3건 초과, `AR031` 입력 크기 초과. 3분 초과·실패 → `arch.fail_ai_run` 전액 환불 |
+| 2 | 같은 화면 | "렌더 만들기" | `POST /api/uploads/sign`(`render_input`) → `POST /api/ai/render` → `arch.start_ai_run(.., 'render', 'render_std' 또는 'render_hq', ..)` → 잡 `arch.render`(fal) → `arch.renders`, Realtime 진행 | `CR001` 402, `AR030` 동시 3건 초과, `AR031` 입력 크기 초과. 3분 초과·실패 → `arch.fail_ai_run` 전액 환불 |
 | 3 | 결과 | "이 PC에 저장"(선택), 업스케일(2) | 로컬 `render_items` 기록. 클라우드 보존 90일 | 만료 → "클라우드 보관 기간이 끝났습니다. 이 PC에 저장한 이미지만 남습니다" |
 | 4 | `/projects/:id/proposal` | 섹션 구성(설계개요, 판정 요약, 면적표, 공사비, 렌더, 도면 시트) → 시트 체크(`include_in_proposal`) | 판정 값·면적표·시트 SVG는 로컬 엔진 값 그대로 첨부(AR-F-014, 9.3절 아래 `:382`) | 시트 없음 → "도면 화면에서 시트를 먼저 만드세요" |
-| 5 | 같은 화면 | "제안서 만들기"(10, 템플릿 문서만이면 1) | `POST /api/ai/proposal` → `arch.start_ai_run('proposal')` → 잡 `arch.proposal_pdf`(공용 WeasyPrint) | `AR031` 첨부 크기 초과 → "시트를 줄이거나 렌더 해상도를 낮추세요". 실패 → 환불 |
+| 5 | 같은 화면 | "제안서 만들기"(10, 템플릿 문서만이면 1) | 시트 SVG를 `POST /api/uploads/sign`(`proposal_sheet`)로 업로드 → `POST /api/ai/proposal` → `arch.start_ai_run(.., 'proposal', 'proposal' 또는 'doc_template', ..)` → 잡 `arch.proposal_pdf`(서버 HTML 조립 → 공용 WeasyPrint) → `arch.proposals` | `AR031` 첨부 크기 초과 → "시트를 줄이거나 렌더 해상도를 낮추세요". 실패 → 환불 |
 | 6 | 결과 | PDF 미리보기·저장 | 서술 섹션 "AI 초안" 표시, 꼬리말 "법적 판정 아님" 고지 | - |
 
-시트 SVG를 요청 본문에 넣을지 서명 업로드로 올릴지는 04장이 정한다(계약에 제안서용 업로드 경로가 없다. 5장 끝 "확인할 점").
+시트 SVG는 요청 본문에 넣지 않고 `POST /api/uploads/sign`(purpose `proposal_sheet`)로 올리며, HTML 조립은 서버가 한다(04장 2.2절·6.2절).
 
 ### 2.6 (f) 시리얼 구매(시스템 브라우저 결제) → 활성화 → 기기 2대 한도
 
@@ -132,7 +132,7 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 | 5 | 같은 화면 | 두 번째 PC에서 같은 과정 | 활성화 2/2 표시 | - |
 | 6 | 세 번째 PC | 활성화 시도 | `AR001`(409) → 기기 목록 대화상자(마지막 사용일, 이 PC 여부) | "해제" → `POST /api/license/deactivate` → 다시 활성화. `AR004` 30일 3회 초과 → "이번 달 해제 횟수를 모두 썼습니다. 고객지원에 문의하세요" |
 
-활성화 한도는 라이선스 2대(PRD 4.4절 `:126`), 체험·월 구독은 `max_activations=1`(`:185`)이다. 체험·구독의 1대 판정 경로(시리얼 없음)는 계약에 RPC가 없어 02·04장이 정한다(5장 끝).
+활성화 한도는 라이선스 2대(PRD 4.4절 `:126`), 체험·월 구독은 `max_activations=1`(`:185`)이다. 체험·구독(시리얼 없음)은 `POST /api/license/activate` 플랜 모드 → `arch.activate_plan_device`로 1대를 판정한다(04장 2.1절).
 
 ### 2.7 (g) 업데이트 만료 폴백 상태
 
@@ -173,7 +173,7 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 |---|---|---|---|
 | 1 약관 | 이용약관·라이선스 약관(영구 사용권, PC 수, 리버스 엔지니어링 금지, 서비스 종료 시 마지막 빌드 배포, PRD `:231`)·개인정보, 버전 표시 | 동의 기록 | 0 |
 | 2 AI | 국외 이전 범위(렌더 입력 이미지, 법규 질의, 제안서 서술 입력, 대화형 입력 문장)와 보내지 않는 것(도면·3D 원본, 건축주 연락처, 상담 녹음), PRD `:227`, `:452` | `core.set_ai_cross_border_ack` | 0 |
-| 3 시작 | "14일 체험 시작"(만료일, 잔액 30) / "시리얼 입력" | `session_context('arch')` | 0 |
+| 3 시작 | "14일 체험 시작"(만료일, 잔액 30) / "시리얼 입력" | `session_context('arch')`, 체험은 `POST /api/license/activate` 플랜 모드(`arch.activate_plan_device`, 1대) | 0 |
 
 ### 3.3 `/projects`
 
@@ -183,7 +183,7 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 |---|---|---|---|
 | 주 행동 | "새 프로젝트", "샘플 대지로 시작" | - | 로컬 `projects` 생성 |
 | 목록 | 이름, 대지 라벨, 최근 판정 요약 배지(PASS/WARN/FAIL 개수), 시트 수, 수정일, 클라우드 사본 여부 | 로컬 `projects`, `judgment_snapshots`(최신), `sheets` 수, `GET /api/cloud-projects` | 열기, 이름 바꾸기, 삭제(확인), "클라우드에 사본 올리기" |
-| 클라우드 사본 | 업로드 전 "올리는 것: 모델 파일 1개" 표시 | `POST /api/cloud-projects/{id}/upload-url` → `arch.save_cloud_project` | `AR040` 상한(체험 3개), `AR041` 버전 충돌 |
+| 클라우드 사본 | 업로드 전 "올리는 것: 모델 파일 1개" 표시 | `POST /api/uploads/sign`(`project_snapshot`) → `POST /api/cloud-projects` → `arch.save_cloud_project` | `AR040` 상한(체험 3개), `AR041` 버전 충돌 |
 
 크레딧 표시 없음.
 
@@ -264,9 +264,9 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 | 체크리스트 | `program.checklist_answers` | 답 고치기 → 면적표 재계산(잠금 행 제외) | 0 |
 | 면적표(O) | `program.targets`, `user_locked_rows` | 셀 편집, 잠금, 행 추가 | 0 |
 | 개략 공사비 | `cost_catalog_cache`(`GET /api/cost-catalogs/latest`), 로컬 엔진 계산(AR-F-012) | 등급 선택 | 0 |
-| 대화형 입력 패널(`IntakePanel`) | `POST /api/ai/intake`, 결과 `arch.intake_runs`, 진행은 Realtime | 텍스트·마이크 입력, 후보 만들기 | 2(+ STT 분당 1) |
+| 대화형 입력 패널(`IntakePanel`) | `POST /api/ai/intake`(`source='chat'`), 결과 `arch.intake_runs`, 진행은 Realtime | 텍스트·마이크 입력, 후보 만들기 | 2(+ STT 분당 1) |
 | 후보 목록(`IntakeCandidateList`) | intake 결과 JSON(체크리스트 답, 실 목록·목표 면적, 메모) | 항목별 채택·버리기, 모두 채택 | 0 |
-| 상담 녹음 모드(P1, AR-F-015) | 녹음 전 제3자 고지(PRD `:228` 문구, 버전 표시) → 녹음(120분 상한) → STT → 후보 | 고지 확인 후 녹음 | STT 분당 1 + 그래프 5(PRD `:144`) |
+| 상담 녹음 모드(P1, AR-F-015) | 녹음 전 제3자 고지(PRD `:228` 문구, 버전 표시) → 녹음(120분 상한) → `POST /api/uploads/sign`(`consult_audio`) → `POST /api/voice/stt`(`mode='consult'`) → `POST /api/ai/intake`(`source='consult'`, 같은 잡 `arch.intake`, 오픈소스 강제) → 후보 | 고지 확인 후 녹음 | STT 분당 1 + 그래프 5(`intake_consult`, PRD `:144`) |
 
 후보 배지 문구는 "AI 추출 후보"로 고정한다(PRD 9.7절 `:455`). 후보에는 좌표·면적 계산값이 없고, 면적표 숫자는 채택 후 엔진이 계산한다.
 
@@ -364,7 +364,7 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 |---|---|---|---|
 | 섹션 목록 | 설계개요, 법규 판정 요약, 면적표, 개략 공사비, 렌더, 도면 시트, AI 서술(설계 의도) | 로컬 모델·판정·`sheets`(`include_in_proposal`)·`render_items` | - |
 | 미리보기 | 쪽 썸네일(최대 20쪽), 서술 섹션 "AI 초안" 표시, 꼬리말 고지 | - | - |
-| 생성 | "제안서 만들기"(10, 렌더는 별도) / "템플릿 문서만"(설계개요서·면적표·공사비, 1, 같은 버전 재요청 0) | `POST /api/ai/proposal` → `arch.proposal_pdf` | 10 / 1 |
+| 생성 | "제안서 만들기"(10, 렌더는 별도) / "템플릿 문서만"(설계개요서·면적표·공사비, 1, 같은 버전 재요청 0) | `POST /api/ai/proposal` → `arch.proposal_pdf` → `arch.proposals` | 10 / 1 |
 
 ### 3.11 `/projects/:id/review` (클라우드 법규 검토)
 
@@ -382,7 +382,7 @@ PRD 9.1절 기본 입력 경로(`docs/products/arch-studio/01_PRD.md:344`)와 �
 |---|---|---|
 | 채팅 패널(셸 오른쪽, `/chat` 전체 화면) | `ChatThread`: 스트리밍 답변, 출처 칩(법령명·조항·시행일, 누르면 원문 요약), 답변마다 "AI 답변" 표시, 입력창 아래 "1턴 1 크레딧, 오늘 남은 <n>턴"(`ai_chat_turns_per_day`) | `POST /api/ai/chat`(Dify `arch-chat` 중계). 개별 사안 적법성은 단정하지 않는다(AR-F-009). 현재 프로젝트 맥락(용도지역, 판정 행)을 첨부할지 체크박스로 고른다(기본 끔, 제안: 대지 정보 전송을 사용자가 정한다) |
 | 마이크 버튼(`VoiceButton`) | 첫 사용 시 처리 목적 고지 → 누르고 말하기/토글 → 녹음 중 빨간 점 + 경과·남은 시간 → 변환 텍스트 미리보기·수정 → 보내기(`VOICE_ARCHITECTURE.md` 8장, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`) | `POST /api/voice/stt`, 분당 1. 원본 저장 안 함(상담 녹음 모드 제외). 음성 없이 모든 기능 사용 가능 |
-| 읽어 주기 | 답변 옆 재생 버튼, 자동 재생 기본 끔 | PRD에 TTS 단가와 계약에 TTS 경로가 없다. OS 음성 합성(WebView 음성 합성 API, WebView2 지원 미확인)으로 0 크레딧 제안. 안 되면 버튼 숨김 |
+| 읽어 주기 | 답변 옆 재생 버튼, 자동 재생 기본 끔 | OS 음성 합성(WebView 음성 합성 API, WebView2 지원 미확인), 서버 미사용, 0 크레딧(제안, 02장 5절). 안 되면 버튼 숨김 |
 | 대화형 입력 마이크 | 3.6절 패널 | 결과는 입력창에 채우기만, 자동 전송 안 함 |
 
 ### 3.13 `/wiki` (법규 해설 위키)
@@ -704,16 +704,16 @@ member는 읽기 전용(저장 시 `AR042`), 오프라인이면 캐시를 읽기
 | 크레딧 내역 없음 | 아직 사용 내역이 없습니다. 도면 출력은 크레딧을 쓰지 않습니다. |
 | 기기 없음 | 활성화한 PC가 없습니다. 앱의 라이선스 화면에서 시리얼을 입력하세요. |
 
-### 5.5 확인할 점 (다른 장에 넘김)
+### 5.5 확인할 점 (2026-10-16 정리 결과)
 
-| # | 내용 | 넘길 곳 |
+| # | 내용 | 결과 |
 |---|---|---|
-| 1 | 체험·월 구독의 `max_activations=1`(PRD `:185`)을 판정할 경로가 계약 RPC에 없다(시리얼 없는 상태) | 02·04·05장 |
-| 2 | 체험·구독(세션형)의 오프라인 허용 기간이 PRD에 없다(`docs/Tauri/README.md:199`는 PRD에서 정한다고 한다). 화면은 마지막 `arch.org_features` 확인 후 7일(제안)로 그렸다 | 01장 열린 결정, 02장 |
-| 3 | AR-F-017 "계정 화면에 시리얼이 보인다"(`:60`)와 4.4절 "서버는 해시만, 화면은 끝 5자"(`:121`)가 충돌한다. 이 문서는 전체 시리얼을 메일로만 보내고 화면은 끝 5자로 그렸다 | 01장, 04장 |
-| 4 | 제안서에 넣을 시트 SVG의 전송 경로(요청 본문 또는 서명 업로드)가 계약에 없다 | 04장 |
-| 5 | 상담 녹음 후보(AR-F-015, 그래프 5, `:144`)와 대화형 입력(AR-F-034, 2, `:389`)이 같은 잡 `arch.intake`인지 단가가 다른 별도 모드인지 계약에 없다 | 02·04장 |
-| 6 | TTS(읽어 주기) 단가·경로가 없다. OS 음성 합성 0 크레딧으로 제안했다 | 02장 |
+| 1 | 체험·월 구독의 `max_activations=1`(PRD `:185`) 판정 경로(시리얼 없는 상태) | 해결: `arch.activate_plan_device`(04장 2.1절, 3장), `license_activations.license_id` null 허용(05장) |
+| 2 | 체험·구독의 오프라인 허용 기간이 PRD에 없다(`docs/Tauri/README.md:199`는 PRD에서 정한다고 한다) | 해결(제안): 라이선스 파일 `offline_valid_until` = 발급 시각 + 7일(02장 2.2절, 04장 2.4절). PRD 열린 결정 추가는 남음 |
+| 3 | AR-F-017 수용 기준(`:60`)과 4.4절 "서버는 해시만, 화면은 끝 5자"(`:121`)의 충돌 | 해결: PRD `:60`을 "계정 화면에 끝 5자, 전체 시리얼은 이메일"로 고쳤다. 화면은 끝 5자, 전체 시리얼은 발급 메일에만 |
+| 4 | 제안서에 넣을 시트 SVG의 전송 경로 | 해결: `POST /api/uploads/sign` purpose `proposal_sheet`, HTML 조립은 서버(04장 6.2절) |
+| 5 | 상담 녹음 후보(AR-F-015, 그래프 5, `:144`)와 대화형 입력(AR-F-034, 2, `:389`)의 관계 | 해결: 같은 잡 `arch.intake`, `source` `chat`(2) / `consult`(5, feature `arch.intake_consult`, 오픈소스 강제)(02장 4절, 04장 2.2절) |
+| 6 | TTS(읽어 주기) 단가·경로 | 해결(제안): OS 음성 합성, 0 크레딧, 서버 미사용(02장 5절) |
 
 ## 6. 접근성과 반응형
 

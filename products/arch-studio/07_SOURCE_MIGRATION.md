@@ -70,10 +70,10 @@ GPL·AGPL 구성요소는 설치 파일·웹 번들에 넣지 않는다(PRD:232)
 | Manifold WASM | 번들 | `packages/geometry/src/**` | Apache-2.0(PRD:232) | 엔벨로프·매스 솔리드 |
 | web-ifc | 번들(소스 무수정, 제안: 파일 단위 공개 의무 회피) | `packages/io/src/ifc/**` | MPL-2.0(PRD:232) | AR-F-016(PRD:58) |
 | That Open components | 후보 | `packages/io/src/ifc/**` | MIT(PRD:232) | 안 쓰면 고지에서 뺀다 |
-| rhino3dm | 번들 | `packages/io/src/rhino/**` | 미확인(PRD:232) | 02 작성 전 확인 |
+| rhino3dm | 번들 | `packages/io/src/rhino/**` | 미확인(PRD:232) | 02장 AR-02-D2(1주 스파이크, 실패 시 .3dm 내보내기 보류) |
 | three.js, R3F, drei | 번들 | `packages/features/src/modeler/**`, `hero3d` | 미확인 | lockfile 기준 고지 |
 | Tauri 2.x·플러그인, rusqlite | 번들 | `apps/desktop/src-tauri/**` | 미확인 | `cargo audit`(Tauri:212) |
-| 2D 다각형 연산(후보 Clipper2 계열) | 후보 | `packages/geometry/src/**` | 미확인(포팅본마다 다를 수 있음) | GPL 포팅이면 채택 안 함 |
+| 2D 다각형 연산(후보 Clipper2 계열) | 후보 | `packages/geometry/src/**` | 미확인(포팅본마다 다를 수 있음) | 02장 AR-02-D1. GPL 포팅이면 채택 안 함(정수 좌표 자체 구현) |
 | 벡터 PDF(후보 jsPDF + svg2pdf.js) | 후보 | `packages/drafting/src/writers/pdf/**` | 미확인 | D-23 (a)(PRD:482) |
 | 오픈소스 JS DXF 라이브러리 | 미사용 | - | 미확인 | D-20 (b) 미채택(PRD:479) |
 | Python ezdxf `audit` | CI 전용(런타임 미포함) | `.github/workflows/golden.yml` | 미확인 | D-20, PRD:380 |
@@ -90,10 +90,10 @@ GPL·AGPL 구성요소는 설치 파일·웹 번들에 넣지 않는다(PRD:232)
 | "숫자는 엔진이 계산, LLM은 해석만" → 도면 | 판정 수치 `packages/rules`, 면적표·공사비 `packages/program`, 좌표·치수 `packages/drafting`. 도면은 판정을 다시 계산하지 않고 JudgmentResult를 입력으로 받는다(PRD:371-372). LLM은 좌표를 출력하지 않는다: `arch.intake` 스키마에 좌표·면적 필드가 없고(목표 면적은 사용자 발화 인용만), `arch.layout`은 인접 의도 JSON만 내며 배치는 `packages/layout` 솔버가 한다(PRD:338, PRD:376-377). 제안서 서술에 엔진 스냅샷에 없는 수치가 나오면 compliance가 막는다(ND:288 방식) |
 | 템플릿 전용 → 제안서 | 판정 요약·면적표·공사비·도면 섹션은 템플릿, LLM은 설계개요 서술만(PRD:56). 꼬리말 "법적 판정 아님"과 표제란 고지(PRD:339)는 요청 입력으로 끌 수 없다 |
 | 회의 녹음 → 상담 녹음·대화형 입력 | 회의록 대신 체크리스트 답·실 목록 후보만. 항목별 채택 전 정본 0행(PRD:376). 고지문은 PRD:228 문구, 버전 기록 |
-| 정액 크레딧 | 같은 값 3개만 이식, 새 값(렌더 3·5, 검토 15, 제안서 10, intake 2)은 제안(D-4). 도면·매스 자동 제안은 0이고 잡이 아니다(PRD:147, PRD:388) |
-| flora 선차감·환불 → `arch.start_ai_run` | 한 트랜잭션: `arch.org_features` 판정(폴백 검토 `AR012`) → `consume_credits` → kind별 실행 행(`arch.renders`·`reviews`·`intake_runs`) → 잡 enqueue. 멱등 키는 `p_request_id`(제안: 데스크톱 재시도 이중 차감 방지). 데스크톱은 kind·request_id만 보내고 금액을 보내지 않는다(PRD:192). 시간 초과(PRD:208-209)는 정리 잡이 `fail_ai_run`으로 전액 환불. 세 함수 service_role 전용 |
-| WeasyPrint → 제안서 PDF | 제안서만 공용 렌더, 도면 PDF는 로컬(D-23 (a)). 렌더는 서버 조립 HTML만 받는다(`docs/products/_platform-core/SHARED_MODULES.md:270`)는 규칙과 "로컬 SVG를 올린다"(PRD:382)가 부딪치므로, 워커가 업로드된 DesignModel·SheetSpec으로 같은 엔진 버전의 `rules`·`drafting`을 돌려 SVG를 다시 만들고 HTML을 조립한다(제안: 엔진이 TS 순수 함수라 워커에서 그대로 돌고, 클라이언트 SVG를 렌더하지 않는다. 02장에서 확정). 렌더 계약 `app_id`에 `arch` 추가 필요(현재 `'publishing' \| 'astro'`, 같은 파일 `:280`, 코어 요청) |
-| AI 계층 → 그래프 3종 | `arch.review`: 로컬 규칙엔진 결과 + RAG → 항목별 근거 → compliance, 출처 없는 문장은 `AR033` 실패·환불(PRD:50). `arch.intake`: 검증 실패 1회 재시도 후 `AR032`. `arch.layout`: Phase 2. 모두 결과 저장은 FastAPI service_role로 `finish_ai_run` 1회 |
+| 정액 크레딧 | nomad-docs와 같은 값(채팅 1, 템플릿 문서 1, STT 분당 1, 상담 녹음 후보 그래프 5, PRD:144)만 이식, 새 값(렌더 3·5, 업스케일 2, 검토 15, 제안서 10, 대화형 intake 2)은 제안(D-4). 단가는 `arch.start_ai_run`의 `p_variant` 상수 표와 서버 `apps/web/src/server/ai/pricing.ts`, seed가 같은 값. 도면·매스 자동 제안은 0이고 잡이 아니다(PRD:147, PRD:388) |
+| flora 선차감·환불 → `arch.start_ai_run` | 시그니처 `arch.start_ai_run(p_org, p_actor, p_kind, p_variant, p_request_id, p_project_ref, p_options)`. 한 트랜잭션: `arch.org_features` 판정(폴백 검토 `AR012`) → variant 단가로 `consume_credits` → kind별 실행 행(`arch.renders`·`reviews`·`intake_runs`·`proposals`) → 잡 enqueue. 멱등 키는 `p_request_id`(제안: 데스크톱 재시도 이중 차감 방지). 데스크톱은 작업 종류·입력·request_id만 보내고 금액을 보내지 않으며 variant는 서버가 정한다(PRD:192). 시간 초과(PRD:208-209)는 정리 잡이 `fail_ai_run`으로 전액 환불. 세 함수 service_role 전용 |
+| WeasyPrint → 제안서 PDF | 제안서만 공용 렌더, 도면 PDF는 로컬(D-23 (a)). 렌더는 서버 조립 HTML만 받는다(`docs/products/_platform-core/SHARED_MODULES.md:270`). 확정: 데스크톱이 로컬 시트 SVG(PRD:382)를 `POST /api/uploads/sign`(purpose `proposal_sheet`)로 올리고, Route Handler가 SVG를 sanitize하고, 워커(`workers/arch-jobs`)가 엔진 값 표·인라인 SVG·렌더 이미지로 HTML을 조립해 렌더에 보낸다(02장 4절, 04장 6.2절). 클라이언트 HTML은 렌더하지 않는다. 결과는 `arch.proposals`. 렌더 계약 `app_id`에 `arch` 추가 필요(현재 `'publishing' \| 'astro'`, 같은 파일 `:280`, PRD 코어 요청 C-5) |
+| AI 계층 → 그래프 3종 | `arch.review`: 로컬 규칙엔진 결과 + RAG → 항목별 근거 → compliance, 출처 없는 문장은 `AR033` 실패·환불(PRD:50). `arch.intake`: `source` `chat`(2)·`consult`(5, feature `arch.intake_consult` 오픈소스 강제) 같은 잡, 검증 실패 1회 재시도 후 `AR032`. `arch.layout`: Phase 2. 모두 결과 저장은 service_role `finish_ai_run` 1회 |
 | HERO_3D → 제품 장면 | 소재 제안: 대지 경계 → 엔벨로프가 솟고 → 매스가 앉고 → 배치도 시트가 펼쳐진다(제안: "입력하면 도면이 나온다"를 보여 준다. HERO_3D 5장에 arch-studio 행이 없어 03장 4절에서 확정 후 행 추가 요청). Manifold WASM을 랜딩 번들에 넣지 않는다(제안: 성능 예산, `docs/products/_design-guide/HERO_3D.md:32`). 카피는 PRD 6.1절 |
 | FortuneDocs 원칙 → 규칙엔진 | 기준 시점 혼동(FD:40)을 막도록 적용 규칙은 시스템 시각이 아니라 `rule_context.application_date`로 고른다(PRD:47). 누락 입력은 기본값으로 계산하지 않고 "조례 미확인"·입력 요청(PRD:48). 규칙 팩 버전별 골든 테스트 |
 

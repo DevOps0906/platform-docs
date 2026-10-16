@@ -54,7 +54,7 @@
 | db | `supabase/**` | `arch` 스키마, RLS, seed(`ai_routing_settings` 포함) | 05장 |
 | ci | `.github/workflows/{desktop-build,desktop-release,web,api,golden}.yml` | 빌드·서명·매니페스트, 골든·ezdxf audit, 비밀 문자열 검사 | 7절 |
 
-AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용): 데스크톱과 웹 화면은 `/api/ai/*`, `/api/voice/*`만 부른다(`docs/Tauri/README.md:171`). Next.js ↔ FastAPI는 EdDSA 서명 토큰(`iss=arch`, `aud=platform-ai:arch`), 워커 ↔ FastAPI는 잡 토큰(`sub=job:<id>`)이다. 잡 토큰 발급 경로는 코어 ai-gateway 표준 내부 경로 `POST /api/internal/ai-token`(워커 키 인증)을 쓴다(계약 8장 목록 밖, 04장에 추가 필요).
+AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용): 데스크톱과 웹 화면은 `/api/ai/*`, `/api/voice/*`만 부른다(`docs/Tauri/README.md:171`). Next.js ↔ FastAPI는 EdDSA 서명 토큰(`iss=arch`, `aud=platform-ai:arch`), 워커 ↔ FastAPI는 잡 토큰(`sub=job:<id>`)이다. 잡 토큰 발급 경로는 코어 ai-gateway 표준 내부 경로 `POST /api/internal/ai-token`(워커 키 인증)을 쓴다(04장 6.3절).
 
 ```
 ┌──────────────────────────── 사용자 PC (Windows 10/11 x64) ─────────────────────────────┐
@@ -89,7 +89,7 @@ AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용): 데스크톱과 웹 화면
 
 ### 2.2 데이터 배치와 라이선스 경계
 
-데이터 분류는 계약 3장(`docs/Tauri/README.md` 4.1절 A~D)을 그대로 쓴다. 로컬 정본(B)은 `projects`, `model_revisions`, `sheets`, `judgment_snapshots`, `exports`, `render_items`, `local_settings`, `license_store`, `rule_pack_cache`, `cost_catalog_cache`, `drafting_profile_cache`이고, 클라우드에는 사용자가 클라우드 기능을 실행할 때 필요한 부분만 올린다(`docs/Tauri/README.md:91`). 동기화(C)는 MVP에 없다.
+데이터 분류는 `docs/Tauri/README.md` 4.1절 A~D를 그대로 쓴다. 로컬 정본(B)은 `projects`, `model_revisions`, `sheets`, `judgment_snapshots`, `exports`, `render_items`, `local_settings`, `license_store`, `rule_pack_cache`, `cost_catalog_cache`, `drafting_profile_cache`이고, 클라우드에는 사용자가 클라우드 기능을 실행할 때 필요한 부분만 올린다(`docs/Tauri/README.md:91`). 동기화(C)는 MVP에 없다.
 
 | 판정 | 위치 | 규칙 |
 |---|---|---|
@@ -98,23 +98,23 @@ AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용): 데스크톱과 웹 화면
 | 규칙 팩 사용 자격 | Rust + 서버 | 서버는 `arch.eligible_rule_packs()`로 목록·서명 URL을 준다. Rust는 팩 매니페스트 서명과 `published_at <= updates_until`을 확인한 팩만 엔진에 넘긴다 |
 | 빌드 자격 | 서버 `arch.eligible_build` + Rust | 업데이터는 `build_date <= updates_until` 빌드만 받는다. 자격 밖 빌드를 직접 설치하면 실행 시 라이선스 화면으로 안내(`01_PRD.md:128`) |
 
-라이선스 파일(`docs/Tauri/README.md:193` 필드 + 계약 13장 `features`). PRD 4.4절 필드 목록에는 `app_id`가 없으나 Tauri 정본을 따라 넣는다.
+라이선스 파일(`docs/Tauri/README.md:193` 필드 + PRD 9.4절 `features`, `01_PRD.md:408`). PRD 4.4절 필드 목록(`01_PRD.md:125`)과 같은 필드이고, 직렬화·서명 형식은 04장 2.4절이 정본이다.
 
 ```ts
 // packages/shell-bridge (계약 예시) — Rust license.rs가 검증한 결과만 화면에 전달
 interface LicenseFilePayload {
-  license_id: string | null          // 체험·월 구독은 null
-  org_id: string; app_id: 'arch'; sku: string   // perpetual_* 또는 플랜 코드
+  v: 1; license_id: string | null    // 체험·월 구독(source 'plan')은 null
+  org_id: string; app_id: 'arch'; sku: string; source: 'license' | 'plan'   // sku: perpetual_* 또는 플랜 코드(trial, sub_monthly)
   updates_until: string | null       // 'YYYY-MM-DD'
   activation_id: string; device_hash: string
-  features: { drafting_watermark: boolean; ai_intake: boolean; cloud_review: boolean; rule_pack_updates: boolean }
-  offline_valid_until: string | null // 제안: 체험·월 구독만. 영구는 null(D-7 무기한)
+  features: { drafting_watermark: boolean; rule_pack_updates: boolean; cloud_review: boolean; ai_render: boolean }   // 표시용, 클라우드 판정은 서버
+  offline_valid_until: string | null // 제안: 체험·월 구독은 발급 시각 + 7일. 영구는 null(D-7 무기한)
   issued_at: string; kid: string
 }
 // 파일 = { payload: base64url(JSON), sig: base64url(Ed25519(payload)) }
 ```
 
-`offline_valid_until`은 이 문서가 더한 필드다(제안). 이유: PRD는 영구 라이선스의 오프라인 무기한(D-7)만 정하고 체험·월 구독의 오프라인 허용 기간을 정하지 않았으며, Tauri 가이드는 이를 제품 PRD가 정하게 한다(`docs/Tauri/README.md:199`). 제안값은 발급 후 7일(이유: 상담 출장 1주를 버티되 해지 후 장기 사용을 막는다).
+`offline_valid_until`은 이 문서가 더한 필드다(제안). 이유: PRD는 영구 라이선스의 오프라인 무기한(D-7)만 정하고 체험·월 구독의 오프라인 허용 기간을 정하지 않았으며, Tauri 가이드는 이를 제품 PRD가 정하게 한다(`docs/Tauri/README.md:199`). 제안값은 발급 후 7일(이유: 상담 출장 1주를 버티되 해지 후 장기 사용을 막는다). 체험·월 구독의 기기 활성화는 `arch.activate_plan_device(p_org, p_user, p_device_hash)`(service_role, 한도 `org_features.max_activations` = 1)가 `arch.license_activations`에 `license_id` null, `source='plan'`, `org_id` 행을 만들고 같은 형식의 파일을 받는다(04장 2.1절, 05장).
 
 ### 2.3 도면 엔진(packages/drafting) 설계
 
@@ -123,7 +123,7 @@ interface LicenseFilePayload {
 ```ts
 // packages/drafting (계약 예시)
 type Mm = number          // 정수 mm(모델 좌표)
-type PaperUm = number     // 정수 0.01mm(용지 좌표). 계약 "용지 mm 좌표"의 정밀도 단위(아래 설명)
+type PaperUm = number     // 정수 0.01mm(용지 좌표). 04장 4.7.4절과 같은 정밀도 단위(아래 설명)
 interface DraftingInput {
   model: DesignModel; judgment: JudgmentResult; sheet: SheetSpec
   profile: DraftingProfile; license: { drafting_watermark: boolean; fallback_revisions?: number }
@@ -137,12 +137,12 @@ interface SheetModel {
   paper_prims: Prim<PaperUm>[]       // 표제란, 도곽, 방위표, 축척 막대, 면적표
   annotations: Annotation[]          // 치수·라벨·경고. anno_id로 덮어쓰기 대상
   blocks: BlockDef[]                 // 문·창 심볼
-  warnings: Array<{ code: 'AR057' | 'AR058'; detail: string }>
+  warnings: Array<{ code: 'AR057' | 'AR058'; detail: string }>; title_block: TitleBlockValues; checks: SheetChecks   // 두 타입은 04장 4.7.4절
 }
 type Prim<U> = { layer: StdLayer; key: string } & (
   | { t: 'line'; a: [U, U]; b: [U, U] } | { t: 'pline'; pts: [U, U][]; closed: boolean }
   | { t: 'arc'; c: [U, U]; r: U; a0: number; a1: number } | { t: 'circle'; c: [U, U]; r: U }
-  | { t: 'text'; at: [U, U]; h: PaperUm; s: string; align: 'l' | 'c' | 'r'; source_ref?: string }
+  | { t: 'text'; at: [U, U]; h: PaperUm; s: string; align: 'l' | 'c' | 'r'; source_ref?: string } | { t: 'mtext'; at: [U, U]; h: PaperUm; width: PaperUm; s: string }
   | { t: 'hatch'; loops: [U, U][][]; pattern: 'SOLID' | 'ANSI31' } | { t: 'insert'; block: string; at: [U, U]; rot_deg: 0 | 90 | 180 | 270 })
 interface Annotation { anno_id: string; kind: 'dim' | 'label' | 'warning' | 'note'; prims: Prim<Mm | PaperUm>[]; overridable: Array<'offset' | 'hide'> }
 ```
@@ -240,25 +240,25 @@ DXF 작성기(D-20 (a), AR-F-038):
 
 ```ts
 // apps/desktop/src/workers (계약 예시)
-type Lane = 'judge' | 'suggest' | 'sheet' | 'export' | 'import'
+type Lane = 'judge' | 'suggest' | 'layout' | 'sheet' | 'export' | 'import'   // engine.worker: judge·suggest·layout, drafting.worker: sheet·export·import
 type EngineRequest =
   | { op: 'load_rule_pack'; req_id: string; version: string; sha256: string; pack: unknown }
   | { op: 'judge'; req_id: string; lane: 'judge'; seq: number; model_rev: string; model: DesignModel }
   | { op: 'suggest_mass'; req_id: string; lane: 'suggest'; seq: number; model: DesignModel; targets: unknown }
   | { op: 'build_sheet'; req_id: string; lane: 'sheet'; seq: number; input: DraftingInput }
-  | { op: 'write'; req_id: string; lane: 'export'; format: 'dxf' | 'svg'; sheet: SheetModel; layer_map: Record<string, string> }
-  | { op: 'import_dxf'; req_id: string; lane: 'import'; bytes: ArrayBuffer; unit_hint?: 'mm' | 'm' }
+  | { op: 'write'; req_id: string; lane: 'export'; format: 'dxf' | 'svg' | 'pdf' | 'png'; sheets: SheetModel[]; layer_map: Record<string, string>; bundle: boolean; project_name: string; date: string }  // 결과 형식은 04장 4.7.5절
+  | { op: 'import_dxf'; req_id: string; lane: 'import'; bytes: ArrayBuffer; unit_hint?: 'mm' | 'm'; purpose: 'site_boundary' | 'reference' } | { op: 'validate_layout'; req_id: string; lane: 'layout'; seq: number; model: DesignModel; floor_id: string }
   | { op: 'cancel'; req_id: string }
 type EngineResponse =
   | { req_id: string; seq?: number; ok: true; op: string; result: unknown; engine_version: string; elapsed_ms: number }
-  | { req_id: string; seq?: number; ok: false; code: 'AR050' | 'AR051' | 'AR053' | 'AR054' | 'AR055' | 'AR057' | 'AR058' | 'AR059'; detail: string }
+  | { req_id: string; seq?: number; ok: false; code: LocalErrorCode; detail: string }   // AR050~AR059(04장 7.3절)
   | { req_id: string; status: 'superseded' | 'canceled' }
   | { req_id: string; status: 'progress'; pct: number }
 ```
 
 | 규칙 | 내용 |
 |---|---|
-| 최신만 유효 | `judge`·`suggest`·`sheet` 레인은 레인마다 `seq`를 올려 보낸다. 워커는 대기열에 같은 레인의 새 요청이 오면 이전 요청을 실행하지 않고 `superseded`로 답한다. UI는 받은 응답의 `seq`가 레인 최신값보다 작으면 버린다 |
+| 최신만 유효 | `judge`·`suggest`·`layout`·`sheet` 레인은 레인마다 `seq`를 올려 보낸다. 워커는 대기열에 같은 레인의 새 요청이 오면 이전 요청을 실행하지 않고 `superseded`로 답한다. UI는 받은 응답의 `seq`가 레인 최신값보다 작으면 버린다 |
 | 실행 중 취소 | JS 순수 함수는 중간에 멈출 수 없으므로 시트 생성·매스 탐색은 단계(뷰, 주석, 후보)마다 취소 플래그를 확인하고 이벤트 루프에 양보한다 |
 | 내보내기 | `export` 레인은 최신만 유효 규칙을 쓰지 않는다(사용자가 시작한 출력은 끝까지). 결과 바이트는 Transferable `ArrayBuffer`로 넘기고 shell-bridge Exporter → Rust `export.rs`가 사용자가 고른 경로에 쓴다(실패 AR052) |
 | 규칙 팩 | Rust가 서명·자격을 확인한 팩만 `load_rule_pack`으로 넘긴다. 워커는 `sha256`이 같으면 다시 파싱하지 않는다 |
@@ -271,17 +271,17 @@ type EngineResponse =
 
 | 공용 모듈 | 용도 | 호출 위치 | 비고 |
 |---|---|---|---|
-| auth | 가입(`signup_app='arch'`), 세션, `requireSession('arch')`, 단계 분기 | `apps/web/src/lib/auth/`, 모든 Route Handler, 데스크톱 `shell-bridge/src/auth` → `POST /api/auth/finish` | Bearer 검증은 코어 요청 T-C1, finishLogin 경로는 T-C8(`docs/Tauri/README.md:372`, `:378`) |
+| auth | 가입(`signup_app='arch'`), 세션, `requireSession('arch')`, 단계 분기 | `apps/web/src/lib/auth/`, 모든 Route Handler, 데스크톱 `shell-bridge/src/auth` → `POST /api/auth/finish` | Bearer 검증은 코어 요청 T-C1, finishLogin 경로는 T-C8(`docs/Tauri/README.md:372`, `:378`). PRD 코어 요청 C-6이 T-C1·T-C2·T-C6·T-C8을 묶는다 |
 | org | 개인 조직(첫 로그인), 라이선스·크레딧의 소유 단위 | 세션 컨텍스트, `arch.deactivate_activation`(owner/admin) | `SHARED_MODULES.md:86` |
 | credits | 선차감·환불. 차감은 `arch.start_ai_run` 안에서만, 실패 환불은 `fail_job` → `arch.fail_ai_run` | web-api ai·voice, 워커 | 데스크톱은 금액을 보내지 않는다(`docs/Tauri/README.md:173`) |
 | toss | 라이선스 SKU·플랜·크레딧팩 주문, confirm | `apps/web/src/server/billing`, 시스템 브라우저 결제(`docs/Tauri/README.md:182`) | 영구 라이선스는 C-1 후 |
 | webhooks | Toss 수신(원시 본문 서명, `core.webhook_events` 멱등) → `arch.issue_license`, `arch.extend_updates` | `POST /api/webhooks/toss` | `SHARED_MODULES.md:165` |
-| storage | 렌더 입력·결과, 제안서 PDF(`exports`), 클라우드 사본·로고(`org-files`), 빌드·규칙 팩·단가표(제품 비공개 버킷 `arch-releases`, 제안) | web-api 서명 URL, Rust 스트리밍 업로드(`docs/Tauri/README.md:175`) | 경로 `<org_id>/arch/<entity>/<uuid>.<ext>`(`SHARED_MODULES.md:378`) |
+| storage | 렌더 결과(`org-files`, fal URL 복사), 제안서 PDF(`exports`), 사용자 업로드(클라우드 사본·렌더 입력·제안서 시트 SVG·로고, 제품 비공개 버킷 `arch-user`), 상담 녹음(코어 `voice-audio`), 빌드·규칙 팩·단가표(제품 비공개 버킷 `arch-releases`) | web-api 서명 URL(`POST /api/uploads/sign`), Rust 스트리밍 업로드(`docs/Tauri/README.md:175`) | 경로 `<org_id>/arch/<purpose>/<uuid>.<ext>`(서버 생성, `SHARED_MODULES.md:378`) |
 | audit | 활성화·해제, 라이선스 발급·정지, 표제란 설정 변경, 국외 이전 동의, 녹음 고지 확인 | RPC 내부, 서버 경로 | `SHARED_MODULES.md:401` |
 | jobs | 클라우드 AI 작업 상태 정본, Realtime 진행률 | 워커, 데스크톱 Realtime 구독 | 큐 = job_type(4절), `SHARED_MODULES.md:417` |
 | compliance | 그래프 마지막 노드의 규칙 사전 + 제품 규칙(`apps/api/app/ai/compliance/arch.py`). 법정 표기·동의·라벨은 V2 공용모듈 `@nomad/compliance`(`profileKind: kr_ecommerce`) | ai-service, web 가입·구매 약관 | `SHARED_MODULES.md:355`, `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:28-36`(AR-V2-01·02, `:57-58`) |
 | fal client | AI 렌더·업스케일, `enable_safety_checker=true` | 워커 `arch.render` | `SHARED_MODULES.md:241`. 웹훅 서명 방식 미확인(`:262`) |
-| weasyprint render | 제안서 PDF(`arch.proposal_pdf`). 도면 PDF는 쓰지 않는다(D-23 (a)) | 워커 → 공용 렌더(private) | `SHARED_MODULES.md:264`. 소비자 `app_id`에 `arch` 추가는 소유자(flora-publishing) 요청 |
+| weasyprint render | 제안서 PDF(`arch.proposal_pdf`). 도면 PDF는 쓰지 않는다(D-23 (a)) | 워커 → 공용 렌더(private) | `SHARED_MODULES.md:264`. 소비자 `app_id`에 `arch` 추가는 소유자(flora-publishing) 요청(PRD 코어 요청 C-5) |
 | ai-gateway | 대화 매핑, 서명·잡 토큰, 턴 선차감·정산, Dify 중계 | `apps/web/src/server/ai`, `/api/ai/*`, `/api/internal/ai-token` | `SHARED_MODULES.md:502` |
 | ai-service | 라우터, RAG(`arch.knowledge`), 위키, 그래프 3종, `/tools/answer` | `apps/api` | `SHARED_MODULES.md:503` |
 | dify | `arch-chat`(법규 질의, 출처 필수) | `POST /api/ai/chat` | `SHARED_MODULES.md:504`. Dify 로그 30일 |
@@ -291,21 +291,21 @@ type EngineResponse =
 
 ## 4. 잡과 워커
 
-원칙: 클라우드 AI 요청 1건 = 제품 실행 행(`arch.renders`·`arch.reviews`·`arch.intake_runs`) 1행 + `core.jobs` 1행. Route Handler가 입력 검사(크기 AR031, 기능 `arch.org_features`, 폴백 상태 검토 AR012, 렌더 동시 3건 AR030) 후 `arch.start_ai_run(p_kind, p_request_id, p_project_ref)`이 선차감과 enqueue를 한 트랜잭션으로 한다. 워커가 결과를 Storage에 올린 뒤 `arch.finish_ai_run`, 실패는 `core.fail_job`(재시도 또는 최종 실패 환불) 다음 `arch.fail_ai_run`. 큐 이름은 job_type과 같고 소비자는 `workers/arch-jobs` 하나다(큐마다 소비자 하나). 그래프 잡은 워커가 잡 토큰으로 FastAPI `POST /graphs/<name>/runs`를 부른다. 페이로드 스키마는 04장 4절이고 payload에는 id만 둔다(좌표·문장·비밀 금지).
+원칙: 클라우드 AI 요청 1건 = 제품 실행 행(`arch.renders`·`arch.reviews`·`arch.intake_runs`·`arch.proposals`) 1행 + `core.jobs` 1행. Route Handler가 입력 검사(크기 AR031, 기능 `arch.org_features`, 폴백 상태 검토 AR012, 렌더 동시 3건 AR030) 후 `arch.start_ai_run(p_org, p_actor, p_kind, p_variant, p_request_id, p_project_ref, p_options)`이 variant 단가(서버 상수 `apps/web/src/server/ai/pricing.ts`, seed와 같은 값)로 선차감과 enqueue를 한 트랜잭션으로 한다. 워커가 결과를 Storage에 올린 뒤 `arch.finish_ai_run`, 실패는 `core.fail_job`(재시도 또는 최종 실패 환불) 다음 `arch.fail_ai_run`. 큐 이름은 job_type과 같고 소비자는 `workers/arch-jobs` 하나다(큐마다 소비자 하나). 그래프 잡은 워커가 잡 토큰으로 FastAPI `POST /graphs/<name>/runs`를 부른다. 페이로드 스키마는 04장 4절이고 payload에는 id만 둔다(좌표·문장·비밀 금지).
 
 | `job_type` | 큐 | 런타임 | 크레딧 선차감 | 재시도 | 환불 조건 |
 |---|---|---|---|---|---|
 | `arch.render` | `arch.render` | TS 워커 → fal(입력: 뷰포트 깊이·윤곽 이미지 + 프리셋, 원본 모델 미전송) | 표준 3 / 고품질 5 / 업스케일 2 | 1회(제출 오류·네트워크). 안전 필터 거부는 재시도 없음 | 3분 초과, 실패, 결과 미전달 시 전액(`01_PRD.md:55`) |
 | `arch.review` | `arch.review` | TS 워커 → FastAPI 그래프 `arch.review`(잡 토큰) | 15 | 1회(제공자 오류·타임아웃, 같은 thread로 재개) | 10분 초과, AR033(출처 없는 결과), 최종 실패 시 전액 |
-| `arch.intake` | `arch.intake` | TS 워커 → FastAPI 그래프 `arch.intake` | 텍스트 2, 음성은 + `arch.stt` 분당 1. 상담 녹음 후보(AR-F-015)는 그래프 5(PRD 4.5절) | 그래프 안 스키마 재시도 1회, 잡 재시도 1회(제공자 오류만) | AR032, 최종 실패 시 전액 |
-| `arch.proposal_pdf` | `arch.proposal_pdf` | TS 워커: FastAPI 서술 생성(잡 토큰, `arch.proposal_narrative`) → HTML 조립(판정·면적·공사비는 엔진 스냅샷 값, 도면은 업로드된 SVG) → 공용 WeasyPrint | 서술 포함 10, 템플릿 문서 1(같은 버전 재요청 0). 렌더 이미지는 별도 | 1회(네트워크·타임아웃·429) | 실패·120초 렌더 타임아웃 시 전액 |
+| `arch.intake` | `arch.intake` | TS 워커 → FastAPI 그래프 `arch.intake` | `source='chat'`(텍스트·음성 대화, AR-F-034) `intake_text` 2, `source='consult'`(상담 녹음 전사본, AR-F-015) `intake_consult` 5(PRD 4.5절). STT는 `arch.stt` 분당 1 별도 | 그래프 안 스키마 재시도 1회, 잡 재시도 1회(제공자 오류만) | AR032, 최종 실패 시 전액 |
+| `arch.proposal_pdf` | `arch.proposal_pdf` | TS 워커: FastAPI 서술 생성(잡 토큰, `arch.proposal_narrative`) → 서버 HTML 조립(판정·면적·공사비는 엔진 스냅샷 값, 도면은 `POST /api/uploads/sign` purpose `proposal_sheet`로 올라와 sanitize된 SVG 인라인) → 공용 WeasyPrint → `arch.proposals` | `proposal` 10(서술 포함), `doc_template` 1(같은 버전 재요청 0). 렌더 이미지는 별도 | 1회(네트워크·타임아웃·429) | 실패·120초 렌더 타임아웃 시 전액 |
 | `arch.stt` | `arch.stt` | TS 워커 → core-voice(상담 녹음은 `oss-voice`만). 짧은 받아쓰기는 `/api/voice/stt` 동기 | 분당 1, 실제 길이로 정산 | 상담 녹음은 대체 없이 1회 | 실패 시 전액. 원본 24시간 후 삭제 |
 | `arch.layout`(Phase 2) | `arch.layout` | TS 워커 → FastAPI 그래프 `arch.layout`(의도 JSON만), 배치는 데스크톱 `packages/layout` 솔버 | 5 | 1회 | 의도 JSON 검증 실패, 최종 실패 시 전액 |
 | `arch.walkthrough`(Phase 2) | `arch.walkthrough` | TS 워커 | 40 | 미정 | 최종 실패 시 전액 |
 
-도면 생성, DXF·SVG·PDF·PNG 시트 출력, 매스 자동 제안, 판정, 엔벨로프는 잡이 아니다. 데스크톱 로컬 Web Worker에서 0크레딧으로 실행하고 서버를 거치지 않는다(`01_PRD.md:388`). 제안서에 넣는 시트도 로컬에서 만든 SVG를 올릴 뿐이다(`01_PRD.md:382`).
+도면 생성, DXF·SVG·PDF·PNG 시트 출력, 매스 자동 제안, 판정, 엔벨로프는 잡이 아니다. 데스크톱 로컬 Web Worker에서 0크레딧으로 실행하고 서버를 거치지 않는다(`01_PRD.md:388`). 제안서에 넣는 시트도 로컬에서 만든 SVG를 `POST /api/uploads/sign`(purpose `proposal_sheet`)로 올릴 뿐이고 HTML 조립은 워커(서버)가 한다(`01_PRD.md:382`, `SHARED_MODULES.md:270`).
 
-`arch.start_ai_run`의 `p_kind`(render, review, intake, proposal, layout)에 STT가 없으므로 `arch.stt` 차감은 core-voice의 `voice:<request_id>` 멱등 키 경로를 쓴다(`AI_ARCHITECTURE.md` 7장). 클라우드 검토는 데스크톱이 보낸 JudgmentResult를 믿지 않는다: Route Handler가 업로드된 DesignModel로 같은 `packages/rules`(서버 번들)를 같은 규칙 팩 버전으로 다시 돌린 결과만 그래프 입력으로 저장한다(결정적 값은 서버 계산, 6절 위험 #1).
+`arch.start_ai_run`의 `p_kind`(render, review, intake, proposal, layout, walkthrough)와 `p_variant` → 크레딧(render_std 3, render_hq 5, upscale 2, review 15, intake_text 2, intake_consult 5, proposal 10, doc_template 1(같은 버전 재요청 0), layout 5, walkthrough 40)에 STT가 없으므로 `arch.stt` 차감은 core-voice의 `voice:<request_id>` 멱등 키 경로를 쓴다(`AI_ARCHITECTURE.md` 7장). 클라우드 검토는 데스크톱이 보낸 JudgmentResult를 믿지 않는다: Route Handler가 업로드된 DesignModel로 같은 `packages/rules`(서버 번들)를 같은 규칙 팩 버전으로 다시 돌린 결과만 그래프 입력으로 저장한다(결정적 값은 서버 계산, 6절 위험 #1).
 
 | 스케줄(잡 아님, 워커 크론) | 주기(제안) |
 |---|---|
@@ -324,7 +324,7 @@ type EngineResponse =
 | purpose(feature 키) | 모델(fast / quality) | 크레딧 | 폴백 |
 |---|---|---|---|
 | `arch.review` | 표준 / 상위(해석 문장) | 15(그래프) | 체인 다음 제공자. 국외 미동의면 oss-llm |
-| `arch.intake` | 표준 / 표준(구조화 출력) | 2 | 같음 |
+| `arch.intake` | 표준 / 표준(구조화 출력) | 2(`intake_text`) | 같음 |
 | `arch.intake_consult`(상담 녹음 후보) | 표준 / 표준 | 5 | 없음(오픈소스 강제) |
 | `arch.proposal_narrative` | 표준 / 상위 | 10에 포함 | 체인 다음 |
 | `arch.chat` | Dify 앱 내부 | 1/턴 | Dify 장애 시 `/tools/answer-direct` |
@@ -334,8 +334,8 @@ type EngineResponse =
 | feature | kind | 모드 | 대체 체인 | 강제 오픈소스 | 쓰는 곳 |
 |---|---|---|---|---|---|
 | `arch.review` | llm | auto | anthropic → openai → google → oss-llm | 아니오 | 그래프 `arch.review`. 입력은 판정 값·법령 조각뿐(주소·건축주 정보 미전송) |
-| `arch.intake` | llm | auto | anthropic → openai → oss-llm | 아니오 | 그래프 `arch.intake`(텍스트·본인 음성) |
-| `arch.intake_consult` | llm | open_source | oss-llm | 예(제3자 발언) | 상담 녹음 전사본 → 후보(`01_PRD.md:57`) |
+| `arch.intake` | llm | auto | anthropic → openai → oss-llm | 아니오 | 그래프 `arch.intake`, `source='chat'`(텍스트·본인 음성) |
+| `arch.intake_consult` | llm | open_source | oss-llm | 예(제3자 발언) | 같은 그래프 `arch.intake`, `source='consult'`(상담 녹음 전사본 → 후보, `01_PRD.md:57`) |
 | `arch.proposal_narrative` | llm | auto | anthropic → openai → google → oss-llm | 아니오 | 제안서 서술 섹션 |
 | `arch.chat` | llm | auto | anthropic → openai → google → oss-llm | 아니오 | `/tools/answer` |
 | `arch.layout`(P2) | llm | auto | anthropic → openai → oss-llm | 아니오 | 그래프 `arch.layout`(층 외곽·면적표만 전송, `01_PRD.md:452`) |
@@ -346,7 +346,7 @@ type EngineResponse =
 | `consult_recording` | stt | open_source | oss-voice | 예(제3자 음성) | 상담 녹음 |
 | `voice_chat` | stt | auto | oss-voice → elevenlabs | 아니오 | 대화형 입력 본인 음성, 채팅 음성 질문 |
 
-국외 이전 미동의 조직은 `resolve_ai_route`가 상용 제공자를 빼므로 모든 llm 기능이 oss-llm만 쓰고 정액 작업 가격은 같다(`AI_ARCHITECTURE.md:86`, `01_PRD.md:193`). TTS는 PRD 범위에 없어 두지 않는다.
+국외 이전 미동의 조직은 `resolve_ai_route`가 상용 제공자를 빼므로 모든 llm 기능이 oss-llm만 쓰고 정액 작업 가격은 같다(`AI_ARCHITECTURE.md:86`, `01_PRD.md:193`). TTS(채팅 답변 읽어 주기, 03장 3.12절)는 OS 음성 합성으로 0크레딧이며 서버 라우팅 기능을 두지 않는다(제안).
 
 LangGraph 그래프(`apps/api/app/ai/graphs/arch_*.py`, compliance는 마지막 생성 노드이고 뒤에는 output만, `AI_ARCHITECTURE.md:117`):
 
@@ -360,7 +360,7 @@ LangGraph 그래프(`apps/api/app/ai/graphs/arch_*.py`, compliance는 마지막 
 
 | 이미지·음성 제공자 | 용도 | 호출 위치 | 규칙 |
 |---|---|---|---|
-| fal(Flux 계열) | 렌더 표준 1024px, 3크레딧 | 워커 | 모델 id는 서버 상수, 안전 검사 켬, 결과를 Storage로 복사, 메타데이터 AI 생성 표시 |
+| fal(Flux 계열) | 렌더 표준 1024px, 3크레딧(라우팅 키 `arch.render`) | 워커 | 모델 id는 서버 상수, 안전 검사 켬, 결과를 Storage로 복사, 메타데이터 AI 생성 표시 |
 | 고품질 이미지(Gemini 이미지 계열) | 렌더 2K, 5크레딧 | 워커 | fal 경유 제공 여부 미확인. 아니면 워커가 google 제공자를 직접 호출하고 키는 워커에만 둔다(06장에서 확정) |
 | fal 업스케일 | 4K, 2크레딧 | 워커 | `render_max_px`는 서버 판정 |
 | oss-voice | 상담 녹음 STT, 본인 음성 STT 1순위 | 워커, `/api/voice/stt` | 상담 녹음은 대체 금지 |
@@ -375,7 +375,7 @@ LangGraph 그래프(`apps/api/app/ai/graphs/arch_*.py`, compliance는 마지막 
 | 위험 #1(`docs/reviews/FortuneDocs.md` 3장 #1) | `docs/reviews/FortuneDocs.md:40` | 외부 API 값을 도메인 경계 규칙 없이 그대로 써서 경계 시점 결과가 틀린다 | 공공 API(VWorld)는 대지 형상·용도지역 입력에만 쓰고 판정에 쓰지 않는다. 시행일 경계는 규칙 팩(from·to·지자체)과 신청 예정일로 rules가 고른다(AR-F-005). 골든에 신·구 일조사선 경계 신청일 쌍, 조례 반영 전후 쌍을 넣는다. 클라우드 검토는 서버가 같은 엔진으로 재계산(4절) | rules, `packages/rules/golden/**`, 06장(작성 예정 ID 블록) 규칙엔진 작업 |
 | 위험 #2(같은 리뷰 #2) | `:41` | 계산 규칙이 없고 필수 입력이 NULL 허용이라 계산 불가 레코드가 생긴다 | DesignModel zod 스키마에서 판정 필수 필드(`north_angle_deg`, 도로 폭, 용도지역)를 필수로 두고, 빠지면 해당 판정 행을 "입력 필요"로 표시해 추정값을 쓰지 않는다. 시트는 AR050으로 거부 | domain, rules |
 | 위험 #3(같은 리뷰 #3) | `:42` | 입력 모델과 저장 스키마가 어긋나 옵션이 저장되지 않는다 | DesignModel·SheetSpec 정본은 `packages/domain` 하나. 로컬 SQLite는 JSON + `schema_version`, 클라우드 사본도 같은 JSON. Python 쪽 pydantic은 동치 테스트로 묶고, 버전 이주 함수 없이 스키마를 바꾸면 CI 실패 | domain, local-migrations, 05장 |
-| 위험 #4(같은 리뷰 #4) | `:43` | `FOR ALL` 정책으로 사용자가 계산 결과 행을 직접 쓴다 | `arch.reviews`·`arch.renders`·`arch.intake_runs`는 사용자 SELECT만, 쓰기는 service RPC(`start_ai_run`, `finish_ai_run`, `fail_ai_run`)만 | 05장 7절 |
+| 위험 #4(같은 리뷰 #4) | `:43` | `FOR ALL` 정책으로 사용자가 계산 결과 행을 직접 쓴다 | `arch.reviews`·`arch.renders`·`arch.intake_runs`·`arch.proposals`는 사용자 SELECT만, 쓰기는 service RPC(`start_ai_run`, `finish_ai_run`, `fail_ai_run`)만 | 05장 7절 |
 | 위험 #5(같은 리뷰 #5) | `:44` | 비원자 크레딧 차감, 실패 환불 없음 | `arch.start_ai_run` 한 트랜잭션(실행 행 + `enqueue_job` + `consume_credits`), 실패는 `fail_job` 자동 환불. 데스크톱은 금액을 보내지 않는다 | 05장 7절, 4절 |
 | 위험 #6(제품: 라이선스 파일 위조) | `01_PRD.md:125`, `docs/Tauri/README.md:193-194` | 사용자가 라이선스 파일을 고치거나 다른 PC 파일을 복사해 권한을 얻는다 | Rust `license.rs`가 Ed25519 서명(앱에 넣은 `kid`별 공개키)과 `device_hash`(현재 기기에서 다시 계산)·`app_id`를 검증하고 하나라도 틀리면 미활성 상태. 개인키는 web 서버 전용. 클라우드 기능은 파일과 무관하게 서버가 매번 판정. 변조 파일 거부 테스트(T-007) | desktop-rust, web-api licenses, 05장 7절 |
 | 위험 #7(제품: 로컬 SQLite로 오프라인 권한 판정) | `docs/Tauri/README.md:42`, `:90` | 로컬 DB·localStorage 값을 고쳐 체험 만료·폴백을 우회한다 | 권한은 서명 파일만(2.2절). 체험·월 구독은 `offline_valid_until`(제안 7일)을 넘으면 열람·내보내기만. 시계 되돌림은 `license_store`에 남긴 최대 `issued_at`보다 현재 시각이 이르면 만료로 본다. 영구 라이선스는 시각과 무관(빌드 상수 `build_date`와 `updates_until` 비교) | desktop-rust, 05장 7절 |
@@ -395,7 +395,7 @@ LangGraph 그래프(`apps/api/app/ai/graphs/arch_*.py`, compliance는 마지막 
 | apps/api | Railway(CPU 1) | 공개 HTTPS지만 서명 토큰·잡 토큰·Dify 내부 키 없으면 401. 상용 LLM, 공용 GPU(`oss-llm`, `oss-embed`, `oss-voice`), Supabase(service_role) |
 | workers/arch-jobs | Railway(CPU 1, 동시 4 제안) | 인바운드 없음. Supabase(service_role), fal, `/api/internal/ai-token`(워커 키), FastAPI(잡 토큰), 공용 WeasyPrint(private, `X-Render-Token`) |
 | 공용 WeasyPrint, Dify, GPU 서버 | 운영사(공용) | WeasyPrint는 private network만(`SHARED_MODULES.md:272`) |
-| Supabase | 모듈러 프로젝트 1개(스키마 `core` + `arch`). 화이트라벨 단독 설치는 monolith | Storage 비공개 버킷 `arch-releases`(빌드·규칙 팩·단가표, 서명 URL만, 제안), `exports`, `org-files` |
+| Supabase | 모듈러 프로젝트 1개(스키마 `core` + `arch`). 화이트라벨 단독 설치는 monolith | Storage 비공개 버킷 `arch-releases`(빌드·규칙 팩·단가표, 서명 URL만), `arch-user`(사용자 업로드), 코어 `exports`, `org-files`, `voice-audio` |
 | 데스크톱 앱 | 사용자 PC | 아래 CSP와 Rust HTTP 허용 목록 밖으로 나가지 않는다 |
 
 빌드·업데이트 파일 배포:
@@ -405,7 +405,7 @@ LangGraph 그래프(`apps/api/app/ai/graphs/arch_*.py`, compliance는 마지막 
 | 설치 형식 | NSIS(기본, 사용자 단위 설치·업데이터용, 제안)와 MSI(기관 일괄 배포) 둘 다 생성(`docs/Tauri/README.md:255`). WebView2 부트스트랩 포함, 설치 파일 200MB 이하(`01_PRD.md:204`) |
 | 서명 | Windows 코드 서명 인증서(종류·비용 미확인, T-D5, `docs/Tauri/README.md:211`, `:366`). 업데이트 파일은 Tauri 업데이트 서명키로 별도 서명(라이선스 키·코드 서명과 분리, `:197`) |
 | 게시 | `desktop-release.yml`(태그 푸시): 빌드 → 코드 서명 → 업데이트 서명 → `arch-releases/builds/<channel>/<version>/`에 업로드 → `arch.builds` 행(`build_date`, channel `stable`·`beta`, 서명값) 등록. 실키는 GitHub 환경 비밀(job 레벨 `env`)에만 |
-| 업데이트 | Rust updater → `GET /api/updates/{target}/{arch}/{current_version}`(서명 라이선스 파일 첨부, 헤더 이름은 04장). 서버가 활성화 상태와 `arch.eligible_build`를 확인해 짧은 수명(제안 15분) 서명 URL과 서명값이 든 매니페스트를 준다. 자격 없으면 204 |
+| 업데이트 | Rust updater → `GET /api/updates/{target}/{arch}/{current_version}`(Bearer 헤더, 04장 2.3절. 서버는 앱이 보낸 라이선스 파일을 쓰지 않는다). 서버가 `arch.org_features`와 `arch.eligible_build(p_org, p_platform, p_current)`를 확인해 짧은 수명(제안 10분) 서명 URL과 서명값이 든 매니페스트를 준다. 자격 없으면 204 |
 | 첫 다운로드 | `/download`는 최신 stable 설치 파일 서명 URL을 서버 컴포넌트에서 만든다(설치는 누구나, 기능은 라이선스·체험으로 판정). 마지막 자격 버전은 `/account/licenses`에서 영구 제공(`01_PRD.md:128`) |
 | 서비스 종료 약속 | 온라인 활성화 없이 동작하는 마지막 빌드를 같은 파이프라인의 별도 채널로 만든다(`01_PRD.md:130`, 제안) |
 

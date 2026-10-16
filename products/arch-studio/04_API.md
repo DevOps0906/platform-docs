@@ -8,16 +8,16 @@
 |---|---|---|
 | 인증 | 모든 Route Handler 첫 줄 `const ctx = await requireSession('arch', { roles? })`. 웹은 쿠키, 데스크톱은 `Authorization: Bearer <Supabase access_token>`. Bearer 검증은 코어 요청 T-C1(같은 `SessionContext` 반환)이 반영된 뒤에 열고, 그 전까지 데스크톱은 Supabase 직접 조회 범위(RLS)만 쓴다. 미로그인 401, pending/suspended 403, `entitled=false` 402. 조직은 세션에서만 얻고 본문의 `org_id`는 받지 않는다(zod에 없음) | `docs/products/_platform-core/SHARED_MODULES.md:80`, `docs/Tauri/README.md:136`, `docs/Tauri/README.md:372` |
 | 공개 예외 | `POST /api/webhooks/toss`(서명), `POST /api/samples/download-event`(익명, 레이트 리밋), `GET /auth/callback`, `POST /api/dev/login`(Stage A 로컬 전용) | `docs/products/_platform-core/AUTH_ROADMAP.md:364` |
-| 순서 | 인증 → zod → 레이트 리밋(`core.rate_limit_hit`) → 기능 판정(`arch.org_features`) → 서버 단가 결정(`priceOf('arch', action)`) → service_role RPC(검사·선차감·enqueue 한 트랜잭션) → 202 | `docs/products/_platform-core/CORE_SPEC.md:181-188` |
+| 순서 | 인증 → zod → 레이트 리밋(`core.rate_limit_hit`) → 기능 판정(`arch.org_features`) → 서버 variant 결정(단가 표는 `apps/web/src/server/ai/pricing.ts` 상수와 seed가 같은 값) → service_role RPC(검사·선차감·enqueue 한 트랜잭션) → 202 | `docs/products/_platform-core/CORE_SPEC.md:181-188` |
 | 금액·크레딧 | 데스크톱은 금액·크레딧 수를 보내지 않는다. 요청은 "작업 종류 + 입력"뿐이고 단가는 서버 상수(PRD 4.5절, 9.4절)에서 정한다. 결제 금액도 서버가 `license_skus`·`plans`·`credit_packs`에서 읽는다 | `docs/Tauri/README.md:173`, `docs/products/arch-studio/01_PRD.md:192` |
 | 선차감 위치 | AI 작업은 `arch.start_ai_run`(service_role) 안에서만 차감한다. Route Handler가 `core.consume_credits`를 따로 부르는 경로는 동기 채팅 턴(`withCredits`)과 STT(`voice:<request_id>`)뿐이다. 사용자용 RPC 안에서는 차감하지 않는다 | `docs/products/_platform-core/DB_CONVENTIONS.md:243`, `docs/products/_platform-core/AI_ARCHITECTURE.md:125` |
-| 멱등 | 유료·비동기 요청은 본문 `request_id`(UUID v4) 필수. 차감 `consume:arch:<request_id>`, 잡 `job:arch:<request_id>`, 채팅 `conv:<id>:turn:<n>`, 음성 `voice:<request_id>`. 같은 `request_id` 재전송은 기존 실행을 돌려준다(추가 차감 없음). 라이선스 발급·연장은 주문 id로 멱등, 활성화는 `(license, device_hash)`로 멱등 | `docs/products/_platform-core/CORE_SPEC.md:198` |
+| 멱등 | 유료·비동기 요청은 본문 `request_id`(UUID v4) 필수. 차감 `consume:arch:<request_id>`, 잡 `job:arch:<request_id>`, 채팅 `conv:<id>:turn:<n>`, 음성 `voice:<request_id>`. 같은 `request_id` 재전송은 기존 실행을 돌려준다(추가 차감 없음). 라이선스 발급·연장은 주문 id로 멱등, 활성화는 `(license, device_hash)`, 플랜 활성화는 `(org, device_hash)`로 멱등 | `docs/products/_platform-core/CORE_SPEC.md:198` |
 | 환불 | 결과가 전달되지 않은 실패는 전액 환불(잡 `fail_job` 자동 환불 → `arch.fail_ai_run`). STT는 실제 길이로 정산 | `docs/products/arch-studio/01_PRD.md:191`, `docs/products/_platform-core/AI_ARCHITECTURE.md:129` |
 | 응답 봉투 | 성공 `{ ok: true, data }`, 실패 `{ ok: false, error: { code, message, details? } }`. 402는 `details: { required, balance }`. 예외 원문·스택·SQL 문구를 내보내지 않는다 | 제안(`docs/products/nomad-docs/04_API.md:15`와 같은 형식) |
 | 진행 상황 | `GET /api/jobs/{id}` 폴링(3초, 제안) 또는 Realtime(`core.jobs`, RLS). 가짜 진행률 금지 | `docs/products/_platform-core/CORE_SPEC.md:312` |
 | 레이트 리밋 | 활성화 API IP당 10회/시간, 렌더 API 조직당 20회/분, 채팅 사용자당 20회/60초(PRD 5장). 그 밖의 생성 API 조직당 60회/분, 로그인 IP당 10회/10분, 웹훅 제공자당 600회/분(코어 기준). 키 `arch:<route>:<org_id 또는 ip_hash>` | `docs/products/arch-studio/01_PRD.md:214`, `docs/products/_platform-core/SECURITY_BASELINE.md:147-149` |
 | CORS | 데스크톱 셸 출처만 허용 목록에 둔다: Windows `http://tauri.localhost`, macOS(Phase 2) `tauri://localhost`(구현 시 확인). 와일드카드 금지, `Access-Control-Allow-Credentials` 없음(쿠키를 쓰지 않음), 허용 헤더 `Authorization`, `Content-Type`. 웹훅·`/auth/*`·`/api/dev/login`은 CORS를 열지 않는다. 규격은 코어 요청 T-C2 | `docs/Tauri/README.md:137`, `docs/Tauri/README.md:373` |
-| 업로드 | 큰 파일(클라우드 사본, 렌더 입력, 제안서 도면 SVG, 상담 녹음)은 서명 업로드 URL을 받아 Rust가 스트리밍 업로드한다. 경로는 서버가 만들고(`<org_id>/arch/<purpose>/<project_ref>/<uuid>.<ext>`), 사용 시점에 서버가 크기·MIME·매직바이트·조직 폴더를 다시 검사한다 | `docs/Tauri/README.md:175` |
+| 업로드 | 큰 파일(클라우드 사본, 렌더 입력, 제안서 도면 SVG, 상담 녹음)은 `POST /api/uploads/sign`으로 서명 업로드 URL을 받아 Rust가 스트리밍 업로드한다. 경로는 서버가 만들고(`<org_id>/arch/<purpose>/<uuid>.<ext>`), 사용 시점에 서버가 크기·MIME·매직바이트·조직 폴더를 다시 검사한다 | `docs/Tauri/README.md:175` |
 | 로그 | 시리얼 원문, 라이선스 파일, 토큰, 도면·모델 좌표, 렌더 입력, 녹음, 프롬프트 전문을 로그에 남기지 않는다 | `docs/products/arch-studio/01_PRD.md:217`, `docs/products/arch-studio/01_PRD.md:421` |
 
 ## 2. Route Handler
@@ -28,24 +28,24 @@
 
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 호출하는 코어/제품 RPC | 오류 |
 |---|---|---|---|---|---|---|
-| `POST /api/license/activate` | D, member+, 로그인 필수(D-16) | `{ serial: string(ARCH-XXXXX-XXXXX-XXXXX-XXXXX, Crockford Base32 정규화), device_hash: hex64, device_label?: string≤60 }` | `{ license_file: SignedLicenseFile, license: { id, sku, serial_last5, updates_until, status }, activation: { id, activated_at } }` | 0 | 서버가 시리얼 정규화 → SHA-256 → `arch.activate_license(p_serial_hash, p_device_hash, p_user=ctx.user_id)` → 2.4절 파일 서명, `write_audit` | `AR001` 409(해제 화면 안내), `AR002` 404, `AR003` 403, `AR006` 403, 429(IP 10회/시간) |
+| `POST /api/license/activate` | D, member+, 로그인 필수(D-16) | `{ serial: string(ARCH-XXXXX-XXXXX-XXXXX-XXXXX, Crockford Base32 정규화), device_hash: hex64, device_label?: string≤60 }` 또는 체험·월 구독 `{ mode: 'plan', device_hash, device_label? }`(시리얼 없음) | `{ license_file: SignedLicenseFile, license: { id, sku, serial_last5, updates_until, status } \| null, activation: { id, activated_at } }` | 0 | 시리얼: 정규화 → SHA-256 → `arch.activate_license(p_serial_hash, p_device_hash, p_user=ctx.user_id)`. 플랜: `arch.activate_plan_device(p_org=ctx.org.id, p_user=ctx.user_id, p_device_hash)`(한도 `max_activations` 1). 다음 2.4절 파일 서명(`source` `license`·`plan`), `write_audit` | `AR001` 409(해제 화면 안내), `AR002` 404, `AR003` 403, `AR006` 403, 402(플랜 모드인데 체험·구독 만료), 429(IP 10회/시간) |
 | `POST /api/license/deactivate` | W·D, oa | `{ activation_id: uuid }` | `{ activation: { id, deactivated_at }, self_deactivations_30d }` | 0 | `arch.deactivate_activation`(세션 클라이언트, authenticated) | `AR004` 429(고객지원 안내), 42501 403, P0002 404 |
 | `POST /api/license/refresh` | D, member+ | `{ activation_id: uuid, device_hash: hex64 }` | `{ license_file }`(현재 `updates_until`·`features`로 재서명) | 0 | 활성화 행 조직·기기 일치 확인(admin 클라이언트) → `arch.org_features` → 재서명 | `AR003` 403, P0002 404(해제됨·기기 불일치), 429(IP 10회/시간, 활성화와 같은 버킷) |
-| `GET /api/license/list` | W·D, member+ | - | `{ licenses: [{ id, sku, serial_last5, status, purchased_at, updates_until, activations: [{ id, device_label, activated_at, last_seen_at }] }], features: OrgFeatures, last_eligible_build: { version, build_date } \| null }` | 0 | SELECT(RLS) + `arch.org_features(ctx.org.id)` | - |
-| `GET /api/updates/{target}/{arch}/{current_version}` | D(Bearer), 로그인 사용자 | 경로: `target` `windows`(MVP)·`darwin`(Phase 2), `arch` `x86_64`·`aarch64`, `current_version` semver | 200 업데이트 매니페스트(2.3절) 또는 204(받을 수 있는 새 빌드 없음) | 0 | `arch.org_features` → `arch.eligible_build(p_platform='<target>-<arch>', p_current)` → `build_date <= updates_until` 확인 → 설치 파일 서명 URL(10분, 제안) | 401(앱은 "로그인하면 업데이트 확인" 표시), `AR010` 403(현재 설치 빌드가 자격 밖: `details.last_eligible`) |
+| `GET /api/license/list` | W·D, member+ | - | `{ licenses: [{ id, sku, serial_last5, status, purchased_at, updates_until, activations: [{ id, device_label, activated_at, last_seen_at }] }], plan_activations: [{ id, device_label, activated_at, last_seen_at }], features: OrgFeatures, last_eligible_build: { version, build_date } \| null }`(시리얼은 끝 5자만, 전체 시리얼은 발급 메일에만) | 0 | SELECT(RLS) + `arch.org_features(ctx.org.id)` | - |
+| `GET /api/updates/{target}/{arch}/{current_version}` | D(Bearer), 로그인 사용자 | 경로: `target` `windows`(MVP)·`darwin`(Phase 2), `arch` `x86_64`·`aarch64`, `current_version` semver | 200 업데이트 매니페스트(2.3절) 또는 204(받을 수 있는 새 빌드 없음) | 0 | `arch.org_features` → `arch.eligible_build(p_org=ctx.org.id, p_platform='<target>-<arch>', p_current)`(함수가 `build_date <= updates_until`까지 판정) → 설치 파일 서명 URL(10분, 제안) | 401(앱은 "로그인하면 업데이트 확인" 표시), `AR010` 403(현재 설치 빌드가 자격 밖: `details.last_eligible`) |
 | `GET /api/rule-packs` | D, member+ | `?after=<version>` | `{ items: [{ version, published_at, sha256, kid, bytes, status }], last_eligible, changes_after_last_eligible: [{ title, effective_from }] }`(제목만, PRD 4.3절 배너) | 0 | `arch.eligible_rule_packs()`, `arch.rule_pack_changes` SELECT | - |
 | `GET /api/rule-packs/{version}/download` | D, member+ | 경로 `version` | `{ url(서명 10분, 제안), sha256, signature, kid }` | 0 | `arch.eligible_rule_packs()`에 그 버전이 있는지 확인 → Storage 서명 URL | `AR011` 403, P0002 404(`withdrawn` 포함) |
 | `GET /api/cost-catalogs/latest` | D, member+ | - | `{ version, basis_date, items, source_note }` | 0 | SELECT `arch.cost_catalogs`(published 최신. 폴백 조직은 `published_at <= updates_until` 최신, 제안: 규칙 팩과 같은 원칙) | - |
-| `POST /api/site/lookup` | D, member+, 체험·유효 상태 | `{ query: { kind: 'address' \| 'jibun' \| 'pnu', value: string≤200 } }` | `{ parcel: { pnu, address_label }, crs, boundary_m: [x,y][], zoning: { use_district, districts[] }, roads: [{ edge_index, width_m? }], sources: [{ provider, fetched_at }] }`(좌표 변환·mm 정수화는 로컬 domain이 한다) | 0 | 서버가 pnu 해시 → `arch.record_site_lookup(p_pnu_hash)` → 6.1절 어댑터 | `AR020` 429, `AR021` 502(앱은 "직접 그리기"로 이동), 422(형식) |
+| `POST /api/site/lookup` | D, member+, 체험·유효 상태 | `{ query: { kind: 'address' \| 'jibun' \| 'pnu', value: string≤200 } }` | `{ parcel: { pnu, address_label }, crs, boundary_m: [x,y][], zoning: { use_district, districts[] }, roads: [{ edge_index, width_m? }], sources: [{ provider, fetched_at }] }`(좌표 변환·mm 정수화는 로컬 domain이 한다) | 0 | 서버가 pnu 해시 → `arch.record_site_lookup(p_org=ctx.org.id, p_pnu_hash)` → 6.1절 어댑터 | `AR020` 429, `AR021` 502(앱은 "직접 그리기"로 이동), 422(형식) |
 | `GET /api/drafting-profile` | D·W, member+ | - | `DraftingProfile`(4.7.3절) + `logo_url`(서명 10분) | 0 | SELECT `arch.drafting_profiles`(RLS) | - |
 | `PUT /api/drafting-profile` | D, oa | `DraftingProfile`(키 허용 목록, `layer_map` 키는 9.6절 표준 이름만, 값 `^[A-Za-z0-9_\-$]{1,64}$`, 제안) | `DraftingProfile` | 0 | `arch.upsert_drafting_profile(p jsonb)`(세션 클라이언트) | `AR042` 403, 22023 422 |
-| `POST /api/drafting-profile/logo-upload-url` | D, oa | `{ ext: 'png', bytes ≤ 1MB }`(제안: SVG 로고는 스크립트 위험 때문에 받지 않음) | `{ signed_upload_url, path, expires_at }` | 0 | Storage 서명 업로드(`<org_id>/arch/drafting-logo/<uuid>.png`) | `AR031` 413, 415 |
+| `POST /api/drafting-profile/logo-upload-url` | D, oa | `{ ext: 'png', bytes ≤ 1MB }`(제안: SVG 로고는 스크립트 위험 때문에 받지 않음) | `{ signed_upload_url, path, expires_at }` | 0 | Storage 서명 업로드(버킷 `arch-user`, `<org_id>/arch/drafting-logo/<uuid>.png`) | `AR031` 413, 415 |
 | `GET /api/cloud-projects` | D·W, member+ | `?cursor` | `{ items: [{ id, local_id, name, version, bytes, updated_at }], next, max }` | 0 | SELECT `arch.cloud_projects`(RLS) + `cloud_projects_max` | - |
 | `POST /api/cloud-projects` | D, member+ | `{ local_id: uuid, name: string 1..120, storage_path, expected_version: int ≥ 0 }` | `{ id, version }` | 0 | 업로드 객체 재검사 → `arch.save_cloud_project(...)`(세션 클라이언트) | `AR040` 403, `AR041` 409(`details.current_version`), `AR031` 413, 23514 422(경로) |
-| `POST /api/cloud-projects/{id}/upload-url` | D, member+ | 경로 `id` = 로컬 프로젝트 id. `{ purpose: 'project_snapshot' \| 'render_input' \| 'proposal_sheet' \| 'consult_audio', ext, bytes, sha256 }` | `{ signed_upload_url, path, expires_at }` | 0 | 목적별 상한 검사 후 서명 업로드 URL. `consult_audio`는 코어 버킷 `voice-audio` | `AR031` 413, `AR040` 403(`project_snapshot`이고 새 사본이 상한을 넘을 때), 415 |
+| `POST /api/uploads/sign` | D, member+ | `{ purpose: 'project_snapshot' \| 'render_input' \| 'proposal_sheet' \| 'consult_audio', project_ref?: uuid(로컬 프로젝트 id), ext, bytes, sha256 }` | `{ signed_upload_url, path, expires_at }` | 0 | 목적별 상한 검사 후 서명 업로드 URL. 경로 `<org_id>/arch/<purpose>/<uuid>.<ext>` 서버 생성. 버킷 `arch-user`, `consult_audio`만 코어 `voice-audio`. `POST /api/cloud-projects/{id}/upload-url`은 이 경로의 `project_snapshot` 별칭(제안: 클라우드 사본 화면 호환) | `AR031` 413, `AR040` 403(`project_snapshot`이고 새 사본이 상한을 넘을 때), 415 |
 | `POST /api/checkout` | W, oa(시스템 브라우저의 웹 결제 화면에서만 호출. 데스크톱은 웹 `/pricing`을 연다) | `{ kind: 'license_sku', code: 'perpetual_early' \| 'perpetual_standard' } \| { kind: 'plan', code: 'updates_yearly' \| 'sub_monthly' } \| { kind: 'credit_pack', code: 'pack_100' \| 'pack_550' \| 'pack_1200' }`(금액 필드 없음) | `{ orderId, amountKrw, orderName, customerKey, successUrl, failUrl }` | 0 | 코어 `toss.createOrder`(금액은 서버가 읽음). `license_sku`는 코어 요청 C-1 반영 후에만 | `AR005` 403, `checkout_unavailable` 409(C-1 전, 품절), `license_required` 409(`updates_yearly`인데 유효 라이선스 없음), 42501 403 |
 | `POST /api/webhooks/toss` | 공개(서명) | Toss 이벤트 원시 본문 | 200 / 401 / 500 | - | 5장 | 401(서명 실패) |
-| `GET /api/jobs/{id}` | D·W, 같은 조직 멤버 | 경로 `id` = `core.jobs.id` | `{ id, job_type, status, progress, stage?, result?(4장 형식, 서명 URL 포함), error?: { code, message }, refunded: boolean }` | 0 | SELECT `core.jobs`(RLS) + 제품 실행 행(`arch.renders`·`arch.reviews`·`arch.intake_runs`) | P0002 404(다른 조직도 404) |
+| `GET /api/jobs/{id}` | D·W, 같은 조직 멤버 | 경로 `id` = `core.jobs.id` | `{ id, job_type, status, progress, stage?, result?(4장 형식, 서명 URL 포함), error?: { code, message }, refunded: boolean }` | 0 | SELECT `core.jobs`(RLS) + 제품 실행 행(`arch.renders`·`arch.reviews`·`arch.intake_runs`·`arch.proposals`) | P0002 404(다른 조직도 404) |
 | `POST /api/samples/download-event` | 공개(익명) | `{ sample_id: string≤40, format: 'dxf' \| 'pdf', ref?: string≤80 }` | 204 | 0 | 이벤트 기록만(저장 위치는 02장. DB 쓰기를 하지 않는 웹 분석 이벤트, 제안). 개인 식별값을 받지 않는다 | 429(IP 해시당 60회/분, 제안) |
 | `POST /api/auth/finish` | D(Bearer, 교환 직후 1회) | `{ provider: 'google' \| 'email' \| 'kakao' \| 'naver', first_login_hint?: boolean }`(토큰·`code`는 본문에 넣지 않는다) | `{ next: '/onboarding' \| '/projects', session: SessionContext }` | 0 | 코어 `finishLogin`(제공자 허용 검사, `session_context`, open 앱이면 `bootstrap_app_for_org` 1회, 감사 `auth.login`). 코어 요청 T-C8 반영 후 | 401, 403(pending·suspended·허용 안 된 제공자), 프로필 없음은 `next: '/login'`(앱이 로그아웃) |
 | `POST /api/dev/login` | Stage A, 로컬 전용(`isMockAuthAllowed()` 거짓이면 404) | `{ persona }`(공통 페르소나 키, `docs/products/_platform-core/AUTH_ROADMAP.md:52-62`) | 웹 쿠키 세션 | 0 | 시드 계정 실제 로그인 → `finishLogin`. 데스크톱 개발 빌드는 이 경로 대신 앱 안 `signInWithPassword`(로컬 시드 계정) | 404 |
@@ -57,14 +57,14 @@
 
 | 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 호출 RPC | 서명 토큰 scope | 오류 |
 |---|---|---|---|---|---|---|---|
-| `POST /api/ai/render` | D, member+, `ai_render` | `{ request_id, project_ref: uuid, quality: 'standard' \| 'high' \| 'upscale', preset: { material: enum, time_of_day: enum, season: enum, style?: enum }, inputs: { depth_path, edge_path } \| { source_render_id } }`(경로는 `render_input` 업로드분만. 3D·도면 원본 없음) | 202 `{ run_id, job_id, credits }` | 3 / 5 / 업스케일 2 | 입력 재검사(PNG, 10MB, `render_max_px`) → `arch.start_ai_run('render', p_request_id, p_project_ref)` | 잡 토큰 불필요(fal 키는 워커에만) | `AR030` 429, `AR031` 413, `CR001` 402, 429(조직 20회/분), 22023 422(`quality='high'`인데 `render_max_px` 1024) |
-| `POST /api/ai/review` | D, member+, `cloud_review` | `{ request_id, project_ref, rule_pack_version, application_date, municipality_code, judgment: JudgmentResult(4.7.2절), model_summary: { site_area_m2, use_district, floors, gross_area_m2, building_area_m2, height_mm } }`(≤256KB, 제안) | 202 `{ run_id, job_id, credits }` | 15 | `arch.start_ai_run('review', ...)` | 잡 토큰 `graph:arch.review` | `AR012` 403(폴백·만료), `AR031` 413, `CR001` 402 |
-| `POST /api/ai/intake` | D, member+, `ai_intake` | `{ request_id, project_ref, source: 'text' \| 'voice' \| 'consult', text?: string 1..4000, stt_job_id?: uuid }`(`text`와 `stt_job_id` 중 하나) | 202 `{ run_id, job_id, credits }` → 결과는 4.3절 후보(채택 전 반영 없음) | 2(텍스트·짧은 음성, PRD 9.4절). `consult`는 5(PRD 4.5절, 7장 끝 표 참고) | `arch.start_ai_run('intake', ...)` | 잡 토큰 `graph:arch.intake` | `AR032` 422(재시도 1회 후, 환불), `CR001` 402, P0002(STT 잡 없음·다른 조직) |
-| `POST /api/ai/proposal` | D, member+, `ai_render` | `{ request_id, project_ref, kind: 'proposal' \| 'overview' \| 'area_table' \| 'cost', content: { overview, judgment: JudgmentResult, area_table, cost?, notes? }, render_ids: uuid[] ≤ 8, drawing_sheets: string[] ≤ 6(`proposal_sheet` SVG 경로) }`(≤512KB, 제안) | 202 `{ run_id, job_id, credits }` | `proposal` 10(렌더 별도), 나머지 템플릿 문서 1, 같은 내용 해시 재요청 0 | SVG sanitize(6.2절) → 내용 해시 조회(같으면 기존 결과, 0크레딧) → `arch.start_ai_run('proposal', ...)` | 잡 토큰(서술 섹션 `graph:arch.proposal_narrative`, 6.3절) | `AR031` 413, `CR001` 402, 422(SVG 검사 실패) |
+| `POST /api/ai/render` | D, member+, `ai_render` | `{ request_id, project_ref: uuid, quality: 'standard' \| 'high' \| 'upscale', preset: { material: enum, time_of_day: enum, season: enum, style?: enum }, inputs: { depth_path, edge_path } \| { source_render_id } }`(경로는 `render_input` 업로드분만. 3D·도면 원본 없음) | 202 `{ run_id, job_id, credits }` | 3 / 5 / 업스케일 2 | 입력 재검사(PNG, 10MB, `render_max_px`) → `arch.start_ai_run(ctx.org.id, ctx.user_id, 'render', 'render_std' \| 'render_hq' \| 'upscale', request_id, project_ref, { preset })` | 잡 토큰 불필요(fal 키는 워커에만) | `AR030` 429, `AR031` 413, `CR001` 402, 429(조직 20회/분), 22023 422(`quality='high'`인데 `render_max_px` 1024) |
+| `POST /api/ai/review` | D, member+, `cloud_review` | `{ request_id, project_ref, rule_pack_version, application_date, municipality_code, judgment: JudgmentResult(4.7.2절), model_summary: { site_area_m2, use_district, floors, gross_area_m2, building_area_m2, height_mm } }`(≤256KB, 제안) | 202 `{ run_id, job_id, credits }` | 15 | `arch.start_ai_run(.., 'review', 'review', ..)` | 잡 토큰 `graph:arch.review` | `AR012` 403(폴백·만료), `AR031` 413, `CR001` 402 |
+| `POST /api/ai/intake` | D, member+, `ai_intake` | `{ request_id, project_ref, source: 'chat' \| 'consult', text?: string 1..4000, stt_job_id?: uuid }`(`text`와 `stt_job_id` 중 하나. `chat`은 텍스트·짧은 음성 대화, `consult`는 상담 녹음 전사본이며 `stt_job_id` 필수) | 202 `{ run_id, job_id, credits }` → 결과는 4.3절 후보(채택 전 반영 없음) | `chat` 2(PRD 9.4절), `consult` 5(PRD 4.5절). STT 분당 1은 `/api/voice/stt`가 따로 차감 | `arch.start_ai_run(.., 'intake', 'intake_text' \| 'intake_consult', .., { source })` | 잡 토큰 `graph:arch.intake`(feature `arch.intake`, `consult`는 `arch.intake_consult` 오픈소스 강제) | `AR032` 422(재시도 1회 후, 환불), `CR001` 402, P0002(STT 잡 없음·다른 조직) |
+| `POST /api/ai/proposal` | D, member+, `ai_render` | `{ request_id, project_ref, kind: 'proposal' \| 'overview' \| 'area_table' \| 'cost', content: { overview, judgment: JudgmentResult, area_table, cost?, notes? }, render_ids: uuid[] ≤ 8, drawing_sheets: string[] ≤ 6(`proposal_sheet` SVG 경로) }`(≤512KB, 제안) | 202 `{ run_id, job_id, credits }` | `proposal` 10(렌더 별도), 나머지 템플릿 문서 1(`doc_template`), 같은 내용 해시 재요청 0 | SVG sanitize(6.2절) → 내용 해시 조회(같으면 기존 결과, 0크레딧) → `arch.start_ai_run(.., 'proposal', 'proposal' \| 'doc_template', .., { content_sha256 })` → `arch.proposals` 행 | 잡 토큰(서술 섹션 `graph:arch.proposal_narrative`, 6.3절) | `AR031` 413, `CR001` 402, 422(SVG 검사 실패) |
 | `POST /api/ai/chat` | D·W, member+, `ai_chat_turns_per_day` > 0 | `{ conversation_id?: uuid, message: string 1..2000 }` | SSE(`text/event-stream`, fetch POST + ReadableStream): `delta`, `citations[{ law, article, effective_from, source_id }]`, `no_source`, `done` | 1/턴(선차감, 출처 없음 답변은 환불, 제안) | 대화 없으면 `core.ai_conversations` 생성(서버) → `withCredits` → Dify `arch-chat` 중계(6.4절) | `chat`(Dify 장애 시 `/tools/answer-direct`) | `CR001` 402, `AI_DAILY_LIMIT` 429(폴백 상한 0 포함), 429(사용자 20회/60초), `AI_UNAVAILABLE` 503 |
 | `POST /api/voice/stt` | D, member+ | 받아쓰기: multipart `audio`(≤60초·5MB, 제안) + `{ request_id, mode: 'dictation' }`. 상담 녹음: `{ request_id, mode: 'consult', project_ref, audio_path(`consult_audio`), duration_s ≤ 7200, notice_version }` | 받아쓰기 200 `{ text, duration_s }` / 상담 202 `{ job_id }`(잡 `arch.stt`) | 분당 1(실제 길이 정산. 상담은 신고 길이로 선차감 후 정산) | `withCredits`(`voice:<request_id>`) / 상담은 `consume_credits` → `enqueue_job('arch.stt', p_credit_ledger_id)` | `voice` | `recording_notice_required` 422, `VOICE_TOO_LONG` 413, `AR031` 413(200MB), `CR001` 402 |
 
-Phase 2 `arch.layout`(AI 실 배치 초안, 5크레딧)의 Route Handler는 MVP 경로 목록에 두지 않는다. Phase 2 착수 때 `POST /api/ai/layout`(`ai_layout`, 입력 4.6절)을 추가한다(제안).
+Phase 2 `arch.layout`(AI 실 배치 초안, 5크레딧, variant `layout`)의 Route Handler는 MVP 경로 목록에 두지 않는다. Phase 2 착수 때 `POST /api/ai/layout`(`ai_layout`, 입력 4.6절)을 추가한다. 읽어 주기(TTS)는 OS 음성 합성이라 서버 경로가 없다(0크레딧, 제안).
 
 ### 2.3 Tauri 업데이터 매니페스트
 
@@ -96,18 +96,18 @@ interface UpdateManifest {
 // 서명 대상. 직렬화는 키 정렬 JSON(UTF-8, 공백 없음, 제안: 서명 재현성)
 interface LicensePayloadV1 {
   v: 1
-  license_id: string          // uuid
+  license_id: string | null   // uuid. 체험·월 구독(source 'plan')은 null
   org_id: string              // uuid
   app_id: 'arch'
-  sku: 'perpetual_early' | 'perpetual_standard'
-  updates_until: string       // YYYY-MM-DD (발급 시점 값. 연장되면 /api/license/refresh 로 재발급)
+  sku: 'perpetual_early' | 'perpetual_standard' | 'trial' | 'sub_monthly'; source: 'license' | 'plan'
+  updates_until: string | null  // YYYY-MM-DD (발급 시점 값. 연장되면 /api/license/refresh 로 재발급). plan 은 null
   activation_id: string       // uuid
   device_hash: string         // hex64, 앱별 솔트로 해시한 기기 식별값
   issued_at: string           // RFC 3339
-  kid: string                 // 서명 키 id(키 교체용)
+  kid: string; offline_valid_until: string | null   // 영구 null, 체험·월 구독은 발급 시각 + 7일(제안, 02장 2.2절)
   features: {                 // PRD 9.4절: 오프라인에서도 같은 값을 쓰는 키만(제안)
     drafting_watermark: boolean   // true 면 시트 표제란 "체험판"
-    rule_pack_updates: boolean    // 발급 시점 값, 표시용(판정은 서버)
+    rule_pack_updates: boolean; cloud_review: boolean; ai_render: boolean   // 발급 시점 값, 표시용(판정은 서버)
   }
 }
 interface SignedLicenseFile {
@@ -125,7 +125,7 @@ type LicenseStatus =
 | 규칙 | 내용 |
 |---|---|
 | 오프라인 | 활성화 후 로컬 기능은 온라인 확인 없이 동작한다(D-7). 클라우드 기능은 호출마다 서버가 라이선스·플랜을 다시 판정한다(`docs/products/arch-studio/01_PRD.md:127`) |
-| 라이선스 없는 상태 | 체험·월 구독은 라이선스 파일 없이 세션 + `GET /api/license/list`의 `features`로 판정한다. 마지막으로 받은 값은 로컬 `local_settings`에 캐시하고, 체험 `expires_at`이 지나면 "열람·내보내기만"으로 내린다 |
+| 체험·월 구독 | `POST /api/license/activate`(플랜 모드) → `arch.activate_plan_device`로 `source='plan'` 파일을 받는다. 로컬 권한은 이 파일로만 판정하고 `offline_valid_until`(제안 7일)이 지나면 온라인 재발급(`POST /api/license/refresh`) 전까지 "열람·내보내기만"으로 내린다 |
 | 저장 | 파일 원문은 로컬 `license_store`. 로그·오류 보고에 넣지 않는다 |
 | 재발급 | `updates_yearly` 결제·플랜 변경 후 앱이 `POST /api/license/refresh`를 부른다(앱 시작 시 하루 1회, 제안) |
 
@@ -140,14 +140,14 @@ type LicenseStatus =
 | `arch.deactivate_activation(p_activation_id uuid)` | authenticated(oa) | 같은 조직 owner/admin, 이미 해제면 그대로 반환, 조직의 셀프 해제 30일 3회 미만(`AR004`), 감사 `license.deactivate` | 활성화 행 | `AR004`, 42501, P0002 |
 | `arch.org_features(p_org uuid)` → jsonb | authenticated(자기 조직) / service_role | 멤버십, 라이선스 상태 + 플랜 `features` + 9.4절 키 병합(PRD 4.8절 표, 폴백 열) | `OrgFeatures`(아래) | 42501 |
 | `arch.extend_updates(p_order_id uuid)` | service_role(`updates_yearly` 결제 확정) | 주문 확정·플랜 `updates_yearly`, 주문 id 멱등, 조직에 `active` 라이선스. 유효 중이면 `updates_until + 1년`, 만료 후면 `결제일 + 1년`(D-5 a, PRD 4.2절의 해석: 제안), 조직의 활성 라이선스 전부에 적용(제안), 감사 `license.extend_updates` | 갱신된 라이선스 행들 | `AR003`, 42501, P0002 |
-| `arch.eligible_build(p_platform text, p_current text)` | service_role(업데이트 매니페스트) | 플랫폼 값 허용 목록, `channel='stable'`, `published`, `version > p_current` 중 최신(조직 자격 비교는 3.1절) | `arch.builds` 행 또는 null | 22023 |
+| `arch.eligible_build(p_org uuid, p_platform text, p_current text)` | service_role(업데이트 매니페스트) | 플랫폼 값 허용 목록, `channel='stable'`, `published`, `version > p_current`, 조직 자격(`build_date <= updates_until`, 업데이트 유효·체험·구독은 전부) 중 최신 | `arch.builds` 행 또는 null | 22023 |
 | `arch.eligible_rule_packs()` | authenticated | 호출자 조직의 `rule_pack_updates`와 `updates_until`: `published_at <= updates_until`(또는 업데이트 유효 시 전부), `status='published'`만 | `setof`(version, published_at, sha256, kid, bytes) | 42501 |
-| `arch.record_site_lookup(p_pnu_hash text)` | service_role | 해시 형식, 조직 당일 건수 < `site_lookups_per_day`(`AR020`), 주소 원문 미저장 | `remaining int` | `AR020`, 22023 |
+| `arch.record_site_lookup(p_org uuid, p_pnu_hash text)` | service_role | 해시 형식, 조직 당일 건수 < `site_lookups_per_day`(`AR020`), 주소 원문 미저장 | `remaining int` | `AR020`, 22023 |
 | `arch.upsert_drafting_profile(p jsonb)` | authenticated(oa) | owner/admin(`AR042`), 키 허용 목록(4.7.3절), `layer_map` 키는 표준 레이어만, `logo_storage_path`는 자기 조직 폴더, 감사 `drafting_profile.update` | `arch.drafting_profiles` 행 | `AR042`, 22023, 23514 |
-| `arch.start_ai_run(p_kind text, p_request_id uuid, p_project_ref uuid)` | service_role | `p_kind` ∈ render·review·intake·proposal·layout, 기능 키(`ai_render`/`cloud_review`(아니면 `AR012`)/`ai_intake`/`ai_layout`), 렌더 조직 동시 3건(`AR030`), `runtime_config.daily_credit_cap`, 선차감 `consume:arch:<request_id>`(`CR001`), `enqueue_job(queue=job_type, p_credit_ledger_id, 'job:arch:<request_id>')`, 실행 행(`renders`·`reviews`·`intake_runs`) 생성, 같은 `request_id` 재호출은 기존 반환 | `(run_id uuid, job_id uuid, credits int)` | `AR012`, `AR030`, `CR001`, 42501, 22023 |
+| `arch.start_ai_run(p_org uuid, p_actor uuid, p_kind text, p_variant text, p_request_id uuid, p_project_ref uuid, p_options jsonb default '{}')` | service_role | `p_kind` ∈ render·review·intake·proposal·layout·walkthrough, variant 단가 상수(render_std 3, render_hq 5, upscale 2, review 15, intake_text 2, intake_consult 5, proposal 10, doc_template 1, layout 5, walkthrough 40), `p_actor`가 `p_org` 멤버, 기능 키(`ai_render`/`cloud_review`(아니면 `AR012`)/`ai_intake`/`ai_layout`), 렌더 조직 동시 3건(`AR030`), `runtime_config.daily_credit_cap`, 선차감 `consume:arch:<request_id>`(`CR001`), `enqueue_job(queue=job_type, p_credit_ledger_id, 'job:arch:<request_id>')`, 실행 행(`renders`·`reviews`·`intake_runs`·`proposals`) 생성, 같은 `request_id` 재호출은 기존 반환 | `(run_id uuid, job_id uuid, credits int)` | `AR012`, `AR030`, `CR001`, 42501, 22023 |
 | `arch.finish_ai_run(p_run_id uuid, p_result jsonb)` | service_role(워커·ai-service) | 실행이 `running`, kind별 결과 스키마(4장), intake 고정 스키마(`AR032`), review 문장별 출처(`AR033`), 상태 `succeeded` | 실행 행 | `AR032`, `AR033`, 22023, P0002 |
 | `arch.fail_ai_run(p_run_id uuid, p_reason text)` | service_role | 활성 실행, 상태 `failed` → 환불 원장(`refund:job:<job_id>`) 확인 후 `refunded` | 실행 행 | 22023, P0002 |
-| `arch.save_cloud_project(p_local_id uuid, p_name text, p_storage_path text, p_expected_version int)` | authenticated(member+) | 새 사본이면 조직 수 < `cloud_projects_max`(`AR040`), 기존이면 `version = p_expected_version`(`AR041`), 경로가 `<org_id>/arch/project_snapshot/<p_local_id>/` 아래 | `(id uuid, version int)` | `AR040`, `AR041`, 23514, 42501 |
+| `arch.save_cloud_project(p_local_id uuid, p_name text, p_storage_path text, p_expected_version int)` | authenticated(member+) | 새 사본이면 조직 수 < `cloud_projects_max`(`AR040`), 기존이면 `version = p_expected_version`(`AR041`), 경로가 `<org_id>/arch/project_snapshot/` 아래(서버 생성 경로) | `(id uuid, version int)` | `AR040`, `AR041`, 23514, 42501 |
 
 `OrgFeatures`(반환 jsonb, 키는 PRD 4.8절·9.4절. `state`·`updates_until`·`license_ids`는 화면 표시용 추가 키, 제안):
 
@@ -165,14 +165,14 @@ interface OrgFeatures {
 
 코어 RPC(인용만, CS): `session_context`, `bootstrap_app_for_org`, `consume_credits`, `grant_credits`, `refund_credits`, `enqueue_job`, `claim_jobs`, `heartbeat_job`, `complete_job`, `fail_job`, `cancel_job`, `reap_stale_jobs`, `write_audit`, `rate_limit_hit`, `confirm_payment_order`, `fail_payment_order`, `apply_subscription_transition`, `resolve_ai_route`, `match_ai_chunks`, `set_ai_cross_border_ack`, `expire_voice_audio`.
 
-### 3.1 05장과 맞출 점 (시그니처 확인 필요)
+### 3.1 05장과 맞춘 점 (2026-10-16 확정)
 
-| 함수 | 쟁점 | 04가 쓰는 임시 해석 |
+| 함수 | 쟁점 | 확정 |
 |---|---|---|
-| `arch.start_ai_run` | service_role 함수인데 조직·행위자·변형(렌더 품질 3/5/2, 제안서 10/1, intake 2/5) 인자가 없다. 차감액을 함수가 정할 수 없다 | 05장 확정 전까지 "조직·행위자·변형은 05장이 정한 방식으로 전달"로 둔다. 제안: `p_org uuid, p_actor uuid, p_options jsonb` 추가(단가는 함수 안 상수 표, 클라이언트 값 아님) |
-| `arch.eligible_build` | 조직 인자가 없어 `build_date <= updates_until`을 함수가 판정할 수 없다 | Route Handler가 `arch.org_features(ctx.org.id)`의 `updates_until`과 비교한다. 제안: `p_org uuid` 추가 |
-| `arch.record_site_lookup` | service_role인데 조직 인자가 없다 | 제안: `p_org uuid` 추가 |
-| 제안서 실행 행 | 05장 테이블 목록에 제안서 테이블이 없다 | `proposal`의 `run_id`는 `core.jobs.id`와 같게 하고 결과는 `core.jobs.result`(제안) |
+| `arch.start_ai_run` | service_role 함수인데 조직·행위자·변형(렌더 품질 3/5/2, 제안서 10/1, intake 2/5) 인자가 없다. 차감액을 함수가 정할 수 없다 | `p_org uuid, p_actor uuid, p_variant text, p_options jsonb` 추가. 단가는 함수 안 상수 표(서버 `pricing.ts`·seed와 같은 값), 클라이언트 값 아님 |
+| `arch.eligible_build` | 조직 인자가 없어 `build_date <= updates_until`을 함수가 판정할 수 없다 | `p_org uuid` 추가. 함수가 조직 자격까지 판정 |
+| `arch.record_site_lookup` | service_role인데 조직 인자가 없다 | `p_org uuid` 추가 |
+| 제안서 실행 행 | 05장 테이블 목록에 제안서 테이블이 없었다 | `arch.proposals` 추가(job 연결, 포함 시트 경로 배열, 결과 PDF 경로, status는 다른 실행 행과 같은 값). 체험·월 구독 기기는 `arch.activate_plan_device`(`license_activations.license_id` null 허용 + `source`·`org_id`) |
 
 ## 4. 잡 페이로드 계약
 
@@ -184,7 +184,7 @@ interface OrgFeatures {
 |---|---|---|---|---|
 | `arch.render` | `{ run_id, quality, preset, inputs: { depth_path, edge_path } \| { source_render_id }, max_px }` | `{ output_path, width, height, bytes, provider: 'fal', model, seed, ai_label: true, expires_at(90일) }` | `{ stage: 'submit' \| 'generate' \| 'persist' }` | 3분 초과 실패·환불, 재시도 1(같은 seed) |
 | `arch.review` | `{ run_id, rule_pack_version, application_date, municipality_code }`(판정 입력은 `arch.reviews` 행) | 4.2절 | `{ stage: 'load' \| 'retrieve' \| 'interpret' \| 'compliance' }` | 10분 초과 실패·환불, 재시도 1 |
-| `arch.intake` | `{ run_id, source: 'text' \| 'voice' \| 'consult', stt_job_id? }`(문장은 `arch.intake_runs` 행) | 4.3절 | `{ stage: 'extract' \| 'validate' \| 'retry' }` | 스키마 실패 1회 재시도 후 `AR032` 실패·환불, p95 20초 |
+| `arch.intake` | `{ run_id, source: 'chat' \| 'consult', stt_job_id? }`(문장은 `arch.intake_runs` 행. `consult`는 feature `arch.intake_consult`로 오픈소스 강제) | 4.3절 | `{ stage: 'extract' \| 'validate' \| 'retry' }` | 스키마 실패 1회 재시도 후 `AR032` 실패·환불, p95 20초 |
 | `arch.proposal_pdf` | 4.4절 | `{ pdf_path, pages, bytes, sheets_included, narrative: { model, ai_label: true } \| null, content_sha256 }` | `{ stage: 'narrative' \| 'assemble' \| 'render' }` | 렌더 120초, 전체 p95 60초, 실패 전액 환불 |
 | `arch.stt` | `{ voice_ref, audio_path, notice_version, language: 'ko', declared_duration_s }` | `{ transcript_path, duration_s, chunks, provider: 'oss-voice', model }` | `{ stage: 'split' \| 'transcribe' \| 'merge', done, total }` | 10분 단위 분할(요청당 상한, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:61`), 대체 없이 실패·환불(오픈소스 강제) |
 | `arch.layout`(Phase 2) | 4.6절 | 4.6절 | `{ stage }` | 실패 전액 환불 |
@@ -235,12 +235,12 @@ interface IntakeCandidateV1 {           // zod .strict(): 정의 밖 키(좌표�
 
 ```ts
 interface ProposalPdfPayloadV1 {
-  run_id: string                        // = core.jobs.id (3.1절)
+  run_id: string                        // arch.proposals.id (3.1절)
   kind: 'proposal' | 'overview' | 'area_table' | 'cost'
   content_path: string                  // 서버가 요청 본문을 정규화·저장한 JSON(`<org_id>/arch/proposal_content/<uuid>.json`)
   content_sha256: string                // 같은 내용 재요청 0크레딧 판정
   render_ids: string[]                  // arch.renders 중 같은 조직·succeeded·미만료
-  drawing_sheets?: string[]             // 데스크톱이 올린 SVG Storage 경로(purpose 'proposal_sheet'). 도면 자체는 로컬 생성, 0크레딧
+  drawing_sheets?: string[]             // POST /api/uploads/sign purpose 'proposal_sheet' 로 올린 SVG 경로(sanitize 통과분). 도면 자체는 로컬 생성, 0크레딧
   template_version: string
   narrative: boolean                    // kind='proposal' 만 true(서술 섹션 LLM)
 }
@@ -367,68 +367,68 @@ type StdLayer =
 #### 4.7.4 SheetModel 프리미티브
 
 ```ts
-type P = [number, number]               // 용지 mm, 소수 둘째 자리 반올림(제안: 결정적 직렬화)
-type Primitive =
-  | { t: 'line'; layer: StdLayer; a: P; b: P }
-  | { t: 'lwpolyline'; layer: StdLayer; pts: P[]; closed: boolean; bulges?: number[] }
-  | { t: 'arc'; layer: StdLayer; c: P; r: number; start_deg: number; end_deg: number }
-  | { t: 'circle'; layer: StdLayer; c: P; r: number }
-  | { t: 'text'; layer: StdLayer; at: P; h: number; value: string; rot_deg?: number; align?: 'left' | 'center' | 'right' }
-  | { t: 'mtext'; layer: StdLayer; at: P; h: number; width: number; value: string }
-  | { t: 'hatch'; layer: StdLayer; loops: P[][]; pattern: 'SOLID' | 'ANSI31' }
-  | { t: 'insert'; layer: StdLayer; block: string; at: P; scale?: number; rot_deg?: number }
+type Mm = number; type PaperUm = number   // 정본 02장 2.3절. 뷰 안 형상은 모델 mm 정수, 용지 고정 요소(표제란·도곽·표·문자 높이)는 0.01mm 정수
+type Prim<U> = { layer: StdLayer; key: string } & (       // key: 결정적 정렬 키
+  | { t: 'line'; a: [U, U]; b: [U, U] }
+  | { t: 'pline'; pts: [U, U][]; closed: boolean }        // DXF LWPOLYLINE
+  | { t: 'arc'; c: [U, U]; r: U; a0: number; a1: number }
+  | { t: 'circle'; c: [U, U]; r: U }
+  | { t: 'text'; at: [U, U]; h: PaperUm; s: string; align: 'l' | 'c' | 'r'; source_ref?: string }   // 수치 TEXT는 source_ref 필수
+  | { t: 'mtext'; at: [U, U]; h: PaperUm; width: PaperUm; s: string }
+  | { t: 'hatch'; loops: [U, U][][]; pattern: 'SOLID' | 'ANSI31' }
+  | { t: 'insert'; block: string; at: [U, U]; rot_deg: 0 | 90 | 180 | 270 })
   // 치수는 DIMENSION 엔티티를 쓰지 않고 line + text 로 분해한다(AR-F-038)
 
-interface SheetModel {
-  engine_version: string
-  spec_id: string
-  paper: { size: 'A3' | 'A2' | 'A1'; orientation: 'landscape' | 'portrait'; width_mm: number; height_mm: number }
-  scale: 100 | 200 | 300 | 500 | 600    // auto 를 해석한 확정 축척
-  layers: Array<{ name: StdLayer; aci: number; linetype: 'CONTINUOUS' | 'DASHED' | 'DASHDOT' }>
-  blocks: Array<{ name: string; entities: Primitive[] }>   // 문·창 심볼, 방위표
-  entities: Primitive[]
-  title_block: {
-    office_name: string; project_name: string; sheet_title: string; scale_label: string; date: string
-    rule_pack_version: string; pending_changes?: number
-    disclaimer: '기획설계 검토용 자료이며 인허가 설계도서가 아닙니다'   // 고정, 덮어쓰기 경로 없음
-    watermark: boolean                                                  // features.drafting_watermark
-  }
-  warnings: Array<{ code: 'AR054' | 'AR057'; message: string }>
-  checks: { area_table_m2: Record<string, number>; parking_count?: number; min_setback_mm?: number }  // 판정 값과의 동일성 속성 테스트용
+interface SheetModel {                   // 02장 2.3절 필드 + 아래 두 필드
+  sheet_id: string; kind: SheetSpec['kind']; engine_version: string; input_hash: string
+  paper: { size: 'A3' | 'A2' | 'A1'; orientation: 'landscape' | 'portrait'; w: PaperUm; h: PaperUm }
+  scale: 100 | 200 | 300 | 500 | 600    // auto 를 해석한 확정 축척. 레이어 색·선 종류는 PRD 9.6절 표(작성기 상수)
+  views: Array<{ view_id: string; origin: [PaperUm, PaperUm]; prims: Prim<Mm>[] }>; paper_prims: Prim<PaperUm>[]
+  annotations: Array<{ anno_id: string; kind: 'dim' | 'label' | 'warning' | 'note'; prims: Prim<Mm | PaperUm>[]; overridable: Array<'offset' | 'hide'> }>
+  blocks: Array<{ name: string; entities: Prim<Mm>[] }>   // 문·창 심볼, 방위표
+  title_block: TitleBlockValues
+  warnings: Array<{ code: 'AR057' | 'AR058'; detail: string }>   // 가져오기 경고 AR054는 import_dxf 결과에 둔다
+  checks: SheetChecks
 }
+interface TitleBlockValues {
+  office_name: string; project_name: string; sheet_title: string; scale_label: string; date: string; rule_pack_version: string; pending_changes?: number
+  disclaimer: '기획설계 검토용 자료이며 인허가 설계도서가 아닙니다'   // 고정, 덮어쓰기 경로 없음
+  watermark: boolean                                                  // features.drafting_watermark
+}
+interface SheetChecks { area_table_m2: Record<string, number>; parking_count?: number; min_setback_mm?: number }  // 판정 값과의 동일성 속성 테스트용
 ```
 
 #### 4.7.5 Web Worker 메시지 프로토콜
 
 ```ts
-type EngineRequest =
-  | { id: string; type: 'generateSheet'; model: DesignModelV1; judgment: JudgmentResult; spec: SheetSpec; profile: DraftingProfile; features: { drafting_watermark: boolean } }
-  | { id: string; type: 'exportSheets'; sheet_ids: string[]; format: 'dxf' | 'svg' | 'pdf' | 'png'; bundle: boolean; project_name: string; date: string }  // date: 파일명 전용(내용에 넣지 않음)
-  | { id: string; type: 'proposeMasses'; model: DesignModelV1; target: { gross_area_m2: number; floors?: number; use: string } }
-  | { id: string; type: 'validateLayout'; model: DesignModelV1; floor_id: string }
-  | { id: string; type: 'importDxf'; bytes: ArrayBuffer; unit_hint: 'auto' | 'mm' | 'm'; purpose: 'site_boundary' | 'reference' }   // reference 는 Phase 2
-  | { id: string; type: 'cancel'; target_id: string }
+type EngineRequest =                    // 봉투·레인·seq 규칙은 02장 2.4절. engine.worker: judge·suggest·layout, drafting.worker: sheet·export·import
+  | { op: 'build_sheet'; req_id: string; lane: 'sheet'; seq: number; input: DraftingInput }   // DraftingInput: model, judgment, sheet(SheetSpec), profile, license{ drafting_watermark }, engine_version
+  | { op: 'write'; req_id: string; lane: 'export'; format: 'dxf' | 'svg' | 'pdf' | 'png'; sheets: SheetModel[]; layer_map: Record<string, string>; bundle: boolean; project_name: string; date: string }  // date: 파일명 전용. pdf·png는 메인 스레드 대안(02장 2.4절)
+  | { op: 'suggest_mass'; req_id: string; lane: 'suggest'; seq: number; model: DesignModelV1; targets: { gross_area_m2: number; floors?: number; use: string } }
+  | { op: 'validate_layout'; req_id: string; lane: 'layout'; seq: number; model: DesignModelV1; floor_id: string }
+  | { op: 'import_dxf'; req_id: string; lane: 'import'; bytes: ArrayBuffer; unit_hint?: 'mm' | 'm'; purpose: 'site_boundary' | 'reference' }   // reference 는 Phase 2
+  | { op: 'judge' | 'load_rule_pack' | 'cancel'; req_id: string }   // 필드는 02장 2.4절
 
-type EngineResponse =
-  | { id: string; type: 'progress'; stage: string; pct: number }
-  | { id: string; type: 'generateSheet.ok'; sheet: SheetModel; svg_preview: string }
-  | { id: string; type: 'exportSheets.ok'; files: Array<{ name: string; bytes: ArrayBuffer; sha256: string }>; engine_version: string }  // bytes 는 Transferable
-  | { id: string; type: 'proposeMasses.ok'; candidates: Array<{ label: 'max_coverage' | 'sunlight_margin' | 'regular_plan'; masses: DesignModelV1['masses']; judgment: JudgmentResult }>; max_gross_area_m2?: number }  // 모두 PASS
-  | { id: string; type: 'validateLayout.ok'; rooms: Array<{ room_id: string; area_m2: number; target_diff_m2: number | null }>; errors: Array<{ code: 'AR051'; room_ids: string[]; kind: 'overlap' | 'outside' }> }
-  | { id: string; type: 'importDxf.ok'; unit: 'mm' | 'm'; polygons: Polygon[]; skipped_entities: Record<string, number> }
-  | { id: string; type: 'importDxf.ask_unit'; candidates: Array<'mm' | 'm'> }   // AR053: 사용자 답을 받아 unit_hint 를 정해 다시 요청
-  | { id: string; type: 'error'; code: LocalErrorCode; message: string; details?: unknown }
-  | { id: string; type: 'canceled' }
+type EngineResponse =                   // 성공은 { req_id, seq?, ok: true, op, result, engine_version, elapsed_ms }. result 형식:
+  | { op: 'progress'; req_id: string; stage: string; pct: number }
+  | { op: 'build_sheet'; result: { sheet: SheetModel; svg_preview: string } }
+  | { op: 'write'; result: { files: Array<{ name: string; bytes: ArrayBuffer; sha256: string }> } }  // bytes 는 Transferable
+  | { op: 'suggest_mass'; result: { candidates: Array<{ label: 'max_coverage' | 'sunlight_margin' | 'regular_plan'; masses: DesignModelV1['masses']; judgment: JudgmentResult }>; max_gross_area_m2?: number } }  // 모두 PASS
+  | { op: 'validate_layout'; result: { rooms: Array<{ room_id: string; area_m2: number; target_diff_m2: number | null }>; errors: Array<{ code: 'AR051'; room_ids: string[]; kind: 'overlap' | 'outside' }> } }
+  | { op: 'import_dxf'; result: { unit: 'mm' | 'm'; polygons: Polygon[]; skipped_entities: Record<string, number> } }   // skipped_entities 가 있으면 AR054 경고
+  | { op: 'import_dxf'; result: { ask_unit: Array<'mm' | 'm'> } }   // AR053: 사용자 답을 받아 unit_hint 를 정해 다시 요청
+  | { req_id: string; ok: false; code: LocalErrorCode; detail: string }
+  | { req_id: string; status: 'superseded' | 'canceled' }
 
 type LocalErrorCode = 'AR050' | 'AR051' | 'AR052' | 'AR053' | 'AR054' | 'AR055' | 'AR056' | 'AR057' | 'AR058' | 'AR059'
 ```
 
 | 규칙 | 내용 |
 |---|---|
-| 취소 | `cancel`은 협조적 취소다. 엔진은 단계 경계(뷰 생성, 주석, 작성기)마다 취소 표시를 확인하고 `canceled`로 끝낸다. 화면은 같은 시트의 새 `generateSheet`를 보내기 전에 이전 요청을 취소한다(마지막 요청만 반영) |
-| 시간 | `generateSheet` p95 1초, `proposeMasses` p95 3초, `validateLayout` p95 100ms, `exportSheets` DXF 시트당 p95 2초·PDF 10장 p95 10초(`docs/products/arch-studio/01_PRD.md:414-418`) |
+| 취소 | `cancel`은 협조적 취소다. 엔진은 단계 경계(뷰 생성, 주석, 작성기)마다 취소 표시를 확인하고 `canceled`로 끝낸다. 같은 레인의 새 요청이 오면 이전 요청은 `superseded`(02장 2.4절, 마지막 요청만 반영). `write`는 끝까지 실행 |
+| 시간 | `build_sheet` p95 1초, `suggest_mass` p95 3초, `validate_layout` p95 100ms, `write` DXF 시트당 p95 2초·PDF 10장 p95 10초(`docs/products/arch-studio/01_PRD.md:414-418`) |
 | 버전 | 모든 응답의 산출물에 `engine_version`. 로컬 `sheets`·`exports`에 함께 저장하고, 저장된 시트의 엔진 버전이 현재와 다르면 `AR059` 안내 후 재생성 |
-| 입력 상한 | `importDxf` 20MB(`AR055`), 지원 엔티티 밖은 경고 후 무시(`AR054`)(`docs/products/arch-studio/01_PRD.md:420`) |
+| 입력 상한 | `import_dxf` 20MB(`AR055`, Rust `fs.rs`가 읽기 전 검사), 지원 엔티티 밖은 경고 후 무시(`AR054`)(`docs/products/arch-studio/01_PRD.md:420`) |
 
 #### 4.7.6 내보내기 파일 이름 규칙 (제안)
 
@@ -466,7 +466,7 @@ fal 결과 웹훅은 받지 않는다. `/api/webhooks/fal` 경로를 두지 않�
 | VWorld(연속지적, 토지이용계획), 건축HUB | `apps/web/src/server/site/`(`POST /api/site/lookup`) | 호출당 4초 타임아웃·재시도 1회(제안: p95 5초 목표 안), 실패·형식 이상은 `AR021` 502 → 앱이 "직접 그리기"로 이동. 응답 좌표계·필드·이용 조건·출처 표기 의무는 모두 미확인(D-14, `docs/products/arch-studio/01_PRD.md:303`). 확인 전에는 직접 그리기가 기본 경로 | 조직 `site_lookups_per_day`, 제공자 일일 한도 미확인 |
 | 국가법령정보 공동활용(DRF) | 규칙 팩 제작·RAG 색인(운영 도구, 사용자 요청 경로 아님) | 실패해도 사용자 기능에 영향 없음(다음 배치 재시도) | 미확인 |
 | fal(렌더) | `workers/arch-jobs`(코어 fal client) | 제출 실패 즉시 실패·환불, 3분 초과 실패·환불, 안전 검사 거부는 재시도 없이 실패·환불. 결과는 Storage로 복사(fal URL 만료), 메타데이터에 AI 생성 표시. 표준·고품질 모델 id는 `core.ai_model_prices`(미확인: 고품질 계열의 fal 제공 여부) | 조직 동시 3건(`AR030`), 렌더 API 조직 20회/분 |
-| 공용 WeasyPrint 렌더 `POST /render/pdf` | `workers/arch-jobs` | 렌더 예외 재시도 불가 → 환불, 타임아웃 120초(`docs/products/_platform-core/SHARED_MODULES.md:274`). `url_fetcher` 허용 목록(자체 Storage)만(`docs/products/_platform-core/SECURITY_BASELINE.md:174`) | 공용 서비스 한도. `RenderPdfRequest.app_id`에 `arch` 추가가 필요하다(현재 `'publishing' \| 'astro'`, `docs/products/_platform-core/SHARED_MODULES.md:280`) |
+| 공용 WeasyPrint 렌더 `POST /render/pdf` | `workers/arch-jobs` | 렌더 예외 재시도 불가 → 환불, 타임아웃 120초(`docs/products/_platform-core/SHARED_MODULES.md:274`). `url_fetcher` 허용 목록(자체 Storage)만(`docs/products/_platform-core/SECURITY_BASELINE.md:174`) | 공용 서비스 한도. `RenderPdfRequest.app_id`에 `arch` 추가가 필요하다(현재 `'publishing' \| 'astro'`, `docs/products/_platform-core/SHARED_MODULES.md:280`, PRD 코어 요청 C-5) |
 | FastAPI ai-service | `workers/arch-jobs`(잡 토큰), `/api/ai/chat`(Dify 장애 시) | 체인 대체(라우터) → 노드 재시도 → 실패·환불. mock 응답 금지 | 조직 60회/분 |
 | Dify `arch-chat` | `/api/ai/chat` | 5xx·10초 무응답 → `/tools/answer-direct`(서명 토큰) + 운영 알림 | 공용 인스턴스 |
 | core-voice(오픈소스 음성 서버) | `/api/voice/stt`(받아쓰기), `workers/arch-jobs`(`arch.stt`) | 오픈소스 강제라 국외 제공자로 대체하지 않고 실패·환불 | 요청당 STT 10분 → 상담 녹음은 10분 단위 분할 |
@@ -478,14 +478,14 @@ fal 결과 웹훅은 받지 않는다. `/api/webhooks/fal` 경로를 두지 않�
 
 ### 6.2 제안서 PDF 조립
 
-Route Handler가 `drawing_sheets`의 SVG를 sanitize한다(허용 요소·속성 목록, `script`·`foreignObject`·이벤트 속성·외부 `href` 제거, 1장 2MB 이하, 제안. 실패 422). 워커는 서술 섹션(`proposal`만, 6.3절)을 받은 뒤 엔진 값 표 + 인라인 SVG(외부 fetch 없음) + 렌더 이미지(자체 Storage) + "AI 초안" 표시 + 꼬리말 고지로 HTML을 조립해 `POST /render/pdf`로 보내고, 결과 `exports/<org_id>/arch/pdf/<uuid>.pdf`를 `finish_ai_run`에 넘긴다.
+Route Handler가 `drawing_sheets`(`POST /api/uploads/sign` purpose `proposal_sheet`로 올린 SVG)를 sanitize한다(허용 요소·속성 목록, `script`·`foreignObject`·이벤트 속성·외부 `href` 제거, 1장 2MB 이하, 제안. 실패 422). 워커는 서술 섹션(`proposal`만, 6.3절)을 받은 뒤 엔진 값 표 + 인라인 SVG(외부 fetch 없음) + 렌더 이미지(자체 Storage) + "AI 초안" 표시 + 꼬리말 고지로 HTML을 조립해 `POST /render/pdf`로 보내고, 결과 `exports/<org_id>/arch/pdf/<uuid>.pdf`를 `finish_ai_run`에 넘긴다(`arch.proposals` 결과 경로). HTML 조립은 서버(워커)만 하고 클라이언트 HTML은 렌더하지 않는다(`docs/products/_platform-core/SHARED_MODULES.md:270`).
 
 ### 6.3 FastAPI 엔드포인트 (`docs/products/_platform-core/AI_ARCHITECTURE.md:152-157` 중 이 제품이 쓰는 것)
 
 | 엔드포인트 | 호출자 | 인증 | 내용 |
 |---|---|---|---|
 | `POST /graphs/arch.review/runs` | `workers/arch-jobs`(`arch.review` claim 후) | 잡 토큰 `graph:arch.review`, `jti` 1회 | 규칙엔진 결과 + 지구단위계획·해석 RAG + compliance 노드(마지막, `docs/products/_platform-core/AI_ARCHITECTURE.md:117`) → 4.2절 결과 → `arch.finish_ai_run` |
-| `POST /graphs/arch.intake/runs` | 같음(`arch.intake`) | `graph:arch.intake` | 요구 문장(또는 전사본) → 4.3절 스키마, 서버 재검증 실패 1회 재시도 후 `AR032` |
+| `POST /graphs/arch.intake/runs` | 같음(`arch.intake`) | `graph:arch.intake` | 요구 문장(`source='chat'`) 또는 상담 전사본(`source='consult'`, 라우팅 `arch.intake_consult`) → 4.3절 스키마, 서버 재검증 실패 1회 재시도 후 `AR032` |
 | `POST /graphs/arch.layout/runs`(Phase 2) | 같음(`arch.layout`) | `graph:arch.layout` | 4.6절 의도 JSON만 |
 | `GET /graphs/runs/{id}` | 워커 | 잡 토큰 | 상태·결과(재시도 시 같은 실행 재개) |
 | `POST /products/arch/proposal/narrative` | 워커(`arch.proposal_pdf`) | 잡 토큰 `graph:arch.proposal_narrative` | 엔진 값 요약 → 서술 섹션(숫자 생성 금지 검사 포함). 제품 전용 엔드포인트(제안) |
@@ -493,7 +493,7 @@ Route Handler가 `drawing_sheets`의 SVG를 sanitize한다(허용 요소·속성
 | `POST /tools/answer-direct` | `/api/ai/chat`(Dify 장애 시) | 서명 토큰 `chat` | 같은 처리 |
 | `POST /v1/chat/completions` | Dify 보조 LLM 노드 | 내부 API 키 | 조직 데이터 금지 |
 
-잡 토큰은 워커가 웹 서버 내부 엔드포인트(워커 키 인증)에서 받는다(`docs/products/_platform-core/AI_ARCHITECTURE.md:39`). 이 경로는 MVP 경로 목록 밖이라 `POST /api/internal/ai-token`(book-trailer와 같은 형태, 제안)으로 둔다. 기능 라우팅 키: `arch.review`, `arch.intake`, `arch.proposal_narrative`, `arch.chat`, `arch.layout`(P2), 이미지 `arch.render`. 국외 이전 동의 전에는 오픈소스 경로만 쓴다(`docs/products/_platform-core/AI_ARCHITECTURE.md:86`).
+잡 토큰은 워커가 웹 서버 내부 엔드포인트(워커 키 인증)에서 받는다(`docs/products/_platform-core/AI_ARCHITECTURE.md:39`). 경로는 `POST /api/internal/ai-token`(워커 키 인증, book-trailer와 같은 형태)이다. 기능 라우팅 키: `arch.review`, `arch.intake`, `arch.intake_consult`(오픈소스 강제), `arch.proposal_narrative`, `arch.chat`, `arch.compliance`, `arch.knowledge`(임베딩), `arch.layout`(P2), 이미지 `arch.render`(02장 5절). 국외 이전 동의 전에는 오픈소스 경로만 쓴다(`docs/products/_platform-core/AI_ARCHITECTURE.md:86`).
 
 ### 6.4 Dify `arch-chat` 계약
 
@@ -511,7 +511,7 @@ Route Handler가 `drawing_sheets`의 SVG를 sanitize한다(허용 요소·속성
 
 | 코드 | 의미 | HTTP | 발생 위치 |
 |---|---|---|---|
-| `AR001` | 활성화 한도 초과 | 409 | `activate_license` |
+| `AR001` | 활성화 한도 초과 | 409 | `activate_license`, `activate_plan_device` |
 | `AR002` | 시리얼 무효 | 404 | `activate_license` |
 | `AR003` | 라이선스 정지·환불·회수 | 403 | `activate_license`, `extend_updates`, 클라우드 기능 판정 |
 | `AR004` | 셀프 해제 한도 초과(30일 3회) | 429 | `deactivate_activation` |
@@ -519,14 +519,14 @@ Route Handler가 `drawing_sheets`의 SVG를 sanitize한다(허용 요소·속성
 | `AR006` | 다른 조직 시리얼 | 403 | `activate_license` |
 | `AR010` | 업데이트 기간 밖 빌드 | 403 | 업데이트 매니페스트 |
 | `AR011` | 규칙 팩 자격 없음 | 403 | `GET /api/rule-packs/{version}/download` |
-| `AR012` | 폴백 상태 클라우드 검토 불가 | 403 | `start_ai_run('review')` |
+| `AR012` | 폴백 상태 클라우드 검토 불가 | 403 | `start_ai_run`(kind `review`) |
 | `AR020` | 대지 조회 일일 상한 | 429 | `record_site_lookup` |
 | `AR021` | 공공 API 실패 | 502 | 대지 조회 어댑터 |
-| `AR030` | 렌더 동시 3건 초과 | 429 | `start_ai_run('render')` |
-| `AR031` | 입력 크기 초과 | 413 | 업로드 URL 발급, 사용 시점 재검사, AI 요청 본문 |
+| `AR030` | 렌더 동시 3건 초과 | 429 | `start_ai_run`(kind `render`) |
+| `AR031` | 입력 크기 초과 | 413 | `POST /api/uploads/sign`, 사용 시점 재검사, AI 요청 본문 |
 | `AR032` | intake 스키마 검증 실패(환불) | 422 | `finish_ai_run`, 워커 검증 |
 | `AR033` | 출처 없는 검토 결과 차단(환불) | 500 | `finish_ai_run('review')` |
-| `AR040` | 클라우드 사본 상한 | 403 | `save_cloud_project`, 업로드 URL |
+| `AR040` | 클라우드 사본 상한 | 403 | `save_cloud_project`, `POST /api/uploads/sign`(`project_snapshot`) |
 | `AR041` | 버전 충돌 | 409 | `save_cloud_project` |
 | `AR042` | 표제란 설정 권한 없음 | 403 | `upsert_drafting_profile` |
 
@@ -563,5 +563,5 @@ Route Handler가 `drawing_sheets`의 SVG를 sanitize한다(허용 요소·속성
 
 | 항목 | 04의 처리 | 근거 |
 |---|---|---|
-| 상담 녹음 → 후보 그래프 크레딧 | PRD 4.5절은 "STT 분당 1 + 그래프 5", 9.4절과 02장 4절은 intake 2. 04는 `source='consult'`(AR-F-015)를 5, 텍스트·짧은 음성(AR-F-034)을 2로 둔다. D-4 단가 확정 때 하나로 정리 | `docs/products/arch-studio/01_PRD.md:144`, `docs/products/arch-studio/01_PRD.md:389-390` |
+| 상담 녹음 → 후보 그래프 크레딧 | 확정: 같은 잡 `arch.intake`, `source='consult'`(AR-F-015, PRD 4.5절) variant `intake_consult` 5, `source='chat'`(AR-F-034, PRD 9.4절) variant `intake_text` 2. STT 분당 1은 별도. 단가 보정은 D-4 | `docs/products/arch-studio/01_PRD.md:144`, `docs/products/arch-studio/01_PRD.md:389-390` |
 | 라이선스 발급 트리거 | PRD 4.4절은 "Toss 결제 확정 웹훅 → 발급", 코어는 "지급 정본은 confirm, 웹훅은 보조". 04는 두 경로 모두에서 같은 후처리를 주문 id 멱등으로 부른다(5장) | `docs/products/arch-studio/01_PRD.md:122`, `docs/products/_platform-core/CORE_SPEC.md:251` |

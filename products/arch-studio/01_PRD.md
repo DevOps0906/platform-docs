@@ -57,7 +57,7 @@
 | AR-F-015 | 상담 녹음 → 요구사항 후보 | 상담 녹음을 전사해 체크리스트 답 후보를 만든다. STT·LLM 오픈소스 강제, 원본 24시간 후 삭제 | 녹음 전 매번 제3자 고지. 후보는 사용자가 채택해야 반영된다 | `docs/products/nomad-docs/01_PRD.md:453` |
 | AR-F-016 | 파일 입출력 | 내보내기: glTF, IFC(web-ifc), .3dm(rhino3dm), 2D 도면 DXF·SVG·PDF(AR-F-038). 가져오기: .3dm, DXF(P1). .skp는 D-11, DWG는 D-22 | 내보낸 IFC를 무료 IFC 뷰어에서 열 수 있다. 상표는 "호환" 표기만 | 3D 방식 결정 |
 | AR-F-027 | 가입/로그인·계정 | 인증 단계(확정 결정 22): Stage A(MVP 개발) 로컬 Supabase 시드 계정 Mock 로그인. 쿠키 역할 Mock·앱에 박은 개발 계정 금지, 개발용 로그인은 `AUTH_ROADMAP.md` 2장의 로컬 시드 계정만(배포 환경 404, 배포 빌드 앱에는 개발용 패널 없음). Stage B(사전예약 판매·공개 베타 전, P0) Google + 이메일+비밀번호. Stage C(G2 후, P2 선택) 카카오(C1)·네이버(C2). 공개 가입(`signup_policy='open'`): 첫 로그인에 개인 조직, `trial` 엔타이틀먼트(14일), 가입 크레딧 30(4.2절). 데스크톱 앱은 앱 안 웹뷰에서 OAuth를 하지 않고 시스템 브라우저로 로그인한 뒤 앱으로 돌아온다(방식 D-15). 세션 토큰은 OS 자격 증명 저장소에만 둔다. 시리얼은 로그인한 계정의 조직에 묶인다(D-16). 시리얼 구매(AR-F-017)는 이메일이 확인된 계정만 | A: `owner` 페르소나 로그인 → `session_context('arch')` `entitled=true`, 플랜 `trial`, 잔액 30. 데스크톱 앱에서 로그인 → 브라우저 → 앱 복귀 후 같은 `user_id`(A단계에서 Mock 페르소나로 검증). 재로그인 3회 뒤에도 가입 크레딧 원장 행 1개. 앱 복귀 URL의 `code`·토큰이 앱·서버 로그에 남지 않는다. B: `AUTH_ROADMAP.md` 5.3절 B-1~B-6. C1: 7.1.3절 C1-1~C1-5. C2: 7.2.4절 C2-1~C2-6 | `docs/products/_platform-core/CORE_SPEC.md` 2.2, `AUTH_ROADMAP.md` 2장·5.3·7.1.3·7.2.4절, 8.2절 |
-| AR-F-017 | 시리얼 라이선스 구매·발급 | 4.4절 | 결제 확정 후 1분 안에 이메일과 계정 화면에 시리얼이 보인다 | 4.4절 |
+| AR-F-017 | 시리얼 라이선스 구매·발급 | 4.4절 | 결제 확정 후 1분 안에 이메일로 전체 시리얼이 오고, 계정 화면에는 시리얼 끝 5자가 보인다(전체 시리얼은 발급 메일에만, 서버는 해시만 저장) | 4.4절 |
 | AR-F-018 | 기기 활성화·해제 | 라이선스당 PC 2대. 셀프 해제 30일당 3회 | 3대째 활성화는 `AR001`로 거부되고 해제 화면으로 안내된다 | 4.4절 |
 | AR-F-019 | 업데이트 권한·폴백 | `updates_until` 이전 빌드와 규칙 팩만 받는다. 마지막 자격 버전은 계정에서 영구 다운로드 | 만료 후에도 마지막 자격 버전이 설치·실행된다. 판정 화면에 규칙 팩 기준일과 이후 개정 건수가 보인다 | 4.4절 |
 | AR-F-020 | 크레딧 지갑 | 잔액, 팩 구매, 사용 내역(작업·크레딧·환불) | 실패 작업의 환불이 내역에 1분 안에 보인다 | `docs/products/_platform-core/CORE_SPEC.md` 크레딧 절 |
@@ -120,9 +120,9 @@
 |---|---|
 | 시리얼 형식 | `ARCH-XXXXX-XXXXX-XXXXX-XXXXX`, Crockford Base32 20자(무작위 100비트). 서버는 SHA-256 해시만 저장하고 화면에는 끝 5자만 보인다 |
 | 발급 | Toss 결제 확정 웹훅(원시 본문 서명 검증, `core.webhook_events` 멱등) → service_role `arch.issue_license` → 이메일과 계정 라이선스 화면 |
-| 라이선스 테이블(제안) | `arch.licenses`(org_id, sku_code, serial_hash, serial_last5, status, purchased_at, updates_until, max_activations=2), `arch.license_activations`(license_id, device_hash, activated_at, last_seen_at, deactivated_at). 상세는 05장 |
+| 라이선스 테이블(제안) | `arch.licenses`(org_id, sku_code, serial_hash, serial_last5, status, purchased_at, updates_until, max_activations=2), `arch.license_activations`(license_id(체험·월 구독은 null), org_id, source('license'·'plan'), device_hash, activated_at, last_seen_at, deactivated_at). 체험·월 구독 기기 1대는 `arch.activate_plan_device`. 상세는 05장 |
 | 기기 식별 | OS 머신 ID 등 기기 정보를 앱별 솔트로 해시한 `device_hash`만 보낸다. 원본 식별자는 서버에 보내지 않는다 |
-| 라이선스 파일 | 서버가 Ed25519로 서명한 JSON: `license_id`, `org_id`, `sku`, `updates_until`, `activation_id`, `device_hash`, `issued_at`, `kid`. 서명 키 `LICENSE_SIGNING_PRIVATE_KEY`는 서버 전용이며 AI 서명 토큰 키(`AI_TOKEN_PRIVATE_KEY`)와 분리한다. 앱에는 공개키만 넣고 키 교체는 `kid`로 한다 |
+| 라이선스 파일 | 서버가 Ed25519로 서명한 JSON: `v`, `license_id`(체험·월 구독은 null), `org_id`, `app_id`('arch'), `sku`, `source`('license'·'plan'), `updates_until`, `activation_id`, `device_hash`, `features`(9.4절), `offline_valid_until`(영구 null, 체험·월 구독은 발급 시각 + 7일, 제안), `issued_at`, `kid`. 서명 키 `LICENSE_SIGNING_PRIVATE_KEY`는 서버 전용이며 AI 서명 토큰 키(`AI_TOKEN_PRIVATE_KEY`)와 분리한다. 앱에는 공개키만 넣고 키 교체는 `kid`로 한다 |
 | 활성화 | 온라인 1회. PC 2대. 셀프 해제 30일당 3회(초과 시 고객지원). 활성화 API 레이트 리밋 IP당 10회/시간 |
 | 오프라인 | 영구 라이선스의 로컬 기능은 활성화 후 온라인 확인 없이 계속 동작한다(권고, D-7). 클라우드 기능은 호출마다 서버가 라이선스·플랜을 검증한다 |
 | 업데이트 권한 | 빌드마다 `build_date`를 넣는다. 업데이터는 `build_date <= updates_until`인 빌드와 `published_at <= updates_until`인 규칙 팩만 제공한다. 계정 화면에 "사용 가능한 마지막 버전" 설치 파일을 영구 보관한다. 자격 밖 빌드를 직접 설치하면 실행 시 라이선스 화면과 마지막 자격 버전 링크로 안내한다 |
@@ -141,7 +141,7 @@
 | 법규 질의 채팅 1턴 | 1 | `docs/products/nomad-docs/01_PRD.md:370`과 같은 값 |
 | 제안서 PDF(서술 섹션 LLM, 렌더 이미지는 별도 차감) | 10 | 제안 |
 | 설계개요서·면적표·개략 공사비 PDF(템플릿) | 1(같은 버전 재요청 0) | `docs/products/nomad-docs/01_PRD.md:368`과 같은 값 |
-| 상담 녹음 → 요구사항 후보 | STT 분당 1 + 그래프 5 | `docs/products/nomad-docs/01_PRD.md:367`과 같은 값 |
+| 상담 녹음 → 요구사항 후보 | STT 분당 1 + 그래프 5 | `docs/products/nomad-docs/01_PRD.md:367`과 같은 값. 대화형 입력(9.4절, 2)과 같은 잡 `arch.intake`이고 입력 `source='consult'`로 구분(오픈소스 강제) |
 | 워크스루 영상 5초(Phase 2) | 40 | 제안. 원가 측정 전 |
 | 대지 조회(공공 API) | 0. 하루 30회 상한(`site_lookups_per_day`) | 남용 방지 |
 | 모델링, 로컬 판정, 엔벨로프, 파일 입출력, 도면 자동 생성·DXF/SVG/PDF 시트 출력(9장), 매스 자동 제안, 로컬 GPU 렌더 | 0 | 결정적 로컬 계산. AI가 들어가는 도면 기능(대화형 입력, AI 실 배치)은 9.4절 |
@@ -379,14 +379,14 @@ pack 버킷은 레포 표준대로 소멸하지 않는다(`docs/products/nomad-d
 | AR-F-037 | 기존 도면 입력 | 신규 | Phase 2: 기존 평면 DXF를 참조 레이어(`A-REFR`, 잠금)로 불러오기, 단위(mm·m) 자동 판별과 수동 보정, 기준점 맞춤. Phase 3: 스캔·사진 도면에서 벽·실 경계 벡터 후보 생성 후 사용자 검수 | Phase 2: 단위 판별 실패 시 사용자에게 묻고 진행(AR053). 참조 레이어는 판정·면적에 쓰이지 않는다(테스트) | 9.1절 입력 경로 |
 | AR-F-038 | 도면 출력 형식 | 신규 | DXF(ASCII, AutoCAD 2013 형식 AC1027, 제안: 호환 범위가 넓은 버전), SVG(화면 미리보기와 같은 결과), PDF(벡터, 여러 시트 묶음, 로컬 생성, D-23), PNG 미리보기. DXF 문자 스타일은 한글 TTF 글꼴 이름만 참조하고 글꼴 파일을 넣지 않는다. 엔티티는 LINE, LWPOLYLINE, ARC, CIRCLE, TEXT, MTEXT, HATCH, INSERT/BLOCK만 쓰고 치수는 분해된 선과 문자로 쓴다(제안: DIMENSION 엔티티의 CAD별 표시 차이를 피한다) | 골든 DXF 20건이 CI의 검증 도구(Python ezdxf `audit`, 런타임에 넣지 않음)에서 오류 0. 무료 DXF 뷰어(LibreCAD, 미확인: 최신 버전 호환)에서 열린다. 시트 10장 PDF 로컬 생성 p95 10초. 한글 문자가 깨지는 경우 대체 글꼴 안내(미확인: AutoCAD의 한글 TTF 스타일 표시) | AR-F-016, D-20, D-23 |
 
-제안서 PDF(AR-F-014)는 사용자가 고른 도면 시트(배치도, 면적 산정도, 일조사선 단면)를 SVG로 넣는다. 도면은 로컬에서 만든 SVG를 올리고 크레딧은 기존 10 그대로다(도면 자체는 0, 4.5절).
+제안서 PDF(AR-F-014)는 사용자가 고른 도면 시트(배치도, 면적 산정도, 일조사선 단면)를 SVG로 넣는다. 도면은 로컬에서 만든 SVG를 서명 업로드(`POST /api/uploads/sign`, purpose `proposal_sheet`)로 올리고 HTML 조립은 서버가 하며, 크레딧은 기존 10 그대로다(도면 자체는 0, 4.5절).
 
 ### 9.4 요금과 크레딧
 
 | 작업 | 크레딧 | 근거 |
 |---|---|---|
 | 도면 생성, DXF·SVG·PDF 시트 출력, 평면 개략도 편집, 매스 자동 제안 | 0 | 결정적 로컬 계산(4.5절과 같은 원칙) |
-| 대화형 설계 입력 1회(AR-F-034, 텍스트) | 2 | 제안. 법규 채팅 1턴(1)보다 출력이 길고 스키마 검증 재시도가 있다. 베타 원가 측정 후 보정(D-4) |
+| 대화형 설계 입력 1회(AR-F-034, 텍스트) | 2 | 제안. 잡 `arch.intake`, `source='chat'`(상담 녹음 후보는 4.5절 5). 법규 채팅 1턴(1)보다 출력이 길고 스키마 검증 재시도가 있다. 베타 원가 측정 후 보정(D-4) |
 | 대화형 설계 입력 음성 | STT 분당 1 + 2 | `docs/products/nomad-docs/01_PRD.md:367`과 같은 STT 단가 |
 | AI 실 배치 초안 3안(Phase 2) | 5 | 제안. 원가 측정 전 |
 
@@ -405,7 +405,7 @@ pack 버킷은 레포 표준대로 소멸하지 않는다(`docs/products/nomad-d
 | `ai_intake` | 대화형 설계 입력 | true | true | true | true | false |
 | `ai_layout` | AI 실 배치 초안(Phase 2) | false | true | true | false | false |
 
-`drafting_watermark`는 서버가 서명하는 라이선스 파일의 기능 목록에도 넣어 오프라인에서도 같은 값을 쓴다(4.4절 라이선스 파일 필드에 `features` 추가, 제안).
+`drafting_watermark`는 서버가 서명하는 라이선스 파일의 기능 목록에도 넣어 오프라인에서도 같은 값을 쓴다(4.4절 라이선스 파일 필드 `features`: `drafting_watermark`, `rule_pack_updates`, `cloud_review`, `ai_render`).
 
 ### 9.5 비기능 요구사항
 
@@ -492,3 +492,10 @@ pack 버킷은 레포 표준대로 소멸하지 않는다(`docs/products/nomad-d
 | 2 | 사전예약 랜딩에 샘플 도면(DXF·PDF) 다운로드를 둔다 | 9.8절 다운로드 → 사전예약 지표 측정 시작 |
 | 3 | 인터뷰 5건 이상: "배치도·면적 산정도를 DXF로 받으면 제안 시간이 얼마나 줄어드는가", "DWG가 꼭 필요한가" | D-22 판단 자료 |
 | 4 | MVP: 9.2절 MVP 범위 | 9.3절 수용 기준 |
+
+### 8.1 보충 코어 요청 (2026-10-16, 02~07 작성 결과)
+
+| ID | 요청 | 이유 |
+|---|---|---|
+| C-5 | 공용 WeasyPrint 렌더 계약 `RenderPdfRequest.app_id`에 `arch` 추가(`docs/products/_platform-core/SHARED_MODULES.md:280`) | 제안서 PDF(AR-F-014). HTML 조립은 서버(`workers/arch-jobs`)가 한다(`SHARED_MODULES.md:270`) |
+| C-6 | 데스크톱 Bearer 세션 검증, CORS 셸 출처, Supabase Redirect URL(커스텀 스킴·루프백), finishLogin 경로(`docs/Tauri/README.md` 15장 T-C1, T-C2, T-C6, T-C8 인용) | AR-F-027, D-15, D-16 |
