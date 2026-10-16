@@ -10,7 +10,7 @@
 |---|---|---|
 | `reviews/` | 원본 프로젝트 25개의 코드 리뷰(결함, 이식할 자산) | 왜 이렇게 기획했는지 근거를 볼 때 |
 | `pdf/` | `reviews/`의 PDF 변환본 | 인쇄·공유용 |
-| `products/` | 통합 기획서(제품 15개(arch-studio는 PRD 초안) + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
+| `products/` | 통합 기획서(제품 16개(arch-studio 포함, 2026-10-16 기획 01~07 완료) + 공용 코어 + 디자인 가이드 + 통합 DB) | 무엇을 만들지 볼 때 |
 | `develop/` | 제품별 개발 묶음(개발 가이드, setup 스크립트, 개발 폴더에 붙일 문서·DB) | 개발을 시작할 때 |
 | `develop_V2/` | 공용모듈(local-news에서 꺼낸 7개)을 쓰는 제품별 개발서. `develop/`의 설치·묶음은 그대로 쓰고 바뀌는 부분(채택 모듈, DB 순서, 추가·축소 작업)만 | 공용모듈로 개발할 때 |
 | `Price_Plans/` | 가격 플랜: 공용 가격 결정 방법(`_common/`) + 플랫폼별 폴더(제품 15개, 서비스 사업 Web-App-Agency) | 가격을 정하거나 바꿀 때 |
@@ -38,7 +38,7 @@
 | nomad-docs (NOMAD Docs) | 체크리스트로 계약서·요구사항정의서 등 실무 문서 자동 생성, CRM형 작업 공간 | `products/nomad-docs/` | `develop/nomad-docs/` |
 | local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(공용모듈 7개의 출처) | `products/local-news/` | `develop/local-news/` |
 | book-trailer (NOMAD Book Trailer, 가칭) | 원고 → 훅 브리프 → 장르 문법 스토리보드 → 규격 4종 트레일러 렌더(Remotion) → 구매 링크 클릭 측정 | `products/book-trailer/` | `develop/book-trailer/` |
-| arch-studio (가칭) | 설치형 건축 설계 앱(법규 판정, AI 렌더, 시리얼 라이선스) | `products/arch-studio/`(PRD 초안) | 아직 없음 |
+| arch-studio (가칭) | 설치형 건축 설계 앱(정보 입력 → 도면 자동 생성 DXF·PDF, 법규 판정, AI 렌더, 시리얼 라이선스) | `products/arch-studio/` | `develop/arch-studio/` |
 
 공용: `products/_platform-core/`(인증·조직·크레딧·결제·잡·AI·음성 규격), `products/_design-guide/`
 (디자인 시스템, 3D 히어로, Awwwards·Dribbble 레퍼런스), `products/_supabase-modular/`(통합 DB: `core` + 제품 스키마).
@@ -198,8 +198,8 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | 항목 | 상태 |
 |---|---|
-| 기획 | 15개 제품 완료(local-news, book-trailer 포함), arch-studio는 PRD 초안. 인증 단계(확정 결정 22) 15개 제품 반영 완료. 공용모듈 7개 기획(`products/_platform-core/common-modules/`). 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
-| 개발 묶음 | 15개 제품 완료(`develop/`, book-trailer 2026-10-15 추가), 공용모듈을 쓰는 V2 개발서 16개(`develop_V2/`, book-trailer 2026-10-16 추가) |
+| 기획 | 16개 제품 완료(local-news, book-trailer, arch-studio 포함. arch-studio는 2026-10-16 01~07 완료). 인증 단계(확정 결정 22) 15개 제품 반영 완료. 공용모듈 7개 기획(`products/_platform-core/common-modules/`). 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
+| 개발 묶음 | 16개 제품 완료(`develop/`, book-trailer 2026-10-15, arch-studio 2026-10-16 추가), 공용모듈을 쓰는 V2 개발서 16개(`develop_V2/`, book-trailer 2026-10-16 추가) |
 | 남은 결정 | 각 제품 `01_PRD.md` 8절. 공용 과제는 `products/README.md` "남은 코어 과제" |
 | 가격 플랜 | `Price_Plans/` 생성. Web-App-Agency 초안, 제품 15개(정본은 각 PRD 4장) |
 | 멀티테넌트 테마 | `Multi-tenant_Theming/` 설계 완료. 코어 확장 SQL `0011`은 제안(staged), PGlite 적용 OK·RLS 스모크 91/91(모듈러·모놀리스). 코어 반영은 승인 후(`06_ADOPTION_PLAN.md` 1장) |

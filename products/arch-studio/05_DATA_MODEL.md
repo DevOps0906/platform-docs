@@ -398,7 +398,7 @@ seed 값(전부 제안, 정본 `01_PRD.md:87-94`, `:149-155`, `:175-185`, `:400-
 | `eligible_rule_packs`, `upsert_drafting_profile` | 끝에 `p_org uuid default null` 추가(계약 형태로 인자 없이 호출 가능) | 다중 조직 사용자가 현재 조직을 고르게. null이면 개인 조직 |
 | `latest_cost_catalog(p_org)` | 신규 RPC | 단가표를 자격별로만 주기 위해 테이블 GRANT를 두지 않았다(04장 `GET /api/cost-catalogs/latest`는 이 RPC를 호출) |
 | `purge_expired()`, `reconcile_runs(p_org)` | 신규 service RPC | 보존 정리(워커 크론), 잡만 끝난 실행 정리 |
-| `AR034` | 신규 SQLSTATE: 일일 플랫폼 크레딧 상한 | 04장 앱 코드 `AI_DAILY_LIMIT` 429에 대응. 04장 7.1절 표 추가 필요 |
+| `AR034` | 신규 SQLSTATE: 일일 플랫폼 크레딧 상한 | 04장 앱 코드 `AI_DAILY_LIMIT` 429에 대응. 04장 7.1절 표에 반영됨(AR030 행과 병합) |
 | `start_ai_run`의 `layout`·`walkthrough` | 시그니처는 받되 22023으로 거부 | Phase 2라 실행 테이블이 없다. 착수 때 테이블과 분기 추가 |
 | 반환형 | `activate_license` → jsonb(활성화 + 라이선스 요약), `finish_ai_run`·`fail_ai_run` → jsonb(`run_id`, `kind`, `status`) | 실행 테이블이 4개라 한 행 타입으로 돌려줄 수 없다 |
 | `site_lookups.pnu_hash` | HMAC-SHA-256(서버 키) | 2.14절 |

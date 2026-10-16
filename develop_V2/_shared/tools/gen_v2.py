@@ -402,20 +402,26 @@ PRODUCTS = {
         dec=[('V2-NW-1', '공용모듈 v1.0이 없는 모듈(search·membership·ads)을 이 제품이 패키지로 만들지, `news` 스키마로 먼저 만들지', '패키지로 만듦(기준 구현, CMX-1)')],
     ),
     'arch-studio': dict(
-        name='Arch Studio(가칭)', app='arch', pfx='AR', stage='설치형(미정)', v1=False,
-        domain=[],
+        name='Arch Studio(가칭)', app='arch', pfx='AR', stage='코어 이후(설치형)',
+        domain=['20261013000002_arch_domain.sql'],
         mods={
-            'compliance': dict(st='채택', role='', deps=[],
-                use='웹 가입·라이선스 구매 약관, 처리방침, AI 이용 안내(라이선스 서버 쪽)',
-                rep='-', keep='설치형 앱 안의 오프라인 고지 문구',
-                inj='`profileKind: kr_ecommerce`(시리얼 라이선스 판매)'),
-            'media': dict(st='보류', why='렌더 이미지는 사용자 PC에 저장', when='클라우드 렌더 갤러리를 만들 때'),
-            'search': dict(st='보류', why='설치형 앱 안 검색은 로컬', when='-'),
+            'compliance': dict(st='채택', role='', deps=['008', '043', '031', '057', '062'],
+                use='온보딩 국외 이전 동의(008), 라이선스·플랜·크레딧팩 구매 약관·환불 규정 동의(043), 설정의 국외 이전·녹음 고지 버전(031), 법적 고지 페이지 `/legal/*`(057), Stage B 온보딩 약관 단계(062)',
+                rep='법적 고지 본문(`web/src/content/legal/**`) → `policy_documents`(kind `terms`, `privacy`, `ai_notice`, `refund`), 가입·구매·국외 이전 동의 → `consents`(purpose `cross_border_ai` 등), 판매자 표기 → `legal_profiles`(`kr_ecommerce`)',
+                keep='설치형 앱 안의 오프라인 고지 문구, 표제란 고지 상수(`titleblock`, PRD 9.7절), 상담 녹음 제3자 고지 확인(`arch.intake_runs.notice_version`, 녹음 건별), 코어 `set_ai_cross_border_ack` 호출',
+                inj='`profileKind: kr_ecommerce`(시리얼 라이선스·플랜 판매), `signupConsents: { required: [terms, privacy, refund], optional: [marketing_email, cross_border_ai] }`'),
+            'media': dict(st='보류', why='렌더 결과는 90일 뒤 지우는 실행 결과물(`arch.renders`, `purge_expired`)이고 표제란 로고는 조직당 1장 고정 경로라 공용 자산 라이브러리가 필요 없음', when='클라우드 렌더 갤러리·사무소 자산 라이브러리를 만들 때'),
+            'search': dict(st='보류', why='프로젝트·도면 검색은 데스크톱 로컬 SQLite, 법규 해설 위키는 llm-wiki 검색으로 충분', when='클라우드 프로젝트 공유·조직 단위 검색을 만들 때'),
         },
-        extra='06장(작업 계획)이 아직 없어 V2 작업은 06장 작성 때 이 문서를 보고 만든다.',
-        db=[('-', '라이선스 서버 DB에 compliance 변환본만')],
-        changes=[],
-        dec=[],
+        extra='notify(시리얼 발급 메일·잡 완료 알림), analytics(샘플 다운로드 → 사전예약 전환 이벤트)는 기존 공용모듈 로드맵대로. 데스크톱 앱 안 라이선스 판정·고지는 공용모듈 대상이 아니다.',
+        db=[('`arch.*`', '변경 없음(동의를 저장하는 표가 없음). 가입·구매·국외 이전 동의 기록은 `compliance.consents`에 새로 쌓는다. 상담 녹음 제3자 고지(`intake_runs.notice_version`)는 녹음 건별 확인이라 제품에 남긴다'),
+            ('모놀리스 `0002_arch_domain.sql`', '모듈러 정본 `2400_arch.sql`의 변환본. 이름만 `…001000_arch_domain.sql`로 바뀌고 내용은 그대로')],
+        changes=[('008', '연결', '`/onboarding` 국외 이전 동의를 `recordConsent(cross_border_ai)`로도 남긴다. 코어 `set_ai_cross_border_ack` 호출은 그대로'),
+                 ('043', '연결', '구매 전 약관·환불 규정 동의를 `ConsentCheckboxes`·`hasConsent`로 확인한 뒤 서버 주문을 만든다. `AR005`, C-1 전 영구 라이선스 보류는 그대로'),
+                 ('031', '연결', '국외 이전·녹음 고지 문구는 `policy_documents`(kind `ai_notice`) 버전을 읽고 재동의는 `needsReconsent`'),
+                 ('057', '축소', '`/legal/*` 본문은 `policy_documents` seed, 화면은 `LegalFooter`. 페이지 배치와 도면 고지(PRD 6장·9.7절) 원고만 제품'),
+                 ('062', '연결', '온보딩 약관 단계는 `signupConsents` 필수 항목을 `ConsentCheckboxes`로 받고 `recordConsent`')],
+        dec=[('V2-AR-1', '영구 라이선스 청약철회 제한 고지를 공통 `refund` 정책 안의 절로 둘지, 제품 kind로 따로 둘지', '공통 `refund` 안의 절(제안). 판매 시작(C-1 반영) 전에 확정')],
     ),
 }
 
@@ -431,9 +437,9 @@ def plan_info(key, pfx):
     if not os.path.exists(path):
         return titles, wave_of, order
     for line in read(path).split('\n'):
-        m = re.match(r'^\| ' + re.escape(pfx) + r'-06-(\d+) \| ([^|]*)\|', line)
+        m = re.match(r'^\| ' + re.escape(pfx) + r'-06-(\d+) \| ((?:[^|\\]|\\.)*)\|', line)  # 셀 안 \| 는 이어 읽는다
         if m:
-            titles[m.group(1)] = m.group(2).strip()
+            titles[m.group(1)] = m.group(2).replace('\\|', '/').strip()
             continue
         m = re.match(r'^\| (W\d+(?:-[A-Z])?)[^|]*\| ([^|]*)\|', line)
         if m:
@@ -651,7 +657,7 @@ def gen(key, d):
     return '\n'.join(L)
 
 
-STAGE_ORDER = ['1', '2', '2 이후', '3', '4', '5', '6', '설치형(미정)']
+STAGE_ORDER = ['1', '2', '2 이후', '3', '4', '5', '6', '코어 이후(설치형)']
 
 
 def gen_index():

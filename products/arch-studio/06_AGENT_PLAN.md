@@ -58,7 +58,7 @@
 | AR-06-033 | 랜딩 샘플 도면 `/samples`: 골든 3건 DXF·PDF 복사, 익명 다운로드 측정 `POST /api/samples/download-event` | `web/src/app/(marketing)/samples/**`, `web/public/samples/**`, `web/src/app/api/samples/**`, `scripts/samples/**` | 003, 021, 023, 024 | P0 | S | Sonnet | 게시 파일은 CI가 골든 출력에서 복사한 실제 엔진 출력만(손으로 만든 파일 0). 다운로드 이벤트로 9.8절 전환 지표 측정 시작. 금지 문구 0 | `01_PRD.md:468`, `:492`, `02_ARCHITECTURE.md:223`, `03_SCREENS_UX.md:486` |
 | AR-06-034 | 프로젝트: `/projects`, 로컬 저장·버전(`model_revisions`), 클라우드 사본(`GET\|POST /api/cloud-projects`, upload-url, `arch.save_cloud_project`) | `feat/projects/**`, `web/src/server/cloud-projects/**`, `web/src/app/api/cloud-projects/**` | 001, 006, 007, 012, 013 | P0 | M | Opus | 상한 초과 `AR040`, 버전 충돌 `AR041`(조용한 덮어쓰기 0). 체험만료·구독만료는 새 프로젝트 불가·열람 | `03_SCREENS_UX.md:19`, `04_API.md:27`, `docs/Tauri/README.md:356` |
 | AR-06-035 | 대지 화면 `/projects/:id/site`(조회·직접 그리기·DXF 가져오기 버튼) + `POST /api/site/lookup`(VWorld 중계, `arch.record_site_lookup`) | `feat/site/**`, `web/src/server/site/**`, `web/src/app/api/site/**` | 001, 007, 012, 013 | P0 | M | Opus | p95 5초. 공공 API 실패 `AR021` → 직접 그리기로 이어짐. 일일 상한 `AR020`. 주소 원문 DB 저장 0(지번 해시만). 공공 API 값은 입력 후보이고 판정 기준이 아님. D-14 원문 확인 전 직접 그리기가 기본 | `01_PRD.md:43`, `:303`, `02_ARCHITECTURE.md:85`, `:375` |
-| AR-06-036 | 모델러 `/projects/:id/model`: R3F 뷰포트, 매스·층·코어·발코니·지붕 편집, 엔벨로프 표시, 실행취소 100단계, 렌더용 깊이·윤곽 캡처 함수 | `feat/modeler/**`(`suggest/` 제외) | 012, 016, 017 | P0 | L | Opus | 매스 50개·삼각형 20만 개 권장 사양 60fps(실기 측정 기록). 실행취소 100단계. 열람 상태 편집 잠금. 판정은 `judge` 레인으로만 요청 | `01_PRD.md:45`, `03_SCREENS_UX.md:201` |
+| AR-06-036 | 모델러 `/projects/:id/model`: R3F 뷰포트, 매스·층·코어·발코니·지붕 편집, 엔벨로프 표시, 실행취소 100단계, 렌더용 깊이·윤곽 캡처 함수 | `feat/modeler/**`(`suggest/` 제외) | 012, 016, 017 | P0 | L | Opus | 착수 첫 주에 R3F + Manifold WASM 성능 스파이크로 최소 사양(RAM 8GB, WebGL2) 30fps를 먼저 확인(`docs/Tauri/README.md:290`, 미달 시 지오메트리 단순화 방침을 log.md에 [DECISION]). 매스 50개·삼각형 20만 개 권장 사양 60fps(실기 측정 기록). 실행취소 100단계. 열람 상태 편집 잠금. 판정은 `judge` 레인으로만 요청 | `01_PRD.md:45`, `03_SCREENS_UX.md:201` |
 | AR-06-037 | 판정 패널: 근거 조항·시행일·팩 버전, 대상 여부, 폴백 "이후 개정 n건"·"개정 확인 필요" 배너 | `feat/judgment/**` | 012, 015, 017 | P0 | M | Sonnet | 근거 없는 행 표시 0. 상태는 배지 + 텍스트(색만 금지). 폴백·30일 미확인(제안) 배너 | `01_PRD.md:46`, `:62`, `02_ARCHITECTURE.md:385` |
 | AR-06-038 | 프로그램 화면 `/projects/:id/program`: 체크리스트·면적표·개략 공사비(대화형 패널 자리만) | `feat/program/**`(`intake/` 제외) | 012, 018, 042 | P0 | M | Sonnet | 03장 3.6절, 사용자 수정 행 잠금 표시, 단가 출처·기준일 표시 | `03_SCREENS_UX.md:241`, `01_PRD.md:53-54` |
 | AR-06-039 | 3D 파일 입출력: glTF·IFC(web-ifc)·.3dm 내보내기, .3dm 가져오기(후보). 첫 단계 AR-02-D2 확정 | `packages/io/src/{ifc,gltf,rhino}/**` | 013, 036 | P0 | M | Opus | 내보낸 IFC가 무료 IFC 뷰어에서 열림(수동 점검 기록). 압축 해제 상한 원본 10배(제안)·시간 상한. 상표는 "호환" 표기만. `[DECISION] AR-02-D2`(미확인이면 .3dm 보류) | `01_PRD.md:58`, `02_ARCHITECTURE.md:14`, `:24`, `:387` |
@@ -87,8 +87,8 @@
 | AR-06-062 | Stage B: 웹 Google + 이메일(가입·인증 메일·재설정, D-19), `GET /auth/callback`, 데스크톱 T-004(시스템 브라우저 + PKCE + `deeplink.rs`, 막히면 루프백), 온보딩 약관 단계(008 경로 이어받기) | `web/src/app/auth/callback/**`, `rust/src/commands/deeplink.rs`, 008의 인증 경로 | G1, 008 | P0 | M | Fable | `AUTH_ROADMAP.md` 5.3절 B-1~B-6. 시작하지 않은 딥링크 콜백 무시, `code`·토큰 로그 0. `[DECISION] D-15` 스파이크 결과 | `docs/products/_platform-core/AUTH_ROADMAP.md:210-219`, `docs/Tauri/README.md:316`, `01_PRD.md:320`, `02_ARCHITECTURE.md:479-490` |
 | AR-06-063 | Stage C1 카카오(D-17 이메일 정책) | `web/src/lib/auth/providers/kakao.ts`, `feat/auth/login-methods/**` | G2, 062 | P2 | S | Opus | C1-1~C1-5, 데스크톱 앱 복귀 경로 검증 | `AUTH_ROADMAP.md:339`, `:349` |
 | AR-06-064 | Stage C2 네이버(스파이크 → `custom:naver` 또는 브리지, D-18) | `web/src/lib/auth/providers/naver.ts`, `web/src/app/auth/naver/**`, `scripts/auth/**` | G2, 062 | P2 | M | Fable | C2-1~C2-6, `[DECISION] NAVER_AUTH_PATH`. 브리지면 R-A10(T-C7) 반영 전 데스크톱 네이버 미제공 | `AUTH_ROADMAP.md:339`, `:350`, `02_ARCHITECTURE.md:477` |
-| AR-V2-01 | compliance 적용(SQL 변환본, 주입 파일 `createModule({ appId: 'arch' })`, seed compliance 절, 어댑터), `profileKind: kr_ecommerce` | `web/src/lib/compliance/**`, compliance 변환본 SQL, seed compliance 절 | W0 완료, `@nomad/compliance` 출시 | P0 | M | Sonnet | `develop/_shared/modules/README.md` 5.2절 1~7번. 가입·구매 동의 기록 1행, 새 정책 버전 후 재동의 화면 | `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:57` |
-| AR-V2-02 | V2 전환 점검: 모듈 계약 테스트 CI 연결, 자체 구현 잔재 검사 | `tests/v2/**` | AR-V2-01 | P0 | S | Sonnet | 제품 E2E 녹색, 공용모듈로 옮긴 표·함수를 제품 코드가 직접 쓰는 곳 0 | `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:58` |
+| AR-V2-01 | compliance 적용(SQL 변환본, 주입 파일 `createModule({ appId: 'arch' })`, seed compliance 절, 어댑터), `profileKind: kr_ecommerce` | `web/src/lib/compliance/**`, compliance 변환본 SQL, seed compliance 절 | W0 완료, `@nomad/compliance` 출시 | P0 | M | Sonnet | `develop/_shared/modules/README.md` 5.2절 1~7번. 가입·구매 동의 기록 1행, 새 정책 버전 후 재동의 화면 | `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:66` |
+| AR-V2-02 | V2 전환 점검: 모듈 계약 테스트 CI 연결, 자체 구현 잔재 검사 | `tests/v2/**` | AR-V2-01 | P0 | S | Sonnet | 제품 E2E 녹색, 공용모듈로 옮긴 표·함수를 제품 코드가 직접 쓰는 곳 0 | `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:67` |
 
 ## 3. 웨이브(병렬 실행 순서)
 
@@ -221,7 +221,7 @@ MVP·P1 기능 29개가 모두 1개 이상의 작업에 매핑된다. 열린 결
 | PRD 9.10절 1단계 스파이크 | `01_PRD.md:491` | 019 | W0 |
 | PRD 9.10절 2단계 샘플 다운로드 | `01_PRD.md:492` | 033(+ 057 랜딩) | W4 |
 | PRD 9.10절 3단계 인터뷰 | `01_PRD.md:493` | 작업 없음(사람) | D-22 자료 |
-| 공용모듈 V2 | `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:57-58` | AR-V2-01, AR-V2-02 | W1 맨 앞, E2E 웨이브 |
+| 공용모듈 V2 | `docs/develop_V2/arch-studio/arch-studio_develop_v2.md:66-67` | AR-V2-01, AR-V2-02 | W1 맨 앞, E2E 웨이브 |
 
 ## 6. 공용 모듈 요청
 

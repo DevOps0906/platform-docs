@@ -1,6 +1,6 @@
 # 02 아키텍처: Arch Studio (arch-studio)
 
-작성일 2026-10-16. 데스크톱 공통 구조·인증·라이선스·보안의 정본은 `docs/Tauri/README.md`, AI 계층·음성·위키의 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`이고, 이 문서는 그것을 인용하며 arch-studio 고유의 패키지 경계, 도면 엔진, 잡, 그래프, 배포만 정한다. 기능 정본은 `docs/products/arch-studio/01_PRD.md`(AR-F-001~038, D-1~D-26)이며 여기서 재정의하지 않는다. 코드 블록은 계약 예시이고 구현 파일이 아니다. 06장 작업 ID(`AR-06-###`)는 06장이 정본이라 이 문서는 "06장(작성 예정 ID 블록)"과 모듈 이름으로만 가리킨다.
+작성일 2026-10-16. 데스크톱 공통 구조·인증·라이선스·보안의 정본은 `docs/Tauri/README.md`, AI 계층·음성·위키의 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`이고, 이 문서는 그것을 인용하며 arch-studio 고유의 패키지 경계, 도면 엔진, 잡, 그래프, 배포만 정한다. 기능 정본은 `docs/products/arch-studio/01_PRD.md`(AR-F-001~038, D-1~D-26)이며 여기서 재정의하지 않는다. 코드 블록은 계약 예시이고 구현 파일이 아니다. 06장 작업 ID(`AR-06-###`)는 06장이 정본이라 이 문서는 모듈 이름과 06장 5.3절 매핑표(위험 → 작업 ID)로 가리킨다.
 
 ## 1. 스택
 
@@ -291,7 +291,7 @@ type EngineResponse =
 
 ## 4. 잡과 워커
 
-원칙: 클라우드 AI 요청 1건 = 제품 실행 행(`arch.renders`·`arch.reviews`·`arch.intake_runs`·`arch.proposals`) 1행 + `core.jobs` 1행. Route Handler가 입력 검사(크기 AR031, 기능 `arch.org_features`, 폴백 상태 검토 AR012, 렌더 동시 3건 AR030) 후 `arch.start_ai_run(p_org, p_actor, p_kind, p_variant, p_request_id, p_project_ref, p_options)`이 variant 단가(서버 상수 `apps/web/src/server/ai/pricing.ts`, seed와 같은 값)로 선차감과 enqueue를 한 트랜잭션으로 한다. 워커가 결과를 Storage에 올린 뒤 `arch.finish_ai_run`, 실패는 `core.fail_job`(재시도 또는 최종 실패 환불) 다음 `arch.fail_ai_run`. 큐 이름은 job_type과 같고 소비자는 `workers/arch-jobs` 하나다(큐마다 소비자 하나). 그래프 잡은 워커가 잡 토큰으로 FastAPI `POST /graphs/<name>/runs`를 부른다. 페이로드 스키마는 04장 4절이고 payload에는 id만 둔다(좌표·문장·비밀 금지).
+원칙: 클라우드 AI 요청 1건 = 제품 실행 행(`arch.renders`·`arch.reviews`·`arch.intake_runs`·`arch.proposals`) 1행 + `core.jobs` 1행. Route Handler가 입력 검사(크기 AR031, 기능 `arch.org_features`, 폴백 상태 검토 AR012, 렌더 동시 3건 AR030) 후 `arch.start_ai_run(p_org, p_actor, p_kind, p_variant, p_request_id, p_project_ref, p_options)`이 variant 단가(서버 상수 `apps/web/src/server/ai/pricing.ts`, seed와 같은 값)로 선차감과 enqueue를 한 트랜잭션으로 한다. 이 함수는 차감 전에 일일 플랫폼 크레딧 상한(`arch.runtime_config.daily_credit_cap`, 베타 비용 서킷 브레이커, 0이면 끔)을 넘으면 `AR034`로 거부하고(Route Handler는 `AI_DAILY_LIMIT` 429, 차감 없음), `layout`·`walkthrough`(Phase 2)는 실행 테이블이 생길 때까지 22023으로 거부한다. 워커가 결과를 Storage에 올린 뒤 `arch.finish_ai_run`, 실패는 `core.fail_job`(재시도 또는 최종 실패 환불) 다음 `arch.fail_ai_run`. 큐 이름은 job_type과 같고 소비자는 `workers/arch-jobs` 하나다(큐마다 소비자 하나). 그래프 잡은 워커가 잡 토큰으로 FastAPI `POST /graphs/<name>/runs`를 부른다. 페이로드 스키마는 04장 4절이고 payload에는 id만 둔다(좌표·문장·비밀 금지).
 
 | `job_type` | 큐 | 런타임 | 크레딧 선차감 | 재시도 | 환불 조건 |
 |---|---|---|---|---|---|
@@ -309,10 +309,10 @@ type EngineResponse =
 
 | 스케줄(잡 아님, 워커 크론) | 주기(제안) |
 |---|---|
-| `core.reap_stale_jobs(600)` | 10분 |
+| `core.reap_stale_jobs(600)` → 직후 `arch.reconcile_runs(p_org)`(잡만 실패·취소된 실행 행을 failed로, 활성 실행이 있는 조직마다) | 10분 |
 | AI 정산(`settled_at is null`) | 5분 |
 | 상담 녹음 원본 삭제(`expire_voice_audio`) | 1시간 |
-| 렌더 결과 90일 만료 삭제 | 매일 |
+| `arch.purge_expired()`(렌더 결과 90일 만료 표시 → 반환된 Storage 경로 삭제, `site_lookups` 90일, 만료 `intake_runs`) | 매일 |
 | `core.run_monthly_credit_grants()`, `core.expire_stale_payment_orders()` | 매일 / 매 시간 |
 
 ## 5. AI 라우팅
@@ -372,15 +372,15 @@ LangGraph 그래프(`apps/api/app/ai/graphs/arch_*.py`, compliance는 마지막 
 
 | 리뷰 #n | 출처 | 결함 요약 | 차단 설계 | 담당 장/작업 |
 |---|---|---|---|---|
-| 위험 #1(`docs/reviews/FortuneDocs.md` 3장 #1) | `docs/reviews/FortuneDocs.md:40` | 외부 API 값을 도메인 경계 규칙 없이 그대로 써서 경계 시점 결과가 틀린다 | 공공 API(VWorld)는 대지 형상·용도지역 입력에만 쓰고 판정에 쓰지 않는다. 시행일 경계는 규칙 팩(from·to·지자체)과 신청 예정일로 rules가 고른다(AR-F-005). 골든에 신·구 일조사선 경계 신청일 쌍, 조례 반영 전후 쌍을 넣는다. 클라우드 검토는 서버가 같은 엔진으로 재계산(4절) | rules, `packages/rules/golden/**`, 06장(작성 예정 ID 블록) 규칙엔진 작업 |
+| 위험 #1(`docs/reviews/FortuneDocs.md` 3장 #1) | `docs/reviews/FortuneDocs.md:40` | 외부 API 값을 도메인 경계 규칙 없이 그대로 써서 경계 시점 결과가 틀린다 | 공공 API(VWorld)는 대지 형상·용도지역 입력에만 쓰고 판정에 쓰지 않는다. 시행일 경계는 규칙 팩(from·to·지자체)과 신청 예정일로 rules가 고른다(AR-F-005). 골든에 신·구 일조사선 경계 신청일 쌍, 조례 반영 전후 쌍을 넣는다. 클라우드 검토는 서버가 같은 엔진으로 재계산(4절) | rules, `packages/rules/golden/**`, 06장 5.3절의 규칙엔진 작업 |
 | 위험 #2(같은 리뷰 #2) | `:41` | 계산 규칙이 없고 필수 입력이 NULL 허용이라 계산 불가 레코드가 생긴다 | DesignModel zod 스키마에서 판정 필수 필드(`north_angle_deg`, 도로 폭, 용도지역)를 필수로 두고, 빠지면 해당 판정 행을 "입력 필요"로 표시해 추정값을 쓰지 않는다. 시트는 AR050으로 거부 | domain, rules |
 | 위험 #3(같은 리뷰 #3) | `:42` | 입력 모델과 저장 스키마가 어긋나 옵션이 저장되지 않는다 | DesignModel·SheetSpec 정본은 `packages/domain` 하나. 로컬 SQLite는 JSON + `schema_version`, 클라우드 사본도 같은 JSON. Python 쪽 pydantic은 동치 테스트로 묶고, 버전 이주 함수 없이 스키마를 바꾸면 CI 실패 | domain, local-migrations, 05장 |
 | 위험 #4(같은 리뷰 #4) | `:43` | `FOR ALL` 정책으로 사용자가 계산 결과 행을 직접 쓴다 | `arch.reviews`·`arch.renders`·`arch.intake_runs`·`arch.proposals`는 사용자 SELECT만, 쓰기는 service RPC(`start_ai_run`, `finish_ai_run`, `fail_ai_run`)만 | 05장 7절 |
 | 위험 #5(같은 리뷰 #5) | `:44` | 비원자 크레딧 차감, 실패 환불 없음 | `arch.start_ai_run` 한 트랜잭션(실행 행 + `enqueue_job` + `consume_credits`), 실패는 `fail_job` 자동 환불. 데스크톱은 금액을 보내지 않는다 | 05장 7절, 4절 |
 | 위험 #6(제품: 라이선스 파일 위조) | `01_PRD.md:125`, `docs/Tauri/README.md:193-194` | 사용자가 라이선스 파일을 고치거나 다른 PC 파일을 복사해 권한을 얻는다 | Rust `license.rs`가 Ed25519 서명(앱에 넣은 `kid`별 공개키)과 `device_hash`(현재 기기에서 다시 계산)·`app_id`를 검증하고 하나라도 틀리면 미활성 상태. 개인키는 web 서버 전용. 클라우드 기능은 파일과 무관하게 서버가 매번 판정. 변조 파일 거부 테스트(T-007) | desktop-rust, web-api licenses, 05장 7절 |
 | 위험 #7(제품: 로컬 SQLite로 오프라인 권한 판정) | `docs/Tauri/README.md:42`, `:90` | 로컬 DB·localStorage 값을 고쳐 체험 만료·폴백을 우회한다 | 권한은 서명 파일만(2.2절). 체험·월 구독은 `offline_valid_until`(제안 7일)을 넘으면 열람·내보내기만. 시계 되돌림은 `license_store`에 남긴 최대 `issued_at`보다 현재 시각이 이르면 만료로 본다. 영구 라이선스는 시각과 무관(빌드 상수 `build_date`와 `updates_until` 비교) | desktop-rust, 05장 7절 |
-| 위험 #8(제품: 데스크톱 번들 비밀 노출) | `docs/Tauri/README.md:172`, `:352` | service_role, LLM·fal 키, 라이선스·업데이트 서명 개인키가 설치 파일에 들어간다 | 데스크톱 빌드 env는 `VITE_` 허용 목록 3개뿐(8절), 그 밖의 `VITE_` 변수가 있으면 빌드 실패. `desktop-release.yml`이 산출물(JS 번들, Rust 바이너리 문자열)에서 JWT `service_role` 클레임, `-----BEGIN PRIVATE KEY`, `sk-`, fal 키 형식, 시드 페르소나 이메일을 검사해 하나라도 있으면 실패 | ci, desktop-shell, 05장 7절 |
-| 위험 #9(제품: 도면 수치와 판정 수치 불일치) | `01_PRD.md:371-372`, `:472` | 도면 치수·면적표가 판정 패널 값과 달라 제안서에 틀린 숫자가 나간다 | drafting은 법규 값을 계산하지 않고 JudgmentResult와 geometry 함수만 읽는다. 수치 TEXT는 `source_ref` 필수, 덮어쓰기로 값 변경 불가. 2.3절 속성 테스트 불일치 0이 CI 조건. 제안서 HTML의 수치도 같은 스냅샷 | drafting, rules, 06장(작성 예정 ID 블록) 도면 작업 |
+| 위험 #8(제품: 데스크톱 번들 비밀 노출) | `docs/Tauri/README.md:172`, `:352` | service_role, LLM·fal 키, 라이선스·업데이트 서명 개인키가 설치 파일에 들어간다 | 데스크톱 빌드 env는 `VITE_` 허용 목록 4개뿐(8절: 공개값 3개 + `VITE_AUTH_MODE`), 그 밖의 `VITE_` 변수가 있으면 빌드 실패. `desktop-release.yml`이 산출물(JS 번들, Rust 바이너리 문자열)에서 JWT `service_role` 클레임, `-----BEGIN PRIVATE KEY`, `sk-`, fal 키 형식, 시드 페르소나 이메일을 검사해 하나라도 있으면 실패 | ci, desktop-shell, 05장 7절 |
+| 위험 #9(제품: 도면 수치와 판정 수치 불일치) | `01_PRD.md:371-372`, `:472` | 도면 치수·면적표가 판정 패널 값과 달라 제안서에 틀린 숫자가 나간다 | drafting은 법규 값을 계산하지 않고 JudgmentResult와 geometry 함수만 읽는다. 수치 TEXT는 `source_ref` 필수, 덮어쓰기로 값 변경 불가. 2.3절 속성 테스트 불일치 0이 CI 조건. 제안서 HTML의 수치도 같은 스냅샷 | drafting, rules, 06장 5.3절의 도면 작업(AR-06-019~033) |
 | 위험 #10(제품: LLM이 만든 좌표·수치) | `01_PRD.md:338`, `:376-377` | LLM 출력 좌표·면적이 도면에 들어가 재현 불가 오류가 생긴다 | intake·layout 출력 스키마에 좌표·면적 계산 필드가 없고(strict, 추가 필드 거부) 서버 그래프와 데스크톱 양쪽에서 재검증. 목표 면적은 사용자가 채택해야 반영. review 문장 숫자는 자리표시자 치환만(5절) | ai-service, layout, program |
 | 위험 #11(제품: 낡은 규칙 팩을 최신으로 오인) | `01_PRD.md:114`, `:398` | 업데이트 만료·장기 오프라인 사용자가 낡은 기준 판정을 최신으로 믿는다 | 판정 행·표제란·제안서에 팩 버전과 기준일을 항상 표시. 폴백이면 "이후 개정 n건" 배너(온라인일 때 `arch.rule_pack_changes`로 갱신, 오프라인이면 "개정 확인일 <날짜>"). 마지막 확인이 30일(제안)을 넘으면 "개정 확인 필요" 배너. 팩은 서명 매니페스트로만 로드 | rules, features/judgment, drafting titleblock |
 | 위험 #12(제품: 딥링크 콜백 주입) | `docs/Tauri/README.md:128`, `:354` | 다른 앱·웹페이지가 `archstudio://` URL로 가짜 `code`를 넣거나 로그인 흐름을 가로챈다 | Rust `deeplink.rs`가 스킴·호스트·경로 허용 목록(`auth/callback`만)과 길이·문자 검사. shell-bridge는 직전에 시작한 로그인 시도(PKCE verifier 보유, 10분, 1회)에만 교환하고 그 밖은 무시. `code`는 로그·화면 기록 금지. 결제 결과 딥링크는 표시 갱신 트리거일 뿐 확정 근거가 아니다(`docs/Tauri/README.md:182`) | desktop-rust, shell-bridge auth, 05장 7절 |
@@ -437,7 +437,7 @@ Rust 쪽 HTTP(업데이터, 대용량 업로드)는 같은 두 도메인만 허�
 | `LICENSE_SIGNING_PRIVATE_KEY` | 라이선스 파일·규칙 팩 매니페스트 Ed25519 서명 | web 서버 전용(워커·api·데스크톱 금지). `AI_TOKEN_PRIVATE_KEY`와 다른 키(`01_PRD.md:125`) | 기동 실패 |
 | `LICENSE_SIGNING_KID` | 현재 서명 키 id(교체는 코어 요청 C-3·T-C4) | 서버 전용 | 기동 실패 |
 | `DESKTOP_CORS_ORIGINS` | 셸 출처 허용 목록(제안 이름) | 서버 전용 | 데스크톱 요청 전부 CORS 거부 + 기동 경고 |
-| `VWORLD_API_KEY` | 대지 조회 중계(D-14 확인 후 건축HUB·법령 키 추가) | web 서버 전용 | `/api/site/lookup`이 AR021, 화면은 "직접 그리기" |
+| `VWORLD_API_KEY`, `SITE_LOOKUP_HASH_KEY` | 대지 조회 중계(D-14 확인 후 건축HUB·법령 키 추가) / 지번(PNU) HMAC-SHA-256 키(`arch.site_lookups.pnu_hash`, 05장 2.14절, 제안 이름. 단순 SHA-256은 사전 대입으로 되돌릴 수 있다) | web 서버 전용 | VWorld 키 없음: `/api/site/lookup`이 AR021, 화면은 "직접 그리기" / 해시 키 없음: 기동 실패 |
 | `AI_TOKEN_PRIVATE_KEY`, `AI_TOKEN_KID` | 서명·잡 토큰 발급 | web 서버 전용 | 기동 실패 |
 | `AI_TOKEN_JWKS_URL` | 토큰 검증 | apps/api, 오픈소스 음성 서버 | 기동 실패 |
 | `AI_SERVICE_URL` | FastAPI 주소 | web 서버, 워커 | web: AI 기능 오류 표시, 워커: 기동 실패 |
@@ -454,7 +454,7 @@ Rust 쪽 HTTP(업데이터, 대용량 업로드)는 같은 두 도메인만 허�
 | `RATE_LIMIT_IP_SALT` | 활성화 API IP당 10회/시간 등 IP 해시 | 서버 전용 | 기동 실패 |
 | `NEXT_PUBLIC_HERO3D_ENABLED`, `NEXT_PUBLIC_HERO_VIDEO_ENABLED` | 3D 히어로 킬 스위치 | 공개 | 기본 true, false면 정지 이미지 |
 | `WORKER_ID`, `WORKER_CONCURRENCY` | 워커 식별·동시성 | 워커 | 기본값 |
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL` | 데스크톱 빌드 시점 공개값(번들에 들어감) | 공개(이 3개만 허용 목록) | 빌드 실패 |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL` | 데스크톱 빌드 시점 공개값(번들에 들어감) | 공개(아래 `VITE_AUTH_MODE`와 함께 4개만 허용 목록) | 빌드 실패 |
 | `VITE_AUTH_MODE` | 데스크톱 인증 단계(`mock`은 개발 빌드만) | 공개 | 기본 `live`. 릴리스 빌드에서 `mock`이면 빌드 실패(9절) |
 | 라이선스 공개키(`kid` → 공개키 목록) | Rust 코어에 빌드 시 상수로 넣는다(레포 파일, 비밀 아님) | 공개 | 빌드 실패 |
 | 업데이트 공개키 | `tauri.conf.json` updater 설정 | 공개 | 빌드 실패 |
@@ -471,7 +471,7 @@ AI 관련 변수는 `AI_ARCHITECTURE.md` 8장 목록을 따르고 `NEXT_PUBLIC_H
 
 | 단계 | 웹(`apps/web`) | 데스크톱 | 켜는 조건 | 작업 |
 |---|---|---|---|---|
-| A | `/login` 개발용 패널, `POST /api/dev/login`(로컬 전용, 판정 거짓이면 404) | 개발 빌드만: 로컬 시드 계정 `signInWithPassword`(5.4절 조건을 빌드 시점에 적용, `docs/Tauri/README.md:160`) | 로컬 Supabase + `AUTH_MODE=mock` / `VITE_AUTH_MODE=mock` | 06장(작성 예정 ID 블록) 인증 A |
+| A | `/login` 개발용 패널, `POST /api/dev/login`(로컬 전용, 판정 거짓이면 404) | 개발 빌드만: 로컬 시드 계정 `signInWithPassword`(5.4절 조건을 빌드 시점에 적용, `docs/Tauri/README.md:160`) | 로컬 Supabase + `AUTH_MODE=mock` / `VITE_AUTH_MODE=mock` | 06장 5.4절 인증 A 작업 |
 | B | Google + 이메일(가입·인증 메일·재설정, D-19), `GET /auth/callback` | Google: 시스템 브라우저 + PKCE + 딥링크. 이메일: 앱 안 폼 `signInWithPassword` | G1(사람 판정). 사전예약 판매는 B 후(`01_PRD.md:316`) | 인증 B(P0) |
 | C1 | 카카오 | B와 같은 시스템 브라우저 흐름 | G2 + 베타 전환 데이터로 P1 승격 판단 | 인증 C1(P2 선택) |
 | C2 | 네이버(`custom:naver` 또는 브리지, D-18) | `custom:naver`면 B와 같음. 브리지면 D-15 (c) + 1회용 교환 코드(T-C7). 그 전까지 데스크톱은 네이버 미제공 | G2 | 인증 C2(P2 선택) |

@@ -37,13 +37,16 @@ REVIEWS = {
     'nomad-docs': ['SellingDocs.md', 'flora.md', 'FortuneDocs.md'],
     'local-news': [],  # 신규 기획(원본·리뷰 없음, 2026-10-15)
     'book-trailer': ['NOMAD_Shorts_Maker.md', 'Toon-Factory.md'],  # 신규 기획, 이식 원천 리뷰(2026-10-15)
+    'arch-studio': ['FortuneDocs.md'],  # 신규 기획(설치형), 이식 원천 리뷰(2026-10-16)
 }
 APP_ID = {
     'astro-ai': 'astro', 'flora-publishing': 'publishing', 'nomad-video': 'video', 'nomad-blog': 'blog',
     'nomad-commerce': 'commerce', 'microweb-studio': 'microweb', 'admin-suite': 'erp, hms, sms', 'live-poll': 'poll',
     'stock-dashboard': 'stock', 'toon-factory': 'toon', 'study-note': 'notes', 'website-floria': 'site',
-    'nomad-docs': 'docs', 'local-news': 'news', 'book-trailer': 'trailer',
+    'nomad-docs': 'docs', 'local-news': 'news', 'book-trailer': 'trailer', 'arch-studio': 'arch',
 }
+
+DESKTOP_UI = {'arch-studio': ('packages/ui/tokens.css', 'packages/ui/src/')}  # (토큰 파일, 컴포넌트 폴더)
 
 PRODUCT_DOCS = [  # (원본 파일, 단계 폴더, ID, 산출물명)
     ('README.md', '01-관리', 'DOC-MGT-001', '제품 개요'),
@@ -113,7 +116,8 @@ def plan(prod):
     return items, refs, mapping
 
 
-REF_RE = re.compile(r'(?<![\w/.-])((?:docs/(?:products|reviews)/|_platform-core/|_design-guide/)[^\s`\'"|)\]:,;<>]*)')
+# docs/Tauri, docs/develop_V2 등 묶음에 복사하지 않는 공용 가이드는 platform 절대경로로 바꾼다(2026-10-16 arch-studio부터)
+REF_RE = re.compile(r'(?<![\w/.-])((?:docs/(?:products|reviews|Tauri|Capacitor|develop_V2|develop|Price_Plans|Multi-tenant_Theming)/|_platform-core/|_design-guide/)[^\s`\'"|)\]:,;<>]*)')
 
 
 def rewrite(text, mapping):
@@ -186,6 +190,11 @@ def build(prod):
           design_seed(seeds, 'DESIGN.md', prod) or DESIGN_TMPL.format(prod=prod))
     write(f'{out}/docs/file/03-설계/디자인/COMPONENTS.md',
           design_seed(seeds, 'COMPONENTS.md', prod) or COMPONENTS_TMPL.format(prod=prod))
+    if prod in DESKTOP_UI:  # 데스크톱 제품은 디자인 토큰·컴포넌트 정답 소스가 공유 패키지에 있다
+        for f in ('DESIGN.md', 'COMPONENTS.md'):
+            q = f'{out}/docs/file/03-설계/디자인/{f}'
+            write(q, read(q).replace('apps/web/src/styles/tokens.css', DESKTOP_UI[prod][0])
+                  .replace('apps/web/src/components/ui/', DESKTOP_UI[prod][1]))
     index_rows.append(('DOC-DSN-006', '디자인 토큰 정의(DESIGN.md)', '03-설계', 'docs/file/03-설계/디자인/DESIGN.md'))
     index_rows.append(('DOC-DSN-007', '컴포넌트·배리언트 명세(COMPONENTS.md)', '03-설계', 'docs/file/03-설계/디자인/COMPONENTS.md'))
 

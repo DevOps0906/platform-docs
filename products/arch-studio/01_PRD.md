@@ -88,7 +88,7 @@
 
 | 코드 | 가격 | 주기 | 기간당 크레딧(plan 버킷) | 가입 크레딧(pack 버킷) | 이월 | 상태 |
 |---|---|---|---|---|---|---|
-| `trial` (기본) | 0원 | 없음 | 0 | 30 | 없음 | 14일 체험(`app_entitlements.source='trial'`, `expires_at`) |
+| `trial` (기본) | 0원 | 없음 | 0 | 30 | 없음 | 14일 체험(`app_entitlements.source='trial'`. 만료는 `expires_at`이 아니라 `arch.org_features`가 생성 시각 + `trial_days`로 판정해 만료 뒤에도 열람·내보내기 유지, 05장 3절) |
 | `updates_yearly` | 290,000원 | 연 | 480 | 0 | 없음(다음 기간 지급 때 만료) | 영구 라이선스 보유자만 가입 |
 | `sub_monthly` | 49,000원 | 월 | 150 | 0 | 없음 | 라이선스 없이 가입 가능 |
 
