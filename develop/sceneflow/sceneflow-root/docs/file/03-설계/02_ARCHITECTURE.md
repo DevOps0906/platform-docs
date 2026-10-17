@@ -355,3 +355,232 @@ STT 두 경로(01장 VD-F-105, D-13):
 ### 9.4 로그인 없는 흐름
 
 공개 랜딩(`/landing/[slug]`), 링크인바이오(`/lb/[handle]`), 단축 링크(`/r/[code]`), 결제 복귀(`/billing/success|fail`), 대행 고객의 승인 화면(`/review/[token]`과 결정 API `POST /api/review/[token]`, 토큰 해시 검증, VD-F-123)은 단계와 무관하다. 고객사 담당자는 계정 없이 토큰 링크로만 승인하고(Supabase 세션 없음, service_role 서버 함수가 토큰 해시로 조회), 단계가 바뀌어도 이 흐름은 그대로다. `proxy.ts` 공개 경로 배열(01장 VD-F-002)에 `/login`, `/api/dev/login`(A, 판정이 거짓이면 404), `/auth/callback`(B), 브리지 채택 시 `/auth/naver/**`(C2)를 더할 뿐 이 화면들에 로그인 버튼을 추가하지 않는다.
+
+## 10. 스토리보드 엔진 구조 (2026-10-18 추가, 스토리보드 디벨롭)
+
+정본은 01장 10장(확정 SF-1~SF-4, VD-F-130~142, 단가 10.4절)이다. 이 장은 Track S의 모듈 경계, 잡, 렌더 파이프라인, 성능 예산만 정한다. 렌더 엔진은 FFmpeg 하나다(VD-F-033, `docs/file/02-요구사항/01_PRD.md:91`, SF-2). 기존 장의 줄은 바꾸지 않았다. 4절의 `longform.storyline`·`longform.render`·`longform.highlights` 행과 5.2절의 Track D 대본 설명은 Track S로 대체되며, 새 코드는 그 경로에 넣지 않는다(삭제는 01장 D-34). API 계약은 04장 9장, 데이터는 05장 11장, 화면은 03장 8장, 작업은 06장 9장이다.
+
+### 10.1 모듈 경계
+
+서비스 이름은 1~2절 그대로 쓴다. 새 서비스는 없다. 기존 서비스 안에 Track S 디렉토리를 더한다(디렉토리 이름은 제안, 소유 작업은 06장 9장).
+
+| 모듈 | 디렉토리 | 책임 | 다른 모듈과의 계약 |
+|---|---|---|---|
+| api(Route Handler) | `apps/sceneflow/src/app/api/{storyboards,scenes}/**` | 얇게. `requireSession` → zod → `src/server/storyboards` 호출 | 04장 9장 |
+| server domain | `apps/sceneflow/src/server/storyboards/**` | 게이팅(`storyboard`, `storyboard_max_minutes`, `shorts_extract_max`), 렌더 전 검사, 크레딧 선차감, 잡 enqueue, 서버 RPC 호출, 서명 URL | 코어 `consume_credits`·`enqueue_job`, 서버 RPC `video.apply_storyboard_result`·`finish_scene_asset`·`snapshot_storyboard` |
+| web-app(편집기) | `apps/sceneflow/src/app/(dashboard)/dashboard/storyboards/**`(화면 `/dashboard/storyboards/...`, 03장 8장), 컴포넌트 `src/components/storyboard/**` | 장면 목록·상세·길이 게이지·출처 경고 수·예상 크레딧 | 읽기는 RLS, 쓰기는 Route Handler만 |
+| preview | `src/components/storyboard-preview/**` | 브라우저 타임라인 재생(10.4절). 서버 렌더 없음 | 서명 URL(10분)과 장면 JSON만 받는다 |
+| orchestrator | `workers/video-orchestrator/src/flows/storyboard/**`(루트 Flow), 기존 `steps/image`(fal), `steps/tts`(core-voice), `steps/script`(그래프 클라이언트) 재사용 | 루트 잡 `storyboard.render`·`storyboard.shorts`의 FlowProducer 체인, AI 잡(`storyboard.generate`, `scene.image`, `scene.narration`, `storyboard.source_check`) 실행, `outputs` 갱신 | BullMQ 큐 `video.ai`·`video.orchestrate`, 미디어 단계는 `core.jobs` 자식 잡으로 브리지(4절 원칙) |
+| media-worker | `services/media-worker/handlers/storyboard/{scene_clip,scene_concat,bgm_mix}`(제안) + 기존 `media.compose`·`media.encode`·`media.stt` 핸들러 | 장면 클립, 연결, 자막 번인, BGM 믹스, 인코딩. FFmpeg만 | `core.claim_jobs(queue='video.media.cpu')`(STT만 `video.media.gpu`) |
+| ai-service | `apps/api/app/ai/graphs/video_storyboard.py`, `video_shorts_pick.py`(제안 파일명), 기존 `compliance/video.py` 재사용 | 그래프 `video.storyboard`, `video.shorts_pick`(10.9절). 텍스트만 다룬다 | 잡 토큰 scope `graph:video.storyboard`, `graph:video.shorts_pick` |
+| rules | `packages/video-rules/storyboard-layout.json`(제안) | 글자 카드·자막 안전 영역, 글자 크기 비율, 모션 프리셋 수치. TS 미리보기와 Python 워커가 같은 파일을 읽는다 | 원본 소유는 06장 9장 작업 |
+| db | `supabase/migrations/1200_video.sql` 새 절 | 05장 11장 테이블·RPC | VID-06-001 소유 규칙 |
+
+경계 규칙(2절 표를 그대로 따르고 Track S에서 더하는 것만):
+
+| 경계 | 규칙 |
+|---|---|
+| 브라우저 ↔ 서버 | 브라우저는 04장 9장 Route Handler와 RLS 읽기만 쓴다. FastAPI·fal·음성 제공자·media-worker를 직접 부르지 않는다 |
+| FastAPI ↔ media-worker | 서로 부르지 않는다(2절 경계 표). 그래프는 장면 JSON만 만들고 이미지·오디오·영상을 다루지 않는다 |
+| 키 위치 | fal·ElevenLabs 키는 오케스트레이터에만(8절). media-worker에는 AI 키가 없다. 장면 이미지 생성과 내레이션 TTS는 오케스트레이터가, FFmpeg 단계는 media-worker가 한다 |
+| 결과 저장 | 장면 목록은 `apply_storyboard_result`, 소재는 `finish_scene_asset`, 스냅샷은 `snapshot_storyboard`만 쓴다(서버 RPC, service_role). 워커가 테이블에 직접 INSERT하지 않는다 |
+| 화면 경로 | 기존 보호 경로 규칙(6절 BS #10 행)에 맞춰 `/dashboard/storyboards`(목록), `/dashboard/storyboards/new`, `/dashboard/storyboards/[id]`(편집기), `/dashboard/storyboards/[id]/render`를 쓴다. API 경로 `/api/storyboards/**`, `/api/scenes/**`는 그대로 |
+
+호출 흐름:
+
+```
+브라우저 ─ Route Handler ─ src/server/storyboards ─ consume_credits → enqueue_job
+                                                   └ 서버 RPC(snapshot_storyboard 등)
+orchestrator(video.ai)       : storyboard.generate → FastAPI video.storyboard → apply_storyboard_result
+                               scene.image → fal → finish_scene_asset
+                               scene.narration → core-voice → finish_scene_asset
+orchestrator(video.orchestrate): storyboard.render(루트) → [ai.tts·storyboard.source_check(video.ai)]
+                               → media.scene_clip ×N → media.scene_concat → media.stt → media.compose
+                               → media.bgm_mix → media.encode (모두 video.media.cpu, STT만 gpu) → outputs
+```
+
+### 10.2 잡과 큐
+
+4절 표와 같은 열이다. 단가는 01장 10.4절.
+
+| `job_type` | 큐 | 런타임 | 크레딧 선차감 | 재시도 | 환불 조건 |
+|---|---|---|---|---|---|
+| `storyboard.generate` | `video.ai` | TS(그래프 클라이언트) → FastAPI `video.storyboard` | 쇼츠 4 / 롱폼 10분당 8(올림) | 1 | 최종 실패 시 전액. 기존 장면은 그대로 둔다 |
+| `scene.image` | `video.ai` | TS(fal, 기존 `steps/image`) | 장면당 3. 재사용은 잡 없음, 0 | 3(지수 백오프, 같은 seed) | 최종 실패 시 그 장면분 전액. 이전 `ready` 소재 유지 |
+| `scene.narration` | `video.ai` | TS(`core-voice`, 기존 `steps/tts`) | 다시 만들기 1장면 1언어 1. 묶음 생성은 4.1절 내레이션 정액(쇼츠 언어당 ElevenLabs 5 / 오픈소스 2, 롱폼 10분 언어당 5 / 2) | 3(같은 제공자·보이스만, 5.3절) | 구간 하나라도 최종 실패하면 그 요청 전액. 이전 `ready` 내레이션 유지 |
+| `storyboard.render`(루트) | `video.orchestrate` | TS(FlowProducer) + Python 자식 | 렌더(쇼츠 언어당 3, 롱폼 10분당 10을 언어판마다, 제안) + 내레이션이 없는 언어의 TTS 정액 + 출처 점검 1 | 0(자식이 재시도) | 10.8절 |
+| `storyboard.source_check` | `video.ai` | TS → FastAPI `video.step`(kind `source_check`, 제안) | 루트에 포함(1) | 1 | 실패 시 1 환불 + "출처 점검 안 됨" WARN. 렌더는 계속한다 |
+| `storyboard.shorts`(루트) | `video.orchestrate` | TS(그래프 클라이언트 `video.shorts_pick`) + Python 자식 | 선정 단계 2 / 렌더 단계 컷·언어당 3 + 세로 다시 만들기 이미지 3 | 0(자식이 재시도) | 10.8절 |
+| `media.scene_clip`(제안) | `video.media.cpu` | Python(FFmpeg) | 루트에 포함 | 2 | 루트 규칙 |
+| `media.scene_concat`(제안), `media.bgm_mix`(제안) | `video.media.cpu` | Python(FFmpeg) | 루트에 포함 | 2 | 루트 규칙 |
+| `media.compose`, `media.encode`, `media.stt` | 4절 그대로 | Python | 루트에 포함 | 4절 그대로 | 루트 규칙 |
+
+큐는 기존 규칙을 따른다: AI 단계는 `video.ai`에서 잡 토큰(`/api/internal/ai-token`)으로 FastAPI·음성 서버를 부르고, FFmpeg 단계는 media-worker가 `video.media.cpu`에서 소비한다. 명세의 "렌더는 media-worker cpu 큐"는 루트(`video.orchestrate`)가 FFmpeg 단계를 cpu 큐 자식 잡으로 넣는 구조로 읽었다. 루트를 오케스트레이터에 두는 이유는 렌더 중 TTS(ElevenLabs 키)가 필요하고 media-worker에는 그 키가 없기 때문이다.
+
+### 10.3 렌더 파이프라인 (`storyboard.render`)
+
+입력은 스냅샷 하나다(10.5절). 잡 payload의 다른 값으로 장면을 읽지 않는다.
+
+| 단계 | 처리 | 실행 | 실패 처리 |
+|---|---|---|---|
+| 0 요청 검사·스냅샷 | 서버가 플랜(`storyboard_max_minutes`), 길이 합계 ±10%(`VD017`), 장면 수(`VD018`), clip 권리 근거(`VD019`), 모든 장면 소재 `ready`(`VD001`)를 검사 → 선차감 → `snapshot_storyboard`(status `rendering`, 마스터 컷, 스냅샷 1행) → 루트 enqueue | Next.js 서버 | 검사 실패는 선차감 전 4xx. enqueue 실패는 즉시 환불 |
+| 1 내레이션 준비 | 요청 언어 중 장면 내레이션이 다 있는 언어는 그대로 쓴다. 없는 언어는 `ai.tts`로 장면별 구간을 만든다. 제공자·보이스는 그 스토리보드에 처음 기록된 값(5.3절, VD-F-133). 내레이션 문장은 기본 언어 문장을 `ai.translate`로 옮긴다(제안: 번역은 렌더 합계에 포함) | 오케스트레이터 | 그 언어판 실패 + 부분 환불 |
+| 2 출처 점검 | `storyboard.source_check`. `source_required=true`인데 출처가 없거나 약한 장면을 WARN 목록으로 남긴다. 렌더를 막지 않는다(D-33 전까지 WARN) | 오케스트레이터 → FastAPI | 1 환불 + "출처 점검 안 됨" WARN |
+| 3 장면별 클립 | `media.scene_clip`을 장면마다 만든다(아래 종류 표). 장면 길이는 스냅샷 `duration_ms`. 영상 트랙은 언어 공용이다. 어떤 언어의 내레이션이 장면 길이 - 300ms보다 길면 그 언어판에서만 그 장면 끝 프레임을 늘린다(제안, book-trailer 길이 보정과 같은 300ms, `D:/WorkSpace/platform/docs/products/book-trailer/02_ARCHITECTURE.md:125`) | media-worker | 2회 재시도 후 그 장면을 쓰는 모든 언어판 실패 |
+| 4 연결 | `media.scene_concat`: 장면 클립을 순서대로 잇는다(컷 전환만, 전환 효과는 Phase 2). 언어별 내레이션 오디오를 장면 시작 시각에 놓는다 | media-worker | 그 언어판 실패 |
+| 5 자막 타이밍 | 내레이션 오디오를 `media.stt`(Whisper, `video.stt` = `oss-voice`)로 단어 시각을 얻어 ASS를 만든다. 문장은 STT 결과가 아니라 스냅샷 내레이션 문장을 쓰고 시각만 맞춘다(제안) | media-worker GPU | 실패 시 문장 길이 비례 시각으로 만든다(제안) + 경고 |
+| 6 자막 레이어 | `media.compose`. 순서는 VD-F-033 그대로: 원본(= 연결된 장면 영상) → ASS(내레이션 자막) → 강조 자막(`image` 장면의 화면 문구) → 리액션(Track S는 없음) → 배경 템플릿(Track S MVP는 쓰지 않음). `text_card`·`title`의 글자는 3단계 장면 클립 안에 그려지므로 이 단계에서 다시 얹지 않는다. Track S에는 레이어 합성 단가 3을 매기지 않는다(01장 10.4절에 없음) | media-worker | 그 언어판 실패 |
+| 7 BGM | `media.bgm_mix`. 곡은 스냅샷의 BGM 1곡(라이선스 근거가 있는 `video.music_library` 곡 또는 없음, 제안). 내레이션 구간에서 덕킹 -12dB, 시작·끝 페이드 2초(제안). `music_cue`는 MVP에서 저장만 하고 곡 전환은 Phase 2(제안) | media-worker | 그 언어판 실패 |
+| 8 인코딩 | `media.encode`(preset `longform` 또는 `short`, 30fps). H.264 yuv420p, AAC 48kHz, 통합 음량 -14 LUFS 목표(제안). Starter 워터마크는 워커가 플랜을 읽어 강제(VD-F-034) | media-worker | 그 언어판 실패 |
+| 9 컷별 출력 | 언어판마다 `video.outputs` 1행(`storyboard_cut_id`, `kind`는 화면비로 `longform`/`short`, `aspect`). 썸네일은 첫 `title` 장면 또는 첫 장면 프레임(제안) | 오케스트레이터 | - |
+| 10 종료 | 하나 이상 ready면 storyboard `rendered`, 전부 실패면 `ready`로 되돌려 편집을 연다. 루트 결과에 `refunded_credits` | 오케스트레이터(service_role) | 10.8절 |
+
+장면 종류별 클립 생성(`media.scene_clip`):
+
+| `kind` | 생성 방법 | 입력 |
+|---|---|---|
+| `image` | 이미지를 출력 크기의 2배로 키운 뒤 `zoompan`/`crop`으로 모션 프리셋을 적용(제안: 2배 확대로 떨림을 줄인다) | 이미지 소재 경로, `motion_preset`, 길이 |
+| `clip` | 앞에서부터 장면 길이만큼 자르고 화면비에 맞춰 크롭·스케일. 원본 소리는 기본 음소거(제안) | 클립 소재 경로, 길이 |
+| `text_card` | 단색 배경 + `drawtext`. 글자 크기·안전 영역은 `storyboard-layout.json` | 화면 문구, 길이 |
+| `title` | `text_card`와 같고 큰 제목 레이아웃 | 화면 문구(챕터 제목), 길이 |
+
+모션 프리셋 수치(제안, `storyboard-layout.json`에 한 번만 적는다):
+
+| `motion_preset` | FFmpeg 처리 |
+|---|---|
+| `zoom_in` | 배율 1.00 → 1.12, 중심 고정, 선형 |
+| `zoom_out` | 배율 1.12 → 1.00 |
+| `pan_left` | 배율 1.10 고정, 오른쪽 끝 → 왼쪽 끝(가로 여유 10%) |
+| `pan_right` | `pan_left`의 반대 |
+| `static` | 배율 1.00, 움직임 없음 |
+
+서체는 media-worker 이미지에 넣은 OFL 한국어·일본어 서체만 쓴다(제안, 서체 이름은 06장 9장 작업에서 고정). 시스템 서체에 기대지 않는다. 언어판의 `text_card`·`title` 글자는 기본 언어 그대로 나간다(01장 VD-F-136 "언어마다 내레이션·자막만 바꿔 렌더"). 글자 카드 번역은 범위 밖이다(미확인: 01장 10장에 결정 없음).
+
+### 10.4 미리보기 (브라우저 타임라인)
+
+| 항목 | 규칙 |
+|---|---|
+| 서버 렌더 | 없다. 잡·원장 행을 만들지 않는다. 0크레딧(VD-F-135) |
+| 입력 | 장면 JSON(순서, 길이, 문구, 모션)과 `ready` 소재의 서명 URL(10분, 만료 전 다시 받기). 소재가 없는 장면은 회색 칸 + 문구로 보인다 |
+| 재생 | `<img>`·`<video>`에 CSS transform으로 모션 프리셋을 근사하고, 내레이션은 `<audio>`를 장면 시작 시각에 맞춰 재생한다. 내레이션이 없으면 길이만큼 무음 |
+| 출력과의 관계 | 근사다. 프레임이 FFmpeg 출력과 같다고 보장하지 않는다. 같은 `storyboard-layout.json` 수치를 써서 안전 영역·글자 크기 비율만 맞춘다 |
+| 다운로드 | 경로 없음. 화면 녹화는 막지 못하므로 워터마크 규칙은 렌더 산출물에만 건다 |
+| 성능 | 미리보기 시작 2초 안 첫 프레임(01장 VD-F-135, 제안). 240장면도 현재 위치 앞뒤 장면 소재만 미리 받는다(제안: 앞 3장면·뒤 5장면) |
+
+### 10.5 스냅샷과 재현성
+
+| 항목 | 규칙 |
+|---|---|
+| 만드는 곳 | 렌더 요청마다 `video.snapshot_storyboard`가 `video.storyboard_snapshots`에 1행. 쇼츠 컷 렌더도 컷마다 1행 |
+| 담는 것(제안) | 스토리보드(id, version, revision, format, aspect, target_seconds, template_code, languages, 고정된 voice), 장면 배열(순서, kind, duration_ms, narration, on_screen_text, motion_preset, music_cue, chapter, sources), 장면별 사용 소재(asset id, storage_path, lang), 컷(kind, aspect, scene_ids, hook_text), BGM(곡 id, 경로, 라이선스 근거), 워터마크 판정, 총 길이. 정확한 키는 04장 9.4절 |
+| 렌더 입력 | 워커는 스냅샷의 Storage 경로만 읽는다. 렌더 중 장면을 고칠 수 없다(`VD020`). 렌더가 끝나면 편집이 다시 열리고, 고친 내용은 다음 스냅샷에만 들어간다 |
+| 소재 보존 | 스냅샷이 가리키는 `superseded` 소재는 그 스냅샷의 산출물 보존 기간(01장 5장 보존 행)이 끝날 때까지 지우지 않는다(제안) |
+| 재현성 | 같은 스냅샷 → 같은 장면 순서·길이·소재·자막 문장. FFmpeg 필터에 난수와 현재 시각을 쓰지 않는다. 바이트 단위 같은 파일은 보장하지 않는다(인코더 스레드 차이). 프레임 해시 비교 테스트는 제안(01장 VD-F-136) |
+| 열람 | `GET /api/storyboards/[id]/snapshots/[version]` 읽기 전용(VD-F-139). 이전 스냅샷으로 다시 렌더하는 경로는 MVP에 없다(제안) |
+| 멈춘 렌더 | 루트 잡이 `reap_stale_jobs`로 실패 처리되면 10분 크론이 `rendering`인데 루트 잡이 끝난 스토리보드를 `ready`로 되돌린다(제안, 4절 매 10분 행에 더함) |
+
+### 10.6 쇼츠 세로 구도
+
+쇼츠 컷은 마스터 영상을 잘라 내지 않는다. 마스터 컷 스냅샷의 장면으로 9:16 컷을 새로 렌더한다(10.3절과 같은 파이프라인, 크기 1080x1920).
+
+| 장면 종류 | 크롭(D-32 기본 권고 (a)) | 다시 만들기(D-32 (b)) |
+|---|---|---|
+| `image`(16:9 소재) | 가운데 9:16 영역을 잘라 2배 확대 후 모션 적용. 0크레딧. 원본이 1920x1080이면 세로 영역이 608x1080이라 화질이 떨어지므로 화면에 화질 경고를 띄운다(제안) | 같은 시각 설명으로 1080x1920 이미지를 새로 만든다(이미지 단가 3). 세로 소재는 16:9 소재를 대체하지 않고 따로 보관한다(05장 11장 `scene_assets`에 화면비 구분 칸 필요, 미확인) |
+| `clip` | 가운데 크롭 | 해당 없음(크롭만) |
+| `text_card`, `title` | 9:16 레이아웃으로 다시 그린다. 0크레딧 | 같음 |
+
+| 항목 | 규칙 |
+|---|---|
+| 훅 문구 | `video.shorts_pick`이 컷마다 만든다. 첫 2.5초 상단 오버레이로 넣는다(제안). 업로드 제목 초안으로도 쓴다 |
+| 자막 위치 | 9:16은 아래 플랫폼 UI를 피해 하단 여백을 화면 높이의 18%로 둔다(제안, `storyboard-layout.json`) |
+| 컷 길이 | 60초 이하(01장 VD-F-137, 제안). 연속 장면만(22023) |
+| 개수 | 스토리보드당 10편(`VD021`), 플랜 `shorts_extract_max` 이하(403 `VD009`) |
+| 마스터 이후 편집 | 쇼츠는 가장 최근 ready 마스터 스냅샷의 장면을 쓴다. 그 뒤에 고친 장면은 쇼츠에 들어가지 않는다는 안내를 화면에 띄운다(제안) |
+| 쇼츠 형식 스토리보드 | 형식이 `shorts`면 마스터 컷이 이미 9:16이다. 쇼츠 추출은 `longform`만(22023) |
+
+### 10.7 성능 예산 (제안)
+
+5장 비기능 요구(`docs/file/02-요구사항/01_PRD.md:240`, `:244`, `:247`)를 Track S 단계로 나눈 값이다. 모두 제안이며 06장 9장 벤치 작업이 W 단계 끝에 확정한다.
+
+| 항목 | 예산 | 비고 |
+|---|---|---|
+| 스토리보드 생성(롱폼 10분, 40장면) / 쇼츠 | p95 90초 / 30초 | 그래프 정밀 모드 p95 90초와 같은 수준(01장 5장) |
+| 장면 이미지 1장 / 장면 내레이션 1개 | p95 40초 / 20초 | book-trailer 값(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:248`)과 같게 |
+| 장면 클립 1개(10초, 1080p) | p95 30초(CPU 1코어) | `media.scene_clip` 타임아웃 300초 |
+| 롱폼 10분 1언어 렌더(루트 시작 → 마스터 ready, 큐 대기 제외) | p95 30분. 언어판 1개 추가마다 +15분 | FFmpeg 단계 타임아웃은 롱폼 3,600초(01장 5장) |
+| 쇼츠 1컷 1언어 렌더 | p95 5분 | 쇼츠 5편 요청 → 5편 ready p90 30분(01장 10.1절) |
+| 큐 대기 | p95 5분 | 01장 5장 워커 큐 지연. 넘으면 media-worker CPU 인스턴스 추가(7절 2~4) |
+| 렌더 1건의 동시 장면 클립 잡 | 최대 8 | 렌더 하나가 cpu 큐를 다 차지하지 않게 |
+| 조직 동시 렌더 | 01장 5장 동시 생산 상한(Starter 1, Basic 3, Pro 5, Advanced 10)에 포함 | 초과 429 |
+| 편집기 첫 표시(240장면) | p95 2초 | 장면 JSON 한 번 + 소재 서명 URL은 보이는 범위만 |
+| 중간 산출물(장면 클립, 언어별 중간 파일) | 7일 보존 후 삭제 | 01장 5장 보존 행 |
+
+### 10.8 실패와 부분 환불 (VD-F-035 규칙)
+
+원칙은 VD-F-035(`docs/file/02-요구사항/01_PRD.md:93`) 그대로다: 루트 잡 1개 + 단계 자식 잡, 언어판 실패는 그 언어분만 부분 환불, 루트 상태 `partial`. 결과가 전달되지 않은 실패는 전액 환불(01장 4.1절 실패 환불 행).
+
+| 실패 위치 | 처리 | 환불 |
+|---|---|---|
+| `storyboard.generate` | 장면을 바꾸지 않는다(`apply_storyboard_result`는 성공 때만) | 전액(잡 자동 환불) |
+| `scene.image` | 이전 `ready` 소재 유지. 새 소재 행 없음 | 그 장면분 3 |
+| `scene.narration` | 구간 하나라도 실패하면 그 요청 실패. 다른 제공자로 대체하지 않는다(5.3절) | 그 요청 전액 |
+| 렌더 출처 점검 | WARN "출처 점검 안 됨" + 렌더 계속 | 1 |
+| 렌더 언어판(TTS·번역·연결·자막·BGM·인코딩) | 그 언어판 `outputs.status=failed`, 다른 언어는 계속. 루트 `partial` | 그 언어분(그 언어 TTS 정액 + 그 언어 렌더 단가). 멱등 키 `refund:<cut_id>:<lang>`(제안) |
+| 렌더 장면 클립(언어 공용) | 그 장면을 쓰는 모든 언어판 실패 → 루트 실패 | 전액(출처 점검 1 포함, 결과가 전달되지 않았으므로) |
+| 쇼츠 선정(`video.shorts_pick`) | 컷을 만들지 않는다 | 2 |
+| 쇼츠 컷·언어 | 그 컷·언어 실패, 다른 컷 계속. 세로 다시 만들기 이미지가 실패하면 그 컷을 조용히 크롭으로 바꾸지 않고 실패로 둔다 | 그 컷·언어 인코딩 3 + 그 컷의 세로 이미지 단가. 키 `refund:<cut_id>:<lang>`(제안) |
+| 루트 잡 reaper 실패 | 10.5절 멈춘 렌더 행 | 코어 자동 환불(잔액 전액) |
+
+### 10.9 그래프 (`video.storyboard`, `video.shorts_pick`)
+
+5.2절 표와 같은 열이다. 입출력 계약은 04장 9.5절.
+
+| 그래프 | 노드 순서 | LLM 기능 | 사람 승인 | compliance | 실행 |
+|---|---|---|---|---|---|
+| `video.storyboard` | `beats` → `scenes` → `claims` → `validate` → `compliance` → (걸린 장면만 `scenes` 1회 재작성 → `validate` → `compliance`) | `video.script`(제안: 새 기능 키를 만들지 않아 5.1절 seed 17행이 바뀌지 않는다) | 그래프 안에는 없다. 사용자는 결과를 편집기에서 고친다 | 있음(마지막 노드, 6장 금지 문구 + 01장 10.5절) | 오케스트레이터가 잡 토큰(scope `graph:video.storyboard`)으로. 체크포인트 thread = `ai_runs.thread_id` |
+| `video.shorts_pick` | `pick` → `hook` → `compliance` | `video.script`(제안) | 없음. 사용자가 제안 컷을 고른다 | 있음(훅 문구) | 오케스트레이터, scope `graph:video.shorts_pick` |
+
+| 노드 | 동작 | LLM |
+|---|---|---|
+| `beats` | 템플릿 비트 비중(01장 10.3절)으로 목표 길이를 비트별 길이로 나눈다 | 없음(결정적) |
+| `scenes` | 대본 문단을 비트에 맞춰 장면으로 나눈다. kind, duration_ms, narration, on_screen_text, visual_prompt, motion_preset, music_cue, chapter, shorts_candidate | 있음 |
+| `claims` | 연도·인물·수치·사건 단정 장면에 `source_required=true`. 출처는 대본 그래프의 근거 id(RAG 청크·검색 결과)가 있을 때만 제목·URL을 채우고, 없으면 비운다. URL을 지어내지 않는다 | 있음 |
+| `validate` | 장면 수(쇼츠 3~12, 롱폼 분당 3~8, 240 이하), 글자 수, enum 검사. 길이 합계가 ±10% 밖이면 비율로 다시 나눠 100ms 단위로 맞춘다(제안). 숫자는 서버 계산값만 저장한다 | 없음 |
+| `compliance` | 기존 규칙 파일 + 01장 10.5절 금지 문구. 2회 걸리면 run `failed` | 없음(규칙) |
+| `pick` | `shorts_candidate` 장면에서 연속 묶음(60초 이하, 서로 겹치지 않음)을 최대 요청 수만큼 고른다. 후보가 없으면 전체 장면에서 고른다 | 있음 |
+| `hook` | 컷마다 훅 문구 40자 이하(제안) | 있음 |
+
+출처 점검(`storyboard.source_check`)은 별도 그래프를 두지 않고 `video.step`(D-20)의 새 kind `source_check`(제안, 기능 키 `video.analyze`)로 실행한다.
+
+### 10.10 Phase 2 Remotion 경계 (D-30)
+
+MVP에는 Remotion·Chrome·Node 렌더러를 넣지 않는다(SF-2). Phase 2에서 검토할 때 바꿀 수 있는 곳을 미리 한 군데로 좁혀 둔다.
+
+| 항목 | 규칙 |
+|---|---|
+| 교체 지점 | 3단계 `media.scene_clip` 하나다. 계약은 "스냅샷의 장면 1개 → 정확히 `duration_ms` 길이의 무음 영상 클립"이다. Remotion을 들여도 4~9단계(연결, 자막, BGM, 인코딩, 출력)는 FFmpeg로 남긴다 |
+| 대상 | `text_card`·`title`의 모션 그래픽(글자 등장, 숫자 카운트 등)부터. `image` 장면은 FFmpeg 모션으로 충분한지 먼저 본다 |
+| 렌더러 공용화 | book-trailer 렌더러(`services/trailer-renderer`, `D:/WorkSpace/platform/docs/products/book-trailer/02_ARCHITECTURE.md:41`)를 장면 클립 생성기로 같이 쓰는 안. 큐·스냅샷 형식이 달라 어댑터가 필요하다 |
+| 미리보기 | 그때 `text_card`·`title`만 Remotion Player로 바꿀 수 있다. 다른 장면은 10.4절 그대로 |
+| 확인할 것 | Remotion 라이선스 조건(book-trailer D-2, `D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:351`)과 서버 렌더 원가. 01장 D-30 기준 미확인 |
+| 지금 하지 않는 것 | `remotion`·`@remotion/*` 패키지 설치, media-worker 이미지에 Chrome 추가, 장면 JSON에 Remotion 전용 필드 추가 |
+
+### 10.11 book-trailer 렌더러와의 차이
+
+| 항목 | SceneFlow Track S(MVP) | book-trailer |
+|---|---|---|
+| 렌더 엔진 | FFmpeg 6(VD-F-033) | Remotion 4.0.x + Chrome Headless Shell + 내장 FFmpeg(`D:/WorkSpace/platform/docs/products/book-trailer/02_ARCHITECTURE.md:11`, `:16`) |
+| 렌더 서비스 | 기존 `services/media-worker`(Python 3.11), 큐 `video.media.cpu` | `services/trailer-renderer`(Node 20), 큐 `trailer.render` |
+| 오케스트레이션 | BullMQ FlowProducer 루트(`video.orchestrate`) + `core.jobs` 자식 잡 여러 개 | `core.jobs`만, 렌더 1잡이 끝까지 처리(`:101`, `:119-129`) |
+| 크레딧 선차감 | Route Handler에서 `consume_credits` → `enqueue_job`(04장 1절) | 서버 RPC `trailer.start_render`가 한 트랜잭션으로 |
+| 입력 | `storyboard_snapshots.snapshot` | `renders.snapshot`(`D:/WorkSpace/platform/docs/products/book-trailer/04_API.md:156`) |
+| 장면 표현 | 장면 클립을 하나씩 만들어 잇는다. 종류 4개 | React 컴포지션 1개 안의 장면 컴포넌트. 종류 7개 |
+| 모션 | `zoompan`·`crop` 프리셋 5개 | 프리셋 8개(parallax, type_reveal 등) |
+| 글자·자막 | `drawtext` + ASS(libass) 번인. 레이어 순서 고정 | 브라우저 조판, 영상 토큰, 자막 큐 + SRT 부산물 |
+| 미리보기 | 브라우저 타임라인 근사. 출력과 프레임이 같지 않다 | Remotion Player, 렌더와 같은 코드(`:39`, `:42`) |
+| 길이·규모 | 최대 60분, 240장면 | 짧은 트레일러, 장면 39개 이하 |
+| 화면비 | 롱폼 16:9 마스터 + 9:16 쇼츠 컷을 따로 렌더 | 9:16 이미지 기준, 포맷별 크롭·패닝(`:200`) |
+| 결정성 | 같은 스냅샷 → 같은 순서·길이·소재(바이트 동일은 아님). 프레임 해시는 제안 | 같은 스냅샷 → 같은 프레임, 프레임 해시 테스트(`:131`) |
+| 언어판 | 언어마다 내레이션·자막만 바꿔 같은 장면 영상에 얹는다 | 트레일러 1개 = 언어 1개 |
+| 라이선스 | 새 의존성 없음(기존 media-worker 이미지) | Remotion Company License 조건(D-2) |
+| 성능 예산 | 롱폼 10분 1언어 p95 30분(제안, 10.7절) | 60초 1080p p95 6분(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:249`) |

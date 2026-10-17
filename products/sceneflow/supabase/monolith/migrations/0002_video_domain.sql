@@ -1961,7 +1961,7 @@ $$;
 
 -- 12.2 테이블 ----------------------------------------------------------
 
--- 12.2.1 storyboard_templates: 스토리보드 템플릿(VD-F-141). 플랫폼 공용, 운영자 seed 만(12.6절).
+-- 12.2.1 storyboard_templates: 스토리보드 템플릿(VD-F-141). 플랫폼 공용, 운영자 seed 만(12.9절).
 --   beats: [{"key","label","share"(목표 길이 비율, 합 1), "kind"(scene_kind 기본값), "hint"}]
 create table if not exists public.storyboard_templates (
   code                  text primary key constraint storyboard_templates_code_check check (code ~ '^[a-z][a-z0-9_]{2,39}$'),

@@ -47,7 +47,7 @@ D:\WorkSpace\DEV\sceneflow\                            베이스를 복사해 �
 
 | 항목 | 내용 |
 |---|---|
-| 제품 | SceneFlow. 트렌드 레이더로 소재를 고르고 숏폼(Track A~C), 롱폼(D), Lofi 단일 곡(E), 플레이리스트(F)를 크레딧 과금으로 자동 생산·검사·다채널 배포·제휴 수익화하는 조직 단위 SaaS |
+| 제품 | SceneFlow. 트렌드 레이더로 소재를 고르고 스토리보드 하나로 롱폼·장면 단위 쇼츠·언어판(Track S, 2026-10-18 디벨롭, 01장 10장·06장 9장)과 드라마·커머스 숏폼(Track A·B)을 크레딧 과금으로 생산·검사·다채널 배포·제휴 수익화하는 조직 단위 SaaS. Lofi·플리(E·F)는 Phase 2 |
 | 통합 원본 | NOMAD Shorts Maker(`D:\WorkSpace\platform\NOMAD Shorts Maker\`), Nomad-BlogStudio(`...\Nomad-BlogStudio\`), Youtube_shots_Maker(`...\Youtube_shots_Maker\`, 작업 트리는 삭제 상태이며 git `5f6d262`에서 읽기 전용으로 참조) |
 | 모듈러 앱 id / 스키마 | `video` / `video`(통합 DB를 쓸 때) |
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(`public` 스키마, 기획서 01장 열린 결정 D-1) |

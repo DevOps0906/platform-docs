@@ -374,3 +374,206 @@ AI·음성 코어 객체(2026-10-13, `D:/WorkSpace/platform/docs/products/_supab
 | `no_app` | `signup_app` 없으면 엔타이틀먼트 없음 → 첫 진입·콜백에서 `bootstrap_app_for_org` | apps 1행이면 가입 트리거가 자동 부트스트랩(`supabase/monolith/migrations/0001_core_lite.sql:38`) → `no_app`도 `entitled=true`. 기대값만 다르고 코드는 같다 |
 | 함수 이름 | `core.invite_member`, `core.accept_invite`, `core.bootstrap_app_for_org` | `public.` 같은 이름 |
 | `--app` 여러 개 | 통합 DB에서 다른 앱과 함께 시드할 수 있다(두 번째 앱부터 `bootstrap_app_for_org`) | 해당 없음 |
+
+## 11. 스토리보드 트랙 데이터 (2026-10-18 추가, 스토리보드 디벨롭)
+
+확정 SF-1로 Track C Mode1과 Track D를 Track S(스토리보드 트랙)로 합쳤다(01장 10장, VD-F-130~142). 정본 SQL은 `1200_video.sql` 12절(1200:1929-3035)이다. 위쪽 절은 고치지 않았다. 기존 테이블 변경은 12절의 ALTER·UPDATE로만 했다. 새 테이블 6개, 함수 19개(헬퍼 4, 트리거 함수 7, 사용자 RPC 5, 서버 RPC 3), 정책 9개.
+
+### 11.1 ERD 조각
+
+```
+video.storyboard_templates (code PK, 플랫폼 공용, 운영자 seed 5종)
+core.organizations
+ └─ video.storyboards ── storyboard_templates(template_code), video.clients(client_id), core.ai_runs(script_ai_run_id), core.jobs(root_job_id)
+      ├─ video.scenes (ord 1..240)
+      │    └─ video.scene_assets (image | narration | clip, ready 1개 + superseded 이력) ── scene_assets(reused_from_asset_id)
+      ├─ video.storyboard_cuts (master 1 + short 최대 10)
+      │    └─ video.outputs.storyboard_cut_id (2026-10-18 추가 FK) → video.uploads (기존 경로 그대로)
+      └─ video.storyboard_snapshots (렌더마다 1행, cut_id, 읽기 전용)
+Storage: video-media 버킷 <org_id>/video/scenes/<scene_id>/<uuid>.<ext>
+```
+
+Track S는 `video.productions`를 쓰지 않는다. 렌더 결과는 기존 `outputs` → `uploads` → compliance 경로를 그대로 탄다.
+
+### 11.2 테이블
+
+#### storyboard_templates (1200:2016-2027)
+
+| 열 | 타입 | 설명 |
+|---|---|---|
+| code | text PK | `^[a-z][a-z0-9_]{2,39}$`. seed 5종: `knowledge_explainer`, `history_documentary`, `list_topn`, `story_radio`, `product_review`(1200:2988-3021) |
+| label | text | 1~60자 |
+| beats | jsonb | 배열 1~20개. `{key, label, share(목표 길이 비율, 합 1.0), kind(장면 종류 기본값)}` |
+| default_scene_seconds | int | 2~30초. 그래프 결과에 장면 길이가 없을 때 쓴다 |
+| status | text | active/retired |
+
+쓰기는 운영자 seed만(guard). 모놀리스는 seed.sql 끝(seed.sql:98-148).
+
+#### storyboards (1200:2029-2065)
+
+| 열 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| client_id | uuid | Y | - | 대행 고객(`video.clients`, set null). 같은 조직 검사(VD002) |
+| title | text | N | - | 1~200자 |
+| format / aspect / target_seconds | text/text/int | N | - | 프리셋 CHECK `storyboards_preset_check`(1200:2057): 쇼츠 9:16 15/30/45/60/90초, 롱폼 16:9 180/300/600/1200/1800/3600초 |
+| template_code | text | N | - | `storyboard_templates.code` |
+| topic | text | Y | - | 300자 이하. 주제 점수 60 게이트(VD-F-013)는 Route Handler가 본다 |
+| script_ai_run_id | uuid | Y | - | 대본 그래프 `video.script` 실행(`core.ai_runs`, 같은 조직 검사) |
+| languages | text[] | N | {KO} | 1~3개, KO/JA/EN |
+| voice_provider / voice_id | text/text | Y | - | 내레이션 목소리 고정(`elevenlabs`/`oss`). 둘 다 null이거나 둘 다 값(1200:2061). 만들 때만 사용자가 고르고 이후는 서버만. 장면 내레이션 다시 만들기는 이 값을 따른다(02장 5.3절 같은 목소리) |
+| status | text | N | draft | draft/ready/rendering/rendered/archived(11.3절) |
+| version | int | N | 0 | 마지막 렌더 스냅샷 번호. `snapshot_storyboard`만 올린다 |
+| revision | int | N | 1 | 장면 구성(추가·삭제·순서·전체 생성) 변경 번호. reorder/add/delete RPC의 낙관적 동시성 기준 |
+| root_job_id / last_error | uuid/text | Y | - | 진행 중 루트 잡(`video.orchestrate` 큐), 마지막 오류. 서버만 |
+
+플랜 한도 트리거 `enforce_storyboard_limits`(1200:2219-2238): `features.storyboard`가 없거나 롱폼 길이가 `storyboard_max_minutes`를 넘으면 VD009(모든 호출자).
+
+#### scenes (1200:2067-2093)
+
+| 열 | 타입 | 설명 |
+|---|---|---|
+| storyboard_id / ord | uuid/int | ord 1~240, `unique(storyboard_id, ord) deferrable initially deferred`(1200:2090)로 한 번에 재정렬 |
+| chapter | text | 1~80자, null 허용. 편집기 챕터 묶음 |
+| kind | text | image/clip/text_card/title(MVP 4종). 엔드카드 없음 |
+| duration_ms | int | 1,000~60,000(제안) |
+| narration / on_screen_text / visual_prompt | text | 600자 / 160자 / 600자 이하 |
+| motion_preset | text | zoom_in/zoom_out/pan_left/pan_right/static, 기본 static |
+| music_cue | text | intro/build/drop/calm/outro 또는 null(제안, trailer와 같은 값) |
+| shorts_candidate | bool | 쇼츠 후보 표시. 바꿔도 revision은 그대로 |
+| sources | jsonb | 배열 최대 5개 `{title(1~200자, 필수), url(http/https), note(300자)}`. 검사 함수 `valid_scene_sources`(1200:1962-1986) |
+| source_required | bool | 사실 주장 장면 표시. 그래프(서버)만 쓴다. true인데 sources가 비면 출처 경고(VD-F-138, D-33 전에는 WARN) |
+| revision | int | 내용 열이 바뀔 때만 트리거 `scenes_before_update`(1200:2344-2364)가 1 올린다. ord·shorts_candidate는 제외 |
+
+쓰기는 사용자 RPC(11.5절)와 서버만. 직접 INSERT/UPDATE는 42501.
+
+#### scene_assets (1200:2095-2127)
+
+| 열 | 타입 | 설명 |
+|---|---|---|
+| scene_id | uuid | cascade |
+| kind | text | image/narration/clip |
+| lang | text | narration만 필수, 나머지 null(CHECK) |
+| aspect | text | 16:9/9:16. image 필수(쇼츠용 세로 이미지를 따로 보관), clip 선택, narration 없음(1200:2115) |
+| status | text | ready/superseded. `(scene, kind, lang, aspect)`마다 ready 1개(부분 unique, 1200:2124) |
+| storage_path | text | 자기 조직 폴더 CHECK `scene_assets_path_check`(1200:2119): 첫 폴더 = org_id, `<org>/video/scenes/<scene>/<uuid>.<ext>` |
+| rights_basis / rights_note | text | clip은 둘 다 필수이고 ai_generated=false(1200:2117, 23514). RPC는 먼저 VD019로 거부 |
+| ai_generated | bool | AI 생성 표시 기본값(01장 10.5절) |
+| reused_from_asset_id | uuid | 이미지 재사용(같은 조직 image만, 0크레딧) |
+| meta | jsonb | provider, model, voice_id, voice_job_id, duration_ms, width, height(4KB 이하) |
+
+쓰기는 서버만(guard). 사용자 업로드는 서버가 검사 뒤 video-media 경로로 옮긴다(제안).
+
+#### storyboard_cuts (1200:2129-2151)
+
+| 열 | 타입 | 설명 |
+|---|---|---|
+| kind | text | master(스토리보드당 1개, 부분 unique) / short |
+| aspect | text | master는 스토리보드 화면비, short는 9:16만 |
+| scene_ids | uuid[] | 1~240개. short는 12개 이하이고 ord가 연속(트리거, 22023) |
+| hook_text | text | short만, 100자 이하 |
+| status | text | proposed/rendering/ready/failed |
+| ord | int | master 0, short 1~10. `unique(storyboard_id, kind, ord)` |
+| job_id / last_error | - | 렌더 잡과 오류 |
+
+쇼츠 수 한도: `least(10, features.shorts_extract_max)`를 넘으면 VD021(1200:2323-2331). 쓰기는 서버만.
+
+#### storyboard_snapshots (1200:2153-2165)
+
+id, org_id(RLS용, 명세에 추가), storyboard_id, cut_id, version(`unique(storyboard_id, version)`), snapshot(jsonb 2MB 이하), created_at. snapshot = `{storyboard{…, voice_provider, voice_id}, cut{…}, scenes[{…, assets{"image:16:9", "clip", "narration:KO"…}}]}`. UPDATE는 service도 거부(42501, 1200:2367-2374).
+
+#### 기존 테이블 변경 (1200:2167-2193)
+
+| 대상 | 변경 |
+|---|---|
+| outputs | `storyboard_cut_id` FK 추가(cascade). `outputs_owner_check`를 6개 중 정확히 하나로 교체, `outputs_kind_owner_check`에 `kind in ('short','longform') and storyboard_cut_id is not null` 추가. 부분 unique `(storyboard_cut_id, language)`. 참조 검사는 새 함수 `check_output_refs`(1200:2379-2398)로 `outputs_check_refs` 트리거를 다시 건다(1200:2439-2441) |
+| productions.track, sources.track | 값 C는 기존 행 호환으로 남기고 "신규 생성 금지" 주석만(제안, DB 차단 없음) |
+| longform_projects/sections/highlights | 지우지 않음. "Track S로 대체, 삭제는 D-34" 주석(11.8절) |
+| core.plans features | 병합 UPDATE(1200:3022-3035). 아래 표 |
+
+| 플랜 | storyboard | storyboard_max_minutes | shorts_extract_max |
+|---|---|---|---|
+| Starter | false | 0 | 0 |
+| Basic | true | 10 | 3 |
+| Pro | true | 30 | 10 |
+| Advanced | true | 60 | 10 |
+
+모두 제안 값(01장 10.4절). Starter 값과 Starter의 `shorts_extract_max` 0은 명세에 없어 새로 정했다(제안). 모듈러 `seed.sql`이 이 조각보다 나중에 실행되면 덮어써지므로 seed 반영을 코어에 요청한다(11절 R-V1과 같은 경로).
+
+### 11.3 상태 전이
+
+새 함수 `video.enforce_storyboard_transition()`(1200:1989-2012). 기존 함수의 표를 고치지 않으려고 따로 만들었다. 허용 쌍 외에는 22023이며 service_role에도 적용된다.
+
+| 테이블.열 | 현재 → 허용 | 누가 | 부수 효과 |
+|---|---|---|---|
+| storyboard_templates.status | active↔retired | 운영자 seed | - |
+| storyboards.status | draft→ready/archived, ready→draft/rendering/archived, rendering→rendered/ready, rendered→ready/rendering/archived. archived는 끝(제안) | 서버(생성 결과·스냅샷·렌더 종료), 사용자 RPC(rendered→ready) | 전체 다시 생성은 Route Handler가 ready→draft 후 잡. rendered에서 장면을 고치면 RPC가 ready로 돌린다 |
+| scene_assets.status | ready→superseded | 서버, save_scene(내레이션 문구 변경 시) | 이전 소재 보관(되돌리기 P1) |
+| storyboard_cuts.status | proposed→rendering, rendering→ready/failed, failed→rendering, ready→rendering | 서버 | 렌더가 끝나면 워커가 컷 ready/failed, 스토리보드 rendered/ready, outputs 행을 service_role로 쓴다 |
+
+편집 잠금: rendering 중 사용자 수정·삭제는 VD020, archived 수정은 VD005(`guard_storyboard_edit` 1200:2198-2216, RPC 공통 검사 `lock_storyboard_for_edit` 1200:2489-2522).
+
+### 11.4 RLS와 GRANT (1200:2443-2485)
+
+| 테이블 | SELECT | INSERT | UPDATE | DELETE | GRANT(authenticated) |
+|---|---|---|---|---|---|
+| storyboard_templates | `exists(current_org_ids() o where org_has_feature(o,'storyboard'))` | 없음 | 없음 | 없음 | select + guard |
+| storyboards | 멤버 + 엔타이틀먼트 | owner/admin/member + 엔타이틀먼트 + `org_has_feature(org,'storyboard')` | 같은 역할, using/with check | owner/admin | insert 열(org_id, client_id, title, format, aspect, target_seconds, template_code, topic, languages, voice_provider, voice_id), update 열(client_id, title, topic, languages), delete |
+| scenes | 멤버 + 엔타이틀먼트 | 없음(RPC) | 없음(RPC) | 없음(RPC) | select + guard |
+| scene_assets, storyboard_cuts, storyboard_snapshots | 멤버 + 엔타이틀먼트 | 없음(서버) | 없음 | 없음 | select + guard |
+
+사용자 RPC는 SECURITY DEFINER이고 `is_service_caller` 또는 `has_org_role(owner/admin/member)`로 판정한다(viewer 불가). 서버 RPC는 `is_privileged_session`이 아니면 42501이고 authenticated EXECUTE를 회수했다. 12.8절(1200:2978-2986)이 이 절 함수의 PUBLIC EXECUTE를 회수한다.
+
+### 11.5 RPC와 오류 코드
+
+| 함수 | 호출자 | 핵심 규칙 | 오류 |
+|---|---|---|---|
+| `save_scene(p_scene_id, p_revision, p_patch)` (1200:2527-2580) | authenticated | 장면 revision 일치. 키는 chapter, duration_ms, narration, on_screen_text, visual_prompt, motion_preset, music_cue, sources. 내레이션이 바뀌면 그 장면 ready 내레이션 소재 superseded | P0002, 42501, VD009, VD020, VD005, VD409, 22023, 23514 |
+| `reorder_scenes(p_storyboard_id, p_scene_ids, p_revision)` (1200:2582-2615) | authenticated | 스토리보드 revision 일치, 장면 id 전부. 스토리보드 revision + 1 | 위와 같음 |
+| `add_scene(p_storyboard_id, p_revision, p_ord, p_kind, p_duration_ms)` (1200:2617-2658) | authenticated | 스토리보드 revision 일치. 상한 넘으면 VD018. 앞 장면 챕터를 이어받음 | 위 + VD018 |
+| `delete_scene(p_scene_id, p_revision, p_scene_revision)` (1200:2660-2694) | authenticated | 스토리보드 revision 일치, 장면 revision은 선택. 그 장면을 포함한 proposed/failed 쇼츠 컷 삭제 | 위와 같음 |
+| `set_shorts_candidate(p_scene_id, p_value)` (1200:2696-2720) | authenticated | revision 증가 없음 | P0002, 42501, VD009, VD020, VD005 |
+| `apply_storyboard_result(p_storyboard_id, p_scenes, p_ai_run_id)` (1200:2728-2792) | service_role | draft만. 장면 수(VD018)·길이 합계 ±10%(VD017). 기존 장면과 렌더 전 컷을 지우고 새로 넣음 → ready. 감사 `storyboard.generate` | 42501, P0002, VD005, VD017, VD018, 22023 |
+| `finish_scene_asset(p_scene_id, p_kind, p_storage_path, p_lang, p_aspect, …)` (1200:2796-2859) | service_role | 같은 슬롯 이전 ready → superseded. clip은 권리 근거·메모(VD019). image 화면비 기본값 = 스토리보드 화면비 | 42501, P0002, VD019, 22023, 23514 |
+| `snapshot_storyboard(p_storyboard_id, p_cut_id)` (1200:2863-2976) | service_role | ready/rendered만. 마스터: 장면 수·길이 합계. 쇼츠: 연속·90초 이하(제안). clip 권리(VD019), image 소재(마스터는 같은 화면비). 스냅샷 1행, version + 1, 컷 rendering, 마스터면 스토리보드 rendering. 감사 `storyboard.snapshot` | 42501, P0002, VD005, VD017, VD018, VD019, 22023 |
+
+새 SQLSTATE: VD017 장면 길이 합계 범위 밖, VD018 장면 수 범위 밖, VD019 clip 권리 근거 없음, VD020 렌더 중 편집, VD021 쇼츠 컷 한도 초과, VD409 낙관적 동시성 충돌. 길이 합계와 장면 수 하한은 편집 중에는 막지 않고(게이지 표시만) 생성 결과 반영과 렌더 스냅샷에서 막는다.
+
+잡: `core.jobs`에 queue·kind CHECK가 없어 DB 변경이 없다. 렌더 루트 잡은 `video.orchestrate` 큐, FFmpeg 단계(`media.scene_clip`, `media.scene_concat`, `media.bgm_mix`)는 `video.media.cpu` 자식 잡이다(04장 새 장).
+
+### 11.6 인덱스
+
+| 인덱스 | 조회 패턴 |
+|---|---|
+| `storyboards_org_idx (org_id, created_at desc)`, `storyboards_status_idx (org_id, status)`, `storyboards_client_idx` | 목록, 렌더 중 수, 고객별 |
+| `scenes_ord_uniq (storyboard_id, ord)` | 편집기 장면 목록 |
+| `scenes_shorts_idx (storyboard_id, ord) where shorts_candidate` | 쇼츠 추출 후보 |
+| `scenes_source_warn_idx (storyboard_id) where source_required and sources='[]'` | 출처 경고 수 |
+| `scene_assets_one_ready_uniq`, `scene_assets_scene_idx`, `scene_assets_reuse_idx (org_id, created_at desc) where ready image` | 현재 소재, 이력, 이미지 재사용 고르기 |
+| `storyboard_cuts_one_master`, `storyboard_cuts_ord_uniq` | 컷 목록 |
+| `storyboard_snapshots_version_uniq`, `storyboard_snapshots_cut_idx` | 버전 열람(`GET …/snapshots/[version]`) |
+| `outputs_storyboard_cut_lang_uniq (storyboard_cut_id, language)` | 컷 언어판 |
+
+규모(제안): 롱폼 1편 40~80장면, 장면당 소재 이력 5행 이하. 스냅샷은 렌더당 1행, 240장면 기준 약 0.5MB.
+
+### 11.7 모놀리스 차이
+
+| 항목 | 모듈러 | 모놀리스 |
+|---|---|---|
+| 위치 | `1200_video.sql` 12절 | `0002_video_domain.sql` 끝 12절(같은 변환 규칙 (a)~(d)) |
+| 스키마 | `video` | `public` |
+| 기본 권한 | default privileges | 새 테이블 6개 `revoke all … from public, anon, authenticated` 후 service_role GRANT(0002 12.5절 앞 블록) |
+| 템플릿 5종, 플랜 키 | 12.9절 | `seed.sql` 끝(seed.sql:98-148). 위쪽 플랜 upsert가 features를 덮어써서 그 뒤에 병합 |
+| 함수 EXECUTE 정리 | `in schema video` | `in schema public` |
+| 이름 충돌 | 없음 | `public`에 같은 이름 없음(검사 OK) |
+
+검증(2026-10-18): 체커 `--vector mod`(0000~0009 + seed + 1200, 1200 2회 연속) OK, `--vector mono`(0001 + 0002 + seed, 0002·seed 2회 연속) OK. 행동 검사 56/56(모듈러·모놀리스 각각, PGlite): VD009 롱폼 한도, 23514 프리셋, 상태 직접 수정 42501, 장면 직접 INSERT 42501, 서버 RPC 사용자 호출 42501, VD018, VD017, VD005, VD409(장면·스토리보드), 다른 조직 42501·0행, VD019, 경로 CHECK, 소재 superseded, VD020(RPC·직접 수정), 스냅샷 수정 42501, 잘못된 전이 22023, outputs 소유 2개 23514, 쇼츠 비연속 22023, VD021(Basic 3편), rendered→ready.
+
+### 11.8 기존 Track D 테이블 처리 (D-34)
+
+| 테이블 | 지금 | 대체 | 이전 경로(VD-F-142, 개발 착수 전 정리 작업) |
+|---|---|---|---|
+| longform_projects | 지우지 않음, 주석 "Track S로 대체, 신규 생성 안 함, 삭제는 D-34" | storyboards(format longform) | title·topic·languages 복사, target_minutes×60을 가장 가까운 프리셋으로, template_code는 category로 정함(knowledge→knowledge_explainer, radio→story_radio, viral_remake→knowledge_explainer, 제안), status는 draft |
+| longform_sections | 지우지 않음, 주석 | scenes | position→ord, heading→chapter, script(언어별)의 storyline 언어 문구→narration, image_prompt→visual_prompt, image_path는 서버가 scene_assets로 옮김 |
+| longform_highlights | 지우지 않음, 주석 | storyboard_cuts(kind short) | 시간 구간이라 장면 단위로 바로 옮길 수 없다. 이전하지 않고 기존 출력물만 남긴다(제안) |
+
+정책·RPC는 그대로 두어 기존 행 읽기와 진행 중 작업이 깨지지 않는다. 새 코드는 Track D 경로에 넣지 않는다. 삭제 시점은 D-34(이전 완료 확인 뒤)이며 그때 outputs의 longform_id·highlight_id와 CHECK도 함께 정리한다.

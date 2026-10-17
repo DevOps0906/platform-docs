@@ -70,7 +70,7 @@ V2 적용 후 개발 폴더 `supabase/migrations/`(파일 이름 규칙은 V2_RU
 | V1 작업 | 작업명(06장) | 변경 | 내용 |
 |---|---|---|---|
 | VID-06-058 | 클립 위험 동의 화면·API(고지문 `clip-2026-10-v1`, 체크 3개 +… | 축소 | 동의 기록은 `recordConsent(video.clip_risk)`, 고지문은 `policy_documents`. 화면은 제품 |
-| VID-06-035 | 마케팅 랜딩·요금·약관 페이지(frontend-design 절차, MASTER.md… | 축소 | 약관 본문은 `policy_documents` seed |
+| VID-06-035 | 랜딩: 6개 트랙 소개, 히어로 레인 F(플리) | 축소 | 약관 본문은 `policy_documents` seed |
 | VID-06-021 | 업로드 API: 문구 삽입, compliance 게이트(규칙+LLM), WARN 확… | 연결 | 표시 문구 필요 여부를 `requiredLabels`로 판정 |
 
 변경 종류(축소·대체·연결)의 뜻과 06장 반영 방법은 V2_RULES 4장. 바뀐 V1 작업의 선행 조건에 해당 V2 적용 작업 ID를 더합니다.

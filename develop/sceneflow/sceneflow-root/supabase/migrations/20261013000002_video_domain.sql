@@ -1871,3 +1871,1075 @@ grant execute on function public.org_has_feature(uuid, text, text) to authentica
 grant execute on function public.get_public_landing(text) to anon, authenticated, service_role;
 grant execute on function public.get_public_linkinbio(text) to anon, authenticated, service_role;
 grant execute on all functions in schema public to service_role;
+
+-- =====================================================================
+-- 2026-10-18 스토리보드 트랙(Track S)
+-- 12. 스토리보드 트랙 (확정 SF-1: Track C Mode1 + Track D → Track S, VD-F-130~142)
+--   [모놀리스] 1200_video.sql 12절을 머리말 (a)~(d) 규칙으로 변환했다. 12.9절 데이터(템플릿 5종, 플랜 키)는
+--   11절과 같이 seed.sql 끝으로 옮겼다(seed 의 플랜 upsert 가 features 를 덮어쓰므로).
+--   기획: docs/products/sceneflow/05_DATA_MODEL.md 11장, 01_PRD.md 10장. 위쪽 절은 고치지 않았다(다른 문서가 줄 번호로 인용).
+--   기존 테이블 변경(outputs 소유 FK·CHECK, productions/sources track 표시, longform 주석, 플랜 키)은 이 절의 ALTER/UPDATE 로만 한다.
+--   새 테이블 6개
+--     storyboard_templates  운영자 seed(5종). 사용자 쓰기 없음 + guard
+--     storyboards           사용자 콘텐츠(컬럼 단위 GRANT + with check). 상태·버전·revision 은 서버/RPC 만
+--     scenes                사용자 RPC(save_scene 등)로만 쓴다. 쓰기 정책 없음 + guard
+--     scene_assets, storyboard_cuts, storyboard_snapshots  서버(service_role)만. 쓰기 정책 없음 + guard
+--   사용자 정의 SQLSTATE 추가: VD017 장면 길이 합계 범위 밖(목표 ±10%), VD018 장면 수 범위 밖, VD019 clip 소재 권리 근거 없음,
+--     VD020 렌더 중 편집, VD021 쇼츠 컷 한도 초과, VD409 낙관적 동시성 충돌(revision 불일치).
+--   길이 합계(VD017)와 장면 수 하한(VD018)은 편집 중에는 막지 않는다(편집기 게이지가 표시). 그래프 결과 반영과 렌더 스냅샷에서 막는다.
+--   크레딧 차감·환불은 이 절에서 하지 않는다(Route Handler/워커가 core RPC 호출).
+--   잡은 public.jobs 를 그대로 쓴다(queue·kind CHECK 없음): 렌더 루트 잡 video.orchestrate 큐, FFmpeg 단계
+--   media.scene_clip / media.scene_concat / media.bgm_mix 는 video.media.cpu 자식 잡(04장 새 장). storyboards.root_job_id 가 루트.
+--   장면 소재 파일은 video-media 버킷 <org_id>/video/scenes/<scene_id>/<uuid>.<ext>. 사용자 업로드는 서버가 검사 뒤 이 경로로 옮긴다(제안).
+-- =====================================================================
+
+-- 12.1 헬퍼 ------------------------------------------------------------
+
+-- 형식·목표 길이별 장면 수 범위. 쇼츠 3~12, 롱폼 분당 3~8(최대 240).
+create or replace function public.scene_count_limits(p_format text, p_target_seconds integer,
+                                                    out min_scenes integer, out max_scenes integer)
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when p_format = 'shorts' then 3 else ceil(p_target_seconds / 60.0 * 3)::integer end,
+         case when p_format = 'shorts' then 12 else least(240, floor(p_target_seconds / 60.0 * 8)::integer) end;
+$$;
+
+-- 장면 출처 배열 검사(CHECK 용). [{title(1~200자, 필수), url(http/https, 선택), note(300자 이하, 선택)}], 최대 5개.
+create or replace function public.valid_scene_sources(p jsonb)
+returns boolean
+language sql
+immutable
+set search_path = ''
+as $$
+  select case when p is null or jsonb_typeof(p) <> 'array' then false
+              when jsonb_array_length(p) > 5 then false
+              else not exists (
+                select 1 from jsonb_array_elements(p) as e(item)
+                where case when jsonb_typeof(e.item) <> 'object' then true
+                           else jsonb_typeof(e.item -> 'title') is distinct from 'string'
+                             or char_length(btrim(e.item ->> 'title')) not between 1 and 200
+                             or (coalesce(jsonb_typeof(e.item -> 'url'), 'null') <> 'null'
+                                 and (jsonb_typeof(e.item -> 'url') <> 'string'
+                                      or (e.item ->> 'url') !~* '^https?://'
+                                      or char_length(e.item ->> 'url') > 2000))
+                             or (coalesce(jsonb_typeof(e.item -> 'note'), 'null') <> 'null'
+                                 and (jsonb_typeof(e.item -> 'note') <> 'string'
+                                      or char_length(e.item ->> 'note') > 300))
+                             or exists (select 1 from jsonb_object_keys(e.item) as k(key)
+                                        where k.key not in ('title', 'url', 'note'))
+                      end)
+         end;
+$$;
+
+-- 새 테이블 상태 전이(기존 enforce_status_transition 과 같은 방식, 표만 다름). service_role 쓰기에도 적용된다.
+create or replace function public.enforce_storyboard_transition()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+declare
+  v_old text := to_jsonb(old) ->> 'status';
+  v_new text := to_jsonb(new) ->> 'status';
+  v_map constant jsonb := '{
+    "storyboard_templates.status": {"active":["retired"], "retired":["active"]},
+    "storyboards.status":          {"draft":["ready","archived"], "ready":["draft","rendering","archived"], "rendering":["rendered","ready"], "rendered":["ready","rendering","archived"]},
+    "scene_assets.status":         {"ready":["superseded"]},
+    "storyboard_cuts.status":      {"proposed":["rendering"], "rendering":["ready","failed"], "failed":["rendering"], "ready":["rendering"]}
+  }'::jsonb;
+begin
+  if v_old is distinct from v_new then
+    if not coalesce((v_map -> (tg_table_name || '.status') -> v_old) ? v_new, false) then
+      raise exception 'video: invalid %.status transition % -> %', tg_table_name, v_old, v_new
+        using errcode = '22023';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- 12.2 테이블 ----------------------------------------------------------
+
+-- 12.2.1 storyboard_templates: 스토리보드 템플릿(VD-F-141). 플랫폼 공용, 운영자 seed 만(12.9절).
+--   beats: [{"key","label","share"(목표 길이 비율, 합 1), "kind"(scene_kind 기본값), "hint"}]
+create table if not exists public.storyboard_templates (
+  code                  text primary key constraint storyboard_templates_code_check check (code ~ '^[a-z][a-z0-9_]{2,39}$'),
+  label                 text not null constraint storyboard_templates_label_check check (length(btrim(label)) between 1 and 60),
+  beats                 jsonb not null default '[]'::jsonb,
+  default_scene_seconds integer not null default 6 constraint storyboard_templates_seconds_check check (default_scene_seconds between 2 and 30),
+  status                text not null default 'active' constraint storyboard_templates_status_check check (status in ('active', 'retired')),
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now(),
+  constraint storyboard_templates_beats_check check (jsonb_typeof(beats) = 'array' and jsonb_array_length(beats) between 1 and 20)
+);
+
+-- 12.2.2 storyboards: 스토리보드 프로젝트 1건(VD-F-130). 롱폼 마스터 컷 + 쇼츠 컷 + 언어판의 기준.
+--   version  = 마지막 렌더 스냅샷 번호(snapshot_storyboard 가 올린다, 0 = 렌더 없음)
+--   revision = 장면 구성(추가·삭제·순서·전체 생성) 변경 번호. 장면 내용 충돌은 scenes.revision 으로 본다.
+create table if not exists public.storyboards (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  client_id        uuid references public.clients(id) on delete set null,
+  title            text not null constraint storyboards_title_check check (length(btrim(title)) between 1 and 200),
+  format           text not null constraint storyboards_format_check check (format in ('shorts', 'longform')),
+  aspect           text not null constraint storyboards_aspect_check check (aspect in ('9:16', '16:9')),
+  target_seconds   integer not null,
+  template_code    text not null references public.storyboard_templates(code),
+  topic            text constraint storyboards_topic_check check (topic is null or length(topic) <= 300),
+  script_ai_run_id uuid references public.ai_runs(id) on delete set null,
+  languages        text[] not null default array['KO']::text[],
+  -- 내레이션 목소리 고정(같은 목소리 규칙, 02장 5.3절). 장면 다시 만들기는 이 값을 따른다. 둘 다 null 이거나 둘 다 값.
+  voice_provider   text constraint storyboards_voice_provider_check check (voice_provider in ('elevenlabs', 'oss')),
+  voice_id         text constraint storyboards_voice_id_check check (voice_id is null or length(btrim(voice_id)) between 1 and 120),
+  status           text not null default 'draft'
+                   constraint storyboards_status_check check (status in ('draft', 'ready', 'rendering', 'rendered', 'archived')),
+  version          integer not null default 0 constraint storyboards_version_check check (version >= 0),
+  revision         integer not null default 1 constraint storyboards_revision_check check (revision >= 1),
+  root_job_id      uuid references public.jobs(id) on delete set null,
+  last_error       text,
+  created_by       uuid default auth.uid(),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  -- 형식 프리셋: 쇼츠 15/30/45/60/90초(9:16), 롱폼 3/5/10/20/30/60분(16:9)
+  constraint storyboards_preset_check check (
+       (format = 'shorts'   and aspect = '9:16' and target_seconds in (15, 30, 45, 60, 90))
+    or (format = 'longform' and aspect = '16:9' and target_seconds in (180, 300, 600, 1200, 1800, 3600))),
+  constraint storyboards_languages_check check (cardinality(languages) between 1 and 3 and languages <@ array['KO', 'JA', 'EN']::text[]),
+  constraint storyboards_voice_pair_check check ((voice_provider is null) = (voice_id is null))
+);
+create index if not exists storyboards_org_idx on public.storyboards (org_id, created_at desc);
+create index if not exists storyboards_status_idx on public.storyboards (org_id, status);
+create index if not exists storyboards_client_idx on public.storyboards (client_id) where client_id is not null;
+
+-- 12.2.3 scenes: 장면(VD-F-132). ord 1..240, 재정렬을 위해 unique 는 deferrable.
+--   revision 은 내용 컬럼이 바뀔 때만 트리거가 1 올린다(ord, shorts_candidate 변경은 올리지 않음).
+--   source_required 는 그래프가 사실 주장 장면에 표시한다(서버만). sources 가 비어 있으면 출처 경고(VD-F-138).
+create table if not exists public.scenes (
+  id               uuid primary key default gen_random_uuid(),
+  org_id           uuid not null references public.organizations(id) on delete cascade,
+  storyboard_id    uuid not null references public.storyboards(id) on delete cascade,
+  ord              integer not null constraint scenes_ord_check check (ord between 1 and 240),
+  chapter          text constraint scenes_chapter_check check (chapter is null or length(btrim(chapter)) between 1 and 80),
+  kind             text not null default 'image' constraint scenes_kind_check check (kind in ('image', 'clip', 'text_card', 'title')),
+  duration_ms      integer not null default 6000 constraint scenes_duration_check check (duration_ms between 1000 and 60000),
+  narration        text constraint scenes_narration_check check (narration is null or char_length(narration) <= 600),
+  on_screen_text   text constraint scenes_on_screen_text_check check (on_screen_text is null or char_length(on_screen_text) <= 160),
+  visual_prompt    text constraint scenes_visual_prompt_check check (visual_prompt is null or char_length(visual_prompt) <= 600),
+  motion_preset    text not null default 'static'
+                   constraint scenes_motion_check check (motion_preset in ('zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'static')),
+  music_cue        text constraint scenes_music_cue_check check (music_cue is null or music_cue in ('intro', 'build', 'drop', 'calm', 'outro')),
+  shorts_candidate boolean not null default false,
+  sources          jsonb not null default '[]'::jsonb constraint scenes_sources_check check (public.valid_scene_sources(sources)),
+  source_required  boolean not null default false,
+  revision         integer not null default 1 constraint scenes_revision_check check (revision >= 1),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  constraint scenes_ord_uniq unique (storyboard_id, ord) deferrable initially deferred
+);
+create index if not exists scenes_shorts_idx on public.scenes (storyboard_id, ord) where shorts_candidate;
+create index if not exists scenes_source_warn_idx on public.scenes (storyboard_id) where source_required and sources = '[]'::jsonb;
+
+-- 12.2.4 scene_assets: 장면 소재(VD-F-133, 134). 다시 만들면 이전 소재는 superseded 로 남긴다(되돌리기 P1).
+--   (scene, kind, lang, aspect) 마다 ready 1개. lang 은 narration 만. aspect 는 image 필수(쇼츠용 9:16 세로 이미지를 따로 보관),
+--   clip 은 선택, narration 은 없음. clip 은 rights_basis + rights_note 필수(VD019, 표는 23514).
+create table if not exists public.scene_assets (
+  id                   uuid primary key default gen_random_uuid(),
+  org_id               uuid not null references public.organizations(id) on delete cascade,
+  scene_id             uuid not null references public.scenes(id) on delete cascade,
+  kind                 text not null constraint scene_assets_kind_check check (kind in ('image', 'narration', 'clip')),
+  lang                 text constraint scene_assets_lang_check check (lang in ('KO', 'JA', 'EN')),
+  aspect               text constraint scene_assets_aspect_check check (aspect in ('16:9', '9:16')),
+  status               text not null default 'ready' constraint scene_assets_status_check check (status in ('ready', 'superseded')),
+  storage_path         text not null,
+  rights_basis         text constraint scene_assets_rights_check check (rights_basis in ('public_free', 'creative_commons', 'licensed', 'own')),
+  rights_note          text constraint scene_assets_rights_note_check check (rights_note is null or char_length(rights_note) <= 500),
+  ai_generated         boolean not null default true,
+  reused_from_asset_id uuid references public.scene_assets(id) on delete set null,
+  meta                 jsonb not null default '{}'::jsonb,  -- provider, model, voice_id, voice_job_id, duration_ms, width, height
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now(),
+  constraint scene_assets_lang_kind_check check ((kind = 'narration') = (lang is not null)),
+  constraint scene_assets_aspect_kind_check check (
+    (kind = 'image' and aspect is not null) or kind = 'clip' or (kind = 'narration' and aspect is null)),
+  constraint scene_assets_clip_rights_check check (
+    kind <> 'clip' or (rights_basis is not null and rights_note is not null and length(btrim(rights_note)) >= 2 and not ai_generated)),
+  constraint scene_assets_path_check check (
+    split_part(storage_path, '/', 1) = org_id::text
+    and storage_path ~ '^[0-9a-f-]{36}/video/scenes/[0-9a-f-]{36}/[0-9a-f-]{36}\.(png|jpg|jpeg|webp|mp3|wav|m4a|mp4|webm|mov)$'),
+  constraint scene_assets_meta_check check (jsonb_typeof(meta) = 'object' and pg_column_size(meta) <= 4096)
+);
+create unique index if not exists scene_assets_one_ready_uniq on public.scene_assets (scene_id, kind, (coalesce(lang, '')), (coalesce(aspect, '')))
+  where status = 'ready';
+create index if not exists scene_assets_scene_idx on public.scene_assets (scene_id, created_at desc);
+create index if not exists scene_assets_reuse_idx on public.scene_assets (org_id, created_at desc) where status = 'ready' and kind = 'image';
+
+-- 12.2.5 storyboard_cuts: 렌더 단위. master 1개(스토리보드 화면비) + short 최대 10개(9:16, 연속 장면, VD-F-137).
+--   상태는 렌더 진행. 출력물은 public.outputs.storyboard_cut_id 로 이어진다.
+create table if not exists public.storyboard_cuts (
+  id            uuid primary key default gen_random_uuid(),
+  org_id        uuid not null references public.organizations(id) on delete cascade,
+  storyboard_id uuid not null references public.storyboards(id) on delete cascade,
+  kind          text not null constraint storyboard_cuts_kind_check check (kind in ('master', 'short')),
+  aspect        text not null constraint storyboard_cuts_aspect_check check (aspect in ('9:16', '16:9')),
+  scene_ids     uuid[] not null constraint storyboard_cuts_scene_ids_check check (cardinality(scene_ids) between 1 and 240),
+  hook_text     text constraint storyboard_cuts_hook_check check (hook_text is null or char_length(hook_text) <= 100),
+  status        text not null default 'proposed'
+                constraint storyboard_cuts_status_check check (status in ('proposed', 'rendering', 'ready', 'failed')),
+  ord           integer not null default 0 constraint storyboard_cuts_ord_check check (ord between 0 and 10),
+  job_id        uuid references public.jobs(id) on delete set null,
+  last_error    text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  constraint storyboard_cuts_kind_shape_check check (
+       (kind = 'master' and ord = 0 and hook_text is null)
+    or (kind = 'short'  and aspect = '9:16' and ord between 1 and 10 and cardinality(scene_ids) <= 12)),
+  constraint storyboard_cuts_ord_uniq unique (storyboard_id, kind, ord)
+);
+create unique index if not exists storyboard_cuts_one_master on public.storyboard_cuts (storyboard_id) where kind = 'master';
+
+-- 12.2.6 storyboard_snapshots: 렌더마다 1행(VD-F-139). 읽기 전용(UPDATE 는 service 도 거부). org_id 는 RLS 용.
+create table if not exists public.storyboard_snapshots (
+  id            uuid primary key default gen_random_uuid(),
+  org_id        uuid not null references public.organizations(id) on delete cascade,
+  storyboard_id uuid not null references public.storyboards(id) on delete cascade,
+  cut_id        uuid not null references public.storyboard_cuts(id) on delete cascade,
+  version       integer not null constraint storyboard_snapshots_version_check check (version >= 1),
+  snapshot      jsonb not null,
+  created_at    timestamptz not null default now(),
+  constraint storyboard_snapshots_version_uniq unique (storyboard_id, version),
+  constraint storyboard_snapshots_shape_check check (jsonb_typeof(snapshot) = 'object' and pg_column_size(snapshot) <= 2097152)
+);
+create index if not exists storyboard_snapshots_cut_idx on public.storyboard_snapshots (cut_id, version desc);
+
+-- 12.2.7 기존 테이블 변경
+-- outputs: 스토리보드 컷 출력물. "소유 엔티티 정확히 1개" CHECK 에 storyboard_cut_id 를 넣는다.
+--   kind 는 기존 값을 쓴다: 쇼츠 컷과 쇼츠 형식 마스터 = short, 롱폼 마스터 = longform.
+alter table public.outputs add column if not exists storyboard_cut_id uuid references public.storyboard_cuts(id) on delete cascade;
+alter table public.outputs drop constraint if exists outputs_owner_check;
+alter table public.outputs add constraint outputs_owner_check
+  check (num_nonnulls(production_id, longform_id, highlight_id, music_track_id, playlist_id, storyboard_cut_id) = 1);
+alter table public.outputs drop constraint if exists outputs_kind_owner_check;
+alter table public.outputs add constraint outputs_kind_owner_check check (
+       (kind = 'short'      and production_id  is not null)
+    or (kind = 'longform'   and longform_id    is not null)
+    or (kind = 'highlight'  and highlight_id   is not null)
+    or (kind = 'music_loop' and music_track_id is not null)
+    or (kind = 'playlist'   and playlist_id    is not null)
+    or (kind in ('short', 'longform') and storyboard_cut_id is not null));
+create unique index if not exists outputs_storyboard_cut_lang_uniq on public.outputs (storyboard_cut_id, language) where storyboard_cut_id is not null;
+
+-- productions/sources.track: 값 C 는 기존 행 호환으로 남기고 신규 생성 금지만 표시한다(제안, DB 차단 없음).
+--   신규 Track S 는 productions 를 쓰지 않고 storyboards 를 쓴다. Track C Mode2(원본 재편집)는 Track A 옵션으로 흡수(SF-1).
+comment on constraint productions_track_check on public.productions is
+  '2026-10-18 SF-1: C 는 신규 생성 금지(기존 행 호환으로 값 유지, 제안). Track S 는 public.storyboards, C Mode2 는 Track A 옵션';
+comment on constraint sources_track_check on public.sources is
+  '2026-10-18 SF-1: C 는 신규 생성 금지(기존 행 호환으로 값 유지, 제안). C Mode2 원본은 Track A 로 소싱';
+-- 기존 Track D 테이블은 지우지 않는다. 데이터 이전은 VD-F-142, 삭제 시점은 D-34.
+comment on table public.longform_projects is 'Track D 롱폼. 2026-10-18 Track S(public.storyboards)로 대체, 신규 생성 안 함. 삭제는 D-34';
+comment on table public.longform_sections is 'Track D 섹션. 2026-10-18 Track S(public.scenes)로 대체. 삭제는 D-34';
+comment on table public.longform_highlights is 'Track D OSMU. 2026-10-18 Track S(public.storyboard_cuts kind=short)로 대체(VD-F-137이 VD-F-041 대체). 삭제는 D-34';
+
+-- 12.3 트리거 함수 ------------------------------------------------------
+
+-- 스토리보드 사용자 편집 잠금: rendering 중 수정·삭제 VD020, archived 수정 VD005. service 호출은 통과.
+create or replace function public.guard_storyboard_edit()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if public.is_service_caller() then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
+  if old.status = 'rendering' then
+    raise exception 'video: storyboard is rendering' using errcode = 'VD020';
+  end if;
+  if tg_op = 'UPDATE' and old.status = 'archived' then
+    raise exception 'video: storyboard is archived' using errcode = 'VD005';
+  end if;
+  return case when tg_op = 'DELETE' then old else new end;
+end;
+$$;
+
+-- 스토리보드 플랜 한도: features.storyboard, 롱폼 목표 길이 <= storyboard_max_minutes 분(VD009). 모든 호출자에 적용.
+create or replace function public.enforce_storyboard_limits()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_f jsonb;
+begin
+  v_f := public.plan_features(new.org_id);
+  if not coalesce(case when jsonb_typeof(v_f -> 'storyboard') = 'boolean' then (v_f ->> 'storyboard')::boolean end, false) then
+    raise exception 'video: plan does not include storyboards' using errcode = 'VD009';
+  end if;
+  if new.format = 'longform'
+     and new.target_seconds > coalesce((v_f ->> 'storyboard_max_minutes')::integer, 0) * 60 then
+    raise exception 'video: longform storyboard over plan limit (% min)', coalesce((v_f ->> 'storyboard_max_minutes')::integer, 0)
+      using errcode = 'VD009';
+  end if;
+  return new;
+end;
+$$;
+
+-- 컷의 장면 목록 검사: 모두 그 스토리보드 장면, 중복 없음, short 는 ord 가 연속(목록 순서대로 1씩 증가).
+create or replace function public.cut_scenes_valid(p_storyboard_id uuid, p_kind text, p_scene_ids uuid[])
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_cnt  integer;
+  v_ords integer[];
+begin
+  if coalesce(cardinality(p_scene_ids), 0) = 0
+     or (select count(distinct x) from unnest(p_scene_ids) as u(x)) <> cardinality(p_scene_ids) then
+    return false;
+  end if;
+  select count(*), array_agg(s.ord order by u.n) into v_cnt, v_ords
+  from unnest(p_scene_ids) with ordinality as u(id, n)
+  join public.scenes s on s.id = u.id and s.storyboard_id = p_storyboard_id;
+  if v_cnt <> cardinality(p_scene_ids) then
+    return false;
+  end if;
+  if p_kind = 'short' then
+    for i in 2 .. v_cnt loop
+      if v_ords[i] <> v_ords[1] + i - 1 then
+        return false;
+      end if;
+    end loop;
+  end if;
+  return true;
+end;
+$$;
+
+-- 참조 무결성(VD002)과 컷 한도(VD021). 모든 호출자에 적용한다.
+create or replace function public.check_storyboard_refs()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_org  uuid;
+  v_kind text;
+  v_cnt  integer;
+  v_max  integer;
+begin
+  if tg_table_name = 'storyboards' then
+    if new.client_id is not null then
+      select org_id into v_org from public.clients where id = new.client_id;
+      if v_org is distinct from new.org_id then raise exception 'video: client org mismatch' using errcode = 'VD002'; end if;
+    end if;
+    if new.script_ai_run_id is not null then
+      select org_id into v_org from public.ai_runs where id = new.script_ai_run_id;
+      if v_org is distinct from new.org_id then raise exception 'video: script run org mismatch' using errcode = 'VD002'; end if;
+    end if;
+    if tg_op = 'UPDATE' and new.org_id is distinct from old.org_id then
+      raise exception 'video: storyboard org cannot change' using errcode = '22023';
+    end if;
+
+  elsif tg_table_name = 'scenes' then
+    select org_id into v_org from public.storyboards where id = new.storyboard_id;
+    if v_org is distinct from new.org_id then raise exception 'video: storyboard org mismatch' using errcode = 'VD002'; end if;
+
+  elsif tg_table_name = 'scene_assets' then
+    select org_id into v_org from public.scenes where id = new.scene_id;
+    if v_org is distinct from new.org_id then raise exception 'video: scene org mismatch' using errcode = 'VD002'; end if;
+    if new.reused_from_asset_id is not null then
+      select org_id, kind into v_org, v_kind from public.scene_assets where id = new.reused_from_asset_id;
+      if v_org is distinct from new.org_id then raise exception 'video: reused asset org mismatch' using errcode = 'VD002'; end if;
+      if v_kind <> 'image' or new.kind <> 'image' then
+        raise exception 'video: only images can be reused' using errcode = '22023';
+      end if;
+    end if;
+
+  elsif tg_table_name = 'storyboard_cuts' then
+    select org_id into v_org from public.storyboards where id = new.storyboard_id;
+    if v_org is distinct from new.org_id then raise exception 'video: storyboard org mismatch' using errcode = 'VD002'; end if;
+    if tg_op = 'INSERT' or new.scene_ids is distinct from old.scene_ids or new.kind is distinct from old.kind then
+      if not public.cut_scenes_valid(new.storyboard_id, new.kind, new.scene_ids) then
+        raise exception 'video: cut scenes must be distinct % scenes of the storyboard',
+          case when new.kind = 'short' then 'consecutive' else 'existing' end using errcode = '22023';
+      end if;
+    end if;
+    if new.kind = 'short' and (tg_op = 'INSERT' or old.kind is distinct from 'short') then
+      v_max := least(10, coalesce((public.plan_features(new.org_id) ->> 'shorts_extract_max')::integer, 0));
+      select count(*) into v_cnt from public.storyboard_cuts c
+      where c.storyboard_id = new.storyboard_id and c.kind = 'short' and c.id <> new.id;
+      if v_cnt >= v_max then
+        raise exception 'video: shorts cut limit % reached', v_max using errcode = 'VD021';
+      end if;
+    end if;
+
+  elsif tg_table_name = 'storyboard_snapshots' then
+    select org_id into v_org from public.storyboards where id = new.storyboard_id;
+    if v_org is distinct from new.org_id then raise exception 'video: storyboard org mismatch' using errcode = 'VD002'; end if;
+    if not exists (select 1 from public.storyboard_cuts c where c.id = new.cut_id and c.storyboard_id = new.storyboard_id) then
+      raise exception 'video: cut does not belong to the storyboard' using errcode = 'VD002';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+-- 장면 revision: 내용 컬럼이 바뀔 때만 1 올린다. 부모·조직 이동 금지. 모든 호출자에 적용.
+create or replace function public.scenes_before_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.storyboard_id is distinct from old.storyboard_id or new.org_id is distinct from old.org_id then
+    raise exception 'video: scene cannot move to another storyboard' using errcode = '22023';
+  end if;
+  if (new.chapter, new.kind, new.duration_ms, new.narration, new.on_screen_text, new.visual_prompt,
+      new.motion_preset, new.music_cue, new.sources, new.source_required)
+     is distinct from
+     (old.chapter, old.kind, old.duration_ms, old.narration, old.on_screen_text, old.visual_prompt,
+      old.motion_preset, old.music_cue, old.sources, old.source_required) then
+    new.revision := old.revision + 1;
+  else
+    new.revision := old.revision;
+  end if;
+  return new;
+end;
+$$;
+
+-- 렌더 스냅샷은 읽기 전용(service 포함).
+create or replace function public.storyboard_snapshots_readonly()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  raise exception 'video: storyboard snapshots are read-only' using errcode = '42501';
+end;
+$$;
+
+-- outputs 참조 무결성: 기존 check_refs 의 outputs 분기에 storyboard_cut_id 를 더한 함수.
+--   outputs_check_refs 트리거를 이 함수로 다시 건다(4절 루프가 먼저 만든 트리거를 아래 12.4에서 교체).
+create or replace function public.check_output_refs()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_org uuid;
+begin
+  select org_id into v_org from (
+    select org_id from public.productions                where id = new.production_id
+    union all select org_id from public.longform_projects  where id = new.longform_id
+    union all select org_id from public.longform_highlights where id = new.highlight_id
+    union all select org_id from public.music_tracks       where id = new.music_track_id
+    union all select org_id from public.playlists          where id = new.playlist_id
+    union all select org_id from public.storyboard_cuts    where id = new.storyboard_cut_id
+  ) s limit 1;
+  if v_org is distinct from new.org_id then raise exception 'video: output owner org mismatch' using errcode = 'VD002'; end if;
+  return new;
+end;
+$$;
+
+-- 12.4 트리거 연결 ------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array['storyboard_templates', 'storyboards', 'scenes', 'scene_assets', 'storyboard_cuts'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_set_updated_at', t);
+    execute format('create trigger %I before update on public.%I for each row execute function public.set_updated_at()', t || '_set_updated_at', t);
+  end loop;
+  -- 사용자 쓰기 정책이 없는 테이블: 이중 잠금(사용자 RPC 는 DEFINER 소유자 권한으로 통과)
+  foreach t in array array['storyboard_templates', 'scenes', 'scene_assets', 'storyboard_cuts', 'storyboard_snapshots'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_guard_write', t);
+    execute format('create trigger %I before insert or update or delete on public.%I for each row execute function public.guard_privileged_write()', t || '_guard_write', t);
+  end loop;
+  foreach t in array array['storyboard_templates', 'storyboards', 'scene_assets', 'storyboard_cuts'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_status_transition', t);
+    execute format('create trigger %I before update of status on public.%I for each row execute function public.enforce_storyboard_transition()', t || '_status_transition', t);
+  end loop;
+  foreach t in array array['storyboards', 'scenes', 'scene_assets', 'storyboard_cuts', 'storyboard_snapshots'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_check_refs', t);
+    execute format('create trigger %I before insert or update on public.%I for each row execute function public.check_storyboard_refs()', t || '_check_refs', t);
+  end loop;
+end $$;
+
+drop trigger if exists storyboards_guard_user_edit on public.storyboards;
+create trigger storyboards_guard_user_edit before update or delete on public.storyboards
+  for each row execute function public.guard_storyboard_edit();
+
+drop trigger if exists storyboards_limits on public.storyboards;
+create trigger storyboards_limits before insert or update of format, target_seconds on public.storyboards
+  for each row execute function public.enforce_storyboard_limits();
+
+drop trigger if exists scenes_before_update on public.scenes;
+create trigger scenes_before_update before update on public.scenes
+  for each row execute function public.scenes_before_update();
+
+drop trigger if exists storyboard_snapshots_readonly on public.storyboard_snapshots;
+create trigger storyboard_snapshots_readonly before update on public.storyboard_snapshots
+  for each row execute function public.storyboard_snapshots_readonly();
+
+drop trigger if exists outputs_check_refs on public.outputs;
+create trigger outputs_check_refs before insert or update on public.outputs
+  for each row execute function public.check_output_refs();
+
+-- [모놀리스] 새 도메인 테이블 기본 권한 회수 후 필요한 GRANT만 다시 준다(DB_CONVENTIONS.md 12장 (d))
+do $$
+declare t text;
+begin
+  foreach t in array array['storyboard_templates', 'storyboards', 'scenes', 'scene_assets', 'storyboard_cuts', 'storyboard_snapshots'] loop
+    execute format('revoke all on table public.%I from public, anon, authenticated', t);
+    execute format('grant all on table public.%I to service_role', t);
+  end loop;
+end $$;
+
+-- 12.5 RLS 와 GRANT -----------------------------------------------------
+alter table public.storyboard_templates enable row level security;
+alter table public.storyboards          enable row level security;
+alter table public.scenes               enable row level security;
+alter table public.scene_assets         enable row level security;
+alter table public.storyboard_cuts      enable row level security;
+alter table public.storyboard_snapshots enable row level security;
+
+-- SELECT: 같은 조직 멤버 + video 엔타이틀먼트
+do $$
+declare t text;
+begin
+  foreach t in array array['storyboards', 'scenes', 'scene_assets', 'storyboard_cuts', 'storyboard_snapshots'] loop
+    execute format('grant select on public.%I to authenticated', t);
+    execute format('drop policy if exists %I on public.%I', t || '_select', t);
+    execute format('create policy %I on public.%I for select to authenticated using (public.is_org_member(org_id) and public.has_entitlement(org_id, ''video''))', t || '_select', t);
+  end loop;
+end $$;
+
+-- storyboard_templates: 공용 데이터. 플랜에 storyboard 가 있는 조직의 멤버만 읽는다(trend_videos 와 같은 방식).
+grant select on public.storyboard_templates to authenticated;
+drop policy if exists storyboard_templates_select on public.storyboard_templates;
+create policy storyboard_templates_select on public.storyboard_templates for select to authenticated
+  using (exists (select 1 from public.current_org_ids() as o(id) where public.org_has_feature(o.id, 'storyboard')));
+
+-- storyboards: 만들기·수정 owner/admin/member(storyboard 기능 필요), 삭제 owner/admin.
+--   status, version, revision, script_ai_run_id, root_job_id, last_error 는 GRANT 에서 뺀다(서버·RPC 만).
+--   voice_provider·voice_id 는 만들 때만 사용자가 고르고, 이후 변경은 서버만(작업 도중 목소리 대체 금지).
+grant insert (org_id, client_id, title, format, aspect, target_seconds, template_code, topic, languages,
+              voice_provider, voice_id) on public.storyboards to authenticated;
+grant update (client_id, title, topic, languages) on public.storyboards to authenticated;
+grant delete on public.storyboards to authenticated;
+drop policy if exists storyboards_insert on public.storyboards;
+create policy storyboards_insert on public.storyboards for insert to authenticated
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video')
+              and public.org_has_feature(org_id, 'storyboard'));
+drop policy if exists storyboards_update on public.storyboards;
+create policy storyboards_update on public.storyboards for update to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'))
+  with check (public.has_org_role(org_id, array['owner', 'admin', 'member']) and public.has_entitlement(org_id, 'video'));
+drop policy if exists storyboards_delete on public.storyboards;
+create policy storyboards_delete on public.storyboards for delete to authenticated
+  using (public.has_org_role(org_id, array['owner', 'admin']));
+
+-- 12.6 사용자용 RPC (SECURITY DEFINER, authenticated). 호출자 판정 = is_service_caller + has_org_role ----
+
+-- 내부 공통: 스토리보드 행을 잠그고 편집 가능 여부를 확인한다(역할 42501, 기능 VD009, 렌더 중 VD020, 보관 VD005).
+--   p_revision 을 주면 스토리보드 revision 과 같아야 한다(구성 변경 RPC 의 낙관적 동시성, VD409).
+create or replace function public.lock_storyboard_for_edit(p_storyboard_id uuid, p_fn text, p_revision integer default null,
+                                                          p_check_revision boolean default false)
+returns public.storyboards
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare v_sb public.storyboards;
+begin
+  select * into v_sb from public.storyboards where id = p_storyboard_id for update;
+  if not found then
+    raise exception '%: storyboard not found', p_fn using errcode = 'P0002';
+  end if;
+  if not public.is_service_caller() and not public.has_org_role(v_sb.org_id, array['owner', 'admin', 'member']) then
+    raise exception '%: not a member', p_fn using errcode = '42501';
+  end if;
+  if not public.org_has_feature(v_sb.org_id, 'storyboard') then
+    raise exception '%: plan does not include storyboards', p_fn using errcode = 'VD009';
+  end if;
+  if v_sb.status = 'rendering' then
+    raise exception '%: storyboard is rendering', p_fn using errcode = 'VD020';
+  end if;
+  if v_sb.status = 'archived' then
+    raise exception '%: storyboard is archived', p_fn using errcode = 'VD005';
+  end if;
+  if p_check_revision and v_sb.revision is distinct from p_revision then
+    raise exception '%: storyboard revision conflict (current %)', p_fn, v_sb.revision using errcode = 'VD409';
+  end if;
+  return v_sb;
+end;
+$$;
+revoke execute on function public.lock_storyboard_for_edit(uuid, text, integer, boolean) from public, anon, authenticated;
+
+-- 장면 저장(VD-F-132). p_revision 이 현재 값과 다르면 VD409. 허용 키만 바꾼다.
+--   내레이션 문구가 바뀌면 그 장면의 ready 내레이션 소재를 superseded 로 돌린다(다시 만들기 필요).
+--   rendered 스토리보드를 고치면 ready 로 돌아간다.
+create or replace function public.save_scene(p_scene_id uuid, p_revision integer, p_patch jsonb)
+returns public.scenes
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb_id uuid;
+  v_sb    public.storyboards;
+  v_old   public.scenes;
+  v_row   public.scenes;
+begin
+  if p_patch is null or jsonb_typeof(p_patch) <> 'object' then
+    raise exception 'save_scene: patch must be an object' using errcode = '22023';
+  end if;
+  if exists (select 1 from jsonb_object_keys(p_patch) as k(key)
+             where k.key not in ('chapter', 'duration_ms', 'narration', 'on_screen_text', 'visual_prompt',
+                                 'motion_preset', 'music_cue', 'sources')) then
+    raise exception 'save_scene: unknown key in patch' using errcode = '22023';
+  end if;
+  select storyboard_id into v_sb_id from public.scenes where id = p_scene_id;
+  if v_sb_id is null then
+    raise exception 'save_scene: scene not found' using errcode = 'P0002';
+  end if;
+  v_sb := public.lock_storyboard_for_edit(v_sb_id, 'save_scene');
+  select * into v_old from public.scenes where id = p_scene_id for update;
+  if v_old.revision is distinct from p_revision then
+    raise exception 'save_scene: revision conflict (current %)', v_old.revision using errcode = 'VD409';
+  end if;
+  update public.scenes s
+     set chapter        = case when p_patch ? 'chapter'        then p_patch ->> 'chapter'                  else s.chapter end,
+         duration_ms    = case when p_patch ? 'duration_ms'    then (p_patch ->> 'duration_ms')::integer   else s.duration_ms end,
+         narration      = case when p_patch ? 'narration'      then p_patch ->> 'narration'                else s.narration end,
+         on_screen_text = case when p_patch ? 'on_screen_text' then p_patch ->> 'on_screen_text'           else s.on_screen_text end,
+         visual_prompt  = case when p_patch ? 'visual_prompt'  then p_patch ->> 'visual_prompt'            else s.visual_prompt end,
+         motion_preset  = case when p_patch ? 'motion_preset'  then p_patch ->> 'motion_preset'            else s.motion_preset end,
+         music_cue      = case when p_patch ? 'music_cue'      then p_patch ->> 'music_cue'                else s.music_cue end,
+         sources        = case when p_patch ? 'sources'        then p_patch -> 'sources'                   else s.sources end
+   where s.id = p_scene_id
+  returning * into v_row;
+  if v_row.narration is distinct from v_old.narration then
+    update public.scene_assets set status = 'superseded'
+     where scene_id = p_scene_id and kind = 'narration' and status = 'ready';
+  end if;
+  if v_sb.status = 'rendered' then
+    update public.storyboards set status = 'ready' where id = v_sb.id;
+  end if;
+  return v_row;
+end;
+$$;
+revoke execute on function public.save_scene(uuid, integer, jsonb) from public, anon;
+grant execute on function public.save_scene(uuid, integer, jsonb) to authenticated;
+
+-- 장면 순서 변경. 스토리보드의 장면 id 전부를 새 순서로 받는다. p_revision = 스토리보드 revision(다르면 VD409).
+--   스토리보드 revision 을 올려 돌려준다.
+create or replace function public.reorder_scenes(p_storyboard_id uuid, p_scene_ids uuid[], p_revision integer)
+returns public.storyboards
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb    public.storyboards;
+  v_count integer;
+begin
+  v_sb := public.lock_storyboard_for_edit(p_storyboard_id, 'reorder_scenes', p_revision, true);
+  select count(*) into v_count from public.scenes s where s.storyboard_id = p_storyboard_id;
+  if v_count = 0 or coalesce(cardinality(p_scene_ids), 0) <> v_count
+     or (select count(distinct x) from unnest(p_scene_ids) as u(x)) <> v_count
+     or exists (select 1 from unnest(p_scene_ids) as u(x)
+                where not exists (select 1 from public.scenes s where s.id = u.x and s.storyboard_id = p_storyboard_id)) then
+    raise exception 'reorder_scenes: id list does not match the storyboard scenes' using errcode = '22023';
+  end if;
+  update public.scenes s
+     set ord = o.n::integer
+    from unnest(p_scene_ids) with ordinality as o(id, n)
+   where s.id = o.id and s.storyboard_id = p_storyboard_id and s.ord <> o.n;
+  update public.storyboards
+     set revision = revision + 1,
+         status   = case when status = 'rendered' then 'ready' else status end
+   where id = p_storyboard_id
+  returning * into v_sb;
+  return v_sb;
+end;
+$$;
+revoke execute on function public.reorder_scenes(uuid, uuid[], integer) from public, anon;
+grant execute on function public.reorder_scenes(uuid, uuid[], integer) to authenticated;
+
+-- 장면 추가. p_revision = 스토리보드 revision(VD409). p_ord = 넣을 위치(1부터, null = 끝). 장면 수 상한 VD018.
+--   챕터는 바로 앞 장면 값을 이어받는다.
+create or replace function public.add_scene(p_storyboard_id uuid, p_revision integer, p_ord integer default null,
+                                           p_kind text default 'image', p_duration_ms integer default 6000)
+returns public.scenes
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb      public.storyboards;
+  v_count   integer;
+  v_max     integer;
+  v_ord     integer;
+  v_chapter text;
+  v_row     public.scenes;
+begin
+  v_sb := public.lock_storyboard_for_edit(p_storyboard_id, 'add_scene', p_revision, true);
+  select count(*) into v_count from public.scenes where storyboard_id = p_storyboard_id;
+  select l.max_scenes into v_max from public.scene_count_limits(v_sb.format, v_sb.target_seconds) as l;
+  if v_count >= v_max then
+    raise exception 'add_scene: scene limit % reached', v_max using errcode = 'VD018';
+  end if;
+  v_ord := coalesce(p_ord, v_count + 1);
+  if v_ord < 1 or v_ord > v_count + 1 then
+    raise exception 'add_scene: position out of range' using errcode = '22023';
+  end if;
+  select chapter into v_chapter from public.scenes where storyboard_id = p_storyboard_id and ord = v_ord - 1;
+  update public.scenes set ord = ord + 1 where storyboard_id = p_storyboard_id and ord >= v_ord;
+  insert into public.scenes (org_id, storyboard_id, ord, chapter, kind, duration_ms)
+  values (v_sb.org_id, p_storyboard_id, v_ord, v_chapter, coalesce(p_kind, 'image'), coalesce(p_duration_ms, 6000))
+  returning * into v_row;
+  update public.storyboards
+     set revision = revision + 1,
+         status   = case when status = 'rendered' then 'ready' else status end
+   where id = p_storyboard_id;
+  return v_row;
+end;
+$$;
+revoke execute on function public.add_scene(uuid, integer, integer, text, integer) from public, anon;
+grant execute on function public.add_scene(uuid, integer, integer, text, integer) to authenticated;
+
+-- 장면 삭제. p_revision = 스토리보드 revision(VD409). p_scene_revision 을 주면 장면 revision 도 맞아야 한다
+--   (다른 사람이 막 고친 장면을 지우지 않게, VD409). 뒤 장면 ord 를 당긴다.
+--   그 장면을 포함한 렌더 전(proposed/failed) 쇼츠 컷은 함께 지운다. ready 컷은 스냅샷이 있으므로 둔다.
+create or replace function public.delete_scene(p_scene_id uuid, p_revision integer, p_scene_revision integer default null)
+returns public.storyboards
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb_id uuid;
+  v_sb    public.storyboards;
+  v_old   public.scenes;
+begin
+  select storyboard_id into v_sb_id from public.scenes where id = p_scene_id;
+  if v_sb_id is null then
+    raise exception 'delete_scene: scene not found' using errcode = 'P0002';
+  end if;
+  v_sb := public.lock_storyboard_for_edit(v_sb_id, 'delete_scene', p_revision, true);
+  select * into v_old from public.scenes where id = p_scene_id for update;
+  if p_scene_revision is not null and v_old.revision is distinct from p_scene_revision then
+    raise exception 'delete_scene: revision conflict (current %)', v_old.revision using errcode = 'VD409';
+  end if;
+  delete from public.storyboard_cuts c
+   where c.storyboard_id = v_sb_id and c.kind = 'short' and c.status in ('proposed', 'failed') and p_scene_id = any (c.scene_ids);
+  delete from public.scenes where id = p_scene_id;
+  update public.scenes set ord = ord - 1 where storyboard_id = v_sb_id and ord > v_old.ord;
+  update public.storyboards
+     set revision = revision + 1,
+         status   = case when status = 'rendered' then 'ready' else status end
+   where id = v_sb_id
+  returning * into v_sb;
+  return v_sb;
+end;
+$$;
+revoke execute on function public.delete_scene(uuid, integer, integer) from public, anon;
+grant execute on function public.delete_scene(uuid, integer, integer) to authenticated;
+
+-- 쇼츠 후보 표시(VD-F-137). 내용 revision 을 올리지 않는다(다른 사람의 문구 편집과 충돌하지 않게).
+create or replace function public.set_shorts_candidate(p_scene_id uuid, p_value boolean)
+returns public.scenes
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb_id uuid;
+  v_sb    public.storyboards;
+  v_row   public.scenes;
+begin
+  if p_value is null then
+    raise exception 'set_shorts_candidate: value required' using errcode = '22023';
+  end if;
+  select storyboard_id into v_sb_id from public.scenes where id = p_scene_id;
+  if v_sb_id is null then
+    raise exception 'set_shorts_candidate: scene not found' using errcode = 'P0002';
+  end if;
+  v_sb := public.lock_storyboard_for_edit(v_sb_id, 'set_shorts_candidate');
+  update public.scenes set shorts_candidate = p_value where id = p_scene_id returning * into v_row;
+  return v_row;
+end;
+$$;
+revoke execute on function public.set_shorts_candidate(uuid, boolean) from public, anon;
+grant execute on function public.set_shorts_candidate(uuid, boolean) to authenticated;
+
+-- 12.7 service_role 전용 RPC ---------------------------------------------
+
+-- 그래프 video.storyboard 결과 반영(VD-F-131). draft 에서만. 장면 수(VD018)·길이 합계(VD017)를 검사하고
+--   기존 장면(소재 포함)과 렌더 전 컷을 지운 뒤 새 장면을 넣는다. 스토리보드 → ready, revision + 1, 감사 storyboard.generate.
+--   p_scenes: [{chapter, kind, duration_ms, narration, on_screen_text, visual_prompt, motion_preset, music_cue,
+--               shorts_candidate, sources, source_required}] 배열 순서 = ord. duration_ms 가 없으면 템플릿 기본 길이.
+create or replace function public.apply_storyboard_result(p_storyboard_id uuid, p_scenes jsonb, p_ai_run_id uuid default null)
+returns public.storyboards
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb      public.storyboards;
+  v_default integer;
+  v_n       integer;
+  v_min     integer;
+  v_max     integer;
+  v_sum     bigint;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'apply_storyboard_result: service_role only' using errcode = '42501';
+  end if;
+  select * into v_sb from public.storyboards where id = p_storyboard_id for update;
+  if not found then
+    raise exception 'apply_storyboard_result: storyboard not found' using errcode = 'P0002';
+  end if;
+  if v_sb.status <> 'draft' then
+    raise exception 'apply_storyboard_result: storyboard is %', v_sb.status using errcode = 'VD005';
+  end if;
+  if p_scenes is null or jsonb_typeof(p_scenes) <> 'array' then
+    raise exception 'apply_storyboard_result: scenes must be an array' using errcode = '22023';
+  end if;
+  if exists (select 1 from jsonb_array_elements(p_scenes) as e(item) where jsonb_typeof(e.item) <> 'object')
+     or exists (select 1 from jsonb_array_elements(p_scenes) as e(item), jsonb_object_keys(e.item) as k(key)
+                where k.key not in ('chapter', 'kind', 'duration_ms', 'narration', 'on_screen_text', 'visual_prompt',
+                                    'motion_preset', 'music_cue', 'shorts_candidate', 'sources', 'source_required')) then
+    raise exception 'apply_storyboard_result: unknown scene key' using errcode = '22023';
+  end if;
+  select default_scene_seconds * 1000 into v_default from public.storyboard_templates where code = v_sb.template_code;
+  v_n := jsonb_array_length(p_scenes);
+  select l.min_scenes, l.max_scenes into v_min, v_max from public.scene_count_limits(v_sb.format, v_sb.target_seconds) as l;
+  if v_n < v_min or v_n > v_max then
+    raise exception 'apply_storyboard_result: % scenes is outside % ~ %', v_n, v_min, v_max using errcode = 'VD018';
+  end if;
+  select sum(coalesce((e.item ->> 'duration_ms')::integer, v_default)) into v_sum from jsonb_array_elements(p_scenes) as e(item);
+  if v_sum < v_sb.target_seconds * 900 or v_sum > v_sb.target_seconds * 1100 then
+    raise exception 'apply_storyboard_result: total % ms is outside target % s ±10%%', v_sum, v_sb.target_seconds using errcode = 'VD017';
+  end if;
+  delete from public.storyboard_cuts where storyboard_id = p_storyboard_id and status in ('proposed', 'failed');
+  delete from public.scenes where storyboard_id = p_storyboard_id;
+  insert into public.scenes (org_id, storyboard_id, ord, chapter, kind, duration_ms, narration, on_screen_text, visual_prompt,
+                            motion_preset, music_cue, shorts_candidate, sources, source_required)
+  select v_sb.org_id, p_storyboard_id, e.n::integer, e.item ->> 'chapter', coalesce(e.item ->> 'kind', 'image'),
+         coalesce((e.item ->> 'duration_ms')::integer, v_default), e.item ->> 'narration', e.item ->> 'on_screen_text',
+         e.item ->> 'visual_prompt', coalesce(e.item ->> 'motion_preset', 'static'), e.item ->> 'music_cue',
+         coalesce((e.item ->> 'shorts_candidate')::boolean, false), coalesce(e.item -> 'sources', '[]'::jsonb),
+         coalesce((e.item ->> 'source_required')::boolean, false)
+  from jsonb_array_elements(p_scenes) with ordinality as e(item, n);
+  update public.storyboards
+     set status = 'ready', revision = revision + 1, root_job_id = null, last_error = null
+   where id = p_storyboard_id
+  returning * into v_sb;
+  perform public.write_audit(v_sb.org_id, 'storyboard.generate', 'storyboard', p_storyboard_id::text, null, null,
+                           jsonb_build_object('scenes', v_n, 'total_ms', v_sum, 'ai_run_id', p_ai_run_id));
+  return v_sb;
+end;
+$$;
+revoke execute on function public.apply_storyboard_result(uuid, jsonb, uuid) from public, anon, authenticated;
+grant execute on function public.apply_storyboard_result(uuid, jsonb, uuid) to service_role;
+
+-- 장면 소재 기록(VD-F-133, 134). 같은 (장면, 종류, 언어, 화면비)의 이전 ready 소재는 superseded.
+--   clip 은 권리 근거와 메모가 없으면 VD019. 재사용(p_reused_from_asset_id)은 같은 조직 이미지만,
+--   경로·화면비를 비우면 원본 값을 쓴다. image 화면비 기본값은 스토리보드 화면비.
+create or replace function public.finish_scene_asset(
+  p_scene_id             uuid,
+  p_kind                 text,
+  p_storage_path         text,
+  p_lang                 text    default null,
+  p_aspect               text    default null,
+  p_ai_generated         boolean default true,
+  p_rights_basis         text    default null,
+  p_rights_note          text    default null,
+  p_reused_from_asset_id uuid    default null,
+  p_meta                 jsonb   default '{}'::jsonb
+)
+returns public.scene_assets
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_scene  public.scenes;
+  v_src    public.scene_assets;
+  v_row    public.scene_assets;
+  v_aspect text;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'finish_scene_asset: service_role only' using errcode = '42501';
+  end if;
+  select * into v_scene from public.scenes where id = p_scene_id for update;
+  if not found then
+    raise exception 'finish_scene_asset: scene not found' using errcode = 'P0002';
+  end if;
+  if p_kind is null or p_kind not in ('image', 'narration', 'clip') then
+    raise exception 'finish_scene_asset: invalid kind %', p_kind using errcode = '22023';
+  end if;
+  if p_kind = 'clip' and (p_rights_basis is null or coalesce(length(btrim(p_rights_note)), 0) < 2) then
+    raise exception 'finish_scene_asset: clip needs rights basis and note' using errcode = 'VD019';
+  end if;
+  if p_reused_from_asset_id is not null then
+    select * into v_src from public.scene_assets where id = p_reused_from_asset_id;
+    if not found then
+      raise exception 'finish_scene_asset: reused asset not found' using errcode = 'P0002';
+    end if;
+  end if;
+  v_aspect := coalesce(p_aspect, v_src.aspect);
+  if p_kind = 'image' and v_aspect is null then
+    select b.aspect into v_aspect from public.storyboards b where b.id = v_scene.storyboard_id;
+  end if;
+  update public.scene_assets set status = 'superseded'
+   where scene_id = p_scene_id and kind = p_kind and lang is not distinct from p_lang
+     and aspect is not distinct from v_aspect and status = 'ready';
+  insert into public.scene_assets (org_id, scene_id, kind, lang, aspect, storage_path, rights_basis, rights_note, ai_generated,
+                                  reused_from_asset_id, meta)
+  values (v_scene.org_id, p_scene_id, p_kind, p_lang, v_aspect, coalesce(p_storage_path, v_src.storage_path), p_rights_basis, p_rights_note,
+          case when p_reused_from_asset_id is not null then v_src.ai_generated else coalesce(p_ai_generated, true) end,
+          p_reused_from_asset_id, coalesce(p_meta, '{}'::jsonb))
+  returning * into v_row;
+  return v_row;
+end;
+$$;
+revoke execute on function public.finish_scene_asset(uuid, text, text, text, text, boolean, text, text, uuid, jsonb) from public, anon, authenticated;
+grant execute on function public.finish_scene_asset(uuid, text, text, text, text, boolean, text, text, uuid, jsonb) to service_role;
+
+-- 렌더 스냅샷(VD-F-136, 139). p_cut_id null = 마스터 컷(없으면 만든다, 장면 전체 순서대로).
+--   검사: 스토리보드 ready/rendered(VD005), 마스터는 장면 수(VD018)·길이 합계 ±10%(VD017),
+--         쇼츠 컷은 연속 장면(22023)·90초 이하(VD017), clip 장면은 권리 근거 있는 ready clip(VD019),
+--         image 장면은 ready image(22023).
+--   결과: 스냅샷 1행(version = 스토리보드 version + 1), 컷 → rendering, 마스터면 스토리보드 → rendering.
+--   렌더가 끝나면 워커가 service_role 로 컷 ready/failed, 스토리보드 rendered/ready, outputs(storyboard_cut_id) 를 쓴다.
+create or replace function public.snapshot_storyboard(p_storyboard_id uuid, p_cut_id uuid default null)
+returns public.storyboard_snapshots
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_sb      public.storyboards;
+  v_cut     public.storyboard_cuts;
+  v_ids     uuid[];
+  v_min     integer;
+  v_max     integer;
+  v_sum     bigint;
+  v_bad     integer;
+  v_version integer;
+  v_snap    jsonb;
+  v_row     public.storyboard_snapshots;
+begin
+  if not public.is_privileged_session() then
+    raise exception 'snapshot_storyboard: service_role only' using errcode = '42501';
+  end if;
+  select * into v_sb from public.storyboards where id = p_storyboard_id for update;
+  if not found then
+    raise exception 'snapshot_storyboard: storyboard not found' using errcode = 'P0002';
+  end if;
+  if v_sb.status not in ('ready', 'rendered') then
+    raise exception 'snapshot_storyboard: storyboard is %', v_sb.status using errcode = 'VD005';
+  end if;
+  if p_cut_id is not null then
+    select * into v_cut from public.storyboard_cuts where id = p_cut_id and storyboard_id = p_storyboard_id for update;
+    if not found then
+      raise exception 'snapshot_storyboard: cut not found' using errcode = 'P0002';
+    end if;
+  else
+    select * into v_cut from public.storyboard_cuts where storyboard_id = p_storyboard_id and kind = 'master' for update;
+  end if;
+
+  if v_cut.id is null or v_cut.kind = 'master' then
+    select array_agg(s.id order by s.ord), sum(s.duration_ms) into v_ids, v_sum from public.scenes s where s.storyboard_id = p_storyboard_id;
+    select l.min_scenes, l.max_scenes into v_min, v_max from public.scene_count_limits(v_sb.format, v_sb.target_seconds) as l;
+    if coalesce(cardinality(v_ids), 0) < v_min or coalesce(cardinality(v_ids), 0) > v_max then
+      raise exception 'snapshot_storyboard: % scenes is outside % ~ %', coalesce(cardinality(v_ids), 0), v_min, v_max using errcode = 'VD018';
+    end if;
+    if v_sum < v_sb.target_seconds * 900 or v_sum > v_sb.target_seconds * 1100 then
+      raise exception 'snapshot_storyboard: total % ms is outside target % s ±10%%', v_sum, v_sb.target_seconds using errcode = 'VD017';
+    end if;
+    if v_cut.id is null then
+      insert into public.storyboard_cuts (org_id, storyboard_id, kind, aspect, scene_ids, status, ord)
+      values (v_sb.org_id, p_storyboard_id, 'master', v_sb.aspect, v_ids, 'rendering', 0)
+      returning * into v_cut;
+    else
+      update public.storyboard_cuts set scene_ids = v_ids, status = 'rendering', last_error = null where id = v_cut.id returning * into v_cut;
+    end if;
+  else
+    if not public.cut_scenes_valid(p_storyboard_id, 'short', v_cut.scene_ids) then
+      raise exception 'snapshot_storyboard: short cut scenes are no longer consecutive' using errcode = '22023';
+    end if;
+    select sum(s.duration_ms) into v_sum from public.scenes s where s.id = any (v_cut.scene_ids);
+    if v_sum > 90000 then
+      raise exception 'snapshot_storyboard: short cut % ms is over 90 s', v_sum using errcode = 'VD017';
+    end if;
+    update public.storyboard_cuts set status = 'rendering', last_error = null where id = v_cut.id returning * into v_cut;
+  end if;
+
+  select count(*) into v_bad from public.scenes s
+  where s.id = any (v_cut.scene_ids) and s.kind = 'clip'
+    and not exists (select 1 from public.scene_assets a where a.scene_id = s.id and a.kind = 'clip' and a.status = 'ready'
+                    and a.rights_basis is not null and a.rights_note is not null);
+  if v_bad > 0 then
+    raise exception 'snapshot_storyboard: % clip scenes without rights basis', v_bad using errcode = 'VD019';
+  end if;
+  -- image: 마스터는 스토리보드 화면비 이미지가 있어야 한다. 쇼츠 컷은 9:16 이 없으면 다른 화면비를 크롭한다(D-32).
+  select count(*) into v_bad from public.scenes s
+  where s.id = any (v_cut.scene_ids) and s.kind = 'image'
+    and not exists (select 1 from public.scene_assets a where a.scene_id = s.id and a.kind = 'image' and a.status = 'ready'
+                    and (v_cut.kind = 'short' or a.aspect = v_sb.aspect));
+  if v_bad > 0 then
+    raise exception 'snapshot_storyboard: % image scenes without a ready image', v_bad using errcode = '22023';
+  end if;
+
+  v_version := v_sb.version + 1;
+  v_snap := jsonb_build_object(
+    'storyboard', jsonb_build_object('id', v_sb.id, 'title', v_sb.title, 'format', v_sb.format, 'aspect', v_sb.aspect,
+                                     'target_seconds', v_sb.target_seconds, 'template_code', v_sb.template_code,
+                                     'topic', v_sb.topic, 'languages', to_jsonb(v_sb.languages), 'revision', v_sb.revision,
+                                     'voice_provider', v_sb.voice_provider, 'voice_id', v_sb.voice_id),
+    'cut', jsonb_build_object('id', v_cut.id, 'kind', v_cut.kind, 'aspect', v_cut.aspect, 'hook_text', v_cut.hook_text),
+    'scenes', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'id', s.id, 'ord', s.ord, 'chapter', s.chapter, 'kind', s.kind, 'duration_ms', s.duration_ms,
+               'narration', s.narration, 'on_screen_text', s.on_screen_text, 'visual_prompt', s.visual_prompt,
+               'motion_preset', s.motion_preset, 'music_cue', s.music_cue, 'sources', s.sources,
+               'source_required', s.source_required, 'revision', s.revision,
+               'assets', coalesce((select jsonb_object_agg(a.kind || coalesce(':' || a.lang, '') || coalesce(':' || a.aspect, ''),
+                                          jsonb_build_object('id', a.id, 'path', a.storage_path, 'ai_generated', a.ai_generated,
+                                                             'aspect', a.aspect, 'rights_basis', a.rights_basis))
+                                   from public.scene_assets a where a.scene_id = s.id and a.status = 'ready'), '{}'::jsonb))
+             order by u.n)
+      from unnest(v_cut.scene_ids) with ordinality as u(id, n)
+      join public.scenes s on s.id = u.id), '[]'::jsonb));
+  insert into public.storyboard_snapshots (org_id, storyboard_id, cut_id, version, snapshot)
+  values (v_sb.org_id, p_storyboard_id, v_cut.id, v_version, v_snap)
+  returning * into v_row;
+  update public.storyboards
+     set version = v_version,
+         status  = case when v_cut.kind = 'master' then 'rendering' else status end
+   where id = p_storyboard_id;
+  perform public.write_audit(v_sb.org_id, 'storyboard.snapshot', 'storyboard', p_storyboard_id::text, null, null,
+                           jsonb_build_object('version', v_version, 'cut_id', v_cut.id, 'cut_kind', v_cut.kind));
+  return v_row;
+end;
+$$;
+revoke execute on function public.snapshot_storyboard(uuid, uuid) from public, anon, authenticated;
+grant execute on function public.snapshot_storyboard(uuid, uuid) to service_role;
+
+-- 12.8 함수 EXECUTE 정리(10절과 같은 규칙). 이 절에서 만든 함수의 PUBLIC EXECUTE 를 회수하고 역할별 GRANT 만 남긴다.
+--   트리거·CHECK 헬퍼(scene_count_limits, valid_scene_sources, cut_scenes_valid 등)는 사용자 EXECUTE 가 필요 없다.
+revoke execute on all functions in schema public from public;
+grant execute on function public.save_scene(uuid, integer, jsonb) to authenticated;
+grant execute on function public.reorder_scenes(uuid, uuid[], integer) to authenticated;
+grant execute on function public.add_scene(uuid, integer, integer, text, integer) to authenticated;
+grant execute on function public.delete_scene(uuid, integer, integer) to authenticated;
+grant execute on function public.set_shorts_candidate(uuid, boolean) to authenticated;
+grant execute on all functions in schema public to service_role;
+
