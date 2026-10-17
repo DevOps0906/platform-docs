@@ -32,7 +32,7 @@ for(const f of fs.readdirSync(dir).filter(f=>f.endsWith('.json')).sort()){
   // 2판 필드(선택). 있으면 검사한다
   const altNames=P.alts.map(a=>Array.isArray(a)?a[0]:a);
   const inR=v=>typeof v==='number'&&v>=0&&v<=10;
-  if(P.features){ if(P.features.length<4||P.features.length>6) e.push('features 4~6'); P.features.forEach(f=>{ if(!ICONS.includes(f.icon)) e.push('feature icon '+f.icon); if(!f.title||!f.sum||!Array.isArray(f.points)||f.points.length<2) e.push('feature shape '+f.title); }); }
+  if(P.features){ if(P.features.length<4||P.features.length>9) e.push('features 4~9'); P.features.forEach(f=>{ if(!ICONS.includes(f.icon)) e.push('feature icon '+f.icon); if(!f.title||!f.sum||!Array.isArray(f.points)||f.points.length<2) e.push('feature shape '+f.title); }); }
   if(P.outputs){ P.outputs.forEach(o=>{ if(!Array.isArray(o)||o.length!==3) e.push('output shape'); }); }
   if(P.faq){ if(P.faq.length<4) e.push('faq<4'); P.faq.forEach(q=>{ if(!Array.isArray(q)||q.length!==2) e.push('faq shape'); }); }
   if(P.competitors){
@@ -49,9 +49,10 @@ for(const f of fs.readdirSync(dir).filter(f=>f.endsWith('.json')).sort()){
       ['price','for','vs','region'].forEach(k=>{ if(!c[k]) e.push(id+' '+k); });
     });
   }
+  if(!P.voice) e.push('voice missing'); else { const VV=P.voice; if(!VV.lead||!Array.isArray(VV.say)||!VV.say.length||!Array.isArray(VV.items)||!VV.items.length) e.push('voice shape'); (VV.say||[]).forEach(x=>{ if(!Array.isArray(x)||x.length!==2) e.push('voice say shape'); }); (VV.items||[]).forEach(x=>{ if(!Array.isArray(x)||x.length!==3) e.push('voice item shape'); }); }
   if(P.wizard){ const W=P.wizard; if(!W.title||!Array.isArray(W.steps)||!W.steps.length) e.push('wizard shape'); (W.steps||[]).forEach((st,i)=>{ ['name','user','system','credit'].forEach(k=>{ if(st[k]===undefined||st[k]==='') e.push('wizard step '+i+' '+k); }); if(st.icon&&!ICONS.includes(st.icon)) e.push('wizard icon '+st.icon); }); }
   if(P.tables){ Object.entries(P.tables).forEach(([k,T])=>{ if(!Array.isArray(T.cols)||!Array.isArray(T.rows)) e.push('table '+k+' shape'); else T.rows.forEach((r,i)=>{ if(r.length!==T.cols.length) e.push('table '+k+' row '+i+' cols'); }); }); }
-  if(P.journey){ const JN=P.journey, TYPES=['scene','cause','flow','steps','features','outputs','market','verdict','nonfit','evidence','ledger','validate','insight','plans','calc','faq','table'], ids=new Set();
+  if(P.journey){ const JN=P.journey, TYPES=['scene','cause','flow','steps','features','voice','outputs','market','verdict','nonfit','evidence','ledger','validate','insight','plans','calc','faq','table'], ids=new Set();
     if(!JN.name) e.push('journey name'); if(!Array.isArray(JN.stages)||JN.stages.length<3||JN.stages.length>7) e.push('journey stages 3~7');
     (JN.stages||[]).forEach(st=>{ if(!st.no||!st.label||!st.q) e.push('journey stage shape '+st.label); if(st.icon&&!ICONS.includes(st.icon)) e.push('journey icon '+st.icon);
       (st.pages||[]).forEach(pg=>{ const t=pg.type||pg.id; if(!pg.id||!/^[A-Za-z0-9_-]+$/.test(pg.id)) e.push('journey page id '+pg.id); if(ids.has(pg.id)) e.push('journey dup id '+pg.id); ids.add(pg.id);

@@ -609,5 +609,30 @@
     "note": "Free는 빠름 모드만, 제휴 자동 넣기는 Pro 이상입니다. 월 발행 한도(Free 10, Pro 50, Business 300건)는 크레딧과 별개입니다. NOMAD Blog 처리 시간은 V1 측정 전이라 숫자로 쓰지 않습니다."
   },
   "insight": [],
-  "source": "products/nomad-blog/01_PRD.md 1·3·4·6장, 03_SCREENS_UX.md 2·4절, 02_ARCHITECTURE.md 4절, Price_Plans/nomad-blog/PRICE_PLAN.md 4장"
+  "source": "products/nomad-blog/01_PRD.md 1·3·4·6장, 03_SCREENS_UX.md 2·4절, 02_ARCHITECTURE.md 4절, Price_Plans/nomad-blog/PRICE_PLAN.md 4장",
+  "voice": {
+    "lead": "글감을 말로 불러 초안 메모를 만들고, 쓰는 중에는 도우미에게 말로 묻습니다.",
+    "say": [
+      [
+        "오늘 다녀온 카페 후기를 말로 불러 준다",
+        "받아쓴 글을 확인해 본문에 넣거나 \"초안 메모\"로 씁니다"
+      ],
+      [
+        "이 글 제목 후보 세 개 줘",
+        "도우미가 답하고, 원하면 읽어 줍니다"
+      ]
+    ],
+    "items": [
+      [
+        "음성 받아쓰기 초안",
+        "에디터 마이크, 한 번에 최대 5분, 확인 후 본문·초안 메모로",
+        "BL-F-056"
+      ],
+      [
+        "음성 대화",
+        "도우미 채팅 마이크(60초), 읽어 주기",
+        "BL-F-057"
+      ]
+    ]
+  }
 }

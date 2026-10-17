@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
 /* 설득형 랜딩 템플릿 엔진 2판 — 제품 1개 전용.
-   Layout: 구매 여정 5단계를 GNB 진행 트랙으로, 단계 안의 하위 페이지를 하위 GNB로 그린다.
+   Layout: 여정(공통 구매 여정 또는 제품 맞춤 여정)의 단계를 GNB 진행 트랙으로, 단계 안의 하위 페이지를 하위 GNB로 그린다.
    두 줄 메뉴가 함께 붙어 다니고, 하위 GNB 아래 막대가 여정 진행률을 보여 준다.
    배경·글래스는 NOMAD 랜딩 키트 구조. 다크 단일 테마. 움직임은 줄이기 설정이 없을 때만. */
 :root{
@@ -25,7 +25,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--gnb)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 a{color:inherit}
@@ -202,7 +202,7 @@ h2.hl{font-size:clamp(24px,3vw,34px);line-height:1.3;margin:0 0 12px;font-weight
 .cta-grid .btn{padding:15px}
 .cta-grid .full{grid-column:1/-1}
 
-.jmap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;position:relative}
+.jmap{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));gap:14px;position:relative}
 .jmap::before{content:"";position:absolute;left:4%;right:4%;top:31px;height:2px;background:var(--line)}
 .jmap .line{position:absolute;left:4%;top:31px;height:2px;width:92%;background:linear-gradient(90deg,var(--acc),var(--denim-ink));transform-origin:0 50%}
 .jstage{position:relative;display:grid;gap:10px;align-content:start;text-decoration:none;padding:0 4px}
@@ -212,6 +212,7 @@ h2.hl{font-size:clamp(24px,3vw,34px);line-height:1.3;margin:0 0 12px;font-weight
 .jstage:hover .dot{transform:translateY(-4px);background:rgba(var(--acc-rgb),.15);box-shadow:0 14px 30px -12px rgba(var(--acc-rgb),.8)}
 .jstage h3{margin:0;font-size:18px}
 .jstage .q{color:var(--fg-2);font-size:13.5px;margin:0}
+.jstage .sref{margin:0;font-family:var(--f-mono);font-size:11.5px;color:var(--acc)}
 .jstage ul{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:3px;font-size:12.5px;color:var(--fg-3)}
 .jstage ul li::before{content:"› ";color:var(--acc)}
 
@@ -281,8 +282,55 @@ h2.hl{font-size:clamp(24px,3vw,34px);line-height:1.3;margin:0 0 12px;font-weight
 .feat-list button[aria-selected="true"]{border-color:rgba(var(--acc-rgb),.55);background:rgba(var(--acc-rgb),.08)}
 .feat-detail{position:sticky;top:calc(var(--nav-h) + 20px)}
 .feat-detail h3{margin:12px 0 8px;font-size:clamp(20px,2.2vw,26px);line-height:1.35;text-wrap:balance}
-.feat-detail .big-ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:rgba(var(--acc-rgb),.14);border:1px solid rgba(var(--acc-rgb),.35);color:var(--acc)}
-.feat-detail .big-ic svg{width:30px;height:30px}
+.big-ic{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:rgba(var(--acc-rgb),.14);border:1px solid rgba(var(--acc-rgb),.35);color:var(--acc)}
+.big-ic svg{width:30px;height:30px}
+.feat-one .fo-h{display:flex;gap:18px;align-items:center}
+.feat-one h3{margin:0 0 4px;font-size:clamp(20px,2.2vw,26px);line-height:1.35;text-wrap:balance}
+.points.fo-p{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+.wz{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:4px;min-width:calc(var(--n)*76px);padding:4px 0 2px}
+.wz-line{position:absolute;left:calc(50% / var(--n));right:calc(50% / var(--n));top:23px;height:2px;background:var(--line);border-radius:2px}
+.wz-line i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--acc),var(--denim-ink));transition:width .5s var(--ease)}
+.wz-n{position:relative;z-index:1;display:grid;justify-items:center;align-content:start;gap:5px;background:none;border:0;cursor:pointer;color:var(--fg-2);padding:0 2px 4px;border-radius:10px;transition:opacity .3s}
+.wz-n .c{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:13px;font-weight:700;background:var(--bg-deep);border:2px solid rgba(var(--acc-rgb),.5);color:var(--acc);transition:background .3s,color .3s,transform .3s var(--ease),box-shadow .3s}
+.wz-n b{font-size:12.5px;font-weight:700;text-align:center;line-height:1.3}
+.wz-n small{font-size:10.5px;color:var(--fg-3)}
+.wz-n.wz-off .c{color:var(--fg-3);border-color:var(--line)}
+.wz-n.wz-off b{color:var(--fg-3);font-weight:500}
+.wz-n.wz-off:hover .c{border-color:rgba(var(--acc-rgb),.5)}
+.wz-n.past .c{background:linear-gradient(rgba(var(--acc-rgb),.22),rgba(var(--acc-rgb),.22)),var(--bg-deep)}
+.wz-n[aria-selected="true"] .c{background:var(--acc);color:#14161b;border-color:var(--acc);box-shadow:0 0 0 5px rgba(var(--acc-rgb),.18);transform:scale(1.08)}
+.wz-n[aria-selected="true"] b{color:var(--fg)}
+.wz-d{margin-top:18px}
+.sd-h{display:flex;gap:16px;align-items:center}
+.sd-h .eyebrow{margin:0 0 4px}
+.sd-h h3{margin:0;font-size:clamp(20px,2.2vw,26px)}
+.sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.sd-grid>div{padding:14px 16px;border-radius:12px;font-size:14.5px;min-width:0}
+.sd-grid .u{background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.sd-grid .s{background:rgba(0,201,167,.07);border:1px solid rgba(94,234,212,.22);color:var(--fg-2)}
+.sd-grid small{display:block;font-size:11.5px;color:var(--fg-3);margin-bottom:4px}
+.sd-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.sub-stage .sq{display:grid;line-height:1.3}
+.sub-stage .sq small{font-size:10.5px;letter-spacing:.06em;color:var(--acc);font-weight:700}
+.vbadge{display:inline-flex;align-items:center;gap:8px;margin:12px 0 0;padding:6px 12px 6px 8px;border-radius:999px;border:1px solid rgba(var(--acc-rgb),.45);background:rgba(var(--acc-rgb),.08);font-size:12.5px;font-weight:700;text-decoration:none;color:var(--fg);transition:background .2s,transform .2s var(--ease)}
+.vbadge:hover{background:rgba(var(--acc-rgb),.16);transform:translateY(-1px)}
+.vbadge>svg{width:16px;height:16px;color:var(--acc)}
+.wave{display:inline-flex;align-items:center;gap:2px;height:16px}
+.wave i{display:block;width:3px;height:40%;border-radius:2px;background:var(--acc);opacity:.85}
+.wave i:nth-child(3n+1){height:70%}.wave i:nth-child(4n+2){height:100%}.wave i:nth-child(5n+3){height:55%}
+.say{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}
+.say-c{position:relative;padding:20px;border-radius:var(--r-md);border:1px solid var(--line);background:rgba(255,255,255,.04);display:grid;gap:10px;align-content:start;transition:border-color .35s,background .35s,transform .35s var(--ease),box-shadow .35s}
+.say-c.on{border-color:rgba(var(--acc-rgb),.6);background:rgba(var(--acc-rgb),.07);transform:translateY(-3px);box-shadow:0 18px 40px -22px rgba(var(--acc-rgb),.7)}
+.say-q{display:flex;align-items:center;gap:10px}
+.say-q .mic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(var(--acc-rgb),.15);border:1px solid rgba(var(--acc-rgb),.4);color:var(--acc);flex-shrink:0}
+.say-q .mic svg{width:18px;height:18px}
+.say-q .wave{height:22px}
+.say-c .q{margin:0;font-size:16px;font-weight:700;line-height:1.5;text-wrap:balance}
+.say-c .a{margin:0;display:flex;gap:8px;align-items:flex-start;color:var(--fg-2);font-size:13.5px;padding-top:10px;border-top:1px dashed var(--line)}
+.say-c .a svg{width:16px;height:16px;flex-shrink:0;margin-top:3px;color:var(--acc)}
+.vrules{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.vrules li{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:13.5px;color:var(--fg-2);padding-bottom:10px;border-bottom:1px solid var(--line-2)}
+.vrules b{color:var(--fg);font-weight:700}
 .points{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:10px}
 .points li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.18);border:1px solid var(--line-2);font-size:14px}
 .points li .n{font-family:var(--f-mono);font-size:12px;color:var(--acc);padding-top:2px}
@@ -496,7 +544,7 @@ footer{padding-block:72px 40px}
   .mmenu a{display:block;padding:10px 12px;border-radius:10px;text-decoration:none;font-size:15px}
   .mmenu a[aria-current="page"]{background:rgba(var(--acc-rgb),.12);color:var(--acc)}
   .sub .wrap{height:50px;gap:8px}
-  .sub-stage span{display:none}
+  .sub-stage span,.sub-stage .sq{display:none}
   .sub-nav .count{display:none}
   .hero,.tabpanel,.calc,.feat,.map-wrap{grid-template-columns:minmax(0,1fr)}
   .feat-detail{position:static}
@@ -520,7 +568,7 @@ footer{padding-block:72px 40px}
   .cta-grid{grid-template-columns:1fr}
   .tabs button{padding:10px 12px;font-size:14px}
   .ltabs button{min-width:0;padding:10px 12px}
-  .sw{grid-template-columns:1fr}
+  .sw,.sd-grid{grid-template-columns:1fr}
   .mapbox{aspect-ratio:1/1}
   .mapbox .dot span{font-size:11px;max-width:96px;overflow:hidden;text-overflow:ellipsis}
 }
@@ -604,6 +652,14 @@ footer{padding-block:72px 40px}
   .go .mapbox .dot{animation:dotIn .7s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(.25s + var(--i)*110ms)}
   .mapbox .dot.ours i{animation:ping 2s ease-out infinite}
   @keyframes dotIn{from{opacity:0;scale:.2}}
+  .go .wz-n{animation:fadeUp .5s var(--ease) backwards;animation-delay:calc(var(--i)*60ms)}
+  .swap .sd-h,.swap .sd-grid>div,.swap .sd-meta{animation:fadeUp .45s var(--ease) backwards}
+  .swap .sd-grid>div+div{animation-delay:.08s}
+  .swap.feat-one .points li{animation:slideR .5s var(--ease) backwards;animation-delay:calc(.3s + var(--i)*90ms)}
+  .vbadge .wave i,.say-c.on .wave i{animation:wv .9s ease-in-out infinite;animation-delay:calc(var(--i)*-70ms)}
+  @keyframes wv{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+  .go.say .say-c{animation:fadeUp .55s var(--ease) backwards;animation-delay:calc(var(--i)*110ms)}
+  .say-c.on .mic{animation:ping 1.8s ease-out infinite}
   .go.comps .comp{animation:fadeUp .55s var(--ease) backwards;animation-delay:calc(var(--i)*80ms)}
   .go .tbl .mk{animation:pop .5s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:var(--md,0ms)}
   .tbl td.ours::after{animation:sweep 4.8s ease-in-out infinite;animation-delay:var(--sd,0ms)}
@@ -682,11 +738,11 @@ footer{padding-block:72px 40px}
         <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="none" stroke="#00C9A7" stroke-width="3" stroke-linejoin="round" d="M5 26V6l11 13V6M16 26l11-13v13"/></svg>
         <b id="logo-name"></b><span>설득형 랜딩</span>
       </a>
-      <nav aria-label="구매 여정 단계"><ol class="track" id="track"></ol></nav>
+      <nav aria-label="여정 단계" id="track-nav"><ol class="track" id="track"></ol></nav>
       <a class="m-stage" href="#home" id="m-stage"></a>
       <div class="gnb-tools">
         <a class="tlink" href="#guide" id="guide-link">템플릿</a>
-        <a class="btn mint sm gnb-cta" href="#plans">시작하기</a>
+        <a class="btn mint sm gnb-cta" href="#plans" id="gnb-cta">시작하기</a>
         <button class="icon-btn burger" type="button" id="burger" aria-label="메뉴 열기" aria-expanded="false" aria-controls="mmenu"><svg><use href="#i-menu"/></svg></button>
       </div>
     </div>
@@ -734,7 +790,7 @@ footer{padding-block:72px 40px}
 (function(){
 'use strict';
 /* 제품 데이터: build.py가 아래 자리에 data/<제품>.json을 넣는다. */
-var P = {"key": "astro-ai", "name": "신비로운AI", "short": "신비로운AI", "accent": "#d6c4a8", "pill": "사주·타로 책자형 리포트", "big": ["SAJU", "TAROT"], "chips": ["본인", "가족", "연인", "친구"], "join": "의 사주를 한 권의 책으로", "head": "내 사주를 한 권의 책으로", "sub": "입춘과 절기 시각으로 원국을 계산하고, AI가 해설을 써서 A4 책자 PDF로 드립니다. 이 리포트는 명리학과 타로의 전통 해석을 AI가 재구성한 참고용 콘텐츠이며 의료, 법률, 투자 판단을 대신하지 않습니다.", "cta": "원국 보기", "formula": "생년월일시 + 타로 3장 = A4 책자 PDF", "personas": [{"who": "서윤 · 31 · 마케터", "icon": "i-book", "cap": "기질과 10년 흐름을 한 권에", "sit": "이직을 고민하고 있습니다. 점집은 부담스럽지만 운세는 궁금합니다.", "scene": "조회형 앱은 화면을 닫으면 끝이고, 해석이 \"고향을 떠나 고생한다\" 같은 옛날 말투입니다.", "want": "자기 기질과 앞으로 10년 흐름을 한 번에 정리한 리포트를 갖고 싶습니다.", "id": "AS-C-01"}, {"who": "민호 · 38 · 회사원", "icon": "i-users", "cap": "가족 사주를 한곳에", "sit": "부모님 생신 선물과 가족 사주를 한곳에 정리하고 싶습니다.", "scene": "가족의 생년월일시를 어디에 맡겨도 되는지, 삭제는 되는지 불안합니다.", "want": "가족 4~5명의 리포트를 보관함에 두고 필요할 때 다시 받고 싶습니다.", "id": "AS-C-02"}, {"who": "지아 · 26 · 대학원생", "icon": "i-star", "cap": "진로 질문 하나를 타로로", "sit": "진로 질문 하나를 타로로 빠르게 보고 싶습니다.", "scene": "결과가 너무 길거나, 크레딧이 빠졌는데 실패하면 돌려받을 수 있는지 모릅니다.", "want": "카드 3장을 직접 뽑고 질문에 대한 해설을 받고 싶습니다.", "id": "AS-C-03"}], "cause": {"line": "운세 조회 화면은 닫으면 사라집니다.", "lead": "화면으로 보는 운세는 다시 찾기 어렵고, 원국을 어떤 기준으로 계산했는지도 보이지 않습니다. 가족 정보를 맡기는 일도 저장과 삭제가 보이지 않으면 망설여집니다.", "bad": ["조회형 운세 화면", "운세 앱"], "good": ["소장하는 리포트", "신비로운AI"], "rows": [["결과물", "화면에서 보고 닫으면 끝", "A4 책자형 PDF(사주 약 10쪽, 타로 약 8쪽, 통합 약 18쪽). 다시 받기는 무료"], ["원국 계산", "기준이 보이지 않는다", "입춘·절기 시각, 자시 방식, 생시 모름, 서머타임, 경도 보정을 반영한 엔진 값만 쓴다"], ["해석 말투", "옛날 말투", "현대적 재해석 사전을 쓰고, 단정·공포 표현은 검사해서 걸러 낸다"], ["가족 정보", "어디에 보관되는지 모른다", "동의 체크 후에만 저장하고 암호화한다. 삭제하면 리포트와 PDF도 함께 지운다"], ["실패했을 때", "크레딧을 돌려받는지 모른다", "생성에 실패하면 크레딧을 자동으로 돌려준다"]]}, "flow": [["입력", "i-calc", "생년월일시와 대상을 입력한다. 본인이 아니면 동의 체크를 한다", true, "브라우저 엔진이 4주 8자를 바로 계산해 보여 준다"], ["선택", "i-star", "리딩 종류와 테마를 고르고, 타로는 카드 3장을 직접 뽑는다", true, "크레딧을 먼저 차감한다(사주 15, 타로 20, 통합 30)"], ["해설 작성", "i-pen", "진행 단계를 본다", false, "엔진 값과 해설집을 근거로 장별 초안을 쓰고, 금지 표현과 엔진에 없는 수치를 검사해 걸린 장만 다시 쓴다"], ["책자 만들기", "i-print", "기다린다", false, "면책과 AI 생성 표시를 넣어 A4 책자 PDF로 렌더한다. 실패하면 크레딧을 돌려준다"], ["받기", "i-send2", "웹 뷰어로 읽고 PDF를 받는다", false, "7일 서명 링크를 대시보드와 이메일로 보내고, 요청할 때마다 새 링크를 무료로 준다"]], "alts": [["그대로 둔다", "무료 운세 조회"], ["범용 AI 채팅", ""], ["사람에게 맡긴다", "대면·전화 상담"], ["운세 앱", "충전형 재화·월 구독"]], "table": [["소장하고 다시 받는 결과물", [["x", "화면을 닫으면 끝난다"], ["t", "대화를 복사해 직접 정리한다"], ["t", "기록은 직접 남긴다(미확인)"], ["t", "단건 리포트 상품이 있는 앱도 있다. 파일 소장 여부는 미확인"]], ["o", "A4 책자 PDF, 다시 받기 무료"], "AS-E-01"], ["원국 계산 기준이 보이는지", [["t", "계산 기준 표시는 서비스마다 다름(미확인)"], ["t", "계산 근거를 직접 대조해야 한다"], ["t", "상담가마다 다르다"], ["t", "앱마다 다름(미확인)"]], ["o", "입춘·절기 기준 엔진 값만 쓰고, 가입 없이 원국을 직접 볼 수 있음"], "AS-E-02"], ["가족 정보 저장과 삭제", [["t", "저장 방식 미확인"], ["t", "대화 기록 보관은 서비스 설정에 따름(미확인)"], ["n", ""], ["t", "앱마다 다름(미확인)"]], ["o", "동의 체크 후 암호화 저장, 삭제하면 리포트·PDF 함께 삭제"], "AS-E-03"], ["실패하면 돌려받는지", [["n", ""], ["n", ""], ["n", ""], ["t", "환불 규정은 앱마다 다름(미확인)"]], ["o", "생성 실패 시 크레딧 자동 환불"], "AS-E-04"], ["비용 구조", [["o", "0원"], ["t", "서비스별 구독료"], ["t", "회당 상담료(미확인)"], ["t", "충전형 재화와 월 정액"]], ["t", "가입 크레딧 30(인증 후 1회). 팩 4,900원(100크레딧)부터, 사주 15·타로 20·통합 30크레딧"], "요금"], ["묻고 답하며 듣는 풀이", [["x", "정해진 결과만 보여 준다"], ["o", "자유롭게 묻는다"], ["o", "상담가와 직접 대화한다"], ["t", "앱마다 다름(미확인)"]], ["t", "AI가 재구성한 참고용 해설. 리포트에 대한 채팅은 턴마다 크레딧이 들고, 용신·격국과 의료·법률·투자 판단은 다루지 않음"], ""]], "nonfit": [["건강·재테크·법률 결정을 운세로 판단하고 싶다", "해당 분야 전문가와 상담하세요. 이 리포트는 의료, 법률, 투자 판단을 대신하지 않습니다"], ["상담가와 마주 앉아 풀이를 듣고 싶다", "대면 상담이 맞습니다"], ["궁합이나 연간 운세가 필요하다", "아직 준비 중입니다"], ["화면으로 한 번 훑어보면 충분하다", "가입 없이 원국 보기로 충분할 수 있습니다"]], "evidence": [["AS-E-01", "E2", "샘플 사주·타로·통합 리포트 PDF", "실제 엔진·그래프·렌더 출력, 가상 인물 입력, \"샘플\" 표시"], ["AS-E-02", "E1", "가입 없이 원국 보기", "실제 엔진 계산, AI 미사용, 입력 저장 안 함, 하루 3회"], ["AS-E-03", "E3", "가족 등록(동의 체크)과 삭제 화면 기록", "가상 인물, 편집 없는 녹화, 삭제 뒤 리포트·PDF가 사라지는 장면 포함"], ["AS-E-04", "E3", "생성 실패 → 크레딧 환불 화면 기록", "테스트 환경에서 실패를 재현, 크레딧 내역의 환불 행 포함"], ["AS-E-05", "E4", "리포트 생성 시간 측정 기록", "기준점(크레딧 차감 후 대기 시작), 건수·기간·버전 표기"]], "ledger": [["AS-C-01", "조회형 앱은 화면을 닫으면 끝이고, 해석이 \"고향을 떠나 고생한다\" 같은 옛날 말투입니다.", "문제 묘사", "V0 인터뷰", "draft"], ["AS-C-02", "가족의 생년월일시를 어디에 맡겨도 되는지, 삭제는 되는지 불안합니다.", "문제 묘사", "V0 인터뷰", "draft"], ["AS-C-03", "결과가 너무 길거나, 크레딧이 빠졌는데 실패하면 돌려받을 수 있는지 모릅니다.", "문제 묘사", "V0 인터뷰", "draft"], ["AS-C-04", "생년월일시를 넣으면 입춘과 절기 시각으로 계산한 원국을 가입 없이 보여 드립니다", "기능 사실", "AS-E-02", "hold"], ["AS-C-05", "사주·타로 해설을 A4 책자 PDF로 드리고, 언제든 다시 받을 수 있습니다", "기능 사실", "AS-E-01", "hold"], ["AS-C-06", "생성에 실패하면 크레딧을 자동으로 돌려드립니다", "기능 사실", "AS-E-04", "hold"], ["AS-C-07", "크레딧 차감 뒤 PDF를 받기까지 걸린 시간 중앙값 ○초(건수, 리딩 종류, 기간, 버전)", "측정치", "AS-E-05", "draft"]], "stages": [{"label": "Starter", "price": "0원", "per": "가입 크레딧 30 · 1회", "steps": [["가입하고 이메일 인증 또는 Google 로그인을 마친다", "30크레딧을 1회 준다"], ["첫 리딩을 만든다", "사주 15 · 타로 20 · 통합 30크레딧. 실패하면 자동 환불"], ["테마를 바꿔 다시 만든다", "5크레딧. 본문은 그대로 두고 책자만 새로 렌더"]]}, {"label": "크레딧팩", "price": "4,900원~", "per": "100크레딧 4,900원 · 330크레딧 12,900원 · 800크레딧 27,900원 · 2,400크레딧 69,900원", "steps": [["필요한 만큼 산다", "결제를 서버에서 확인한 뒤 지급하고, 팩 크레딧은 만료하지 않는다"], ["PDF를 다시 받거나 메일을 다시 보낸다", "링크 재발급과 이메일 재발송은 0크레딧"]]}, {"label": "구독", "price": "9,900원~", "per": "월 Basic 300 · Pro 1,000 · Master 3,000크레딧 · Phase 2", "steps": [["매달 쓰는 만큼 구독한다", "Basic 9,900원 · Pro 29,900원 · Master 69,900원. 연간 20% 할인은 Phase 2에 함께 연다"]]}], "calc": {"title": "가족 리포트 비용 비교", "groups": [["대면 상담으로 할 때", [["visits", "상담 횟수", "회", 1], ["fee", "1회 상담료", "원", 50000]]], ["운세 앱 단건으로 할 때", [["app", "리포트 1건 결제액", "원", 15000]]], ["신비로운AI로 할 때", [["saju", "사주 리딩 수", "건", 4], ["tarot", "타로 리딩 수", "건", 0], ["comb", "통합 리딩 수", "건", 1], ["rerender", "테마 바꿔 다시 만들기", "회", 0], ["welcome", "가입 크레딧 30 사용", "", ["예", "아니오"]]]]], "derived": [["cnt", "saju+tarot+comb"], ["need", "saju*15+tarot*20+comb*30+rerender*5"], ["over", "max(0, need-(welcome==='예'?30:0))"], ["packc", "pack(over, [[100,4900],[330,12900],[800,27900],[2400,69900]])"]], "rows": [["대면 상담", "visits*fee", "visits+'회 방문'", "'상담 횟수 × 1회 상담료'"], ["운세 앱 단건", "cnt*app", "'앱마다 다름'", "'리포트 '+cnt+'건 × 1건 결제액'"], ["신비로운AI", "packc", "'건마다 처리 대기'", "'필요 크레딧 '+need+(welcome==='예'?' − 가입 30':'')+(over?' → 팩 '+won(packc):' (가입 크레딧 안)')"]], "formula": "대면 상담 = 상담 횟수 × 1회 상담료\n운세 앱 단건 = 리포트 수 × 1건 결제액\n신비로운AI = 팩 비용\n필요 크레딧 = 사주 15 + 타로 20 + 통합 30 + 테마 재생성 5(건마다)\n팩 비용 = 가입 크레딧 30을 뺀 나머지를 100크레딧 4,900원 / 330크레딧 12,900원 / 800크레딧 27,900원 / 2,400크레딧 69,900원 중 싼 조합으로", "note": "AI 채팅과 리딩 낭독 크레딧은 넣지 않았습니다. 구독은 Phase 2라 비교에서 뺐고, 처리 시간은 측정 전이라 숫자로 쓰지 않습니다."}, "insight": [], "features": [{"title": "만세력 엔진과 원국 보기", "icon": "i-calc", "sum": "생년월일시를 넣으면 브라우저에서 4주 8자를 바로 계산해 보여 줍니다.", "points": ["입춘 기준 년주, 절입 시각 기준 월주, 자시 방식 2종, 생시 모름(삼주) 처리", "한국 서머타임 기간과 출생지 경도 보정, 음력·윤달 변환", "오행 색 명식표, 오행 막대, 대운 타임라인(10년 단위)", "가입 없이 원국 보기는 하루 3회, AI를 쓰지 않고 입력을 저장하지 않음"], "ref": "01_PRD.md 3장 AS-F-006·007·008·024, 03_SCREENS_UX.md 3절"}, {"title": "사주·타로·통합 리딩", "icon": "i-star", "sum": "엔진 값과 해설집을 근거로 장별 해설을 씁니다.", "points": ["사주 15크레딧: 기질, 오행 균형, 일과 재능, 관계, 대운 흐름, 올해의 흐름 6장", "타로 20크레딧: 메이저 아르카나 22장에서 3장을 직접 뽑고 질문(200자 이하)을 남김", "통합 30크레딧: 사주 6장 + 타로 연결 2장", "금지 표현과 엔진에 없는 수치를 검사해 걸린 장만 다시 쓰고, 용신·격국은 판정하지 않음"], "ref": "01_PRD.md 3장 AS-F-009·010·011·029·038"}, {"title": "A4 책자 PDF와 다시 받기", "icon": "i-print", "sum": "해설을 판권면과 면책이 들어간 A4 책자로 렌더해 보관합니다.", "points": ["테마 2종(mystical-dark, oracle-gold), 테마만 바꿔 다시 만들기 5크레딧", "다운로드는 요청할 때마다 7일 서명 링크를 새로 발급하며 무료", "대시보드 웹 뷰어와 이메일 링크로 받음(이메일 발송은 설정에서 끌 수 있음)"], "ref": "01_PRD.md 3장 AS-F-013~017, 4.2절"}, {"title": "가족 보관함과 동의·삭제", "icon": "i-lock", "sum": "본인과 가족, 지인의 정보를 동의 확인 뒤에 암호화해 보관합니다.", "points": ["본인이 아니면 정보 제공 동의(또는 법정대리인) 체크가 있어야 저장", "이름과 생년월일시 원문은 AES-256-GCM으로 암호화하고 AI 제공자에게 보내지 않음", "대상을 지우면 그 대상의 리딩, PDF, 발송 기록, 낭독 파일을 함께 지움", "보관함은 조직당 20명까지(제안)"], "ref": "01_PRD.md 3장 AS-F-003·004·005·026, 6.1절"}, {"title": "AI 채팅과 리딩 낭독", "icon": "i-chat", "sum": "리포트를 근거로 묻고, 리딩 본문을 음성으로 듣습니다.", "points": ["\"이 리포트에 대해 묻기\"는 그 리딩의 원국과 본문을 근거로 답하고 답마다 출처를 붙임", "채팅 1턴 약 3크레딧(정산 후 1~5), 마이크로 묻는 음성 대화는 녹음 원본을 저장하지 않음", "리딩 낭독은 장 단위 mp3로 만들고 재생·재다운로드는 무료", "의료·법률·투자 판단 요청은 정중히 거절하고 전문가를 안내"], "ref": "01_PRD.md 3장 AS-F-032·033·034·038, 4.7절, 03_SCREENS_UX.md 3.1절"}, {"title": "크레딧 선차감과 자동 환불", "icon": "i-shield", "sum": "리딩 전에 크레딧을 차감하고, 생성에 실패하면 자동으로 돌려줍니다.", "points": ["리딩 상태 queued → generating → rendering → completed, 실패하면 차감 전액 환불", "대기 중 취소도 환불", "결제는 서버에서 금액을 대조한 뒤 한 번만 지급, 팩 크레딧은 만료하지 않음(제안)"], "ref": "01_PRD.md 3장 AS-F-012·019, 4.4절"}], "outputs": [["사주 리딩 책자", "A4 PDF, 약 10쪽", "6장 구성 해설. 판권면에 \"AI가 생성한 해설\", 첫 장에 면책 고지"], ["타로 3카드 책자", "A4 PDF, 약 8쪽", "직접 뽑은 카드 3장과 질문에 대한 4장 구성 해설"], ["통합 리딩 책자", "A4 PDF, 약 18쪽", "사주 6장과 타로 연결 2장을 한 권으로"], ["명식표와 대운 타임라인", "웹 화면(보관함 상세)", "4주 8자, 오행 막대, 10년 단위 대운 구간과 현재 구간 표시"], ["리딩 낭독 음성", "mp3", "리딩 본문을 장 단위로 읽은 파일. 첫머리에 \"AI가 생성한 음성입니다\" 안내"]], "market": {"line": "사주·타로 시장은 화면으로 보는 운세 앱과 사람과 묻고 답하는 상담으로 나뉘어 있습니다.", "lead": "운세 앱은 충전형 재화와 월 정액으로 많은 콘텐츠를 화면에서 보여 주고, 상담 서비스와 범용 AI 채팅은 묻고 답하는 쪽에 있습니다. 결과를 책자 파일로 소장하고 다시 받는 쪽은 확인한 공식 페이지 범위에서 내세운 곳이 적습니다.", "axes": {"xname": "결과를 받는 방식", "x": ["화면 조회·통화로 끝남", "소장하는 책자 파일"], "yname": "풀이 방식", "y": ["정해진 콘텐츠", "묻고 답하는 대화"]}, "ours": [9, 5], "gaps": [["소장형 책자 리포트", "확인한 운세 앱과 상담 서비스의 공식 페이지에서는 결과를 A4 책자 파일로 받아 보관하는 상품을 찾지 못했습니다(정성 판단)."], ["계산 기준을 보여 주는 원국", "입춘·절기 시각, 자시 방식, 경도 보정 같은 계산 기준을 결과와 함께 밝히는 곳은 공식 페이지에서 확인하지 못했습니다(미확인)."], ["가족 정보의 동의와 삭제", "가족·지인 정보를 저장할 때 동의를 받고, 지우면 리포트와 파일까지 함께 지운다고 밝힌 곳은 확인하지 못했습니다(미확인)."]]}, "competitors": [{"name": "포스텔러", "cat": "운세 앱", "region": "국내", "url": "https://apps.apple.com/kr/app/id1262949138", "price": "200포스 3,300원 / 500포스 7,700원 / 900포스 15,000원 / 2,000포스 33,000원 / 7,200포스 97,000원(충전형 재화, 상품별 포스 가격 미확인)", "checked": "2026-10-14", "for": "신년운세와 사주·타로를 화면으로 자주 보는 사용자", "strengths": ["신년운세, 토정비결, 사주, 주역, 타로, 궁합, 점성술을 한 서비스에서 제공", "3,300원부터 소액으로 충전할 수 있음"], "weaknesses": ["결제가 충전형 재화(포스) 단위라 상품별 원화 가격은 상품마다 따로 봐야 함", "결과를 파일로 받는 상품이 있는지 미확인"], "vs": "우리는 리딩마다 정해진 크레딧으로 A4 책자 PDF를 만들어 보관합니다.", "xy": [2, 2], "src": ["https://apps.apple.com/kr/app/id1262949138", "Price_Plans/astro-ai/PRICE_PLAN.md 4장", "https://www.forceteller.com/"]}, {"name": "점신PRO", "cat": "운세 앱", "region": "국내", "url": "https://apps.apple.com/kr/app/2024-%EC%A0%90%EC%8B%A0pro-%EA%B0%91%EC%A7%84%EB%85%84-%EC%8B%A0%EB%85%84%EC%9A%B4%EC%84%B8-%EC%82%AC%EC%A3%BC-%ED%83%80%EB%A1%9C-%EC%83%81%EB%8B%B4/id960515020", "price": "앱 99,000원(스토어 표시) / 소원카드 1개 4,400원, 2개 8,800원, 5개 22,000원, 10+1개 41,000원", "checked": "2026-10-17", "for": "일일 운세와 신년운세, 궁합을 앱에서 보고 필요하면 상담사와 통화하려는 사용자", "strengths": ["신년운세, 사주·궁합, 타로, 일일 운세 보고서까지 콘텐츠 종류가 넓음", "주변인을 저장해 관계 흐름과 궁합을 보는 인맥 보고서", "신점·사주·타로 상담사와 실시간 전화 상담 연결(첫 상담 3분 무료)"], "weaknesses": ["스토어 표시 지원 언어는 한국어만", "행운패스를 결제하지 않으면 전면 광고가 나온다고 스토어 설명에 적혀 있음"], "vs": "우리는 상담 연결 대신 엔진 값과 해설집을 근거로 쓴 책자 리포트를 줍니다.", "xy": [2, 6], "src": ["https://apps.apple.com/kr/app/2024-%EC%A0%90%EC%8B%A0pro-%EA%B0%91%EC%A7%84%EB%85%84-%EC%8B%A0%EB%85%84%EC%9A%B4%EC%84%B8-%EC%82%AC%EC%A3%BC-%ED%83%80%EB%A1%9C-%EC%83%81%EB%8B%B4/id960515020", "Price_Plans/astro-ai/PRICE_PLAN.md 4장"]}, {"name": "헬로우봇", "cat": "운세 앱", "region": "국내", "url": "https://apps.apple.com/kr/app/%ED%97%AC%EB%A1%9C%EC%9A%B0%EB%B4%87/id1294957719", "price": "하트 12개 3,300원 ~ 200개 31,900원 / 멤버십 월 26,000원(자동 갱신)", "checked": "2026-10-17", "for": "연애·재회·직업운 같은 주제별 사주·타로 콘텐츠를 골라 보는 사용자", "strengths": ["사주, 타로, 별자리, 손금, 꿈해몽(AI 채팅), 작명까지 콘텐츠 종류가 넓음", "한국어, 영어, 일본어 지원", "일부 콘텐츠는 무료로 제공"], "weaknesses": ["가격 구조가 충전형 하트와 월 자동 갱신 멤버십", "앱스토어판은 iPhone 전용, iOS 16.0 이상"], "vs": "우리는 주제별 콘텐츠를 늘리는 대신 한 사람의 원국을 한 권의 책자로 정리합니다.", "xy": [2, 4], "src": ["https://apps.apple.com/kr/app/%ED%97%AC%EB%A1%9C%EC%9A%B0%EB%B4%87/id1294957719", "Price_Plans/astro-ai/PRICE_PLAN.md 4장"]}, {"name": "Co-Star", "cat": "운세 앱", "region": "해외", "url": "https://apps.apple.com/kr/app/id1264782561", "price": "Pro-Star 월 12,000원 / 질문 5개 4,400원, 10개 7,700원, 25개 11,000원 / Advanced Chart 15,000원 / Your Year Ahead 19,000원", "checked": "2026-10-17", "for": "서양 점성술 출생 차트로 일일 운세와 관계를 보는 사용자", "strengths": ["개인 맞춤 일일 운세와 푸시 알림", "친구를 추가해 출생 차트를 비교하고 궁합을 확인", "Advanced Chart, Your Year Ahead 같은 단건 리포트 상품"], "weaknesses": ["스토어 표시 지원 언어는 영어만", "서양 점성술 기반이라 사주 원국(4주 8자)은 다루지 않음"], "vs": "우리는 입춘·절기 기준 사주 원국과 타로를 한국어 책자로 정리합니다.", "xy": [4, 4], "src": ["https://apps.apple.com/kr/app/id1264782561", "Price_Plans/astro-ai/PRICE_PLAN.md 4장"]}, {"name": "ChatGPT", "cat": "범용 AI 채팅", "region": "해외", "url": "https://chatgpt.com/pricing", "price": "Free 플랜 있음 / Plus 월 20달러(원화 표시가 미확인, 연간 결제 없음)", "checked": "2026-10-17", "for": "사주·타로 해석을 직접 묻고 이어서 질문하려는 사용자", "strengths": ["자유롭게 묻고 이어서 질문할 수 있음", "무료 플랜에서 텍스트 채팅을 쓸 수 있음", "Plus에서 음성 대화, 파일 업로드와 분석 지원"], "weaknesses": ["운세 전용 서비스가 아니어서 만세력 계산 기준과 책자형 결과물은 요금 페이지 기능 목록에 없음", "Plus는 월 단위 결제만 지원(도움말 기준)"], "vs": "우리는 엔진이 계산한 원국 값만 해설에 쓰고, 결과를 책자로 남깁니다.", "xy": [3, 9], "src": ["https://chatgpt.com/pricing", "https://help.openai.com/ko-kr/articles/6950777-what-is-chatgpt-plus"]}, {"name": "사주나루", "cat": "사람에게 맡긴다", "region": "국내", "url": "https://apps.apple.com/kr/app/id1663714546", "price": "앱 무료 / 상담은 코인 충전 결제(분당 요금 미확인)", "checked": "2026-10-17", "for": "상담사와 직접 통화하며 연애·진로·사업 고민을 묻고 싶은 사용자", "strengths": ["사람 상담사와 1:1 실시간 전화 상담", "연애, 진로, 사업 등 주제를 골라 상담", "한국어, 영어 지원"], "weaknesses": ["공식 스토어 페이지에 분당 상담료가 표시되지 않음", "상담 방식이 전화라 결과를 문서로 받는지는 미확인", "앱스토어판은 iPhone 전용"], "vs": "우리는 통화 대신 계산 근거와 해설을 담은 책자를 주고, 언제든 다시 받게 합니다.", "xy": [1, 10], "src": ["https://apps.apple.com/kr/app/id1663714546"]}], "faq": [["원국은 어떤 기준으로 계산하나요?", "입춘 시각으로 년주를, 절입 시각으로 월주를 정합니다. 자시 방식 2종, 생시 모름(삼주), 한국 서머타임 기간, 출생지 경도 보정, 음력·윤달 변환을 반영한 엔진 값만 씁니다. 용신·격국은 판정하지 않습니다."], ["무료로 얼마나 써 볼 수 있나요?", "가입 없이 원국 보기를 하루 3회 쓸 수 있고, 이때 입력은 저장하지 않습니다. 가입 후 이메일 인증 또는 Google 로그인을 마치면 30크레딧을 1회 드립니다. 통합 리딩 1건 또는 사주 리딩 2건에 해당합니다."], ["크레딧은 얼마이고 언제까지 쓰나요?", "크레딧팩은 100크레딧 4,900원, 330크레딧 12,900원, 800크레딧 27,900원, 2,400크레딧 69,900원입니다. 사주 15, 타로 20, 통합 30, 테마 바꿔 다시 만들기 5크레딧이고, 팩 크레딧은 만료하지 않습니다(제안). 월 구독은 Phase 2에 엽니다."], ["리포트는 어떻게 받나요?", "대시보드 웹 뷰어에서 읽고 PDF를 받습니다. 이메일로는 파일 대신 7일 동안 열리는 링크를 보내고, 링크가 만료되면 요청할 때마다 새 링크를 무료로 드립니다. 리포트는 직접 지우거나 탈퇴 후 30일이 지날 때까지 보관합니다."], ["가족 정보는 어떻게 저장하고 지우나요?", "본인이 아니면 정보 제공 동의 체크가 있어야 저장합니다. 이름과 생년월일시는 암호화해 저장하고, AI 제공자에게는 원문을 보내지 않고 계산한 간지·오행·대운만 보냅니다. 대상을 지우면 그 대상의 리딩과 PDF, 낭독 파일도 함께 지웁니다."], ["결과가 마음에 들지 않거나 생성이 실패하면요?", "생성에 실패하면 크레딧을 자동으로 돌려드립니다. 완료된 리포트의 내용에 대한 불만은 자동 환불 대상이 아닙니다. 결제 후 7일 안에 해당 팩 크레딧을 쓰지 않았다면 전액 환불합니다(제안, 법무 확인 필요). 이 리포트는 명리학과 타로의 전통 해석을 AI가 재구성한 참고용 콘텐츠이며 의료, 법률, 투자 판단을 대신하지 않습니다."]], "source": "products/astro-ai/01_PRD.md 1장·3장·4장·6.1절·6.4~6.5절, 03_SCREENS_UX.md 2절·3절·4절, 02_ARCHITECTURE.md 4절·5절, 06_AGENT_PLAN.md AS-06-023·024, Price_Plans/astro-ai/PRICE_PLAN.md 4장, 경쟁사 공식 페이지(2026-10-17 확인)"};
+var P = {"key": "astro-ai", "name": "신비로운AI", "short": "신비로운AI", "accent": "#d6c4a8", "pill": "사주·타로 책자형 리포트", "big": ["SAJU", "TAROT"], "chips": ["본인", "가족", "연인", "친구"], "join": "의 사주를 한 권의 책으로", "head": "내 사주를 한 권의 책으로", "sub": "입춘과 절기 시각으로 원국을 계산하고, AI가 해설을 써서 A4 책자 PDF로 드립니다. 이 리포트는 명리학과 타로의 전통 해석을 AI가 재구성한 참고용 콘텐츠이며 의료, 법률, 투자 판단을 대신하지 않습니다.", "cta": "원국 보기", "formula": "생년월일시 + 타로 3장 = A4 책자 PDF", "personas": [{"who": "서윤 · 31 · 마케터", "icon": "i-book", "cap": "기질과 10년 흐름을 한 권에", "sit": "이직을 고민하고 있습니다. 점집은 부담스럽지만 운세는 궁금합니다.", "scene": "조회형 앱은 화면을 닫으면 끝이고, 해석이 \"고향을 떠나 고생한다\" 같은 옛날 말투입니다.", "want": "자기 기질과 앞으로 10년 흐름을 한 번에 정리한 리포트를 갖고 싶습니다.", "id": "AS-C-01"}, {"who": "민호 · 38 · 회사원", "icon": "i-users", "cap": "가족 사주를 한곳에", "sit": "부모님 생신 선물과 가족 사주를 한곳에 정리하고 싶습니다.", "scene": "가족의 생년월일시를 어디에 맡겨도 되는지, 삭제는 되는지 불안합니다.", "want": "가족 4~5명의 리포트를 보관함에 두고 필요할 때 다시 받고 싶습니다.", "id": "AS-C-02"}, {"who": "지아 · 26 · 대학원생", "icon": "i-star", "cap": "진로 질문 하나를 타로로", "sit": "진로 질문 하나를 타로로 빠르게 보고 싶습니다.", "scene": "결과가 너무 길거나, 크레딧이 빠졌는데 실패하면 돌려받을 수 있는지 모릅니다.", "want": "카드 3장을 직접 뽑고 질문에 대한 해설을 받고 싶습니다.", "id": "AS-C-03"}], "cause": {"line": "운세 조회 화면은 닫으면 사라집니다.", "lead": "화면으로 보는 운세는 다시 찾기 어렵고, 원국을 어떤 기준으로 계산했는지도 보이지 않습니다. 가족 정보를 맡기는 일도 저장과 삭제가 보이지 않으면 망설여집니다.", "bad": ["조회형 운세 화면", "운세 앱"], "good": ["소장하는 리포트", "신비로운AI"], "rows": [["결과물", "화면에서 보고 닫으면 끝", "A4 책자형 PDF(사주 약 10쪽, 타로 약 8쪽, 통합 약 18쪽). 다시 받기는 무료"], ["원국 계산", "기준이 보이지 않는다", "입춘·절기 시각, 자시 방식, 생시 모름, 서머타임, 경도 보정을 반영한 엔진 값만 쓴다"], ["해석 말투", "옛날 말투", "현대적 재해석 사전을 쓰고, 단정·공포 표현은 검사해서 걸러 낸다"], ["가족 정보", "어디에 보관되는지 모른다", "동의 체크 후에만 저장하고 암호화한다. 삭제하면 리포트와 PDF도 함께 지운다"], ["실패했을 때", "크레딧을 돌려받는지 모른다", "생성에 실패하면 크레딧을 자동으로 돌려준다"]]}, "flow": [["입력", "i-calc", "생년월일시와 대상을 입력한다. 본인이 아니면 동의 체크를 한다", true, "브라우저 엔진이 4주 8자를 바로 계산해 보여 준다"], ["선택", "i-star", "리딩 종류와 테마를 고르고, 타로는 카드 3장을 직접 뽑는다", true, "크레딧을 먼저 차감한다(사주 15, 타로 20, 통합 30)"], ["해설 작성", "i-pen", "진행 단계를 본다", false, "엔진 값과 해설집을 근거로 장별 초안을 쓰고, 금지 표현과 엔진에 없는 수치를 검사해 걸린 장만 다시 쓴다"], ["책자 만들기", "i-print", "기다린다", false, "면책과 AI 생성 표시를 넣어 A4 책자 PDF로 렌더한다. 실패하면 크레딧을 돌려준다"], ["받기", "i-send2", "웹 뷰어로 읽고 PDF를 받는다", false, "7일 서명 링크를 대시보드와 이메일로 보내고, 요청할 때마다 새 링크를 무료로 준다"]], "alts": [["그대로 둔다", "무료 운세 조회"], ["범용 AI 채팅", ""], ["사람에게 맡긴다", "대면·전화 상담"], ["운세 앱", "충전형 재화·월 구독"]], "table": [["소장하고 다시 받는 결과물", [["x", "화면을 닫으면 끝난다"], ["t", "대화를 복사해 직접 정리한다"], ["t", "기록은 직접 남긴다(미확인)"], ["t", "단건 리포트 상품이 있는 앱도 있다. 파일 소장 여부는 미확인"]], ["o", "A4 책자 PDF, 다시 받기 무료"], "AS-E-01"], ["원국 계산 기준이 보이는지", [["t", "계산 기준 표시는 서비스마다 다름(미확인)"], ["t", "계산 근거를 직접 대조해야 한다"], ["t", "상담가마다 다르다"], ["t", "앱마다 다름(미확인)"]], ["o", "입춘·절기 기준 엔진 값만 쓰고, 가입 없이 원국을 직접 볼 수 있음"], "AS-E-02"], ["가족 정보 저장과 삭제", [["t", "저장 방식 미확인"], ["t", "대화 기록 보관은 서비스 설정에 따름(미확인)"], ["n", ""], ["t", "앱마다 다름(미확인)"]], ["o", "동의 체크 후 암호화 저장, 삭제하면 리포트·PDF 함께 삭제"], "AS-E-03"], ["실패하면 돌려받는지", [["n", ""], ["n", ""], ["n", ""], ["t", "환불 규정은 앱마다 다름(미확인)"]], ["o", "생성 실패 시 크레딧 자동 환불"], "AS-E-04"], ["비용 구조", [["o", "0원"], ["t", "서비스별 구독료"], ["t", "회당 상담료(미확인)"], ["t", "충전형 재화와 월 정액"]], ["t", "가입 크레딧 30(인증 후 1회). 팩 4,900원(100크레딧)부터, 사주 15·타로 20·통합 30크레딧"], "요금"], ["묻고 답하며 듣는 풀이", [["x", "정해진 결과만 보여 준다"], ["o", "자유롭게 묻는다"], ["o", "상담가와 직접 대화한다"], ["t", "앱마다 다름(미확인)"]], ["t", "AI가 재구성한 참고용 해설. 리포트에 대한 채팅은 턴마다 크레딧이 들고, 용신·격국과 의료·법률·투자 판단은 다루지 않음"], ""]], "nonfit": [["건강·재테크·법률 결정을 운세로 판단하고 싶다", "해당 분야 전문가와 상담하세요. 이 리포트는 의료, 법률, 투자 판단을 대신하지 않습니다"], ["상담가와 마주 앉아 풀이를 듣고 싶다", "대면 상담이 맞습니다"], ["궁합이나 연간 운세가 필요하다", "아직 준비 중입니다"], ["화면으로 한 번 훑어보면 충분하다", "가입 없이 원국 보기로 충분할 수 있습니다"]], "evidence": [["AS-E-01", "E2", "샘플 사주·타로·통합 리포트 PDF", "실제 엔진·그래프·렌더 출력, 가상 인물 입력, \"샘플\" 표시"], ["AS-E-02", "E1", "가입 없이 원국 보기", "실제 엔진 계산, AI 미사용, 입력 저장 안 함, 하루 3회"], ["AS-E-03", "E3", "가족 등록(동의 체크)과 삭제 화면 기록", "가상 인물, 편집 없는 녹화, 삭제 뒤 리포트·PDF가 사라지는 장면 포함"], ["AS-E-04", "E3", "생성 실패 → 크레딧 환불 화면 기록", "테스트 환경에서 실패를 재현, 크레딧 내역의 환불 행 포함"], ["AS-E-05", "E4", "리포트 생성 시간 측정 기록", "기준점(크레딧 차감 후 대기 시작), 건수·기간·버전 표기"]], "ledger": [["AS-C-01", "조회형 앱은 화면을 닫으면 끝이고, 해석이 \"고향을 떠나 고생한다\" 같은 옛날 말투입니다.", "문제 묘사", "V0 인터뷰", "draft"], ["AS-C-02", "가족의 생년월일시를 어디에 맡겨도 되는지, 삭제는 되는지 불안합니다.", "문제 묘사", "V0 인터뷰", "draft"], ["AS-C-03", "결과가 너무 길거나, 크레딧이 빠졌는데 실패하면 돌려받을 수 있는지 모릅니다.", "문제 묘사", "V0 인터뷰", "draft"], ["AS-C-04", "생년월일시를 넣으면 입춘과 절기 시각으로 계산한 원국을 가입 없이 보여 드립니다", "기능 사실", "AS-E-02", "hold"], ["AS-C-05", "사주·타로 해설을 A4 책자 PDF로 드리고, 언제든 다시 받을 수 있습니다", "기능 사실", "AS-E-01", "hold"], ["AS-C-06", "생성에 실패하면 크레딧을 자동으로 돌려드립니다", "기능 사실", "AS-E-04", "hold"], ["AS-C-07", "크레딧 차감 뒤 PDF를 받기까지 걸린 시간 중앙값 ○초(건수, 리딩 종류, 기간, 버전)", "측정치", "AS-E-05", "draft"]], "stages": [{"label": "Starter", "price": "0원", "per": "가입 크레딧 30 · 1회", "steps": [["가입하고 이메일 인증 또는 Google 로그인을 마친다", "30크레딧을 1회 준다"], ["첫 리딩을 만든다", "사주 15 · 타로 20 · 통합 30크레딧. 실패하면 자동 환불"], ["테마를 바꿔 다시 만든다", "5크레딧. 본문은 그대로 두고 책자만 새로 렌더"]]}, {"label": "크레딧팩", "price": "4,900원~", "per": "100크레딧 4,900원 · 330크레딧 12,900원 · 800크레딧 27,900원 · 2,400크레딧 69,900원", "steps": [["필요한 만큼 산다", "결제를 서버에서 확인한 뒤 지급하고, 팩 크레딧은 만료하지 않는다"], ["PDF를 다시 받거나 메일을 다시 보낸다", "링크 재발급과 이메일 재발송은 0크레딧"]]}, {"label": "구독", "price": "9,900원~", "per": "월 Basic 300 · Pro 1,000 · Master 3,000크레딧 · Phase 2", "steps": [["매달 쓰는 만큼 구독한다", "Basic 9,900원 · Pro 29,900원 · Master 69,900원. 연간 20% 할인은 Phase 2에 함께 연다"]]}], "calc": {"title": "가족 리포트 비용 비교", "groups": [["대면 상담으로 할 때", [["visits", "상담 횟수", "회", 1], ["fee", "1회 상담료", "원", 50000]]], ["운세 앱 단건으로 할 때", [["app", "리포트 1건 결제액", "원", 15000]]], ["신비로운AI로 할 때", [["saju", "사주 리딩 수", "건", 4], ["tarot", "타로 리딩 수", "건", 0], ["comb", "통합 리딩 수", "건", 1], ["rerender", "테마 바꿔 다시 만들기", "회", 0], ["welcome", "가입 크레딧 30 사용", "", ["예", "아니오"]]]]], "derived": [["cnt", "saju+tarot+comb"], ["need", "saju*15+tarot*20+comb*30+rerender*5"], ["over", "max(0, need-(welcome==='예'?30:0))"], ["packc", "pack(over, [[100,4900],[330,12900],[800,27900],[2400,69900]])"]], "rows": [["대면 상담", "visits*fee", "visits+'회 방문'", "'상담 횟수 × 1회 상담료'"], ["운세 앱 단건", "cnt*app", "'앱마다 다름'", "'리포트 '+cnt+'건 × 1건 결제액'"], ["신비로운AI", "packc", "'건마다 처리 대기'", "'필요 크레딧 '+need+(welcome==='예'?' − 가입 30':'')+(over?' → 팩 '+won(packc):' (가입 크레딧 안)')"]], "formula": "대면 상담 = 상담 횟수 × 1회 상담료\n운세 앱 단건 = 리포트 수 × 1건 결제액\n신비로운AI = 팩 비용\n필요 크레딧 = 사주 15 + 타로 20 + 통합 30 + 테마 재생성 5(건마다)\n팩 비용 = 가입 크레딧 30을 뺀 나머지를 100크레딧 4,900원 / 330크레딧 12,900원 / 800크레딧 27,900원 / 2,400크레딧 69,900원 중 싼 조합으로", "note": "AI 채팅과 리딩 낭독 크레딧은 넣지 않았습니다. 구독은 Phase 2라 비교에서 뺐고, 처리 시간은 측정 전이라 숫자로 쓰지 않습니다."}, "insight": [], "features": [{"title": "만세력 엔진과 원국 보기", "icon": "i-calc", "sum": "생년월일시를 넣으면 브라우저에서 4주 8자를 바로 계산해 보여 줍니다.", "points": ["입춘 기준 년주, 절입 시각 기준 월주, 자시 방식 2종, 생시 모름(삼주) 처리", "한국 서머타임 기간과 출생지 경도 보정, 음력·윤달 변환", "오행 색 명식표, 오행 막대, 대운 타임라인(10년 단위)", "가입 없이 원국 보기는 하루 3회, AI를 쓰지 않고 입력을 저장하지 않음"], "ref": "01_PRD.md 3장 AS-F-006·007·008·024, 03_SCREENS_UX.md 3절"}, {"title": "사주·타로·통합 리딩", "icon": "i-star", "sum": "엔진 값과 해설집을 근거로 장별 해설을 씁니다.", "points": ["사주 15크레딧: 기질, 오행 균형, 일과 재능, 관계, 대운 흐름, 올해의 흐름 6장", "타로 20크레딧: 메이저 아르카나 22장에서 3장을 직접 뽑고 질문(200자 이하)을 남김", "통합 30크레딧: 사주 6장 + 타로 연결 2장", "금지 표현과 엔진에 없는 수치를 검사해 걸린 장만 다시 쓰고, 용신·격국은 판정하지 않음"], "ref": "01_PRD.md 3장 AS-F-009·010·011·029·038"}, {"title": "A4 책자 PDF와 다시 받기", "icon": "i-print", "sum": "해설을 판권면과 면책이 들어간 A4 책자로 렌더해 보관합니다.", "points": ["테마 2종(mystical-dark, oracle-gold), 테마만 바꿔 다시 만들기 5크레딧", "다운로드는 요청할 때마다 7일 서명 링크를 새로 발급하며 무료", "대시보드 웹 뷰어와 이메일 링크로 받음(이메일 발송은 설정에서 끌 수 있음)"], "ref": "01_PRD.md 3장 AS-F-013~017, 4.2절"}, {"title": "가족 보관함과 동의·삭제", "icon": "i-lock", "sum": "본인과 가족, 지인의 정보를 동의 확인 뒤에 암호화해 보관합니다.", "points": ["본인이 아니면 정보 제공 동의(또는 법정대리인) 체크가 있어야 저장", "이름과 생년월일시 원문은 AES-256-GCM으로 암호화하고 AI 제공자에게 보내지 않음", "대상을 지우면 그 대상의 리딩, PDF, 발송 기록, 낭독 파일을 함께 지움", "보관함은 조직당 20명까지(제안)"], "ref": "01_PRD.md 3장 AS-F-003·004·005·026, 6.1절"}, {"title": "AI 채팅과 리딩 낭독", "icon": "i-chat", "sum": "리포트를 근거로 묻고, 리딩 본문을 음성으로 듣습니다.", "points": ["\"이 리포트에 대해 묻기\"는 그 리딩의 원국과 본문을 근거로 답하고 답마다 출처를 붙임", "채팅 1턴 약 3크레딧(정산 후 1~5), 마이크로 묻는 음성 대화는 녹음 원본을 저장하지 않음", "리딩 낭독은 장 단위 mp3로 만들고 재생·재다운로드는 무료", "의료·법률·투자 판단 요청은 정중히 거절하고 전문가를 안내"], "ref": "01_PRD.md 3장 AS-F-032·033·034·038, 4.7절, 03_SCREENS_UX.md 3.1절"}, {"title": "크레딧 선차감과 자동 환불", "icon": "i-shield", "sum": "리딩 전에 크레딧을 차감하고, 생성에 실패하면 자동으로 돌려줍니다.", "points": ["리딩 상태 queued → generating → rendering → completed, 실패하면 차감 전액 환불", "대기 중 취소도 환불", "결제는 서버에서 금액을 대조한 뒤 한 번만 지급, 팩 크레딧은 만료하지 않음(제안)"], "ref": "01_PRD.md 3장 AS-F-012·019, 4.4절"}], "outputs": [["사주 리딩 책자", "A4 PDF, 약 10쪽", "6장 구성 해설. 판권면에 \"AI가 생성한 해설\", 첫 장에 면책 고지"], ["타로 3카드 책자", "A4 PDF, 약 8쪽", "직접 뽑은 카드 3장과 질문에 대한 4장 구성 해설"], ["통합 리딩 책자", "A4 PDF, 약 18쪽", "사주 6장과 타로 연결 2장을 한 권으로"], ["명식표와 대운 타임라인", "웹 화면(보관함 상세)", "4주 8자, 오행 막대, 10년 단위 대운 구간과 현재 구간 표시"], ["리딩 낭독 음성", "mp3", "리딩 본문을 장 단위로 읽은 파일. 첫머리에 \"AI가 생성한 음성입니다\" 안내"]], "market": {"line": "사주·타로 시장은 화면으로 보는 운세 앱과 사람과 묻고 답하는 상담으로 나뉘어 있습니다.", "lead": "운세 앱은 충전형 재화와 월 정액으로 많은 콘텐츠를 화면에서 보여 주고, 상담 서비스와 범용 AI 채팅은 묻고 답하는 쪽에 있습니다. 결과를 책자 파일로 소장하고 다시 받는 쪽은 확인한 공식 페이지 범위에서 내세운 곳이 적습니다.", "axes": {"xname": "결과를 받는 방식", "x": ["화면 조회·통화로 끝남", "소장하는 책자 파일"], "yname": "풀이 방식", "y": ["정해진 콘텐츠", "묻고 답하는 대화"]}, "ours": [9, 5], "gaps": [["소장형 책자 리포트", "확인한 운세 앱과 상담 서비스의 공식 페이지에서는 결과를 A4 책자 파일로 받아 보관하는 상품을 찾지 못했습니다(정성 판단)."], ["계산 기준을 보여 주는 원국", "입춘·절기 시각, 자시 방식, 경도 보정 같은 계산 기준을 결과와 함께 밝히는 곳은 공식 페이지에서 확인하지 못했습니다(미확인)."], ["가족 정보의 동의와 삭제", "가족·지인 정보를 저장할 때 동의를 받고, 지우면 리포트와 파일까지 함께 지운다고 밝힌 곳은 확인하지 못했습니다(미확인)."]]}, "competitors": [{"name": "포스텔러", "cat": "운세 앱", "region": "국내", "url": "https://apps.apple.com/kr/app/id1262949138", "price": "200포스 3,300원 / 500포스 7,700원 / 900포스 15,000원 / 2,000포스 33,000원 / 7,200포스 97,000원(충전형 재화, 상품별 포스 가격 미확인)", "checked": "2026-10-14", "for": "신년운세와 사주·타로를 화면으로 자주 보는 사용자", "strengths": ["신년운세, 토정비결, 사주, 주역, 타로, 궁합, 점성술을 한 서비스에서 제공", "3,300원부터 소액으로 충전할 수 있음"], "weaknesses": ["결제가 충전형 재화(포스) 단위라 상품별 원화 가격은 상품마다 따로 봐야 함", "결과를 파일로 받는 상품이 있는지 미확인"], "vs": "우리는 리딩마다 정해진 크레딧으로 A4 책자 PDF를 만들어 보관합니다.", "xy": [2, 2], "src": ["https://apps.apple.com/kr/app/id1262949138", "Price_Plans/astro-ai/PRICE_PLAN.md 4장", "https://www.forceteller.com/"]}, {"name": "점신PRO", "cat": "운세 앱", "region": "국내", "url": "https://apps.apple.com/kr/app/2024-%EC%A0%90%EC%8B%A0pro-%EA%B0%91%EC%A7%84%EB%85%84-%EC%8B%A0%EB%85%84%EC%9A%B4%EC%84%B8-%EC%82%AC%EC%A3%BC-%ED%83%80%EB%A1%9C-%EC%83%81%EB%8B%B4/id960515020", "price": "앱 99,000원(스토어 표시) / 소원카드 1개 4,400원, 2개 8,800원, 5개 22,000원, 10+1개 41,000원", "checked": "2026-10-17", "for": "일일 운세와 신년운세, 궁합을 앱에서 보고 필요하면 상담사와 통화하려는 사용자", "strengths": ["신년운세, 사주·궁합, 타로, 일일 운세 보고서까지 콘텐츠 종류가 넓음", "주변인을 저장해 관계 흐름과 궁합을 보는 인맥 보고서", "신점·사주·타로 상담사와 실시간 전화 상담 연결(첫 상담 3분 무료)"], "weaknesses": ["스토어 표시 지원 언어는 한국어만", "행운패스를 결제하지 않으면 전면 광고가 나온다고 스토어 설명에 적혀 있음"], "vs": "우리는 상담 연결 대신 엔진 값과 해설집을 근거로 쓴 책자 리포트를 줍니다.", "xy": [2, 6], "src": ["https://apps.apple.com/kr/app/2024-%EC%A0%90%EC%8B%A0pro-%EA%B0%91%EC%A7%84%EB%85%84-%EC%8B%A0%EB%85%84%EC%9A%B4%EC%84%B8-%EC%82%AC%EC%A3%BC-%ED%83%80%EB%A1%9C-%EC%83%81%EB%8B%B4/id960515020", "Price_Plans/astro-ai/PRICE_PLAN.md 4장"]}, {"name": "헬로우봇", "cat": "운세 앱", "region": "국내", "url": "https://apps.apple.com/kr/app/%ED%97%AC%EB%A1%9C%EC%9A%B0%EB%B4%87/id1294957719", "price": "하트 12개 3,300원 ~ 200개 31,900원 / 멤버십 월 26,000원(자동 갱신)", "checked": "2026-10-17", "for": "연애·재회·직업운 같은 주제별 사주·타로 콘텐츠를 골라 보는 사용자", "strengths": ["사주, 타로, 별자리, 손금, 꿈해몽(AI 채팅), 작명까지 콘텐츠 종류가 넓음", "한국어, 영어, 일본어 지원", "일부 콘텐츠는 무료로 제공"], "weaknesses": ["가격 구조가 충전형 하트와 월 자동 갱신 멤버십", "앱스토어판은 iPhone 전용, iOS 16.0 이상"], "vs": "우리는 주제별 콘텐츠를 늘리는 대신 한 사람의 원국을 한 권의 책자로 정리합니다.", "xy": [2, 4], "src": ["https://apps.apple.com/kr/app/%ED%97%AC%EB%A1%9C%EC%9A%B0%EB%B4%87/id1294957719", "Price_Plans/astro-ai/PRICE_PLAN.md 4장"]}, {"name": "Co-Star", "cat": "운세 앱", "region": "해외", "url": "https://apps.apple.com/kr/app/id1264782561", "price": "Pro-Star 월 12,000원 / 질문 5개 4,400원, 10개 7,700원, 25개 11,000원 / Advanced Chart 15,000원 / Your Year Ahead 19,000원", "checked": "2026-10-17", "for": "서양 점성술 출생 차트로 일일 운세와 관계를 보는 사용자", "strengths": ["개인 맞춤 일일 운세와 푸시 알림", "친구를 추가해 출생 차트를 비교하고 궁합을 확인", "Advanced Chart, Your Year Ahead 같은 단건 리포트 상품"], "weaknesses": ["스토어 표시 지원 언어는 영어만", "서양 점성술 기반이라 사주 원국(4주 8자)은 다루지 않음"], "vs": "우리는 입춘·절기 기준 사주 원국과 타로를 한국어 책자로 정리합니다.", "xy": [4, 4], "src": ["https://apps.apple.com/kr/app/id1264782561", "Price_Plans/astro-ai/PRICE_PLAN.md 4장"]}, {"name": "ChatGPT", "cat": "범용 AI 채팅", "region": "해외", "url": "https://chatgpt.com/pricing", "price": "Free 플랜 있음 / Plus 월 20달러(원화 표시가 미확인, 연간 결제 없음)", "checked": "2026-10-17", "for": "사주·타로 해석을 직접 묻고 이어서 질문하려는 사용자", "strengths": ["자유롭게 묻고 이어서 질문할 수 있음", "무료 플랜에서 텍스트 채팅을 쓸 수 있음", "Plus에서 음성 대화, 파일 업로드와 분석 지원"], "weaknesses": ["운세 전용 서비스가 아니어서 만세력 계산 기준과 책자형 결과물은 요금 페이지 기능 목록에 없음", "Plus는 월 단위 결제만 지원(도움말 기준)"], "vs": "우리는 엔진이 계산한 원국 값만 해설에 쓰고, 결과를 책자로 남깁니다.", "xy": [3, 9], "src": ["https://chatgpt.com/pricing", "https://help.openai.com/ko-kr/articles/6950777-what-is-chatgpt-plus"]}, {"name": "사주나루", "cat": "사람에게 맡긴다", "region": "국내", "url": "https://apps.apple.com/kr/app/id1663714546", "price": "앱 무료 / 상담은 코인 충전 결제(분당 요금 미확인)", "checked": "2026-10-17", "for": "상담사와 직접 통화하며 연애·진로·사업 고민을 묻고 싶은 사용자", "strengths": ["사람 상담사와 1:1 실시간 전화 상담", "연애, 진로, 사업 등 주제를 골라 상담", "한국어, 영어 지원"], "weaknesses": ["공식 스토어 페이지에 분당 상담료가 표시되지 않음", "상담 방식이 전화라 결과를 문서로 받는지는 미확인", "앱스토어판은 iPhone 전용"], "vs": "우리는 통화 대신 계산 근거와 해설을 담은 책자를 주고, 언제든 다시 받게 합니다.", "xy": [1, 10], "src": ["https://apps.apple.com/kr/app/id1663714546"]}], "faq": [["원국은 어떤 기준으로 계산하나요?", "입춘 시각으로 년주를, 절입 시각으로 월주를 정합니다. 자시 방식 2종, 생시 모름(삼주), 한국 서머타임 기간, 출생지 경도 보정, 음력·윤달 변환을 반영한 엔진 값만 씁니다. 용신·격국은 판정하지 않습니다."], ["무료로 얼마나 써 볼 수 있나요?", "가입 없이 원국 보기를 하루 3회 쓸 수 있고, 이때 입력은 저장하지 않습니다. 가입 후 이메일 인증 또는 Google 로그인을 마치면 30크레딧을 1회 드립니다. 통합 리딩 1건 또는 사주 리딩 2건에 해당합니다."], ["크레딧은 얼마이고 언제까지 쓰나요?", "크레딧팩은 100크레딧 4,900원, 330크레딧 12,900원, 800크레딧 27,900원, 2,400크레딧 69,900원입니다. 사주 15, 타로 20, 통합 30, 테마 바꿔 다시 만들기 5크레딧이고, 팩 크레딧은 만료하지 않습니다(제안). 월 구독은 Phase 2에 엽니다."], ["리포트는 어떻게 받나요?", "대시보드 웹 뷰어에서 읽고 PDF를 받습니다. 이메일로는 파일 대신 7일 동안 열리는 링크를 보내고, 링크가 만료되면 요청할 때마다 새 링크를 무료로 드립니다. 리포트는 직접 지우거나 탈퇴 후 30일이 지날 때까지 보관합니다."], ["가족 정보는 어떻게 저장하고 지우나요?", "본인이 아니면 정보 제공 동의 체크가 있어야 저장합니다. 이름과 생년월일시는 암호화해 저장하고, AI 제공자에게는 원문을 보내지 않고 계산한 간지·오행·대운만 보냅니다. 대상을 지우면 그 대상의 리딩과 PDF, 낭독 파일도 함께 지웁니다."], ["결과가 마음에 들지 않거나 생성이 실패하면요?", "생성에 실패하면 크레딧을 자동으로 돌려드립니다. 완료된 리포트의 내용에 대한 불만은 자동 환불 대상이 아닙니다. 결제 후 7일 안에 해당 팩 크레딧을 쓰지 않았다면 전액 환불합니다(제안, 법무 확인 필요). 이 리포트는 명리학과 타로의 전통 해석을 AI가 재구성한 참고용 콘텐츠이며 의료, 법률, 투자 판단을 대신하지 않습니다."]], "source": "products/astro-ai/01_PRD.md 1장·3장·4장·6.1절·6.4~6.5절, 03_SCREENS_UX.md 2절·3절·4절, 02_ARCHITECTURE.md 4절·5절, 06_AGENT_PLAN.md AS-06-023·024, Price_Plans/astro-ai/PRICE_PLAN.md 4장, 경쟁사 공식 페이지(2026-10-17 확인)", "voice": {"lead": "리딩 결과를 말로 다시 묻고, 완성된 리딩을 소리로 들을 수 있습니다.", "say": [["올해 리딩에서 일 운 부분만 다시 설명해 줘", "리딩 내용을 근거로 답하고, 원하면 읽어 줍니다"], ["완성된 리딩 읽어 줘", "장 단위로 낭독한 mp3를 만들어 재생·내려받기"], ["다음 달에 투자해도 될까?", "투자·의료·법률 판단 요청은 정중히 거절하고 전문가를 안내합니다"]], "items": [["음성 대화", "채팅 마이크(누르고 말하기, 60초), 변환 글 확인 후 전송, 읽어 주기", "AS-F-033"], ["리딩 낭독", "완료된 리딩을 장 단위 mp3로. 도중에 목소리를 바꾸지 않음", "AS-F-034"], ["출력 규칙", "단정 예언·전문 판단 요청 거절, 위기 신호는 상담 전화 안내", "AS-F-038"]]}};
 var view = document.getElementById('view');
 if(!P){ view.innerHTML='<div class="empty" style="margin-top:40px"><b>제품 데이터가 없습니다.</b>build.py로 data/&lt;제품&gt;.json을 넣어 dist/&lt;제품&gt;.html을 만드세요.</div>'; return; }
 
@@ -744,41 +800,59 @@ var finePointer=!!(window.matchMedia&&window.matchMedia('(pointer: fine)').match
   if(m){ var r=document.documentElement.style; r.setProperty('--acc','#'+m[1]+m[2]+m[3]); r.setProperty('--acc-rgb',parseInt(m[1],16)+','+parseInt(m[2],16)+','+parseInt(m[3],16)); } })();
 
 var S=P.short;
-var has={features:!!(P.features&&P.features.length),outputs:!!(P.outputs&&P.outputs.length),market:!!(P.competitors&&P.competitors.length&&P.market),faq:!!(P.faq&&P.faq.length),insight:!!(P.insight&&P.insight.length)};
+var has={voice:!!(P.voice&&P.voice.say&&P.voice.say.length),features:!!(P.features&&P.features.length),outputs:!!(P.outputs&&P.outputs.length),market:!!(P.competitors&&P.competitors.length&&P.market),faq:!!(P.faq&&P.faq.length),insight:!!(P.insight&&P.insight.length)};
 
-/* ---------- 여정 구조: 단계(GNB) → 하위 페이지(하위 GNB) ---------- */
-var STAGES=[
-  {key:'problem',no:'01',label:'문제',icon:'i-search',q:'나도 겪는 일인가?',pages:[
+/* ---------- 여정 구조 ----------
+   공통 템플릿은 아래 기본 구매 여정을 쓴다. 제품 데이터에 journey가 있으면 그 이름·단계·하위 페이지로 바꾼다.
+   하위 페이지 = {id, title, desc, type(없으면 id), pick, range, data, head, lead, ref} */
+var DEFAULT_JOURNEY={name:'구매 여정',lead:'방문자가 판단하는 순서입니다. 제품마다 이 여정의 이름과 단계를 개발 요건에 맞게 바꿉니다.',stages:[
+  {no:'01',label:'문제',icon:'i-search',q:'나도 겪는 일인가?',pages:[
     {id:'scene',title:'막히는 장면',desc:'페르소나 3명의 실제 장면'},
     {id:'cause',title:'원인',desc:'기존 방식과 제품 방식 비교'}]},
-  {key:'solve',no:'02',label:'해결',icon:'i-bulb',q:'어떻게 푸나?',pages:[
+  {no:'02',label:'해결',icon:'i-bulb',q:'어떻게 푸나?',pages:[
     {id:'flow',title:'처리 흐름',desc:'사람이 하는 일과 제품이 하는 일'},
-    {id:'features',title:'핵심 기능',desc:'기획 문서의 기능을 하나씩',when:has.features},
-    {id:'outputs',title:'결과물',desc:'손에 쥐는 파일과 화면',when:has.outputs}]},
-  {key:'compare',no:'03',label:'비교',icon:'i-scale',q:'왜 다른 방법이 아닌가?',pages:[
-    {id:'market',title:'경쟁 지형',desc:'경쟁사 강점·약점과 위치',when:has.market},
+    {id:'steps',title:'사용 단계',desc:'처음부터 결과까지 단계별로'},
+    {id:'features',title:'핵심 기능',desc:'기획 문서의 기능을 하나씩'},
+    {id:'voice',title:'음성 지시',desc:'말로 묻고 지시하기'},
+    {id:'outputs',title:'결과물',desc:'손에 쥐는 파일과 화면'}]},
+  {no:'03',label:'비교',icon:'i-scale',q:'왜 다른 방법이 아닌가?',pages:[
+    {id:'market',title:'경쟁 지형',desc:'경쟁사 강점·약점과 위치'},
     {id:'verdict',title:'판정표',desc:'대안 범주별 ○△✕'},
     {id:'nonfit',title:'맞지 않는 경우',desc:'다른 방법이 나은 상황'}]},
-  {key:'proof',no:'04',label:'검증',icon:'i-shield',q:'믿을 근거가 있나?',pages:[
+  {no:'04',label:'검증',icon:'i-shield',q:'믿을 근거가 있나?',pages:[
     {id:'evidence',title:'증거',desc:'직접 확인할 수 있는 것부터'},
     {id:'ledger',title:'주장 장부',desc:'검증된 문장만 게시'},
     {id:'validate',title:'검증 단계',desc:'V0 인터뷰부터 V3 사례까지'},
-    {id:'insight',title:'논증 글',desc:'판정 기준을 글로 깊게',when:has.insight}]},
-  {key:'adopt',no:'05',label:'도입',icon:'i-rocket',q:'나한테 이득인가?',pages:[
+    {id:'insight',title:'논증 글',desc:'판정 기준을 글로 깊게'}]},
+  {no:'05',label:'도입',icon:'i-rocket',q:'나한테 이득인가?',pages:[
     {id:'plans',title:'요금 단계',desc:'어디서 시작해 어떻게 늘리나'},
     {id:'calc',title:'비교 계산기',desc:'내 숫자로 비교'},
-    {id:'faq',title:'자주 묻는 질문',desc:'가격·범위·정책',when:has.faq}]}
-];
-STAGES.forEach(function(s){ s.pages=s.pages.filter(function(p){return p.when!==false;}); s.pages.forEach(function(p,i){ p.stage=s; p.k=(+s.no)+'-'+(i+1); }); });
+    {id:'faq',title:'자주 묻는 질문',desc:'가격·범위·정책'}]}]};
+var TYPES=['scene','cause','flow','steps','features','voice','outputs','market','verdict','nonfit','evidence','ledger','validate','insight','plans','calc','faq','table'];
+function typeReady(pg){ var t=pg.type;
+  if(t==='voice') return has.voice;
+  if(t==='features') return has.features; if(t==='outputs') return has.outputs; if(t==='market') return has.market; if(t==='faq') return has.faq; if(t==='insight') return has.insight;
+  if(t==='steps') return !!(P.wizard&&P.wizard.steps&&P.wizard.steps.length);
+  if(t==='table') return !!(P.tables&&P.tables[pg.data]);
+  return TYPES.indexOf(t)>=0; }
+var CUSTOM=!!(P.journey&&P.journey.stages), J=CUSTOM?P.journey:DEFAULT_JOURNEY;
+var STAGES=J.stages.map(function(s){
+  var st={no:s.no,label:s.label,icon:s.icon||'i-layers',q:s.q||'',ref:s.ref||''};
+  st.pages=(s.pages||[]).map(function(p){ return {id:p.id,title:p.title,desc:p.desc||'',type:p.type||p.id,pick:p.pick,range:p.range,data:p.data,head:p.head,lead:p.lead,ref:p.ref||''}; }).filter(typeReady);
+  st.pages.forEach(function(p,i){ p.stage=st; p.k=(+st.no)+'-'+(i+1); });
+  return st; }).filter(function(s){ return s.pages.length; });
 var ORDER=[]; STAGES.forEach(function(s){ ORDER=ORDER.concat(s.pages); });
-var EXTRA={home:{id:'home',title:'개요',desc:'한눈에 보기'},guide:{id:'guide',title:'템플릿 사용법',desc:'데이터 · 메뉴 구조 · 점검'}};
+var EXTRA={home:{id:'home',type:'home',title:'개요',desc:'한눈에 보기'},guide:{id:'guide',type:'guide',title:'템플릿 사용법',desc:'데이터 · 여정 구조 · 점검'}};
+[['ledger','주장 장부','검증된 문장만 게시'],['validate','검증 단계','V0 인터뷰부터 V3 사례까지']].forEach(function(t){
+  if(!ORDER.some(function(p){return p.type===t[0];})) EXTRA[t[0]]={id:t[0],type:t[0],title:t[1],desc:t[2],note:true}; });
 function pageById(id){ return ORDER.filter(function(p){return p.id===id;})[0]||EXTRA[id]; }
+function hrefT(t){ var p=ORDER.filter(function(x){return x.type===t;})[0]||EXTRA[t]; return '#'+(p?p.id:'home'); }
 function idxOf(id){ for(var i=0;i<ORDER.length;i++) if(ORDER[i].id===id) return i; return -1; }
 
 var STATUS={draft:['초안','draft'],hold:['보류','hold'],ok:['검증','ok']};
 var MARK={o:'○',t:'△',x:'✕',n:'—'};
 var MARKNAME={o:'된다',t:'일부·조건부',x:'안 된다',n:'해당 없음'};
-var state={page:null,prev:null,persona:0,stage:0,feature:0,filter:'all',onlyOk:false,v:null,touched:false,flowPaused:false,visited:{}};
+var state={page:null,prev:null,persona:0,stage:0,feature:0,step:0,wzPaused:false,filter:'all',onlyOk:false,v:null,touched:false,flowPaused:false,visited:{}};
 try{ state.visited=JSON.parse(localStorage.getItem('lp2-'+P.key+'-visited')||'{}')||{}; }catch(e){ state.visited={}; }
 
 /* ---------- 작은 도구 ---------- */
@@ -794,6 +868,7 @@ function mark(m,txt,d){ return '<span class="mk '+m+'" aria-label="'+MARKNAME[m]
 function chip(st){ var s=STATUS[st]||STATUS.draft; return '<span class="st-chip '+s[1]+'">'+s[0]+'</span>'; }
 function ico(id){ return '<svg aria-hidden="true"><use href="#'+id+'"/></svg>'; }
 function secHead(eb,title,lead,left){ return '<div class="sec-head rv'+(left?' left':'')+'">'+(eb?'<p class="eyebrow acc">'+eb+'</p>':'')+'<h2 class="hl">'+title+'</h2>'+(lead?'<p class="lead">'+lead+'</p>':'')+'</div>'; }
+function eb(){ var p=pageById(state.page); return p&&p.stage?p.stage.no+' '+esc(p.stage.label)+' · '+esc(p.title):esc(p&&p.title||''); }
 function replay(el,cls){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function ledgerStatus(id){ var r=P.ledger.filter(function(x){return x[0]===id;})[0]; return r?r[4]:'draft'; }
 function legend(){ return '<div class="legend">'+['o','t','x','n'].map(function(m){return '<span>'+mark(m)+MARKNAME[m]+'</span>';}).join('')+'</div>'; }
@@ -882,7 +957,7 @@ function headlineHTML(rows,idp){
 function nextCard(id){
   var i=idxOf(id), nx=id==='home'?ORDER[0]:(i>=0?ORDER[i+1]:null), pv=i>0?ORDER[i-1]:(i===0?{id:'home',k:'0',title:'개요'}:null), html='';
   if(nx) html+='<a class="next rv" href="#'+nx.id+'"><div><small>다음 · '+nx.stage.no+' '+esc(nx.stage.label)+' · '+nx.k+'</small><b>'+esc(nx.title)+'</b><span class="d">'+esc(nx.desc)+'</span></div><span class="go-ic">'+ico('i-chev')+'</span></a>';
-  else html+='<a class="next rv" href="#plans"><div><small>여정 끝 · 지금 할 수 있는 한 가지</small><b>'+esc(P.cta)+'</b><span class="d">'+esc(P.stages[0].label)+' '+esc(P.stages[0].price)+' · '+esc(P.stages[0].per)+'</span></div><span class="go-ic">'+ico('i-chev')+'</span></a>';
+  else html+='<a class="next rv" href="'+hrefT('plans')+'"><div><small>여정 끝 · 지금 할 수 있는 한 가지</small><b>'+esc(P.cta)+'</b><span class="d">'+esc(P.stages[0].label)+' '+esc(P.stages[0].price)+' · '+esc(P.stages[0].per)+'</span></div><span class="go-ic">'+ico('i-chev')+'</span></a>';
   if(pv) html+='<a class="prev-link" href="#'+pv.id+'">'+ico('i-chev')+'이전 · '+(pv.k!=='0'?pv.k+' ':'')+esc(pv.title)+'</a>';
   return html;
 }
@@ -901,33 +976,33 @@ function formulaHTML(){
 var HOME_SECTIONS=[['h-hero','개요'],['h-journey','여정'],['h-market','경쟁'],['h-cost','비용'],['h-start','시작']];
 function pageHome(){
   var ex=CERR?null:runCalc(DEF);
-  var jm='<div class="jmap"><span class="line" aria-hidden="true"></span>'+STAGES.map(function(s,i){
-    return '<a class="jstage" href="#'+s.pages[0].id+'" style="--i:'+i+'"><span class="dot">'+ico(s.icon)+'<b>'+s.no+'</b></span><h3>'+esc(s.label)+'</h3><p class="q">'+esc(s.q)+'</p><ul>'+s.pages.map(function(p){return '<li>'+esc(p.title)+'</li>';}).join('')+'</ul></a>';
+  var jm='<div class="jmap" style="--n:'+STAGES.length+'"><span class="line" aria-hidden="true"></span>'+STAGES.map(function(s,i){
+    return '<a class="jstage" href="#'+s.pages[0].id+'" style="--i:'+i+'"><span class="dot">'+ico(s.icon)+'<b>'+s.no+'</b></span><h3>'+esc(s.label)+'</h3><p class="q">'+esc(s.q)+'</p>'+(s.ref?'<p class="sref">'+esc(s.ref)+'</p>':'')+'<ul>'+s.pages.map(function(p){return '<li>'+esc(p.title)+'</li>';}).join('')+'</ul></a>';
   }).join('')+'</div>';
   var mk=has.market?
     '<section class="sec" id="h-market">'+secHead('경쟁 요약',esc(P.market.line),esc(P.market.lead))+
       '<div class="glass pad rv"><div class="map-wrap">'+mapHTML(false)+'<div><div class="grid" style="gap:12px">'+P.market.gaps.map(function(g,i){return '<div class="mini"><p class="eyebrow mint">비어 있는 자리 '+(i+1)+'</p><h4>'+esc(g[0])+'</h4><p>'+esc(g[1])+'</p></div>';}).join('')+'</div>'+
-      '<p style="margin:16px 0 0"><a class="btn" href="#market">'+ico('i-scale')+'경쟁사 '+P.competitors.length+'곳 강점·약점 보기</a></p></div></div></div></section>'
-    :'<section class="sec" id="h-market">'+secHead('왜 이 플랫폼인가','다른 방법이 아니라 왜 '+j(S,'이어야','여야')+' 할까요?','앞의 세 기준만 먼저 보여 줍니다.')+'<div class="glass pad rv">'+legend()+verdictTable(3)+'<p style="text-align:center;margin:22px 0 0"><a class="btn" href="#verdict">'+ico('i-scale')+'판정표 전체 보기</a></p></div></section>';
+      '<p style="margin:16px 0 0"><a class="btn" href="'+hrefT('market')+'">'+ico('i-scale')+'경쟁사 '+P.competitors.length+'곳 강점·약점 보기</a></p></div></div></div></section>'
+    :'<section class="sec" id="h-market">'+secHead('왜 이 플랫폼인가','다른 방법이 아니라 왜 '+j(S,'이어야','여야')+' 할까요?','앞의 세 기준만 먼저 보여 줍니다.')+'<div class="glass pad rv">'+legend()+verdictTable(3)+'<p style="text-align:center;margin:22px 0 0"><a class="btn" href="'+hrefT('verdict')+'">'+ico('i-scale')+'판정표 전체 보기</a></p></div></section>';
   return ''+
   '<div class="hero" id="h-hero"><div>'+
       '<div class="hero-mark"><div class="tool-stack" id="chips" aria-label="다루는 대상">'+P.chips.map(function(c,i){return '<span style="--i:'+i+'">'+esc(c)+'</span>';}).join('')+'</div><div class="hero-join">'+esc(P.join)+'</div></div>'+
       bigTitle()+'<p class="hero-head">'+esc(P.head)+'</p><p class="hero-sub">'+esc(P.sub)+'</p></div>'+
     '<aside class="glass cta-card" id="cta-card">'+
       '<svg class="arcs" viewBox="0 0 200 140" aria-hidden="true"><circle cx="150" cy="10" r="30"/><circle cx="150" cy="10" r="48"/><circle cx="150" cy="10" r="66"/><circle cx="150" cy="10" r="84"/><circle cx="150" cy="10" r="102"/></svg>'+
-      '<span class="pill"><i></i>'+esc(P.pill)+'</span>'+
+      '<span class="pill"><i></i>'+esc(P.pill)+'</span>'+(has.voice?'<br><a class="vbadge" href="'+hrefT('voice')+'">'+ico('i-mic')+'<span>말로 지시 · Whisper 음성</span>'+waveHTML()+'</a>':'')+
       '<div class="typing"><span id="typed">'+esc(P.cta)+'</span><span class="caret" aria-hidden="true"></span></div>'+formulaHTML()+
-      '<div class="cta-grid"><a class="btn" href="#scene">'+ico('i-search')+'01 문제부터</a>'+
-        '<a class="btn" href="#'+(has.market?'market':'verdict')+'">'+ico('i-scale')+'왜 '+esc(S)+'인가</a>'+
-        '<a class="btn mint full" href="#plans">'+esc(P.cta)+'</a></div>'+
+      '<div class="cta-grid"><a class="btn" href="#'+ORDER[0].id+'">'+ico(STAGES[0].icon)+STAGES[0].no+' '+esc(STAGES[0].label)+'부터</a>'+
+        '<a class="btn" href="'+hrefT(has.market?'market':'verdict')+'">'+ico('i-scale')+'왜 '+esc(S)+'인가</a>'+
+        '<a class="btn mint full" href="'+hrefT('plans')+'">'+esc(P.cta)+'</a></div>'+
     '</aside></div>'+
-  '<section class="sec" id="h-journey">'+secHead('구매 여정','다섯 단계를 따라오면 판단이 끝납니다.','위쪽 메뉴의 단계 순서와 같습니다. 각 단계는 하위 메뉴의 페이지로 나뉘고, 모두 '+ORDER.length+'페이지입니다.')+
+  '<section class="sec" id="h-journey">'+secHead(esc(J.name),esc(J.head||(STAGES.length+'단계를 따라오면 판단이 끝납니다.')),esc(J.lead||'')+' 위쪽 메뉴의 단계 순서와 같고, 모두 '+ORDER.length+'페이지입니다.')+
     '<div class="glass pad rv">'+jm+'</div></section>'+
   mk+
   (ex?'<section class="sec" id="h-cost">'+secHead('비용·시간 비교',esc(C.title),'처음 보이는 값은 예시입니다. 내 숫자를 넣으면 계산기에서 다시 계산합니다.')+
-    '<div class="glass pad rv"><div class="widget-h"><div class="t"><b>예시로 계산하면</b><span class="example">예시 값</span></div><a class="btn sm" href="#calc">'+ico('i-calc')+'내 숫자로 계산</a></div>'+headlineHTML(ex,'h-')+barsHTML(ex,'h-')+'<p class="note">입력한 가정으로 계산한 추정치이며 실제 결과와 다를 수 있습니다.</p></div></section>':'')+
+    '<div class="glass pad rv"><div class="widget-h"><div class="t"><b>예시로 계산하면</b><span class="example">예시 값</span></div><a class="btn sm" href="'+hrefT('calc')+'">'+ico('i-calc')+'내 숫자로 계산</a></div>'+headlineHTML(ex,'h-')+barsHTML(ex,'h-')+'<p class="note">입력한 가정으로 계산한 추정치이며 실제 결과와 다를 수 있습니다.</p></div></section>':'')+
   '<section class="sec" id="h-start">'+secHead('행동','지금 할 수 있는 한 가지',null)+
-    '<div class="callout m rv">'+ico('i-check')+'<div><b>'+esc(P.cta)+'</b><p>'+esc(P.stages[0].label)+' '+esc(P.stages[0].price)+' · '+esc(P.stages[0].per)+'. 다음 단계와 가격은 05 도입에 있습니다.</p></div></div>'+
+    '<div class="callout m rv">'+ico('i-check')+'<div><b>'+esc(P.cta)+'</b><p>'+esc(P.stages[0].label)+' '+esc(P.stages[0].price)+' · '+esc(P.stages[0].per)+'. 다음 단계와 가격은 요금 단계 페이지에 있습니다.</p></div></div>'+
     nextCard('home')+'</section>';
 }
 
@@ -940,12 +1015,12 @@ function personaInner(p){
 }
 function pageScene(){
   var p=P.personas[state.persona];
-  return '<section class="sec first">'+secHead('01 문제 · 막히는 장면','같은 일, 사람마다 다른 곳에서 막힙니다.','기획 문서의 페르소나에서 가져온 장면입니다. 실제 랜딩에는 V0 인터뷰에서 같은 불편이 나온 장면만 남깁니다.')+
+  return '<section class="sec first">'+secHead(eb(),'같은 일, 사람마다 다른 곳에서 막힙니다.','기획 문서의 페르소나에서 가져온 장면입니다. 실제 랜딩에는 V0 인터뷰에서 같은 불편이 나온 장면만 남깁니다.')+
     '<div class="glass pad rv"><div class="tabs" role="tablist" aria-label="페르소나 선택" id="ptabs">'+P.personas.map(function(x,i){return '<button role="tab" type="button" id="pt-'+i+'" aria-selected="'+(i===state.persona)+'" aria-controls="pp" tabindex="'+(i===state.persona?0:-1)+'" data-persona="'+i+'">'+esc(x.who.split(' · ')[0])+'</button>';}).join('')+'<span class="ink" aria-hidden="true"></span></div>'+
     '<div class="panel pad"><div class="tabpanel" role="tabpanel" id="pp" aria-labelledby="pt-'+state.persona+'">'+personaInner(p)+'</div></div></div></section>';
 }
 function pageCause(){
-  return '<section class="sec first">'+secHead('01 문제 · 원인',esc(P.cause.line),esc(P.cause.lead))+
+  return '<section class="sec first">'+secHead(eb(),esc(P.cause.line),esc(P.cause.lead))+
     '<div class="grid g2">'+
       '<div class="cmp bad lift rv"><h3>'+mark('x')+esc(P.cause.bad[0])+'</h3><div class="sub-t">'+esc(P.cause.bad[1])+'</div><dl>'+P.cause.rows.map(function(r,i){return '<dt>'+esc(r[0])+'</dt><dd><span class="x" style="--i:'+i+'">'+esc(r[1])+'</span></dd>';}).join('')+'</dl></div>'+
       '<div class="cmp good lift rv" style="--d:120ms"><h3>'+mark('o')+esc(P.cause.good[0])+'</h3><div class="sub-t">'+esc(P.cause.good[1])+'</div><dl>'+P.cause.rows.map(function(r,i){return '<dt>'+esc(r[0])+'</dt><dd style="--i:'+i+'">'+ico('i-check')+'<span>'+esc(r[2])+'</span></dd>';}).join('')+'</dl></div>'+
@@ -955,20 +1030,72 @@ function pageCause(){
 /* ---------- 02 해결 ---------- */
 function pageFlow(){
   var rows=P.flow.map(function(f){return {stage:f[0],u:f[2],approve:f[3],s:f[4]};});
-  return '<section class="sec first">'+secHead('02 해결 · 처리 흐름','사람이 정하고, '+j(S,'이','가')+' 처리합니다.','실제 처리 순서입니다. 승인이 필요한 단계는 사람 쪽에 표시했습니다.')+
+  return '<section class="sec first">'+secHead(eb(),'사람이 정하고, '+j(S,'이','가')+' 처리합니다.','실제 처리 순서입니다. 승인이 필요한 단계는 사람 쪽에 표시했습니다.')+
     '<div class="glass pad rv"><div class="widget-h"><div class="t"><b>'+esc(S)+'</b> 처리 흐름</div>'+(reduce?'':'<button type="button" class="btn sm" id="flow-toggle" aria-pressed="false"></button>')+'</div>'+rail(P.flow,true)+dual(rows,'사용자가 하는 일',j(S,'이','가')+' 하는 일',true)+'</div></section>';
 }
+function featList(){ var p=pageById(state.page); return (p&&p.pick)?p.pick.map(function(i){return P.features[i];}).filter(Boolean):P.features; }
+function pointsHTML(f,cls){ return '<ol class="points'+(cls?' '+cls:'')+'">'+f.points.map(function(p,k){return '<li style="--i:'+k+'"><span class="n">'+(k<9?'0':'')+(k+1)+'</span><span>'+esc(p)+'</span></li>';}).join('')+'</ol>'; }
 function featDetail(i){
-  var f=P.features[i];
-  return '<span class="big-ic">'+ico(f.icon)+'</span><h3>'+esc(f.title)+'</h3><p class="lead">'+esc(f.sum)+'</p><ol class="points">'+f.points.map(function(p,k){return '<li style="--i:'+k+'"><span class="n">'+(k<9?'0':'')+(k+1)+'</span><span>'+esc(p)+'</span></li>';}).join('')+'</ol>'+(f.ref?'<p class="ref">근거 · '+esc(f.ref)+'</p>':'');
+  var f=featList()[i];
+  return '<span class="big-ic">'+ico(f.icon)+'</span><h3>'+esc(f.title)+'</h3><p class="lead">'+esc(f.sum)+'</p>'+pointsHTML(f)+(f.ref?'<p class="ref">근거 · '+esc(f.ref)+'</p>':'');
 }
-function pageFeatures(){
-  return '<section class="sec first">'+secHead('02 해결 · 핵심 기능','기획 문서에 있는 기능만 보여 줍니다.','왼쪽에서 기능을 고르면 오른쪽에 세부 동작과 근거 문서가 나옵니다.')+
-    '<div class="feat"><div class="feat-list rv" role="tablist" aria-label="기능 선택" aria-orientation="vertical">'+P.features.map(function(f,i){return '<button type="button" role="tab" id="ft-'+i+'" aria-controls="fd" aria-selected="'+(i===state.feature)+'" tabindex="'+(i===state.feature?0:-1)+'" data-feature="'+i+'" style="--i:'+i+'"><span class="chip-ic">'+ico(f.icon)+'</span><b>'+esc(f.title)+'</b><small>'+esc(f.sum)+'</small></button>';}).join('')+'</div>'+
+function pageFeatures(pg){
+  var L=featList(); if(state.feature>=L.length) state.feature=0;
+  if(L.length===1){ var f=L[0];
+    return '<section class="sec first">'+secHead(eb(),esc(pg.head||f.sum),esc(pg.lead||'기획 문서의 기능 요구사항과 수용 기준에서 가져온 동작입니다.'))+
+      '<div class="glass pad rv feat-one swap"><div class="fo-h"><span class="big-ic">'+ico(f.icon)+'</span><div><h3>'+esc(f.title)+'</h3><p class="lead">'+esc(f.sum)+'</p></div></div>'+
+      pointsHTML(f,'fo-p')+(f.ref?'<p class="ref">근거 · '+esc(f.ref)+'</p>':'')+'</div></section>';
+  }
+  return '<section class="sec first">'+secHead(eb(),esc(pg.head||'기획 문서에 있는 기능만 보여 줍니다.'),esc(pg.lead||'왼쪽에서 기능을 고르면 오른쪽에 세부 동작과 근거 문서가 나옵니다.'))+
+    '<div class="feat"><div class="feat-list rv" role="tablist" aria-label="기능 선택" aria-orientation="vertical">'+L.map(function(f,i){return '<button type="button" role="tab" id="ft-'+i+'" aria-controls="fd" aria-selected="'+(i===state.feature)+'" tabindex="'+(i===state.feature?0:-1)+'" data-feature="'+i+'" style="--i:'+i+'"><span class="chip-ic">'+ico(f.icon)+'</span><b>'+esc(f.title)+'</b><small>'+esc(f.sum)+'</small></button>';}).join('')+'</div>'+
     '<div class="glass pad feat-detail rv" style="--d:120ms" role="tabpanel" id="fd" aria-labelledby="ft-'+state.feature+'">'+featDetail(state.feature)+'</div></div></section>';
 }
+/* ---------- 음성 지시(공용 Whisper 음성 구조) ---------- */
+var VOICE_RULES=[['받아쓰기 엔진','공용 오픈소스 음성 서버의 faster-whisper(Whisper)와 무음 감지로 받아씁니다. 국외 이전에 동의한 조직은 ElevenLabs도 고를 수 있습니다.'],['확인 후 전송','변환된 글을 먼저 보여 주고, 고친 뒤에 보냅니다.'],['녹음 원본','기본으로 저장하지 않습니다. 원본이 필요한 기능만 동의를 받고 기간을 정해 보관합니다.'],['고지','첫 사용 전에 마이크 사용과 처리 목적을 알리고 확인받습니다.'],['대안','음성은 글 입력의 대안입니다. 음성 없이도 모든 기능을 쓸 수 있습니다.'],['크레딧','받아쓰기는 분 단위로 정산합니다(오픈소스 분당 0.5, ElevenLabs 분당 3, 제안).']];
+function waveHTML(){ var h=''; for(var i=0;i<12;i++) h+='<i style="--i:'+i+'"></i>'; return '<span class="wave" aria-hidden="true">'+h+'</span>'; }
+function pageVoice(pg){
+  var V=P.voice;
+  return '<section class="sec first">'+secHead(eb(),esc(pg.head||V.head||'말로 묻고, 말로 지시합니다.'),esc(pg.lead||V.lead||''))+
+    '<div class="say rv" id="say">'+V.say.map(function(s,i){return '<article class="say-c'+(i===0?' on':'')+'" style="--i:'+i+'"><div class="say-q"><span class="mic">'+ico('i-mic')+'</span>'+waveHTML()+'</div><p class="q">“'+esc(s[0])+'”</p><p class="a">'+ico('i-chev')+'<span>'+esc(s[1])+'</span></p></article>';}).join('')+'</div>'+
+    '<div class="glass pad rv" style="margin-top:20px"><div class="widget-h"><div class="t"><b>음성 처리 순서</b> · 모든 제품이 같은 공용 음성 구조를 씁니다</div></div>'+rail([['말하기','i-mic'],['Whisper 받아쓰기','i-doc'],['확인·수정','i-pen'],['AI 도우미·기능','i-bulb'],['읽어 주기','i-play']],true)+'</div>'+
+    '<div class="grid g2" style="margin-top:20px"><div class="glass pad rv"><div class="card-title"><span class="chip-ic">'+ico('i-mic')+'</span><h3>'+esc(S)+'의 음성 기능</h3></div><div class="scroll-x"><table class="res"><thead><tr><th scope="col">기능</th><th scope="col">하는 일</th><th scope="col">근거</th></tr></thead><tbody>'+
+      V.items.map(function(x){return '<tr><td><b>'+esc(x[0])+'</b></td><td style="color:var(--fg-2)">'+esc(x[1])+'</td><td class="mono" style="white-space:nowrap">'+esc(x[2])+'</td></tr>';}).join('')+'</tbody></table></div></div>'+
+    '<div class="glass pad rv" style="--d:120ms"><div class="card-title"><span class="chip-ic">'+ico('i-shield')+'</span><h3>모든 제품 공통 규칙</h3></div><ul class="vrules">'+VOICE_RULES.concat(V.rules||[]).map(function(r){return '<li><b>'+esc(r[0])+'</b><span>'+esc(r[1])+'</span></li>';}).join('')+'</ul><p class="note">근거 · products/_platform-core/VOICE_ARCHITECTURE.md (확정 결정 16)</p></div></div></section>';
+}
+function startVoice(){
+  var cs=view.querySelectorAll('.say-c'); if(!cs.length) return;
+  Array.prototype.forEach.call(cs,function(c,i){ c.addEventListener('mouseenter',function(){ state.sayHold=true; Array.prototype.forEach.call(cs,function(x,k){ x.classList.toggle('on',k===i); }); }); c.addEventListener('mouseleave',function(){ state.sayHold=false; }); });
+  if(reduce||cs.length<2) return; var k=0;
+  every(2600,function(){ if(state.sayHold) return; k=(k+1)%cs.length; Array.prototype.forEach.call(cs,function(x,j){ x.classList.toggle('on',j===k); }); });
+}
+/* ---------- 단계 진행(위저드) ---------- */
+function stepStage(i){ var p=ORDER.filter(function(x){return x.type==='steps'&&x.range&&i>=x.range[0]&&i<=x.range[1];})[0]; return p?p.stage:null; }
+function stepDetail(i){
+  var W=P.wizard, s=W.steps[i], n=W.steps.length, ph=stepStage(i);
+  return '<div class="sd-h"><span class="big-ic">'+ico(s.icon||'i-checkbox')+'</span><div><p class="eyebrow acc">'+(i<9?'0':'')+(i+1)+' / '+n+(ph?' · '+ph.no+' '+esc(ph.label):'')+'</p><h3>'+esc(s.name)+'</h3></div></div>'+
+    '<div class="sd-grid"><div class="u"><small>사용자가 하는 일</small>'+esc(s.user)+'</div><div class="s"><small>'+j(S,'이','가')+' 하는 일</small>'+esc(s.system)+'</div></div>'+
+    '<div class="sd-meta"><span class="tag acc">크레딧 '+esc(s.credit)+'</span>'+(s.ref?'<span class="tag mono">'+esc(s.ref)+'</span>':'')+'</div>';
+}
+function pageSteps(pg){
+  var W=P.wizard, n=W.steps.length, r=pg.range||[0,n-1];
+  if(state.step<r[0]||state.step>r[1]) state.step=r[0];
+  var track='<div class="wz" role="tablist" aria-label="'+esc(W.title)+'" style="--n:'+n+'"><span class="wz-line" aria-hidden="true"><i id="wz-fill"></i></span>'+W.steps.map(function(s,i){
+    var inR=i>=r[0]&&i<=r[1], ph=stepStage(i);
+    return '<button type="button" role="tab" class="wz-n'+(inR?'':' wz-off')+(i<state.step?' past':'')+'" id="wz-'+i+'" data-step="'+i+'" aria-selected="'+(i===state.step)+'" aria-controls="wzd" tabindex="'+(i===state.step?0:-1)+'" style="--i:'+i+'"><span class="c">'+(i+1)+'</span><b>'+esc(s.name)+'</b>'+(ph?'<small>'+esc(ph.label)+'</small>':'')+'</button>'; }).join('')+'</div>';
+  return '<section class="sec first">'+secHead(eb(),esc(pg.head||W.title),esc(pg.lead||W.lead||''))+
+    '<div class="glass pad rv"><div class="widget-h"><div class="t"><b>'+esc(W.title)+'</b> · 이 페이지는 '+(r[0]+1)+(r[1]>r[0]?'~'+(r[1]+1):'')+'단계</div>'+(reduce?'':'<button type="button" class="btn sm" id="wz-toggle" aria-pressed="false"></button>')+'</div>'+
+    '<div class="scroll-x">'+track+'</div><div class="panel pad wz-d" role="tabpanel" id="wzd" aria-labelledby="wz-'+state.step+'">'+stepDetail(state.step)+'</div></div></section>';
+}
+/* ---------- 표(제품 요건) ---------- */
+function pageTable(pg){
+  var T=P.tables[pg.data];
+  return '<section class="sec first">'+secHead(eb(),esc(pg.head||T.title),esc(pg.lead||T.lead||''),true)+
+    '<div class="glass pad rv rows-in"><div class="scroll-x"><table class="tbl" style="min-width:'+Math.max(560,T.cols.length*170)+'px"><thead><tr>'+T.cols.map(function(c){return '<th scope="col">'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>'+
+    T.rows.map(function(r,i){return '<tr style="--i:'+i+'">'+r.map(function(c,k){ return k===0?'<th scope="row">'+esc(c)+'</th>':'<td'+(/^[A-Z]{2}-[A-Z]-\d/.test(c)?' class="mono"':'')+'>'+esc(c)+'</td>'; }).join('')+'</tr>';}).join('')+
+    '</tbody></table></div>'+(T.note?'<p class="note">'+esc(T.note)+'</p>':'')+'</div></section>';
+}
 function pageOutputs(){
-  return '<section class="sec first">'+secHead('02 해결 · 결과물','끝나면 손에 쥐는 것','형식과 쓰는 곳을 함께 적었습니다. 예시 파일은 실제 엔진 출력이 나온 뒤 04 검증의 증거로 연결합니다.')+
+  return '<section class="sec first">'+secHead(eb(),'끝나면 손에 쥐는 것','형식과 쓰는 곳을 함께 적었습니다. 예시 파일은 실제 엔진 출력이 나온 뒤 증거 페이지로 연결합니다.')+
     '<div class="outs rv">'+P.outputs.map(function(o,i){return '<article class="out lift" style="--i:'+i+'"><span class="pg" aria-hidden="true"></span><span class="fmt">'+esc(o[1])+'</span><h4>'+esc(o[0])+'</h4><p>'+esc(o[2])+'</p></article>';}).join('')+'</div></section>';
 }
 
@@ -999,7 +1126,7 @@ function compCard(c,i){
 }
 function pageMarket(){
   var cats=[]; P.competitors.forEach(function(c){ if(cats.indexOf(c.cat)<0) cats.push(c.cat); });
-  return '<section class="sec first">'+secHead('03 비교 · 경쟁 지형',esc(P.market.line),esc(P.market.lead))+
+  return '<section class="sec first">'+secHead(eb(),esc(P.market.line),esc(P.market.lead))+
     '<div class="callout rv">'+ico('i-warn')+'<div><b>내부 검토 시안</b><p>경쟁사 이름·가격은 공식 페이지에서 확인한 값이고 확인일을 적었습니다. 공개 랜딩에는 범주 이름만 쓰고, 실명 비교는 비교광고 기준을 확인한 뒤에 게시합니다(제안). 로고·화면은 쓰지 않습니다.</p></div></div>'+
     '<div class="glass pad rv" style="margin-top:20px"><div class="map-wrap">'+mapHTML(true)+
       '<div><p class="eyebrow mint">비어 있는 자리</p><div class="grid" style="gap:12px">'+P.market.gaps.map(function(g){return '<div class="mini"><h4>'+esc(g[0])+'</h4><p>'+esc(g[1])+'</p></div>';}).join('')+'</div><p class="note">점을 누르면 아래 카드로 이동합니다.</p></div></div></div>'+
@@ -1009,17 +1136,17 @@ function pageMarket(){
     '<div class="comps rv" id="comps">'+P.competitors.map(compCard).join('')+'</div></section>';
 }
 function pageVerdict(){
-  return '<section class="sec first">'+secHead('03 비교 · 판정표','다른 방법과 나란히 놓고 봅니다.','대안은 범주 이름으로 묶었습니다. 대안의 약점은 직접 해 보면 확인되는 사실만 적고, 우리 열의 ○에는 증거를 연결합니다.',true)+
+  return '<section class="sec first">'+secHead(eb(),'다른 방법과 나란히 놓고 봅니다.','대안은 범주 이름으로 묶었습니다. 대안의 약점은 직접 해 보면 확인되는 사실만 적고, 우리 열의 ○에는 증거를 연결합니다.',true)+
     '<div class="glass pad rv">'+legend()+verdictTable()+'</div><div style="margin-top:20px">'+honesty()+'</div></section>';
 }
 function pageNonfit(){
-  return '<section class="sec first">'+secHead('03 비교 · 맞지 않는 경우','이런 경우엔 다른 방법이 낫습니다.','미리 걸러 주면 신뢰가 쌓이고 환불이 줄어듭니다.',true)+
+  return '<section class="sec first">'+secHead(eb(),'이런 경우엔 다른 방법이 낫습니다.','미리 걸러 주면 신뢰가 쌓이고 환불이 줄어듭니다.',true)+
     '<div class="grid g2">'+P.nonfit.map(function(n,i){return '<div class="mini lift rv" style="--d:'+(i%2*110)+'ms"><p class="eyebrow">이런 경우</p><h4>'+esc(n[0])+'</h4><p>'+esc(n[1])+'</p></div>';}).join('')+'</div></section>';
 }
 
 /* ---------- 04 검증 ---------- */
 function pageEvidence(){
-  return '<section class="sec first">'+secHead('04 검증 · 증거','방문자가 직접 확인할 수 있는 것부터',null,true)+
+  return '<section class="sec first">'+secHead(eb(),'방문자가 직접 확인할 수 있는 것부터',null,true)+
     '<div class="glass pad rv rows-in"><div class="scroll-x"><table class="tbl" style="min-width:640px"><thead><tr><th scope="col">ID</th><th scope="col">등급</th><th scope="col">증거</th><th scope="col">조건</th><th scope="col">상태</th></tr></thead><tbody>'+
     P.evidence.map(function(e,i){return '<tr style="--i:'+i+'"><td><span class="ev">'+esc(e[0])+'</span></td><td><span class="grade">'+esc(e[1])+'</span></td><td style="color:var(--fg)">'+esc(e[2])+'</td><td>'+esc(e[3])+'</td><td><span class="st-chip ready">준비 중</span></td></tr>';}).join('')+
     '</tbody></table></div><p class="note">등급: E1 가입 없이 직접 해 보기 · E2 실제 결과 파일 · E3 실제 화면 기록 · E4 측정 기록 · E5 동의받은 고객 사례. 출처 없는 업계 통계는 증거로 쓰지 않습니다.</p></div></section>';
@@ -1032,12 +1159,12 @@ function ledgerTable(){
 }
 function pageLedger(){
   var cnt={draft:0,hold:0,ok:0}; P.ledger.forEach(function(r){cnt[r[4]]=(cnt[r[4]]||0)+1;});
-  return '<section class="sec first">'+secHead('04 검증 · 주장 장부','랜딩 문장은 모두 여기서 출발합니다.','상태가 "검증"인 문장만 게시합니다. 실제 개발에서는 문구 상수와 이 장부가 다르면 CI가 실패합니다.',true)+
+  return '<section class="sec first">'+secHead(eb(),'랜딩 문장은 모두 여기서 출발합니다.','상태가 "검증"인 문장만 게시합니다. 실제 개발에서는 문구 상수와 이 장부가 다르면 CI가 실패합니다.',true)+
     '<div class="glass pad rv"><div class="ledger-bar"><div class="counts">'+chip('draft')+'<span class="mono">'+cnt.draft+'</span>'+chip('hold')+'<span class="mono">'+cnt.hold+'</span>'+chip('ok')+'<span class="mono">'+cnt.ok+'</span></div>'+
     '<label class="toggle" for="only-ok"><input type="checkbox" id="only-ok"'+(state.onlyOk?' checked':'')+'>게시 가능한 문장만 보기</label></div><div id="ledger-box">'+ledgerTable()+'</div></div></section>';
 }
 function pageValidate(){
-  return '<section class="sec first">'+secHead('04 검증 · 검증 단계','개발보다 검증을 먼저 합니다.','앞 단계 결과로 다음 단계 진입을 정합니다. 기준값은 제안입니다.',true)+
+  return '<section class="sec first">'+secHead(eb(),'개발보다 검증을 먼저 합니다.','앞 단계 결과로 다음 단계 진입을 정합니다. 기준값은 제안입니다.',true)+
     '<div class="glass pad rv">'+rail([['V0 인터뷰','i-users'],['V0 랜딩 교대 실험','i-scale'],['V1 과업 측정','i-calc'],['V2 실측','i-grid'],['V3 사례','i-check']],true)+
     '<div class="grid g4 stagger" style="margin-top:20px">'+
       [['V0 · 개발 전 · 0원','페르소나 5명에게 지금 어떻게 하는지, 어디서 가장 막히는지 묻습니다. 5명 중 3명 이상이 같은 불편을 먼저 꺼내면 통과입니다.'],
@@ -1048,7 +1175,7 @@ function pageValidate(){
 }
 function pageInsight(){
   var steps=['주장','대비','증상','논거','우리 방식','증거','다음 편'], n=P.insight.length;
-  return '<section class="sec first">'+secHead('04 검증 · 논증 글','판정 기준 하나를 글 한 편으로 깊게','단계 이름은 화면에 쓰지 않고 한국어 소제목 문장으로 시작합니다. 외부 인용은 원문을 직접 확인한 것만 씁니다.',true)+
+  return '<section class="sec first">'+secHead(eb(),'판정 기준 하나를 글 한 편으로 깊게','단계 이름은 화면에 쓰지 않고 한국어 소제목 문장으로 시작합니다. 외부 인용은 원문을 직접 확인한 것만 씁니다.',true)+
     '<div class="grid g3">'+P.insight.map(function(a,i){return '<article class="mini article lift rv" style="--d:'+(i*120)+'ms"><p class="eyebrow">'+(i+1)+'편 · '+esc(a[2])+'</p><h4>'+esc(a[0])+'</h4><p>'+esc(a[1])+'</p><div class="steps">'+steps.map(function(s,k){return '<span style="--i:'+k+'">'+s+'</span>';}).join('')+'</div><p class="note">'+(i<n-1?'끝에서 '+(i+2)+'편으로 잇는다':'끝에서 비교 계산기와 무료 시작으로 잇는다')+'</p></article>';}).join('')+'</div></section>';
 }
 
@@ -1057,9 +1184,9 @@ function priceParts(s){ var m=/^([\d,]+)(.*)$/.exec(String(s)); return m?{n:+m[1
 function stageRows(s){ return dual(s.steps.map(function(x,i){return {stage:(i+1)+'',u:x[0],s:x[1]};}),'사용자가 하는 일',j(S,'이','가')+' 해 주는 일',false); }
 function pagePlans(){
   var s=P.stages[state.stage]||P.stages[0];
-  return '<section class="sec first">'+secHead('05 도입 · 요금 단계','어디서 시작해 어떻게 늘려 가는지',esc(P.name)+'의 요금 구조를 단계로 나눴습니다. 가격은 기획 문서의 제안값입니다.')+
+  return '<section class="sec first">'+secHead(eb(),'어디서 시작해 어떻게 늘려 가는지',esc(P.name)+'의 요금 구조를 단계로 나눴습니다. 가격은 기획 문서의 제안값입니다.')+
     '<div class="ltabs rv" role="tablist" aria-label="요금 단계" id="stabs">'+P.stages.map(function(x,i){return '<button role="tab" type="button" id="stt-'+i+'" aria-selected="'+(i===state.stage)+'" aria-controls="sp" tabindex="'+(i===state.stage?0:-1)+'" data-stage="'+i+'"><b>'+esc(x.label)+'</b><small>'+esc(x.price)+'</small></button>';}).join('')+'<span class="ink" aria-hidden="true"></span></div>'+
-    '<div class="glass pad rv" role="tabpanel" id="sp" aria-labelledby="stt-'+state.stage+'"><div class="widget-h"><div class="price-big"><span id="stage-price">'+esc(s.price)+'</span><small id="stage-per">'+esc(s.per)+'</small></div><a class="btn" href="#calc">'+ico('i-calc')+'내 숫자로 비교하기</a></div><div id="stage-rows">'+stageRows(s)+'</div></div></section>';
+    '<div class="glass pad rv" role="tabpanel" id="sp" aria-labelledby="stt-'+state.stage+'"><div class="widget-h"><div class="price-big"><span id="stage-price">'+esc(s.price)+'</span><small id="stage-per">'+esc(s.per)+'</small></div><a class="btn" href="'+hrefT('calc')+'">'+ico('i-calc')+'내 숫자로 비교하기</a></div><div id="stage-rows">'+stageRows(s)+'</div></div></section>';
 }
 function pageCalc(){
   var v=calcVals();
@@ -1070,7 +1197,7 @@ function pageCalc(){
       return '<div class="field"><label for="'+id+'">'+esc(f[1])+(f[2]?'<small>'+esc(f[2])+'</small>':'')+'</label><input id="'+id+'" data-k="'+f[0]+'" type="number" inputmode="decimal" min="0" step="any" value="'+esc(v[f[0]])+'"></div>';
     }).join('')+'</div>';
   }).join('');
-  return '<section class="sec first">'+secHead('05 도입 · 비교 계산기',esc(C.title),'값은 이 화면 안에서만 계산하고 어디에도 보내지 않습니다. 처음 보이는 값은 예시입니다.')+
+  return '<section class="sec first">'+secHead(eb(),esc(C.title),'값은 이 화면 안에서만 계산하고 어디에도 보내지 않습니다. 처음 보이는 값은 예시입니다.')+
     '<div class="calc"><form class="glass pad rv" id="calc-form" novalidate><div class="fields">'+form+'</div></form>'+
     '<div class="glass pad rv" style="--d:120ms"><div class="widget-h"><div class="t"><b>비교 결과</b>'+(state.touched?'':'<span class="example" id="ex-tag">예시 값</span>')+'</div></div><div id="calc-out" aria-live="polite"></div></div></div></section>';
 }
@@ -1100,7 +1227,7 @@ function renderCalc(){
   lastCalc=rows;
 }
 function pageFaq(){
-  return '<section class="sec first">'+secHead('05 도입 · 자주 묻는 질문','시작 전에 많이 묻는 것','답은 기획 문서의 가격·정책 장과 같습니다. 제안 단계인 정책은 답 안에 표시했습니다.',true)+
+  return '<section class="sec first">'+secHead(eb(),'시작 전에 많이 묻는 것','답은 기획 문서의 가격·정책 장과 같습니다. 제안 단계인 정책은 답 안에 표시했습니다.',true)+
     '<div class="faq rv">'+P.faq.map(function(q,i){return '<details style="--i:'+i+'"'+(i===0?' open':'')+'><summary><span><span class="k">Q'+(i+1)+'</span>'+esc(q[0])+'</span>'+ico('i-plus')+'</summary><div class="a">'+esc(q[1])+'</div></details>';}).join('')+'</div></section>';
 }
 
@@ -1108,10 +1235,13 @@ function pageFaq(){
 function pageGuide(){
   var checks=[['모든 주장이 장부에 "검증"으로 있다','장부에 없는 문장 0'],['측정치 옆에 측정 조건이 있다','조건 없는 숫자 0'],['예시 데이터·샘플에 표시가 있다','표시 없는 예시 0'],['판정표 우리 열에 △·✕가 있다','전부 ○이면 다시 검토'],['실명 비교는 내부 시안에만 있다','공개 전 비교광고 기준 확인'],['경쟁사 가격에 확인일이 있다','확인일 없는 가격 0'],['보장 표현이 없다','제품 금지 문구 0'],['동작 줄이기 설정에서 움직임이 멈춘다','움직임 없이도 내용이 다 보인다']];
   var done=0; try{ checks.forEach(function(c,i){ if(localStorage.getItem('lp-'+P.key+'-ck-'+i)==='1') done++; }); }catch(e){}
-  var tree=STAGES.map(function(s){return s.no+' '+s.label+'  ('+s.q+')\n'+s.pages.map(function(p){return '   '+p.k+'  '+p.title+'   #'+p.id;}).join('\n');}).join('\n');
-  return '<section class="sec first">'+secHead('Template · 메뉴 구조','위 메뉴는 구매 여정, 아래 메뉴는 그 단계의 페이지입니다.','GNB의 01~05는 방문자가 판단하는 순서입니다. 지금 단계까지 선이 채워지고, 하위 GNB 아래 막대가 전체 '+ORDER.length+'페이지 중 위치를 보여 줍니다. 데이터에 없는 페이지(기능·결과물·경쟁 지형·FAQ)는 메뉴에서 자동으로 빠집니다.',true)+
-    '<div class="grid g2"><div class="glass pad rv"><div class="card-title"><span class="chip-ic">'+ico('i-layers')+'</span><h3>이 제품의 메뉴 지도</h3></div><div class="code">'+esc(tree)+'</div></div>'+
-    '<div class="glass pad rv" style="--d:120ms"><div class="card-title"><span class="chip-ic">'+ico('i-doc')+'</span><h3>데이터와 빌드</h3></div><div class="code">'+esc('data/'+P.key+'.json\n  → python3 build.py '+P.key+'\n  → dist/'+P.key+'.html\n\n2판 필드: features, outputs, market,\n          competitors, faq\n검사: node validate.js  (ALL OK)')+'</div><p class="note">작성 규칙은 templates/persuasion-landing/DATA_BRIEF.md. 근거 문서: '+esc(P.source||'')+'</p></div></div></section>'+
+  var tree=J.name+(CUSTOM?'  (제품 맞춤 여정)':'  (공통 구매 여정)')+'\n'+STAGES.map(function(s){return s.no+' '+s.label+'  ('+s.q+')'+(s.ref?'  ['+s.ref+']':'')+'\n'+s.pages.map(function(p){return '   '+p.k+'  '+p.title+'   #'+p.id+(p.type!==p.id?'  type:'+p.type:'')+(p.pick?'  pick:'+p.pick.join(','):'')+(p.range?'  range:'+p.range.join('~'):'');}).join('\n');}).join('\n');
+  var types=[['scene','막히는 장면','personas'],['cause','원인','cause'],['flow','처리 흐름','flow'],['steps','단계 진행(위저드)','wizard + range'],['features','기능 전체 또는 일부','features (+ pick)'],['voice','음성 지시','voice'],['outputs','결과물','outputs'],['market','경쟁 지형','market, competitors'],['verdict','판정표','alts, table'],['nonfit','맞지 않는 경우','nonfit'],['evidence','증거','evidence'],['ledger','주장 장부','ledger'],['validate','검증 단계','(고정 내용)'],['insight','논증 글','insight'],['plans','요금 단계','stages'],['calc','비교 계산기','calc'],['faq','자주 묻는 질문','faq'],['table','제품 요건 표','tables[data]']];
+  var notes=Object.keys(EXTRA).filter(function(k){return EXTRA[k].note;});
+  return '<section class="sec first">'+secHead('Template · 여정 구조',CUSTOM?j(J.name,'은','는')+' 공통 구매 여정을 이 제품의 개발 요건에 맞게 바꾼 여정입니다.':'공통 템플릿의 기본 구매 여정입니다.','공통 템플릿은 엔진 하나와 기본 구매 여정(문제 → 해결 → 비교 → 검증 → 도입)으로 이루어집니다. 제품마다 data/<제품>.json의 journey에 여정 이름, 단계, 하위 페이지를 적으면 위·아래 메뉴와 페이지 순서가 그대로 바뀝니다. 지금 이 템플릿은 '+STAGES.length+'단계 '+ORDER.length+'페이지입니다.',true)+
+    '<div class="grid g2"><div class="glass pad rv"><div class="card-title"><span class="chip-ic">'+ico('i-layers')+'</span><h3>이 제품의 여정 지도</h3></div><div class="code">'+esc(tree)+'</div></div>'+
+    '<div class="glass pad rv" style="--d:120ms"><div class="card-title"><span class="chip-ic">'+ico('i-grid')+'</span><h3>하위 페이지 유형</h3></div><div class="scroll-x"><table class="res"><thead><tr><th scope="col">type</th><th scope="col">페이지</th><th scope="col">쓰는 데이터</th></tr></thead><tbody>'+types.map(function(t){return '<tr><td class="mono">'+t[0]+'</td><td>'+t[1]+'</td><td style="color:var(--fg-3)">'+t[2]+'</td></tr>';}).join('')+'</tbody></table></div></div></div>'+
+    '<div class="glass pad rv" style="margin-top:20px"><div class="card-title"><span class="chip-ic">'+ico('i-doc')+'</span><h3>새 제품 랜딩 만드는 순서</h3></div><div class="code">'+esc('1  data/_common.json 을 data/<제품>.json 으로 복사\n2  기획 문서(01장 1·3·4·6장, 03장, Price_Plans 4장)로 내용 채우기\n3  journey: 여정 이름 "<제품> ○○ 여정", 단계, 하위 페이지를 개발 요건에 맞게\n4  node validate.js            → ALL OK\n5  python3 build.py <제품>     → dist/<제품>.html')+'</div>'+(notes.length?'<p class="note">여정에 넣지 않은 검증 노트: '+notes.map(function(k){return '<a href="#'+k+'">'+EXTRA[k].title+'</a>';}).join(' · ')+'</p>':'')+'</div></section>'+
   '<section class="sec">'+secHead('게시 전 점검','실제 랜딩으로 옮기기 전에 확인합니다.','체크 상태는 이 브라우저에만 남습니다.',true)+
     '<div class="glass pad rv"><div class="widget-h"><div class="t"><b id="ck-count">'+done+'</b> / '+checks.length+' 확인</div></div><div class="meter" style="margin:0 0 18px"><i id="ck-meter" style="width:'+Math.round(done/checks.length*100)+'%"></i></div><ul class="checklist">'+checks.map(function(c,i){return '<li><label for="ck-'+i+'"><input type="checkbox" id="ck-'+i+'" data-ck="'+i+'"><span>'+c[0]+'<small>'+c[1]+'</small></span></label></li>';}).join('')+'</ul></div></section>'+
   '<section class="sec">'+secHead('벤치마킹 차용 기준','구조는 가져오고, 표현은 새로 씁니다.',null,true)+
@@ -1188,22 +1318,24 @@ function drawTrack(){
   }).join('');
   var ms=document.getElementById('m-stage');
   if(ci>=0){ ms.innerHTML='<b>'+STAGES[ci].no+'</b>'+esc(STAGES[ci].label); ms.setAttribute('href','#'+STAGES[ci].pages[0].id); } else { ms.innerHTML='<b>00</b>개요'; ms.setAttribute('href','#home'); }
+  document.getElementById('track-nav').setAttribute('aria-label',J.name+' 단계');
+  document.getElementById('gnb-cta').setAttribute('href',hrefT('plans'));
   var gl=document.getElementById('guide-link'); if(state.page==='guide') gl.setAttribute('aria-current','page'); else gl.removeAttribute('aria-current');
-  document.getElementById('mmenu').innerHTML='<a href="#home"'+(state.page==='home'?' aria-current="page"':'')+'>개요</a>'+STAGES.map(function(s){return '<h6><b>'+s.no+'</b>'+esc(s.label)+' · '+esc(s.q)+'</h6>'+s.pages.map(function(p){return '<a href="#'+p.id+'"'+(p.id===state.page?' aria-current="page"':'')+'>'+p.k+'  '+esc(p.title)+'</a>';}).join('');}).join('')+'<h6>템플릿</h6><a href="#guide"'+(state.page==='guide'?' aria-current="page"':'')+'>템플릿 사용법</a><a href="#plans">'+esc(P.cta)+'</a>';
+  document.getElementById('mmenu').innerHTML='<h6>'+esc(J.name)+'</h6><a href="#home"'+(state.page==='home'?' aria-current="page"':'')+'>개요</a>'+STAGES.map(function(s){return '<h6><b>'+s.no+'</b>'+esc(s.label)+' · '+esc(s.q)+'</h6>'+s.pages.map(function(p){return '<a href="#'+p.id+'"'+(p.id===state.page?' aria-current="page"':'')+'>'+p.k+'  '+esc(p.title)+'</a>';}).join('');}).join('')+'<h6>템플릿</h6><a href="#guide"'+(state.page==='guide'?' aria-current="page"':'')+'>템플릿 사용법</a>'+Object.keys(EXTRA).filter(function(k){return EXTRA[k].note;}).map(function(k){return '<a href="#'+k+'"'+(state.page===k?' aria-current="page"':'')+'>'+EXTRA[k].title+'</a>';}).join('')+'<a href="'+hrefT('plans')+'">'+esc(P.cta)+'</a>';
 }
 function drawSub(stageChanged){
   var p=pageById(state.page), i=idxOf(state.page), ss=document.getElementById('sub-stage'), st=document.getElementById('sub-steps'), sn=document.getElementById('sub-nav');
   if(p&&p.stage){
     var s=p.stage;
-    ss.innerHTML='<b>'+s.no+'</b><span><strong>'+esc(s.label)+'</strong> · '+esc(s.q)+'</span>';
+    ss.innerHTML='<b>'+s.no+'</b><span class="sq"><small>'+esc(J.name)+'</small><span><strong>'+esc(s.label)+'</strong> · '+esc(s.q)+'</span></span>';
     st.innerHTML='<ol>'+s.pages.map(function(x){ var cur=x.id===state.page, seen=state.visited[x.id]&&!cur;
       return '<li><a class="chip" href="#'+x.id+'"'+(cur?' aria-current="page"':'')+'><span class="k">'+x.k+'</span>'+esc(x.title)+(seen?'<svg aria-label="본 페이지"><use href="#i-check"/></svg>':'')+(cur?'<span class="fill" id="read-fill" aria-hidden="true"></span>':'')+'</a></li>'; }).join('')+'</ol>';
   } else if(state.page==='home'){
-    ss.innerHTML='<b>00</b><span><strong>개요</strong> · 한눈에 보기</span>';
+    ss.innerHTML='<b>00</b><span class="sq"><small>'+esc(J.name)+'</small><span><strong>개요</strong> · 한눈에 보기</span></span>';
     st.innerHTML='<ol>'+HOME_SECTIONS.filter(function(h){return document.getElementById(h[0]);}).map(function(h,k){return '<li><button type="button" class="chip" data-jump="'+h[0]+'"><span class="k">0-'+(k+1)+'</span>'+h[1]+'</button></li>';}).join('')+'</ol>';
   } else {
-    ss.innerHTML='<b>TPL</b><span><strong>템플릿</strong> · 구조와 점검</span>';
-    st.innerHTML='<ol>'+STAGES.map(function(s){return '<li><a class="chip" href="#'+s.pages[0].id+'"><span class="k">'+s.no+'</span>'+esc(s.label)+'</a></li>';}).join('')+'</ol>';
+    ss.innerHTML='<b>TPL</b><span class="sq"><small>'+esc(J.name)+'</small><span><strong>'+esc(p.title)+'</strong> · 템플릿 도구</span></span>';
+    st.innerHTML='<ol>'+Object.keys(EXTRA).filter(function(k){return k!=='home';}).map(function(k){var x=EXTRA[k]; return '<li><a class="chip" href="#'+k+'"'+(k===state.page?' aria-current="page"':'')+'>'+esc(x.title)+'</a></li>';}).join('')+STAGES.map(function(s){return '<li><a class="chip" href="#'+s.pages[0].id+'"><span class="k">'+s.no+'</span>'+esc(s.label)+'</a></li>';}).join('')+'</ol>';
   }
   var pv=i>0?ORDER[i-1]:(i===0?EXTRA.home:null), nx=i>=0?ORDER[i+1]:(state.page==='home'?ORDER[0]:null);
   sn.innerHTML='<span class="count">'+(i>=0?'<b>'+(i+1)+'</b> / '+ORDER.length:'<b>0</b> / '+ORDER.length)+'</span>'+
@@ -1245,7 +1377,7 @@ function layoutMaps(){
 }
 
 /* ---------- 렌더 ---------- */
-var PAGEFN={home:pageHome,scene:pageScene,cause:pageCause,flow:pageFlow,features:pageFeatures,outputs:pageOutputs,market:pageMarket,verdict:pageVerdict,nonfit:pageNonfit,evidence:pageEvidence,ledger:pageLedger,validate:pageValidate,insight:pageInsight,plans:pagePlans,calc:pageCalc,faq:pageFaq,guide:pageGuide};
+var PAGEFN={voice:pageVoice,steps:pageSteps,table:pageTable,home:pageHome,scene:pageScene,cause:pageCause,flow:pageFlow,features:pageFeatures,outputs:pageOutputs,market:pageMarket,verdict:pageVerdict,nonfit:pageNonfit,evidence:pageEvidence,ledger:pageLedger,validate:pageValidate,insight:pageInsight,plans:pagePlans,calc:pageCalc,faq:pageFaq,guide:pageGuide};
 function render(){
   clearTimers();
   var p=pageById(state.page), prevP=state.prev?pageById(state.prev):null;
@@ -1253,18 +1385,18 @@ function render(){
   document.getElementById('tb-title').innerHTML=ico('i-send')+esc(P.name)+' <span>'+(p.stage?p.k+' ':'')+esc(p.title)+'</span>';
   document.getElementById('tb-crumb').innerHTML='<svg width="14" height="14" aria-hidden="true"><use href="#i-home"/></svg><b>'+esc(S)+'</b>'+(p.stage?'›<span>'+p.stage.no+' '+esc(p.stage.label)+'</span>':'')+'›<span>'+esc(p.title)+'</span>';
   lastCalc=null;
-  view.innerHTML=PAGEFN[state.page]()+(state.page!=='home'&&state.page!=='guide'?nextCard(state.page):'');
+  view.innerHTML=PAGEFN[p.type](p)+(p.stage?nextCard(state.page):'');
   var a=state.prev?idxOf(state.prev):-2, b=idxOf(state.page);
   var cls=(!state.prev||state.prev===state.page)?'in-fade':(b>a?'in-fwd':'in-back');
   view.classList.remove('in-fwd','in-back','in-fade'); void view.offsetWidth; view.classList.add(cls);
-  document.title=state.page==='home'?S+' 설득형 랜딩 템플릿':(p.stage?p.k+' '+p.title:p.title)+' · '+S;
+  document.title=state.page==='home'?(P.title||S+' 설득형 랜딩 템플릿'):(p.stage?p.k+' '+p.title:p.title)+' · '+S;
   if(p.stage){ state.visited[state.page]=1; try{ localStorage.setItem('lp2-'+P.key+'-visited',JSON.stringify(state.visited)); }catch(e){} }
   drawTrack(); drawSub(stageChanged);
   bindPage();
   if(state.page==='calc') renderCalc();
   setupReveal();
   if(state.page==='home'){ startTyping(); startChips(); }
-  startCycle();
+  startCycle(); startWizard(); startVoice();
   requestAnimationFrame(function(){ inkAll(); layoutMaps(); onScroll(); });
 }
 function tabKeys(list,i,e,cb,vert){ var n=null, nx=vert?'ArrowDown':'ArrowRight', pv=vert?'ArrowUp':'ArrowLeft';
@@ -1275,6 +1407,21 @@ function setPersona(i,focus){ state.persona=i; var tabs=view.querySelectorAll('[
   var pp=document.getElementById('pp'); pp.innerHTML=personaInner(P.personas[i]); pp.setAttribute('aria-labelledby','pt-'+i); replay(pp,'swap'); moveInk(document.getElementById('ptabs')); if(focus) tabs[i].focus(); }
 function setFeature(i,focus){ state.feature=i; var tabs=view.querySelectorAll('[data-feature]'); setSel(tabs,i);
   var fd=document.getElementById('fd'); fd.innerHTML=featDetail(i); fd.setAttribute('aria-labelledby','ft-'+i); replay(fd,'swap'); if(focus) tabs[i].focus(); }
+function wzPaint(){ var b=document.getElementById('wz-toggle'); if(!b) return; b.setAttribute('aria-pressed',String(state.wzPaused)); b.innerHTML=ico(state.wzPaused?'i-play':'i-pause')+'<span>'+(state.wzPaused?'자동 넘김 재생':'자동 넘김 멈춤')+'</span>'; }
+function setStep(i,focus,auto){
+  var tabs=view.querySelectorAll('[data-step]'); if(!tabs.length) return; state.step=i; setSel(tabs,i);
+  Array.prototype.forEach.call(tabs,function(b,k){ b.classList.toggle('past',k<i); });
+  var n=tabs.length, f=document.getElementById('wz-fill'); if(f) f.style.width=(n>1?i/(n-1)*100:0)+'%';
+  var sc=tabs[i].closest('.scroll-x'); if(sc&&sc.scrollWidth>sc.clientWidth){ var t=tabs[i].offsetLeft-sc.clientWidth/2+tabs[i].offsetWidth/2; if(sc.scrollTo) sc.scrollTo({left:t,behavior:reduce?'auto':'smooth'}); else sc.scrollLeft=t; }
+  var d=document.getElementById('wzd'); if(d){ d.innerHTML=stepDetail(i); d.setAttribute('aria-labelledby','wz-'+i); replay(d,'swap'); }
+  if(!auto){ state.wzPaused=true; wzPaint(); }
+  if(focus) tabs[i].focus();
+}
+function startWizard(){
+  var p=pageById(state.page); if(!p||p.type!=='steps') return; setStep(state.step,false,true); wzPaint();
+  if(reduce) return; var r=p.range||[0,P.wizard.steps.length-1];
+  every(2800,function(){ if(state.wzPaused) return; setStep(state.step>=r[1]?r[0]:state.step+1,false,true); });
+}
 function setStage(i,focus){
   var prev=P.stages[state.stage]; state.stage=i; var s=P.stages[i], tabs=view.querySelectorAll('[data-stage]'); setSel(tabs,i);
   document.getElementById('sp').setAttribute('aria-labelledby','stt-'+i);
@@ -1299,19 +1446,22 @@ function bindPage(){
   var st=Array.prototype.slice.call(view.querySelectorAll('[data-stage]'));
   st.forEach(function(b,i){ b.addEventListener('click',function(){ setStage(i); }); b.addEventListener('keydown',function(e){ tabKeys(st,i,e,setStage); }); });
   Array.prototype.forEach.call(view.querySelectorAll('[data-filter]'),function(b){ b.addEventListener('click',function(){ setFilter(b.getAttribute('data-filter')); }); });
-  var onMarket=state.page==='market';
+  var onMarket=pageById(state.page).type==='market';
   Array.prototype.forEach.call(view.querySelectorAll('.mapbox .dot[data-ci]'),function(d){
     var i=d.getAttribute('data-ci');
     d.addEventListener('mouseenter',function(){ linkHL(i,true); }); d.addEventListener('mouseleave',function(){ linkHL(i,false); });
     d.addEventListener('focus',function(){ linkHL(i,true); }); d.addEventListener('blur',function(){ linkHL(i,false); });
     d.addEventListener('click',function(){
-      if(!onMarket){ location.hash='market'; return; }
+      if(!onMarket){ location.hash=hrefT('market').slice(1); return; }
       var card=view.querySelector('.comp[data-ci="'+i+'"]'); if(!card) return;
       if(card.hidden) setFilter('all');
       card.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'}); linkHL(i,true); setTimeout(function(){ linkHL(i,false); },1600);
     });
   });
   Array.prototype.forEach.call(view.querySelectorAll('.comp'),function(c){ var i=c.getAttribute('data-ci'); c.addEventListener('mouseenter',function(){ linkHL(i,true); }); c.addEventListener('mouseleave',function(){ linkHL(i,false); }); });
+  var ws=Array.prototype.slice.call(view.querySelectorAll('[data-step]'));
+  ws.forEach(function(b,i){ b.addEventListener('click',function(){ setStep(i); }); b.addEventListener('keydown',function(e){ tabKeys(ws,i,e,function(n,f){ setStep(n,f); }); }); });
+  var wt=document.getElementById('wz-toggle'); if(wt) wt.addEventListener('click',function(){ state.wzPaused=!state.wzPaused; wzPaint(); });
   var fl=document.getElementById('flow-toggle');
   if(fl){ var paint=function(){ fl.setAttribute('aria-pressed',String(state.flowPaused)); fl.innerHTML=ico(state.flowPaused?'i-play':'i-pause')+'<span>'+(state.flowPaused?'흐름 재생':'흐름 멈춤')+'</span>'; };
     paint(); fl.addEventListener('click',function(){ state.flowPaused=!state.flowPaused; paint(); }); }
@@ -1334,7 +1484,8 @@ function bindPage(){
 function route(){
   var id=(location.hash||'').replace('#','');
   state.prev=state.page;
-  state.page=PAGEFN[id]&&pageById(id)?id:'home';
+  state.page=pageById(id)?id:'home';
+  if(state.page!==state.prev) state.feature=0;
   navs.classList.remove('open'); burger.setAttribute('aria-expanded','false');
   var de=document.documentElement, sb=de.style.scrollBehavior; de.style.scrollBehavior='auto'; window.scrollTo(0,0); de.style.scrollBehavior=sb;
   render();

@@ -639,5 +639,34 @@
     ]
   ],
   "insight": [],
-  "source": "[근거 문서: products/<제품>/01_PRD.md, 03_SCREENS_UX.md, Price_Plans/<제품>/PRICE_PLAN.md 4장]"
+  "source": "[근거 문서: products/<제품>/01_PRD.md, 03_SCREENS_UX.md, Price_Plans/<제품>/PRICE_PLAN.md 4장]",
+  "voice": {
+    "lead": "[이 제품에서 말로 할 수 있는 일을 한 문장으로. 01장 음성 기능 ID 기준]",
+    "say": [
+      [
+        "[사용자가 말하는 예시 1]",
+        "[그 말로 일어나는 일]"
+      ],
+      [
+        "[예시 2]",
+        "[일어나는 일]"
+      ],
+      [
+        "[예시 3]",
+        "[일어나는 일]"
+      ]
+    ],
+    "items": [
+      [
+        "[음성 기능 1]",
+        "[하는 일]",
+        "XX-F-0NN"
+      ],
+      [
+        "[음성 기능 2]",
+        "[하는 일]",
+        "XX-F-0NN"
+      ]
+    ]
+  }
 }

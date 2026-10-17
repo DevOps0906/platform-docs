@@ -584,5 +584,44 @@
     "note": "언어판마다 업로드 채널 1개로 잡았고, 대본이 길 때의 TTS 추가분은 넣지 않았습니다. AI Factory 처리 시간은 V1 측정 전이라 숫자로 쓰지 않습니다."
   },
   "insight": [],
-  "source": "products/nomad-video/01_PRD.md 1·3·4·6장, 03_SCREENS_UX.md 2·4절, 02_ARCHITECTURE.md 4절, Price_Plans/nomad-video/PRICE_PLAN.md 4장"
+  "source": "products/nomad-video/01_PRD.md 1·3·4·6장, 03_SCREENS_UX.md 2·4절, 02_ARCHITECTURE.md 4절, Price_Plans/nomad-video/PRICE_PLAN.md 4장",
+  "voice": {
+    "lead": "대본을 말로 불러 넣고, 고른 목소리로 내레이션을 끝까지 같게 만듭니다. 자막은 Whisper로 받아씁니다.",
+    "say": [
+      [
+        "(주제·대본 입력란) 대본을 말로 불러 준다",
+        "받아쓴 글을 확인해 입력란에 넣습니다(60초)"
+      ],
+      [
+        "이 보이스로 샘플 들려줘",
+        "대본 첫 100자를 고른 제공자로 합성해 들려줍니다"
+      ],
+      [
+        "이번 영상 제목 후보 줘",
+        "도우미가 답하고, 원하면 읽어 줍니다"
+      ]
+    ],
+    "items": [
+      [
+        "음성 대화",
+        "채팅 마이크(60초), 읽어 주기",
+        "VD-F-104"
+      ],
+      [
+        "Whisper 자막",
+        "원본 영상 오디오를 Whisper로 받아써 자막. 공용 음성 구조에 편입",
+        "VD-F-105"
+      ],
+      [
+        "내레이션",
+        "작업 시작 때 제공자·보이스를 고정해 같은 목소리",
+        "VD-F-106"
+      ],
+      [
+        "대본 받아쓰기·샘플 듣기",
+        "입력란 받아쓰기, 보이스 샘플, 대본 읽어 주기",
+        "VD-F-107"
+      ]
+    ]
+  }
 }
