@@ -10,9 +10,9 @@
 | [`flora.md`](flora.md) | AI 출판(v1) | flora-publishing, nomad-docs(참고) |
 | [`flora-publisher.md`](flora-publisher.md) | 출판 편집기 | flora-publishing |
 | [`SellingDocs.md`](SellingDocs.md) | 판매 문서 생성 | flora-publishing, nomad-docs(참고) |
-| [`NOMAD_Shorts_Maker.md`](NOMAD_Shorts_Maker.md) | 숏폼 제작 | nomad-video, nomad-blog, toon-factory(참고) |
-| [`Nomad-BlogStudio.md`](Nomad-BlogStudio.md) | 블로그 자동화 | nomad-video, toon-factory(참고) |
-| [`Youtube_shots_Maker.md`](Youtube_shots_Maker.md) | 유튜브 쇼츠 제작 | nomad-video, nomad-blog |
+| [`NOMAD_Shorts_Maker.md`](NOMAD_Shorts_Maker.md) | 숏폼 제작 | shortsflow, nomad-blog, toon-factory(참고) |
+| [`Nomad-BlogStudio.md`](Nomad-BlogStudio.md) | 블로그 자동화 | shortsflow, toon-factory(참고) |
+| [`Youtube_shots_Maker.md`](Youtube_shots_Maker.md) | 유튜브 쇼츠 제작 | shortsflow, nomad-blog |
 | [`Nomad-AI-Factory_V.2.md`](Nomad-AI-Factory_V.2.md) | AI 커머스 팩토리 v2 | nomad-commerce |
 | [`nomad-ai-factory.md`](nomad-ai-factory.md) | AI 커머스 팩토리 | nomad-commerce, nomad-blog(참고) |
 | [`nomad-ai-commerce.md`](nomad-ai-commerce.md) | AI 커머스 | nomad-commerce, nomad-blog(참고) |

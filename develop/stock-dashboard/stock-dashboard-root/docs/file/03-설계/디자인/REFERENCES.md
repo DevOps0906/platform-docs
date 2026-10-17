@@ -77,7 +77,7 @@
 
 ---
 
-## nomad-video (NOMAD AI Factory, 숏폼/롱폼/Lofi/플리 자동화)
+## shortsflow (ShortsFlow, 숏폼/롱폼/Lofi/플리 자동화)
 
 방향 요약: 대상은 여러 유튜브 채널을 동시에 굴리는 운영자다. 앱은 다크 대시보드를 유지하되 트랙(A~F)과 채널 역할을 범례가 있는 색으로 구분하고, 잡 진행률이 주인공이다. 랜딩은 실제 생성 결과(쇼츠, 플리 썸네일)를 보여 주고, 민트 단일 강조 다크 베이스를 다른 제품과 겹치지 않게 다시 뽑는다.
 
@@ -85,7 +85,7 @@
 |---|---|
 | 기존 토큰 | 배경 #13131A/#1A1A26/#1E1E2E, 민트 #00C9A7, 보조 #2563EB/#F43F5E/#F59E0B/#7C3AED, Bebas Neue, JetBrains Mono 숫자 |
 | 피할 인상 | 해커 터미널 같은 모노스페이스 라벨, 큰 숫자 + 그라디언트 히어로(기본값 6번) |
-| UUPM 쿼리 | `search.py "video automation youtube multi channel dashboard" --design-system -p "nomad-video" --page "dashboard" --density 8 --motion 2` |
+| UUPM 쿼리 | `search.py "video automation youtube multi channel dashboard" --design-system -p "shortsflow" --page "dashboard" --density 8 --motion 2` |
 
 | 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 |
 |---|---|---|---|---|---|---|
@@ -295,10 +295,10 @@
 |---|---|---|
 | A(i)strology (Honorable Mention) | https://www.awwwards.com/sites/a-i-strology | astro-ai |
 | Astrology & Numerology (Honorable Mention) | https://www.awwwards.com/sites/astrology-numerology | astro-ai |
-| Dyvo AI (Honorable Mention) | https://www.awwwards.com/sites/dyvo-ai | nomad-video |
-| Fourmula AI (SOTD) | https://www.awwwards.com/sites/fourmula-ai | nomad-video, toon-factory(생성 결과 쇼케이스) |
-| Radio Garden (Honorable Mention) | https://www.awwwards.com/sites/radio-garden | nomad-video(플리) |
-| Offradio - Turn your radio OFF! (Honorable Mention) | https://www.awwwards.com/sites/offradio-turn-your-radio-off | nomad-video(플리) |
+| Dyvo AI (Honorable Mention) | https://www.awwwards.com/sites/dyvo-ai | shortsflow |
+| Fourmula AI (SOTD) | https://www.awwwards.com/sites/fourmula-ai | shortsflow, toon-factory(생성 결과 쇼케이스) |
+| Radio Garden (Honorable Mention) | https://www.awwwards.com/sites/radio-garden | shortsflow(플리) |
+| Offradio - Turn your radio OFF! (Honorable Mention) | https://www.awwwards.com/sites/offradio-turn-your-radio-off | shortsflow(플리) |
 | The Renaissance Edition (SOTD) | https://www.awwwards.com/sites/the-renaissance-edition | nomad-commerce |
 | Andreas & Mathilde · Wedding (Nominee) | https://www.awwwards.com/sites/andreas-mathilde-wedding | microweb-studio |
 | +_+ crypton.trading (SOTD) | https://www.awwwards.com/sites/crypton-trading-bot | stock-dashboard(네온 톤은 피함) |

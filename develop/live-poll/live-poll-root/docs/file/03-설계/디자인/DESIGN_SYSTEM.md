@@ -52,7 +52,7 @@
 
 | 제품 화면 성격 | 주 레퍼런스 | 보조 | 해당 제품 |
 |---|---|---|---|
-| B2B SaaS, 관리자, 자동화 도구(데이터 밀도) | Primer | Atlassian(권한·상태 배지) | admin-suite, stock-dashboard, nomad-commerce, nomad-video(작업·채널 대시보드), nomad-blog(발행 관리) |
+| B2B SaaS, 관리자, 자동화 도구(데이터 밀도) | Primer | Atlassian(권한·상태 배지) | admin-suite, stock-dashboard, nomad-commerce, shortsflow(작업·채널 대시보드), nomad-blog(발행 관리) |
 | 협업, 워크플로, 보드(복잡한 폼과 상태) | Atlassian | Primer | flora-publishing(원고·제작 단계), toon-factory(회차·컷 관리), live-poll(진행자 콘솔), microweb-studio(제작 주문 관리) |
 | AI 채팅, 메시지 스레드, AI 연동 UI | Astryx(MIT 베타, 패턴만) | Primer(밀도) | 12개 제품 공통 AI 채팅 위젯·음성 UI·위키 화면, study-note, astro-ai(리딩 대화) |
 | 메인페이지(랜딩) | `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` | - | 모든 제품의 공개 랜딩 |

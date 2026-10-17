@@ -221,7 +221,7 @@ Supabase가 2026-04에 커스텀 OAuth/OIDC 제공자를 내놓아 네이버를 
 | 1 | study-note(`notes`) | open | Google + 이메일 | P1 | NT-06-006 / 053 / 054 / 055 | 표준 open 앱 |
 | 1 | website-floria(`site`) | invite | Google + 초대 메일 | 제외 | SI-06-019 / 049 / - / - | invite 첫 검증. 방문자는 로그인 없음 |
 | 2 | astro-ai(`astro`) | open | Google + 이메일 | P1 | AS-06-003 / 055 / 056 / 057 | 환영 크레딧은 Google 로그인 확인 후 |
-| 3 | nomad-video(`video`) | open | Google + 이메일 | P1 | VID-06-004 / 063 / 064 / 065 | 로그인용 Google 클라이언트와 YouTube 채널 연동용 클라이언트를 나눔 |
+| 3 | shortsflow(`video`) | open | Google + 이메일 | P1 | VID-06-004 / 063 / 064 / 065 | 로그인용 Google 클라이언트와 YouTube 채널 연동용 클라이언트를 나눔 |
 | 3 | nomad-blog(`blog`) | open | Google + 이메일 | P1 | BL-06-004 / 057 / 058 / 059 | 네이버 사용자 비중이 커서 C2 검수를 먼저 신청 |
 | 3 | nomad-commerce(`commerce`) | open | Google + 이메일 | P1 | CM-06-007 / 058 / 059 / 060 | 기존 MVP 카카오 로그인을 C1으로 옮김 |
 | 4 | microweb-studio(`microweb`) | invite | Google + 초대 메일 | P2 선택 | MW-06-003 / 054 / 055 / 056 | `studio_access` 허용 목록. 하객은 로그인 없음 |

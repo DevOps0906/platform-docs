@@ -30,7 +30,7 @@
 | AI 크레딧 | 채팅·음성·내레이션은 제공자 호출 전에 선차감하고 끝나면 정산, 결과가 전달되지 않으면 전액 환불(01장 4.6절). 상세페이지 그래프와 보조 그래프 작업은 4.2절 정액 차감에 묶는다 |
 | 라우팅 | 기능 키와 기본 체인은 02장 5.1절과 seed가 정본. 코드에 제공자·모델을 하드코딩하지 않고 `resolve_ai_route` 결과만 쓴다. 국외 이전 미동의 조직에 상용 제공자를 쓰지 않는다. 요청 바디의 모델·제공자 값은 무시 |
 | AI 출력 | 생성물·채팅·내레이션에 승인·반려 보장, 법률 단정, 질병 효능 단정, 가상 후기·평점을 쓰지 않는다. 규칙 근거가 없으면 "근거 자료를 찾지 못했습니다". 같은 규칙 파일(`packages/commerce-compliance/rules/`)을 TS와 FastAPI가 함께 읽는다 |
-| 내레이션 | `feature='shorts_narration'`은 작업 도중 다른 제공자로 대체하지 않는다. 실패하면 파일을 만들지 않고 환불. 영상 렌더·결합은 nomad-video 워커 API 호출만(렌더 코드 0줄) |
+| 내레이션 | `feature='shorts_narration'`은 작업 도중 다른 제공자로 대체하지 않는다. 실패하면 파일을 만들지 않고 환불. 영상 렌더·결합은 shortsflow 워커 API 호출만(렌더 코드 0줄) |
 | Tailwind | 반드시 Tailwind CSS v4(4.x 고정). CSS 우선 설정(`@import "tailwindcss"`, `@theme`, `@custom-variant dark`). `tailwind.config.js`, `@tailwind base` 같은 v3 문법 금지. 지시·문서에 "Tailwind"가 아니라 "Tailwind CSS v4"라고 쓴다 |
 | 디자인 시스템 | 정답은 코드 하나: `apps/nomad-commerce/styles/tokens.css`(`@theme`)와 `components/ui/`. 피그마·문서 hex 표는 정답이 아니다. 컴포넌트 작업은 `DESIGN_SYSTEM.md` 8장 템플릿(대상, 근거, 버전, 배리언트, 수치, 금지, 검증)으로 1개씩 맡긴다. 화면 작업은 CM-06-044 뒤 |
 | 3D | three.js는 `components/hero3d/`에서만 import. `HERO_3D.md` 성능 예산과 대체 화면을 지키고, 3D 재질 색도 토큰만 |

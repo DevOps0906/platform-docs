@@ -2263,7 +2263,7 @@ create policy public_assets_delete on storage.objects for delete to authenticate
 
 -- =====================================================================
 -- [astro-ai 제거] SECTION 9 affiliate
--- 이유: 제휴마케팅 모듈 소비 제품은 nomad-video, nomad-blog 뿐이다(확정 결정 12, SHARED_MODULES.md 1장).
+-- 이유: 제휴마케팅 모듈 소비 제품은 shortsflow, nomad-blog 뿐이다(확정 결정 12, SHARED_MODULES.md 1장).
 --       SECTION 9 는 SECTION 6-B 에도 의존하므로 6-B 와 함께 지운다.
 -- =====================================================================
 

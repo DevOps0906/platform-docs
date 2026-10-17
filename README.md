@@ -92,7 +92,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 마이그레이션·seed·RLS 스모크 |
 
-일부 제품은 추가 문서가 있습니다: nomad-video `08_AGENCY_OPERATIONS.md`(쇼츠 대행 운영), toon-factory `08_BENCHMARK.md`(경쟁 비교), local-news `modules/`(모듈 M1~M8)와 `research/`(디자인 벤치마크, 시장·법규), book-trailer `08_DESIGN_SYSTEM.md`(앱 토큰 층 + 영상 토큰 층).
+일부 제품은 추가 문서가 있습니다: shortsflow `08_AGENCY_OPERATIONS.md`(쇼츠 대행 운영), toon-factory `08_BENCHMARK.md`(경쟁 비교), local-news `modules/`(모듈 M1~M8)와 `research/`(디자인 벤치마크, 시장·법규), book-trailer `08_DESIGN_SYSTEM.md`(앱 토큰 층 + 영상 토큰 층).
 
 ### 2.3 `develop/_shared/` (모든 개발 묶음이 같이 쓰는 설치 가이드)
 
@@ -114,7 +114,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | flora-publishing (FLORA Publishing) | 1인 작가가 AI와 기획·집필·판형 조정을 거쳐 인쇄 PDF·ePub 완성 | `publishing`(1000) | 2 | 65 | [기획](products/flora-publishing/) · [개발](develop/flora-publishing/) · [가격](Price_Plans/flora-publishing/PRICE_PLAN.md) |
 | astro-ai (신비로운AI) | 사주 원국 + 타로 3장 AI 해설을 A4 책자형 PDF 리포트로 | `astro`(1100) | 2 | 57 | [기획](products/astro-ai/) · [개발](develop/astro-ai/) · [가격](Price_Plans/astro-ai/PRICE_PLAN.md) |
 | nomad-docs (NOMAD Docs) | 체크리스트 한 번으로 견적서·요구사항정의서·계약서 등 실무 문서 묶음 생성, CRM형 작업 공간 | `docs`(2300) | 2 이후 | 65 | [기획](products/nomad-docs/) · [개발](develop/nomad-docs/) · [가격](Price_Plans/nomad-docs/PRICE_PLAN.md) |
-| nomad-video (NOMAD AI Factory) | 숏폼·롱폼·Lofi·플리 자동 생산과 다채널 배포, 쇼츠 대행 | `video`(1200) | 3 | 65 | [기획](products/nomad-video/) · [개발](develop/nomad-video/) · [가격](Price_Plans/nomad-video/PRICE_PLAN.md) |
+| shortsflow (ShortsFlow) | 숏폼·롱폼·Lofi·플리 자동 생산과 다채널 배포, 쇼츠 대행 | `video`(1200) | 3 | 65 | [기획](products/shortsflow/) · [개발](develop/shortsflow/) · [가격](Price_Plans/shortsflow/PRICE_PLAN.md) |
 | nomad-blog (NOMAD Blog) | 키워드 하나로 블로그 원고 + 제휴 카드 + 대가성 문구, 예약 발행 | `blog`(1300) | 3 | 59 | [기획](products/nomad-blog/) · [개발](develop/nomad-blog/) · [가격](Price_Plans/nomad-blog/PRICE_PLAN.md) |
 | nomad-commerce (NOMAD Commerce) | 셀러용 상품 소싱·AI 상세페이지·마켓 업로드 | `commerce`(1400) | 3 | 60 | [기획](products/nomad-commerce/) · [개발](develop/nomad-commerce/) · [가격](Price_Plans/nomad-commerce/PRICE_PLAN.md) |
 | microweb-studio (Microweb Studio) | 모바일 청첩장 등 마이크로웹 템플릿 엔진 + 대행 제작 쇼룸 | `microweb`(1500) | 4 | 56 | [기획](products/microweb-studio/) · [개발](develop/microweb-studio/) · [가격](Price_Plans/microweb-studio/PRICE_PLAN.md) |
@@ -309,3 +309,11 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 템플릿 테마 | 불투명한 면과 한글 서체(Noto Sans KR)를 쓰는 어두운 단일 테마. 반투명 유리 카드·배경 흐림·영문 디스플레이 서체·빛이 훑는 효과는 쓰지 않는다. 제품마다 강조색만 다르다 |
 | 남은 결정 | flora-publishing D28~D32, nomad-docs D-23~D-27, arch-studio D-27~D-30, Web-App-Agency AG-D-13·14. V0 인터뷰는 개발 전에 대표님이 진행 |
 
+### 8.3 2026-10-18 영상 제품 이름 변경
+
+| 항목 | 내용 |
+|---|---|
+| 이름 | NOMAD AI Factory → **ShortsFlow**. NOMAD AI Factory는 회사 브랜드(디지털노마드연구소, 문의 메일, 저작권 표기)로만 쓴다 |
+| 폴더 | `nomad-video` → `shortsflow`: `products/shortsflow/`, `develop/shortsflow/`(`shortsflow_develop.md`, `setup-shortsflow.sh`·`.ps1`, `shortsflow-root/`), `develop_V2/shortsflow/`, `Price_Plans/shortsflow/`, 랜딩 템플릿 `data/shortsflow.json`·`dist/shortsflow.html` |
+| 그대로 둔 것 | DB 스키마 `video`와 앱 ID `video`, 기능·작업 ID 접두어(VD-F, VD-06), SQL 파일 이름(`1200_video.sql`, `0002_video_domain.sql`). 제품 이름이 아니라 도메인 이름이라 바꾸면 DB·코어 규격까지 바뀐다. 원본 코드 리뷰(`reviews/`, `pdf/`)는 원본 프로젝트 이름 그대로 |
+| 실제 개발 폴더 | `D:\WorkSpace\DEV\shortsflow\` (setup 스크립트 기본값) |

@@ -47,7 +47,7 @@
 | microweb-studio | 0001_core_lite, 0002_microweb_domain, seed | OK |
 | nomad-blog | 0001_core_lite, 0002_blog_domain, seed | OK |
 | nomad-commerce | 0001_core_lite, 0002_commerce_domain, seed | OK |
-| nomad-video | 0001_core_lite, 0002_video_domain, seed | OK |
+| shortsflow | 0001_core_lite, 0002_video_domain, seed | OK |
 | stock-dashboard | 0001_core_lite, 0002_stock_domain, 0003_stock_orders_paper, seed | OK |
 | study-note | 0001_core_lite, 0002_study_note_domain, seed | OK |
 | toon-factory | 0001_core_lite, 0002_toon_domain, seed | OK |
@@ -64,7 +64,7 @@
 |---|---|---|---|
 | publishing | features 4키 | free/basic features 16키, description 추가. 금액/크레딧 동일 | flora-publishing/01_PRD.md 4장, 06장 R1 |
 | astro | starter `signup_credits=30`, features `{"readings":["saju","tarot"],"pdf_themes":2}`. 팩 100/300/1000/2000(보너스 없음, pack_1000 39,900원) | `signup_credits=0`, features에 `combined`, 테마 키 배열, `max_subjects`, `email_delivery`, `welcome_credits=30`. 팩 100 / 330(12,900) / 800(27,900, pack_700) / 2,400(69,900) | astro-ai/01_PRD.md 4장, 8장 D-3 |
-| video | 플랜 동일. 팩 정가 4종만 | Advanced 30% 할인 `adv_pack_*` 4종 추가 | nomad-video/01_PRD.md 4장, 06장 |
+| video | 플랜 동일. 팩 정가 4종만 | Advanced 30% 할인 `adv_pack_*` 4종 추가 | shortsflow/01_PRD.md 4장, 06장 |
 | blog | free 월 10cr, features 2키. pro/business, 팩은 조각에만 있어 순서 A에서 free가 옛 값 | free 월 20cr + 10키, pro 29,000/300cr, business 99,000/1,500cr, 팩 3종 | nomad-blog/01_PRD.md 4.1절 |
 | commerce | free features 3키(`market_api` 없음 → 업로드 CM007 차단, `zip_export` 없음), pro market_slots 8, enterprise 20, 팩 없음 | 4플랜 12키(free `market_api`=쿠팡/스마트스토어, `zip_export=true`, slots 1/3/10/-1, slot_sets, concurrency, image_quality), 팩 50/120/200 | nomad-commerce/01_PRD.md 4.1/4.4절 |
 | microweb | free features `{}`, 팩 없음 | features 8키, 팩 pack_30/pack_60(비활성) | microweb-studio/01_PRD.md 4장 |

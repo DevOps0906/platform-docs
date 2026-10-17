@@ -214,7 +214,7 @@
 | R-5 | 공용 Dify | `commerce-chat` 앱 생성, 내부 키 환경 변수, 외부 지식 `commerce-rules` 등록, 로그 보존 30일 | 공용 인프라는 코어 소유 | 없음(필수). 장애 시 `/tools/answer-direct` |
 | R-6 | `_design-guide` 3D 키트 | 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/file/03-설계/디자인/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
 | R-7 | compliance 모듈 | 언어 중립 규칙 파일과 공용 테스트 벡터를 제품이 주입하는 규약(`checkRules(input, dict)`의 JSON 규칙 버전)을 확정 | TS 매처(commerce-compliance)와 FastAPI compliance 노드가 같은 판정을 하도록 | commerce가 `packages/commerce-compliance/rules/`와 `fixtures/`로 자체 규약을 둔다(CM-06-017, 051) |
-| R-8 | nomad-video | 쇼츠 렌더 워커 API 계약(입력: 음성 파일 경로, 이미지 경로, 분량; 출력: 영상 경로; 인증: 서비스 토큰)을 확정 | Phase 2 쇼츠 연동(CM-06-038). 렌더 엔진은 nomad-video 소유 | 내레이션 mp3까지만 MVP로 제공(01장 D-12) |
+| R-8 | shortsflow | 쇼츠 렌더 워커 API 계약(입력: 음성 파일 경로, 이미지 경로, 분량; 출력: 영상 경로; 인증: 서비스 토큰)을 확정 | Phase 2 쇼츠 연동(CM-06-038). 렌더 엔진은 shortsflow 소유 | 내레이션 mp3까지만 MVP로 제공(01장 D-12) |
 
 ## 7. 완료 정의
 

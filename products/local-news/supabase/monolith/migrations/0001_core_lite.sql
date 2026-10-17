@@ -2320,7 +2320,7 @@ create policy public_assets_delete on storage.objects for delete to authenticate
 
 -- =====================================================================
 -- SECTION 9. affiliate  [선택: video, blog 계열만]  -- local-news 에서 제거함
--- 제거 사유: 제휴마케팅 모듈 소비 제품은 nomad-video, nomad-blog 뿐이다(SHARED_MODULES.md 1장, 확정 결정 12).
+-- 제거 사유: 제휴마케팅 모듈 소비 제품은 shortsflow, nomad-blog 뿐이다(SHARED_MODULES.md 1장, 확정 결정 12).
 --            지역신문 광고는 자체 광고 관리(news 도메인 M3, 0003_local_news_domain.sql)로 처리한다.
 -- 원본 줄: _platform-core/MONOLITH_CORE_LITE.sql:2410-2760. SECTION 10 은 to_regclass/to_regprocedure 로
 --          존재하는 객체에만 권한을 주므로 이 절이 없어도 그대로 동작한다.
