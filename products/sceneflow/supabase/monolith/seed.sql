@@ -94,3 +94,55 @@ begin
     raise exception 'video routing defaults: invalid chain providers %', v_bad;
   end if;
 end $$;
+
+-- =====================================================================
+-- 2026-10-18 스토리보드 트랙(Track S) 데이터. 0002_video_domain.sql 12절 표의 seed(1200_video.sql 12.9절과 같은 값).
+-- 템플릿 5종(VD-F-141, 제안 값)과 플랜 키. 위쪽 플랜 upsert 뒤에 병합하므로 반복 실행해도 값이 유지된다.
+-- =====================================================================
+--   beats.share 는 목표 길이 비율(합 1.0). kind 는 그래프가 쓸 장면 종류 기본값. 문구는 운영자가 이 seed 와 1200_video.sql 12.9절에서 함께 바꾼다.
+insert into public.storyboard_templates (code, label, beats, default_scene_seconds, status) values
+  ('knowledge_explainer', '지식 해설',
+   '[{"key":"hook","label":"질문 던지기","share":0.08,"kind":"title"},
+     {"key":"context","label":"배경","share":0.17,"kind":"image"},
+     {"key":"explain","label":"핵심 설명","share":0.45,"kind":"image"},
+     {"key":"example","label":"예시·숫자","share":0.15,"kind":"text_card"},
+     {"key":"recap","label":"정리","share":0.15,"kind":"text_card"}]', 6, 'active'),
+  ('history_documentary', '역사 다큐',
+   '[{"key":"cold_open","label":"장면으로 시작","share":0.08,"kind":"image"},
+     {"key":"title","label":"제목·시대","share":0.04,"kind":"title"},
+     {"key":"background","label":"시대 배경","share":0.18,"kind":"image"},
+     {"key":"events","label":"사건 전개","share":0.40,"kind":"image"},
+     {"key":"turning_point","label":"전환점","share":0.15,"kind":"image"},
+     {"key":"legacy","label":"남긴 것·출처","share":0.15,"kind":"text_card"}]', 7, 'active'),
+  ('list_topn', 'TOP N 리스트',
+   '[{"key":"hook","label":"목록 예고","share":0.08,"kind":"title"},
+     {"key":"items","label":"순위 항목","share":0.80,"kind":"image"},
+     {"key":"outro","label":"정리","share":0.12,"kind":"text_card"}]', 5, 'active'),
+  ('story_radio', '사연 라디오',
+   '[{"key":"intro","label":"사연 소개","share":0.10,"kind":"title"},
+     {"key":"story","label":"사연","share":0.60,"kind":"image"},
+     {"key":"reflection","label":"생각 나누기","share":0.20,"kind":"text_card"},
+     {"key":"outro","label":"마무리","share":0.10,"kind":"text_card"}]', 8, 'active'),
+  ('product_review', '제품 리뷰',
+   '[{"key":"hook","label":"한 줄 결론","share":0.08,"kind":"title"},
+     {"key":"overview","label":"제품 소개","share":0.17,"kind":"image"},
+     {"key":"points","label":"장점·단점","share":0.45,"kind":"image"},
+     {"key":"compare","label":"비교·숫자","share":0.15,"kind":"text_card"},
+     {"key":"verdict","label":"추천 대상","share":0.15,"kind":"text_card"}]', 5, 'active')
+on conflict (code) do update
+  set label = excluded.label, beats = excluded.beats, default_scene_seconds = excluded.default_scene_seconds;
+
+-- 플랜 키(있으면 병합). storyboard(bool), storyboard_max_minutes, shorts_extract_max 는 제안 값(01장 10.4절).
+--   모놀리스는 이 파일 위쪽 플랜 upsert 가 features 를 통째로 바꾸므로 그 뒤에서 병합한다.
+update public.plans
+   set features = features || '{"storyboard": false, "storyboard_max_minutes": 0, "shorts_extract_max": 0}'::jsonb
+ where app_id = 'video' and code = 'starter';
+update public.plans
+   set features = features || '{"storyboard": true, "storyboard_max_minutes": 10, "shorts_extract_max": 3}'::jsonb
+ where app_id = 'video' and code = 'basic';
+update public.plans
+   set features = features || '{"storyboard": true, "storyboard_max_minutes": 30, "shorts_extract_max": 10}'::jsonb
+ where app_id = 'video' and code = 'pro';
+update public.plans
+   set features = features || '{"storyboard": true, "storyboard_max_minutes": 60, "shorts_extract_max": 10}'::jsonb
+ where app_id = 'video' and code = 'advanced';
