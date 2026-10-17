@@ -6,7 +6,7 @@
 |---|---|
 | 주 사용자 | 1~5인 건축사사무소, 전원주택·모듈러 시공사 |
 | 앱 id / DB 스키마(모듈러 번호) | `arch` / `arch`(2400), 이 묶음은 모놀리스(`public`) |
-| 개발 작업 수 | 66개(`products/arch-studio/06_AGENT_PLAN.md`, AR-06-001~064 + AR-V2-01·02, 웨이브 W0~W8 + W0-D) |
+| 개발 작업 수 | 71개(`products/arch-studio/06_AGENT_PLAN.md`, AR-06-001~069 + AR-V2-01·02, 웨이브 W0~W8 + W0-D. 065~069는 2026-10-17 설득형 랜딩, 8장) |
 | 이 제품만의 것 | 데스크톱 셸(Rust 코어, 키체인, 로컬 SQLite), 서명 라이선스·업데이터, 도면 엔진(결정적 DXF, 골든 + ezdxf audit CI). 개발서 12~13장 |
 | 인증 단계 | Mock 로그인(Stage A, 데스크톱은 개발 빌드만)으로 시작 → G1 후 Google + 이메일(B, 데스크톱은 `archstudio://auth/callback` 딥링크) → G2 후 카카오·네이버(C, P2 선택). [`arch-studio_develop.md`](arch-studio_develop.md) 19장 |
 | 기획서 | [`products/arch-studio/`](../../products/arch-studio/) (도면은 `01_PRD.md` 9장, 데스크톱 공통은 [`Tauri/README.md`](../../Tauri/README.md)) |

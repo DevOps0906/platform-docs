@@ -11,7 +11,7 @@
 | 3 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 1.1절 "불일치와 구현 기준", 금지 패턴(`07_SOURCE_MIGRATION.md` 4절) |
 | 4 | DB 작업이면 `docs/products/_supabase-modular/migrations/2300_docs.sql`(정본)과 `supabase/monolith/` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
-| 3-UI | 화면 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-docs 절, 랜딩이면 `HERO_3D.md` |
+| 3-UI | 화면 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-docs 절, 랜딩이면 `HERO_3D.md`와 `LANDING_PERSUASION.md`(2026-10-17, 03장 8장) |
 
 ## 2. 절대 규칙
 
@@ -152,3 +152,17 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 | 소유 경로 | 014: `web/src/lib/auth/`, `web/src/app/api/dev/login/`, `web/src/components/dev-auth/`, `scripts/dev/`, `web/src/app/(auth)/login/`(A 구성), `web/src/app/onboarding/company/`. 063: `web/src/app/(auth)/`(014에서 이어 받음), `web/src/app/auth/callback/`, `web/src/app/onboarding/terms/`, `web/src/features/onboarding-terms/`, `web/src/app/api/terms/`, `web/src/lib/auth/onboarding.ts`(이어 받음). 064: `web/src/features/login-methods/`, `web/src/lib/auth/providers/kakao.ts`. 065: `web/src/app/auth/naver/`(브리지만), `web/src/lib/auth/providers/naver.ts`, `scripts/auth/`. 배지 장착(레이아웃)·`db:seed-users` 스크립트·Playwright `globalSetup` 등록은 DC-06-004에, `/app/settings/login-methods` 장착은 DC-06-038에 1줄 요청 |
 | 이 제품의 B·C 작업 | B: DC-06-063(W7 맨 앞). C1: DC-06-064, C2: DC-06-065(W8, G2 후). 남은 결정: 01장 8.1절 D-18(카카오 이메일), D-19(네이버 경로), D-20(이메일 가입 유지), D-21(Google 사용자 `email_confirmed_at` 판정), D-22(로그인 Google 클라이언트 분리) |
 | "mock" 단어 구분 | 2장 "mock 금지"(실패를 성공처럼 반환)와 7장 "mock 폴백"은 LLM·렌더·연동 장애를 가짜 성공 응답으로 숨기는 것을 금지한다. 이 절의 Mock 로그인은 로컬 시드 계정으로 실제 Supabase JWT를 받는 개발 수단이라 그 금지에 해당하지 않는다. 반대로 Mock 로그인이 허용된다고 LLM 가짜 성공 응답을 만들지 않는다 |
+
+## 설득형 랜딩 규칙 (2026-10-17, 검토용)
+
+정본 `docs/products/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 9장, 03장 8장, 06장 9절. 변경 기록: 2026-10-17 DC-F-050~055, DC-06-066~070, 01장 D-23~D-27(7장 변경 기록 표의 추가분).
+
+| 항목 | 규칙 |
+|---|---|
+| 주장 장부 | 랜딩·인사이트 문장은 `docs/nomad-docs/experiments/claims-ledger.md`에서 "검증"인 것만. 문구 상수와 장부가 다르면 `scripts/proof/check-claims.mjs`가 CI를 실패시킨다 |
+| 비교 표시 | 대안은 범주 이름만(D-23). 다른 제안서·전자계약·법률문서 서비스 이름과 로고 금지 |
+| 체크 데모 | `web/src/features/effects-engine/`을 import만 한다(복제·수정 금지). 예시 데이터는 가상 회사명. 입력값을 서버로 보내지 않는다 |
+| 계산기 | 순수 함수, 입력값 수집 금지, 요금 값은 요금 상수 import, 결과를 가입 뒤에 숨기지 않는다 |
+| 외부 랜딩 자료 | 다른 회사 랜딩의 문구·수치·주장과 다크 글래스 비주얼 금지(`LANDING_PERSUASION.md` 1장) |
+| 컴포넌트 경계 | `web/src/components/marketing/`은 `(marketing)` 경로에서만 import |
+| 소유 경로 | 066 `web/src/features/landing-proof/`, `web/public/proof/`, `scripts/proof/`. 067 `docs/nomad-docs/experiments/`. 068 `web/src/app/(marketing)/insight/`, `web/content/insight/`. 069 `web/src/app/(marketing)/tools/time-compare/`, `web/src/features/time-compare/`. 070 `web/src/components/marketing/` |

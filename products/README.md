@@ -309,3 +309,23 @@ local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용�
 | RLS 스모크(모듈러 / 모놀리스) | 125/125 / 125/125 |
 | 05장 확정 후 맞춘 것 | 04장 RPC 표(`latest_cost_catalog`, `purge_expired`, `reconcile_runs`, `p_org` 선택 인자, jsonb 반환형), SQLSTATE `AR034`(일일 플랫폼 크레딧 상한), 02장 `SITE_LOOKUP_HASH_KEY`·크론, 위키 읽기 경로 `GET /api/ai/wiki/pages` |
 | 공용 요청 | C-1(일회성 주문 종류, 영구 라이선스 판매 전 필수), R-A1~R-A14(`arch-studio/06_AGENT_PLAN.md` 6장) |
+
+## 설득형 랜딩 추가 (2026-10-17, 검토용)
+
+설득형 랜딩의 내용 구조와 "왜 이 플랫폼이어야 하는가" 검증 방식을 공용 규칙 [`_design-guide/LANDING_PERSUASION.md`](_design-guide/LANDING_PERSUASION.md)로 정리하고, 적합도가 높은 3개 제품에 반영했다. 설득 순서·검증 방식·범용 UI 패턴만 쓰고, 다른 회사 랜딩의 문구·통계·고유 연출·유료 테마 자산과 다크 글래스 비주얼은 쓰지 않는다(저작권과 `DESIGN_PRINCIPLES.md` 생성형 기본값 판정, 규칙 문서 1장). 화면 시안은 [`_design-guide/templates/persuasion-landing/`](_design-guide/templates/persuasion-landing/README.md)(공통 템플릿 1개 + 제품별 16개)에 있다.
+
+| 제품 | 06장 작업 | 추가 작업 | 요구 ID | 결정 | 문서 위치 |
+|---|---|---|---|---|---|
+| flora-publishing | 65 → 70 | PB-06-066~070 | PB-F-064~069 | D28~D32 | 01장 9장, 03장 9절, 06장 10절, `CLAUDE.md` 끝 절, `../Price_Plans/flora-publishing/PRICE_PLAN.md` 11장 |
+| nomad-docs | 65 → 70 | DC-06-066~070 | DC-F-050~055 | D-23~D-27 | 01장 9장, 03장 8장, 06장 9절, `CLAUDE.md` 끝 절 |
+| arch-studio | 66 → 71 | AR-06-065~069 | AR-F-039~042 | D-27~D-30 | 01장 10장, 03장 7장, 06장 8장, `CLAUDE.md` 끝 절 |
+
+| 점검 | 결과 |
+|---|---|
+| DB·코어 | 변경 없음. 계산기 입력값은 수집하지 않고, 리드는 기존 대기자·가입 경로를 쓴다 |
+| 줄 번호 인용 보호 | 기존 장은 같은 줄 안의 수정만 하고 추가분은 문서 끝 장으로 붙였다 |
+| `build_root.py` | `LANDING_PERSUASION.md`를 DOC-DSN-009로 등록, 16개 묶음 재생성(묶음 안 누락 0. book-trailer·local-news의 절대경로 누락 1건은 이번 변경 전부터 있던 것) |
+| `gen_v2.py` | 재실행 결과 V2 개발서 변경 없음(새 작업은 공용모듈과 무관) |
+| 외부 문구 검색 | 제품 문서에서 다른 회사 랜딩의 고유 문구·통계 0건 |
+| 다른 제품 | admin-suite(도입 영업 랜딩)·local-news(신문사 도입 문의 페이지)는 후보로만 두고 반영하지 않았다. 나머지는 즉시 가입형이라 낮음(규칙 문서 8장) |
+

@@ -171,3 +171,18 @@ P0 작업은 대응 테스트 작업(`06_AGENT_PLAN.md` 7.1절)이 녹색이어�
 | E2E | Playwright `globalSetup`이 페르소나마다 `/api/dev/login`을 호출해 `storageState`를 저장한다. 데스크톱 E2E는 개발 빌드 Mock 패널로 로그인한다. Google·카카오·네이버 실로그인은 자동화하지 않고 사람이 수동 점검표로 확인한다(B-5) |
 | 단계 전환 | 에이전트가 단계를 스스로 바꾸지 않는다. 사람(대표님)이 G1(`AUTH_ROADMAP.md:177-184`)·G2(`:223-229`)를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한 뒤에 B·C 작업을 시작한다 |
 | "mock" 단어 구분 | 2장 "mock 금지"는 렌더·검토·동기화 실패를 가짜 성공으로 숨기는 것을 금지한다. 이 절의 Mock 로그인은 로컬 시드 계정으로 실제 Supabase JWT를 받는 개발 수단이라 그 금지에 해당하지 않는다 |
+
+## 설득형 랜딩 규칙 (2026-10-17, 검토용)
+
+정본 `docs/file/03-설계/디자인/LANDING_PERSUASION.md`, 이 제품 반영은 01장 10장, 03장 7장, 06장 8장.
+
+| 항목 | 규칙 |
+|---|---|
+| 주장 장부 | 랜딩 문장은 `docs/arch-studio/experiments/claims-ledger.md`에서 "검증"인 것만. 문구 상수와 장부가 다르면 `scripts/proof/check-claims.mjs`가 CI를 실패시킨다 |
+| 비교 표시 | 대안은 범주 이름만(D-27). CAD·모델링 도구·법규 검토 서비스 이름과 로고 금지. 상표는 "파일 호환"만 |
+| 증거 | 샘플 도면은 골든 출력 CI 복사(033 기존 규칙), 화면 기록은 실제 앱의 편집 없는 녹화 |
+| 계산기·도입 단계 | 요금 값은 요금 상수 import(하드코딩 금지), 입력값 수집 금지, 시간 절감 수치는 V1 측정 전 쓰지 않는다 |
+| 외부 랜딩 자료 | 다른 회사 랜딩의 문구·수치·단계 이름과 다크 글래스 비주얼 금지(`LANDING_PERSUASION.md` 1장). 단계 이름은 01장 4장 요금 구조에서 |
+| 컴포넌트 경계 | `web/src/components/marketing/**`은 웹 `(marketing)` 경로에서만. 데스크톱 앱 공용 `packages/ui`에 넣지 않는다 |
+| 소유 경로 | 065 `web/src/features/landing-proof/**`, `web/public/proof/**`, `scripts/proof/**`. 066 `docs/arch-studio/experiments/`. 067 `web/src/features/adoption-steps/**`. 068 `web/src/app/(marketing)/tools/**`, `web/src/features/proposal-time/**`. 069 `web/src/components/marketing/**` |
+

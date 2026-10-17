@@ -358,4 +358,3 @@
 | 랜딩 | Join Radio (SOTD) | Awwwards | https://www.awwwards.com/sites/join-radio | 선택에 따라 배경과 그래픽이 바뀌는 방식 → 장르 문법 6종을 고르면 같은 문장이 그 문법의 서체·모션으로 바뀌는 섹션 | 라디오 브랜드 색, 시간대 콘셉트 | 랜딩 "장르 문법" 섹션 |
 | 앱 | Video Editing Dashboard | Dribbble | https://dribbble.com/shots/25186663-Video-Editing-Dashboard | 미리보기와 하단 가로 스트립의 위계(스트립은 트랙이 아니라 장면 칸 한 줄) | 다중 트랙 타임라인, 파형 겹침 | 작업실 장면 띠 |
 | 앱 | AI book app | Dribbble | https://dribbble.com/shots/23707376-AI-book-app | AI 결과를 여러 안으로 나란히 보여 주고 하나를 고르게 하는 구조 | 일러스트 책 표지 장식, 둥근 카드 키트 | 브리프 3안 비교 |
-
