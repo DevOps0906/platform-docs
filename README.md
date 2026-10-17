@@ -4,7 +4,7 @@
 
 로컬 위치는 `D:\WorkSpace\platform\docs`를 기준으로 합니다. 문서 안의 경로가 이 위치를 씁니다.
 
-## 0. 한눈에 보기 (2026-10-17 기준)
+## 0. 한눈에 보기 (2026-10-18 기준)
 
 | 항목 | 수 | 위치 |
 |---|---|---|
@@ -18,7 +18,7 @@
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `products/_design-guide/templates/persuasion-landing/` |
-| 전체 파일 | 1,629개(이 중 1,065개는 `develop/*/*-root/`에 생성된 사본) | - |
+| 전체 파일 | 1,631개, 폴더 444개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
 
@@ -50,6 +50,8 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 ```
 
 ## 2. 폴더 지도
+
+폴더 444개를 모두 펼친 트리는 [`FOLDER_TREE.md`](FOLDER_TREE.md)에 있습니다(`python3 -I _tools/folder_tree.py`로 다시 만듦).
 
 | 폴더 | 무엇이 있나 | 성격 | 언제 보나 |
 |---|---|---|---|
