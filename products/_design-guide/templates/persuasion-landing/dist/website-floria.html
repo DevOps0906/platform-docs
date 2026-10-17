@@ -1,0 +1,1073 @@
+<title>Floria 설득형 랜딩 템플릿</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+/* 설득형 랜딩 템플릿 엔진 — 제품 1개 전용.
+   build.py가 data/<제품>.json을 아래 PRODUCT_DATA 자리에 넣어 dist/<제품>.html을 만든다.
+   레이아웃은 NOMAD 랜딩 키트 구조(고정 빛 배경 + 글래스 2단 + GNB 드롭다운), 움직임은 모두
+   prefers-reduced-motion: no-preference 안에서만 켠다. 움직임이 없어도 내용은 전부 보인다. */
+:root{
+  color-scheme:dark;
+  --bg:#40444e; --bg-deep:#363940; --glow:#69728c;
+  --glass:rgba(255,255,255,.065); --line:rgba(255,255,255,.13); --line-2:rgba(255,255,255,.07);
+  --panel:rgba(14,16,22,.32); --panel-2:rgba(14,16,22,.5);
+  --fg:#f1f3f7; --fg-2:#bcc2ce; --fg-3:#8d94a3;
+  --mint:#00C9A7; --mint-ink:#5eead4; --denim:#2563EB; --denim-ink:#8fb0ff; --amber:#F59E0B; --amber-ink:#fbbf24; --coral:#F43F5E; --coral-ink:#fb7185; --violet-ink:#b4a3ff;
+  --acc:#5eead4; --acc-rgb:94,234,212; /* 제품 강조색: 제품 데이터가 바꾼다 */
+  --gnb:rgba(52,55,63,.9);
+  --f-display:"Bebas Neue","Arial Narrow",Impact,sans-serif;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --r-lg:24px; --r-md:16px; --max:1240px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--gnb)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* 배경: 고정 빛 + 떠다니는 강조색 빛 + 포인터 조명 */
+.atmo{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden;background:
+  radial-gradient(60% 45% at 50% -5%,var(--glow) 0%,transparent 70%),
+  radial-gradient(40% 50% at 8% 40%,rgba(105,114,140,.55) 0%,transparent 70%),
+  radial-gradient(45% 55% at 100% 85%,rgba(79,106,120,.45) 0%,transparent 70%),
+  linear-gradient(180deg,var(--bg) 0%,var(--bg-deep) 100%)}
+.atmo::after{content:"";position:absolute;inset:0;opacity:.18;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.atmo .b{position:absolute;width:62vmax;height:62vmax;border-radius:50%;background:radial-gradient(circle,rgba(var(--acc-rgb),.16) 0%,transparent 62%)}
+.atmo .b1{left:-22vmax;top:-18vmax}
+.atmo .b2{right:-26vmax;top:30vh;background:radial-gradient(circle,rgba(143,176,255,.13) 0%,transparent 62%)}
+.atmo .b3{left:20vw;bottom:-34vmax;width:50vmax;height:50vmax}
+.spot{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(520px circle at var(--mx,50%) var(--my,30%),rgba(var(--acc-rgb),.09),transparent 60%)}
+body.pointer .spot{opacity:1}
+.progress{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);height:3px;z-index:70;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--acc),var(--denim-ink));pointer-events:none}
+
+a{color:inherit}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--mint-ink);outline-offset:3px;border-radius:6px}
+.wrap{max-width:var(--max);margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* GNB */
+.gnb{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--gnb);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line-2)}
+.gnb .wrap{display:flex;align-items:center;gap:22px;height:64px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;min-width:0}
+.logo svg{width:28px;height:28px;flex-shrink:0}
+.logo b{font-size:17px;font-weight:900;letter-spacing:-.01em;white-space:nowrap}
+.logo span{font-size:12px;color:var(--fg-3);white-space:nowrap}
+.menu{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex:1}
+.menu>li{position:relative}
+.menu>li>button{background:none;border:0;padding:10px 12px;border-radius:8px;cursor:pointer;font-weight:500;display:flex;align-items:center;gap:7px;color:var(--fg-2);transition:color .2s,background .2s}
+.menu>li>button svg{width:16px;height:16px}
+.menu>li>button:hover,.menu>li.on>button{color:var(--fg);background:rgba(255,255,255,.06)}
+.menu>li.on>button{box-shadow:inset 0 -2px 0 var(--acc)}
+.drop{position:absolute;top:calc(100% + 8px);left:0;min-width:260px;padding:10px;border-radius:var(--r-md);background:rgba(44,47,55,.97);border:1px solid var(--line);box-shadow:0 24px 48px rgba(0,0,0,.35);list-style:none;margin:0;opacity:0;visibility:hidden;transform:translateY(-6px);transition:.2s var(--ease)}
+.menu>li:hover .drop,.menu>li:focus-within .drop{opacity:1;visibility:visible;transform:none}
+.drop a{display:block;padding:9px 12px;border-radius:8px;text-decoration:none;transition:background .15s,padding-left .2s}
+.drop a small{display:block;color:var(--fg-3);font-size:12px;line-height:1.4}
+.drop a:hover,.drop a.on{background:rgba(255,255,255,.07)}
+.drop a:hover{padding-left:16px}
+.drop a.on{box-shadow:inset 3px 0 0 var(--acc)}
+.gnb-tools{display:flex;align-items:center;gap:10px}
+.icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:none;border:0;color:var(--fg-2);cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+.burger{display:none}
+
+/* Title bar */
+.titlebar{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-block:28px 8px;flex-wrap:wrap}
+.titlebar h1{margin:0;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.titlebar h1 span{font-weight:400;color:var(--fg-2);font-size:15px}
+.titlebar h1 svg{width:18px;height:18px;color:var(--acc)}
+.crumb{font-size:13px;color:var(--fg-3);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.crumb b{color:var(--fg);font-weight:500}
+
+/* Section frame */
+section.sec{padding-block:64px 8px}
+.sec-head{text-align:center;max-width:860px;margin:0 auto 32px}
+.sec-head.left{text-align:left;margin-left:0}
+.eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.14em;color:var(--amber-ink);margin:0 0 10px}
+.eyebrow.mint{color:var(--mint-ink)}.eyebrow.acc{color:var(--acc)}
+.eyebrow.acc::before{content:"";display:inline-block;width:18px;height:2px;background:currentColor;vertical-align:middle;margin-right:8px;transform-origin:0 50%}
+h2.hl{font-size:clamp(24px,3vw,34px);line-height:1.3;margin:0 0 12px;font-weight:700;text-wrap:balance;letter-spacing:-.01em}
+.lead{color:var(--fg-2);margin:0;text-wrap:pretty}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:0 30px 60px -30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.glass.pad{padding:clamp(20px,3vw,36px)}
+.panel{background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r-md)}
+.panel.pad{padding:clamp(16px,2.4vw,28px)}
+.widget-h{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.widget-h .t{font-size:14px;color:var(--fg-2)}
+.widget-h .t b{color:var(--fg)}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);text-decoration:none;font-weight:500;cursor:pointer;transition:background .2s,transform .2s var(--ease),border-color .2s}
+.btn:hover{background:rgba(255,255,255,.1);transform:translateY(-2px);border-color:rgba(var(--acc-rgb),.45)}
+.btn svg{width:18px;height:18px}
+.btn::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.2) 50%,transparent 65%);transform:translateX(-130%)}
+.btn.mint{background:#007A64;border-color:#007A64;color:#fff}
+.btn.mint:hover{background:#008c73}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:10px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-size:12.5px;color:var(--fg-2)}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 rgba(var(--acc-rgb),.6)}
+.chip-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;background:rgba(37,99,235,.22);color:var(--denim-ink);border:1px solid rgba(143,176,255,.25)}
+.chip-ic svg{width:20px;height:20px}
+.card-title{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.card-title h3{margin:0;font-size:18px;line-height:1.35}
+.note{font-size:12.5px;color:var(--fg-3);margin:14px 0 0}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.lift{transition:transform .3s var(--ease),border-color .3s,box-shadow .3s}
+.lift:hover{transform:translateY(-4px);border-color:rgba(var(--acc-rgb),.45);box-shadow:0 22px 44px -22px rgba(var(--acc-rgb),.55)}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:center;padding-block:48px 24px}
+.hero>*{min-width:0}
+.hero-mark{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.tool-stack{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:16px}
+.tool-stack span{font-family:var(--f-mono);font-size:12px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);color:var(--fg-2);transition:color .35s,border-color .35s,background .35s,transform .35s var(--ease),box-shadow .35s}
+.tool-stack span.on{color:#14161b;background:var(--acc);border-color:var(--acc);transform:translateY(-3px);box-shadow:0 10px 24px -10px rgba(var(--acc-rgb),.9)}
+.hero-join{font-size:clamp(20px,2.4vw,28px);font-weight:700;padding-bottom:16px}
+.hero-big{font-family:var(--f-display);font-size:clamp(64px,10vw,150px);line-height:.86;letter-spacing:.01em;margin:0;text-shadow:0 10px 40px rgba(0,0,0,.25)}
+.hero-big.len-m{font-size:clamp(56px,8.4vw,128px)}
+.hero-big.len-l{font-size:clamp(46px,6.8vw,106px)}
+.hero-big .w{display:block;white-space:nowrap}
+.hero-big .w2{color:var(--acc);position:relative;display:inline-block}
+.hero-big .w2::after{content:"";position:absolute;left:0;right:0;bottom:.02em;height:.07em;border-radius:99px;background:linear-gradient(90deg,var(--acc),rgba(var(--acc-rgb),.15));transform-origin:0 50%}
+.hero-big .ch{display:inline-block;white-space:pre}
+.hero-head{font-size:clamp(18px,2vw,22px);font-weight:700;margin:22px 0 6px;text-wrap:balance}
+.hero-sub{color:var(--fg-2);max-width:580px;margin:0}
+.cta-card{position:relative;overflow:hidden;padding:26px;transform-style:preserve-3d;transition:transform .5s var(--ease)}
+.cta-card .arcs{position:absolute;right:-30px;top:-40px;width:200px;height:140px;opacity:.55}
+.cta-card .arcs circle{fill:none;stroke:var(--acc);stroke-width:.8;transform-origin:150px 10px}
+.cta-card .arcs circle:nth-child(2n){stroke-dasharray:4 6}
+.typing{font-size:22px;font-weight:700;color:var(--denim-ink);margin:16px 0 6px;min-height:34px;display:flex;align-items:center;gap:6px}
+.typing .caret{width:2px;height:24px;background:var(--denim-ink)}
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--fg-3);font-size:13.5px;margin-bottom:20px}
+.formula .tk{padding:3px 9px;border-radius:7px;border:1px solid var(--line-2);background:rgba(0,0,0,.18)}
+.formula .op{font-family:var(--f-mono);color:var(--fg-3)}
+.cta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cta-grid .btn{padding:15px}
+.cta-grid .full{grid-column:1/-1}
+
+/* Persona tabs */
+.tabs{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-bottom:-1px;position:relative;z-index:1}
+.tabs button{background:none;border:0;padding:12px 20px;border-radius:12px 12px 0 0;cursor:pointer;color:var(--fg-2);font-weight:700;font-size:15px;transition:color .25s,background .25s}
+.tabs button[aria-selected="true"]{background:var(--panel-2);color:var(--acc)}
+.ink{position:absolute;height:2px;border-radius:2px;background:var(--acc);pointer-events:none;transition:left .4s var(--ease),width .4s var(--ease),top .4s var(--ease);box-shadow:0 0 12px rgba(var(--acc-rgb),.8)}
+.tabpanel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:28px;align-items:center}
+.art{position:relative;border-radius:var(--r-md);overflow:hidden;aspect-ratio:4/3;max-width:100%;display:grid;place-items:center;border:1px solid var(--line-2);background:linear-gradient(135deg,#2c3446,#46506a 55%,rgba(var(--acc-rgb),.5))}
+.art svg.big{width:36%;height:auto;color:rgba(255,255,255,.9);filter:drop-shadow(0 10px 24px rgba(0,0,0,.25))}
+.art .ring{position:absolute;width:70%;height:70%;border:1.5px dashed rgba(255,255,255,.3);border-radius:50%}
+.art .ring.r2{width:88%;height:88%;border-style:dotted;border-color:rgba(var(--acc-rgb),.35)}
+.art .cap{position:absolute;left:0;right:0;bottom:0;padding:16px;text-align:center;font-weight:700;font-size:16px;background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.art .who{position:absolute;top:14px;left:16px;font-size:12.5px;color:#e9ecf3;background:rgba(0,0,0,.3);padding:3px 10px;border-radius:999px}
+.qa{display:grid;gap:20px}
+.qa .k{font-size:13px;font-weight:700;color:var(--fg-3)}
+.qa h4{margin:2px 0 6px;font-size:18px;line-height:1.45;text-wrap:balance}
+.qa p{margin:0;border-left:3px solid var(--line);padding-left:14px;color:var(--fg-2);font-size:14px}
+
+/* Compare + rail + dual timeline */
+.cmp{border-radius:var(--r-md);padding:24px;border:1px solid}
+.cmp.bad{border-color:rgba(251,113,133,.3);background:rgba(244,63,94,.07)}
+.cmp.good{border-color:rgba(143,176,255,.3);background:rgba(37,99,235,.08)}
+.cmp h3{margin:0;font-size:20px;display:flex;align-items:center;gap:10px}
+.cmp h3 .mk{margin:0}
+.cmp.bad h3{color:var(--coral-ink)}.cmp.good h3{color:var(--denim-ink)}
+.cmp .sub{font-size:13px;color:var(--fg-3);margin-bottom:6px}
+.cmp dl{margin:0}
+.cmp dt{font-size:12px;color:var(--fg-3);margin-top:12px}
+.cmp dd{margin:2px 0 0;padding-bottom:10px;border-bottom:1px solid var(--line-2)}
+.cmp.bad dd .x{background:linear-gradient(rgba(251,113,133,.7),rgba(251,113,133,.7)) no-repeat 0 60%/100% 1.5px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.cmp.good dd{display:flex;gap:8px;align-items:flex-start}
+.cmp.good dd svg{width:16px;height:16px;flex-shrink:0;margin-top:4px;color:var(--mint-ink)}
+.rail{display:flex;align-items:stretch;min-width:calc(var(--n,5)*120px)}
+.rail .st{flex:1;min-width:0;padding:16px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.18);text-align:center;transition:border-color .35s,background .35s,transform .35s var(--ease),box-shadow .35s}
+.rail .st svg{width:24px;height:24px;color:var(--denim-ink);transition:color .35s,transform .35s var(--ease)}
+.rail .st b{display:block;font-size:14px;margin-top:6px}
+.rail .st.out{border-color:rgba(251,191,36,.55);background:rgba(245,158,11,.1)}
+.rail .st.out svg{color:var(--amber-ink)}
+.rail .st.live{border-color:rgba(var(--acc-rgb),.85);background:rgba(var(--acc-rgb),.13);transform:translateY(-4px);box-shadow:0 14px 30px -14px rgba(var(--acc-rgb),.8)}
+.rail .st.live svg{color:var(--acc);transform:scale(1.15)}
+.rail .ar{flex:0 0 26px;display:grid;place-items:center;color:var(--denim-ink);transition:color .35s}
+.rail .ar svg{width:20px;height:12px;stroke-dasharray:3 3}
+.rail .ar.live{color:var(--acc)}
+.dual{display:grid;gap:12px;margin-top:22px}
+.dual-row{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.dual-row>*{min-width:0}
+.dual-row .stg{display:flex;align-items:center;gap:10px;font-weight:700}
+.dual-row .stg .n{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font-size:12px;font-family:var(--f-mono);color:var(--denim-ink);border:1px solid rgba(143,176,255,.4);background:rgba(37,99,235,.15);flex-shrink:0;transition:background .35s,color .35s,border-color .35s}
+.dual-row .u,.dual-row .s{padding:12px 14px;border-radius:12px;font-size:14px;transition:border-color .35s,background .35s}
+.dual-row .u{background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.dual-row .s{background:rgba(0,201,167,.07);border:1px solid rgba(94,234,212,.22);color:var(--fg-2)}
+.dual-row.live .stg .n{background:var(--acc);color:#14161b;border-color:var(--acc)}
+.dual-row.live .u,.dual-row.live .s{border-color:rgba(var(--acc-rgb),.6)}
+.dual-row small{display:block;font-size:11.5px;color:var(--fg-3);margin-bottom:2px}
+.dual-head{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:12px;font-size:12.5px;color:var(--fg-3);font-weight:700}
+.approve{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:var(--amber-ink);border:1px solid rgba(251,191,36,.5);border-radius:6px;padding:0 6px;vertical-align:1px}
+.callout{display:flex;gap:16px;align-items:flex-start;padding:20px 24px;border-radius:var(--r-md);border:1px solid var(--line);border-left:4px solid var(--amber);background:linear-gradient(90deg,rgba(245,158,11,.1),rgba(255,255,255,.03))}
+.callout.m{border-left-color:var(--mint);background:linear-gradient(90deg,rgba(0,201,167,.1),rgba(255,255,255,.03))}
+.callout svg{width:24px;height:24px;flex-shrink:0;color:var(--amber-ink);margin-top:2px}
+.callout.m svg{color:var(--mint-ink)}
+.callout>div{flex:1;min-width:0}
+.callout b{display:block;font-size:16px;margin-bottom:4px}
+.callout p{margin:0;color:var(--fg-2);font-size:14px}
+
+/* Meters and bars */
+.meter{height:8px;border-radius:99px;background:rgba(0,0,0,.3);overflow:hidden;margin-top:12px;border:1px solid var(--line-2)}
+.meter i,.bar i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--acc),var(--denim-ink));transition:width 1s var(--ease)}
+.bars{display:grid;gap:14px}
+.bar-row{display:grid;grid-template-columns:120px minmax(0,1fr) 120px;gap:12px;align-items:center;font-size:13.5px}
+.bar-row b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{height:14px;border-radius:99px;background:rgba(0,0,0,.28);overflow:hidden;border:1px solid var(--line-2)}
+.bar-row .bar i{background:linear-gradient(90deg,rgba(255,255,255,.35),rgba(255,255,255,.18))}
+.bar-row.ours .bar i{background:linear-gradient(90deg,var(--acc),var(--denim-ink))}
+.bar-row .v{font-family:var(--f-mono);font-weight:700;text-align:right;white-space:nowrap}
+.bar-row.ours b,.bar-row.ours .v{color:var(--acc)}
+.headline{font-size:clamp(16px,1.8vw,19px);font-weight:700;margin:0 0 18px;text-wrap:balance}
+.headline .num{font-family:var(--f-mono);color:var(--acc)}
+
+/* Verdict table */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px}
+.tbl th{font-size:12.5px;text-align:left;color:var(--fg-2);font-weight:700;padding:12px 12px;background:rgba(0,0,0,.2);vertical-align:bottom}
+.tbl th small{display:block;font-weight:400;color:var(--fg-3);font-size:11.5px}
+.tbl td{padding:12px 12px;border-top:1px solid var(--line-2);vertical-align:top;color:var(--fg-2)}
+.tbl tbody th{color:var(--fg);font-weight:700;min-width:140px;text-align:left;background:none;border-top:1px solid var(--line-2);font-size:13.5px;padding:12px;vertical-align:top}
+.tbl .ours{background:rgba(37,99,235,.12);color:var(--fg);position:relative;overflow:hidden}
+.tbl td.ours::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 30%,rgba(var(--acc-rgb),.16) 50%,transparent 70%);transform:translateX(-110%)}
+.tbl th.ours{color:var(--denim-ink)}
+.tbl tbody tr{transition:background .2s}
+.tbl tbody tr:hover{background:rgba(255,255,255,.03)}
+.mk{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-weight:900;font-size:13px;margin-right:6px;vertical-align:-5px}
+.mk.o{color:var(--mint-ink);border:1.5px solid var(--mint-ink)}
+.mk.t{color:var(--amber-ink);border:1.5px solid var(--amber-ink)}
+.mk.x{color:var(--coral-ink);border:1.5px solid var(--coral-ink)}
+.mk.n{color:var(--fg-3);border:1.5px dashed var(--fg-3)}
+.ev{font-family:var(--f-mono);font-size:12px;color:var(--acc);white-space:nowrap}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-3);margin-bottom:14px}
+.mini{padding:20px;border-radius:var(--r-md);border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.mini h4{margin:0 0 6px;font-size:16px;line-height:1.45}
+.mini p{margin:0;color:var(--fg-2);font-size:14px}
+.mini .eyebrow{font-size:11.5px;margin-bottom:6px}
+
+/* Status chips */
+.st-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.st-chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.st-chip.draft{color:var(--fg-2);background:rgba(255,255,255,.07)}
+.st-chip.hold{color:var(--amber-ink);background:rgba(245,158,11,.13)}
+.st-chip.ok{color:var(--mint-ink);background:rgba(0,201,167,.13)}
+.st-chip.ready{color:var(--denim-ink);background:rgba(37,99,235,.15)}
+.grade{font-family:var(--f-mono);font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(139,120,255,.16);color:var(--violet-ink)}
+.ledger-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:14px;color:var(--fg-2)}
+.toggle input{width:18px;height:18px;accent-color:var(--mint)}
+.counts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.empty{padding:28px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-md);color:var(--fg-2)}
+.empty b{display:block;color:var(--fg);font-size:16px;margin-bottom:6px}
+
+/* Stage tabs */
+.ltabs{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:8px 0 -1px;position:relative}
+.ltabs button{background:none;border:0;padding:12px 20px;cursor:pointer;color:var(--fg-3);display:grid;justify-items:center;gap:2px;min-width:120px;border-radius:10px 10px 0 0;transition:background .25s,color .25s}
+.ltabs button b{font-size:15px;color:var(--fg-2)}
+.ltabs button small{font-size:12px;font-family:var(--f-mono)}
+.ltabs button[aria-selected="true"]{background:rgba(255,255,255,.05);color:var(--acc)}
+.ltabs button[aria-selected="true"] b{color:var(--fg)}
+.price{font-family:var(--f-mono);font-size:clamp(22px,2.6vw,30px);font-weight:700;color:var(--fg)}
+.price small{font-size:13px;color:var(--fg-3);font-weight:500;margin-left:6px;font-family:var(--f-body)}
+
+/* Calculator */
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:24px;align-items:start}
+.calc>*{min-width:0}
+.field{display:grid;gap:6px}
+.field label{font-size:13.5px;font-weight:500}
+.field label small{color:var(--fg-3);font-weight:400;margin-left:6px}
+.field input,.field select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,.25);font-family:var(--f-mono);font-size:15px;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus{border-color:rgba(var(--acc-rgb),.7);box-shadow:0 0 0 3px rgba(var(--acc-rgb),.15);outline:none}
+.field select{font-family:var(--f-body)}
+.fields{display:grid;gap:14px}
+.fgroup{display:grid;gap:14px;padding-top:14px;border-top:1px solid var(--line-2)}
+.fgroup:first-child{border-top:0;padding-top:0}
+.fgroup h4{margin:0;font-size:13px;color:var(--acc);letter-spacing:.06em}
+.res{width:100%;border-collapse:collapse;font-size:14px}
+.res th{text-align:left;font-size:12.5px;color:var(--fg-3);padding:10px 12px;font-weight:700;background:rgba(0,0,0,.2)}
+.res td{padding:14px 12px;border-top:1px solid var(--line-2);vertical-align:top}
+.res td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:700;font-size:16px}
+.res tr.ours td{background:rgba(37,99,235,.1)}
+.res td small{display:block;color:var(--fg-3);font-size:12px;font-weight:400;font-family:var(--f-body);white-space:normal}
+.formula-box{font-family:var(--f-mono);font-size:12.5px;line-height:1.9;color:var(--fg-2);background:rgba(0,0,0,.3);border-radius:12px;padding:14px 16px;border:1px solid var(--line-2);overflow-x:auto;white-space:pre-wrap}
+details summary{cursor:pointer;color:var(--fg-2);font-size:13.5px;margin-top:14px}
+.example{display:inline-block;font-size:11px;color:var(--amber-ink);border:1px dashed rgba(251,191,36,.5);border-radius:6px;padding:1px 8px;margin-left:8px;font-weight:500;vertical-align:middle}
+.calc-err{color:var(--coral-ink);font-size:14px}
+
+/* Insight + guide */
+.article .steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.article .steps span{font-size:12px;padding:3px 9px;border-radius:6px;background:rgba(0,0,0,.22);border:1px solid var(--line-2);color:var(--fg-2)}
+.code{font-family:var(--f-mono);font-size:12.5px;line-height:1.8;background:rgba(0,0,0,.35);border-radius:12px;padding:16px 18px;border:1px solid var(--line-2);white-space:pre;overflow-x:auto;color:var(--fg-2)}
+.code b{color:var(--amber-ink)}
+.checklist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.checklist label{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:rgba(0,0,0,.16);border:1px solid var(--line-2);cursor:pointer;font-size:14px;transition:border-color .2s,background .2s}
+.checklist label:has(input:checked){border-color:rgba(0,201,167,.4);background:rgba(0,201,167,.07)}
+.checklist input{width:18px;height:18px;margin-top:3px;accent-color:var(--mint);flex-shrink:0}
+.checklist small{display:block;color:var(--fg-3);font-size:12.5px}
+
+/* Footer + floating */
+footer{padding-block:72px 40px}
+.foot{padding:clamp(22px,3vw,40px)}
+.foot h5{margin:0 0 14px;font-size:13px;letter-spacing:.12em;border-left:3px solid var(--acc);padding-left:12px}
+.foot-cols{display:grid;grid-template-columns:1.4fr 1fr 1.2fr;gap:28px;font-size:14px;color:var(--fg-2)}
+.foot-cols ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px 20px}
+.foot-cols .sel{user-select:all;color:var(--fg)}
+.foot-cols code{font-family:var(--f-mono);font-size:12.5px;word-break:break-all}
+.float{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 12px));bottom:max(18px,calc(env(safe-area-inset-bottom,0px) + 12px));display:grid;gap:12px;justify-items:end;z-index:40}
+.float>button{width:52px;height:52px;border-radius:50%;border:1px solid rgba(251,191,36,.45);background:rgba(60,56,48,.88);color:var(--amber-ink);display:grid;place-items:center;cursor:pointer;transition:transform .25s var(--ease),opacity .3s}
+.float>button:hover{transform:translateY(-3px)}
+.float>button.up{border-color:var(--line);background:rgba(80,84,94,.88);color:var(--fg)}
+.float>button.up.hide{opacity:0;pointer-events:none;transform:translateY(10px)}
+.float>button svg{width:22px;height:22px}
+.contact{max-width:280px;padding:14px 16px;border-radius:12px;border:1px solid rgba(251,191,36,.45);background:rgba(54,50,44,.97);font-size:13.5px;line-height:1.55}
+.contact b{display:block;margin-bottom:4px}
+.contact .sel{user-select:all;font-family:var(--f-mono);font-size:13px;color:#fde4b0;display:block;margin:6px 0 8px;word-break:break-all}
+.contact button{font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.06);cursor:pointer}
+
+/* Responsive */
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){
+  .burger{display:grid}
+  .gnb .wrap{gap:12px}
+  .gnb-cta{display:none}
+  .menu{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:0;right:0;bottom:0;flex-direction:column;gap:0;background:rgba(40,43,50,.98);padding:12px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));overflow-y:auto;display:none}
+  .gnb.open .menu{display:flex}
+  .menu>li>button{width:100%;padding:14px 8px;font-size:16px}
+  .drop{position:static;opacity:1;visibility:visible;transform:none;box-shadow:none;background:none;border:0;padding:0 0 8px 26px;display:block;min-width:0}
+  .gnb-tools{margin-left:auto}
+  .hero,.tabpanel,.calc{grid-template-columns:minmax(0,1fr)}
+  .g2,.g3{grid-template-columns:1fr}
+  .foot-cols{grid-template-columns:1fr}
+  .rail{flex-direction:column;min-width:0}
+  .rail .ar{flex-basis:22px;transform:rotate(90deg)}
+  .dual-head{display:none}
+  .dual-row{grid-template-columns:minmax(0,1fr)}
+  .bar-row{grid-template-columns:minmax(0,1fr) auto}
+  .bar-row .bar{grid-column:1/-1;grid-row:2}
+}
+@media (max-width:560px){
+  .g4{grid-template-columns:1fr}
+  .cta-grid{grid-template-columns:1fr}
+  .tabs button{padding:10px 12px;font-size:14px}
+  .ltabs button{min-width:0;padding:10px 12px}
+  .logo span{display:none}
+}
+
+/* =================== 움직임 (줄이기 설정이 없을 때만) =================== */
+@media (prefers-reduced-motion:no-preference){
+  /* 배경 */
+  .atmo .b1{animation:drift1 26s ease-in-out infinite alternate}
+  .atmo .b2{animation:drift2 32s ease-in-out infinite alternate}
+  .atmo .b3{animation:drift3 38s ease-in-out infinite alternate}
+  @keyframes drift1{to{transform:translate3d(18vw,12vh,0) scale(1.15)}}
+  @keyframes drift2{to{transform:translate3d(-16vw,-18vh,0) scale(.9)}}
+  @keyframes drift3{to{transform:translate3d(-12vw,-10vh,0) scale(1.2)}}
+  /* 페이지 전환 */
+  #view.view-in{animation:viewIn .5s var(--ease) backwards}
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px)}}
+  /* 히어로 등장 순서: 대상 칩 → 대형 글자 → 문장 → CTA 카드 */
+  .hero .tool-stack span{animation:chipIn .55s cubic-bezier(.2,.9,.3,1.35) backwards;animation-delay:calc(var(--i)*70ms)}
+  .hero .hero-join{animation:fadeUp .6s var(--ease) .45s backwards}
+  .hero-big .ch{animation:letterUp .85s var(--ease) backwards;animation-delay:calc(.3s + var(--i)*42ms)}
+  .hero-big .w2::after{animation:grow .9s var(--ease) backwards;animation-delay:calc(.6s + var(--n)*42ms)}
+  .hero .hero-head{animation:fadeUp .7s var(--ease) .95s backwards}
+  .hero .hero-sub{animation:fadeUp .7s var(--ease) 1.1s backwards}
+  .hero .cta-card{animation:slideIn .9s var(--ease) .55s backwards}
+  .cta-card .arcs circle{animation:spin 40s linear infinite}
+  .cta-card .arcs circle:nth-child(2n){animation-duration:26s;animation-direction:reverse}
+  .typing .caret{animation:blink 1s steps(1) infinite}
+  .pill i{animation:ping 2.4s ease-out infinite}
+  .formula .tk{animation:tkGlow 5s ease-in-out infinite;animation-delay:calc(1.6s + var(--i)*.7s)}
+  .btn.mint::after{animation:shine 5s 2.4s ease-in-out infinite}
+  .btn:hover::after{transform:translateX(130%);transition:transform .7s var(--ease)}
+  @keyframes chipIn{from{opacity:0;transform:translateY(14px) scale(.85)}}
+  @keyframes letterUp{from{opacity:0;transform:translateY(.55em) rotate(7deg);filter:blur(6px)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(40px) rotateY(-8deg)}}
+  @keyframes grow{from{transform:scaleX(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes blink{50%{opacity:0}}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(var(--acc-rgb),.6)}70%,100%{box-shadow:0 0 0 9px rgba(var(--acc-rgb),0)}}
+  @keyframes tkGlow{0%,14%{color:var(--fg);border-color:rgba(var(--acc-rgb),.7);background:rgba(var(--acc-rgb),.14)}22%,100%{}}
+  @keyframes shine{0%,70%{transform:translateX(-130%)}100%{transform:translateX(130%)}}
+
+  /* 스크롤 등장: 화면 아래에 있던 요소만 숨겼다가 보일 때 올린다 */
+  .rv{transition:opacity .75s var(--ease),transform .75s var(--ease);transition-delay:var(--d,0ms)}
+  .rv.wait:not(.go){opacity:0;transform:translateY(28px)}
+  .rv.wait:not(.go) *,.rv.wait:not(.go)::before,.rv.wait:not(.go)::after{animation-play-state:paused!important}
+  .rv.wait:not(.go) .eyebrow.acc::before{animation-play-state:paused}
+  .eyebrow.acc::before{animation:grow .7s var(--ease) .25s backwards}
+
+  /* 페르소나 */
+  .art .ring{animation:spin 28s linear infinite}
+  .art .ring.r2{animation-duration:46s;animation-direction:reverse}
+  .art svg.big{animation:bob 4.5s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-8px)}}
+  .swap .art{animation:artIn .55s var(--ease) backwards}
+  .swap .qa>div{animation:fadeUp .5s var(--ease) backwards;animation-delay:calc(var(--i)*90ms + 80ms)}
+  @keyframes artIn{from{opacity:0;transform:scale(.94)}}
+
+  /* 원인: 기존 방식은 줄이 그어지고, 제품 방식은 미끄러져 들어온다 */
+  .cmp.bad dd .x{animation:strike .7s var(--ease) backwards;animation-delay:calc(.35s + var(--i)*160ms)}
+  .cmp.good dd{animation:slideR .6s var(--ease) backwards;animation-delay:calc(.5s + var(--i)*160ms)}
+  .cmp.good dd svg{animation:pop .5s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(.75s + var(--i)*160ms)}
+  @keyframes strike{from{background-size:0% 1.5px}}
+  @keyframes slideR{from{opacity:0;transform:translateX(-18px)}}
+
+  /* 처리 흐름 */
+  .rail .ar svg{animation:dash 1s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-6}}
+  .stagger>*{animation:fadeUp .55s var(--ease) backwards;animation-delay:calc(var(--i)*90ms + 150ms)}
+  .approve{animation:ring 2.2s ease-out infinite}
+  @keyframes ring{0%{box-shadow:0 0 0 0 rgba(251,191,36,.55)}70%,100%{box-shadow:0 0 0 7px rgba(251,191,36,0)}}
+
+  /* 판정표: 표시가 차례로 튀어나오고 우리 열에 빛이 지나간다 */
+  .tbl .mk{animation:pop .5s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:var(--d,0ms)}
+  .tbl td.ours::after{animation:sweep 4.8s ease-in-out infinite;animation-delay:var(--d,0ms)}
+  @keyframes pop{from{opacity:0;transform:scale(.2)}}
+  @keyframes sweep{0%{transform:translateX(-110%)}45%,100%{transform:translateX(110%)}}
+  .rows-in tbody tr{animation:fadeUp .5s var(--ease) backwards;animation-delay:calc(var(--i)*70ms)}
+
+  /* 인사이트 단계 */
+  .article .steps span{animation:tkGlow 7s ease-in-out infinite;animation-delay:calc(var(--i)*1s)}
+  .swap-soft{animation:fadeUp .4s var(--ease) backwards}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="atmo" aria-hidden="true"><span class="b b1"></span><span class="b b2"></span><span class="b b3"></span></div>
+<div class="spot" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-box" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M7 21h10M4 7h16M6 7l-3 7a3 3 0 0 0 6 0zM18 7l-3 7a3 3 0 0 0 6 0z"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M14 4c3-1 6-1 6-1s0 3-1 6l-6 6-5-5zM8 10l-4 1 3 3M14 16l-1 4-3-3M9 15l-3 3"/></symbol>
+    <symbol id="i-bulb" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M21 3L3 10.5l7 2.5 2.5 7zM10 13l11-10"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 11l8-7 8 7v9h-5v-6h-6v6H4z"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 5.5C6.5 4 9.5 4 12 5.5 14.5 4 17.5 4 20 5.5V19c-2.5-1.5-5.5-1.5-8 0-2.5-1.5-5.5-1.5-8 0zM12 5.5V19"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M4 4h16v16H4zM4 10h16M4 15h16M10 4v16M15 4v16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M4 12.5l5 5L20 6"/></symbol>
+    <symbol id="i-checkbox" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 12l3 3 5-6"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M7 8V3h10v5M5 8h14a2 2 0 0 1 2 2v6h-4v4H7v-4H3v-6a2 2 0 0 1 2-2zM7 14h10"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/></symbol>
+    <symbol id="i-stamp" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M9 3h6v5l-1 4h4a2 2 0 0 1 2 2v3H4v-3a2 2 0 0 1 2-2h4L9 8zM4 21h16"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></symbol>
+    <symbol id="i-send2" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 4h16v12H8l-4 4z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.5c2 .8 3.5 2.7 3.5 5.5"/></symbol>
+    <symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M8 7h8M8 12h1M12 12h1M16 12h0M8 16h1M12 16h1M16 12v4"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3l10 18H2zm-1 6v6h2V9zm0 8v2h2v-2z"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6zM8.5 12l2.5 2.5 4.5-5"/></symbol>
+    <symbol id="i-headset" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 15v-3a8 8 0 0 1 16 0v3M4 14h3v5H5a1 1 0 0 1-1-1zM20 14h-3v5h2a1 1 0 0 0 1-1zM17 19c0 1.5-2 2-4 2"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 4h14M12 20V9M7 13l5-5 5 5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 22 12"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M0 6h19"/><path fill="currentColor" d="M22 6l-6-4v8z"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M16 10.5l5-3v9l-5-3z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 4v16h16M8 16v-4M12 16V8M16 16v-6M20 16V5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M9 21h6"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 9l1.5-5h13L20 9zM4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9M5 11.5V20h14v-8.5M10 20v-5h4v5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 20.5a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 4h2.5l2.2 11h10.6L21 7.5H6.4"/><circle cx="9" cy="19.5" r="1.4" fill="currentColor"/><circle cx="17.5" cy="19.5" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="15.5" cy="9.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3.5 16l5-5 4.5 4.5 2.5-2.5 5 4.5"/></symbol>
+    <symbol id="i-news" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 5h13v14H6a2 2 0 0 1-2-2zM17 9h3v8a2 2 0 0 1-2 2M7 9h7M7 12.5h7M7 16h4"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 20s-7.5-4.6-7.5-10.2A4.1 4.1 0 0 1 12 7.3a4.1 4.1 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="currentColor" d="M10 8.5v7l6-3.5z"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 15V4M7 9l5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.6" d="M3.5 12h17M12 3.5c2.4 2.5 3.6 5.3 3.6 8.5s-1.2 6-3.6 8.5c-2.4-2.5-3.6-5.3-3.6-8.5s1.2-6 3.6-8.5z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M4 5h16v11H9l-5 4zM8 9h8M8 12h5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+  </defs>
+</svg>
+
+<header class="gnb" id="gnb">
+  <div class="wrap">
+    <a class="logo" href="#home" id="logo" aria-label="템플릿 홈">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="none" stroke="#00C9A7" stroke-width="3" stroke-linejoin="round" d="M5 26V6l11 13V6M16 26l11-13v13"/></svg>
+      <b id="logo-name"></b><span>설득형 랜딩</span>
+    </a>
+    <ul class="menu" id="menu"></ul>
+    <div class="gnb-tools">
+      <a class="btn mint sm gnb-cta" href="#steps" id="gnb-cta">시작 단계</a>
+      <button class="icon-btn burger" type="button" id="burger" aria-label="메뉴 열기" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="titlebar">
+    <h1 id="tb-title"></h1>
+    <div class="crumb" id="tb-crumb"></div>
+  </div>
+  <div id="view"></div>
+
+  <footer>
+    <div class="glass foot">
+      <div class="foot-cols">
+        <div><h5>제품</h5><p style="margin:0" id="foot-name"></p><p class="note">이 페이지는 설득형 랜딩 템플릿입니다. 가격·크레딧은 기획 문서의 제안값이고, 문장은 주장 장부에서 "검증"이 된 것만 실제 랜딩에 게시합니다.</p></div>
+        <div><h5>문의</h5><p style="margin:0">메일 <span class="sel">writer@nomadaifactory.com</span></p></div>
+        <div><h5>정본 문서</h5><p style="margin:0"><code id="foot-src"></code></p><p class="note" style="margin-top:6px">규칙 products/_design-guide/LANDING_PERSUASION.md<br>© 2026 NOMAD AI Factory · 디지털노마드연구소</p></div>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<div class="float">
+  <div class="contact" id="contact" hidden>
+    <b>문의하기</b>메일로 보내 주시면 영업일 기준으로 답합니다.
+    <span class="sel" id="mail">writer@nomadaifactory.com</span>
+    <button type="button" id="copy-mail">주소 복사</button>
+  </div>
+  <button type="button" aria-label="문의 창 열기" aria-expanded="false" id="talk"><svg><use href="#i-headset"/></svg></button>
+  <button type="button" class="up hide" aria-label="맨 위로" id="up"><svg><use href="#i-up"/></svg></button>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* 제품 데이터: build.py가 아래 자리에 data/<제품>.json을 넣는다. */
+var P = {"key": "website-floria", "name": "Floria", "short": "Floria", "accent": "#b79fd0", "pill": "식물 설치 스튜디오 브랜드 사이트", "big": ["BOTANIC", "ARCHITECTURE"], "chips": ["고급 주거", "갤러리", "기업 공간", "웨딩", "맞춤 주문"], "join": "을 위한 식물 설치", "head": "진귀하고 조각적인 식물로 공간과 순간을 설계합니다.", "sub": "작업물과 진행 방식을 보고 같은 날 문의를 남길 수 있습니다. 문의를 보내면 접수번호를 바로 보여 드리고, 운영자가 상담을 켠 경우 AI 상담이 공개한 자료를 근거로 먼저 답합니다. 가격과 일정은 문의로 안내합니다.", "cta": "문의하기", "formula": "작업 보기 + 상담 + 문의 폼 = 접수번호가 있는 문의", "personas": [{"who": "A · (미확인) · 갤러리 디렉터(방문자)", "icon": "i-image", "cap": "오프닝 전에 설치 작가를 찾습니다", "sit": "전시 오프닝 2개월 전, 공간에 맞는 식물 설치 작가를 찾다가 검색과 추천으로 사이트에 들어옵니다.", "scene": "가격도 일정도 없이 이미지만 보이고, 문의 폼이 동작하지 않아 이메일 주소를 직접 찾아야 합니다.", "want": "작업물 사진과 진행 방식을 보고 같은 날 문의를 남기고 싶습니다.", "id": "SI-C-01"}, {"who": "B · (미확인) · 하이엔드 개인 고객(방문자)", "icon": "i-heart", "cap": "웨딩·기념일 맞춤 주문", "sit": "웨딩이나 기념일용 맞춤 주문을 스마트폰으로 알아봅니다.", "scene": "모바일에서 3열 그리드가 그대로 보이고 이미지가 깨집니다.", "want": "어떤 주문이 가능한지 이해하고 맞춤 주문을 문의하고 싶습니다.", "id": "SI-C-02"}, {"who": "C · (미확인) · 스튜디오 운영자(콘솔 사용자)", "icon": "i-bell", "cap": "흩어진 문의를 한곳에서", "sit": "1~3명이 메일과 SNS 메시지로 흩어진 문의를 처리합니다.", "scene": "스팸 문의가 섞이고, 연락처 같은 개인정보를 어디에 보관하는지 불분명합니다.", "want": "문의를 한곳에서 보고 상태를 표시해 답변 여부를 놓치지 않고 싶습니다.", "id": "SI-C-03"}], "cause": {"line": "이미지만으로는 문의로 이어지지 않습니다.", "lead": "작업물에 마음이 생겨도 무엇을 맡길 수 있는지, 어디로 연락하는지가 보이지 않으면 방문자는 떠납니다. 문의가 도착해도 메일과 SNS 메시지로 흩어지면 운영자는 답할 것을 놓칩니다.", "bad": ["이미지만 있는 사이트", "메일·SNS 메시지"], "good": ["문의로 이어지는 사이트", "Floria"], "rows": [["문의 경로", "이메일 주소를 직접 찾는다", "모든 버튼이 문의 폼 하나로 가고, 제출하면 접수번호 8자리를 보여 준다"], ["모바일 화면", "3열 그리드가 그대로 보이고 이미지가 깨진다", "375px에서 1열로 떨어지고 가로 스크롤이 없다"], ["운영자 확인", "메일과 SNS 메시지에 흩어진다", "콘솔 한 곳에서 상태(새 문의, 확인함, 답변함, 보관, 스팸)와 메모로 관리한다"], ["스팸", "문의 사이에 섞여 들어온다", "CAPTCHA, 숨은 필드, 작성 시간, 링크 수로 점수를 매겨 따로 격리한다"], ["궁금한 점", "답장을 기다린다", "운영자가 켠 경우 AI 상담이 공개 자료를 근거로 먼저 답하고 출처를 붙인다"]]}, "flow": [["작업 보기", "i-image", "컬렉션, 진행 방식, 아카이브를 본다", false, "모든 문의 버튼을 문의 폼 하나로 잇는다"], ["상담", "i-chat", "궁금한 점을 상담 패널에 묻는다(운영자가 켠 사이트만)", false, "공개한 지식과 게시된 안내 문서에서 근거를 찾아 답하고 출처를 붙인다. 근거가 없으면 답을 지어내지 않고 문의를 안내한다"], ["문의 작성", "i-pen", "\"이 내용으로 문의하기\"로 채워진 초안을 고치고 이름, 이메일, 동의를 넣는다", true, "상담 내용으로 문의 종류와 초안만 채운다. 자동으로 제출하지 않는다"], ["접수", "i-checkbox", "제출하고 접수번호를 확인한다", true, "CAPTCHA, 숨은 필드, 레이트 리밋을 거쳐 저장하고 스팸 점수가 높으면 따로 격리한다"], ["운영자 처리", "i-bell", "알림을 받고 콘솔에서 상태를 바꾸고 답한다", true, "1분 간격으로 새 문의를 확인해 개인정보 없이 콘솔 링크만 담은 알림 메일을 보낸다"]], "alts": [["그대로 둔다", "이메일 주소만 공개"], ["SNS 메시지", "메시지로 문의 받기"], ["외부 폼 도구", "설문·폼 서비스 링크"], ["범용 AI 채팅", "방문자가 일반 AI에 묻기"]], "table": [["보는 자리에서 바로 문의 남기기", [["t", "메일 앱을 열어 직접 써야 한다"], ["t", "그 서비스 계정이 있어야 보낼 수 있다"], ["o", "폼으로 접수된다"], ["x", "문의를 받지 않는다"]], ["o", "사이트 안 문의 폼, 제출하면 접수번호 표시"], "SI-E-01"], ["모바일에서 작업물 보기", [["n", ""], ["o", "모바일 앱이 기본이다"], ["n", ""], ["n", ""]], ["o", "375·768·1024·1440px에서 가로 스크롤 없음"], "SI-E-02"], ["문의를 한곳에서 보고 상태 표시", [["t", "받은편지함을 직접 분류한다"], ["x", "메일과 메시지가 따로 쌓인다"], ["t", "폼 도구 화면을 따로 본다. 상태 기능은 도구마다 다름(미확인)"], ["n", ""]], ["o", "콘솔 목록, 상태 변경, 내부 메모"], "SI-E-03"], ["스팸 걸러 내기", [["t", "메일함 스팸 필터에 맡긴다"], ["t", "서비스 필터에 맡긴다(미확인)"], ["t", "도구마다 다름(미확인)"], ["n", ""]], ["o", "CAPTCHA, 숨은 필드, 작성 시간, 링크 수 점수로 격리"], "SI-E-03"], ["이 스튜디오 작업에 대한 질문", [["t", "답장을 기다린다"], ["t", "답장을 기다린다"], ["x", "질문에 답하지 않는다"], ["t", "이 스튜디오가 공개한 자료를 근거로 하지 않는다"]], ["t", "운영자가 켠 사이트에서만(기본 꺼짐), 공개 자료 범위 안에서 답하고 견적·일정은 확정하지 않음"], "SI-E-04"], ["가격·일정 바로 알기", [["t", "답장으로 받는다"], ["t", "답장으로 받는다"], ["t", "답장으로 받는다"], ["x", "이 스튜디오의 가격을 알 수 없다"]], ["x", "가격은 문의로 안내하고 일정은 상담 후 안내"], ""]], "nonfit": [["온라인으로 바로 주문하고 결제하고 싶다", "지금은 문의로만 받습니다. 온라인 판매는 열려 있지 않습니다"], ["가격과 일정을 먼저 확정받아야 한다", "문의를 남겨 주세요. AI 상담의 답은 견적이나 일정 확정이 아닙니다"], ["식물 독성·알레르기나 구조 안전(하중, 방수)을 판단받아야 한다", "해당 분야 전문가에게 확인하세요"], ["영문으로 안내와 상담을 받아야 한다", "영문 버전은 아직 없습니다. 문의 폼으로 남겨 주세요"]], "evidence": [["SI-E-01", "E3", "문의 제출 → 접수번호 → 콘솔 목록 표시 화면 기록", "편집 없는 녹화, \"테스트 문의\" 표시, 실제 개인정보 없는 값"], ["SI-E-02", "E3", "4개 화면 폭(375·768·1024·1440px) 캡처", "CI가 실제 렌더에서 찍은 화면만, 상담 패널 연 상태 포함"], ["SI-E-03", "E3", "콘솔 상태 변경과 스팸 격리 화면 기록", "테스트 제출로 만든 데이터, 숨은 필드 채움·3초 미만 제출 포함"], ["SI-E-04", "E1", "사이트에서 상담 위젯에 직접 물어보기", "운영자가 상담을 켠 사이트만, 실제 그래프 응답, 출처 칩과 근거 없음 응답 그대로"], ["SI-E-05", "E4", "5명 과업 시간 측정 기록", "인원·과업·기간·버전 표기"]], "ledger": [["SI-C-01", "가격도 일정도 없이 이미지만 보이고, 문의 폼이 동작하지 않아 이메일 주소를 직접 찾아야 합니다.", "문제 묘사", "V0 인터뷰", "draft"], ["SI-C-02", "모바일에서 3열 그리드가 그대로 보이고 이미지가 깨집니다.", "문제 묘사", "V0 인터뷰", "draft"], ["SI-C-03", "스팸 문의가 섞이고, 연락처 같은 개인정보를 어디에 보관하는지 불분명합니다.", "문제 묘사", "V0 인터뷰", "draft"], ["SI-C-04", "문의를 보내면 접수번호를 바로 보여 드립니다", "기능 사실", "SI-E-01", "hold"], ["SI-C-05", "AI 상담은 공개한 자료를 근거로 답하고 출처를 함께 보여 드립니다. 견적과 일정은 확정이 아닙니다", "기능 사실", "SI-E-04", "hold"], ["SI-C-06", "상담 내용으로 문의 초안을 채워 드리고, 제출은 방문자가 직접 합니다", "기능 사실", "SI-E-04, SI-E-01", "hold"], ["SI-C-07", "사이트에 들어와 문의를 남기기까지 걸린 시간 중앙값 ○분(5명, 같은 과업, 기간, 버전)", "측정치", "SI-E-05", "draft"]], "stages": [{"label": "방문자", "price": "0원", "per": "로그인 없음 · 크레딧 없음", "steps": [["작업을 보고 문의를 남긴다", "결제 단계 없이 접수번호를 보여 준다"], ["AI 상담에 묻는다(켜진 사이트만)", "방문자 부담 없음. 메시지 300자, 대화당 10턴까지"], ["소식 메일을 신청한다", "확인 메일의 링크를 누른 뒤에만 발송 대상이 된다"]]}, {"label": "운영자", "price": "0원", "per": "default 플랜 · 초대제 · AI 비용은 운영자 조직 예산", "steps": [["초대 메일로 콘솔에 들어온다", "가입 폼 없이 초대받은 사람만 로그인한다"], ["AI 상담을 켜고 국외 이전 동의 여부를 고른다", "동의 전에는 국내 오픈소스 모델만 쓰고, 최근 30일 사용량을 콘솔에 보여 준다"], ["사이트 하루 상담 상한에 닿으면", "상담을 닫고 문의 폼을 안내한다"]]}], "calc": {"title": "한 달 문의 처리 시간 비교(운영자)", "groups": [["지금 문의량", [["n", "한 달 문의 수", "건", 30], ["spam", "한 달 스팸 문의 수", "건", 10], ["rate", "내 시간 가치", "원/시간", 20000]]], ["메일·SNS로 받을 때", [["mnow", "문의 1건 확인·정리 시간", "분", 10], ["snow", "스팸 1건 가려내는 시간", "분", 2]]], ["외부 폼 도구를 쓸 때", [["fee", "폼 도구 월 요금", "원", 0], ["mform", "문의 1건 처리 시간", "분", 8], ["sform", "스팸 1건 가려내는 시간", "분", 2]]], ["Floria로 할 때", [["mfl", "문의 1건 처리 시간", "분", 6], ["sfl", "격리된 스팸 1건 확인 시간", "분", 0]]]], "derived": [["hnow", "(n*mnow+spam*snow)/60"], ["hform", "(n*mform+spam*sform)/60"], ["hfl", "(n*mfl+spam*sfl)/60"]], "rows": [["메일·SNS", "hnow*rate", "fmt1(hnow)+'시간'", "'(문의 수 × 처리 시간 + 스팸 수 × 가려내는 시간) × 시간 가치'"], ["외부 폼 도구", "fee+hform*rate", "fmt1(hform)+'시간'", "'폼 도구 월 요금 '+won(fee)+' + 처리 시간 × 시간 가치'"], ["Floria", "0+hfl*rate", "fmt1(hfl)+'시간'", "'default 플랜 0원 + 처리 시간 × 시간 가치. AI 상담 원가는 운영자 조직 예산'"]], "formula": "메일·SNS = (문의 수 × 1건 시간 + 스팸 수 × 1건 시간) ÷ 60 × 시간 가치\n외부 폼 도구 = 월 요금 + (문의 수 × 1건 시간 + 스팸 수 × 1건 시간) ÷ 60 × 시간 가치\nFloria = 0원(default 플랜) + (문의 수 × 1건 시간 + 격리 스팸 수 × 확인 시간) ÷ 60 × 시간 가치", "note": "AI 상담 비용은 원가 지표로만 기록되고 원화 환산은 미확인이라 넣지 않았습니다. Floria 처리 시간은 측정 전이라 입력한 값만 씁니다."}, "insight": [], "source": "products/website-floria/01_PRD.md 1장·4장·6장, 03_SCREENS_UX.md 2절·4절, 02_ARCHITECTURE.md 5.2절·5.3절, 06_AGENT_PLAN.md 2절"};
+
+var view = document.getElementById('view');
+if(!P){ view.innerHTML='<div class="empty" style="margin-top:40px"><b>제품 데이터가 없습니다.</b>build.py로 data/&lt;제품&gt;.json을 넣어 dist/&lt;제품&gt;.html을 만드세요.</div>'; return; }
+
+var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+var finePointer = !!(window.matchMedia && window.matchMedia('(pointer: fine)').matches);
+
+/* ---------- 강조색 ---------- */
+(function(){ var m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(P.accent||'');
+  if(m){ var root=document.documentElement.style; root.setProperty('--acc','#'+m[1]+m[2]+m[3]); root.setProperty('--acc-rgb',parseInt(m[1],16)+','+parseInt(m[2],16)+','+parseInt(m[3],16)); } })();
+
+var PAGES = [
+  {id:'home',group:'story',title:'설득형 메인',desc:'문제 → 원인 → 방식 → 비교 → 행동'},
+  {id:'why',group:'proof',title:'왜 이 플랫폼인가',desc:'대안 판정표 · 맞지 않는 경우 · 증거'},
+  {id:'ledger',group:'proof',title:'주장 장부',desc:'검증된 문장만 게시'},
+  {id:'steps',group:'adopt',title:'도입 단계',desc:'요금 단계별 할 일'},
+  {id:'calc',group:'adopt',title:'비교 계산기',desc:'내 숫자로 비교'},
+  {id:'insight',group:'insight',title:'인사이트 시리즈',desc:'논증형 글 구성'},
+  {id:'guide',group:'template',title:'템플릿 사용법',desc:'데이터 · 섹션 지도 · 움직임 · 점검'}
+].filter(function(p){ return p.id!=='insight' || (P.insight && P.insight.length); });
+var GROUPS = [
+  {key:'story',label:'Story',icon:'i-box'},
+  {key:'proof',label:'Proof',icon:'i-scale'},
+  {key:'adopt',label:'Adoption',icon:'i-rocket'},
+  {key:'insight',label:'Insight',icon:'i-bulb'},
+  {key:'template',label:'Template',icon:'i-layers'}
+].filter(function(g){ return PAGES.some(function(p){return p.group===g.key;}); });
+var STATUS = {draft:['초안','draft'],hold:['보류','hold'],ok:['검증','ok']};
+var MARK = {o:'○',t:'△',x:'✕',n:'—'};
+var MARKNAME = {o:'된다',t:'일부·조건부',x:'안 된다',n:'해당 없음'};
+
+var state = {page:'home', persona:0, stage:0, onlyOk:false, v:null, touched:false, flowPaused:false};
+var S = P.short;
+
+/* ---------- 작은 도구 ---------- */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function won(n){ return Math.round(n).toLocaleString('ko-KR')+'원'; }
+function fmt1(n){ return (Math.round(n*10)/10).toLocaleString('ko-KR'); }
+function batchim(w){ w=String(w).trim(); var c=w.charCodeAt(w.length-1);
+  if(c>=0xAC00 && c<=0xD7A3) return (c-0xAC00)%28!==0;
+  var ch=w.slice(-1).toLowerCase(); if(/[0-9]/.test(ch)) return '013678'.indexOf(ch)>=0;
+  return 'lmnb'.indexOf(ch)>=0 || /ng$/i.test(w); }
+function j(w,a,b){ return esc(w)+(batchim(w)?a:b); }
+function mark(m,txt,d){ return '<span class="mk '+m+'" aria-label="'+MARKNAME[m]+'"'+(d!=null?' style="--d:'+d+'ms"':'')+'>'+MARK[m]+'</span>'+(txt?esc(txt):''); }
+function chip(st){ var s=STATUS[st]||STATUS.draft; return '<span class="st-chip '+s[1]+'">'+s[0]+'</span>'; }
+function secHead(eb,title,lead,left){ return '<div class="sec-head rv'+(left?' left':'')+'">'+(eb?'<p class="eyebrow acc">'+eb+'</p>':'')+'<h2 class="hl">'+title+'</h2>'+(lead?'<p class="lead">'+lead+'</p>':'')+'</div>'; }
+function ico(id){ return '<svg aria-hidden="true"><use href="#'+id+'"/></svg>'; }
+function pageHref(id){ return '#'+id; }
+function replay(el,cls){ if(!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+function ledgerStatus(id){ var r=P.ledger.filter(function(x){return x[0]===id;})[0]; return r?r[4]:'draft'; }
+function legend(){ return '<div class="legend">'+['o','t','x','n'].map(function(m){return '<span>'+mark(m)+MARKNAME[m]+'</span>';}).join('')+'</div>'; }
+function altLabel(a){ return Array.isArray(a)? a : [a,'']; }
+
+/* ---------- 계산기 엔진: JSON 식을 함수로 ---------- */
+function packCost(n,packs){ n=Math.min(Math.ceil(n),200000); if(!(n>0)) return 0;
+  var dp=new Array(n+1); dp[0]=0;
+  for(var i=1;i<=n;i++){ var best=Infinity; for(var k=0;k<packs.length;k++){ var c=dp[Math.max(0,i-packs[k][0])]+packs[k][1]; if(c<best) best=c; } dp[i]=best; }
+  return dp[n]; }
+var HELP={max:Math.max,min:Math.min,ceil:Math.ceil,floor:Math.floor,round:Math.round,won:won,fmt1:fmt1,pack:packCost,parseInt:parseInt};
+var C=P.calc, IN=[], DEF={};
+C.groups.forEach(function(g){ g[1].forEach(function(f){ IN.push(f[0]); DEF[f[0]]=Array.isArray(f[3])?f[3][0]:f[3]; }); });
+var DK=(C.derived||[]).map(function(d){return d[0];});
+var NAMES=Object.keys(HELP).concat(IN,DK);
+function fn(expr){ return Function.apply(null, NAMES.concat(['"use strict";return ('+expr+');'])); }
+/* build.py가 식을 미리 함수로 바꿔 넣는다(CF). 없으면 브라우저에서 바꾼다. */
+var CF = {names:["max", "min", "ceil", "floor", "round", "won", "fmt1", "pack", "parseInt", "n", "spam", "rate", "mnow", "snow", "fee", "mform", "sform", "mfl", "sfl", "hnow", "hform", "hfl"],d:[function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return ((n*mnow+spam*snow)/60);},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return ((n*mform+spam*sform)/60);},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return ((n*mfl+spam*sfl)/60);}],r:[[function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return (hnow*rate);},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return (fmt1(hnow)+'시간');},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return ('(문의 수 × 처리 시간 + 스팸 수 × 가려내는 시간) × 시간 가치');}],[function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return (fee+hform*rate);},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return (fmt1(hform)+'시간');},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return ('폼 도구 월 요금 '+won(fee)+' + 처리 시간 × 시간 가치');}],[function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return (0+hfl*rate);},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return (fmt1(hfl)+'시간');},function(max,min,ceil,floor,round,won,fmt1,pack,parseInt,n,spam,rate,mnow,snow,fee,mform,sform,mfl,sfl,hnow,hform,hfl){"use strict";return ('default 플랜 0원 + 처리 시간 × 시간 가치. AI 상담 원가는 운영자 조직 예산');}]]};
+var CERR=null, DFN=[], RFN=[];
+try{
+  if(CF && CF.names.join(',')===NAMES.join(',')){ DFN=CF.d; RFN=CF.r; }
+  else { DFN=(C.derived||[]).map(function(d){return fn(d[1]);}); RFN=C.rows.map(function(r){return [fn(r[1]),fn(r[2]),fn(r[3])];}); }
+}catch(e){ CERR=e; }
+function runCalc(v){
+  var sc={}; Object.keys(HELP).forEach(function(k){sc[k]=HELP[k];}); IN.forEach(function(k){sc[k]=v[k];});
+  function args(){ return NAMES.map(function(n){return sc[n];}); }
+  DFN.forEach(function(f,i){ sc[DK[i]]=f.apply(null,args()); });
+  var a=args();
+  return RFN.map(function(r,i){ var c=+r[0].apply(null,a); return {name:C.rows[i][0], cost:isFinite(c)?c:0, time:String(r[1].apply(null,a)), note:String(r[2].apply(null,a))}; });
+}
+function calcVals(){ return state.v || DEF; }
+
+/* ---------- 숫자 올라가기 ---------- */
+function countTo(el,from,to,fmt,dur){
+  if(!el) return; fmt=fmt||won;
+  if(reduce || from===to){ el.textContent=fmt(to); el.setAttribute('data-val',to); return; }
+  var t0=null; dur=dur||700; el.setAttribute('data-val',to);
+  function step(t){ if(t0===null) t0=t; var p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent=fmt(from+(to-from)*e); if(p<1 && el.getAttribute('data-val')==String(to)) requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+}
+
+/* ---------- 공용 조각 ---------- */
+function rail(flow,cycle){
+  return '<div class="scroll-x"><div class="rail"'+(cycle?' data-cycle':'')+' style="--n:'+flow.length+'">'+flow.map(function(f,i){
+    return (i?'<div class="ar" data-i="'+i+'">'+ico('i-arrow')+'</div>':'')+'<div class="st'+(i===flow.length-1?' out':'')+'" data-i="'+i+'">'+ico(f[1])+'<b>'+esc(f[0])+'</b></div>';
+  }).join('')+'</div></div>';
+}
+function dual(rows,labelU,labelS,numbered){
+  var out='<div class="dual"><div class="dual-head"><span>단계</span><span>'+labelU+'</span><span>'+labelS+'</span></div><div class="dual stagger" style="margin-top:0">';
+  rows.forEach(function(r,i){
+    out+='<div class="dual-row" data-i="'+i+'" style="--i:'+i+'"><div class="stg">'+(numbered?'<span class="n">'+(i+1)+'</span>':'')+esc(r.stage)+'</div>'+
+      '<div class="u"><small>'+labelU+'</small>'+esc(r.u)+(r.approve?'<span class="approve">승인</span>':'')+'</div>'+
+      '<div class="s"><small>'+labelS+'</small>'+esc(r.s)+'</div></div>';
+  });
+  return out+'</div></div>';
+}
+function verdictTable(limit){
+  var rows=P.table.slice(0,limit||P.table.length);
+  var head='<tr><th scope="col">판정 기준</th>'+P.alts.map(function(a){a=altLabel(a); return '<th scope="col">'+esc(a[0])+(a[1]?'<small>'+esc(a[1])+'</small>':'')+'</th>';}).join('')+'<th scope="col" class="ours">'+esc(S)+'</th><th scope="col">우리 열 증거</th></tr>';
+  var body=rows.map(function(r,ri){
+    return '<tr><th scope="row">'+esc(r[0])+'</th>'+r[1].map(function(c,ci){return '<td>'+mark(c[0],c[1],200+ri*110+ci*45)+'</td>';}).join('')+
+      '<td class="ours" style="--d:'+(ri*380)+'ms">'+mark(r[2][0],r[2][1],200+ri*110+4*45+60)+'</td><td>'+(r[3]?'<span class="ev">'+esc(r[3])+'</span>':'')+'</td></tr>';
+  }).join('');
+  return '<div class="scroll-x"><table class="tbl"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>';
+}
+function honesty(){
+  var weak=P.table.filter(function(r){return r[2][0]==='t'||r[2][0]==='x';}).length;
+  var proofless=P.table.filter(function(r){return r[2][0]==='o' && !r[3];}).length;
+  var proved=P.table.filter(function(r){return r[2][0]==='o' && r[3];}).length;
+  var ok = weak>0 && proofless===0;
+  var pct=Math.round(weak/P.table.length*100);
+  return '<div class="callout rv'+(ok?' m':'')+'">'+ico(ok?'i-check':'i-warn')+'<div><b>정직성 점검 '+(ok?'통과':'다시 보기')+'</b><p>우리 열 △·✕ '+weak+'개, 증거가 붙은 ○ '+proved+'개, 증거가 빠진 ○ '+proofless+'개. 우리 열이 전부 ○이거나 증거 없는 ○가 있으면 표를 다시 씁니다.</p>'+
+    '<div class="meter" role="img" aria-label="우리 열에서 약점을 인정한 칸 '+pct+'%"><i data-w="'+pct+'"></i></div><p class="note" style="margin-top:6px">우리 열에서 약점을 인정한 칸 '+pct+'%</p></div></div>';
+}
+function barsHTML(rows,idp){
+  var max=Math.max.apply(null,rows.map(function(r){return r.cost;}))||1;
+  return '<div class="bars">'+rows.map(function(r,i){
+    var ours=i===rows.length-1;
+    return '<div class="bar-row'+(ours?' ours':'')+'"><b>'+esc(r.name)+'</b><div class="bar"><i data-w="'+Math.max(1.5,r.cost/max*100).toFixed(1)+'" id="'+idp+'b'+i+'"></i></div><span class="v" id="'+idp+'v'+i+'" data-count="'+r.cost+'">'+(reduce?won(r.cost):'0원')+'</span></div>';
+  }).join('')+'</div>';
+}
+function headlineHTML(rows,idp){
+  if(rows.length<2) return '';
+  var ours=rows[rows.length-1], others=rows.slice(0,-1), cheap=others.reduce(function(a,b){return b.cost<a.cost?b:a;});
+  var diff=cheap.cost-ours.cost;
+  return '<p class="headline" id="'+idp+'hl">'+(others.length>1?'다른 방법 중 가장 싼 ':'')+'‘'+esc(cheap.name)+'’보다 <span class="num" id="'+idp+'diff" data-count="'+Math.abs(diff)+'">'+(reduce?won(Math.abs(diff)):'0원')+'</span> '+(diff>0?'적게 듭니다.':diff<0?'더 듭니다.':'차이가 납니다. 비용은 같습니다.')+'</p>';
+}
+
+/* ---------- 페이지 ---------- */
+function personaInner(p){
+  return '<div class="art lift"><span class="ring"></span><span class="ring r2"></span><span class="who">'+esc(p.who)+'</span><svg class="big" aria-hidden="true"><use href="#'+p.icon+'"/></svg><div class="cap">'+esc(p.cap)+'</div></div>'+
+    '<div class="qa">'+
+      '<div style="--i:0"><div class="k">상황</div><p>'+esc(p.sit)+'</p></div>'+
+      '<div style="--i:1"><div class="k">막히는 장면 <span class="ev">'+esc(p.id)+'</span> '+chip(ledgerStatus(p.id))+'</div><h4>'+esc(p.scene)+'</h4></div>'+
+      '<div style="--i:2"><div class="k">원하는 것</div><p>'+esc(p.want)+'</p></div>'+
+    '</div>';
+}
+function bigTitle(){
+  var w=P.big, n=0, len=Math.max(w[0].length,(w[1]||'').length);
+  function word(s,cls){ return '<span class="w '+cls+'">'+String(s).split('').map(function(c){ return '<span class="ch" style="--i:'+(n++)+'">'+esc(c)+'</span>'; }).join('')+'</span>'; }
+  var a=word(w[0],'w1'), b=w[1]?word(w[1],'w2'):'';
+  return '<p class="hero-big'+(len>=11?' len-l':len>=8?' len-m':'')+'" style="--n:'+n+'"><span class="sr">'+esc(w.join(' '))+'</span><span aria-hidden="true">'+a+b+'</span></p>';
+}
+function formulaHTML(){
+  var parts=String(P.formula).split(/(\s[+=]\s)/), k=0;
+  return '<div class="formula" aria-label="'+esc(P.formula)+'">'+parts.map(function(t){ if(/^\s[+=]\s$/.test(t)) return '<span class="op" aria-hidden="true">'+t.trim()+'</span>'; return t?'<span class="tk" aria-hidden="true" style="--i:'+(k++)+'">'+esc(t)+'</span>':''; }).join('')+'</div>';
+}
+
+function pageHome(){
+  var p=P.personas[state.persona];
+  var flowRows=P.flow.map(function(f){return {stage:f[0],u:f[2],approve:f[3],s:f[4]};});
+  var ex=CERR?null:runCalc(DEF);
+  return ''+
+  '<div class="hero">'+
+    '<div>'+
+      '<div class="hero-mark"><div class="tool-stack" id="chips" aria-label="다루는 대상">'+P.chips.map(function(c,i){return '<span style="--i:'+i+'">'+esc(c)+'</span>';}).join('')+'</div><div class="hero-join">'+esc(P.join)+'</div></div>'+
+      bigTitle()+
+      '<p class="hero-head">'+esc(P.head)+'</p>'+
+      '<p class="hero-sub">'+esc(P.sub)+'</p>'+
+    '</div>'+
+    '<aside class="glass cta-card" id="cta-card">'+
+      '<svg class="arcs" viewBox="0 0 200 140" aria-hidden="true"><circle cx="150" cy="10" r="30"/><circle cx="150" cy="10" r="48"/><circle cx="150" cy="10" r="66"/><circle cx="150" cy="10" r="84"/><circle cx="150" cy="10" r="102"/></svg>'+
+      '<span class="pill"><i></i>'+esc(P.pill)+'</span>'+
+      '<div class="typing"><span id="typed">'+esc(P.cta)+'</span><span class="caret" aria-hidden="true"></span></div>'+
+      formulaHTML()+
+      '<div class="cta-grid">'+
+        '<a class="btn" href="#why">'+ico('i-scale')+'왜 '+esc(S)+'인가</a>'+
+        '<a class="btn" href="#calc">'+ico('i-calc')+'비교 계산기</a>'+
+        '<a class="btn mint full" href="#steps">'+esc(P.cta)+'</a>'+
+      '</div>'+
+    '</aside>'+
+  '</div>'+
+
+  '<section class="sec">'+secHead('막히는 지점','같은 일, 사람마다 다른 곳에서 막힙니다.','기획 문서의 페르소나에서 가져온 장면입니다. 실제 랜딩에는 V0 인터뷰에서 같은 불편이 나온 장면만 남깁니다.')+
+    '<div class="glass pad rv">'+
+      '<div class="tabs" role="tablist" aria-label="페르소나 선택" id="ptabs">'+P.personas.map(function(x,i){return '<button role="tab" type="button" id="pt-'+i+'" aria-selected="'+(i===state.persona)+'" aria-controls="pp" tabindex="'+(i===state.persona?0:-1)+'" data-persona="'+i+'">'+esc(x.who.split(' · ')[0])+'</button>';}).join('')+'<span class="ink" aria-hidden="true"></span></div>'+
+      '<div class="panel pad"><div class="tabpanel" role="tabpanel" id="pp" aria-labelledby="pt-'+state.persona+'">'+personaInner(p)+'</div></div>'+
+    '</div>'+
+  '</section>'+
+
+  '<section class="sec">'+secHead('원인 하나',esc(P.cause.line),esc(P.cause.lead))+
+    '<div class="grid g2">'+
+      '<div class="cmp bad lift rv"><h3>'+mark('x')+esc(P.cause.bad[0])+'</h3><div class="sub">'+esc(P.cause.bad[1])+'</div><dl>'+P.cause.rows.map(function(r,i){return '<dt>'+esc(r[0])+'</dt><dd><span class="x" style="--i:'+i+'">'+esc(r[1])+'</span></dd>';}).join('')+'</dl></div>'+
+      '<div class="cmp good lift rv" style="--d:120ms"><h3>'+mark('o')+esc(P.cause.good[0])+'</h3><div class="sub">'+esc(P.cause.good[1])+'</div><dl>'+P.cause.rows.map(function(r,i){return '<dt>'+esc(r[0])+'</dt><dd style="--i:'+i+'"><svg aria-hidden="true" style="--i:'+i+'"><use href="#i-check"/></svg><span>'+esc(r[2])+'</span></dd>';}).join('')+'</dl></div>'+
+    '</div>'+
+  '</section>'+
+
+  '<section class="sec">'+secHead('만드는 순서','사람이 정하고, '+j(S,'이','가')+' 처리합니다.','실제 처리 순서입니다. 승인이 필요한 단계는 사람 쪽에 표시했습니다.')+
+    '<div class="glass pad rv"><div class="widget-h"><div class="t"><b>'+esc(S)+'</b> 처리 흐름</div>'+(reduce?'':'<button type="button" class="btn sm" id="flow-toggle" aria-pressed="false">'+ico('i-pause')+'<span>흐름 멈춤</span></button>')+'</div>'+rail(P.flow,true)+dual(flowRows,'사용자가 하는 일',j(S,'이','가')+' 하는 일',true)+'</div>'+
+  '</section>'+
+
+  '<section class="sec">'+secHead('왜 이 플랫폼인가','다른 방법이 아니라 왜 '+j(S,'이어야','여야')+' 할까요?','앞의 세 기준만 먼저 보여 줍니다. 전체 판정표와 맞지 않는 경우는 다음 페이지에 있습니다.')+
+    '<div class="glass pad rv">'+legend()+verdictTable(3)+'<p style="text-align:center;margin:22px 0 0"><a class="btn" href="#why">'+ico('i-scale')+'판정표 전체와 증거 보기</a></p></div>'+
+  '</section>'+
+
+  (ex?'<section class="sec">'+secHead('비용·시간 비교',esc(C.title),'처음 보이는 값은 예시입니다. 내 숫자를 넣으면 계산기에서 다시 계산합니다.')+
+    '<div class="glass pad rv"><div class="widget-h"><div class="t"><b>예시로 계산하면</b><span class="example">예시 값</span></div><a class="btn sm" href="#calc">'+ico('i-calc')+'내 숫자로 계산</a></div>'+headlineHTML(ex,'h-')+barsHTML(ex,'h-')+'<p class="note">입력한 가정으로 계산한 추정치이며 실제 결과와 다를 수 있습니다.</p></div>'+
+  '</section>':'')+
+
+  '<section class="sec">'+secHead('행동','지금 할 수 있는 한 가지',null)+
+    '<div class="callout m rv">'+ico('i-check')+'<div><b>'+esc(P.cta)+'</b><p>'+esc(P.stages[0].label)+' '+esc(P.stages[0].price)+' · '+esc(P.stages[0].per)+'. 다음 단계와 가격은 도입 단계 페이지에 있습니다.</p></div></div>'+
+    '<p style="text-align:center;margin-top:24px" class="rv"><a class="btn mint" href="#steps">도입 단계 보기</a></p>'+
+  '</section>';
+}
+
+function pageWhy(){
+  return '<section class="sec" style="padding-top:24px">'+secHead('Proof · 판정표','다른 방법과 나란히 놓고 봅니다.','대안은 범주 이름만 씁니다. 대안의 약점은 직접 해 보면 확인되는 사실만 적고, 우리 열의 ○에는 증거를 연결합니다.',true)+
+    '<div class="glass pad rv">'+legend()+verdictTable()+'</div>'+
+    '<div style="margin-top:20px">'+honesty()+'</div>'+
+  '</section>'+
+  '<section class="sec">'+secHead('맞지 않는 경우','이런 경우엔 다른 방법이 낫습니다.','미리 걸러 주면 신뢰가 쌓이고 환불이 줄어듭니다.',true)+
+    '<div class="grid g2">'+P.nonfit.map(function(n,i){return '<div class="mini lift rv" style="--d:'+(i%2*110)+'ms"><p class="eyebrow">이런 경우</p><h4>'+esc(n[0])+'</h4><p>'+esc(n[1])+'</p></div>';}).join('')+'</div>'+
+  '</section>'+
+  '<section class="sec">'+secHead('증거','방문자가 직접 확인할 수 있는 것부터',null,true)+
+    '<div class="glass pad rv rows-in"><div class="scroll-x"><table class="tbl" style="min-width:640px"><thead><tr><th scope="col">ID</th><th scope="col">등급</th><th scope="col">증거</th><th scope="col">조건</th><th scope="col">상태</th></tr></thead><tbody>'+
+    P.evidence.map(function(e,i){return '<tr style="--i:'+i+'"><td><span class="ev">'+esc(e[0])+'</span></td><td><span class="grade">'+esc(e[1])+'</span></td><td style="color:var(--fg)">'+esc(e[2])+'</td><td>'+esc(e[3])+'</td><td><span class="st-chip ready">준비 중</span></td></tr>';}).join('')+
+    '</tbody></table></div><p class="note">등급: E1 가입 없이 직접 해 보기 · E2 실제 결과 파일 · E3 실제 화면 기록 · E4 측정 기록 · E5 동의받은 고객 사례. 출처 없는 업계 통계는 증거로 쓰지 않습니다.</p></div>'+
+  '</section>';
+}
+
+function ledgerTable(){
+  var rows=P.ledger.filter(function(r){return !state.onlyOk || r[4]==='ok';});
+  if(!rows.length) return '<div class="empty swap-soft"><b>아직 게시할 수 있는 문장이 없습니다.</b>문제 묘사는 V0 인터뷰, 기능 사실은 기능 출시와 증거 게시, 측정치는 V1 측정을 거쳐 "검증"으로 바뀝니다.</div>';
+  return '<div class="scroll-x rows-in"><table class="tbl" style="min-width:720px"><thead><tr><th scope="col">ID</th><th scope="col">주장(화면에 나갈 문장)</th><th scope="col">유형</th><th scope="col">증거</th><th scope="col">상태</th></tr></thead><tbody>'+
+    rows.map(function(r,i){return '<tr style="--i:'+i+'"><td><span class="ev">'+esc(r[0])+'</span></td><td style="color:var(--fg)">'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+chip(r[4])+'</td></tr>';}).join('')+'</tbody></table></div>';
+}
+function pageLedger(){
+  var cnt={draft:0,hold:0,ok:0}; P.ledger.forEach(function(r){cnt[r[4]]=(cnt[r[4]]||0)+1;});
+  return '<section class="sec" style="padding-top:24px">'+secHead('Proof · 주장 장부','랜딩 문장은 모두 여기서 출발합니다.','상태가 "검증"인 문장만 게시합니다. 실제 개발에서는 문구 상수와 이 장부가 다르면 CI가 실패합니다.',true)+
+    '<div class="glass pad rv"><div class="ledger-bar"><div class="counts">'+chip('draft')+'<span class="mono" data-count="'+cnt.draft+'">'+cnt.draft+'</span>'+chip('hold')+'<span class="mono">'+cnt.hold+'</span>'+chip('ok')+'<span class="mono">'+cnt.ok+'</span></div>'+
+    '<label class="toggle" for="only-ok"><input type="checkbox" id="only-ok"'+(state.onlyOk?' checked':'')+'>게시 가능한 문장만 보기</label></div><div id="ledger-box">'+ledgerTable()+'</div></div>'+
+  '</section>'+
+  '<section class="sec">'+secHead('필요성 검증 단계','개발보다 검증을 먼저 합니다.','앞 단계 결과로 다음 단계 진입을 정합니다. 기준값은 제안입니다.',true)+
+    '<div class="glass pad rv">'+rail([['V0 인터뷰','i-users'],['V0 랜딩 교대 실험','i-scale'],['V1 과업 측정','i-calc'],['V2 실측','i-grid'],['V3 사례','i-check']],true)+
+    '<div class="grid g4 stagger" style="margin-top:20px">'+
+      [['V0 · 개발 전 · 0원','페르소나 5명에게 지금 어떻게 하는지, 어디서 가장 막히는지 묻습니다. 5명 중 3명 이상이 같은 불편을 먼저 꺼내면 통과입니다.'],
+       ['V0 · 대기자 랜딩','"왜 이 플랫폼인가" 칸이 있는 판과 없는 판을 2주씩 번갈아 겁니다. 있는 판의 등록률이 낮지 않으면 통과입니다.'],
+       ['V1 · MVP 직후','5명이 같은 과업을 자기 방법과 제품으로 각각 합니다. 시간과 막힌 곳을 기록하고 중앙값만 장부에 올립니다.'],
+       ['V2 · V3','공개 베타의 실측으로 문구를 바꾸고, 유료 고객 이후 동의받은 사례 2건으로 사례 칸을 채웁니다.']].map(function(v,i){return '<div class="mini lift" style="--i:'+i+'"><p class="eyebrow">'+v[0]+'</p><p>'+v[1]+'</p></div>';}).join('')+
+    '</div><p class="note">V0에서 같은 불편이 나오지 않으면 랜딩 문구가 아니라 제품 범위를 다시 봅니다.</p></div>'+
+  '</section>';
+}
+
+function priceParts(s){ var m=/^([\d,]+)(.*)$/.exec(String(s)); return m?{n:+m[1].replace(/,/g,''),rest:m[2]}:null; }
+function stageRows(s){ return dual(s.steps.map(function(x,i){return {stage:(i+1)+'',u:x[0],s:x[1]};}),'사용자가 하는 일',j(S,'이','가')+' 해 주는 일',false); }
+function pageSteps(){
+  var s=P.stages[state.stage]||P.stages[0];
+  return '<section class="sec" style="padding-top:24px">'+secHead('Adoption · 도입 단계','어디서 시작해 어떻게 늘려 가는지',esc(P.name)+'의 요금 구조를 단계로 나눴습니다. 가격은 기획 문서의 제안값입니다.')+
+    '<div class="ltabs rv" role="tablist" aria-label="도입 단계" id="stabs">'+P.stages.map(function(x,i){return '<button role="tab" type="button" id="stt-'+i+'" aria-selected="'+(i===state.stage)+'" aria-controls="sp" tabindex="'+(i===state.stage?0:-1)+'" data-stage="'+i+'"><b>'+esc(x.label)+'</b><small>'+esc(x.price)+'</small></button>';}).join('')+'<span class="ink" aria-hidden="true"></span></div>'+
+    '<div class="glass pad rv" role="tabpanel" id="sp" aria-labelledby="stt-'+state.stage+'">'+
+      '<div class="widget-h"><div><div class="price"><span id="stage-price">'+esc(s.price)+'</span><small id="stage-per">'+esc(s.per)+'</small></div></div><a class="btn" href="#calc">'+ico('i-calc')+'내 숫자로 비교하기</a></div>'+
+      '<div id="stage-rows">'+stageRows(s)+'</div>'+
+    '</div>'+
+  '</section>';
+}
+
+function pageCalc(){
+  var v=calcVals();
+  var form = C.groups.map(function(g){
+    return '<div class="fgroup"><h4>'+esc(g[0])+'</h4>'+g[1].map(function(f){
+      var id='in-'+f[0];
+      if(Array.isArray(f[3])) return '<div class="field"><label for="'+id+'">'+esc(f[1])+'</label><select id="'+id+'" data-k="'+f[0]+'">'+f[3].map(function(o){return '<option'+(String(v[f[0]])===String(o)?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select></div>';
+      return '<div class="field"><label for="'+id+'">'+esc(f[1])+(f[2]?'<small>'+esc(f[2])+'</small>':'')+'</label><input id="'+id+'" data-k="'+f[0]+'" type="number" inputmode="decimal" min="0" step="any" value="'+esc(v[f[0]])+'"></div>';
+    }).join('')+'</div>';
+  }).join('');
+  return '<section class="sec" style="padding-top:24px">'+secHead('Adoption · 비교 계산기',esc(C.title),'값은 이 화면 안에서만 계산하고 어디에도 보내지 않습니다. 처음 보이는 값은 예시입니다.')+
+    '<div class="calc">'+
+      '<form class="glass pad rv" id="calc-form" novalidate><div class="fields">'+form+'</div></form>'+
+      '<div class="glass pad rv" style="--d:120ms"><div class="widget-h"><div class="t"><b>비교 결과</b>'+(state.touched?'':'<span class="example" id="ex-tag">예시 값</span>')+'</div></div><div id="calc-out" aria-live="polite"></div></div>'+
+    '</div>'+
+  '</section>';
+}
+var lastCalc=null;
+function renderCalc(){
+  var out=document.getElementById('calc-out'); if(!out) return;
+  if(CERR){ out.innerHTML='<p class="calc-err">계산식을 읽지 못했습니다: '+esc(CERR.message)+'</p>'; return; }
+  var rows; try{ rows=runCalc(calcVals()); }catch(e){ out.innerHTML='<p class="calc-err">계산 중 오류: '+esc(e.message)+'</p>'; return; }
+  var first=!out.firstChild || !lastCalc || lastCalc.length!==rows.length;
+  if(first){
+    out.innerHTML=headlineHTML(rows,'c-')+barsHTML(rows,'c-')+
+      '<div class="scroll-x" style="margin-top:20px"><table class="res"><thead><tr><th scope="col">방법</th><th scope="col">비용</th><th scope="col">시간</th></tr></thead><tbody>'+
+      rows.map(function(x,i){return '<tr'+(i===rows.length-1?' class="ours"':'')+'><td><b>'+esc(x.name)+'</b><small id="c-n'+i+'">'+esc(x.note)+'</small></td><td class="num" id="c-c'+i+'">'+won(x.cost)+'</td><td class="num" id="c-t'+i+'">'+esc(x.time)+'</td></tr>';}).join('')+
+      '</tbody></table></div><p class="note">입력한 가정으로 계산한 추정치이며 실제 결과와 다를 수 있습니다. '+esc(C.note)+'</p>'+
+      '<details><summary>계산식 보기</summary><div class="formula-box" style="margin-top:10px">'+esc(C.formula)+'</div></details>';
+    lastCalc=rows; return true;
+  }
+  var max=Math.max.apply(null,rows.map(function(r){return r.cost;}))||1;
+  rows.forEach(function(r,i){
+    var prev=lastCalc[i].cost;
+    countTo(document.getElementById('c-v'+i),prev,r.cost);
+    countTo(document.getElementById('c-c'+i),prev,r.cost);
+    var b=document.getElementById('c-b'+i); if(b) b.style.width=Math.max(1.5,r.cost/max*100).toFixed(1)+'%';
+    document.getElementById('c-t'+i).textContent=r.time;
+    document.getElementById('c-n'+i).textContent=r.note;
+  });
+  var hl=document.getElementById('c-hl');
+  if(hl){ var oldN=document.getElementById('c-diff'), oldV=oldN?+oldN.getAttribute('data-val')||0:0;
+    var tmp=document.createElement('div'); tmp.innerHTML=headlineHTML(rows,'c-'); var nhl=tmp.firstChild;
+    hl.parentNode.replaceChild(nhl,hl); var nd=document.getElementById('c-diff'); countTo(nd,oldV,+nd.getAttribute('data-count')); }
+  lastCalc=rows; return false;
+}
+
+function pageInsight(){
+  var steps=['주장','대비','증상','논거','우리 방식','증거','다음 편'], n=P.insight.length;
+  return '<section class="sec" style="padding-top:24px">'+secHead('Insight · 논증형 시리즈','판정 기준 하나를 글 한 편으로 깊게','단계 이름은 화면에 쓰지 않고 한국어 소제목 문장으로 시작합니다. 외부 인용은 원문을 직접 확인한 것만 씁니다. V0 인터뷰 뒤에 씁니다.',true)+
+    '<div class="grid g3">'+P.insight.map(function(a,i){
+      return '<article class="mini article lift rv" style="--d:'+(i*120)+'ms"><p class="eyebrow">'+(i+1)+'편 · '+esc(a[2])+'</p><h4>'+esc(a[0])+'</h4><p>'+esc(a[1])+'</p><div class="steps">'+steps.map(function(s,k){return '<span style="--i:'+k+'">'+s+'</span>';}).join('')+'</div><p class="note">'+(i<n-1?'끝에서 '+(i+2)+'편으로 잇는다':'끝에서 비교 계산기와 무료 시작으로 잇는다')+'</p></article>';
+    }).join('')+'</div></section>';
+}
+
+function pageGuide(){
+  var schema = '{\n  "key", "name", "short", "accent", "pill",\n  "big": ["단어1", "단어2"], "chips", "join",\n  "head", "sub", "cta", "formula",\n  "personas": [{who, icon, cap, sit, scene, want, id}],\n  "cause": {line, lead, bad, good, rows},\n  "flow": [[단계, 아이콘, 사용자 일, 승인 여부, 제품 일]],\n  "alts", "table", "nonfit", "evidence",\n  "ledger": [[ID, 주장, 유형, 증거, "draft|hold|ok"]],\n  "stages": [{label, price, per, steps}],\n  "calc": {title, groups, derived, rows, formula, note},\n  "insight", "source"\n}';
+  var checks=[['모든 주장이 장부에 "검증"으로 있다','장부에 없는 문장 0'],['측정치 옆에 측정 조건이 있다','조건 없는 숫자 0'],['예시 데이터·샘플에 표시가 있다','표시 없는 예시 0'],['판정표 우리 열에 △·✕가 있다','전부 ○이면 다시 검토'],['실명 비교·타사 로고가 없다','법무 확인 전 0'],['보장 표현이 없다','제품 금지 문구 0'],['벤치마킹 원자료 문구가 섞이지 않았다','A-RMS 문구·통계·연출 0'],['동작 줄이기 설정에서 움직임이 모두 멈춘다','움직임 없이도 내용이 다 보인다']];
+  var sections=[['히어로','이게 뭔가?','결과물과 한 줄 정의, CTA 하나'],['막히는 지점','나도 겪나?','페르소나 장면 3개'],['원인 하나','왜 계속 막히나?','기존 방식 / 제품 방식 비교 1쌍'],['방식','어떻게 푸나?','실제 순서 + 이중 타임라인'],['왜 이 플랫폼인가','왜 다른 방법이 아닌가?','대안 판정표, 증거, 맞지 않는 경우'],['비용·시간 비교','나한테 이득인가?','사용자가 숫자를 넣는 계산기'],['행동','지금 뭘 하나?','시작 버튼 하나 + 요금']];
+  var motion=[['히어로 등장','대상 칩 → 대형 글자 → 문장 → CTA 카드 순서로 한 번'],['대상 칩 순환','다루는 대상을 하나씩 밝혀 "무엇을 다루는지" 보여 줌'],['처리 흐름','단계가 차례로 켜지고 같은 줄의 이중 타임라인이 함께 켜짐. 멈춤 버튼 있음'],['원인 비교','기존 방식 문장에 줄이 그어지고 제품 방식이 들어옴'],['판정표','○△✕가 행 순서로 나타나고 우리 열에 빛이 지나감'],['숫자','계산 결과·차이·막대가 이전 값에서 새 값으로 움직임'],['스크롤 등장','화면 아래에 있던 블록만 보일 때 올라옴'],['배경','강조색 빛이 천천히 떠다니고 포인터 주변이 밝아짐']];
+  var done=0; try{ checks.forEach(function(c,i){ if(localStorage.getItem('lp-'+P.key+'-ck-'+i)==='1') done++; }); }catch(e){}
+  return '<section class="sec" style="padding-top:24px">'+secHead('Template · 사용법','제품 데이터 파일 하나로 이 페이지 전체를 그립니다.','이 템플릿은 data/'+esc(P.key)+'.json 하나로 만들었습니다. 같은 엔진에 다른 제품 JSON을 넣으면 그 제품 전용 템플릿이 따로 만들어집니다.',true)+
+    '<div class="grid g2">'+
+      '<div class="glass pad rv"><div class="card-title"><span class="chip-ic">'+ico('i-layers')+'</span><h3>섹션 지도</h3></div><div class="scroll-x"><table class="res"><thead><tr><th scope="col">칸</th><th scope="col">묻는 질문</th><th scope="col">채우는 것</th></tr></thead><tbody>'+
+        sections.map(function(s){return '<tr><td><b>'+s[0]+'</b></td><td>'+s[1]+'</td><td style="color:var(--fg-2)">'+s[2]+'</td></tr>';}).join('')+'</tbody></table></div></div>'+
+      '<div class="glass pad rv" style="--d:120ms"><div class="card-title"><span class="chip-ic">'+ico('i-doc')+'</span><h3>제품 데이터 구조</h3></div><div class="code">'+esc(schema)+'</div><p class="note">작성 규칙은 templates/persuasion-landing/DATA_BRIEF.md. mark 값: o 된다 · t 일부·조건부 · x 안 된다 · n 해당 없음.</p></div>'+
+    '</div>'+
+  '</section>'+
+  '<section class="sec">'+secHead('움직임','보는 사람이 순서를 따라가게 움직입니다.','움직임은 내용을 대신하지 않습니다. 기기에서 동작 줄이기를 켜면 전부 멈추고 같은 내용이 그대로 보입니다.',true)+
+    '<div class="grid g4 stagger rv">'+motion.map(function(m,i){return '<div class="mini lift" style="--i:'+i+'"><p class="eyebrow mint">'+m[0]+'</p><p>'+m[1]+'</p></div>';}).join('')+'</div>'+
+  '</section>'+
+  '<section class="sec">'+secHead('게시 전 점검','실제 랜딩으로 옮기기 전에 확인합니다.','체크 상태는 이 브라우저에만 남습니다.',true)+
+    '<div class="glass pad rv"><div class="widget-h"><div class="t"><b id="ck-count">'+done+'</b> / '+checks.length+' 확인</div></div><div class="meter" style="margin:0 0 18px"><i id="ck-meter" data-w="'+Math.round(done/checks.length*100)+'"></i></div><ul class="checklist">'+checks.map(function(c,i){return '<li><label for="ck-'+i+'"><input type="checkbox" id="ck-'+i+'" data-ck="'+i+'"><span>'+c[0]+'<small>'+c[1]+'</small></span></label></li>';}).join('')+'</ul></div>'+
+  '</section>'+
+  '<section class="sec">'+secHead('벤치마킹 차용 기준','구조는 가져오고, 표현은 새로 씁니다.',null,true)+
+    '<div class="grid g3">'+
+      '<div class="mini lift rv"><p class="eyebrow mint">가져옴</p><h4>설득 순서와 검증 방식</h4><p>공감 → 원인 → 근거 → 해결 → 효과 → 행동, 논증형 글 단계, 추정치 고지, 비교 카드·단계 레일·이중 타임라인 같은 범용 패턴</p></div>'+
+      '<div class="mini lift rv" style="--d:110ms"><p class="eyebrow">바꿔서</p><h4>탭과 문의 버튼</h4><p>역할 탭은 제품 페르소나로, 라이선스 탭은 제품 요금 단계로 바꿨습니다. 문의 버튼은 자동으로 뜨는 말풍선 없이 둡니다</p></div>'+
+      '<div class="mini lift rv" style="--d:220ms"><p class="eyebrow" style="color:var(--coral-ink)">제외</p><h4>원문 문구와 고유 자료</h4><p>원자료의 헤드라인·질문·말풍선, 인용 통계, 채용공고 비교 연출, 특허 흐름도, 페이지 slug, 유료 테마 자산, 근거 없는 ROI 수치</p></div>'+
+    '</div>'+
+  '</section>';
+}
+
+/* ---------- 움직임 장치 ---------- */
+var timers=[];
+function every(ms,f){ var t=setInterval(f,ms); timers.push(t); return t; }
+function clearTimers(){ timers.forEach(clearInterval); timers=[]; clearTimeout(typingTimer); }
+
+var io = (!reduce && 'IntersectionObserver' in window) ? new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){ go(e.target); io.unobserve(e.target); } });
+},{rootMargin:'0px 0px -6% 0px',threshold:0.06}) : null;
+function go(el){
+  el.classList.add('go');
+  Array.prototype.forEach.call(el.querySelectorAll('[data-w]'),function(b){ fillBar(b); });
+  Array.prototype.forEach.call(el.querySelectorAll('.v[data-count],.num[data-count]'),function(n){ countTo(n,0,+n.getAttribute('data-count'),won,1100); });
+}
+function fillBar(b){ var w=b.getAttribute('data-w')+'%'; if(reduce){ b.style.width=w; return; } requestAnimationFrame(function(){ requestAnimationFrame(function(){ b.style.width=w; }); }); }
+function setupReveal(){
+  var vh=window.innerHeight||800;
+  Array.prototype.forEach.call(view.querySelectorAll('.rv'),function(el){
+    if(!io){ go(el); return; }
+    var r=el.getBoundingClientRect();
+    if(r.top<vh*0.94){ go(el); } else { el.classList.add('wait'); io.observe(el); }
+  });
+}
+
+var typingTimer=null;
+function startTyping(){
+  var el=document.getElementById('typed'); if(!el||reduce) return;
+  var full=el.textContent, i=full.length, dir=-1, hold=60;
+  (function step(){ if(!document.body.contains(el)) return;
+    if(hold>0){hold--;} else { i+=dir; if(i<=0){dir=1;hold=6;} if(i>=full.length){dir=-1;hold=70;} el.textContent=full.slice(0,Math.max(i,0)); }
+    typingTimer=setTimeout(step, dir>0?100:50); })();
+}
+function startChips(){
+  var box=document.getElementById('chips'); if(!box||reduce) return;
+  var cs=box.children, k=0;
+  setTimeout(function(){ if(!document.body.contains(box)) return; every(1100,function(){ for(var i=0;i<cs.length;i++) cs[i].classList.toggle('on',i===k); k=(k+1)%(cs.length+1); }); },1400);
+}
+function startCycle(){
+  if(reduce) return;
+  Array.prototype.forEach.call(view.querySelectorAll('.rail[data-cycle]'),function(r){
+    var sec=r.closest('.glass')||view, st=r.querySelectorAll('.st'), ar=r.querySelectorAll('.ar'), rows=sec.querySelectorAll('.dual-row'), k=0;
+    every(1300,function(){
+      if(state.flowPaused && sec.querySelector('#flow-toggle')) return;
+      for(var i=0;i<st.length;i++) st[i].classList.toggle('live',i===k);
+      for(var a=0;a<ar.length;a++) ar[a].classList.toggle('live',a===k-1);
+      for(var d=0;d<rows.length;d++) rows[d].classList.toggle('live',d===k);
+      k=(k+1)%st.length;
+    });
+  });
+}
+function moveInk(box){
+  if(!box) return; var ink=box.querySelector('.ink'), b=box.querySelector('[aria-selected="true"]'); if(!ink||!b) return;
+  ink.style.left=b.offsetLeft+'px'; ink.style.width=b.offsetWidth+'px'; ink.style.top=(b.offsetTop+b.offsetHeight-2)+'px';
+}
+function inkAll(){ moveInk(document.getElementById('ptabs')); moveInk(document.getElementById('stabs')); }
+
+/* ---------- 셸 ---------- */
+var menu=document.getElementById('menu'), gnb=document.getElementById('gnb'), burger=document.getElementById('burger');
+document.getElementById('logo-name').textContent=S;
+document.getElementById('foot-name').textContent=P.name;
+document.getElementById('foot-src').textContent=P.source||'';
+function buildMenu(){
+  menu.innerHTML = GROUPS.map(function(g){
+    var items=PAGES.filter(function(p){return p.group===g.key;});
+    var on = items.some(function(p){return p.id===state.page;});
+    return '<li class="'+(on?'on':'')+'" data-group="'+g.key+'"><button type="button" aria-haspopup="true">'+ico(g.icon)+g.label+'</button><ul class="drop">'+
+      items.map(function(p){var cur=p.id===state.page; return '<li><a href="'+pageHref(p.id)+'"'+(cur?' class="on" aria-current="page"':'')+'>'+p.title+'<small>'+p.desc+'</small></a></li>';}).join('')+'</ul></li>';
+  }).join('');
+  Array.prototype.forEach.call(menu.querySelectorAll('[data-group] > button'),function(b){
+    b.addEventListener('click',function(){ if(window.innerWidth>900){ var a=b.parentNode.querySelector('.drop a'); if(a) location.hash=a.getAttribute('href'); } });
+  });
+}
+function render(){
+  clearTimers();
+  var pg=PAGES.filter(function(p){return p.id===state.page;})[0], grp=GROUPS.filter(function(g){return g.key===pg.group;})[0];
+  document.getElementById('tb-title').innerHTML=ico('i-send')+esc(P.name)+' <span>'+pg.title+'</span>';
+  document.getElementById('tb-crumb').innerHTML='<svg width="14" height="14" aria-hidden="true"><use href="#i-home"/></svg><b>'+esc(S)+'</b>›<span>'+grp.label+'</span>›<span>'+pg.title+'</span>';
+  var f={home:pageHome,why:pageWhy,ledger:pageLedger,steps:pageSteps,calc:pageCalc,insight:pageInsight,guide:pageGuide}[state.page];
+  lastCalc=null;
+  view.innerHTML=f();
+  replay(view,'view-in');
+  document.title = pg.id==='home' ? S+' 설득형 랜딩 템플릿' : pg.title+' · '+S;
+  buildMenu();
+  bindPage();
+  if(state.page==='calc') renderCalc();
+  setupReveal();
+  if(state.page==='home'){ startTyping(); startChips(); }
+  startCycle();
+  requestAnimationFrame(inkAll);
+}
+function tabKeys(list,i,e,cb){ var n=null; if(e.key==='ArrowRight') n=(i+1)%list.length; if(e.key==='ArrowLeft') n=(i-1+list.length)%list.length; if(e.key==='Home') n=0; if(e.key==='End') n=list.length-1; if(n!==null){ e.preventDefault(); cb(n,true); } }
+function setPersona(i,focus){
+  state.persona=i;
+  var tabs=view.querySelectorAll('[data-persona]');
+  Array.prototype.forEach.call(tabs,function(b,k){ b.setAttribute('aria-selected',String(k===i)); b.tabIndex=k===i?0:-1; });
+  var pp=document.getElementById('pp'); pp.innerHTML=personaInner(P.personas[i]); pp.setAttribute('aria-labelledby','pt-'+i);
+  replay(pp,'swap'); moveInk(document.getElementById('ptabs')); if(focus) tabs[i].focus();
+}
+function setStage(i,focus){
+  var prev=P.stages[state.stage]; state.stage=i; var s=P.stages[i];
+  var tabs=view.querySelectorAll('[data-stage]');
+  Array.prototype.forEach.call(tabs,function(b,k){ b.setAttribute('aria-selected',String(k===i)); b.tabIndex=k===i?0:-1; });
+  document.getElementById('sp').setAttribute('aria-labelledby','stt-'+i);
+  var pe=document.getElementById('stage-price'), a=priceParts(prev&&prev.price), b=priceParts(s.price);
+  if(a&&b){ countTo(pe,a.n,b.n,function(n){return Math.round(n).toLocaleString('ko-KR')+b.rest;},650); } else pe.textContent=s.price;
+  document.getElementById('stage-per').textContent=s.per;
+  var box=document.getElementById('stage-rows'); box.innerHTML=stageRows(s); replay(box,'swap-soft');
+  moveInk(document.getElementById('stabs')); if(focus) tabs[i].focus();
+}
+function bindPage(){
+  var pt=Array.prototype.slice.call(view.querySelectorAll('[data-persona]'));
+  pt.forEach(function(b,i){ b.addEventListener('click',function(){ setPersona(i); }); b.addEventListener('keydown',function(e){ tabKeys(pt,i,e,setPersona); }); });
+  var st=Array.prototype.slice.call(view.querySelectorAll('[data-stage]'));
+  st.forEach(function(b,i){ b.addEventListener('click',function(){ setStage(i); }); b.addEventListener('keydown',function(e){ tabKeys(st,i,e,setStage); }); });
+  var ft=document.getElementById('flow-toggle');
+  if(ft){ var paint=function(){ ft.setAttribute('aria-pressed',String(state.flowPaused)); ft.innerHTML=ico(state.flowPaused?'i-play':'i-pause')+'<span>'+(state.flowPaused?'흐름 재생':'흐름 멈춤')+'</span>'; };
+    paint(); ft.addEventListener('click',function(){ state.flowPaused=!state.flowPaused; paint(); }); }
+  var only=document.getElementById('only-ok');
+  if(only) only.addEventListener('change',function(){ state.onlyOk=only.checked; var box=document.getElementById('ledger-box'); box.innerHTML=ledgerTable(); });
+  var form=document.getElementById('calc-form');
+  if(form){
+    form.addEventListener('submit',function(e){e.preventDefault();});
+    var onIn=function(e){
+      var t=e.target; if(!t.dataset || !t.dataset.k) return;
+      state.v=state.v||JSON.parse(JSON.stringify(DEF));
+      state.v[t.dataset.k] = t.tagName==='SELECT'? t.value : Math.max(0, parseFloat(t.value)||0);
+      state.touched=true; var ex=document.getElementById('ex-tag'); if(ex) ex.remove();
+      renderCalc();
+    };
+    form.addEventListener('input',onIn);
+  }
+  var cks=view.querySelectorAll('[data-ck]');
+  function ckPaint(){ var n=0; Array.prototype.forEach.call(cks,function(c){ if(c.checked) n++; }); var ce=document.getElementById('ck-count'), m=document.getElementById('ck-meter'); if(ce) ce.textContent=n; if(m) m.style.width=Math.round(n/cks.length*100)+'%'; }
+  Array.prototype.forEach.call(cks,function(c){
+    try{ c.checked = localStorage.getItem('lp-'+P.key+'-ck-'+c.dataset.ck)==='1'; }catch(e){}
+    c.addEventListener('change',function(){ try{ localStorage.setItem('lp-'+P.key+'-ck-'+c.dataset.ck, c.checked?'1':'0'); }catch(e){} ckPaint(); });
+  });
+}
+
+function route(){
+  var id=(location.hash||'').replace('#','');
+  state.page = PAGES.some(function(p){return p.id===id;}) ? id : 'home';
+  gnb.classList.remove('open'); burger.setAttribute('aria-expanded','false');
+  var de=document.documentElement, sb=de.style.scrollBehavior; de.style.scrollBehavior='auto'; window.scrollTo(0,0); de.style.scrollBehavior=sb;
+  render();
+}
+window.addEventListener('hashchange',route);
+burger.addEventListener('click',function(){ var o=gnb.classList.toggle('open'); burger.setAttribute('aria-expanded',o?'true':'false'); });
+
+/* 스크롤 진행 막대 · 맨 위로 버튼 · 포인터 조명 · CTA 카드 기울기 */
+var progress=document.getElementById('progress'), up=document.getElementById('up'), ticking=false;
+function onScroll(){ if(ticking) return; ticking=true; requestAnimationFrame(function(){ ticking=false;
+  var h=document.documentElement.scrollHeight-window.innerHeight, p=h>0?window.scrollY/h:0;
+  progress.style.transform='scaleX('+Math.min(1,Math.max(0,p)).toFixed(4)+')';
+  up.classList.toggle('hide',window.scrollY<420); }); }
+window.addEventListener('scroll',onScroll,{passive:true});
+window.addEventListener('resize',function(){ inkAll(); onScroll(); });
+if(finePointer && !reduce){
+  var root=document.documentElement, pend=null;
+  window.addEventListener('pointermove',function(e){ document.body.classList.add('pointer'); if(pend) return; var x=e.clientX, y=e.clientY;
+    pend=requestAnimationFrame(function(){ pend=null; root.style.setProperty('--mx',x+'px'); root.style.setProperty('--my',y+'px');
+      var card=document.getElementById('cta-card'); if(card){ var r=card.getBoundingClientRect();
+        if(x>r.left-80&&x<r.right+80&&y>r.top-80&&y<r.bottom+80){ var rx=((y-r.top)/r.height-.5)*-5, ry=((x-r.left)/r.width-.5)*6; card.style.transform='perspective(900px) rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg)'; }
+        else card.style.transform=''; } }); },{passive:true});
+  document.addEventListener('pointerleave',function(){ document.body.classList.remove('pointer'); });
+}
+
+var contact=document.getElementById('contact'), talk=document.getElementById('talk');
+talk.addEventListener('click',function(){ contact.hidden=!contact.hidden; talk.setAttribute('aria-expanded',String(!contact.hidden)); });
+document.getElementById('copy-mail').addEventListener('click',function(){
+  var b=this, t=document.getElementById('mail').textContent;
+  function sel(){ var r=document.createRange(); r.selectNodeContents(document.getElementById('mail')); var s=window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent='주소를 선택했습니다'; }
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){ b.textContent='복사했습니다'; }, sel); } else sel();
+});
+up.addEventListener('click',function(){ window.scrollTo({top:0,behavior:reduce?'auto':'smooth'}); });
+
+route();
+onScroll();
+})();
+</script>
