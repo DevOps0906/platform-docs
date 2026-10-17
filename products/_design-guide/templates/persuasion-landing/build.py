@@ -54,7 +54,8 @@ def build(key: str, engine: str) -> pathlib.Path:
     for mark in (MARK_DATA, MARK_CALC, MARK_TITLE):
         if out.count(mark) != 1:
             raise ValueError(f"엔진 표식이 1개가 아님: {mark}")
-    out = out.replace(MARK_TITLE, f"<title>{data['short']} 설득형 랜딩 템플릿</title>")
+    title = data.get("title") or f"{data['short']} 설득형 랜딩 템플릿"
+    out = out.replace(MARK_TITLE, f"<title>{title}</title>")
     out = out.replace(MARK_DATA, js_safe(json.dumps(data, ensure_ascii=False)))
     out = out.replace(MARK_CALC, js_safe(calc_functions(data["calc"])))
     DIST.mkdir(exist_ok=True)

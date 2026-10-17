@@ -54,7 +54,7 @@
 | source | 문자열 | 근거 문서 경로 |
 
 icon 값은 아래 목록에서만 고른다:
-i-bulb i-list i-pen i-checkbox i-print i-doc i-layers i-stamp i-map i-cube i-move i-grid i-send2 i-users i-book i-shield i-calc i-scale i-video i-chart i-mic i-store i-star i-bell i-cart i-image i-news i-heart i-clock i-search i-link i-play i-upload i-globe i-chat i-lock
+i-bulb i-list i-pen i-checkbox i-print i-doc i-layers i-stamp i-map i-cube i-move i-grid i-send2 i-users i-book i-shield i-calc i-scale i-video i-chart i-mic i-store i-star i-bell i-cart i-image i-news i-heart i-clock i-search i-link i-play i-upload i-globe i-chat i-lock i-rocket i-box
 
 ## 계산기 규칙
 
@@ -95,3 +95,24 @@ JSON이 `python3 -c "import json;json.load(open('<파일>'))"`로 읽히는지 �
 4. `xy`는 `market.axes` 기준 0~10 정성 배치다. 화면에 "정성 배치(제안)"로 표시된다. 근거가 약하면 중앙(5) 근처에 둔다.
 5. 로고·스크린숏·원문 문구는 쓰지 않는다. 실명 비교 화면은 내부 시안이며 공개 게시 전 비교광고 기준 확인이 필요하다고 화면에 표시된다.
 6. 검사는 `node validate.js`로 한다. 마지막 줄이 `ALL OK`여야 한다.
+
+## 3판: 공통 템플릿과 제품 맞춤 여정
+
+새 제품 랜딩은 공통 템플릿에서 시작한다. `data/_common.json`을 `data/<제품>.json`으로 복사해 [ ] 자리를 채우고, `journey`로 여정 이름과 단계를 제품 개발 요건에 맞게 바꾼다. `journey`가 없으면 공통 구매 여정(01 문제 → 02 해결 → 03 비교 → 04 검증 → 05 도입)을 쓴다.
+
+| 필드 | 형식 | 설명 |
+|---|---|---|
+| title | 문자열(선택) | 페이지 제목. 없으면 "<short> 설득형 랜딩 템플릿" |
+| journey | 객체(선택) | `{name:"<제품> ○○ 여정", head, lead, stages}` |
+| journey.stages | 3~7개 | `{no:"01", label:2~3자, icon, q:방문자의 질문, ref:근거(예: "J1 · 위저드 1~6단계"), pages}` |
+| journey.stages[].pages | 1~5개 | `{id, title, desc, type, pick, range, data, head, lead, ref}` |
+| wizard | 객체(선택) | `{title, lead, steps:[{name, icon, user, system, credit, ref}]}`. 순서가 있는 사용 단계(위저드·온보딩) |
+| tables | 객체(선택) | `{<키>:{title, lead, cols, rows, note}}`. 에이전트 표, 점검표 같은 제품 요건 표 |
+
+하위 페이지 `type`(없으면 `id`와 같다): scene, cause, flow, steps(`range:[시작, 끝]`, 0부터), features(`pick:[번호]`로 일부만), outputs, market, verdict, nonfit, evidence, ledger, validate, insight, plans, calc, faq, table(`data:"<tables 키>"`).
+
+규칙
+1. `id`는 영문·숫자·-·_만 쓰고 여정 안에서 겹치지 않는다. home, guide는 쓰지 않는다.
+2. 단계와 하위 페이지는 기획 문서의 핵심 과제·기능 요구사항(01장 1장·3장)과 화면(03장) 순서를 따른다. 각 단계 `ref`에 근거를 적는다.
+3. 여정에 넣지 않은 주장 장부·검증 단계는 템플릿 메뉴의 "검증 노트"로 남는다.
+4. 데이터에 없는 유형의 페이지는 메뉴에서 자동으로 빠진다.

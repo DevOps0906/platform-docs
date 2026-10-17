@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path');
 const dir=process.argv[2]||require('path').join(__dirname,'data');
-const ICONS='i-bulb i-list i-pen i-checkbox i-print i-doc i-layers i-stamp i-map i-cube i-move i-grid i-send2 i-users i-book i-shield i-calc i-scale i-video i-chart i-mic i-store i-star i-bell i-cart i-image i-news i-heart i-clock i-search i-link i-play i-upload i-globe i-chat i-lock'.split(' ');
+const ICONS='i-bulb i-list i-pen i-checkbox i-print i-doc i-layers i-stamp i-map i-cube i-move i-grid i-send2 i-users i-book i-shield i-calc i-scale i-video i-chart i-mic i-store i-star i-bell i-cart i-image i-news i-heart i-clock i-search i-link i-play i-upload i-globe i-chat i-lock i-rocket i-box'.split(' ');
 function packCost(n,packs){ n=Math.min(Math.ceil(n),200000); if(n<=0) return 0; const dp=new Array(n+1); dp[0]=0;
  for(let i=1;i<=n;i++){ let b=Infinity; for(const p of packs){ const c=dp[Math.max(0,i-p[0])]+p[1]; if(c<b) b=c;} dp[i]=b;} return dp[n]; }
 const H={max:Math.max,min:Math.min,ceil:Math.ceil,floor:Math.floor,round:Math.round,won:n=>Math.round(n).toLocaleString('ko-KR')+'원',fmt1:n=>(Math.round(n*10)/10).toLocaleString('ko-KR'),pack:packCost,parseInt:parseInt};
@@ -49,6 +49,16 @@ for(const f of fs.readdirSync(dir).filter(f=>f.endsWith('.json')).sort()){
       ['price','for','vs','region'].forEach(k=>{ if(!c[k]) e.push(id+' '+k); });
     });
   }
+  if(P.wizard){ const W=P.wizard; if(!W.title||!Array.isArray(W.steps)||!W.steps.length) e.push('wizard shape'); (W.steps||[]).forEach((st,i)=>{ ['name','user','system','credit'].forEach(k=>{ if(st[k]===undefined||st[k]==='') e.push('wizard step '+i+' '+k); }); if(st.icon&&!ICONS.includes(st.icon)) e.push('wizard icon '+st.icon); }); }
+  if(P.tables){ Object.entries(P.tables).forEach(([k,T])=>{ if(!Array.isArray(T.cols)||!Array.isArray(T.rows)) e.push('table '+k+' shape'); else T.rows.forEach((r,i)=>{ if(r.length!==T.cols.length) e.push('table '+k+' row '+i+' cols'); }); }); }
+  if(P.journey){ const JN=P.journey, TYPES=['scene','cause','flow','steps','features','outputs','market','verdict','nonfit','evidence','ledger','validate','insight','plans','calc','faq','table'], ids=new Set();
+    if(!JN.name) e.push('journey name'); if(!Array.isArray(JN.stages)||JN.stages.length<3||JN.stages.length>7) e.push('journey stages 3~7');
+    (JN.stages||[]).forEach(st=>{ if(!st.no||!st.label||!st.q) e.push('journey stage shape '+st.label); if(st.icon&&!ICONS.includes(st.icon)) e.push('journey icon '+st.icon);
+      (st.pages||[]).forEach(pg=>{ const t=pg.type||pg.id; if(!pg.id||!/^[A-Za-z0-9_-]+$/.test(pg.id)) e.push('journey page id '+pg.id); if(ids.has(pg.id)) e.push('journey dup id '+pg.id); ids.add(pg.id);
+        if(['home','guide'].includes(pg.id)) e.push('journey reserved id '+pg.id); if(!TYPES.includes(t)) e.push('journey type '+t); if(!pg.title) e.push('journey page title '+pg.id);
+        if(t==='features'&&pg.pick&&pg.pick.some(i=>!P.features||!P.features[i])) e.push('journey pick '+pg.id);
+        if(t==='steps'&&(!P.wizard||(pg.range&&(pg.range[0]<0||pg.range[1]>=P.wizard.steps.length||pg.range[0]>pg.range[1])))) e.push('journey range '+pg.id);
+        if(t==='table'&&(!P.tables||!P.tables[pg.data])) e.push('journey table data '+pg.id); }); }); }
   if(P.market){ const m=P.market; if(!m.line||!m.lead||!m.axes||!Array.isArray(m.ours)||!inR(m.ours[0])||!inR(m.ours[1])) e.push('market shape'); if(m.axes&&(!m.axes.xname||!m.axes.yname||m.axes.x.length!==2||m.axes.y.length!==2)) e.push('market axes'); if(!Array.isArray(m.gaps)||m.gaps.length<2) e.push('market gaps<2'); }
   try{ const rows=evalCalc(P.calc); rows.forEach(r=>{ if(typeof r[1]!=='number'||!isFinite(r[1])) e.push('cost NaN '+r[0]); if(typeof r[2]!=='string'||typeof r[3]!=='string') e.push('str type '+r[0]);});
     console.log(f.padEnd(24), rows.map(r=>r[0]+'='+H.won(r[1])).join(' | '));
