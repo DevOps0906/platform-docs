@@ -27,6 +27,7 @@
 - [[sources/doc-dsn-004]] DOC-DSN-004 디자인 기준: SKILLS
 - [[sources/doc-dsn-005]] DOC-DSN-005 디자인 기준: REFERENCES
 - [[sources/doc-dsn-008]] DOC-DSN-008 디자인 기준: DASHBOARD_PATTERNS
+- [[sources/doc-dsn-009]] DOC-DSN-009 디자인 기준: LANDING_PERSUASION
 - [[sources/doc-mod-001]] DOC-MOD-001 공통모듈 기획: M1_newsroom-cms
 - [[sources/doc-mod-002]] DOC-MOD-002 공통모듈 기획: M2_reader-membership
 - [[sources/doc-mod-003]] DOC-MOD-003 공통모듈 기획: M3_ad-manager

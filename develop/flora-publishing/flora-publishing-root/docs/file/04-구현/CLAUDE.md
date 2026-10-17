@@ -9,7 +9,7 @@
 | 1 | `docs/file/03-설계/공용코어/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md`(기능 ID, 단가, features 키) → `02_ARCHITECTURE.md`(경계, 잡) → `04_API.md`(계약) → `05_DATA_MODEL.md`(테이블, RLS) |
 | 1-AI | AI·음성 작업이면 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장, `DB_CONVENTIONS.md` 14장(pgvector) |
-| 3 | 화면 작업이면 `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` flora-publishing 절, 랜딩이면 `HERO_3D.md` |
+| 3 | 화면 작업이면 `docs/file/03-설계/디자인/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` flora-publishing 절, 랜딩이면 `HERO_3D.md`와 `LANDING_PERSUASION.md`(2026-10-17, 03장 9절) |
 | 4 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 이식 대상(`07_SOURCE_MIGRATION.md` 2절, 금지 패턴 4절) |
 
 ## 2. 절대 규칙
@@ -139,3 +139,17 @@ AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 �
 | 운영 콘솔 | `/admin/*`는 `platform_admin`만, 일반 사용자 404. 조회마다 감사 `admin.view`. 원가 필드는 운영자 API에만. 데이터가 없으면 숫자 대신 "—" |
 | 디자인 레이어 | 루트 레이아웃이 `data-surface`(marketing, workspace, ops)를 붙이고 토큰은 같은 의미 이름의 값만 바꾼다. 맞춤 마젠타는 marketing의 재단선·맞춤표와 교정 표시에만. 제안서 팔레트·Pretendard는 01장 D23·D24 결정 전까지 쓰지 않는다 |
 | 소유 경로 | 059 `web/src/server/agents/`, `api/agents/`, `api/agent-tasks/`, `api/internal/agent-sync/` 등(06장 9.1절). 060 `features/agents/`, `(app)/dashboard/agents/`, 061 `features/ai-panel/`(에디터 3단 레이아웃은 022), 062 `app/admin/{books,agents,jobs,settings}/`·`api/admin/{tasks,trace,costs,books,settings,agents}/`, 064 `app/admin/graph/`(Phase 2). 027은 `app/admin/` 루트·`users/`·`billing/`·`audit/` |
+
+## 설득형 랜딩 규칙 (2026-10-17, 검토용)
+
+정본 `docs/file/03-설계/디자인/LANDING_PERSUASION.md`, 이 제품 반영은 01장 9장, 03장 9절, 06장 10절.
+
+| 항목 | 규칙 |
+|---|---|
+| 주장 장부 | 랜딩·FAQ·인사이트에 나가는 문장은 `docs/flora-publishing/experiments/claims-ledger.md`에서 상태가 "검증"인 것만. 문구 상수와 장부가 다르면 `scripts/proof/check-claims.mjs`가 CI를 실패시킨다 |
+| 비교 표시 | 대안은 범주 이름만(D28). 특정 회사·서비스 이름과 로고 금지. 가격 비교는 `/pricing`에서 출처·확인일·VAT 포함 여부와 함께만 |
+| 증거 파일 | 샘플 PDF·ePub·미리보기는 CI가 렌더 서비스 출력에서 복사한 것만. 손으로 다듬은 파일, 연출 목업 금지 |
+| 계산기 | 순수 함수, 입력값 서버 전송·수집 금지, 요금 값은 요금 상수 import(하드코딩 금지), 결과를 이메일 뒤에 숨기지 않는다 |
+| 벤치마킹 원자료 | `D:/WorkSpace/platform/docs/products/_design-guide/benchmarks/a-rms/`의 문구·수치·slug·다크 글래스 비주얼을 쓰지 않는다(`LANDING_PERSUASION.md` 1장) |
+| 컴포넌트 경계 | `web/src/components/marketing/`은 `(marketing)` 경로에서만 import. 앱 화면(TaskTimeline 등)은 같은 구조를 앱 토큰으로 따로 만든다 |
+| 소유 경로 | 066 `web/src/features/landing-proof/`, `web/public/proof/`, `scripts/proof/`. 067 `docs/flora-publishing/experiments/{claims-ledger,v0-interviews,v1-task-timing}.md`. 068 `web/src/app/(marketing)/insight/`, `web/content/insight/`. 069 `web/src/app/(marketing)/tools/cost-compare/`, `web/src/features/cost-compare/`. 070 `web/src/components/marketing/` |

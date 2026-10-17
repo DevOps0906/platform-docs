@@ -8,6 +8,7 @@
 | [`REFERENCES.md`](REFERENCES.md) | 제품별 시각 레퍼런스(Awwwards·Dribbble) |
 | [`SKILLS.md`](SKILLS.md) | 개발 에이전트용 스킬 목록과 작업별 매핑 |
 | [`DASHBOARD_VISUAL.md`](DASHBOARD_VISUAL.md) | **대시보드를 디자인할 때 반드시 거치는 분석 절차**와 시각 아키타입(V-A~V-N 14개), 트레이딩 문법 적합도, 색·숫자 규칙, 제품별 시각 지정. 근거는 이 폴더의 PDF 2개(Dribbble 트레이딩 대시보드 분석, 플랫폼별 대시보드 추천서) |
+| [`LANDING_PERSUASION.md`](LANDING_PERSUASION.md) | 설득형 랜딩 내용 구조와 "왜 이 플랫폼이어야 하는가" 검증 규칙(2026-10-17): 벤치마킹 자료 차용 판정(저작권·디자인 원칙), 설득 흐름, 대안 판정표, 증거 등급, 주장 장부, 필요성 검증 단계(V0~V3), 마케팅 컴포넌트, 비교 계산기, 제품별 적용 현황. 원자료는 [`benchmarks/a-rms/`](benchmarks/a-rms/README.md) |
 | [`DASHBOARD_PATTERNS.md`](DASHBOARD_PATTERNS.md) | 앱 화면 구조 패턴 카탈로그(A~O 15개, 홈 화면 고르는 기준, 공용화 기준, 제품별 제안). 제품 `03_SCREENS_UX.md` 화면 표의 `패턴` 열이 이 코드를 쓴다 |
 
 제품별 선택(레퍼런스, 토큰 값, 화면)은 각 제품 `03_SCREENS_UX.md`에 있습니다.

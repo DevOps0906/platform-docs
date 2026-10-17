@@ -22,6 +22,7 @@
 - 확인했지만 표에 넣지 않은 Awwwards 후보
 - nomad-docs (NOMAD Docs, 체크리스트 기반 실무 문서 생성)
 - book-trailer (NOMAD Book Trailer, 원고 기반 북트레일러 자동화)
+- 구조 레퍼런스 (설득 구조, 2026-10-17)
 
 ## 출처
 - `docs/file/03-설계/디자인/REFERENCES.md`

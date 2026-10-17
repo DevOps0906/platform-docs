@@ -27,6 +27,7 @@
 - [[sources/doc-dsn-004]] DOC-DSN-004 디자인 기준: SKILLS
 - [[sources/doc-dsn-005]] DOC-DSN-005 디자인 기준: REFERENCES
 - [[sources/doc-dsn-008]] DOC-DSN-008 디자인 기준: DASHBOARD_PATTERNS
+- [[sources/doc-dsn-009]] DOC-DSN-009 디자인 기준: LANDING_PERSUASION
 - [[sources/doc-dsn-006]] DOC-DSN-006 디자인 토큰 정의(DESIGN.md)
 - [[sources/doc-dsn-007]] DOC-DSN-007 컴포넌트·배리언트 명세(COMPONENTS.md)
 

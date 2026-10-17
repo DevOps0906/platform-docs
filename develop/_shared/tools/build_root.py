@@ -69,7 +69,7 @@ CORE_DOCS = ['CORE_SPEC.md', 'SHARED_MODULES.md', 'SECURITY_BASELINE.md', 'DB_CO
              'AUTH_ROADMAP.md']  # DOC-CORE-009: 인증 단계(2026-10-14, 확정 결정 22). 순서를 바꾸면 기존 DOC-CORE ID가 바뀐다
 DESIGN_DOCS = ['DESIGN_PRINCIPLES.md', 'DESIGN_SYSTEM.md', 'HERO_3D.md', 'SKILLS.md', 'REFERENCES.md']
 # 나중에 추가한 디자인 기준 문서. DOC-DSN-006/007은 DESIGN.md/COMPONENTS.md가 쓰므로 008부터 고정 ID를 준다(기존 ID를 바꾸지 않는다).
-EXTRA_DESIGN_DOCS = [('DASHBOARD_PATTERNS.md', 'DOC-DSN-008')]
+EXTRA_DESIGN_DOCS = [('DASHBOARD_PATTERNS.md', 'DOC-DSN-008'), ('LANDING_PERSUASION.md', 'DOC-DSN-009')]  # 009: 설득형 랜딩(2026-10-17)
 
 
 def read(p):

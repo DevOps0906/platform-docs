@@ -359,3 +359,11 @@
 | 앱 | Video Editing Dashboard | Dribbble | https://dribbble.com/shots/25186663-Video-Editing-Dashboard | 미리보기와 하단 가로 스트립의 위계(스트립은 트랙이 아니라 장면 칸 한 줄) | 다중 트랙 타임라인, 파형 겹침 | 작업실 장면 띠 |
 | 앱 | AI book app | Dribbble | https://dribbble.com/shots/23707376-AI-book-app | AI 결과를 여러 안으로 나란히 보여 주고 하나를 고르게 하는 구조 | 일러스트 책 표지 장식, 둥근 카드 키트 | 브리프 3안 비교 |
 
+## 구조 레퍼런스 (설득 구조, 2026-10-17)
+
+위 절들은 시각 레퍼런스다. 아래는 화면의 모양이 아니라 **무엇을 어떤 순서로 말하고 무엇으로 증명하는가**를 참고하는 레퍼런스이며, 사용 규칙은 `LANDING_PERSUASION.md`가 정본이다. 시각(다크 글래스 카드, 대형 영문 히어로, KPI 타일)은 참고하지 않는다.
+
+| 대상 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 제품 |
+|---|---|---|---|---|---|
+| A-RMS 랜딩(10개 페이지) | 대표님 벤치마킹 문서(`benchmarks/a-rms/A-RMS_LANDING_REPORT.md`) | https://www.a-rms.net/arms/template.html?page=landing_index (자동 접속 차단, 이 저장소 작업에서 직접 확인하지 않음: 미확인) | 공감 → 원인 하나 → 근거 → 해결 흐름 → 효과 → 행동 순서, 논증형 아티클 단계, 추정치 고지 태도, 도입 단계 탭 구조 | 헤드라인·질문·말풍선 문구, 인용 통계, 채용공고 비교 연출, 특허 흐름도, slug, 유료 테마 자산, 다크 글래스 비주얼 | flora-publishing, nomad-docs, arch-studio, Web-App-Agency(`LANDING_PERSUASION.md` 8장) |
+
