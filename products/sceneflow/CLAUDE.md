@@ -130,3 +130,20 @@
 | 단계 전환 | G1(`AUTH_ROADMAP.md` 4장)·G2(6장)는 사람(대표님)이 판정하고 task `log.md`에 `[DECISION] G1 통과`·`[DECISION] G2 통과`로 남긴다. 네이버 경로(스파이크 결과)도 `[DECISION]`으로 기록하고 `NAVER_AUTH_PATH`에 같은 값을 넣는다 |
 | 로그인 없는 흐름 | `/landing/[slug]`, `/lb/[handle]`, `/r/[code]`, `/review/[token]`에는 로그인 버튼을 추가하지 않는다. 대행 고객사 담당자는 계정 없이 토큰 링크로만 승인한다(시드 페르소나 없음) |
 | 소유 경로 | 004: `src/lib/auth/`(003 소유 `src/lib/`의 예외), `src/app/(auth)/`, `src/components/auth/`, `src/app/api/dev/login/`, `scripts/dev/`. 063: `(auth)`·`components/auth`(004에서 이어 받음), `src/app/auth/callback/`, `src/app/onboarding/terms/`. 064: `providers/kakao.ts`, `dashboard/settings/login-methods/`. 065: `providers/naver.ts`, `src/app/auth/naver/`(브리지만), `scripts/auth/`. `proxy.ts` 공개 경로·env 스키마는 003, 배지 셸 장착은 028, `config.toml`은 001 파일에 1줄 요청(06장 8.4절) |
+
+## 스토리보드 트랙 규칙 (2026-10-18)
+
+정본: 01장 10장(확정 SF-1~SF-4, VD-F-130~142, 단가 10.4절). 반영 위치: 03·04·05·06장 끝의 2026-10-18 새 장. 트랙은 A, B, S, E, F이고 E·F는 Phase 2다.
+
+| 항목 | 규칙 |
+|---|---|
+| 렌더 엔진 | FFmpeg만 쓴다(VD-F-033, SF-2). Remotion·CapCut 패키지를 설치하거나 import하지 않는다(Phase 2 검토는 01장 D-30). 미리보기는 브라우저 타임라인만이고 서버 미리보기 렌더를 만들지 않는다(VD-F-135, 0크레딧, 다운로드 경로 없음) |
+| 장면 길이 합계 | 목표 길이 ±10%. 판정은 서버가 한다: 그래프 결과 저장(`video.apply_storyboard_result`)과 렌더 요청 때 검사하고 벗어나면 `VD017`. 장면 수는 쇼츠 3~12, 롱폼 분당 3~8, 최대 240(`VD018`). 편집기 게이지는 표시만 하고 클라이언트 값을 믿지 않는다 |
+| 낙관적 동시성 | 장면 저장은 `video.save_scene(p_scene_id, p_revision, p_patch)`만. revision이 다르면 `VD409`를 돌려주고 화면은 최신본을 다시 불러온다. revision 없이 덮어쓰는 경로를 만들지 않는다. status `rendering` 중 편집은 `VD020` |
+| clip 권리 근거 | `clip` 장면 소재는 `rights_basis`와 근거 메모가 있어야 저장된다(`VD019`). 렌더 직전에도 다시 검사한다. "무료 배포" 원본을 권리 근거로 자동 채우지 않는다 |
+| 출처 경고 | 그래프·채팅은 근거 id가 없는 출처 URL을 만들지 않는다. 출처 없는 사실 주장 장면(`source_required=true`)은 WARN이며 D-33 결정 전에는 FAIL로 올리지 않는다. 설명란 "참고 자료"는 대가성 문구 첫 줄 뒤에 넣는다(VD-F-062 순서 유지). AI 생성 소재가 있으면 AI 생성 표시를 기본으로 켠다(01장 10.5절) |
+| 서버 쓰기 테이블 | `video.scene_assets`, `video.storyboard_snapshots`는 서버(service_role)만 쓰고 guard 트리거로 막는다. `video.storyboard_templates`는 운영자 seed만. 서버 RPC `video.apply_storyboard_result`, `video.finish_scene_asset`, `video.snapshot_storyboard`를 사용자 세션에서 부르지 않는다. 다른 테이블의 쓰기 주체는 05장 새 장을 따른다 |
+| 쇼츠 추출 | 컷은 연속 장면만, 스토리보드당 최대 10편(`VD021`), 플랜 `shorts_extract_max` 이하. 기존 OSMU(`longform_highlights`) 경로에 새 코드를 넣지 않는다 |
+| 크레딧 | 단가는 01장 10.4절이 정본(서버 상수). 미리보기·편집 저장·이미지 재사용은 0. 장면 다시 만들기는 그 장면 단가만 선차감하고 실패하면 그 장면분만 환불한다 |
+| 기존 Track C·D·E·F | 새 Track C Mode1·Track D 생성 경로를 만들지 않는다(Track S로 안내). `longform_projects/sections/highlights`와 E·F 테이블은 지우지 않는다(삭제는 01장 D-34, 스키마는 VID-06-001). MVP 작업에서 E·F 화면·워커를 새로 만들지 않는다 |
+| 소유 작업 | 스토리보드 작업은 06장 2026-10-18 새 장의 작업(VID-06-066부터)이 소유한다. 작업 번호·소유 경로는 그 장을 따르고, 스키마 변경은 VID-06-001에 요청한다 |

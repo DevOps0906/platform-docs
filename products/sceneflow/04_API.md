@@ -311,3 +311,133 @@
 | `AUTH_STATE_INVALID` | (C2 브리지) state 불일치·재사용·만료 → `/login?error=state` | 302 |
 | `AUTH_EMAIL_IN_USE` | (C2 브리지) 같은 이메일의 다른 로그인 수단 사용자 존재 → `/login?error=email_in_use` | 302 |
 | `DEV_LOGIN_UNAVAILABLE` | Mock 판정 거짓. 응답 본문 없이 404 | 404 |
+
+## 9. 스토리보드 API (2026-10-18 추가, 스토리보드 디벨롭)
+
+정본은 01장 10장(VD-F-130~142, 단가 10.4절)이고 구조는 02장 10장이다. 기존 장의 줄은 바꾸지 않았다. 1절 원칙(인증, zod, `request_id` 멱등, Route Handler 선차감 → `enqueue_job`, 응답 봉투, 레이트 리밋)이 그대로 걸린다. Track 값은 이제 `A`, `B`, `S`, `E`, `F`다(1절 "Track `A-F`"와 2.1절 `/api/ai/script`의 `track: 'B'|'C'|'D'`는 이 장을 따라 `S`를 받는다. 새 `C`·`D` 생성 요청은 받지 않는다). 기존 `POST /api/longform/*`(2절)에는 새 코드를 넣지 않는다(01장 VD-F-142, D-34). 화면 경로는 `/dashboard/storyboards/...`(03장 8장)이다.
+
+### 9.1 Route Handler
+
+2절 표와 같은 열이다. 크레딧은 01장 10.4절 값이다. "(제안)"이 붙은 경로는 명세 7절 목록에 없지만 VD-F-132·134를 처리하려고 더한 것이다.
+
+| 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 코어 RPC | 오류 |
+|---|---|---|---|---|---|---|
+| POST `/api/storyboards` | member+, `features.storyboard` | `{title, format: 'shorts'\|'longform', target_seconds(형식 프리셋 값만), template_code, topic, languages[](플랜 `languages` 안, 첫 값이 기본 언어), client_id?, script: {mode: 'quick'\|'precise', script_run_id?}, request_id}`. 화면비는 서버가 형식으로 정한다 | storyboard(draft, version 1) + `{scriptJobId?}` | 빠른 모드 대본 쇼츠 3 / 롱폼 5. 정밀 모드(`script_run_id`, `/api/ai/script`에서 이미 선차감)는 0 | 주제 점수 게이트(VD-F-013, 대본 단가에 포함) → `storyboards` INSERT(RLS) → consume → enqueue `ai.script`(빠른 모드, `{storyboard_id}`) | 403 `VD009`(storyboard=false, `storyboard_max_minutes` 초과), 409 `VD010` + `alternatives`, 402, 404(`script_run_id` 없음·다른 조직), VD002 → 403(다른 조직 `client_id`) |
+| GET `/api/storyboards/[id]` | 전 역할 | - | storyboard + scenes(순서대로) + 장면별 `ready` 소재(서명 URL 10분) + cuts + 진행 중 잡 + `{length_gauge: {total_ms, min_ms, max_ms}, source_warnings, estimate}` | 0 | RLS select, Storage 서명 URL | 404 |
+| POST `/api/storyboards/[id]/generate` | member+ | `{request_id}`(처음 생성과 전체 다시 생성이 같은 경로) | `{jobId}` | 쇼츠 4 / 롱폼 10분당 8(`ceil(target_seconds/600)`) | 대본 ready 확인 → consume → enqueue `storyboard.generate`. 레이트 리밋 `video:ai-graph:<org>`(1절) | 409 `VD020`(rendering), 409 22023(대본 없음), 402, 429 |
+| PATCH `/api/scenes/[id]` | member+ | `{revision, patch: {narration?(≤600), on_screen_text?(≤160), visual_prompt?(≤600), duration_ms?, motion_preset?, music_cue?, chapter?, kind?, sources?(≤5: title, url, note)}}` | scene(새 revision) | 0 | 사용자 세션 `rpc('video.save_scene', {p_scene_id, p_revision, p_patch})` | 409 `VD409`(detail에 현재 revision), 409 `VD020`, 422 23514, 403 42501, 404 |
+| POST `/api/storyboards/[id]/reorder` | member+ | `{scene_ids: uuid[](현재 장면 전부), revision}` | scenes(새 순서) + storyboard revision | 0 | `video.reorder_scenes` | 409 `VD409`, 409 `VD020`, 409 22023(집합 불일치) |
+| POST `/api/storyboards/[id]/scenes` (제안) | member+ | `{after_scene_id?, kind, duration_ms, revision}` | scene | 0 | `video.add_scene` | 422 `VD018`, 409 `VD409`, 409 `VD020` |
+| DELETE `/api/scenes/[id]` (제안) | member+ | `{revision}`(스토리보드 revision) | 204 | 0 | `video.delete_scene` | 409 `VD409`, 409 `VD020`, 409 22023(마지막 장면) |
+| POST `/api/scenes/[id]/shorts-candidate` (제안) | member+ | `{value: boolean}` | scene | 0 | `video.set_shorts_candidate` | 409 `VD020`, 409 22023(쇼츠 형식 스토리보드) |
+| POST `/api/scenes/[id]/regenerate` | member+ | `{part: 'image'\|'narration', lang?(narration 필수), reuse_asset_id?(image만), request_id}` | `{jobId}` 또는 재사용이면 scene_asset | image 3, narration 1(1장면 1언어), 재사용 0(원장 행 없음) | 재사용: 같은 조직 `ready` 이미지 확인 → `finish_scene_asset`(service, `reused_from_asset_id`). 그 밖: consume → enqueue `scene.image` / `scene.narration`. 내레이션 제공자·보이스는 스토리보드에 처음 기록된 값 | 409 `VD020`, 422 `VD013`(보이스 불일치), 422(`text_card`·`title` 장면의 image), 402, 404 |
+| POST `/api/storyboards/[id]/assets` (제안) | member+ | `{images: boolean, narration?: {lang, provider: 'elevenlabs'\|'oss-voice'\|'auto', voice_id}, request_id}` | `{jobIds[]}` | image: 소재 없는 `image` 장면 수 x 3. narration: 4.1절 정액(쇼츠 언어당 ElevenLabs 5 / 오픈소스 2, 롱폼 10분 언어당 5 / 2) | 이미지는 장면마다 consume(`consume:video:<request_id>:<scene_id>`) → enqueue `scene.image`. 내레이션은 consume 1회 → enqueue `scene.narration` 1잡(장면 묶음). `auto`는 시작 때 확정값으로 바꿔 기록(02장 5.3절) | 409 `VD020`, 409 `VOICE_PROVIDER_UNAVAILABLE`, 402 |
+| POST `/api/scenes/[id]/upload` (제안) | member+ | `{kind: 'image'\|'clip', path(org-files 자기 조직 경로), rights_basis(clip 필수), rights_note(clip 필수)}` | scene_asset | 0 | 경로 접두 확인 → `finish_scene_asset`(service, `ai_generated=false`). clip 길이·코덱 확인은 렌더 1단계에서 | 422 `VD019`, 422 23514(다른 조직 경로), 413(500MB 초과) |
+| POST `/api/storyboards/[id]/render` | member+ | `{languages[](storyboard languages 안), voice?: {provider, voice_id_by_lang}, bgm?: {library_track_id}\|null, request_id}` | `{rootJobId, cutId, snapshotVersion}` | 렌더(쇼츠 언어당 3, 롱폼 10분당 10을 언어판마다, 제안) + 내레이션이 없는 언어의 4.1절 TTS 정액 + 출처 점검 1 | 서버 검사(VD009, VD017, VD018, VD019, VD001) → consume → `video.snapshot_storyboard`(service) → enqueue `storyboard.render`. 동시 생산 상한(01장 5장)에 포함 | 403 `VD009`, 422 `VD017`·`VD018`·`VD019`, 409 `VD001`(소재 없는 장면, detail `scene_ids`), 409 `VD020`(이미 렌더 중), 402, 429 |
+| POST `/api/storyboards/[id]/shorts` | member+, `shorts_extract_max` ≥ 1 | `{step: 'pick', max_cuts(1~10), request_id}` 또는 `{step: 'render', cut_ids[], vertical: 'crop'\|'regenerate'(기본값 D-32), languages[], request_id}` | pick: `{rootJobId}` → 제안 컷(`storyboard_cuts` kind `short`) / render: `{rootJobId, snapshotVersions[]}` | pick 2 / render 컷·언어당 3 + `regenerate`면 세로 이미지 장면 수 x 3 | `longform` + ready 마스터 컷 확인 → consume → (render) 컷마다 `snapshot_storyboard` → enqueue `storyboard.shorts` | 409 22023(쇼츠 형식, 마스터 없음, 비연속 장면), 403 `VD009`(플랜 한도 초과, 제안), 422 `VD021`(11번째 컷), 402 |
+| POST `/api/storyboards/[id]/command` | member+, P1(VD-F-140) | `{text, request_id}`(받아쓰기 후 사용자가 확인한 텍스트. 음성 원본은 받지 않는다) | 변경 제안 패치 목록(장면 id, 바꿀 칸, 새 값). 바로 적용하지 않고 화면에서 확인 뒤 `save_scene`으로 저장 | 1(패치 변환, 01장 10.4절, 제안) | consume → FastAPI `video.step` kind `storyboard_command`(제안) → 패치 반환 | 422 해석 실패, 409 VD020(렌더 중), 402 |
+| GET `/api/storyboards/[id]/snapshots/[version]` | 전 역할 | - | 스냅샷 jsonb(9.4절 키) 읽기 전용 | 0 | RLS select `storyboard_snapshots` | 404 |
+
+기존 Route Handler에서 바뀌는 동작:
+
+| 경로 | 변경 |
+|---|---|
+| POST `/api/uploads` | `outputId`의 `storyboard_cut_id`가 있으면 서버가 그 컷 스냅샷의 장면 출처로 "참고 자료" 목록을 설명란에 넣는다. 대가성 문구 첫 줄 뒤(VD-F-062 순서, VD-F-138). AI 생성 소재가 있으면 01장 10.5절 AI 생성 표시 문구를 기본으로 넣는다 |
+| POST `/api/uploads/[id]/check` | 스냅샷의 출처 점검 WARN을 compliance 항목으로 넘긴다. FAIL로 올리지 않는다(D-33) |
+| POST `/api/internal/ai-token` | 잡 유형 → scope 대응에 더한다: `storyboard.generate`→`graph:video.storyboard`, `storyboard.shorts`→`graph:video.shorts_pick`, `storyboard.source_check`→`graph:video.step`, `scene.narration`·`storyboard.render`(TTS 단계)→`voice` |
+
+### 9.2 RPC
+
+3절 표와 같은 열이다. 이름은 명세 6절(05장 11장)과 같다. 인자 중 명세에 없는 것은 "(제안)"으로 적었다.
+
+| 시그니처 | 호출자 | 검사 | 반환 | SQLSTATE |
+|---|---|---|---|---|
+| `video.save_scene(p_scene_id uuid, p_revision int, p_patch jsonb)` | authenticated | owner/admin/member, 엔타이틀먼트 `storyboard`, 스토리보드 status가 `rendering`이 아님, `revision = p_revision`, 패치 키 허용 목록, 글자 수·sources 5개 이하. 성공 시 장면 revision +1, `rendered`면 `ready`로(제안) | `video.scenes` | P0002, 42501, VD409, VD020, 22023, 23514 |
+| `video.reorder_scenes(p_storyboard_id uuid, p_scene_ids uuid[], p_revision int)` | authenticated | 위와 같은 권한·상태, `p_scene_ids`가 현재 장면 집합과 같음, 스토리보드 `revision = p_revision`(01장 VD-F-132, 인자는 제안). `ord` 다시 매김(deferrable unique) | `video.storyboards`(새 revision) | P0002, 42501, VD409, VD020, 22023 |
+| `video.add_scene(p_storyboard_id uuid, p_after_scene_id uuid, p_kind text, p_duration_ms int, p_revision int)`(인자는 제안) | authenticated | 위와 같음, 장면 수 240 이하와 형식별 상한(쇼츠 12) | `video.scenes` | P0002, 42501, VD409, VD020, VD018, 22023 |
+| `video.delete_scene(p_scene_id uuid, p_revision int)`(인자는 제안) | authenticated | 위와 같음, 마지막 장면 삭제 금지. 소재는 지우지 않는다(스냅샷 참조) | void | P0002, 42501, VD409, VD020, 22023 |
+| `video.set_shorts_candidate(p_scene_id uuid, p_value boolean)` | authenticated | 위와 같은 권한·상태, `longform`만 | `video.scenes` | P0002, 42501, VD020, 22023 |
+| `video.apply_storyboard_result(p_storyboard_id uuid, p_ai_run_id uuid, p_scenes jsonb, p_expected_version int)`(인자는 제안) | service_role | `is_service_caller`, version 일치, 장면 수(VD018)·길이 합계(VD017) 재검사, enum. 장면 교체, version +1, status `ready` | `video.storyboards` | 42501, VD017, VD018, 22023 |
+| `video.finish_scene_asset(p_scene_id uuid, p_kind text, p_lang text, p_storage_path text, p_ai_generated boolean, p_rights_basis text, p_reused_from_asset_id uuid)`(인자는 제안) | service_role | 경로가 자기 조직 폴더(CHECK), clip은 `rights_basis` 필수, 같은 장면·종류·언어의 기존 `ready` → `superseded` | `video.scene_assets` | 42501, VD019, 23514, P0002 |
+| `video.snapshot_storyboard(p_storyboard_id uuid, p_cut_kind text, p_scene_ids uuid[], p_hook_text text)`(인자는 제안) | service_role | 마스터: VD017·VD018·VD019, 모든 장면 소재 `ready`(VD001), status → `rendering`. 쇼츠: 연속 장면, 컷 10개 이하(VD021). 컷 행 upsert + 스냅샷 1행 | `(cut_id, snapshot_id, version)` | 42501, VD001, VD017, VD018, VD019, VD020, VD021, 22023 |
+
+렌더 종료 때 `storyboards.status`(rendering → rendered/ready)와 `storyboard_cuts.status`는 오케스트레이터가 service_role로 바꾸고 전이 트리거가 검사한다(05장 11장).
+
+### 9.3 잡 공통 규칙
+
+4절 공통 규칙 그대로다: payload에 비밀값·원문 대본 전체를 넣지 않고 id와 Storage 경로만, 경로는 `video-media/<org_id>/video/storyboards/<storyboard_id>/<uuid>.<ext>`(제안), 진행률은 `heartbeat_job`. 렌더 계열 워커는 payload가 아니라 스냅샷에서 장면을 읽는다.
+
+### 9.4 잡 페이로드 계약
+
+4절 표와 같은 열이다.
+
+| `job_type` | payload | result | progress 메시지 예 |
+|---|---|---|---|
+| `storyboard.generate` | `{storyboard_id, script_run_id, template_code, format, aspect, target_seconds, base_language, expected_version}` | `{ai_run_id, version, scene_count}`(장면 저장은 FastAPI가 `apply_storyboard_result`로 1회) | `"beats"`, `"scenes"`, `"claims"`, `"validate"`, `"compliance"` |
+| `scene.image` | `{scene_id, storyboard_id, prompt(서버 조립: 시각 설명 + 스타일 접미어 + 금지 접미어), size: '1920x1080'\|'1080x1920', model: 'flux-pro'\|'flux-ultra', seed, purpose: 'scene'\|'vertical'}` | `{scene_asset_id, storage_path, seed, model, width, height}` | - |
+| `scene.narration` | `{storyboard_id, scene_ids[], language, provider: 'elevenlabs'\|'oss-voice', voice_id, narration_group_id}`(시작 때 고정된 값, 대체 없음) | `{assets: [{scene_id, scene_asset_id, storage_path, duration_ms}], voice_job_ids[], provider, voice_id}` | `"tts 12/40"` |
+| `storyboard.render` | `{storyboard_id, cut_id, snapshot_id, languages[], voice: {provider, voice_id_by_lang}}`(워터마크·BGM·장면은 스냅샷에서) | `{outputs: [{language, output_id, status}], source_warnings: [{scene_id, kind}], refunded_credits}` | `"narration:JA"`, `"source_check"`, `"scene 12/40"`, `"concat:KO"`, `"subtitle:KO"`, `"bgm:KO"`, `"encode:KO"` |
+| `storyboard.source_check` | `{storyboard_id, snapshot_id}` | `{run_id, warnings: [{scene_id, kind: 'no_source'\|'weak_source', note}]}` | - |
+| `storyboard.shorts` | pick: `{storyboard_id, phase: 'pick', master_snapshot_id, max_cuts}` / render: `{storyboard_id, phase: 'render', cuts: [{cut_id, snapshot_id}], vertical: 'crop'\|'regenerate', languages[]}` | pick: `{ai_run_id, cut_ids[]}` / render: `{outputs: [{cut_id, language, output_id, status}], refunded_credits}` | `"pick"`, `"hook"`, `"cut 2/5:KO"` |
+| `media.scene_clip`(제안) | `{snapshot_id, scene_id, kind, duration_ms, motion_preset, image_path?, clip_path?, text?, layout: 'landscape'\|'portrait', size: '1920x1080'\|'1080x1920', fps: 30, hold_ms_by_lang?: {KO: 0, JA: 400}}` | `{output_path, duration_ms}` | - |
+| `media.scene_concat`(제안) | `{clips: [{path, duration_ms}], narration: [{start_ms, path}], language}` | `{output_path, duration_ms}` | `"concat 12/40"` |
+| `media.bgm_mix`(제안) | `{video_path, bgm_path\|null, duck_db: -12, fade_ms: 2000}` | `{output_path}` | - |
+| `media.compose`, `media.encode`, `media.stt` | 4절 그대로. Track S는 `media.compose`에 `reaction_layer: null`, `template_path: null`, `emphasis_ass_path`(image 장면 화면 문구)를 넣는다 | 4절 그대로 | - |
+
+스냅샷 `snapshot` 키(제안, 05장 11장 jsonb와 같아야 한다): `storyboard`(id, version, revision, format, aspect, target_seconds, template_code, languages, voice), `cut`(id, kind, aspect, scene_ids, hook_text), `scenes`(ord, id, kind, duration_ms, narration, on_screen_text, motion_preset, music_cue, chapter, sources, `assets`: {image?, clip?, narration_by_lang}), `bgm`(library_track_id, path, license_type 또는 null), `watermark`, `has_ai_assets`, `total_ms`. 계약 스키마는 TS(zod)와 Python(pydantic) 두 곳에 같게 두고 동치 테스트로 묶는다(제안, book-trailer `docs/products/book-trailer/04_API.md:97`과 같은 방식).
+
+### 9.5 FastAPI 엔드포인트와 그래프 계약
+
+6.1절 표와 같은 열이다.
+
+| 엔드포인트 | 호출자 | 인증 | video 사용 |
+|---|---|---|---|
+| `POST /graphs/video.storyboard/runs`, `GET /graphs/runs/{id}` | 오케스트레이터(`storyboard.generate`) | 잡 토큰 scope `graph:video.storyboard`, `jti` 1회 | 장면 목록 생성. interrupt 없음. 결과는 FastAPI가 `apply_storyboard_result`로 저장 |
+| `POST /graphs/video.shorts_pick/runs`, `GET /graphs/runs/{id}` | 오케스트레이터(`storyboard.shorts` pick 단계) | 잡 토큰 scope `graph:video.shorts_pick` | 쇼츠 컷 후보와 훅 문구. 컷 행은 오케스트레이터가 service_role로 쓴다 |
+| `POST /graphs/video.step/runs`(kind `source_check`, 제안) | 오케스트레이터(`storyboard.source_check`) | 잡 토큰 scope `graph:video.step` | 출처 점검. 기능 키 `video.analyze`(제안) |
+
+Next.js는 이 그래프들을 직접 부르지 않는다(사람 승인 단계가 그래프 안에 없다).
+
+그래프 입출력(02장 10.9절 노드 순서):
+
+| 그래프 | 입력 | 출력 | 서버 재검증 |
+|---|---|---|---|
+| `video.storyboard` | `{storyboard_id, script_run_id(대본은 FastAPI가 ai_runs에서 읽는다), template: {code, beats: [{name, weight}], default_scene_seconds}, format, aspect, target_seconds, base_language}` | `{scenes: [장면 JSON], total_ms, compliance: {verdict, items}}` | 장면 수, 길이 합계 ±10%, 글자 수, enum. 실패면 `VD017`·`VD018`로 run `failed` + 환불 |
+| `video.shorts_pick` | `{storyboard_id, master_snapshot_id, max_cuts}` | `{cuts: [{scene_ids[](연속), duration_ms(≤60000), hook_text(≤40자, 제안), reason}], compliance}` | 연속성, 겹침 없음, 컷 길이, 개수 ≤ `min(max_cuts, 10)` |
+| `video.step` kind `source_check` | `{scenes: [{scene_id, narration, on_screen_text, source_required, sources}]}` | `{warnings: [{scene_id, kind, note}]}` | 장면 id가 스냅샷 안에 있는지 |
+
+장면 JSON(`video.storyboard` 출력 원소):
+
+```json
+{
+  "ord": 1,
+  "chapter": "1부 시대 배경 | null",
+  "kind": "image | clip | text_card | title",
+  "duration_ms": 8000,
+  "narration": "600자 이하",
+  "on_screen_text": "160자 이하",
+  "visual_prompt": "600자 이하",
+  "motion_preset": "zoom_in | zoom_out | pan_left | pan_right | static",
+  "music_cue": "문자열 | null",
+  "shorts_candidate": false,
+  "source_required": true,
+  "sources": [{ "title": "근거 문서 제목", "url": "근거 id가 있는 URL만", "note": "근거 id" }]
+}
+```
+
+`sources`는 근거 id(RAG 청크·검색 결과)가 있을 때만 채우고, 없으면 빈 배열이다. 그래프는 URL을 지어내지 않는다(01장 VD-F-138). `clip` 장면은 그래프가 만들지 않고 사용자가 편집기에서 바꾼다(제안).
+
+### 9.6 오류 코드
+
+7절 표와 같은 열이다. HTTP 대응은 제안이다.
+
+| 코드 | 의미 | HTTP |
+|---|---|---|
+| VD017 | 장면 길이 합계가 목표 길이 ±10% 밖(그래프 결과 저장, 렌더 요청) | 422 + detail `{total_ms, min_ms, max_ms}` |
+| VD018 | 장면 수 한도 초과(쇼츠 3~12, 롱폼 분당 3~8, 최대 240) | 422 + detail `{count, min, max}` |
+| VD019 | `clip` 장면에 권리 근거(`rights_basis`, 근거 메모) 없음 | 422 + "원본의 권리 근거를 선택해 주세요" |
+| VD020 | 렌더 중(`rendering`) 편집·다시 만들기·렌더 재요청 | 409 + "렌더가 끝난 뒤 다시 시도해 주세요" |
+| VD021 | 쇼츠 컷 10개 초과 | 422 |
+| VD409 | 낙관적 동시성 충돌: 장면 또는 스토리보드 revision이 현재 값과 다름 | 409 + detail `{current_revision}`. 화면은 최신본을 다시 불러온다 |
+
+기존 코드의 Track S 쓰임: `VD001`(렌더할 장면에 `ready` 소재 없음, detail `scene_ids`), `VD009`(storyboard 엔타이틀먼트 없음, `storyboard_max_minutes`·`shorts_extract_max` 초과), `VD010`(주제 점수 60 미만), `VD013`(장면 내레이션 보이스가 기록된 값과 다름), `22023`(비연속 쇼츠 컷, 쇼츠 형식에 쇼츠 추출, 마스터 컷 없음, 마지막 장면 삭제).

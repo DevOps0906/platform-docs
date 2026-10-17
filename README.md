@@ -11,14 +11,14 @@
 | 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
 | 기획 제품 | 16개(모두 01~07 완료) | `products/<제품>/` |
-| 개발 묶음 | 16개, 작업 합계 962개 | `develop/<제품>/` |
+| 개발 묶음 | 16개, 작업 합계 981개 | `develop/<제품>/` |
 | 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
 | 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
 | 가격 플랜 | 제품 15개 + 서비스 사업 1개(arch-studio는 아직 없음, 요금은 01_PRD 4장) | `Price_Plans/` |
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `products/_design-guide/templates/persuasion-landing/` |
-| 전체 파일 | 1,631개, 폴더 444개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
+| 전체 파일 | 1,636개, 폴더 444개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
 
@@ -116,7 +116,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | flora-publishing (FLORA Publishing) | 1인 작가가 AI와 기획·집필·판형 조정을 거쳐 인쇄 PDF·ePub 완성 | `publishing`(1000) | 2 | 65 | [기획](products/flora-publishing/) · [개발](develop/flora-publishing/) · [가격](Price_Plans/flora-publishing/PRICE_PLAN.md) |
 | astro-ai (신비로운AI) | 사주 원국 + 타로 3장 AI 해설을 A4 책자형 PDF 리포트로 | `astro`(1100) | 2 | 57 | [기획](products/astro-ai/) · [개발](develop/astro-ai/) · [가격](Price_Plans/astro-ai/PRICE_PLAN.md) |
 | nomad-docs (NOMAD Docs) | 체크리스트 한 번으로 견적서·요구사항정의서·계약서 등 실무 문서 묶음 생성, CRM형 작업 공간 | `docs`(2300) | 2 이후 | 65 | [기획](products/nomad-docs/) · [개발](develop/nomad-docs/) · [가격](Price_Plans/nomad-docs/PRICE_PLAN.md) |
-| sceneflow (SceneFlow) | 숏폼·롱폼·Lofi·플리 자동 생산과 다채널 배포, 쇼츠 대행 | `video`(1200) | 3 | 65 | [기획](products/sceneflow/) · [개발](develop/sceneflow/) · [가격](Price_Plans/sceneflow/PRICE_PLAN.md) |
+| sceneflow (SceneFlow) | 스토리보드 하나로 롱폼·장면 단위 쇼츠·언어판을 만들고 다채널 배포, 드라마·커머스 숏폼 재편집, 쇼츠 대행(음원·플리는 Phase 2) | `video`(1200) | 3 | 84 | [기획](products/sceneflow/) · [개발](develop/sceneflow/) · [가격](Price_Plans/sceneflow/PRICE_PLAN.md) |
 | nomad-blog (NOMAD Blog) | 키워드 하나로 블로그 원고 + 제휴 카드 + 대가성 문구, 예약 발행 | `blog`(1300) | 3 | 59 | [기획](products/nomad-blog/) · [개발](develop/nomad-blog/) · [가격](Price_Plans/nomad-blog/PRICE_PLAN.md) |
 | nomad-commerce (NOMAD Commerce) | 셀러용 상품 소싱·AI 상세페이지·마켓 업로드 | `commerce`(1400) | 3 | 60 | [기획](products/nomad-commerce/) · [개발](develop/nomad-commerce/) · [가격](Price_Plans/nomad-commerce/PRICE_PLAN.md) |
 | microweb-studio (Microweb Studio) | 모바일 청첩장 등 마이크로웹 템플릿 엔진 + 대행 제작 쇼룸 | `microweb`(1500) | 4 | 56 | [기획](products/microweb-studio/) · [개발](develop/microweb-studio/) · [가격](Price_Plans/microweb-studio/PRICE_PLAN.md) |
@@ -281,7 +281,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 |---|---|
 | 기획 | 16개 제품 완료(01~07, CLAUDE.md, SQL. book-trailer는 08_DESIGN_SYSTEM 추가, arch-studio는 2026-10-16 완료). 인증 단계(확정 결정 22) 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
 | 통합 DB | 코어 `0000~0009` + 제품 조각 17개(`1000~2300`, `2400_arch`, `2500_news`, `2600_trailer`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
-| 개발 묶음 | 16개 제품(작업 962개, book-trailer 2026-10-15·arch-studio 2026-10-16 추가, 2026-10-17 설득형 랜딩 15개 추가: flora-publishing·nomad-docs·arch-studio 각 5개), 공용모듈 V2 개발서 16개 |
+| 개발 묶음 | 16개 제품(작업 981개, 2026-10-18 sceneflow 스토리보드 트랙 19개 추가, book-trailer 2026-10-15·arch-studio 2026-10-16 추가, 2026-10-17 설득형 랜딩 15개 추가: flora-publishing·nomad-docs·arch-studio 각 5개), 공용모듈 V2 개발서 16개 |
 | 공용모듈 | 7개 기획·개발 지시서 완료(상태: 제안). 패키지 저장소 `nomad-modules`는 아직 없음 |
 | 가격 | 제품 15개 + Web-App-Agency 초안(정본은 각 PRD 4장) |
 | 화이트라벨 | `Multi-tenant_Theming/` 설계 완료, 코어 확장 SQL `0011`은 제안(PGlite 적용·RLS 스모크 91/91 통과). 코어 반영은 승인 후 |
@@ -319,3 +319,14 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 폴더 | `nomad-video` → `sceneflow`: `products/sceneflow/`, `develop/sceneflow/`(`sceneflow_develop.md`, `setup-sceneflow.sh`·`.ps1`, `sceneflow-root/`), `develop_V2/sceneflow/`, `Price_Plans/sceneflow/`, 랜딩 템플릿 `data/sceneflow.json`·`dist/sceneflow.html` |
 | 그대로 둔 것 | DB 스키마 `video`와 앱 ID `video`, 기능·작업 ID 접두어(VD-F, VD-06), SQL 파일 이름(`1200_video.sql`, `0002_video_domain.sql`). 제품 이름이 아니라 도메인 이름이라 바꾸면 DB·코어 규격까지 바뀐다. 원본 코드 리뷰(`reviews/`, `pdf/`)는 원본 프로젝트 이름 그대로 |
 | 실제 개발 폴더 | `D:\WorkSpace\DEV\sceneflow\` (setup 스크립트 기본값) |
+
+### 8.4 2026-10-18 SceneFlow 스토리보드 디벨롭 (검토용)
+
+| 항목 | 내용 |
+|---|---|
+| 핵심 | 스토리보드 하나로 롱폼 1편 + 장면 단위 쇼츠 여러 편 + 언어판(KO/JA/EN). 첫 고객은 지식·역사 채널 운영자 |
+| 확정 결정(사용자) | SF-1 Track C Mode1·D → **Track S** 통합(C Mode2는 A로), SF-2 MVP 렌더는 FFmpeg(Remotion은 Phase 2), SF-3 Track E·F(Lofi·플리) Phase 2, SF-4 첫 고객 지식·역사 채널 |
+| 기획서 | `products/sceneflow/` 01장 10장(VD-F-130~142, 크레딧, 법·고지, D-30~D-37), 02장 10장(렌더 구조), 03장 8장(편집기 화면), 04장 9장(API·잡·오류 VD017~021·VD409), 05장 11장(테이블 6개), 06장 9장(작업 19개 VID-06-066~084), CLAUDE.md·README 끝 절, 08장 9장(롱폼 대행 패키지) |
+| DB | `1200_video.sql` 12절·모놀리스 `0002` 끝 절: storyboards, scenes, scene_assets, storyboard_cuts, storyboard_snapshots, storyboard_templates. PGlite 적용·행동 검사 통과 |
+| 가격·검증 | `Price_Plans/sceneflow/PRICE_PLAN.md` 11장(이익률 검증: 기본 단가로는 70% 미달 → D-31·D-36·D-37 함께 결정), 검증 키트 `01_VALIDATION_PLAN.md`~`04_INTAKE_AND_INTERVIEW.md` |
+| 랜딩 | `templates/persuasion-landing/data/sceneflow.json` "SceneFlow 스토리보드 여정"(6단계 24페이지) |
