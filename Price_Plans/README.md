@@ -40,7 +40,7 @@ Price_Plans/
 | nomad-blog | 제품 SaaS | [`nomad-blog/PRICE_PLAN.md`](nomad-blog/PRICE_PLAN.md) | 초안 | `products/nomad-blog/01_PRD.md` 4장 |
 | nomad-commerce | 제품 SaaS | [`nomad-commerce/PRICE_PLAN.md`](nomad-commerce/PRICE_PLAN.md) | 초안 | `products/nomad-commerce/01_PRD.md` 4장 |
 | nomad-docs | 제품 SaaS | [`nomad-docs/PRICE_PLAN.md`](nomad-docs/PRICE_PLAN.md) | 초안 | `products/nomad-docs/01_PRD.md` 4장 |
-| sceneflow | 제품 SaaS + 대행 | [`sceneflow/PRICE_PLAN.md`](sceneflow/PRICE_PLAN.md) | 초안 | `products/sceneflow/01_PRD.md` 4장 |
+| sceneflow | 제품 SaaS + 대행(검증 키트 포함, 2026-10-18 스토리보드 트랙) | [`sceneflow/PRICE_PLAN.md`](sceneflow/PRICE_PLAN.md), [`README.md`](sceneflow/README.md) | 초안 | `products/sceneflow/01_PRD.md` 4장 |
 | stock-dashboard | 제품 SaaS | [`stock-dashboard/PRICE_PLAN.md`](stock-dashboard/PRICE_PLAN.md) | 초안 | `products/stock-dashboard/01_PRD.md` 4장 |
 | study-note | 제품 SaaS | [`study-note/PRICE_PLAN.md`](study-note/PRICE_PLAN.md) | 초안 | `products/study-note/01_PRD.md` 4장 |
 | toon-factory | 제품 SaaS | [`toon-factory/PRICE_PLAN.md`](toon-factory/PRICE_PLAN.md) | 초안 | `products/toon-factory/01_PRD.md` 4장 |

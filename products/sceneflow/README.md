@@ -73,6 +73,6 @@ SceneFlow는 **스토리보드 하나로 롱폼 1편 + 장면 단위 쇼츠 여�
 | 문서 | 위치 |
 |---|---|
 | `01_PRD.md` | 10장: 확정 결정 SF-1~SF-4, 페르소나, 기능 VD-F-130~142, Track S 흐름·형식·장면 종류·템플릿, 크레딧 단가(10.4절이 정본), 법·금지 문구, KPI, 열린 결정 D-30~D-34. 범위 표 변경은 2절 Track C~F 행 |
-| `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `06_AGENT_PLAN.md` | 각 문서 끝의 2026-10-18 새 장(화면 `/app/storyboards`, API·잡, 테이블·RPC·오류 코드, 작업 VID-06-066부터) |
+| `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `06_AGENT_PLAN.md` | 각 문서 끝의 2026-10-18 새 장(화면 `/dashboard/storyboards`, API·잡, 테이블·RPC·오류 코드, 작업 VID-06-066부터) |
 | `CLAUDE.md` | 끝의 "스토리보드 트랙 규칙 (2026-10-18)" 절 |
 | `docs/products/00_MERGE_ANALYSIS.md` | 확정 결정 7 행 끝의 2026-10-18 개정 메모 |
