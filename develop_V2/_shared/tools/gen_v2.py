@@ -113,8 +113,8 @@ PRODUCTS = {
                  ('025', '축소', '법적 페이지 본문은 `policy_documents` seed')],
         dec=[('V2-AS-1', '제품 목적 코드(`astro.subject_info`)를 compliance 표준 목적에 넣을지', '제품 접두어 코드로 유지')],
     ),
-    'shortsflow': dict(
-        name='ShortsFlow', app='video', pfx='VID', stage='3',
+    'sceneflow': dict(
+        name='SceneFlow', app='video', pfx='VID', stage='3',
         domain=['20261013000002_video_domain.sql'],
         mods={
             'compliance': dict(st='채택', role='', deps=['035', '058'],

@@ -147,11 +147,11 @@ TR-06-010은 준비(스크린샷 표, 수정 기록 양식)를 Sonnet이 하고 
 | R-T1 | 모듈러 `seed.sql`에 trailer 플랜 3·팩 3 반영 | `_supabase-modular/seed.sql` | 지금은 조각 12절이 do nothing으로 넣는다(nomad-docs C-3과 같은 처리) | W0 |
 | R-T2 | `DB_CONVENTIONS.md` 2장 번호 표에 `2600~2699 trailer`, 1장 SQLSTATE 접두사에 `TR` 등록 | `docs/file/03-설계/공용코어/DB_CONVENTIONS.md` | 표에 2400·2500도 아직 없다 | W0 |
 | R-T3 | affiliate `source_app`에 `trailer` 추가와 서점 제휴 제공자(알라딘 TTB 등) 범용화 검토 | `0006_core_affiliate.sql` | 범용화되면 `purchase_links`의 제휴 링크를 코어로 옮길 수 있다(지금은 제품 테이블, 05장 6절) | Phase 2 |
-| R-T4 | 오케스트레이터 잡 토큰 표준화 | `AI_ARCHITECTURE.md` 2.1절 | shortsflow R-V5와 같은 요청 | W1 |
+| R-T4 | 오케스트레이터 잡 토큰 표준화 | `AI_ARCHITECTURE.md` 2.1절 | sceneflow R-V5와 같은 요청 | W1 |
 | R-T5 | `AUTH_ROADMAP.md` 8장 매트릭스에 trailer 행: open, 작가·출판사, 추가 페르소나 creator·publisher 팀, B Google + 이메일, C1 P1, C2 P1 | `docs/file/03-설계/공용코어/AUTH_ROADMAP.md` | 확정 결정 22 적용 | W0 |
 | R-T6 | `SHARED_MODULES.md` 11장 sns-uploader 소비자 목록에 trailer 추가 | `docs/file/03-설계/공용코어/SHARED_MODULES.md` | YouTube 업로드(P1) | W7 전 |
 | R-T7 | `REFERENCES.md`에 book-trailer 절 추가(북트레일러·출판 마케팅 사이트 URL 확인 후) | `docs/file/03-설계/디자인/REFERENCES.md` | 지금은 다른 제품 후보를 다른 방식으로만 인용한다(03장 4.1절) | W1-D |
-| R-T8 | Remotion 렌더러를 공용 렌더 서비스로 승격 검토 | `_platform-core` | toon-factory MP4, shortsflow Track C/D가 같은 렌더러를 쓸 수 있다. 라이선스는 조직 단위(D-2) | Phase 2 |
+| R-T8 | Remotion 렌더러를 공용 렌더 서비스로 승격 검토 | `_platform-core` | toon-factory MP4, sceneflow Track C/D가 같은 렌더러를 쓸 수 있다. 라이선스는 조직 단위(D-2) | Phase 2 |
 
 반영 현황(2026-10-16):
 

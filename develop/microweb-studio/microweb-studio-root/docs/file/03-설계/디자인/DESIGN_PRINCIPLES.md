@@ -136,8 +136,8 @@ ASCII 와이어프레임 예시(형식 참고용):
 
 | 제품 | 기존 토큰 | 걸리는 항목 | 처리 지침 |
 |---|---|---|---|
-| shortsflow, astro-ai, flora-publishing | 배경 #0A0A0F~#0D0D1A + 민트 #00C9A7 또는 보라 #7C3AED/#8B5CF6 단일 강조 | 2, 5(색조 섞인 거의 검정), UUPM의 보라 그라디언트 | 제품마다 같은 다크 베이스를 공유하고 있어 서로 구분되지 않는다. 대시보드 다크 베이스는 유지할 수 있지만 랜딩은 제품 주제에서 색을 다시 뽑는다. |
-| shortsflow, nomad-commerce | JetBrains Mono 숫자, Bebas Neue 헤드라인 | 5(모노스페이스 데이터 라벨) | 숫자 정렬이 필요한 표는 tabular-nums 지원 본문 서체로 대체를 먼저 검토한다. |
+| sceneflow, astro-ai, flora-publishing | 배경 #0A0A0F~#0D0D1A + 민트 #00C9A7 또는 보라 #7C3AED/#8B5CF6 단일 강조 | 2, 5(색조 섞인 거의 검정), UUPM의 보라 그라디언트 | 제품마다 같은 다크 베이스를 공유하고 있어 서로 구분되지 않는다. 대시보드 다크 베이스는 유지할 수 있지만 랜딩은 제품 주제에서 색을 다시 뽑는다. |
+| sceneflow, nomad-commerce | JetBrains Mono 숫자, Bebas Neue 헤드라인 | 5(모노스페이스 데이터 라벨) | 숫자 정렬이 필요한 표는 tabular-nums 지원 본문 서체로 대체를 먼저 검토한다. |
 | flora-publishing `warm-serif` 테마 | #FAF7F2 배경 + #92400E 강조 + Georgia/Noto Serif KR | 1 | 테마 옵션으로는 둘 수 있으나 기본 테마나 랜딩에 쓰지 않는다. |
 | website-floria (Botanic, Lucury) | #080808~#0B0B0B 배경 + 흰 글자, Lucury는 #C4A46B 골드 | 2, 5(색조 섞인 거의 검정) | 럭셔리 맥락에서 어두운 배경은 브리프상 유지할 수 있다. 검정은 의도된 검정(#000 또는 주제색이 섞인 어두운 녹색 등)으로 정한다. |
 

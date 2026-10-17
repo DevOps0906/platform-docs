@@ -1,29 +1,29 @@
 # 07 원본 이식과 폐기: NOMAD Book Trailer
 
-작성일 2026-10-15. NOMAD Book Trailer는 신규 제품이라 전용 원본 저장소가 없다(`README.md` 2장). 이 장의 "원본"은 `README.md` 3장의 이식 원천 6개다: shortsflow(설계), toon-factory(설계·SQL), flora-publishing(설계, 연동 대상), nomad-docs(설계), NOMAD Shorts Maker(코드, 리뷰로만 참조), Toon-Factory(기획, 리뷰로만 참조). 이식은 개발 단계에서 새 앱 저장소에 "새로 작성하며 패턴을 참고"하거나 "데이터·규칙을 복사 후 수정"하는 두 방식뿐이고, 원천 폴더와 원천 제품 문서는 수정하지 않는다(5절).
+작성일 2026-10-15. NOMAD Book Trailer는 신규 제품이라 전용 원본 저장소가 없다(`README.md` 2장). 이 장의 "원본"은 `README.md` 3장의 이식 원천 6개다: sceneflow(설계), toon-factory(설계·SQL), flora-publishing(설계, 연동 대상), nomad-docs(설계), NOMAD Shorts Maker(코드, 리뷰로만 참조), Toon-Factory(기획, 리뷰로만 참조). 이식은 개발 단계에서 새 앱 저장소에 "새로 작성하며 패턴을 참고"하거나 "데이터·규칙을 복사 후 수정"하는 두 방식뿐이고, 원천 폴더와 원천 제품 문서는 수정하지 않는다(5절).
 
 근거 표기: 분석 = `docs/reference/00_MERGE_ANALYSIS.md`(아래 "분석:줄"), 리뷰 = `D:/WorkSpace/platform/docs/reviews/<이름>.md:줄`, 이 폴더 문서는 파일 이름만 쓴다. 대상 위치의 `web/`, `api/`, `orch/`, `rend/`, `comp/` 약어는 `06_AGENT_PLAN.md` 머리말과 같다.
 
-AI 관련 원천 자산 점검: 원천의 AI 사용은 shortsflow 설계의 이미지(fal)·TTS(ElevenLabs·오픈소스) 경로와 LangGraph 그래프(`D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:176`, `:210-238`), NOMAD Shorts Maker 원본의 AI 클라이언트 산재(`docs/reference/reviews/NOMAD_Shorts_Maker.md` 5장 #10)다. 원본 코드 호출 경로는 하나도 옮기지 않고 ai-service 라우터(확정 결정 17)와 오케스트레이터 단계로 새로 작성한다. 원고 분석, 브리프·인용 원고 대조, 장르 트레일러 문법, 표지 팔레트 추출, 구매 링크 추적, Remotion 컴포지션은 원천에 없어 모두 신규다.
+AI 관련 원천 자산 점검: 원천의 AI 사용은 sceneflow 설계의 이미지(fal)·TTS(ElevenLabs·오픈소스) 경로와 LangGraph 그래프(`D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:176`, `:210-238`), NOMAD Shorts Maker 원본의 AI 클라이언트 산재(`docs/reference/reviews/NOMAD_Shorts_Maker.md` 5장 #10)다. 원본 코드 호출 경로는 하나도 옮기지 않고 ai-service 라우터(확정 결정 17)와 오케스트레이터 단계로 새로 작성한다. 원고 분석, 브리프·인용 원고 대조, 장르 트레일러 문법, 표지 팔레트 추출, 구매 링크 추적, Remotion 컴포지션은 원천에 없어 모두 신규다.
 
 ## 1. 원본별 자산 분류
 
 상태는 원천 자산의 구현 상태(동작/부분/목업/기획만), 처리는 이식(복사 후 수정)/참고(패턴만, 새로 작성)/폐기다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 2.8절).
 
-### 1.1 shortsflow (설계, 미디어 파이프라인 패턴 베이스)
+### 1.1 sceneflow (설계, 미디어 파이프라인 패턴 베이스)
 
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
-| 이미지 경로(fal Flux, 안전 검사, 모델 id 서버 상수, 코어 라우팅 밖) | 기획만 | 참고 | `orch/src/steps/image/` | `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:22`, `:176` |
-| 같은 목소리 규칙(첫 결과로 제공자·보이스 고정, 같은 엔진 재시도만, 샘플 대체 없음) | 기획만 | 이식(규칙 문장 그대로, 대상 테이블만 `trailers`) | `orch/src/steps/tts/`, `trailer.trailers.voice`(jsonb) | `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:227-238` |
-| compliance 노드(그래프 마지막, FAIL 차단·WARN 확인) | 기획만 | 참고(규칙 사전은 출판 도메인으로 새로 작성) | `api/app/ai/compliance/trailer.py`, `packages/trailer-rules/` | `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:214` |
-| 고객 승인 링크(토큰 sha256, 만료, 로그인 없는 재생·결정) | 기획만 | 참고 | `trailer.reviews`, `web/src/app/review/` | `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md` 3.1절 VD-F-123 |
-| 오케스트레이터 잡 토큰(running 잡에 묶인 토큰을 내부 경로에서 발급) | 기획만 | 참고(`AI_ARCHITECTURE.md` 1장 잡 토큰 규칙, `parse` scope는 R-T4로 추가) | `orch/src/core/token.ts` | `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:58-80` |
-| 크레딧 단가 구조(서버 상수가 정본, DB는 받은 값만 차감), 이미지 3·업로드 1 | 기획만 | 참고 | `web/src/server/pricing.ts` | `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md:175`, `:184`, `:189` |
-| sns-uploader(YouTube 업로드) | 기획만 | 참고(소비자로 호출만, 소유는 shortsflow) | `orch/src/steps/upload/` | `docs/file/03-설계/공용코어/SHARED_MODULES.md` 11장 |
+| 이미지 경로(fal Flux, 안전 검사, 모델 id 서버 상수, 코어 라우팅 밖) | 기획만 | 참고 | `orch/src/steps/image/` | `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:22`, `:176` |
+| 같은 목소리 규칙(첫 결과로 제공자·보이스 고정, 같은 엔진 재시도만, 샘플 대체 없음) | 기획만 | 이식(규칙 문장 그대로, 대상 테이블만 `trailers`) | `orch/src/steps/tts/`, `trailer.trailers.voice`(jsonb) | `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:227-238` |
+| compliance 노드(그래프 마지막, FAIL 차단·WARN 확인) | 기획만 | 참고(규칙 사전은 출판 도메인으로 새로 작성) | `api/app/ai/compliance/trailer.py`, `packages/trailer-rules/` | `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:214` |
+| 고객 승인 링크(토큰 sha256, 만료, 로그인 없는 재생·결정) | 기획만 | 참고 | `trailer.reviews`, `web/src/app/review/` | `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md` 3.1절 VD-F-123 |
+| 오케스트레이터 잡 토큰(running 잡에 묶인 토큰을 내부 경로에서 발급) | 기획만 | 참고(`AI_ARCHITECTURE.md` 1장 잡 토큰 규칙, `parse` scope는 R-T4로 추가) | `orch/src/core/token.ts` | `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:58-80` |
+| 크레딧 단가 구조(서버 상수가 정본, DB는 받은 값만 차감), 이미지 3·업로드 1 | 기획만 | 참고 | `web/src/server/pricing.ts` | `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md:175`, `:184`, `:189` |
+| sns-uploader(YouTube 업로드) | 기획만 | 참고(소비자로 호출만, 소유는 sceneflow) | `orch/src/steps/upload/` | `docs/file/03-설계/공용코어/SHARED_MODULES.md` 11장 |
 | BullMQ FlowProducer 단계 체인, Python 미디어 워커 | 기획만 | 폐기 | - | TS-01 |
 | FFmpeg 단일 합성 엔진 결정과 "Remotion 제외" | 기획만 | 폐기(이 제품은 반대 결정) | - | TS-02 |
-| Track A~D, 다채널 예약·분석, 레이더 | 기획만 | 폐기(범위 밖, Phase 2 "shortsflow로 보내기") | - | TS-03 |
+| Track A~D, 다채널 예약·분석, 레이더 | 기획만 | 폐기(범위 밖, Phase 2 "sceneflow로 보내기") | - | TS-03 |
 
 ### 1.2 toon-factory (설계, SQL 검증 완료)
 
@@ -60,7 +60,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 shortsflow 설계의 이�
 
 ### 1.5 NOMAD Shorts Maker (코드, 약 35%, 리뷰로만 참조)
 
-코드는 shortsflow가 소유한다(`D:/WorkSpace/platform/docs/products/shortsflow/README.md:32`). 이 제품은 그 코드를 직접 복사하지 않고 리뷰가 지적한 결함만 차단 설계로 가져온다(`README.md` 2.1절).
+코드는 sceneflow가 소유한다(`D:/WorkSpace/platform/docs/products/sceneflow/README.md:32`). 이 제품은 그 코드를 직접 복사하지 않고 리뷰가 지적한 결함만 차단 설계로 가져온다(`README.md` 2.1절).
 
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
@@ -82,10 +82,10 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 shortsflow 설계의 이�
 
 | 자산 | 수정할 점 |
 |---|---|
-| shortsflow 같은 목소리 규칙 | 고정 시점이 "첫 내레이션 성공"이고 고정 값은 `trailers.voice`(`provider`, `voice_id`, `fixed_at`, 서버만 쓴다). 장면 재생성·전체 다시 녹음도 같은 값. 다른 목소리 결과는 `finish_run`이 22023으로 거부. 작가 목소리 클론은 Phase 2(D-9, 동의 녹음) |
-| shortsflow 이미지 경로 | 스타일 고정이 추가된다: 브랜드 키트 팔레트 → 프롬프트 색 지시, 문법별 스타일 프리셋 접미어, 트레일러 고정 seed(`02_ARCHITECTURE.md` 5.4절). 실존 인물·특정 작가 화풍 금지어를 compliance가 막고 인물은 실루엣·소품 중심(08장 8장) |
-| shortsflow compliance | 규칙 사전을 출판 도메인으로: 근거 없는 판매·순위·수상, 보장, 가상 독자 후기, 의료·투자 효능 단정, 도서정가제 위반 할인(정가 대비 15% 초과), 실존 인물 이름 이미지 프롬프트, 스포일러 수준 위반(`01_PRD.md` 6.5절). 한글 경계 `\b` 금지(4절) |
-| shortsflow 고객 승인 | 승인 대상이 렌더(1~5개)이고 결정은 승인·수정 요청(1,000자). 승인되면 `trailers.status=approved`. publisher 플랜만 |
+| sceneflow 같은 목소리 규칙 | 고정 시점이 "첫 내레이션 성공"이고 고정 값은 `trailers.voice`(`provider`, `voice_id`, `fixed_at`, 서버만 쓴다). 장면 재생성·전체 다시 녹음도 같은 값. 다른 목소리 결과는 `finish_run`이 22023으로 거부. 작가 목소리 클론은 Phase 2(D-9, 동의 녹음) |
+| sceneflow 이미지 경로 | 스타일 고정이 추가된다: 브랜드 키트 팔레트 → 프롬프트 색 지시, 문법별 스타일 프리셋 접미어, 트레일러 고정 seed(`02_ARCHITECTURE.md` 5.4절). 실존 인물·특정 작가 화풍 금지어를 compliance가 막고 인물은 실루엣·소품 중심(08장 8장) |
+| sceneflow compliance | 규칙 사전을 출판 도메인으로: 근거 없는 판매·순위·수상, 보장, 가상 독자 후기, 의료·투자 효능 단정, 도서정가제 위반 할인(정가 대비 15% 초과), 실존 인물 이름 이미지 프롬프트, 스포일러 수준 위반(`01_PRD.md` 6.5절). 한글 경계 `\b` 금지(4절) |
+| sceneflow 고객 승인 | 승인 대상이 렌더(1~5개)이고 결정은 승인·수정 요청(1,000자). 승인되면 `trailers.status=approved`. publisher 플랜만 |
 | toon-factory 컷 저장 | 컷 대신 장면. `scenes.revision` 낙관적 동시성(`save_scene`의 `p_expected_revision`), 엔드카드 보호(`TR007`), 위치 재정렬은 `reorder_scenes` 한 번에 |
 | toon-factory 라이선스 CHECK | 음악은 `license_verified_at`, `license_verified_by`, `commercial_use_allowed`가 없으면 `status='published'` 불가(`license_source`, `license_ref` 필수). 서체는 OFL 8종만(08장 4.2절), 템플릿 그래픽은 자체 코드라 라이선스 행이 없다 |
 | flora-publishing 업로드 계약 | 형식 5종(pdf, epub, docx, md, txt), 붙여넣기 600,000자, 권리 확인(감사) 없으면 분석 불가(`TR003`), 원문은 Storage에만 두고 DB에는 해시·글자 수 |
@@ -99,9 +99,9 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 shortsflow 설계의 이�
 
 | ID | 항목 | 원천 | 출처 | 사유 | 대체 |
 |---|---|---|---|---|---|
-| TS-01 | BullMQ FlowProducer 단계 체인, Redis, Python 미디어 워커 | shortsflow | `docs/reference/reviews/NOMAD_Shorts_Maker.md:133`, `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md` 4장 | 이 제품은 단계가 사용자 행동마다 끊기고 동시 잡이 적다. 큐 인프라를 하나 더 운영할 이유가 없다 | `core.jobs` + 오케스트레이터 1개 + 렌더러 1개(02장 4절) |
-| TS-02 | FFmpeg 단일 합성 엔진, "Remotion 제외" 결정 | shortsflow | `D:/WorkSpace/platform/docs/products/shortsflow/07_SOURCE_MIGRATION.md:91`, `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md:91` | shortsflow는 원본 영상 편집이 중심이라 FFmpeg가 맞다. 이 제품은 텍스트·한글 조판·브랜드 토큰이 중심이라 React 컴포지션이 맞다(D-2). 두 결정은 서로 모순이 아니라 제품별 선택이다 | Remotion 4.0.x 렌더러(라이선스: 직원 3명 이하 무료, 그 밖은 Company License) |
-| TS-03 | Track A~D, 다채널 예약·분석, 레이더 | shortsflow | `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md` 2장 | 범위 밖 | YouTube 직접 업로드만(P1), 다채널은 Phase 2 "shortsflow로 보내기"(D-10) |
+| TS-01 | BullMQ FlowProducer 단계 체인, Redis, Python 미디어 워커 | sceneflow | `docs/reference/reviews/NOMAD_Shorts_Maker.md:133`, `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md` 4장 | 이 제품은 단계가 사용자 행동마다 끊기고 동시 잡이 적다. 큐 인프라를 하나 더 운영할 이유가 없다 | `core.jobs` + 오케스트레이터 1개 + 렌더러 1개(02장 4절) |
+| TS-02 | FFmpeg 단일 합성 엔진, "Remotion 제외" 결정 | sceneflow | `D:/WorkSpace/platform/docs/products/sceneflow/07_SOURCE_MIGRATION.md:91`, `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md:91` | sceneflow는 원본 영상 편집이 중심이라 FFmpeg가 맞다. 이 제품은 텍스트·한글 조판·브랜드 토큰이 중심이라 React 컴포지션이 맞다(D-2). 두 결정은 서로 모순이 아니라 제품별 선택이다 | Remotion 4.0.x 렌더러(라이선스: 직원 3명 이하 무료, 그 밖은 Company License) |
+| TS-03 | Track A~D, 다채널 예약·분석, 레이더 | sceneflow | `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md` 2장 | 범위 밖 | YouTube 직접 업로드만(P1), 다채널은 Phase 2 "sceneflow로 보내기"(D-10) |
 | TS-04 | Fabric.js 자유 캔버스·레이어 편집, 말풍선, 표정 교체 | toon-factory, Toon-Factory | `docs/reference/reviews/Toon-Factory.md` 5장 #5, #7 | 트레일러는 자유 배치보다 문법·템플릿 일관성이 품질을 결정한다. 자유 편집은 이중 상태 원천 문제를 다시 만든다 | 장면 컴포넌트 8종 + 속성 편집(08장 9장) |
 | TS-05 | LoRA 화풍 학습 | Toon-Factory | `docs/reference/reviews/Toon-Factory.md:49` | 학습 데이터·GPU·검수 기준이 없고 일정 위험이 가장 크다 | 프롬프트 프리셋 + 팔레트 + 고정 seed(02장 5.4절) |
 | TS-06 | 판형·표지 디자인·페르소나 60종·ePub 생성·TTS 낭독·3D 책 소재 | flora-publishing | `D:/WorkSpace/platform/docs/products/flora-publishing/01_PRD.md` 2장 | 책을 만드는 기능은 flora-publishing 소유. 이 제품은 이미 나온 책을 홍보한다 | FLORA 가져오기(P1) |
@@ -110,7 +110,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 shortsflow 설계의 이�
 | TS-09 | 브라우저 FFmpeg.wasm 렌더 | Toon-Factory | `docs/reference/reviews/Toon-Factory.md:45` | 워터마크 제거, 무료 MP4 생성을 서버가 막을 수 없다 | 서버 렌더러만 파일 생성, 브라우저는 Remotion Player 미리보기(다운로드 경로 없음) |
 | TS-10 | 사용자 모델 선택, LLM SDK 직접 연동 | NOMAD Shorts Maker | `docs/reference/reviews/NOMAD_Shorts_Maker.md` 5장 #10 | 키 분산, 단가 설명 불가 | ai-service 라우터 기능별 체인(02장 5.1절), 기능별 정액 단가 |
 | TS-11 | 대시보드 더미 배열, 난수 성장률 | NOMAD Shorts Maker | `docs/reference/reviews/NOMAD_Shorts_Maker.md` 5장 #9 | 허위 수치 | 구매 링크 클릭 실집계(`link_clicks`), 랜딩 수치 표시 금지 |
-| TS-12 | Suno 음악 생성 | shortsflow | `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md` D-8 | 공식 API 미확인, 저작권 불명확 | 라이선스 검증 카탈로그 곡, 사용자 업로드(권리 확인), Phase 2 재검토(TR-F-135) |
+| TS-12 | Suno 음악 생성 | sceneflow | `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md` D-8 | 공식 API 미확인, 저작권 불명확 | 라이선스 검증 카탈로그 곡, 사용자 업로드(권리 확인), Phase 2 재검토(TR-F-135) |
 
 ## 4. 복사 금지 결함
 
@@ -155,8 +155,8 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 shortsflow 설계의 이�
 
 | 순서 | 작업 | 담당 |
 |---|---|---|
-| 1 | 아카이브 대상 없음을 확인한다. NOMAD Shorts Maker·Toon-Factory 원본 폴더의 아카이브는 각 소유 제품(shortsflow, toon-factory)의 07장 5절이 맡는다 | 해당 없음 |
-| 2 | 원천 폴더·원천 제품 문서(`shortsflow/`, `toon-factory/`, `flora-publishing/`, `nomad-docs/`, `D:/WorkSpace/platform/docs/products/_platform-core/`, `D:/WorkSpace/platform/docs/products/_design-guide/`, `D:/WorkSpace/platform/docs/reviews/`)를 읽기 전용으로 둔다. 필요한 변경은 06장 6절 공용 모듈 요청 또는 해당 제품 담당에게 요청한다. git으로 원천을 바꾸는 명령(checkout, reset, stash, add, commit)을 쓰지 않는다(`D:/WorkSpace/platform/docs/products/_PRODUCT_AGENT_BRIEF.md`) | 모든 개발 에이전트 |
+| 1 | 아카이브 대상 없음을 확인한다. NOMAD Shorts Maker·Toon-Factory 원본 폴더의 아카이브는 각 소유 제품(sceneflow, toon-factory)의 07장 5절이 맡는다 | 해당 없음 |
+| 2 | 원천 폴더·원천 제품 문서(`sceneflow/`, `toon-factory/`, `flora-publishing/`, `nomad-docs/`, `D:/WorkSpace/platform/docs/products/_platform-core/`, `D:/WorkSpace/platform/docs/products/_design-guide/`, `D:/WorkSpace/platform/docs/reviews/`)를 읽기 전용으로 둔다. 필요한 변경은 06장 6절 공용 모듈 요청 또는 해당 제품 담당에게 요청한다. git으로 원천을 바꾸는 명령(checkout, reset, stash, add, commit)을 쓰지 않는다(`D:/WorkSpace/platform/docs/products/_PRODUCT_AGENT_BRIEF.md`) | 모든 개발 에이전트 |
 | 3 | 코드를 옮기는 자산은 2절의 규칙 문장, 라이선스 CHECK 구조, RFC 5987 파일명뿐이다. 원천의 `.env*`, `node_modules`, venv, 잡파일을 새 저장소로 복사하지 않는다 | TR-06-001, 029 |
 | 4 | 키 재발급은 필요 없다. 모든 키를 새로 발급해 배포 플랫폼 비밀로만 둔다. 개발 중 원천 `.env` 값을 실수로 복사·커밋했다면 즉시 재발급하고 원천 소유 제품의 재발급 기록에 함께 남긴다 | TR-06-049(CI 비밀 검사), 사람 |
 | 5 | zip 중복 정리 대상 없음 | 해당 없음 |

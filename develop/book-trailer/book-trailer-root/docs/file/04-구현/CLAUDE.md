@@ -1,6 +1,6 @@
 # CLAUDE.md: NOMAD Book Trailer
 
-개발 에이전트 지침. 이 제품의 기획 정본은 같은 폴더의 01~08이고, 이식 원천(shortsflow, toon-factory, flora-publishing, nomad-docs) 문서보다 우선한다. 모든 사용자 노출 문구는 한국어. 경로 약어(`web/`, `api/`, `orch/`, `rend/`, `comp/`)는 `06_AGENT_PLAN.md` 머리말과 같다.
+개발 에이전트 지침. 이 제품의 기획 정본은 같은 폴더의 01~08이고, 이식 원천(sceneflow, toon-factory, flora-publishing, nomad-docs) 문서보다 우선한다. 모든 사용자 노출 문구는 한국어. 경로 약어(`web/`, `api/`, `orch/`, `rend/`, `comp/`)는 `06_AGENT_PLAN.md` 머리말과 같다.
 
 ## 1. 먼저 읽을 문서
 

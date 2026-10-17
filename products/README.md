@@ -11,7 +11,7 @@
 | `_supabase-modular/` | 공통 | 신규 (통합 DB) | 전체 | - |
 | `flora-publishing/` | 통합 | Flora-v2, flora, flora-publisher, SellingDocs | `publishing` | 1000 |
 | `astro-ai/` (신비로운AI) | 통합 | Astro AI, FortuneDocs | `astro` | 1100 |
-| `shortsflow/` (ShortsFlow) | 통합 | NOMAD Shorts Maker, Nomad-BlogStudio, Youtube_shots_Maker | `video` | 1200 |
+| `sceneflow/` (SceneFlow) | 통합 | NOMAD Shorts Maker, Nomad-BlogStudio, Youtube_shots_Maker | `video` | 1200 |
 | `nomad-blog/` | 분리 신설 | Shorts Maker 내 Content Automator, Youtube_shots_Maker Track D | `blog` | 1300 |
 | `nomad-commerce/` (NOMAD Commerce) | 통합 | Nomad-AI-Factory_V.2, nomad-ai-factory, nomad-ai-commerce, sellingstudio | `commerce` | 1400 |
 | `microweb-studio/` | 통합 | premium-wedding-invitation, nexus-micro-web-builder, webcraft-agency-simulator | `microweb` | 1500 |
@@ -24,7 +24,7 @@
 | `nomad-docs/` (NOMAD Docs) | 신설 | 없음(설계 이식: flora-publishing, flora, SellingDocs, FortuneDocs) | `docs` | 2300 |
 | `arch-studio/` (Arch Studio, 가칭) | 신설(설치형 데스크톱 + 시리얼 라이선스, 정보 입력 → 도면 자동 생성) | 없음(설계 이식: nomad-docs, flora-publishing, `_platform-core` AI 계층) | `arch` | 2400 |
 | `local-news/` (로컬뉴스 클라우드, 가칭) | 신설(멀티테넌트 SaaS, 화이트라벨) | 없음(설계 이식: `Multi-tenant_Theming`, `_platform-core`, 언론사 디자인 벤치마크) | `news` | 2500 |
-| `book-trailer/` (NOMAD Book Trailer, 가칭) | 신설 | 없음(설계 이식: shortsflow, toon-factory, flora-publishing, nomad-docs. 리뷰 NOMAD Shorts Maker, Toon-Factory) | `trailer` | 2600 |
+| `book-trailer/` (NOMAD Book Trailer, 가칭) | 신설 | 없음(설계 이식: sceneflow, toon-factory, flora-publishing, nomad-docs. 리뷰 NOMAD Shorts Maker, Toon-Factory) | `trailer` | 2600 |
 
 ## 제품 폴더 표준 구성
 | 파일 | 내용 |
@@ -85,7 +85,7 @@
 |---|---|---|---|---|
 | flora-publishing | 25 | 38 | 57/57 / 57/57 | `flora-publishing/01_PRD.md` 8절 |
 | astro-ai | 14 | 38 | 65/65 / 64/64 | `astro-ai/01_PRD.md` 8절 |
-| shortsflow | 26 | 40 | 65/65 / 65/65 | `shortsflow/01_PRD.md` 8절 |
+| sceneflow | 26 | 40 | 65/65 / 65/65 | `sceneflow/01_PRD.md` 8절 |
 | nomad-blog | 16 | 40 | 69/69 / 67/67 | `nomad-blog/01_PRD.md` 8절 |
 | nomad-commerce | 22 | 40 | 60/60 / 59/59 | `nomad-commerce/01_PRD.md` 8절 |
 | microweb-studio | 10 | 35 | 87/87 / 87/87 | `microweb-studio/01_PRD.md` 8절 |
@@ -111,7 +111,7 @@
 | 0 | `_platform-core` 패키지, core DB 0000~0007, 통합 seed | 모든 제품이 의존한다 |
 | 1 | study-note, website-floria | 범위가 작아 core 계약을 먼저 실전 검증한다 |
 | 2 | flora-publishing, astro-ai | 공용 WeasyPrint 렌더 서비스를 함께 만든다 |
-| 3 | shortsflow, nomad-blog, nomad-commerce | affiliate·SNS 업로더·잡 워커를 공유한다 |
+| 3 | sceneflow, nomad-blog, nomad-commerce | affiliate·SNS 업로더·잡 워커를 공유한다 |
 | 4 | microweb-studio, live-poll, toon-factory | 독립 도메인이다 |
 | 5 | admin-suite, stock-dashboard | 의료정보·금융 규제 확인이 먼저 필요하다 |
 | 6 | local-news | 코어 요청 R-1~R-10(독자 인증, Theming 승격)이 먼저 필요하다 |
@@ -183,7 +183,7 @@
 |---|---|---|---|
 | flora-publishing | 55 | `../develop/flora-publishing/` | 443 / 0 |
 | astro-ai (기준 예시) | 54 | `../develop/astro-ai/` | 531 / 0 |
-| shortsflow | 56 | `../develop/shortsflow/` | 341 / 0 |
+| sceneflow | 56 | `../develop/sceneflow/` | 341 / 0 |
 | nomad-blog | 56 | `../develop/nomad-blog/` | 383 / 0 |
 | nomad-commerce | 57 | `../develop/nomad-commerce/` | 434 / 0 |
 | microweb-studio | 53 | `../develop/microweb-studio/` | 340 / 0 |
@@ -205,10 +205,10 @@
 - 고문(Fable) 교차 검토: 조건부 통과. 지적 12건 중 9건 반영, 1건 유지(microweb 기능 키 밑줄 표기는 모놀리스 변환 때문에 의도된 것, `microweb-studio/02_ARCHITECTURE.md:11`), 2건은 사용자 결정 대기(아래).
 
 교차 검토 반영 내역
-- shortsflow `video.script` 그래프 순서를 `… → metadata → compliance`로 바꿨다(02·01·03·06장, 개발 문서).
+- sceneflow `video.script` 그래프 순서를 `… → metadata → compliance`로 바꿨다(02·01·03·06장, 개발 문서).
 - `AI_ARCHITECTURE.md` 2.1절에 잡 토큰 규격을, 6절에 "compliance 뒤에는 비생성 노드만" 규칙을 추가했다.
 - `VOICE_ARCHITECTURE.md`에 업무용 앱 TTS 오픈소스 우선 예외를, `HERO_3D.md`에 킬 스위치 `NEXT_PUBLIC_HERO3D_ENABLED`를 추가했다. 줄 번호 인용이 깨지지 않도록 기존 줄 안에서 고쳤다.
-- shortsflow 01장 8절 번호를 D-1~D-12로 통일, stock-dashboard 모바일 3D 문구 정리, 낡은 `AI_TOKEN_SECRET` 참조 문구 정리, nomad-commerce 개발 문서의 작업 ID 오기(CM-06-001) 수정.
+- sceneflow 01장 8절 번호를 D-1~D-12로 통일, stock-dashboard 모바일 3D 문구 정리, 낡은 `AI_TOKEN_SECRET` 참조 문구 정리, nomad-commerce 개발 문서의 작업 ID 오기(CM-06-001) 수정.
 
 사용자 결정(2026-10-13 확정, 모두 권장안)
 | 번호 | 결정 | 반영 위치 |
@@ -225,10 +225,10 @@ PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`)
 
 | 주제 | 먼저 볼 문서 | 관련 문서 |
 |---|---|---|
-| 네이버 클립 채널(결정 18) | `shortsflow/01_PRD.md` VD-F-075, 6.5절 위험 고지, D-23 | `shortsflow/02~06`, `_platform-core/SHARED_MODULES.md` 11장, `_supabase-modular/migrations/1200_video.sql` |
+| 네이버 클립 채널(결정 18) | `sceneflow/01_PRD.md` VD-F-075, 6.5절 위험 고지, D-23 | `sceneflow/02~06`, `_platform-core/SHARED_MODULES.md` 11장, `_supabase-modular/migrations/1200_video.sql` |
 | 브랜드커넥트 범용화(결정 19) | `_platform-core/CORE_SPEC.md` 13장, 16.1절 | `nomad-blog/01_PRD.md` 3.4절(BL-F-036/037), `nomad-blog/04_API.md`, `_supabase-modular/migrations/0006_core_affiliate.sql` |
 | toon-factory 벤치마킹(결정 20) | `toon-factory/08_BENCHMARK.md` (비교표, 격차→제안, 분기 재점검 방법) | `toon-factory/01_PRD.md` TN-F-024/038/070~073/080/081, `_supabase-modular/migrations/2000_toon.sql` 11절 |
-| 쇼츠 대행사업(결정 21) | `shortsflow/08_AGENCY_OPERATIONS.md` (패키지, 가격 근거, 프로세스, 필요 문서 14종, 법적 위험) | `shortsflow/01_PRD.md` VD-F-120~126, `nomad-docs/01_PRD.md` DC-F-046 `shorts_agency`, `_supabase-modular/migrations/2300_docs.sql` |
+| 쇼츠 대행사업(결정 21) | `sceneflow/08_AGENCY_OPERATIONS.md` (패키지, 가격 근거, 프로세스, 필요 문서 14종, 법적 위험) | `sceneflow/01_PRD.md` VD-F-120~126, `nomad-docs/01_PRD.md` DC-F-046 `shorts_agency`, `_supabase-modular/migrations/2300_docs.sql` |
 
 확인 필요: 네이버 약관의 자동화 조항(미확인), 공정위 AI 가상인물 표시 개정안 확정 여부(미확인), 이미 배포된 DB에는 별도 `alter table` 필요.
 
@@ -240,7 +240,7 @@ PR: https://github.com/DevOps0906/platform-docs/pull/2 (병합 커밋 `f868eb7`)
 |---|---|---|---|---|---|---|
 | flora-publishing | 65 | PB-06-006 | PB-06-056 | PB-06-057(P1) | PB-06-058(P1) | 490 / 0 |
 | astro-ai | 57 | AS-06-003 | AS-06-055 | AS-06-056(P1) | AS-06-057(P1) | 574 / 0 |
-| shortsflow | 65 | VID-06-004 | VID-06-063 | VID-06-064(P1) | VID-06-065(P1) | 377 / 0 |
+| sceneflow | 65 | VID-06-004 | VID-06-063 | VID-06-064(P1) | VID-06-065(P1) | 377 / 0 |
 | nomad-blog | 59 | BL-06-004 | BL-06-057 | BL-06-058(P1) | BL-06-059(P1) | 427 / 0 |
 | nomad-commerce | 60 | CM-06-007 | CM-06-058 | CM-06-059(P1) | CM-06-060(P1) | 473 / 0 |
 | microweb-studio | 56 | MW-06-003 | MW-06-054 | MW-06-055(P2 선택) | MW-06-056(P2 선택) | 378 / 0 |

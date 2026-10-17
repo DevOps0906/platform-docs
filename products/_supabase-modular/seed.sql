@@ -12,7 +12,7 @@
 insert into core.apps (id, name, schema_name, signup_policy, status) values
   ('publishing', 'FLORA Publishing',    'publishing', 'open', 'active'),
   ('astro',      '신비로운AI',            'astro',      'open', 'active'),
-  ('video',      'ShortsFlow',     'video',      'open', 'active'),
+  ('video',      'SceneFlow',     'video',      'open', 'active'),
   ('blog',       'NOMAD Blog',           'blog',       'open', 'active'),
   ('commerce',   'NOMAD Commerce',       'commerce',   'open', 'active'),
   ('microweb',   'Microweb Studio',      'microweb',   'invite', 'beta'),

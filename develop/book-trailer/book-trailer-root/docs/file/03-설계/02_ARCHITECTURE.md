@@ -12,7 +12,7 @@
 | 3D | three.js + React Three Fiber + drei. 히어로 전용 컴포넌트에서만 import, 동적 import(`ssr: false`) | React 19 호환(구현 시 확인) | 확정 결정 15 |
 | 폼/검증/데이터 | React Hook Form + zod, TanStack Query v5 | 구현 시 확인 | 다른 제품과 같음 |
 | DB/인증/Storage | Supabase(Postgres 15, RLS, Auth, Storage, Realtime), `@supabase/ssr` | - | `docs/file/03-설계/공용코어/CORE_SPEC.md` 1장 |
-| 오케스트레이터 | Node 20 + TS 독립 패키지 `workers/trailer-orchestrator`. 큐는 `core.jobs`(`claim_jobs`, SKIP LOCKED)만, BullMQ·Redis 없음 | Node 20 | nomad-docs와 같은 단순 구조(작업 수가 적고 단계가 짧다). 확정 결정 6은 shortsflow 범위(`01_PRD.md` 2장) |
+| 오케스트레이터 | Node 20 + TS 독립 패키지 `workers/trailer-orchestrator`. 큐는 `core.jobs`(`claim_jobs`, SKIP LOCKED)만, BullMQ·Redis 없음 | Node 20 | nomad-docs와 같은 단순 구조(작업 수가 적고 단계가 짧다). 확정 결정 6은 sceneflow 범위(`01_PRD.md` 2장) |
 | 렌더러 | Node 20 + Remotion 렌더러 + Chrome Headless Shell + FFmpeg(Remotion 내장) + sharp(표지 팔레트·이미지 정규화). Docker 이미지에 OFL 한국어 서체 8종 포함 | Node 20 | D-2 |
 | AI 서비스 | FastAPI(Python) `apps/api`. 공용 ai-service 위에 trailer 확장만. 원고 파싱(텍스트 추출)도 여기서 한다. 영상·오디오·이미지 바이너리는 다루지 않는다(2절 경계 표) | Python 3.12(제안) | 확정 결정 3, 13 |
 | AI 오케스트레이션 | LangChain, LangGraph + `langgraph-checkpoint-postgres`(스키마 `ai_runtime`) | 구현 시 확인 | `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md` 4장 |
@@ -21,7 +21,7 @@
 | RAG | pgvector(HNSW, cosine, 1024차원), 임베딩 `oss-embed` 고정 | pgvector 0.8 이상 | `AI_ARCHITECTURE.md` 5장 |
 | 채팅 운영 | 공용 자체 호스팅 Dify, 제품 앱 `trailer-chat`(Chatflow) | 설치 버전 문서로 확인 | 확정 결정 14 |
 | 음성 | `packages/core-voice`: ElevenLabs TS SDK + 공용 오픈소스 음성 서버 | 구현 시 확인 | 확정 결정 16 |
-| 이미지 | fal(Flux 계열), `enable_safety_checker=true`. 코어 제공자 레지스트리 밖이라 라우팅 대상 아님(shortsflow와 같다) | 모델 id는 서버 상수 | `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:22` |
+| 이미지 | fal(Flux 계열), `enable_safety_checker=true`. 코어 제공자 레지스트리 밖이라 라우팅 대상 아님(sceneflow와 같다) | 모델 id는 서버 상수 | `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:22` |
 | 결제 | Toss Payments(코어) | - | 확정 결정 4 |
 | 호스팅 | Vercel(web), Railway(orchestrator 1, renderer 2, `apps/api` 1), 공용 Dify·GPU 서버(운영사) | - | 7절 |
 
@@ -69,7 +69,7 @@ AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용, 재정의하지 않음):
 | 다루는 데이터 | 이미지·오디오·영상 바이너리 | 텍스트·임베딩(원고 파일은 텍스트 추출만) |
 | 상대 호출 | 하지 않는다 | 하지 않는다 |
 
-이미지(fal)와 TTS(ElevenLabs·오픈소스)는 오케스트레이터가 호출한다. 오케스트레이터는 fal 키와 ElevenLabs 키를 가진 서버 전용 프로세스다(shortsflow 오케스트레이터와 같은 배치, `D:/WorkSpace/platform/docs/products/shortsflow/CLAUDE.md` 2장 LLM·음성 키 행). LLM 키는 FastAPI에만 둔다.
+이미지(fal)와 TTS(ElevenLabs·오픈소스)는 오케스트레이터가 호출한다. 오케스트레이터는 fal 키와 ElevenLabs 키를 가진 서버 전용 프로세스다(sceneflow 오케스트레이터와 같은 배치, `D:/WorkSpace/platform/docs/products/sceneflow/CLAUDE.md` 2장 LLM·음성 키 행). LLM 키는 FastAPI에만 둔다.
 
 ## 3. 공용 모듈 사용
 
@@ -87,7 +87,7 @@ AI 모듈 경계(`AI_ARCHITECTURE.md` 1~3장 인용, 재정의하지 않음):
 | audit | 권리 확인, 승인 링크, compliance WARN 확인, FLORA 가져오기 | 제품 RPC, 서버 | |
 | jobs | 상태 정본, 클레임, 자동 환불, Realtime | 전역 | 큐 `trailer.ai`, `trailer.render`, `trailer.media` |
 | compliance | 공용 금지어 사전 + 제품 규칙(`packages/trailer-rules`) | 그래프 마지막 노드, 렌더 직전 서버 | |
-| sns uploader | YouTube 업로드(P1, 소비자) | 오케스트레이터 `steps/upload` | 구현 소유는 shortsflow(`SHARED_MODULES.md` 11장) |
+| sns uploader | YouTube 업로드(P1, 소비자) | 오케스트레이터 `steps/upload` | 구현 소유는 sceneflow(`SHARED_MODULES.md` 11장) |
 | ai-gateway | 대화 매핑, 서명·잡 토큰, 턴 선차감·정산 | `src/app/api/ai/`, `src/server/ai/` | |
 | ai-service | 라우터, RAG, 위키, 그래프 4종, `/tools/answer` | `apps/api` | |
 | dify | 채팅 앱 `trailer-chat` | `src/app/api/ai/chat` | Dify 로그 30일 |

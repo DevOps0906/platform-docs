@@ -20,7 +20,7 @@
 
 | 근거 | 내용 | 출처 |
 |---|---|---|
-| 확정 결정 1 | 블로그는 영상(shortsflow)과 분리한 단독 제품이다. 공유하는 것은 `_platform-core`뿐이다. 블로그 게시기(네이버/티스토리/워드프레스)는 blog가 소유한다. commerce의 블로그 원고 기능은 commerce 범위에서 뺀다 | `docs/reference/00_MERGE_ANALYSIS.md:9` |
+| 확정 결정 1 | 블로그는 영상(sceneflow)과 분리한 단독 제품이다. 공유하는 것은 `_platform-core`뿐이다. 블로그 게시기(네이버/티스토리/워드프레스)는 blog가 소유한다. commerce의 블로그 원고 기능은 commerce 범위에서 뺀다 | `docs/reference/00_MERGE_ANALYSIS.md:9` |
 | 확정 결정 12 | 제휴 링크, 클릭 통계, 대가성 문구는 `_platform-core` affiliate 모듈이 맡는다. blog는 본문에 제휴 상품 카드와 링크를 자동 삽입하고 글 상단에 대가성 문구를 자동 삽입한다. 네이버 브랜드커넥트 지원은 blog가 소유하며 완전 자동(Playwright)으로 한다 | `docs/reference/00_MERGE_ANALYSIS.md:20` |
 | C-5-1 (b) 결정 | CA는 플랜 단위가 포스팅 수(Free 10건 / Pro 50건)라서 숏츠 크레딧 모델과 맞지 않고, Shorts PRD v0.4에는 블로그가 없다 | `docs/reference/00_MERGE_ANALYSIS.md:692-702` |
 | 실제 블로그 기능의 위치 | Nomad-BlogStudio는 블로그 제품이 아니다. 실제 블로그 기능은 Shorts Maker 안의 CA와 YSM Track D에만 있다 | `docs/reference/00_MERGE_ANALYSIS.md:53-56` |

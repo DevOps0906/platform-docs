@@ -2,7 +2,7 @@
 
 usage: python3 -I _tools/folder_tree.py      (저장소 루트에서 실행)
 - git이 관리하는 파일만 센다. 괄호 안 숫자는 그 폴더 아래 파일 수
-- 1장: 개발 묶음(develop/<제품>/<제품>-root/)은 shortsflow만 펼친 요약 트리
+- 1장: 개발 묶음(develop/<제품>/<제품>-root/)은 sceneflow만 펼친 요약 트리
 - 2장: 모든 폴더를 펼친 전체 트리
 """
 import collections
@@ -20,7 +20,7 @@ children = collections.defaultdict(list)
 for d in sorted(cnt):
     children[d.rsplit('/', 1)[0] if '/' in d else ''].append(d)
 BUNDLE = re.compile(r'develop/[^/]+/[^/]+-root$')
-SHOW = 'develop/shortsflow/'
+SHOW = 'develop/sceneflow/'
 
 
 def render(short):
@@ -32,7 +32,7 @@ def render(short):
             last = i == len(ks) - 1
             line = prefix + ('└── ' if last else '├── ') + k.split('/')[-1] + f'/  ({cnt[k]})'
             if short and BUNDLE.match(k) and not k.startswith(SHOW):
-                out.append(line + '  ※ shortsflow-root와 같은 구조')
+                out.append(line + '  ※ sceneflow-root와 같은 구조')
                 continue
             out.append(line)
             walk(k, prefix + ('    ' if last else '│   '))
@@ -46,7 +46,7 @@ doc = f"""# FOLDER_TREE — 저장소 폴더 구조
 
 `develop/<제품>/<제품>-root/`는 `develop/_shared/tools/build_root.py`가 만드는 사본 묶음이라 손으로 고치지 않습니다. 묶음 16개의 구조는 거의 같고, local-news만 `03-설계/모듈/`, `reference/research/`(원본 리뷰 대신), `supabase/tests/`가 있습니다.
 
-## 1. 요약 트리 (개발 묶음은 shortsflow만 펼침)
+## 1. 요약 트리 (개발 묶음은 sceneflow만 펼침)
 
 ```
 {render(True)}

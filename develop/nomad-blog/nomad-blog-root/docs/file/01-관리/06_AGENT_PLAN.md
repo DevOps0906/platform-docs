@@ -118,7 +118,7 @@
 | SM #4 인증 가드, Mock 로그인, OAuth state, 키 폴백 | BL-06-004, BL-06-009 | 쿠키 역할 Mock 금지, 허용 Mock은 AUTH_ROADMAP 2장(BL-06-004 Stage A) |
 | SM #5 빌드 복구 | BL-06-032 | 새 저장소, tsc 게이트 |
 | SM #6 제품 경계·스키마 통합 | BL-06-001 | 확정 결정 1로 경계 확정 |
-| SM #7 파이프라인 재설계 | BL-06-010 | blog 잡은 core.jobs 단일 단계. video 파이프라인은 shortsflow 소관 |
+| SM #7 파이프라인 재설계 | BL-06-010 | blog 잡은 core.jobs 단일 단계. video 파이프라인은 sceneflow 소관 |
 | SM #8 zod 입력 검증, `getCurrentOrg` | BL-06-003, BL-06-004 | 세션 컨텍스트로 대체 |
 | SM #9 대시보드 실데이터 | BL-06-021 | |
 | SM #10 AI 클라이언트 단일화, env 검증 | BL-06-006, BL-06-003 | |

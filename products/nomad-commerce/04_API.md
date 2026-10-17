@@ -189,7 +189,7 @@ type WikiLintResult    = { contradictions: string[]; stale: string[]; orphans: s
 | 오픈소스 음성 서버 | `app/api/voice/*`(서명 토큰 scope `voice`) | 서명 토큰 | 같음 | 요청당 STT 10분·TTS 5,000자 상한(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:61`). commerce는 60초·120초·600자 |
 | fal | 워커 images (STT에는 쓰지 않음) | 플랫폼 키 | 제출 실패 즉시 환불, 30분 미도착 실패 | safety checker on |
 | Toss | Route Handler, 워커 | 시크릿 키 | core 규약 | - |
-| video 워커(Phase 2) | Route Handler | 서비스 토큰 | 렌더 실패 환불 | C-6. 입력은 내레이션 mp3 경로와 상세페이지 이미지 경로, 렌더·결합 코드는 shortsflow 소유 |
+| video 워커(Phase 2) | Route Handler | 서비스 토큰 | 렌더 실패 환불 | C-6. 입력은 내레이션 mp3 경로와 상세페이지 이미지 경로, 렌더·결합 코드는 sceneflow 소유 |
 
 ### 6.1 이 제품이 쓰는 FastAPI 엔드포인트
 

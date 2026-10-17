@@ -6,7 +6,7 @@
 
 | # | 항목 | 확정 내용 |
 |---|---|---|
-| 1 | 블로그와 영상 분리 | `shortsflow`(숏폼, 롱폼, Lofi, 플리)와 `nomad-blog`(블로그 전용)를 서로 다른 단독 프로젝트로 구성한다. 공유하는 것은 `_platform-core` 공통 모듈뿐이다. 블로그 게시기(네이버/티스토리/워드프레스)는 blog가 소유한다. 링크인바이오와 Track B 랜딩은 video가 소유한다. 제휴 링크, 클릭 통계, 대가성 문구는 `_platform-core`의 affiliate 공용 모듈이 맡고 video와 blog가 함께 쓴다(결정 12, 2026-10-12 변경). commerce의 블로그 원고 기능은 commerce 범위에서 뺀다. |
+| 1 | 블로그와 영상 분리 | `sceneflow`(숏폼, 롱폼, Lofi, 플리)와 `nomad-blog`(블로그 전용)를 서로 다른 단독 프로젝트로 구성한다. 공유하는 것은 `_platform-core` 공통 모듈뿐이다. 블로그 게시기(네이버/티스토리/워드프레스)는 blog가 소유한다. 링크인바이오와 Track B 랜딩은 video가 소유한다. 제휴 링크, 클릭 통계, 대가성 문구는 `_platform-core`의 affiliate 공용 모듈이 맡고 video와 blog가 함께 쓴다(결정 12, 2026-10-12 변경). commerce의 블로그 원고 기능은 commerce 범위에서 뺀다. |
 | 2 | admin-suite | 공유 코어 패키지(`packages/admin-kit`)와 앱 3개(erp, hms, sms)로 구성한다. hms는 의료정보 격리를 위해 별도 DB로만 제공하고, 모듈러 통합 DB에서 제외한다. |
 | 3 | 출판·사주 백엔드 | Next.js + FastAPI로 구성한다. WeasyPrint 렌더 서비스는 두 제품이 공용으로 쓴다. |
 | 4 | 결제 PG | 전 제품 Toss Payments로 통일한다. |
@@ -15,7 +15,7 @@
 | 7 | MVP 범위 | 출판: 전자책만 / video: Track A~F 전부(Distrokid 자동 배포, 24시간 라이브, 보이스 클로닝은 2단계) / commerce: 쿠팡 + 스마트스토어 + 엑셀/ZIP / 사주: 사주 + 타로 + 크레딧팩 |
 | 8 | 플랜 정본 | 출판: 크레딧팩 + 저가 구독 / video: `NOMAD Shorts Maker/PRD_pricing.md` / commerce: V.2 가격표에 sellingstudio 크레딧을 환산 / 사주: Astro AI 단가표 |
 | 9 | Capacitor 앱 | sellingstudio의 모바일 앱은 MVP 이후로 미룬다. |
-| 10 | 브랜드와 폴더명 | video: ShortsFlow(폴더 `shortsflow`. 2026-10-18 이름 변경, 이전 이름 NOMAD AI Factory·폴더 `nomad-video`. NOMAD AI Factory는 회사 브랜드로만 쓴다) / commerce: NOMAD Commerce / 사주: 신비로운AI(폴더 `astro-ai`) |
+| 10 | 브랜드와 폴더명 | video: SceneFlow(폴더 `sceneflow`. 2026-10-18 이름 변경, 이전 이름 NOMAD AI Factory·폴더 `nomad-video`. NOMAD AI Factory는 회사 브랜드로만 쓴다) / commerce: NOMAD Commerce / 사주: 신비로운AI(폴더 `astro-ai`) |
 | 11 | 마이크로웹 | 대행 제작으로 시작해 셀프서비스로 확장한다. Next.js + platform-core로 이전한다. |
 | 12 | 제휴마케팅(affiliate) | `_platform-core`에 affiliate 공용 모듈을 둔다. 제공자는 쿠팡파트너스, 네이버 브랜드커넥트, 텐핑, 네이버쇼핑 커넥트이며, 어댑터 구조로 추가할 수 있게 한다. 텐핑과 네이버쇼핑 커넥트는 공개 API 여부를 확인하지 않았다(없으면 Playwright 또는 수동 링크 등록). blog: 본문에 제휴 상품 카드와 링크를 자동 삽입하고, 대가성 문구를 글 상단에 자동 삽입한다. 네이버 브랜드커넥트 지원은 blog가 소유하며 완전 자동(Playwright)으로 한다. video: 모든 Track의 설명란과 고정댓글에 제휴링크와 대가성 문구를 자동 삽입하고, Track B 랜딩은 유지한다. 플랫폼의 유료 프로모션 표시 자동 설정은 제안 단계이며 확정이 아니다. C-5-1은 (b)로 결정됐다. |
 | 13 | AI 계층 (2026-10-13) | FastAPI(`apps/api`)에 LangChain/LangGraph로 AI 계층을 구성하고, RAG는 Supabase pgvector(HNSW, 1024차원. 임베딩은 플랫폼 기본 Voyage, 제품 지식 컬렉션 기본 오픈소스, 기존 컬렉션은 기록된 모델로만 처리: 2026-10-13 사용자 결정)를 쓴다. 12개 제품 모두 MVP에 AI 기능을 넣는다. AI 크레딧은 선차감 + 정산이며 admin-suite만 예외(플랜 포함 한도 + 원가 기록, 2026-10-13 사용자 결정)다. LLM Wiki는 제품 지식 위키(DB + FastAPI)와 개발용 프로젝트 위키(`docs/wiki/` + 스킬) 두 가지다. 설계 정본 `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, DB `0008_core_ai.sql`. |
@@ -23,10 +23,10 @@
 | 15 | 3D 히어로 표준 (2026-10-13) | 전 제품 메인페이지 히어로는 PC·태블릿 풀 3D, 모바일은 절충안(HTML 즉시 표시 + 가벼운 3D 지연 로딩), 저사양·미지원·reduced-motion은 정지 이미지. 정본 `docs/file/03-설계/디자인/HERO_3D.md`. |
 | 16 | 음성 (2026-10-13) | 음성 대화 전체(말하기 → STT → AI → TTS)와 제품별 음성 기능을 12개 제품 MVP에 넣는다. 제공자는 ElevenLabs(TypeScript SDK)와 오픈소스 공용 GPU 음성 서버(faster-whisper + silero-vad + 상업 이용 가능한 한국어 TTS)로 이원화한다. 정본 `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md`, DB `0009_core_voice.sql`. |
 | 17 | LLM 이원화 (2026-10-13) | 상용(ChatGPT, Claude, Gemini, OpenRouter 등)과 오픈소스(vLLM 서빙) 모델을 병행한다. 라우팅은 FastAPI 라우터가 `core.resolve_ai_route` 설정(commercial/open_source/auto)과 대체 체인으로 정한다. 민감 데이터는 오픈소스 강제(`force_open_source`, 조직이 해제 불가). 설치 `D:/WorkSpace/platform/docs/develop/_shared/llm/`. |
-| 18 | 네이버 클립 채널 (2026-10-13) | shortsflow 업로드 플랫폼에 `naver_clip`을 추가한다(pro/advanced). 공식 업로드 API가 확인되지 않아(2026-10-13 조사) Playwright 자동 업로드로 하고, owner/admin 위험 고지·동의(`clip-2026-10-v1`)가 있어야 업로드 잡을 만든다. 대가성 문구는 제목과 첫 해시태그에 넣는다(공정위 추천보증 지침). 공식 API가 확인되면 어댑터를 교체한다(video D-23). 정본: `shortsflow/01_PRD.md` VD-F-075 |
+| 18 | 네이버 클립 채널 (2026-10-13) | sceneflow 업로드 플랫폼에 `naver_clip`을 추가한다(pro/advanced). 공식 업로드 API가 확인되지 않아(2026-10-13 조사) Playwright 자동 업로드로 하고, owner/admin 위험 고지·동의(`clip-2026-10-v1`)가 있어야 업로드 잡을 만든다. 대가성 문구는 제목과 첫 해시태그에 넣는다(공정위 추천보증 지침). 공식 API가 확인되면 어댑터를 교체한다(video D-23). 정본: `sceneflow/01_PRD.md` VD-F-075 |
 | 19 | 브랜드커넥트 범용화 (2026-10-13) | `core.brandconnect_applications`의 `blog_url`을 `target_url` + `target_kind`(blog/clip) + `source_app`(blog/video)으로 바꾼다. Playwright 지원 어댑터는 blog가 계속 소유하고, video는 `brandconnect.apply` 잡을 `source_app='video'`로 요청한다. blog 스캔 결과에 `campaign_type`을 붙여 클립형 캠페인을 video로 넘긴다. 정본: `docs/file/03-설계/공용코어/CORE_SPEC.md` 13장, `nomad-blog/01_PRD.md` 3.4절 |
 | 20 | toon-factory 벤치마킹 보강 (2026-10-13) | 경쟁 서비스 비교(`toon-factory/08_BENCHMARK.md`) 결과로 로그라인·시놉시스 생성과 플랫폼 포맷 프리셋을 MVP에, 직접 업로드(naver_clip 포함)와 숏툰 모션을 Phase 2에, 브랜디드 툰(광고 표시·고객 승인)을 신규로 넣는다. 벤치마크는 분기마다 다시 확인한다 |
-| 21 | 쇼츠 대행사업 (2026-10-13) | 직접 대행으로 시작하고 shortsflow를 내부 도구로 쓴다(고객사 `video.clients`, 고객 승인 단계, 월간 리포트, VD-F-120~126). 영업·계약·운영 문서는 nomad-docs `shorts_agency` 패키지로 만든다. 다른 대행사에 판매하는 화이트라벨 SaaS는 Phase 2에서 검토한다(video D-24). 사업 운영 정본: `shortsflow/08_AGENCY_OPERATIONS.md` |
+| 21 | 쇼츠 대행사업 (2026-10-13) | 직접 대행으로 시작하고 sceneflow를 내부 도구로 쓴다(고객사 `video.clients`, 고객 승인 단계, 월간 리포트, VD-F-120~126). 영업·계약·운영 문서는 nomad-docs `shorts_agency` 패키지로 만든다. 다른 대행사에 판매하는 화이트라벨 SaaS는 Phase 2에서 검토한다(video D-24). 사업 운영 정본: `sceneflow/08_AGENCY_OPERATIONS.md` |
 | 22 | 인증 단계 도입 (2026-10-14) | 전 제품의 로그인을 단계로 켠다. A(MVP 개발): 로컬 Supabase 시드 계정으로 실제 JWT를 받는 Mock 로그인(쿠키 역할 Mock 금지, 원격 DB·배포 환경 차단) → 게이트 G1(MVP P0 기능·핵심 플로우 E2E·RLS 스모크가 Mock으로 녹색) → B: Google OAuth(+제품 PRD의 이메일·초대 메일), 공개 베타 필수 → 게이트 G2(Google 실사용 2주 안정, 제안) → C1 카카오(Supabase 기본 제공자), C2 네이버(Supabase 커스텀 OAuth2 `custom:naver` 스파이크, 실패 시 서버 브리지 + `staged/0010_core_auth_identity_links.sql`). nomad-commerce의 MVP 카카오와 flora-publishing 카카오 열린 결정은 C1으로 옮긴다. 정본 `docs/file/03-설계/공용코어/AUTH_ROADMAP.md`. |
 
 ### video 트랙 정의 (확정)
@@ -498,7 +498,7 @@ FD는 스스로 SellingDocs 계보라고 밝히고 있어(`FortuneDocs/PRD.MD:3`
 - 코드 확인: `D:\WorkSpace\platform\flora\api\db.py`, `D:\WorkSpace\platform\Flora-v2\api\routers\automation.py`, `D:\WorkSpace\platform\Flora-v2\api\routers\tts.py`, `D:\WorkSpace\platform\Flora-v2\frontend\src\app\(dashboard)\dashboard\automation\canvas\page.tsx`, `D:\WorkSpace\platform\flora-publisher\frontend\components\Sidebar.tsx`
 
 
-# 분석 원문 2: 영상(shortsflow, 분석 당시 nomad-shorts) / 커머스(nomad-commerce)
+# 분석 원문 2: 영상(sceneflow, 분석 당시 nomad-shorts) / 커머스(nomad-commerce)
 
 # 그룹 C·D 기능 단위 통합 분석 (합치기 전 단계)
 

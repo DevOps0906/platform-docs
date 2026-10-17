@@ -38,7 +38,7 @@ marketplace.json에는 `claude-api`, `academy-guide`, `discernment-nudge` 플러
 |---|---|---|---|
 | frontend-design | example-skills | 템플릿처럼 보이지 않는 의도적인 시각 디자인 지침. 미적 방향, 타이포그래피, 기본값 회피 | 새 UI 구축, 기존 UI 재구성, 메인페이지/랜딩 구현 전 계획 단계. 모든 UI 작업의 기준 스킬 |
 | webapp-testing | example-skills | Playwright로 로컬 웹앱과 상호작용하고 테스트. 프론트 기능 검증, UI 디버깅, 스크린샷, 브라우저 로그 확인 | E2E 시나리오 검증, 출시 전 체크리스트의 뷰포트 4종 스크린샷, 포커스와 reduced-motion 확인 |
-| mcp-builder | example-skills | 외부 API/서비스를 LLM 도구로 연결하는 MCP 서버 작성 가이드(Python FastMCP 또는 Node/TypeScript MCP SDK) | 제품 기능을 MCP 서버로 노출할 때(예: shortsflow 파이프라인 제어, stock-dashboard 조회 도구) |
+| mcp-builder | example-skills | 외부 API/서비스를 LLM 도구로 연결하는 MCP 서버 작성 가이드(Python FastMCP 또는 Node/TypeScript MCP SDK) | 제품 기능을 MCP 서버로 노출할 때(예: sceneflow 파이프라인 제어, stock-dashboard 조회 도구) |
 | skill-creator | example-skills | 스킬 생성, 수정, 평가(eval), 성능 벤치마크, description 최적화 | 반복되는 제품 작업(예: 제품별 디자인 시스템 생성 절차)을 프로젝트 전용 스킬로 묶을 때 |
 | pdf | document-skills | PDF 읽기, 텍스트/표 추출, 병합/분할, 회전, 워터마크, 생성, 폼 채우기, 암호화, 이미지 추출, OCR | astro-ai 리포트 PDF, flora-publishing 인쇄용 PDF 결과물 검증, 생성된 PDF의 텍스트/폰트 임베드 확인 |
 | docx | document-skills | Word 문서(.docx/.dotx) 생성, 읽기, 편집, 변경 추적, 템플릿 처리 | flora-publishing 원고 .docx 가져오기, admin-suite 보고서 .docx 내보내기 |
@@ -74,7 +74,7 @@ marketplace.json에는 `claude-api`, `academy-guide`, `discernment-nudge` 플러
 | 대시보드/운영 화면 구현 | frontend-design | UUPM(`--density 7~9 --page "dashboard"`, `--domain chart`), webapp-testing | Dribbble 레퍼런스 먼저 |
 | 디자인 시스템(MASTER.md) 작성 | UUPM(`--persist`) | frontend-design(토큰 계획, 기본값 검토) | `DESIGN_PRINCIPLES.md` 3~5단계 |
 | 컴포넌트 구현(shadcn/ui) | frontend-design | UUPM(`--stack shadcn`, `--stack nextjs`) | 토큰은 MASTER.md에서 |
-| 차트/KPI 시각화 | UUPM(`--domain chart`) | frontend-design | stock-dashboard, admin-suite, shortsflow 분석 화면 |
+| 차트/KPI 시각화 | UUPM(`--domain chart`) | frontend-design | stock-dashboard, admin-suite, sceneflow 분석 화면 |
 | 접근성/반응형 점검 | webapp-testing | UUPM(`--domain ux`) | 375/768/1024/1440 스크린샷, 포커스, reduced-motion, 대비 |
 | E2E 테스트 | webapp-testing | - | 결제, 생성 잡, 실시간 투표 흐름 |
 | PDF 결과물 생성/검증 | pdf | - | astro-ai 리포트, flora-publishing 인쇄용 PDF. 렌더는 WeasyPrint 서비스, 검증은 pdf 스킬 |
@@ -91,7 +91,7 @@ marketplace.json에는 `claude-api`, `academy-guide`, `discernment-nudge` 플러
 |---|---|---|---|---|
 | flora-publishing | frontend-design + UUPM | frontend-design + UUPM(dashboard) | pdf, docx | webapp-testing |
 | astro-ai | frontend-design + UUPM | frontend-design + UUPM(dashboard) | pdf | webapp-testing |
-| shortsflow | frontend-design + UUPM | UUPM(dashboard, chart) + frontend-design | - | webapp-testing |
+| sceneflow | frontend-design + UUPM | UUPM(dashboard, chart) + frontend-design | - | webapp-testing |
 | nomad-blog | frontend-design + UUPM | UUPM(dashboard) + frontend-design | - | webapp-testing |
 | nomad-commerce | frontend-design + UUPM | UUPM(dashboard) + frontend-design | xlsx | webapp-testing |
 | microweb-studio | frontend-design + UUPM | frontend-design(청첩장 템플릿은 모바일 우선) | - | webapp-testing(375px 우선) |

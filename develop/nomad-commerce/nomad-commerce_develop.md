@@ -52,7 +52,7 @@ D:\WorkSpace\DEV\nomad-commerce\                            베이스를 복사�
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(`public` 스키마, 기획서 D-7) |
 | 개발 근거 | `docs/file/`의 산출물 25개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
 | AI 범위 | 상세페이지 생성 그래프, 보조 AI 그래프, 마켓 규칙·상품 스펙 RAG, 마켓 규칙 위키, 셀러 어시스턴트 채팅(Dify), 음성(상품 설명 입력, 쇼츠 내레이션, 음성 대화) |
-| 경계 | 쇼츠 영상 렌더 엔진은 shortsflow 소유(Phase 2에 워커 API 호출). 이 폴더에서 구현하지 않습니다 |
+| 경계 | 쇼츠 영상 렌더 엔진은 sceneflow 소유(Phase 2에 워커 API 호출). 이 폴더에서 구현하지 않습니다 |
 
 이 문서는 "어떻게 시작하고 진행하는가"를 다룹니다. "무엇을 만드는가"는 묶음 안의 산출물(`docs/file/`)이 정본입니다.
 
@@ -380,7 +380,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 마켓 규칙 위키 | 쿠팡·스마트스토어 규칙 위키(draft 검수 후 published, 기준일·출처), 공개 화면 | CM-06-049, 050 |
 | LangGraph | `commerce.detail_page`(정보 추출 → 규칙 검색 → 카피 → 금지어 → 마켓 형식 변환 → compliance), `commerce.assist`. 워커는 1~3단계에서 잡 토큰으로 호출, 이미지·합성·마켓 이미지 변환·업로드는 TS 워커 | CM-06-051, 013, 011 |
 | Dify 채팅 | 공용 Dify에 `commerce-chat` Chatflow 등록(셀러 어시스턴트: 모드 rules, product). 설정은 `infra/dify/README.md` | CM-06-052, 053 |
-| 음성 | 상품 설명 음성 입력, 음성 대화(STT 오픈소스 우선, TTS ElevenLabs 우선), 쇼츠 내레이션(작업 중 제공자 대체 금지). 영상 렌더는 shortsflow(Phase 2) | CM-06-054, 055 |
+| 음성 | 상품 설명 음성 입력, 음성 대화(STT 오픈소스 우선, TTS ElevenLabs 우선), 쇼츠 내레이션(작업 중 제공자 대체 금지). 영상 렌더는 sceneflow(Phase 2) | CM-06-054, 055 |
 | 보안 회귀 | 조직 격리, 대화 매핑·바인딩 위조, 강제 오픈소스·국외 동의 우회, 크레딧 우회, LLM 키 위치 | CM-06-057 |
 
 순서는 이렇습니다.
@@ -481,7 +481,7 @@ baseline:
 |---|---|
 | core 코드 위치 | `apps/web/src/core/`(인증, 조직, 결제, 크레딧, AI 게이트, 음성 어댑터), `apps/api/app/core/`, `apps/api/app/ai/`. 다음 제품에서 재사용하거나 공용 패키지로 뺄 수 있게 한곳에 모읍니다 |
 | 워커 | 상세페이지·업로드·내보내기 워커는 `services/commerce-worker`로 두고, 앱과는 `packages/commerce-*`만 공유합니다 |
-| 영상 렌더 | 쇼츠 영상 렌더는 shortsflow 소유입니다(Phase 2에 워커 API 호출만). 이 저장소에 렌더 코드를 만들지 않습니다 |
+| 영상 렌더 | 쇼츠 영상 렌더는 sceneflow 소유입니다(Phase 2에 워커 API 호출만). 이 저장소에 렌더 코드를 만들지 않습니다 |
 | 3D 키트 | 3D 공통 요소(로더, 토큰 기반 재질, 조명, 대체 이미지, 성능 측정)는 `packages/ui-3d`로 분리 가능하게 만듭니다(코어 요청 R-6) |
 | 남은 코어 과제 | `adjust_credits` 미구현, 잡 토큰 패턴 표준화(R-3), 조직별 동시성 claim 등. `docs/file/01-관리/06_AGENT_PLAN.md` 6절과 6.1절을 참고합니다 |
 

@@ -2264,7 +2264,7 @@ create policy public_assets_delete on storage.objects for delete to authenticate
 
 -- =====================================================================
 -- SECTION 9. affiliate  [선택: video, blog 계열만] -- toon-factory 에서 제거함
--- 제거 사유: 제휴마케팅은 shortsflow, nomad-blog 전용 공용 모듈이다(확정 결정 12, CORE_SPEC.md 13장).
+-- 제거 사유: 제휴마케팅은 sceneflow, nomad-blog 전용 공용 모듈이다(확정 결정 12, CORE_SPEC.md 13장).
 --           Toon Factory 결과물에는 제휴 링크를 넣지 않는다. SECTION 6-B 제거와도 일치한다.
 --           SECTION 10 은 to_regclass / to_regprocedure 로 존재하는 객체에만 권한을 주므로 수정하지 않았다.
 -- =====================================================================

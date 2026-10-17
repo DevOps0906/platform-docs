@@ -266,7 +266,7 @@ export interface NativeBridge {
 | 제품 | 데스크톱 이득 | 로컬로 내릴 것 | 로컬 SQLite(B·C 분류) | 네이티브 연동 | 권고 |
 |---|---|---|---|---|---|
 | arch-studio | 매우 큼(본체가 설치형) | 모델러, 규칙엔진, 엔벨로프, 파일 입출력 | 프로젝트, 3D 모델, 판정 기록 | 키체인, 라이선스, .3dm·IFC, (조건부) SketchUp C API | MVP 필수 |
-| shortsflow | 큼 | 영상 편집·인코딩(FFmpeg sidecar), 원본 관리 | 원본 목록, 편집 프로젝트, 업로드 대기열 | FFmpeg, 대용량 파일 스트리밍 업로드 | Phase 2. 클라우드 렌더 원가 절감 효과를 먼저 측정 |
+| sceneflow | 큼 | 영상 편집·인코딩(FFmpeg sidecar), 원본 관리 | 원본 목록, 편집 프로젝트, 업로드 대기열 | FFmpeg, 대용량 파일 스트리밍 업로드 | Phase 2. 클라우드 렌더 원가 절감 효과를 먼저 측정 |
 | nomad-docs | 중간 | 기밀 RFP 로컬 파싱, 오프라인 편집 | 초안, 업로드 원본 캐시 | 키체인, 파일 | Phase 2. 설치형 판매 수요(`docs/products/nomad-docs/README.md:74`)가 확인되면 |
 | book-trailer | 중간 | 미출간 원고 로컬 파싱, (선택) 로컬 Remotion 렌더로 렌더 원가 절감 | 원고 캐시, 작업 중 장면 초안 | 키체인, 파일, (조건부) 로컬 Chromium 렌더 sidecar | Phase 3. 출판사 설치형(판매 모델 A, `docs/products/book-trailer/README.md` 5장) 수요가 확인되면. 로컬 렌더는 Remotion 라이선스 조건(직원 수 기준)을 먼저 확인 |
 | admin-suite(hms) | 큼 | 접수·대기열 화면 오프라인 지속, 장비 연동 | 대기열 캐시(정본은 서버) | 영수증·라벨 프린터, 바코드 스캐너(미확인: 장비 SDK) | Phase 2. 의료정보 규제 확인 후(`develop/README.md` 개발 순서 5단계) |
@@ -288,7 +288,7 @@ export interface NativeBridge {
 | 제품 | 메모 |
 |---|---|
 | arch-studio | 이 가이드의 기준 제품이다. `docs/products/arch-studio/01_PRD.md` 4장(라이선스·업데이트)과 1주 기술 스파이크(R3F + Manifold WASM, 저사양 PC 30fps) 통과 후 확정 |
-| shortsflow | 클라우드 `services/media-worker`(`docs/products/_platform-core/SHARED_MODULES.md` 0장)의 Whisper·FFmpeg 처리를 로컬 sidecar로 옮기면 GPU·서버 원가가 줄지만, 사용자 PC 사양 편차가 크다. "로컬 처리 우선, 실패 시 클라우드" 이중 경로와 크레딧 차등(로컬 0 또는 할인)을 PRD에 함께 정한다. 업로드는 여전히 서버 업로더(`sns-uploader`)를 거친다 |
+| sceneflow | 클라우드 `services/media-worker`(`docs/products/_platform-core/SHARED_MODULES.md` 0장)의 Whisper·FFmpeg 처리를 로컬 sidecar로 옮기면 GPU·서버 원가가 줄지만, 사용자 PC 사양 편차가 크다. "로컬 처리 우선, 실패 시 클라우드" 이중 경로와 크레딧 차등(로컬 0 또는 할인)을 PRD에 함께 정한다. 업로드는 여전히 서버 업로더(`sns-uploader`)를 거친다 |
 | nomad-docs | 고위험 문서 규칙(템플릿 전용, AI 조항 금지)은 셸에서도 같다. 로컬 파싱은 업로드 원문을 서버에 보내지 않는 장점이 있으나 RAG 색인은 서버에 있으므로 "로컬 전용 모드"의 기능 범위를 따로 정한다 |
 | book-trailer | 워터마크·AI 표시 판정은 서버(`start_render`) 정본이라 로컬 렌더를 허용해도 스냅샷과 판정은 서버에서 받는다. 무료 플랜의 로컬 렌더는 허용하지 않는다(워터마크 우회 위험, `docs/reviews/Toon-Factory.md:45`) |
 | admin-suite(hms) | hms는 전용 서버를 쓰는 제품이다. 셸은 병원 내부망의 hms 전용 백엔드만 바라보게 빌드 설정을 분리하고, 공용 클라우드 도메인을 CSP에서 제외한다 |

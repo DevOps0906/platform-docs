@@ -78,7 +78,7 @@
 
 | 적합도 | 제품 | 적용 범위 |
 |---|---|---|
-| 적합 | stock-dashboard, live-poll, nomad-commerce, shortsflow | 주요 화면에 V-A·V-B·V-C·V-D 적용 가능 |
+| 적합 | stock-dashboard, live-poll, nomad-commerce, sceneflow | 주요 화면에 V-A·V-B·V-C·V-D 적용 가능 |
 | 일부 화면 | admin-suite(ERP 매출), nomad-blog(제휴 수익), flora-publishing(인세·정산 탭), book-trailer(구매 링크 클릭), local-news(광고·기사 성과), astro-ai(운영자 화면) | 괄호 안 화면에만. 나머지 화면은 그 제품의 기본 시각 |
 | 부적합 | nomad-docs, toon-factory, microweb-studio, study-note, website-floria, arch-studio | 트레이딩 요소(캔들, 호가창, 네온 다크)를 쓰지 않는다 |
 
@@ -144,7 +144,7 @@
 | stock-dashboard | 적합 | C | C → B, G(종목 모달), L, N(동기화), A + AI 패널 | V-C(#9), 종목 상세에만 V-A 캔들, AI 진단 V-L(#54) | 다크 기본. 크립토 네온(#59·#61류) 제외. 상승·하락은 6.2 국내 관례 |
 | live-poll | 적합 | 최근 이벤트 | I(이벤트 생성), 진행자 콘솔 `고유`, L(결과) | 진행자 콘솔 V-A 터미널 문법(#62), OBS 오버레이 V-F(#33) | 투표 결과 = 실시간 체결, Q&A 대기열 = 호가창. 발표 화면은 다크 |
 | nomad-commerce | 적합 | C(마켓별 성과) | B, O(대량 편집), N(업로드 잡), M | V-D(#26, #43), 가격 추이 V-M(#45), 성과 V-B(#31) | 라이트. 다른 NOMAD 제품과 다크가 겹치지 않게 |
-| shortsflow | 적합 | 오늘 처리할 일 + N | N(주인공), M, E(업로드 일정), L(채널 성과) | 채널 성과 V-N 히트맵(#68), V-B 히스토그램(#74) | 다크 + 기존 민트. 큰 숫자·그라디언트 히어로 금지 |
+| sceneflow | 적합 | 오늘 처리할 일 + N | N(주인공), M, E(업로드 일정), L(채널 성과) | 채널 성과 V-N 히트맵(#68), V-B 히스토그램(#74) | 다크 + 기존 민트. 큰 숫자·그라디언트 히어로 금지 |
 | nomad-blog | 일부 | E(발행 캘린더) | B, J(원고 편집), N | 제휴 수익 V-B(#51), 편집 보조 V-L(#53) | 밝은 작업면. video와 구분 |
 | flora-publishing | 일부 | 오늘 처리할 일(원고 단계) | D, J, N, I(출판 신청) | 인세·판매 정산 탭에만 V-C(#9) | 조용한 집필 도구. 첫 구현 제품이므로 A·B·H를 공용으로 |
 | astro-ai | 일부 | 사용자: 최근 리딩 / 운영자: C | I, N, B, G, H | 사용자 V-E(#16), 운영자 V-B | 보라 그라디언트·별 파티클 금지 |
