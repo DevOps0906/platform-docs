@@ -42,13 +42,13 @@
 | llm gateway | _platform-core (sellingstudio 구현 기준). 2026-10-13부터 라우터 본체는 ai-service | 전 제품 | `ai_usage`, `consume_credits`, `resolve_ai_route` |
 | fal client | _platform-core (sellingstudio 구현 기준) | video, commerce, toon, publishing(표지), astro(테마 이미지) | `jobs`, `webhook_events`, `ai_usage` |
 | weasyprint render | flora-publishing | astro-ai, nomad-docs(DOCX·공문서 프리셋은 nomad-docs 코어 요청 C-1) | `jobs`, Storage `exports` |
-| sns uploader | shortsflow | nomad-commerce(2단계), nomad-blog(인스타 포스팅), book-trailer(YouTube 업로드, P1) | `encrypted_credentials`, `oauth_states`, `jobs` |
+| sns uploader | sceneflow | nomad-commerce(2단계), nomad-blog(인스타 포스팅), book-trailer(YouTube 업로드, P1) | `encrypted_credentials`, `oauth_states`, `jobs` |
 | automation-core | _platform-core | video, commerce, (blog) | `jobs`(parent_job_id), `webhook_events` |
 | compliance | _platform-core | video(LLM 판정), commerce(금지어), blog | `ai_usage` |
 | storage | _platform-core | 전 제품 | 버킷 3개, `storage_org_id` |
 | audit | _platform-core | 전 제품 | `audit_log`, `write_audit` |
 | jobs | _platform-core | 비동기 작업 있는 제품 전부 | `jobs` + RPC 8개 |
-| affiliate | _platform-core | shortsflow, nomad-blog | `affiliate_*`, `brandconnect_applications` + 함수 6개 |
+| affiliate | _platform-core | sceneflow, nomad-blog | `affiliate_*`, `brandconnect_applications` + 함수 6개 |
 | ai-gateway | _platform-core | 전 제품 | `ai_conversations`(visitor_key, dify_user, status), `ai_messages`, `ai_usage`, `ai_org_settings`, `set_ai_cross_border_ack`, `consume_credits` |
 | ai-service | _platform-core | 전 제품 | `ai_*`, `wiki_*`, `match_ai_chunks`, `resolve_ai_route`, `ai_runtime` |
 | dify | _platform-core (공용 인프라) | 전 제품 | 없음(조직 데이터를 두지 않음) |
@@ -291,7 +291,7 @@ astro-ai는 같은 계약으로 사주/타로 PDF를 렌더한다. 테마 미리
 
 | 항목 | 내용 |
 |---|---|
-| 소유 / 소비 | shortsflow / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:821`), nomad-blog(인스타 포스팅, `:642`), book-trailer(YouTube 업로드 P1, `D:/WorkSpace/platform/docs/products/book-trailer/02_ARCHITECTURE.md` 3절, TR-06-058) |
+| 소유 / 소비 | sceneflow / nomad-commerce(2단계, `docs/reference/00_MERGE_ANALYSIS.md:821`), nomad-blog(인스타 포스팅, `:642`), book-trailer(YouTube 업로드 P1, `D:/WorkSpace/platform/docs/products/book-trailer/02_ARCHITECTURE.md` 3절, TR-06-058) |
 | 기준 자산 | Shorts Maker `lib/platforms/*`, `channels/oauth-manager.ts`, YSM `account_manager`(AES-GCM). 이식 전에 0키 폴백, state 결함, tsc 오류를 먼저 고친다(`:955`) |
 | 플랫폼 | YouTube Data API v3(resumable 업로드), Instagram Reels/Threads(Meta Graph), TikTok Content Posting(`NOMAD Shorts Maker/PRD.md` 10-3), 네이버 클립(`naver_clip`, 확정 결정 18) |
 | 네이버 클립 | 공식 업로드 API 미확인(2026-10-13 기준. 클립 크리에이터 PC 웹 업로드만 확인). Playwright로 사용자 네이버 계정에 로그인해 PC 웹에서 업로드한다. OAuth가 없으므로 `connect()`는 로그인 세션(쿠키)을 `encrypted_credentials`에 저장하는 흐름이고, 원본 `NOMAD Shorts Maker/src/skill/playwright-engine/naver-login.ts`를 재사용한다. 네이버 약관 위반·계정 정지 위험이 있어 owner/admin 위험 동의(고지문 버전 `clip-2026-10-v1`)가 없으면 업로드 잡을 만들지 않는다. 잡 `upload.naver_clip`. `pinComment`·`quota`는 지원하지 않음(capabilities로 표시), `fetchStats`는 PC 웹 화면 수집(제안). 공식 API가 확인되면 같은 `UploaderAdapter`로 교체한다 |
@@ -442,7 +442,7 @@ Python 쪽은 같은 RPC를 `supabase.rpc('claim_jobs', {...})`로 호출한다.
 
 | 항목 | 내용 |
 |---|---|
-| 소유 / 소비 | _platform-core / shortsflow, nomad-blog(확정 결정 12). 브랜드커넥트 어댑터와 Playwright 지원 플로우는 blog가 소유. video는 클립형 캠페인 지원을 cross-app 잡으로 요청한다(확정 결정 19) |
+| 소유 / 소비 | _platform-core / sceneflow, nomad-blog(확정 결정 12). 브랜드커넥트 어댑터와 Playwright 지원 플로우는 blog가 소유. video는 클립형 캠페인 지원을 cross-app 잡으로 요청한다(확정 결정 19) |
 | 코어 SQL | `core.affiliate_accounts`, `affiliate_links`, `affiliate_clicks`, `affiliate_disclosures`, `brandconnect_applications`(`migrations/0006_core_affiliate.sql:24-211`), 함수 `new_affiliate_short_code`, `record_affiliate_click`, `effective_disclosure`, `upsert_affiliate_disclosure`, `consent_brandconnect_risk`, `create_brandconnect_application`(`:218-377`) |
 | 제공자 | coupang(쿠팡파트너스 API), naver_brandconnect(Playwright, blog 소유), tenping(미확인), naver_shopping_connect(미확인). 공개 API가 없으면 Playwright 또는 수동 링크 등록 |
 | 키 보관 | 제공자 API 키/세션 쿠키는 `encrypted_credentials`에, `affiliate_accounts.credential_id`로 연결(`:30`) |

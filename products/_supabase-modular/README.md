@@ -39,7 +39,7 @@ Supabase 프로젝트 1개에 `core` 스키마와 제품별 스키마를 함께 
 ```bash
 supabase start
 supabase db reset          # supabase/migrations/* 를 번호 순으로 적용한 뒤 seed.sql 실행
-supabase gen types typescript --local --schema core,video > apps/shortsflow/src/types/supabase.ts
+supabase gen types typescript --local --schema core,video > apps/sceneflow/src/types/supabase.ts
 ```
 
 ## 3. 마이그레이션 번호 범위
@@ -51,7 +51,7 @@ supabase gen types typescript --local --schema core,video > apps/shortsflow/src/
 | 0000~0099 | `core` | _platform-core |
 | 1000~1099 | `publishing` | flora-publishing |
 | 1100~1199 | `astro` | astro-ai |
-| 1200~1299 | `video` | shortsflow |
+| 1200~1299 | `video` | sceneflow |
 | 1300~1399 | `blog` | nomad-blog |
 | 1400~1499 | `commerce` | nomad-commerce |
 | 1500~1599 | `microweb` | microweb-studio |
@@ -128,7 +128,7 @@ create policy jobs_meta_delete on video.jobs_meta for delete to authenticated
 5. 앱을 등록한다(`seed.sql`에 이미 있으면 생략).
 
 ```sql
-insert into core.apps (id, name, schema_name, signup_policy) values ('video', 'ShortsFlow', 'video', 'open')
+insert into core.apps (id, name, schema_name, signup_policy) values ('video', 'SceneFlow', 'video', 'open')
 on conflict (id) do nothing;
 ```
 

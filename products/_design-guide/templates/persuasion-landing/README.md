@@ -26,7 +26,7 @@
 | NOMAD Blog | NOMAD Blog 발행 여정 | 01 막힘 · 02 초안 · 03 검수 · 04 발행 · 05 비교 · 06 시작 (22페이지) | 적용 |
 | NOMAD Commerce | Commerce 판매 준비 여정 | 01 막힘 · 02 입력 · 03 생성 · 04 검사 · 05 등록 · 06 비교 (24페이지) | 적용 |
 | NOMAD Docs | NOMAD Docs 수주·검수 여정 | 01 막힘 · 02 견적 · 03 계약 · 04 마감 · 05 비교 · 06 시작 (23페이지) | 적용 |
-| ShortsFlow | ShortsFlow 채널 게시 여정 | 01 막힘 · 02 기획 · 03 생산 · 04 게시 · 05 비교 · 06 시작 (22페이지) | 적용 |
+| SceneFlow | SceneFlow 채널 게시 여정 | 01 막힘 · 02 기획 · 03 생산 · 04 게시 · 05 비교 · 06 시작 (22페이지) | 적용 |
 | Stock Dashboard | Stock 대시보드 계좌 점검 여정 | 01 막힘 · 02 연결 · 03 한눈 · 04 요약 · 05 브리핑 · 06 비교 · 07 시작 (24페이지) | 적용 |
 | Study Note | Study Note 시험 대비 여정 | 01 막힘 · 02 기록 · 03 정리 · 04 복습 · 05 대비 · 06 시작 (23페이지) | 적용 |
 | Toon Factory | Toon Factory 회차 완성 여정 | 01 막힘 · 02 설정 · 03 콘티 · 04 조립 · 05 출력 · 06 결정 (23페이지) | 적용 |
@@ -109,7 +109,7 @@ node validate.js              # 데이터 검사
 | Microweb Studio | `data/microweb-studio.json` | https://claude.ai/artifact/WrcyWVYevBUz6548oGsdYg | 초안 |
 | NOMAD Blog | `data/nomad-blog.json` | https://claude.ai/artifact/HPwZqWQQt56wkkJDcRxYwy | 초안 |
 | NOMAD Commerce | `data/nomad-commerce.json` | https://claude.ai/artifact/TRMuXutU8yv2XQsFMfqPLW | 초안. 경쟁사 6곳·기능·결과물·FAQ 포함 |
-| ShortsFlow | `data/shortsflow.json` | https://claude.ai/artifact/2CCz973ubHfNNWj7pa3pJS | 초안 |
+| SceneFlow | `data/sceneflow.json` | https://claude.ai/artifact/2CCz973ubHfNNWj7pa3pJS | 초안 |
 | Stock Dashboard | `data/stock-dashboard.json` | https://claude.ai/artifact/BNX3jaG1YFXPU4JJ9gSpqG | 초안 |
 | Study Note | `data/study-note.json` | https://claude.ai/artifact/LFcA1dbwBxGMcTN2BbkMqb | 초안 |
 | Toon Factory | `data/toon-factory.json` | https://claude.ai/artifact/UtbXomcD5ztzL3UDeAfbF5 | 초안 |

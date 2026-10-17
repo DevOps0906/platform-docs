@@ -4,7 +4,7 @@
 
 `develop/<제품>/<제품>-root/`는 `develop/_shared/tools/build_root.py`가 만드는 사본 묶음이라 손으로 고치지 않습니다. 묶음 16개의 구조는 거의 같고, local-news만 `03-설계/모듈/`, `reference/research/`(원본 리뷰 대신), `supabase/tests/`가 있습니다.
 
-## 1. 요약 트리 (개발 묶음은 shortsflow만 펼침)
+## 1. 요약 트리 (개발 묶음은 sceneflow만 펼침)
 
 ```
 platform-docs/  (파일 1,631개, 폴더 444개)
@@ -19,30 +19,30 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   │   ├── tools/  (1)
 │   │   └── voice/  (1)
 │   ├── admin-suite/  (76)
-│   │   └── admin-suite-root/  (72)  ※ shortsflow-root와 같은 구조
+│   │   └── admin-suite-root/  (72)  ※ sceneflow-root와 같은 구조
 │   ├── arch-studio/  (68)
-│   │   └── arch-studio-root/  (64)  ※ shortsflow-root와 같은 구조
+│   │   └── arch-studio-root/  (64)  ※ sceneflow-root와 같은 구조
 │   ├── astro-ai/  (68)
-│   │   └── astro-ai-root/  (64)  ※ shortsflow-root와 같은 구조
+│   │   └── astro-ai-root/  (64)  ※ sceneflow-root와 같은 구조
 │   ├── book-trailer/  (71)
-│   │   └── book-trailer-root/  (67)  ※ shortsflow-root와 같은 구조
+│   │   └── book-trailer-root/  (67)  ※ sceneflow-root와 같은 구조
 │   ├── flora-publishing/  (70)
-│   │   └── flora-publishing-root/  (66)  ※ shortsflow-root와 같은 구조
+│   │   └── flora-publishing-root/  (66)  ※ sceneflow-root와 같은 구조
 │   ├── live-poll/  (67)
-│   │   └── live-poll-root/  (63)  ※ shortsflow-root와 같은 구조
+│   │   └── live-poll-root/  (63)  ※ sceneflow-root와 같은 구조
 │   ├── local-news/  (97)
-│   │   ├── local-news-root/  (84)  ※ shortsflow-root와 같은 구조
+│   │   ├── local-news-root/  (84)  ※ sceneflow-root와 같은 구조
 │   │   └── modules/  (9)
 │   ├── microweb-studio/  (70)
-│   │   └── microweb-studio-root/  (66)  ※ shortsflow-root와 같은 구조
+│   │   └── microweb-studio-root/  (66)  ※ sceneflow-root와 같은 구조
 │   ├── nomad-blog/  (70)
-│   │   └── nomad-blog-root/  (66)  ※ shortsflow-root와 같은 구조
+│   │   └── nomad-blog-root/  (66)  ※ sceneflow-root와 같은 구조
 │   ├── nomad-commerce/  (70)
-│   │   └── nomad-commerce-root/  (66)  ※ shortsflow-root와 같은 구조
+│   │   └── nomad-commerce-root/  (66)  ※ sceneflow-root와 같은 구조
 │   ├── nomad-docs/  (70)
-│   │   └── nomad-docs-root/  (66)  ※ shortsflow-root와 같은 구조
-│   ├── shortsflow/  (69)
-│   │   └── shortsflow-root/  (65)
+│   │   └── nomad-docs-root/  (66)  ※ sceneflow-root와 같은 구조
+│   ├── sceneflow/  (69)
+│   │   └── sceneflow-root/  (65)
 │   │       ├── docs/  (61)
 │   │       │   ├── file/  (28)
 │   │       │   │   ├── 01-관리/  (2)
@@ -60,13 +60,13 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   │       └── supabase/  (3)
 │   │           └── migrations/  (2)
 │   ├── stock-dashboard/  (68)
-│   │   └── stock-dashboard-root/  (64)  ※ shortsflow-root와 같은 구조
+│   │   └── stock-dashboard-root/  (64)  ※ sceneflow-root와 같은 구조
 │   ├── study-note/  (67)
-│   │   └── study-note-root/  (63)  ※ shortsflow-root와 같은 구조
+│   │   └── study-note-root/  (63)  ※ sceneflow-root와 같은 구조
 │   ├── toon-factory/  (70)
-│   │   └── toon-factory-root/  (66)  ※ shortsflow-root와 같은 구조
+│   │   └── toon-factory-root/  (66)  ※ sceneflow-root와 같은 구조
 │   └── website-floria/  (67)
-│       └── website-floria-root/  (63)  ※ shortsflow-root와 같은 구조
+│       └── website-floria-root/  (63)  ※ sceneflow-root와 같은 구조
 ├── develop_V2/  (19)
 │   ├── _shared/  (2)
 │   │   └── tools/  (1)
@@ -81,7 +81,7 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   ├── nomad-blog/  (1)
 │   ├── nomad-commerce/  (1)
 │   ├── nomad-docs/  (1)
-│   ├── shortsflow/  (1)
+│   ├── sceneflow/  (1)
 │   ├── stock-dashboard/  (1)
 │   ├── study-note/  (1)
 │   ├── toon-factory/  (1)
@@ -106,7 +106,7 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   ├── nomad-blog/  (1)
 │   ├── nomad-commerce/  (1)
 │   ├── nomad-docs/  (1)
-│   ├── shortsflow/  (1)
+│   ├── sceneflow/  (1)
 │   ├── stock-dashboard/  (1)
 │   ├── study-note/  (1)
 │   ├── toon-factory/  (1)
@@ -180,7 +180,7 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   │       └── monolith/  (4)
 │   │           ├── migrations/  (2)
 │   │           └── tests/  (1)
-│   ├── shortsflow/  (13)
+│   ├── sceneflow/  (13)
 │   │   └── supabase/  (3)
 │   │       └── monolith/  (3)
 │   │           └── migrations/  (2)
@@ -427,8 +427,8 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   │       └── supabase/  (4)
 │   │           ├── migrations/  (2)
 │   │           └── tests/  (1)
-│   ├── shortsflow/  (69)
-│   │   └── shortsflow-root/  (65)
+│   ├── sceneflow/  (69)
+│   │   └── sceneflow-root/  (65)
 │   │       ├── docs/  (61)
 │   │       │   ├── file/  (28)
 │   │       │   │   ├── 01-관리/  (2)
@@ -531,7 +531,7 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   ├── nomad-blog/  (1)
 │   ├── nomad-commerce/  (1)
 │   ├── nomad-docs/  (1)
-│   ├── shortsflow/  (1)
+│   ├── sceneflow/  (1)
 │   ├── stock-dashboard/  (1)
 │   ├── study-note/  (1)
 │   ├── toon-factory/  (1)
@@ -556,7 +556,7 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   ├── nomad-blog/  (1)
 │   ├── nomad-commerce/  (1)
 │   ├── nomad-docs/  (1)
-│   ├── shortsflow/  (1)
+│   ├── sceneflow/  (1)
 │   ├── stock-dashboard/  (1)
 │   ├── study-note/  (1)
 │   ├── toon-factory/  (1)
@@ -630,7 +630,7 @@ platform-docs/  (파일 1,631개, 폴더 444개)
 │   │       └── monolith/  (4)
 │   │           ├── migrations/  (2)
 │   │           └── tests/  (1)
-│   ├── shortsflow/  (13)
+│   ├── sceneflow/  (13)
 │   │   └── supabase/  (3)
 │   │       └── monolith/  (3)
 │   │           └── migrations/  (2)

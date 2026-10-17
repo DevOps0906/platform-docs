@@ -36,7 +36,7 @@
 | 관찰 | 근거 | 생기는 일 |
 |---|---|---|
 | 알림을 12개 제품이 각자 적음 | `grep "알림" products/*/01_PRD.md` 12개 제품 | 이메일 제공자·알림톡 발신 프로필·수신 동의·발송 기록이 제품마다 달라진다 |
-| 문의·리드·퍼널을 7개 제품이 언급 | website-floria(문의 폼 백엔드가 없던 원본), microweb-studio(문의 → 제작 주문 → 게시 추적), arch-studio(사전예약), nomad-docs(파이프라인 lead 단계), live-poll, stock-dashboard, shortsflow | 리드가 여러 테이블에 흩어지고 광고 출처(UTM)를 비교할 수 없다 |
+| 문의·리드·퍼널을 7개 제품이 언급 | website-floria(문의 폼 백엔드가 없던 원본), microweb-studio(문의 → 제작 주문 → 게시 추적), arch-studio(사전예약), nomad-docs(파이프라인 lead 단계), live-poll, stock-dashboard, sceneflow | 리드가 여러 테이블에 흩어지고 광고 출처(UTM)를 비교할 수 없다 |
 | CRM형 화면을 2개 제품이 따로 설계 | nomad-docs DC-F-047(파이프라인 보드, 거래처 360, 활동 타임라인), admin-suite ERP 거래처 | 같은 연락처·활동 모델을 두 번 만든다 |
 | 운영자 화면을 13개 제품이 각자 기획 | `products/*/03_SCREENS_UX.md`의 `/admin` 행 | 크레딧 조정·환불·감사 열람의 권한 규칙이 제품마다 어긋날 위험(보안) |
 | 구글 시트 연동 기획 0건 | `grep "Google Sheets"` 결과 없음 | 고객이 가장 먼저 요구하는 "엑셀/시트로 받기"가 빠져 있다 |
@@ -157,7 +157,7 @@ analytics는 점수가 높지만 직접 만드는 부분이 얇아(외부 도구
 | 용도 | (1) 내보내기: 리드·주문·출석·예약을 고객이 지정한 시트에 한 행씩 추가(가장 많이 요구됨) (2) 읽기: 운영자가 시트로 관리하는 가격표·FAQ·상품 목록을 주기적으로 가져오기 (3) 일괄 가져오기: 초기 데이터 이전 |
 | 원칙 | DB가 정본, 시트는 사본. 1차는 단방향(DB → 시트)만. 양방향은 충돌 규칙이 필요해 확장으로 미룬다 |
 | 인증 방식 비교 | (a) 사용자 OAuth + `drive.file` 범위(앱이 만들었거나 사용자가 고른 파일만, **비민감 범위라 기본 확인만**) (b) 사용자 OAuth + `spreadsheets` 범위(모든 시트, **민감 범위라 추가 검증**) (c) 서비스 계정 + 사용자가 시트를 서비스 계정 이메일에 공유 (d) n8n·Make 시나리오 |
-| 권고 | 고객용은 **(a) `drive.file` + Google Picker로 시트 선택**. 운영자 내부용은 (c). 로그인용 Google 클라이언트와 시트 연동용 클라이언트는 나눈다(로그인 동의 화면을 기본 범위로 유지, shortsflow의 채널 연동 분리와 같은 이유) |
+| 권고 | 고객용은 **(a) `drive.file` + Google Picker로 시트 선택**. 운영자 내부용은 (c). 로그인용 Google 클라이언트와 시트 연동용 클라이언트는 나눈다(로그인 동의 화면을 기본 범위로 유지, sceneflow의 채널 연동 분리와 같은 이유) |
 | 저장 | 연동 토큰은 코어 oauth 모듈(`create/consume_oauth_state`, `encrypted_credentials`, `SHARED_MODULES.md` 7장)에 암호화 저장 |
 | 표 | `sync.connections`(조직, 대상 시트 id, 시트 탭, 열 매핑, 자격증명 id), `sync.runs`(실행 기록, 행 수, 오류) |
 | 실행 | 이벤트(리드 생성 등) → `core.jobs` 큐 `sync.sheets` → 묶어서 `spreadsheets.values.append`. 한도: 프로젝트당 분당 읽기·쓰기 각 300회, 사용자당 분당 60회, 요청 180초 제한, 권장 페이로드 2MB 이하. 429면 지수 백오프(최대 32~64초) 후 재시도 |

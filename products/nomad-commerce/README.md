@@ -6,12 +6,12 @@
 
 쿠팡·스마트스토어에 상품을 올리는 국내 셀러가 아마존·국내 도매 상품을 가져와 상품DB에 쌓고, AI로 슬롯형 상세페이지(이미지 10장/15장, 카피, 금지어 검사)를 만든 뒤, 마켓 규격으로 변환해 API 업로드하거나 엑셀(플레이오토 호환)/ZIP으로 내려받는 SaaS다.
 
-2026-10-13부터 상품 스펙·마켓 규칙 RAG, 마켓 규칙 위키(쿠팡·스마트스토어), 상세페이지 생성 그래프(`commerce.detail_page`), 셀러 어시스턴트 채팅, 음성(상품 설명 입력, 쇼츠 내레이션, 음성 대화), 3D 히어로가 MVP에 들어간다(확정 결정 13~17). 쇼츠 영상 렌더 엔진은 shortsflow 소유이고 commerce는 워커 API만 호출한다.
+2026-10-13부터 상품 스펙·마켓 규칙 RAG, 마켓 규칙 위키(쿠팡·스마트스토어), 상세페이지 생성 그래프(`commerce.detail_page`), 셀러 어시스턴트 채팅, 음성(상품 설명 입력, 쇼츠 내레이션, 음성 대화), 3D 히어로가 MVP에 들어간다(확정 결정 13~17). 쇼츠 영상 렌더 엔진은 sceneflow 소유이고 commerce는 워커 API만 호출한다.
 
 | 항목 | 내용 |
 |---|---|
 | 대상 사용자 | 부업 셀러, 여러 마켓을 운영하는 중급 셀러, 건강식품 구매대행 소싱러(`Nomad-AI-Factory_V.2/PRD.md:17-23`) |
-| 브랜드 | NOMAD Commerce(확정 결정 10, `docs/products/00_MERGE_ANALYSIS.md:18`). "NOMAD AI Factory"는 회사 브랜드이고, 영상 제품 이름은 ShortsFlow(`shortsflow`)다 |
+| 브랜드 | NOMAD Commerce(확정 결정 10, `docs/products/00_MERGE_ANALYSIS.md:18`). "NOMAD AI Factory"는 회사 브랜드이고, 영상 제품 이름은 SceneFlow(`sceneflow`)다 |
 | 모듈러 스키마 | `commerce`, 마이그레이션 번호 1400~1499(`docs/products/README.md:16`) |
 
 ## 2. 통합 근거
@@ -60,7 +60,7 @@
 | 음성 | 상품 설명 음성 입력(STT), 쇼츠 내레이션(TTS, 도중 제공자 대체 금지), 음성 대화. 녹음 원본 미저장. 제공자는 오픈소스와 ElevenLabs 이원화 |
 | 라우팅·동의 | `ai_routing_settings` 14행(org null, app commerce). 국외 이전 동의가 없으면 오픈소스만. 이미지 생성(fal)은 체인 밖(01장 D-15) |
 | 3D 히어로·디자인 시스템 | 상품 상자 → 상세페이지 패널 → 마켓 진열대(모바일은 상자 열림만). Tailwind CSS v4 토큰이 정답, 주 레퍼런스 Primer, 보조 Atlassian |
-| 경계 | 쇼츠 영상 렌더는 shortsflow 소유(Phase 2에 워커 API 호출) |
+| 경계 | 쇼츠 영상 렌더는 sceneflow 소유(Phase 2에 워커 API 호출) |
 
 ## 5. DB 구조 선택
 

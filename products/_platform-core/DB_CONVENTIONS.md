@@ -28,7 +28,7 @@
 | 0000~0099 | `core` | _platform-core |
 | 1000~1099 | `publishing` | flora-publishing |
 | 1100~1199 | `astro` | astro-ai |
-| 1200~1299 | `video` | shortsflow |
+| 1200~1299 | `video` | sceneflow |
 | 1300~1399 | `blog` | nomad-blog |
 | 1400~1499 | `commerce` | nomad-commerce |
 | 1500~1599 | `microweb` | microweb-studio |
@@ -51,7 +51,7 @@
 ```sql
 -- =====================================================================
 -- 1200_video.sql
--- shortsflow 도메인. 선행: core 0000~0009
+-- sceneflow 도메인. 선행: core 0000~0009
 -- =====================================================================
 create schema if not exists video;
 grant usage on schema video to anon, authenticated, service_role;
@@ -61,7 +61,7 @@ alter default privileges in schema video grant execute on functions to service_r
 alter default privileges in schema video revoke execute on functions from public;
 -- 주의: 위 줄은 PostgreSQL 전역 기본 PUBLIC EXECUTE를 없애지 못한다. 조각 끝에 `revoke execute on all functions in schema video from public;`을 반드시 둔다(SECURITY_BASELINE 3절).
 
-insert into core.apps (id, name, schema_name, signup_policy) values ('video', 'ShortsFlow', 'video', 'open')
+insert into core.apps (id, name, schema_name, signup_policy) values ('video', 'SceneFlow', 'video', 'open')
 on conflict (id) do nothing;
 ```
 

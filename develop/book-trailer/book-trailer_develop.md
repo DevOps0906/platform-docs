@@ -48,7 +48,7 @@ D:\WorkSpace\DEV\book-trailer\                           베이스를 복사해 
 | 항목 | 내용 |
 |---|---|
 | 제품 | NOMAD Book Trailer(가칭, D-1). 원고(PDF·EPUB·DOCX·MD·TXT)나 FLORA 책을 넣으면 원고 분석 → 훅 브리프 3안 → 장르 문법 스토리보드 → 장면 이미지·내레이션·자막·음악 → 쇼츠(9:16)·유튜브(16:9)·인스타(1:1, 4:5)·표지 루프 렌더 → 구매 링크 클릭 측정까지 하는 북트레일러 자동화 SaaS. 공개 베타, 가입 개방 |
-| 통합 원본 | 없음(신규 제품). 이식 원천: shortsflow(미디어 파이프라인 설계), toon-factory(장면 단위 저장·서버 렌더 워터마크·라이선스 CHECK), flora-publishing(업로드·그래프 패턴, FLORA 연동), nomad-docs(결정성 원칙), 리뷰 2건(NOMAD Shorts Maker, Toon-Factory) |
+| 통합 원본 | 없음(신규 제품). 이식 원천: sceneflow(미디어 파이프라인 설계), toon-factory(장면 단위 저장·서버 렌더 워터마크·라이선스 CHECK), flora-publishing(업로드·그래프 패턴, FLORA 연동), nomad-docs(결정성 원칙), 리뷰 2건(NOMAD Shorts Maker, Toon-Factory) |
 | 모듈러 앱 id / 스키마 | `trailer` / `trailer`(번호 2600, SQLSTATE `TR`) |
 | 이번 개발 방식 | 단독 Supabase 프로젝트 1개(모놀리스, `public` 스키마)로 시작하는 것을 제안합니다. 기획의 1차 출시안은 모듈러이고(`README.md` 5장), 모놀리스는 "베타를 독립 Supabase 프로젝트로 먼저 띄울 때" 쓰는 경로입니다. 함수 이름·시그니처는 같고 `SUPABASE_DB_SCHEMA=public`만 다릅니다. 이 경로에서는 FLORA 가져오기(TR-06-056)가 `TR010`을 냅니다 |
 | 개발 근거 | `docs/file/`의 산출물 27개(등록부 `docs/file/_index.md`). 정본은 이 산출물입니다 |
@@ -154,7 +154,7 @@ setup 스크립트는 커밋, 원격 푸시, 의존성 설치, 원격 DB 변경�
 
 - 묶음은 `D:\WorkSpace\platform\docs\develop\_shared\tools\build_root.py book-trailer`로 만들었습니다(2026-10-15, 산출물 27개, SQL 4개). 같은 날 이 스크립트에 book-trailer 등록 행(`REVIEWS`, `APP_ID`)과 선택 기획서 `08_DESIGN_SYSTEM.md`(DOC-DES-005), `###` 수준 "초기값" 절 읽기를 추가했습니다. 다른 제품의 묶음 결과는 바뀌지 않습니다(nomad-docs·local-news 초기값 동일 확인).
 - 경로 검사(`build_root.py --check book-trailer`): 문서 경로 399개, 묶음 안 누락 0, 절대경로 누락 0.
-- 복사하지 않은 파일(예: `_supabase-modular/migrations/2600_trailer.sql`, shortsflow·toon-factory 기획서)을 가리키는 참조는 `D:/WorkSpace/platform/...` 절대경로로 바뀌어 계속 열 수 있습니다.
+- 복사하지 않은 파일(예: `_supabase-modular/migrations/2600_trailer.sql`, sceneflow·toon-factory 기획서)을 가리키는 참조는 `D:/WorkSpace/platform/...` 절대경로로 바뀌어 계속 열 수 있습니다.
 - RLS 러너 `run-smoke.mjs`는 묶음에 들어가지 않습니다(platform 저장소 경로를 전제). 개발 폴더 러너는 TR-06-002가 만들고, 그 전에는 7.3절 방법을 씁니다.
 
 ### 5.2 최종 트리 (setup 실행 후 `D:\WorkSpace\DEV\book-trailer\`)
@@ -298,7 +298,7 @@ node products/book-trailer/supabase/monolith/tests/run-smoke.mjs --target mod   
 | D-7 | 음악 카탈로그 | 커미션 + 상업 라이선스 혼합 30곡 | W3 전(TR-06-029·045). 곡이 없으면 무음·사용자 업로드로 진행 |
 | D-8 | 무료 플랜 범위 | 30초 1편(가입 60크레딧) | 착수 전 |
 | D-9 | 작가 목소리 클론 | Phase 2 | 확인만 |
-| D-10 | 다채널 업로드 | P1 YouTube만, 다채널은 shortsflow | W7 전 |
+| D-10 | 다채널 업로드 | P1 YouTube만, 다채널은 sceneflow | W7 전 |
 | D-11 | 도서정가제 규칙 | 법률 확인 전 FAIL | 규칙 사전(TR-06-023) 전 |
 | D-12 | 화이트라벨 | 출판사 계약 3곳 이상이면 | Phase 2 계획 시 |
 | D-13 | YouTube 합성 콘텐츠 표시 | API 미확인, 수동 안내 | TR-06-058 전 공식 문서 확인 |
@@ -506,7 +506,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 정본: `docs/file/04-구현/07_SOURCE_MIGRATION.md`
 
-- 전용 원본 저장소가 없습니다. 이식 원천(shortsflow, toon-factory, flora-publishing, nomad-docs 기획, 리뷰 2건)은 **읽기 전용**이고 아카이브 대상도 없습니다.
+- 전용 원본 저장소가 없습니다. 이식 원천(sceneflow, toon-factory, flora-publishing, nomad-docs 기획, 리뷰 2건)은 **읽기 전용**이고 아카이브 대상도 없습니다.
 - 실제로 옮기는 것은 규칙 문장(같은 목소리 규칙), 라이선스 CHECK 구조(이미 `2600`에 반영), RFC 5987 한글 파일명뿐입니다. 나머지는 패턴만 보고 새로 작성합니다.
 - 리뷰 "높음" 18건(NOMAD Shorts Maker 12, Toon-Factory 6)의 차단 설계는 비보안 8건 `02_ARCHITECTURE.md` 6절, 보안·데이터 10건 `05_DATA_MODEL.md` 7절입니다. 해당 task 리뷰 단계에서 차단 여부를 확인합니다.
 - 폐기 TS-01~12(BullMQ·Python 미디어 워커, FFmpeg 단일 엔진, Fabric.js 캔버스, LoRA, 브라우저 렌더, 메모리 버퍼 업로드, localStorage Mock 등)는 옮기지 않습니다.
@@ -517,8 +517,8 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 |---|---|
 | 코어 재정의 금지 | auth, org, credits, toss, webhooks, oauth, storage, audit, jobs, compliance, ai-gateway, ai-service, dify, core-voice, llm-wiki, sns-uploader는 import·호출만 |
 | 키 위치 | LLM 키는 `apps/api`에만. fal·ElevenLabs는 오케스트레이터(ElevenLabs는 web 서버 음성 대화도). 서명 개인키는 web 서버만. 렌더러에는 AI 키 없음 |
-| sns-uploader | YouTube 업로드(P1)는 shortsflow 소유 공용 모듈의 소비자 |
-| 렌더러 | 지금은 이 제품 소유. toon-factory MP4·shortsflow와 공유할지 R-T8에서 판단 |
+| sns-uploader | YouTube 업로드(P1)는 sceneflow 소유 공용 모듈의 소비자 |
+| 렌더러 | 지금은 이 제품 소유. toon-factory MP4·sceneflow와 공유할지 R-T8에서 판단 |
 | 공용 요청 | R-T1(모듈러 seed), R-T2(번호·SQLSTATE), R-T4(잡 토큰 `parse` scope), R-T5(인증 매트릭스), R-T6(sns-uploader 소비자), R-T7(REFERENCES 절)은 2026-10-16 반영. 남은 것은 R-T3 서점 제휴 범용화, R-T8 렌더러 공용화(둘 다 Phase 2, `06_AGENT_PLAN.md` 6절) |
 
 ## 16. 검증과 완료 정의

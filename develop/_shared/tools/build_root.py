@@ -25,7 +25,7 @@ STAMP = '20261013'
 REVIEWS = {
     'astro-ai': ['Astro_AI.md', 'FortuneDocs.md'],
     'flora-publishing': ['Flora-v2.md', 'flora.md', 'flora-publisher.md', 'SellingDocs.md'],
-    'shortsflow': ['NOMAD_Shorts_Maker.md', 'Nomad-BlogStudio.md', 'Youtube_shots_Maker.md'],
+    'sceneflow': ['NOMAD_Shorts_Maker.md', 'Nomad-BlogStudio.md', 'Youtube_shots_Maker.md'],
     'nomad-blog': ['NOMAD_Shorts_Maker.md', 'Youtube_shots_Maker.md', 'nomad-ai-commerce.md', 'nomad-ai-factory.md'],
     'nomad-commerce': ['Nomad-AI-Factory_V.2.md', 'nomad-ai-factory.md', 'nomad-ai-commerce.md', 'sellingstudio.md'],
     'microweb-studio': ['premium-wedding-invitation.md', 'nexus-micro-web-builder.md', 'webcraft-agency-simulator.md', 'WebSite.md'],
@@ -41,7 +41,7 @@ REVIEWS = {
     'arch-studio': ['FortuneDocs.md'],  # 신규 기획(설치형), 이식 원천 리뷰(2026-10-16)
 }
 APP_ID = {
-    'astro-ai': 'astro', 'flora-publishing': 'publishing', 'shortsflow': 'video', 'nomad-blog': 'blog',
+    'astro-ai': 'astro', 'flora-publishing': 'publishing', 'sceneflow': 'video', 'nomad-blog': 'blog',
     'nomad-commerce': 'commerce', 'microweb-studio': 'microweb', 'admin-suite': 'erp, hms, sms', 'live-poll': 'poll',
     'stock-dashboard': 'stock', 'toon-factory': 'toon', 'study-note': 'notes', 'website-floria': 'site',
     'nomad-docs': 'docs', 'local-news': 'news', 'book-trailer': 'trailer', 'arch-studio': 'arch',

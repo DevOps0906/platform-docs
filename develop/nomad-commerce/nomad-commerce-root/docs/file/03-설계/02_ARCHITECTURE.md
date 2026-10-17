@@ -9,7 +9,7 @@
 | 상세페이지 생성 경로 | 잡 소유와 이미지·합성·마켓 이미지 변환은 TS 워커가 그대로 한다. 1~3단계의 텍스트 생성은 FastAPI 그래프 `commerce.detail_page`에 맡긴다. 워커는 Next.js `/api/internal/ai-token`에서 잡에 묶인 서명 토큰을 받아 그래프를 실행한다(4.1절) | 01장 D-14, CM-F-043 |
 | 보조 AI(상품명, 자동완성, 벤치마킹 요약, Vision, 음성 구조화, 쇼츠 스크립트) | Route Handler가 서명 토큰으로 FastAPI 그래프 `commerce.assist`를 실행하고 결과를 기다린다. 사용자 URL fetch는 Route Handler의 `packages/commerce-net`이 하고 그래프에는 텍스트만 넘긴다(FastAPI에 사용자 URL fetch 코드 없음) | CM-F-044, 리뷰 CM #3 |
 | 음성 | Next.js `/api/voice/*` + 공용 `packages/core-voice`(ElevenLabs TS SDK, 오픈소스 음성 서버). fal whisper STT는 폐기. 쇼츠 내레이션도 Route Handler가 처리한다(ElevenLabs 키를 워커에 두지 않기 위해) | 확정 결정 16, `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:5-20` |
-| 쇼츠 영상 렌더 | shortsflow가 소유한다. commerce는 내레이션 mp3와 상세페이지 이미지 경로를 video 워커 API로 넘기기만 한다(Phase 2) | 확정 결정 6, `docs/reference/00_MERGE_ANALYSIS.md:956` |
+| 쇼츠 영상 렌더 | sceneflow가 소유한다. commerce는 내레이션 mp3와 상세페이지 이미지 경로를 video 워커 API로 넘기기만 한다(Phase 2) | 확정 결정 6, `docs/reference/00_MERGE_ANALYSIS.md:956` |
 
 ## 1. 스택
 
@@ -33,7 +33,7 @@
 | 결제 | Toss Payments | - | 확정 결정 4 |
 | 패키지 관리 | pnpm 모노레포, lockfile 커밋, `latest` 금지 | - | `SECURITY_BASELINE.md` 13장 |
 
-영상 렌더(Python FFmpeg)는 shortsflow 소유이며 commerce는 워커 API만 호출한다(확정 결정 6, C-6 `docs/reference/00_MERGE_ANALYSIS.md:956`).
+영상 렌더(Python FFmpeg)는 sceneflow 소유이며 commerce는 워커 API만 호출한다(확정 결정 6, C-6 `docs/reference/00_MERGE_ANALYSIS.md:956`).
 
 ## 2. 모듈 경계
 
@@ -248,7 +248,7 @@ FastAPI는 DB 쓰기를 `ai_runs`·`ai_run_steps`·`ai_usage`에만 한다. `det
 | ElevenLabs | 외부 SaaS(국외) | 공개 인터넷. Next.js 서버만 TS SDK로 호출 |
 | DB | Supabase 통합 프로젝트(모듈러) | RLS. 워커는 service_role |
 | 웹훅 | `/api/webhooks/toss`, `/api/webhooks/fal` | 공개, 서명 검증·레이트 리밋·1MB 상한 |
-| video 렌더(Phase 2) | shortsflow 워커 API(내레이션 mp3 경로와 이미지 경로 전달) | 내부 서비스 토큰 |
+| video 렌더(Phase 2) | sceneflow 워커 API(내레이션 mp3 경로와 이미지 경로 전달) | 내부 서비스 토큰 |
 
 AI 호출 경로: 브라우저 → Next.js `/api/ai/*`·`/api/voice/*` → (Dify 또는 FastAPI 직접, 장애 시 `/tools/answer-direct`) → FastAPI → 상용 API 또는 공용 GPU 서버. 상세페이지 텍스트 생성은 워커 → FastAPI(4.1절). 마켓 API 호출은 워커에서만 한다(키 복호화 지점을 하나로). 쿠팡 Open API가 호출 IP 등록을 요구하면(미확인) Railway 고정 아웃바운드 IP를 쓴다.
 

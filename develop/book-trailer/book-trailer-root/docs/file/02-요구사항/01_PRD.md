@@ -27,7 +27,7 @@
 | 책 등록(업로드·붙여넣기), 서지 정보, 권리 확인, 표지 → 브랜드 키트 | MVP | 핵심 과제 1, 신규 |
 | 원고 분석, 브리프 3안, 인용 원고 대조, 스포일러 수준 | MVP | 핵심 과제 1, 신규 |
 | 장르 트레일러 문법 6종, 스토리보드 생성·편집·장면 재생성 | MVP | 핵심 과제 2, 신규 |
-| 장면 이미지(fal Flux, 스타일 고정), 사용자 이미지, 내레이션(같은 목소리), 자막, 카탈로그·사용자 음악 | MVP | 핵심 과제 2, 이미지·TTS 경로는 shortsflow 설계 이식(`D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:176`, `:227-238`) |
+| 장면 이미지(fal Flux, 스타일 고정), 사용자 이미지, 내레이션(같은 목소리), 자막, 카탈로그·사용자 음악 | MVP | 핵심 과제 2, 이미지·TTS 경로는 sceneflow 설계 이식(`D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:176`, `:227-238`) |
 | 포맷 5종 렌더(9:16, 16:9, 1:1, 4:5, 표지 루프), 브라우저 미리보기, 포스터·SRT·ZIP 내려받기 | MVP | 핵심 과제 2, 신규 |
 | 플랫폼별 메타데이터 팩, 구매 링크·클릭 집계, 제휴 링크 대가성 문구 | MVP | 핵심 과제 3, 대가성 문구 규칙은 `docs/file/03-설계/공용코어/CORE_SPEC.md` 13장과 같은 기준(이 제품은 코어 affiliate 대신 자체 테이블, 05장 6절) |
 | AI 트레일러 코치 채팅, 책 설정 위키, 음성 대화·받아쓰기, 내레이션 샘플 | MVP | 확정 결정 13, 14, 16(`docs/reference/00_MERGE_ANALYSIS.md:21-24`) |
@@ -38,10 +38,10 @@
 | 외부 승인 링크(저자·편집자), 팀 멤버(publisher 5인) | P1 | 페르소나 박도윤 |
 | YouTube 업로드(공용 sns-uploader 소비), 합성 콘텐츠 표시 | P1 | `docs/file/03-설계/공용코어/SHARED_MODULES.md` 11장(video 소유, 다른 제품 소비), D-10, D-13 |
 | 음악 BPM 맞춤 컷 길이 | P1 | 신규 |
-| 작가 목소리 클론(동의 녹음), 캐릭터 일관성(toon 엔진), 다국어판(EN/JA), Suno 음악, shortsflow로 보내기(다채널 예약), 화이트라벨(출판사 로고·도메인) | Phase 2 | D-9, D-7, D-10, D-12. 화이트라벨은 `Multi-tenant_Theming/` |
+| 작가 목소리 클론(동의 녹음), 캐릭터 일관성(toon 엔진), 다국어판(EN/JA), Suno 음악, sceneflow로 보내기(다채널 예약), 화이트라벨(출판사 로고·도메인) | Phase 2 | D-9, D-7, D-10, D-12. 화이트라벨은 `Multi-tenant_Theming/` |
 | 타인 도서 트레일러(서평가·북튜버), 서점 상세페이지 직접 등록 | Phase 3 | D-6. 서점 등록 API 미확인 |
 
-확정 결정 6(TS 오케스트레이션 + Python 미디어, `docs/reference/00_MERGE_ANALYSIS.md:14`)은 shortsflow의 결정이다. 이 제품은 렌더 엔진을 열린 결정 D-2로 두고 권장안(Remotion, Node)으로 설계했다(02장 1절). Python은 AI 서비스(`apps/api`)에만 쓴다.
+확정 결정 6(TS 오케스트레이션 + Python 미디어, `docs/reference/00_MERGE_ANALYSIS.md:14`)은 sceneflow의 결정이다. 이 제품은 렌더 엔진을 열린 결정 D-2로 두고 권장안(Remotion, Node)으로 설계했다(02장 1절). Python은 AI 서비스(`apps/api`)에만 쓴다.
 
 ## 3. 기능 요구사항과 수용 기준
 
@@ -89,9 +89,9 @@
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| TR-F-040 | 장면 이미지 | 디벨롭 | fal Flux로 장면 이미지 생성. 스타일 고정: 브랜드 키트 팔레트 + 문법별 스타일 프리셋 + 트레일러 고정 seed. 실존 인물·유명인·특정 작가 화풍 금지, 인물은 기본 실루엣·뒷모습·소품 중심(08_DESIGN_SYSTEM.md 8장). 안전 검사 켬 | 같은 트레일러의 장면 이미지가 같은 팔레트·질감으로 보인다(사람 검토 기준표 08장 8.3절). 실존 인물 이름이 든 프롬프트는 compliance가 막는다 | shortsflow 이미지 경로(`D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:176`) |
+| TR-F-040 | 장면 이미지 | 디벨롭 | fal Flux로 장면 이미지 생성. 스타일 고정: 브랜드 키트 팔레트 + 문법별 스타일 프리셋 + 트레일러 고정 seed. 실존 인물·유명인·특정 작가 화풍 금지, 인물은 기본 실루엣·뒷모습·소품 중심(08_DESIGN_SYSTEM.md 8장). 안전 검사 켬 | 같은 트레일러의 장면 이미지가 같은 팔레트·질감으로 보인다(사람 검토 기준표 08장 8.3절). 실존 인물 이름이 든 프롬프트는 compliance가 막는다 | sceneflow 이미지 경로(`D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:176`) |
 | TR-F-041 | 사용자 이미지 | 신규 | 장면에 직접 이미지(png/jpg/webp, 10MB) 업로드. 권리 확인 체크 필수 | 체크 없이 올리면 거부. 사용자 이미지는 AI 생성 표시 대상이 아니다(`source=upload`) | `2600_trailer.sql:511-545` |
-| TR-F-042 | 내레이션 | 디벨롭 | 엔진 선택(auto, ElevenLabs, 오픈소스). 첫 내레이션이 끝나면 제공자·보이스를 트레일러에 고정하고 이후 모든 장면은 같은 목소리. 장면 재생성도 같은 값 | 다른 목소리 결과는 저장 거부(22023). 엔진 실패는 같은 엔진으로만 3회 재시도 후 그 장면 실패 + 환불 | `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:47`, `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:227-238` |
+| TR-F-042 | 내레이션 | 디벨롭 | 엔진 선택(auto, ElevenLabs, 오픈소스). 첫 내레이션이 끝나면 제공자·보이스를 트레일러에 고정하고 이후 모든 장면은 같은 목소리. 장면 재생성도 같은 값 | 다른 목소리 결과는 저장 거부(22023). 엔진 실패는 같은 엔진으로만 3회 재시도 후 그 장면 실패 + 환불 | `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:47`, `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:227-238` |
 | TR-F-043 | 음악 | 신규 | 라이선스 검증된 카탈로그 곡(무드·BPM) 또는 사용자 업로드(mp3/wav, 20MB, 5분, creator 이상, 권리 확인). 내레이션 구간 자동 덕킹(-12dB, 제안) | 권리 확인 없는 업로드 음악으로 렌더하면 `TR011`. 라이선스 검증 기록이 없는 곡은 공개할 수 없다(DB CHECK) | toon-factory 리뷰 #6 차단과 같은 방식(`2000_toon.sql:94-115`) |
 | TR-F-044 | 자막 | 신규 | 내레이션·화면 문구 자막을 번인하고 SRT도 만든다. 플랫폼 안전 영역 안에만 배치 | 9:16에서 하단 UI 영역(08_DESIGN_SYSTEM.md 5.2절)에 자막이 겹치지 않는다. SRT 시간이 영상과 100ms 안에서 맞는다 | 신규 |
 
@@ -112,21 +112,21 @@
 | TR-F-060 | 메타데이터 팩 | 신규 | 그래프 `trailer.meta`: 플랫폼별(유튜브 쇼츠, 유튜브, 인스타그램, 틱톡, 네이버 클립, 서점, 일반) 제목·설명·해시태그 + 구매 단축 링크(UTM 태그 포함) | 해시태그 30개 이하, 공백 없음(DB CHECK). 설명에 근거 없는 판매 실적·순위 문구가 있으면 compliance FAIL | 신규 |
 | TR-F-061 | 대가성 문구 | 신규 | 제휴 링크가 하나라도 들어간 메타데이터는 설명 첫 줄에 대가성 문구. 사용자가 지워도 다시 들어간다 | 대가성 문구를 지운 저장은 문구가 다시 붙은 채 저장된다. `has_affiliate`를 직접 끌 수 없다(42501) | `docs/file/03-설계/공용코어/CORE_SPEC.md` 13장 기준, `2600_trailer.sql` 5-9절 |
 | TR-F-062 | 클릭 측정 | 신규 | `/b/<code>?t=<태그>` 클릭을 영상·플랫폼 태그별로 집계(IP는 일 단위 솔트 sha256만) | 책 상세에서 링크별·태그별 7일·30일 클릭이 보인다. 원 IP는 어디에도 저장되지 않는다 | 6.1절 |
-| TR-F-063 | YouTube 업로드 | 디벨롭(P1) | 공용 sns-uploader로 쇼츠·동영상 업로드, 합성 콘텐츠 표시(API 가능 여부 미확인, D-13), 예약. 같은 템플릿 반복 업로드 경고 | 업로드 1건 1크레딧(shortsflow와 같음). 같은 채널에 같은 템플릿 영상이 7일 안 3편 이상이면 경고(6.6절) | `docs/file/03-설계/공용코어/SHARED_MODULES.md` 11장, `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md:189` |
+| TR-F-063 | YouTube 업로드 | 디벨롭(P1) | 공용 sns-uploader로 쇼츠·동영상 업로드, 합성 콘텐츠 표시(API 가능 여부 미확인, D-13), 예약. 같은 템플릿 반복 업로드 경고 | 업로드 1건 1크레딧(sceneflow와 같음). 같은 채널에 같은 템플릿 영상이 7일 안 3편 이상이면 경고(6.6절) | `docs/file/03-설계/공용코어/SHARED_MODULES.md` 11장, `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md:189` |
 
 ### 3.8 검토·승인·팀
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
 | TR-F-070 | 버전 기록 | 신규 | 렌더마다 스냅샷(장면·에셋·키트·템플릿 버전). 브리프는 불변 버전 | 렌더 상세에서 그 시점 스토리보드를 읽기 전용으로 열 수 있다 | `2600_trailer.sql:582-620` |
-| TR-F-071 | 외부 승인 링크 | 디벨롭(P1) | publisher 플랜. 완료된 렌더 1~5개로 승인 링크(7일, 토큰 sha256만 저장). 저자는 로그인 없이 재생·승인·수정 요청(1,000자) | 만료·결정된 링크는 `TR009`. 승인되면 트레일러가 approved | shortsflow 고객 승인 설계 이식(`D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md` 3.1절, VD-F-123) |
+| TR-F-071 | 외부 승인 링크 | 디벨롭(P1) | publisher 플랜. 완료된 렌더 1~5개로 승인 링크(7일, 토큰 sha256만 저장). 저자는 로그인 없이 재생·승인·수정 요청(1,000자) | 만료·결정된 링크는 `TR009`. 승인되면 트레일러가 approved | sceneflow 고객 승인 설계 이식(`D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md` 3.1절, VD-F-123) |
 | TR-F-072 | 팀 | 유지(P1) | publisher 5인. owner/admin/member/viewer. viewer는 읽기만 | viewer가 장면을 고치면 0행(정책). 책 삭제는 owner/admin만 | `docs/file/03-설계/공용코어/CORE_SPEC.md` 3장 |
 
 ### 3.9 compliance
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| TR-F-080 | 금지 문구·위험 검사 | 디벨롭 | 모든 그래프 마지막 노드와 렌더 직전에 규칙 검사(`packages/trailer-rules`): 근거 없는 판매·순위·수상 표현, 보장 표현, 가상 독자 후기, 의료·투자 효능 단정, 도서정가제 위반 할인 표현, 실존 인물 이름의 이미지 프롬프트, 스포일러 수준 위반. FAIL은 차단, WARN은 확인 후 진행 | "베스트셀러 1위" 문구는 근거 입력이 없으면 FAIL로 렌더 버튼이 막힌다. "정가 50% 할인"은 FAIL. WARN은 사용자가 확인하면 진행되고 감사 로그가 남는다 | 6.5절, shortsflow compliance 노드 이식(`D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:214`) |
+| TR-F-080 | 금지 문구·위험 검사 | 디벨롭 | 모든 그래프 마지막 노드와 렌더 직전에 규칙 검사(`packages/trailer-rules`): 근거 없는 판매·순위·수상 표현, 보장 표현, 가상 독자 후기, 의료·투자 효능 단정, 도서정가제 위반 할인 표현, 실존 인물 이름의 이미지 프롬프트, 스포일러 수준 위반. FAIL은 차단, WARN은 확인 후 진행 | "베스트셀러 1위" 문구는 근거 입력이 없으면 FAIL로 렌더 버튼이 막힌다. "정가 50% 할인"은 FAIL. WARN은 사용자가 확인하면 진행되고 감사 로그가 남는다 | 6.5절, sceneflow compliance 노드 이식(`D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:214`) |
 
 ### 3.10 AI·음성 (확정 결정 13~17)
 
@@ -135,7 +135,7 @@
 | TR-F-100 | 트레일러 코치 채팅 | 신규 | Dify `trailer-chat` + FastAPI `/tools/answer`. 이 책의 원고 컬렉션(RAG)과 위키만 근거로 답한다(예: "3장에서 쓸 만한 문장 찾아 줘"). 답변에 장 번호·문단 위치 출처 | 출처 없는 답은 "원고에서 근거를 찾지 못했다"로 끝난다. 다른 책·다른 조직 원고는 검색되지 않는다(조직·컬렉션 필터). 실패하면 턴 크레딧 환불 | `docs/file/03-설계/공용코어/AI_ARCHITECTURE.md` 2~5장 |
 | TR-F-101 | 책 설정 위키 | 신규 | 분석 때 인물·장소·용어 위키 초안 자동 생성(크레딧은 분석에 포함), 사용자 편집. 스토리보드·이미지 프롬프트가 위키를 근거로 인물 묘사를 맞춘다 | 위키에서 인물 머리색을 바꾸면 다음 장면 이미지 프롬프트에 반영된다. 삭제는 보관, 개인정보 삭제 요청은 `purge_wiki_page` | `docs/file/03-설계/공용코어/LLM_WIKI.md` |
 | TR-F-102 | 음성 대화·받아쓰기 | 유지 | 코치에게 말로 묻고 답을 듣는다. 내레이션 문구를 말로 입력(60초) | 마이크 권한을 거부해도 텍스트로 모든 기능을 쓸 수 있다. 녹음은 기본 저장하지 않는다(`store_audio=false`) | 확정 결정 16, `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md` 6·8장 |
-| TR-F-103 | 내레이션 샘플 | 유지 | 보이스 고르기 전 100자 샘플 | 샘플은 선택한 엔진·보이스로만 만들고 다른 엔진으로 대체하지 않는다 | `D:/WorkSpace/platform/docs/products/shortsflow/02_ARCHITECTURE.md:237` |
+| TR-F-103 | 내레이션 샘플 | 유지 | 보이스 고르기 전 100자 샘플 | 샘플은 선택한 엔진·보이스로만 만들고 다른 엔진으로 대체하지 않는다 | `D:/WorkSpace/platform/docs/products/sceneflow/02_ARCHITECTURE.md:237` |
 | TR-F-104 | 국외 이전 동의 | 유지 | 온보딩·설정에서 상용 AI·음성 제공자로의 국외 이전 동의. 동의하지 않으면 오픈소스 경로만 | 미동의 조직에서 ElevenLabs 보이스가 선택지에 없다. 원고 분석은 오픈소스로 진행된다 | `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/0008_core_ai.sql:419-476` |
 
 ### 3.11 공개 화면과 운영
@@ -153,10 +153,10 @@
 |---|---|---|---|
 | TR-F-130 | 작가 목소리 클론 | Phase 2 | 본인 동의 녹음, 공용 음성 서버 정책 확인 후(D-9) |
 | TR-F-131 | 캐릭터 일관성 | Phase 2 | toon-factory 캐릭터 엔진 연계(`D:/WorkSpace/platform/docs/products/toon-factory/01_PRD.md`) |
-| TR-F-132 | shortsflow로 보내기 | Phase 2 | 다채널 예약 업로드·분석은 shortsflow가 소유(D-10) |
+| TR-F-132 | sceneflow로 보내기 | Phase 2 | 다채널 예약 업로드·분석은 sceneflow가 소유(D-10) |
 | TR-F-133 | 화이트라벨 | Phase 2 | 출판사 로고·도메인(Model B, `Multi-tenant_Theming/`) |
 | TR-F-134 | 다국어판 | Phase 2 | EN/JA 내레이션·자막, KDP 홍보 |
-| TR-F-135 | Suno 음악 | Phase 2 | 공식 API 미확인(shortsflow D-8과 같은 문제) |
+| TR-F-135 | Suno 음악 | Phase 2 | 공식 API 미확인(sceneflow D-8과 같은 문제) |
 
 ## 4. 요금과 크레딧
 
@@ -193,23 +193,23 @@
 
 -1(무제한)은 쓰지 않는다(`Price_Plans/_common/PRICING_PRINCIPLES.md` 6장 무제한 금지).
 
-크레딧 단가. 서버 상수 `apps/web/src/server/pricing.ts`가 정본이고 DB는 받은 값만 차감한다(코어는 단가를 모른다, shortsflow와 같은 구조 `D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md:175`).
+크레딧 단가. 서버 상수 `apps/web/src/server/pricing.ts`가 정본이고 DB는 받은 값만 차감한다(코어는 단가를 모른다, sceneflow와 같은 구조 `D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md:175`).
 
 | 작업 | 크레딧 | 근거(전부 제안) |
 |---|---|---|
 | 원고 분석(20만 자까지) / 10만 자 추가마다 | 20 / 8 | 오픈소스 우선 체인. 20만 자 ≈ 입력 30만 토큰 x 0.2cr(`D:/WorkSpace/platform/docs/products/_supabase-modular/seed.sql:243-262` 오픈소스 단가) + 출력 + 위키 초안. 같은 원고 재분석 0 |
 | 브리프 3안 | 8 | 분석 결과 1만~1.5만 토큰 입력 + 3안 출력, Claude 단가(입력 1cr/1k, 출력 4cr/1k) |
 | 스토리보드 생성·재생성 | 6 | 브리프 + 문법 + 위키 입력, 장면 JSON 출력 |
-| 장면 이미지 1장(생성·재생성) | 3 | shortsflow 이미지 1장과 같다(`D:/WorkSpace/platform/docs/products/shortsflow/01_PRD.md:184`) |
+| 장면 이미지 1장(생성·재생성) | 3 | sceneflow 이미지 1장과 같다(`D:/WorkSpace/platform/docs/products/sceneflow/01_PRD.md:184`) |
 | 사용자 이미지 등록 | 0 | 정규화(리사이즈)만 |
 | 내레이션 장면 1개: ElevenLabs / 오픈소스 | 2 / 1 | 장면 평균 60자. 코어 단가(EL 5cr/천 자, 오픈소스 1cr/천 자)에 최소 단위·재시도 여유 |
-| 렌더 15~30초 / 45~60초 / 90초 | 4 / 6 / 8 | shortsflow 숏폼 인코딩 3보다 높다: 헤드리스 Chromium 프레임 렌더가 FFmpeg 합성보다 CPU를 더 쓴다(D-2) |
+| 렌더 15~30초 / 45~60초 / 90초 | 4 / 6 / 8 | sceneflow 숏폼 인코딩 3보다 높다: 헤드리스 Chromium 프레임 렌더가 FFmpeg 합성보다 CPU를 더 쓴다(D-2) |
 | 1080p 추가 | +2 | 픽셀 2.25배 |
 | 표지 루프 | 2 | 5~8초 |
 | 서버 미리보기 렌더(480p, 워터마크) | 1 | 공유용. 브라우저 미리보기는 0 |
 | 메타데이터 팩(플랫폼 4개까지) | 2 | 트렌드 분석 단가와 같게 |
 | 표지 팔레트 추출, 구매 링크, 클릭 집계, 승인 링크 | 0 | 결정적 처리·조회 |
-| YouTube 업로드(P1) | 1/건 | shortsflow와 같다 |
+| YouTube 업로드(P1) | 1/건 | sceneflow와 같다 |
 
 예: 30초 무료 체험 = 분석 20 + 브리프 8 + 스토리보드 6 + 이미지 4장 12 + 오픈소스 내레이션 4장면 4 + 렌더 4 = 54 크레딧(가입 60 안). 60초 creator 세트 = 분석 20 + 브리프 8 + 스토리보드 6 + 이미지 8장 24 + EL 내레이션 8장면 16 + 9:16 1080p 8 + 16:9 1080p 8 + 표지 루프 2 + 메타 2 = 94 크레딧(creator 월 800으로 약 8세트).
 
@@ -348,7 +348,7 @@
 | # | 결정 | 선택지 | 권고 |
 |---|---|---|---|
 | D-1 | 브랜드명 | NOMAD Book Trailer(가칭) / 디지털노마드연구소 하위 브랜드 / 별도 이름 | 베타는 가칭. 출판 브랜드 FLORA와 묶을지 출시 전 결정 |
-| D-2 | 렌더 엔진 | (a) Remotion(React 컴포지션, Node 렌더러) (b) FFmpeg 직접 합성(shortsflow 미디어 워커 방식) | (a). 디자인 토큰을 앱·영상이 같이 쓰고, 텍스트·한글 조판이 브라우저 수준이다. 라이선스: 개인·직원 3명 이하 영리 조직은 무료, 그 밖은 Company License(Remotion LICENSE.md 4.0.529, 2026-10-15 확인). 직원이 4명이 되는 시점에 구매 |
+| D-2 | 렌더 엔진 | (a) Remotion(React 컴포지션, Node 렌더러) (b) FFmpeg 직접 합성(sceneflow 미디어 워커 방식) | (a). 디자인 토큰을 앱·영상이 같이 쓰고, 텍스트·한글 조판이 브라우저 수준이다. 라이선스: 개인·직원 3명 이하 영리 조직은 무료, 그 밖은 Company License(Remotion LICENSE.md 4.0.529, 2026-10-15 확인). 직원이 4명이 되는 시점에 구매 |
 | D-3 | FLORA 연동 시점 | MVP / P1 / Phase 2 | P1. FLORA가 먼저 완성되어야 하고 모듈러 배포에서만 된다 |
 | D-4 | 가격·단가 확정 | 4장 제안값 유지 / 베타 원가 측정 후 조정 | 베타 4주 원가 측정 후 확정 |
 | D-5 | 인용 한도 | 80/300자 / 120/500자 | 80/300자로 시작, 출판사 의견으로 조정 |
@@ -356,7 +356,7 @@
 | D-7 | 음악 카탈로그 확보 | 자체 제작 / 커미션 / 상업 라이선스 구매 / Suno(Phase 2) | 커미션 + 상업 라이선스 혼합 30곡으로 베타. Suno는 공식 API 확인 후 |
 | D-8 | 무료 플랜 범위 | 30초 1편 / 15초 3편 | 30초 1편(가입 60 크레딧) |
 | D-9 | 작가 목소리 클론 | Phase 2 / 제외 | Phase 2, 본인 녹음 동의 + 제공자 정책 확인 |
-| D-10 | 다채널 업로드 | sns-uploader 직접 소비(P1) / shortsflow로 보내기(Phase 2) | P1은 YouTube만 직접, 다채널은 shortsflow로 넘긴다 |
+| D-10 | 다채널 업로드 | sns-uploader 직접 소비(P1) / sceneflow로 보내기(Phase 2) | P1은 YouTube만 직접, 다채널은 sceneflow로 넘긴다 |
 | D-11 | 도서정가제 규칙 | 15% 기준 FAIL / WARN만 | 법률 확인 전 FAIL(보수적) |
 | D-12 | 화이트라벨 판매 | Phase 2 / 대행 수요 확인 후 | 출판사 계약 3곳 이상이면 착수 |
 | D-13 | YouTube 합성 콘텐츠 표시 | API 설정 / 수동 안내 | API 미확인. 확인 전에는 수동 안내 |
@@ -368,7 +368,7 @@
 | D-14 | 카카오 이메일 정책 | 이메일 필수 동의 / 선택 + 보충 입력 | `AUTH_ROADMAP.md` 7.1절 기본값(선택 + 보충 입력) |
 | D-15 | 네이버 경로 | Supabase 커스텀 OIDC / 서버 브리지 | 스파이크 결과로 결정(`AUTH_ROADMAP.md` 7.2.2절). 브리지면 코어 `staged/0010` 적용 요청 |
 | D-16 | 이메일 가입 유지 | 유지 / Google만 | 유지(출판사 업무 메일 계정 사용자가 많다) |
-| D-17 | Google 클라이언트 분리 | 로그인용과 YouTube 채널용 분리 / 하나 | 분리(shortsflow D-29와 같은 이유) |
+| D-17 | Google 클라이언트 분리 | 로그인용과 YouTube 채널용 분리 / 하나 | 분리(sceneflow D-29와 같은 이유) |
 
 ### 8.2 인증 단계 범위 (확정 결정 22)
 
