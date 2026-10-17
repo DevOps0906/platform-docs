@@ -29,10 +29,10 @@
 |---|---|---|
 | Track A 중국 드라마 숏폼(KO/JA/EN 더빙, 강조 자막) | MVP | 확정 결정 7, MA:22-28 |
 | Track B 커머스 숏폼 + `/landing/[slug]` | MVP | 확정 결정 7, 12 |
-| Track C Mode1(대본→이미지→켄번스), Mode2(원본 재편집) | MVP | 확정 결정 7 |
-| Track D 롱폼 10섹션 + OSMU 하이라이트 3개 | MVP | 확정 결정 7 |
-| Track E Lofi 단일 곡(Suno) + 단일 곡 루프 영상 + DSP 유통 패키지(수동 제출) | MVP | 확정 결정 7. 관리 단위는 곡 |
-| Track F 플레이리스트(30분/1시간/3시간, 트랙리스트·타임스탬프·무드 썸네일·고정 댓글) | MVP | 확정 결정 7. 관리 단위는 플레이리스트 프로젝트 |
+| Track C Mode1(대본→이미지→켄번스), Mode2(원본 재편집) | MVP (2026-10-18: 10장 Track S로 통합, SF-1) | 확정 결정 7 |
+| Track D 롱폼 10섹션 + OSMU 하이라이트 3개 | MVP (2026-10-18: 10장 Track S로 통합, SF-1) | 확정 결정 7 |
+| Track E Lofi 단일 곡(Suno) + 단일 곡 루프 영상 + DSP 유통 패키지(수동 제출) | Phase 2(2026-10-18, SF-3) | 확정 결정 7. 관리 단위는 곡 |
+| Track F 플레이리스트(30분/1시간/3시간, 트랙리스트·타임스탬프·무드 썸네일·고정 댓글) | Phase 2(2026-10-18, SF-3) | 확정 결정 7. 관리 단위는 플레이리스트 프로젝트 |
 | MODULE 0 레이더(플레이보드, 채널파인더, 블링) | MVP | PRD 3장, MA:550-557 |
 | YouTube 다채널(최대 40), IG Reels, TikTok, Threads 업로더 | MVP | PRD 10장, SHARED_MODULES 11장 |
 | 네이버 클립 업로더(Playwright, 위험 동의 필수, Pro 이상) | MVP | 확정 결정 18. 공식 API 미확인(D-23) |

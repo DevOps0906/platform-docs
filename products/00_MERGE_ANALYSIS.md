@@ -12,7 +12,7 @@
 | 4 | 결제 PG | 전 제품 Toss Payments로 통일한다. |
 | 5 | 테넌시 | org 기준 스키마로 설계하고, 운영은 1인 1워크스페이스로 한다. |
 | 6 | 영상 워커 | TS(BullMQ FlowProducer)가 오케스트레이션을 맡고, Python이 Whisper, demucs, FFmpeg 미디어 처리를 맡는다. |
-| 7 | MVP 범위 | 출판: 전자책만 / video: Track A~F 전부(Distrokid 자동 배포, 24시간 라이브, 보이스 클로닝은 2단계) / commerce: 쿠팡 + 스마트스토어 + 엑셀/ZIP / 사주: 사주 + 타로 + 크레딧팩 |
+| 7 | MVP 범위 | 출판: 전자책만 / video: Track A~F 전부(Distrokid 자동 배포, 24시간 라이브, 보이스 클로닝은 2단계) / commerce: 쿠팡 + 스마트스토어 + 엑셀/ZIP / 사주: 사주 + 타로 + 크레딧팩 (2026-10-18 sceneflow 개정: C·D → Track S, E·F Phase 2. sceneflow 01장 10장) |
 | 8 | 플랜 정본 | 출판: 크레딧팩 + 저가 구독 / video: `NOMAD Shorts Maker/PRD_pricing.md` / commerce: V.2 가격표에 sellingstudio 크레딧을 환산 / 사주: Astro AI 단가표 |
 | 9 | Capacitor 앱 | sellingstudio의 모바일 앱은 MVP 이후로 미룬다. |
 | 10 | 브랜드와 폴더명 | video: SceneFlow(폴더 `sceneflow`. 2026-10-18 이름 변경, 이전 이름 NOMAD AI Factory·폴더 `nomad-video`. NOMAD AI Factory는 회사 브랜드로만 쓴다) / commerce: NOMAD Commerce / 사주: 신비로운AI(폴더 `astro-ai`) |
