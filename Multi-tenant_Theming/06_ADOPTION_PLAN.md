@@ -52,7 +52,7 @@ T2·T3는 **같은 요청이 실제 고객 2곳 이상에서 나올 때** 시작
 | 2 | admin-suite ERP·School | 고객사(회사·학교) 로고·명칭 요구가 가장 확실. 고객사별 분리 배치(모델 B) 계획이 이미 있음(`_supabase-modular/ARCHITECTURE.md` 3장) | T0~T2 |
 | 3 | nomad-docs | 에이전시가 자기 브랜드로 견적서·계약서를 내는 수요. 문서 출력에 테마 적용(02장 8절) | T0~T2 |
 | 4 | Web-App-Agency 납품물·리드 대시보드 | `Price_Plans/Web-App-Agency/PRICE_PLAN.md`의 AG-WL(화이트라벨 공급) | T1 |
-| 5 | nomad-video 대행 화이트라벨(Phase 2, video D-24) | 다른 대행사에 판매 | 결정 후 |
+| 5 | shortsflow 대행 화이트라벨(Phase 2, video D-24) | 다른 대행사에 판매 | 결정 후 |
 
 ## 5. 공용 모듈 요청 방식
 

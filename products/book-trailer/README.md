@@ -20,10 +20,10 @@ AI 요약: 원고를 1회 분석해 장 요약·인물·주제와 RAG 색인을 
 | 항목 | 내용 | 근거 |
 |---|---|---|
 | 통합 대상 | 없다. 기존 리뷰 대상 프로젝트를 합친 제품이 아니라 신규 제품이다. 기존 제품 설계와 리뷰에서 검증된 패턴을 "이식 원천"으로 가져온다(3장) | 사용자 요청(2026-10-15) |
-| 베이스 | 코드 베이스 없음. 설계 패턴 베이스는 nomad-video(이미지·TTS 경로, 같은 목소리 규칙, compliance 노드, 고객 승인)와 toon-factory(장면 단위 저장·재생성, 서버 렌더 워터마크, 라이선스 CHECK). 이유: 같은 "AI 에셋 → 합성 → 렌더" 흐름이고 이미 "높음" 결함 차단 설계를 거쳤다 | `docs/products/nomad-video/02_ARCHITECTURE.md:176`, `:227-238`, `docs/products/_supabase-modular/migrations/2000_toon.sql:94-115`, `:476-497` |
-| 다른 제품과의 경계 | 책을 만드는 일은 flora-publishing, 다채널 예약·분석은 nomad-video, 캐릭터 일관성은 toon-factory가 소유한다. 이 제품은 "이미 나온 책을 홍보 영상으로" 하나에 집중하고 셋과는 연동(FLORA 가져오기 P1, nomad-video로 보내기·캐릭터 엔진 Phase 2)으로만 만난다 | `01_PRD.md` 2장, D-10 |
+| 베이스 | 코드 베이스 없음. 설계 패턴 베이스는 shortsflow(이미지·TTS 경로, 같은 목소리 규칙, compliance 노드, 고객 승인)와 toon-factory(장면 단위 저장·재생성, 서버 렌더 워터마크, 라이선스 CHECK). 이유: 같은 "AI 에셋 → 합성 → 렌더" 흐름이고 이미 "높음" 결함 차단 설계를 거쳤다 | `docs/products/shortsflow/02_ARCHITECTURE.md:176`, `:227-238`, `docs/products/_supabase-modular/migrations/2000_toon.sql:94-115`, `:476-497` |
+| 다른 제품과의 경계 | 책을 만드는 일은 flora-publishing, 다채널 예약·분석은 shortsflow, 캐릭터 일관성은 toon-factory가 소유한다. 이 제품은 "이미 나온 책을 홍보 영상으로" 하나에 집중하고 셋과는 연동(FLORA 가져오기 P1, shortsflow로 보내기·캐릭터 엔진 Phase 2)으로만 만난다 | `01_PRD.md` 2장, D-10 |
 | 확정 결정 적용 | 4 Toss, 5 org 기준 스키마와 1인 1워크스페이스, 13 AI 계층(FastAPI LangGraph, pgvector RAG), 14 Dify 앱 1개(`trailer-chat`), 15 3D 히어로, 16 음성, 17 LLM 이원화와 국외 이전 동의, 22 인증 단계 | `docs/products/00_MERGE_ANALYSIS.md:5-30` |
-| 확정 결정 밖 | 결정 6(TS 오케스트레이션 + Python 미디어)은 nomad-video 범위다. 이 제품은 렌더 엔진을 D-2로 두고 Remotion(Node)으로 설계했다. 요금은 전부 제안(`01_PRD.md` 4장, `Price_Plans/book-trailer/PRICE_PLAN.md`) | `01_PRD.md` 2장 끝 |
+| 확정 결정 밖 | 결정 6(TS 오케스트레이션 + Python 미디어)은 shortsflow 범위다. 이 제품은 렌더 엔진을 D-2로 두고 Remotion(Node)으로 설계했다. 요금은 전부 제안(`01_PRD.md` 4장, `Price_Plans/book-trailer/PRICE_PLAN.md`) | `01_PRD.md` 2장 끝 |
 | 공유하는 것 | `_platform-core` 공용 모듈만 인용한다: auth, org, credits, toss, webhooks, oauth, storage, audit, jobs, compliance, ai-gateway, ai-service, dify, core-voice, llm-wiki, sns-uploader(P1). 재정의하지 않는다 | `docs/products/_platform-core/SHARED_MODULES.md` |
 
 ### 2.1 리뷰 "높음" 결함 차단 범위
@@ -32,9 +32,9 @@ AI 요약: 원고를 1회 분석해 장 요약·인물·주제와 RAG 색인을 
 
 | 리뷰 | 높음 수 | 대상 여부 | 이유 | 근거 |
 |---|---|---|---|---|
-| `docs/reviews/NOMAD_Shorts_Maker.md` | 12 | 대상 | 이식하는 미디어 파이프라인(이미지·TTS·합성·업로드)의 원천인 nomad-video의 원본이다. 크레딧 RPC 개방(#1), 웹훅 서명(#2), orderId(#3), 헤더 우회(#4), OAuth state(#5), Mock 로그인(#6), 0키 폴백(#7), 세션 없는 백그라운드(#8), 단계 동시 enqueue(#9), 워커 결합(#10), 빌드 실패(#11), Next 16 params(#12) 모두 이 제품의 생성·렌더·결제·업로드 경로에서 같은 형태로 다시 생길 수 있다 | `docs/reviews/NOMAD_Shorts_Maker.md:78-89` |
+| `docs/reviews/NOMAD_Shorts_Maker.md` | 12 | 대상 | 이식하는 미디어 파이프라인(이미지·TTS·합성·업로드)의 원천인 shortsflow의 원본이다. 크레딧 RPC 개방(#1), 웹훅 서명(#2), orderId(#3), 헤더 우회(#4), OAuth state(#5), Mock 로그인(#6), 0키 폴백(#7), 세션 없는 백그라운드(#8), 단계 동시 enqueue(#9), 워커 결합(#10), 빌드 실패(#11), Next 16 params(#12) 모두 이 제품의 생성·렌더·결제·업로드 경로에서 같은 형태로 다시 생길 수 있다 | `docs/reviews/NOMAD_Shorts_Maker.md:78-89` |
 | `docs/reviews/Toon-Factory.md` | 6 | 대상 | 장면 단위 편집·렌더·워터마크·에셋 카탈로그를 이식한다. 브라우저 렌더 워터마크(#1), 공개 에셋 버킷(#2), 컷 단위 부재(#3), 레이어 필드 부족(#4), LoRA 일정 위험(#5), 스톡 라이선스(#6)는 트레일러 렌더·이미지 스타일·음악 카탈로그에서 그대로 재발할 수 있다 | `docs/reviews/Toon-Factory.md:45-50` |
-| `docs/reviews/Youtube_shots_Maker.md` | - | 제외 | 이 제품은 YouTube 업로드를 공용 sns-uploader 소비자로만 쓴다. 해당 원본의 결함 차단 설계는 nomad-video가 소유한다 | `docs/products/nomad-video/README.md` 2장, `docs/products/nomad-video/02_ARCHITECTURE.md` 6장 |
+| `docs/reviews/Youtube_shots_Maker.md` | - | 제외 | 이 제품은 YouTube 업로드를 공용 sns-uploader 소비자로만 쓴다. 해당 원본의 결함 차단 설계는 shortsflow가 소유한다 | `docs/products/shortsflow/README.md` 2장, `docs/products/shortsflow/02_ARCHITECTURE.md` 6장 |
 | `docs/reviews/flora.md`, `Flora-v2.md`, `SellingDocs.md` | - | 제외 | 업로드 계약·파서 교훈만 flora-publishing·nomad-docs 설계를 거쳐 참고한다(원천 코드 이식 없음). 같은 계열 결함(업로드 경로 조작, 렌더러 SSRF, 폰트 경로)은 `07_SOURCE_MIGRATION.md` 4절 복사 금지 표로 막고, 정본 차단 설계는 flora-publishing·nomad-docs가 소유한다 | `docs/products/flora-publishing/02_ARCHITECTURE.md` 6장·`05_DATA_MODEL.md` 7장, `docs/products/nomad-docs/README.md` 2.1절 |
 
 ## 3. 원본 매핑
@@ -43,7 +43,7 @@ AI 요약: 원고를 1회 분석해 장 요약·인물·주제와 RAG 색인을 
 
 | 원본 프로젝트 | 리뷰 파일 | 완성도 | 가져오는 것 | 버리는 것 |
 |---|---|---|---|---|
-| nomad-video(설계) | `docs/products/nomad-video/` | 기획만 | 이미지 경로(fal, 안전 검사), 같은 목소리 규칙, compliance 노드, 고객 승인 링크, 크레딧 단가 구조, 잡 토큰, sns-uploader 소비 | BullMQ·Python 미디어 워커, FFmpeg 단일 엔진 결정, Track A~D·레이더 |
+| shortsflow(설계) | `docs/products/shortsflow/` | 기획만 | 이미지 경로(fal, 안전 검사), 같은 목소리 규칙, compliance 노드, 고객 승인 링크, 크레딧 단가 구조, 잡 토큰, sns-uploader 소비 | BullMQ·Python 미디어 워커, FFmpeg 단일 엔진 결정, Track A~D·레이더 |
 | toon-factory(설계·SQL) | `docs/products/toon-factory/`, `2000_toon.sql` | 기획만(SQL 검증) | 장면 낙관적 동시성 저장, 장면 단위 재생성, 서버 렌더 워터마크, 음악 라이선스 CHECK, 비공개 원본·공개 미리보기 버킷 | Fabric.js 캔버스·말풍선·표정 교체, LoRA |
 | flora-publishing(설계) | `docs/products/flora-publishing/` | 기획만 | 업로드 계약, LangGraph 그래프 패턴, 30일 purge, FLORA 원고 가져오기(연동) | 판형·표지·페르소나·ePub 생성·낭독·3D 책 소재 |
 | nomad-docs(설계) | `docs/products/nomad-docs/` | 기획만 | "결정적 값은 서버" 원칙, RFC 5987 한글 파일명, 파서 선택, 진행률 규칙, `core.jobs` 단일 큐 구조 | 없음(참고만) |
@@ -73,7 +73,7 @@ AI 요약: 원고를 1회 분석해 장 요약·인물·주제와 RAG 색인을 
 | 항목 | 내용 |
 |---|---|
 | 1차 출시 | 모듈러(스키마 `trailer`, 조각 `2600_trailer.sql`). 2400은 arch-studio(제안), 2500은 local-news가 먼저 잡았으므로(`docs/products/README.md` 제품 표) 다음 빈 범위 2600~2699를 쓴다. SQLSTATE 접두사 `TR`. `DB_CONVENTIONS.md` 2장 표 등록은 공용 모듈 요청 R-T2 |
-| 이유 | (1) FLORA 가져오기(P1)는 같은 모듈러 DB의 `publishing` 스키마를 service_role 함수(`import_flora_book`)로 읽는 방식이 가장 단순하다. (2) 공용 ai-service·sns-uploader·크레딧팩을 nomad-video·flora-publishing과 같은 구조로 쓴다. (3) 코어 인증만으로 가입 개방 베타가 가능하다 |
+| 이유 | (1) FLORA 가져오기(P1)는 같은 모듈러 DB의 `publishing` 스키마를 service_role 함수(`import_flora_book`)로 읽는 방식이 가장 단순하다. (2) 공용 ai-service·sns-uploader·크레딧팩을 shortsflow·flora-publishing과 같은 구조로 쓴다. (3) 코어 인증만으로 가입 개방 베타가 가능하다 |
 | 모놀리스 제공 이유 | 출판사 전용 설치형(원고를 다른 제품과 같은 DB에 두기 싫은 출판사, 화이트라벨 Phase 2)이나 베타를 독립 Supabase 프로젝트로 먼저 띄울 때 쓴다. 같은 함수 이름과 시그니처를 유지하고 `SUPABASE_DB_SCHEMA`만 바꾼다. 모놀리스에서는 FLORA 교차 스키마 읽기가 불가능해 `import_flora_book`이 `TR010`을 낸다 |
 | 이동 | 모놀리스 → 모듈러 흡수 절차는 `docs/products/_supabase-modular/ARCHITECTURE.md`를 따른다 |
 | 코어 사용 | 크레딧 선차감, 잡 큐, Storage(`org-files`, `exports`), 자격증명 vault(채널 토큰, P1), OAuth state, 웹훅 이벤트, AI·음성 테이블(`core.ai_*`, `core.wiki_*`, `core.voice_*`)을 쓰므로 모놀리스 코어 축소판에서도 해당 섹션을 유지한다 |

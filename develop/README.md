@@ -29,7 +29,7 @@
 | [`nomad-blog/`](nomad-blog/) | NOMAD Blog | 키워드 하나로 AI가 블로그 원고를 쓰고 제휴 상품 카드와 대가성(광고) 문구를 자동으로 넣은 뒤, 네이버 블로그·티스토리·워드프레스에 예약 발행하는 조직 단위 서비스입니다. | 제휴 수익 블로거, 블로그 여러 개를 운영하는 제휴 마케터, 소상공인 | 59 |
 | [`nomad-commerce/`](nomad-commerce/) | NOMAD Commerce | 쿠팡·스마트스토어 셀러가 아마존·국내 도매 상품을 가져와 상품DB에 쌓고, AI로 슬롯형 상세페이지(이미지 10장/15장, 카피, 금지어 검사)를 만든 뒤 마켓 규격으로 API 업로드하거나 엑셀(플레이오토 호환)·ZIP으로 내려받는 서비스입니다. | 쿠팡·스마트스토어 국내 셀러 | 60 |
 | [`nomad-docs/`](nomad-docs/) | NOMAD Docs | 회사·거래처·프로젝트 정보를 한 번 입력하고 체크리스트에 체크하면 견적서·과업지시서·요구사항정의서·WBS·화면목록·개발용역계약서·검수확인서·회의록을 한 번에 만드는 문서 자동화 서비스입니다. | 외주 개발 프리랜서, 소형 개발 에이전시 | 70 |
-| [`nomad-video/`](nomad-video/) | NOMAD AI Factory | 트렌드 레이더로 소재를 고르고 숏폼(Track A~C), 롱폼(Track D), Lofi 단일 곡(Track E), 플레이리스트(Track F)를 크레딧 과금으로 자동 생산·검사한 뒤 YouTube(최대 40채널)·인스타그램·틱톡·스레드·네이버 클립에 배포하고 제휴 수익화까지 하는 조직 단위 서비스입니다. | 숏폼 크리에이터, 커머스 운영자, 소규모 에이전시 | 65 |
+| [`shortsflow/`](shortsflow/) | ShortsFlow | 트렌드 레이더로 소재를 고르고 숏폼(Track A~C), 롱폼(Track D), Lofi 단일 곡(Track E), 플레이리스트(Track F)를 크레딧 과금으로 자동 생산·검사한 뒤 YouTube(최대 40채널)·인스타그램·틱톡·스레드·네이버 클립에 배포하고 제휴 수익화까지 하는 조직 단위 서비스입니다. | 숏폼 크리에이터, 커머스 운영자, 소규모 에이전시 | 65 |
 | [`stock-dashboard/`](stock-dashboard/) | Stock Dashboard | 본인이 직접 연결한 증권사 계좌(1차는 모의투자)의 잔고·보유 종목·체결 내역을 한 화면에서 보고, AI가 포트폴리오 분산과 위험 요인을 진단하는 초대제 개인 투자 대시보드입니다. | 개인 투자자(초대제) | 54 |
 | [`study-note/`](study-note/) | Study Note | 수업이나 회의 원문을 붙여넣으면 AI 모델 2개가 따로 정리하고 통합 모델이 하나의 "학습 일지"(학습 목표 / 학습 내용)로 합쳐 TXT와 보관함에 남기는 서비스입니다. | IT 교육·부트캠프 수강생, 강사, 회의를 정리하는 직장인 | 55 |
 | [`toon-factory/`](toon-factory/) | Toon Factory | 이야기를 넣으면 AI가 회차 콘티(컷 구성·대사)를 짜고, 미리 만든 캐릭터 모듈(포즈·표정)로 컷을 조립하며 배경은 AI로 생성해 인스타툰 PNG·ZIP, 세로 스크롤 웹툰, 9:16 MP4로 내보내는 AI 웹툰 제작 도구입니다. | 인스타툰·웹툰 지망 작가, SNS 마케터, 지식 크리에이터 | 69 |
@@ -47,7 +47,7 @@
 | 0 | 공용 코어(`products/_platform-core`, 통합 DB) | 모든 제품이 의존한다 |
 | 1 | study-note, website-floria | 범위가 작아 공용 코어를 먼저 실전 검증한다 |
 | 2 | flora-publishing, astro-ai | 공용 PDF 렌더 서비스를 함께 만든다 |
-| 3 | nomad-video, nomad-blog, nomad-commerce | 제휴·SNS 업로더·잡 워커를 공유한다 |
+| 3 | shortsflow, nomad-blog, nomad-commerce | 제휴·SNS 업로더·잡 워커를 공유한다 |
 | 4 | microweb-studio, live-poll, toon-factory | 독립 도메인이다 |
 | 5 | admin-suite, stock-dashboard | 의료정보·금융 규제 확인이 먼저 필요하다 |
 

@@ -49,7 +49,7 @@
 | 랜딩 3D 히어로(공간에 흩어진 웹툰 컷 → 세로 스크롤 만화로 정렬) | MVP | 확정 결정 15(`docs/reference/00_MERGE_ANALYSIS.md:23`), `docs/file/03-설계/디자인/HERO_3D.md:89` |
 | 로그라인·시놉시스 생성기(TN-F-024) | MVP | 확정 결정 20. 투툰·WeToon·인서툰이 기획 단계를 돕는다(`08_BENCHMARK.md` G1). 페르소나 서진의 좌절 |
 | 플랫폼 내보내기 프리셋 4종(인스타 캐러셀, 웹툰 캔버스, 네이버 도전만화, 9:16 영상)(TN-F-038) | MVP | 확정 결정 20(`08_BENCHMARK.md` G2). 8절 D3를 프리셋으로 해소 |
-| 브랜디드 툰: 협찬 등록(광고주 브리프), 광고주 확인 결과 기록, 승인 회차만 최종 내보내기, 대가성 문구·가상인물 표시 자동 삽입(TN-F-070~073) | MVP(Pro) | 확정 결정 20(`08_BENCHMARK.md` G3·G4). 비교 대상에 없는 차별화 기능. 페르소나 도윤, 대행 운영(`D:/WorkSpace/platform/docs/products/nomad-video/08_AGENCY_OPERATIONS.md`) |
+| 브랜디드 툰: 협찬 등록(광고주 브리프), 광고주 확인 결과 기록, 승인 회차만 최종 내보내기, 대가성 문구·가상인물 표시 자동 삽입(TN-F-070~073) | MVP(Pro) | 확정 결정 20(`08_BENCHMARK.md` G3·G4). 비교 대상에 없는 차별화 기능. 페르소나 도윤, 대행 운영(`D:/WorkSpace/platform/docs/products/shortsflow/08_AGENCY_OPERATIONS.md`) |
 | 광고주 외부 검토 링크(로그인 없이 시안 확인·의견) | Phase 2 | 8절 D19. MVP는 담당자가 광고주 확인 결과를 기록한다(TN-F-071) |
 | 사용자 보이스 선택·업로드, 보이스 클로닝 | Phase 2 이후(클로닝은 제공 안 함) | `docs/file/03-설계/공용코어/VOICE_ARCHITECTURE.md:80` |
 | 비회원 AI 상담(랜딩 채팅) | Phase 2 | 제안: 비로그인 상담은 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/file/03-설계/공용코어/AI_ARCHITECTURE.md:130`) |
@@ -147,7 +147,7 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 
 ### 3.7 브랜디드 툰 (2026-10-13 2차, 확정 결정 20)
 
-광고주가 돈·제품·수수료를 주고 의뢰한 툰을 만들 때 쓰는 흐름이다. 제품은 광고주와 계약하지 않는다. 계약, 견적, 청구는 대행 운영 문서(`D:/WorkSpace/platform/docs/products/nomad-video/08_AGENCY_OPERATIONS.md`, nomad-docs `shorts_agency` 패키지)가 다룬다. Pro 플랜 전용(`features.sponsorship`).
+광고주가 돈·제품·수수료를 주고 의뢰한 툰을 만들 때 쓰는 흐름이다. 제품은 광고주와 계약하지 않는다. 계약, 견적, 청구는 대행 운영 문서(`D:/WorkSpace/platform/docs/products/shortsflow/08_AGENCY_OPERATIONS.md`, nomad-docs `shorts_agency` 패키지)가 다룬다. Pro 플랜 전용(`features.sponsorship`).
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
@@ -160,7 +160,7 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 
 | ID | 기능 | 요구사항 요약 | 근거 |
 |---|---|---|---|
-| TN-F-080 | SNS 직접 업로드 | 내보내기 결과를 video의 sns-uploader 어댑터로 올린다(YouTube Shorts, Instagram, TikTok, Threads, 네이버 클립). toon은 video 테이블에 쓰지 않고, 코어 잡 `upload.<platform>`을 요청하는 공용 업로더 API를 소비한다(코어 요청, 06장 6절). 네이버 클립은 공식 업로드 API가 확인되지 않아 Playwright 자동화이며, nomad-video와 같은 위험 고지(`clip-2026-10-v1`)와 owner/admin 동의가 필요하다. 협찬 회차는 제목·설명 첫 줄과 첫 해시태그에 대가성 문구를 강제한다 | `08_BENCHMARK.md` G5, D18 |
+| TN-F-080 | SNS 직접 업로드 | 내보내기 결과를 video의 sns-uploader 어댑터로 올린다(YouTube Shorts, Instagram, TikTok, Threads, 네이버 클립). toon은 video 테이블에 쓰지 않고, 코어 잡 `upload.<platform>`을 요청하는 공용 업로더 API를 소비한다(코어 요청, 06장 6절). 네이버 클립은 공식 업로드 API가 확인되지 않아 Playwright 자동화이며, shortsflow와 같은 위험 고지(`clip-2026-10-v1`)와 owner/admin 동의가 필요하다. 협찬 회차는 제목·설명 첫 줄과 첫 해시태그에 대가성 문구를 강제한다 | `08_BENCHMARK.md` G5, D18 |
 | TN-F-081 | 숏툰 모션·자막 | 9:16 MP4에 켄 번스(팬·줌), 패널 단위 줌인, 말풍선 순차 등장, 대사 자막(TTS 타이밍 동기, 끌 수 있음), 효과음 카탈로그(`assets.kind` 확장은 Phase 2 SQL)를 더한다. 크레딧은 MP4 3에 모션 +2(제안) | `08_BENCHMARK.md` G6 |
 
 ## 4. 요금과 크레딧
@@ -427,10 +427,10 @@ AI 대화 규칙(6.3·6.5절에 더해 콘티·대사·채팅·TTS 입력 모두
 | D15 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md:11`). TN-06-041에서 확인 결과를 기록 |
 | D16 | 영상 음성의 AI 가시 표기 | (a) 마지막 컷 하단 문구 + 메타데이터(기본 ON, 끄려면 확인) (b) 메타데이터와 게시글용 문구 복사만 | (a). 법무 확인 후 확정. 협찬 영상은 첫 3초 대가성·가상인물 표시(TN-F-072·073)와 겹치지 않게 배치 |
 | D17 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트(02장 4절) (b) FastAPI가 잡을 직접 소비 (c) 워커에 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/file/03-설계/공용코어/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 6장 6절 요청 8 |
-| D18 | 네이버 클립 직접 업로드(TN-F-080) | (a) Playwright 자동 업로드 + 위험 고지·동의(nomad-video와 같은 방식) (b) 업로드 패키지(영상·제목·해시태그·문구) 다운로드만 | (a)(사용자 결정, 2026-10-13). 공식 API가 확인되면 어댑터를 교체한다. 약관 위반·계정 제한 위험을 고지문에 적는다 |
+| D18 | 네이버 클립 직접 업로드(TN-F-080) | (a) Playwright 자동 업로드 + 위험 고지·동의(shortsflow와 같은 방식) (b) 업로드 패키지(영상·제목·해시태그·문구) 다운로드만 | (a)(사용자 결정, 2026-10-13). 공식 API가 확인되면 어댑터를 교체한다. 약관 위반·계정 제한 위험을 고지문에 적는다 |
 | D19 | 광고주 외부 검토 링크 | (a) Phase 2: 만료 토큰 링크(로그인 없음, 시안 보기·의견만) (b) 광고주 계정 초대 | (a)(제안). MVP는 담당자 기록(TN-F-071)으로 시작 |
 | D20 | 가상인물 표시 문구와 위치 | 공정위 개정안 확정 고시에 맞춤 / 지금 정한 "가상인물" 유지 | 확정 고시 확인 전까지 "가상인물"(제안). 확인 후 6.8절과 TN-F-073 갱신 |
-| D21 | 브랜디드 툰 플랜 | (a) Pro 전용 (b) 별도 비즈니스 플랜(팀·협찬 다수) | (a)로 시작. 협찬 수·팀 사용이 늘면 (b)를 nomad-video 대행 운영과 함께 검토 |
+| D21 | 브랜디드 툰 플랜 | (a) Pro 전용 (b) 별도 비즈니스 플랜(팀·협찬 다수) | (a)로 시작. 협찬 수·팀 사용이 늘면 (b)를 shortsflow 대행 운영과 함께 검토 |
 
 ### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
 

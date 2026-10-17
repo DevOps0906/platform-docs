@@ -128,7 +128,7 @@ C(KPI 오버뷰)는 홈의 기본값이 아니다. 사용자가 그 제품에 **
 | admin-suite | ERP: C(매출 1개 크게) / SMS: 오늘 처리할 일(출결) | B, G, H, I, O(일괄 수정) |
 | stock-dashboard | C | L, B, N(데이터 동기화 상태·오류) |
 | nomad-commerce | C(마켓별 성과) | B, O(상품 대량 편집), N(업로드 잡), M |
-| nomad-video | 오늘 처리할 일 + N(잡 진행률이 주인공) | N, M, E(업로드 일정), L(채널 성과) |
+| shortsflow | 오늘 처리할 일 + N(잡 진행률이 주인공) | N, M, E(업로드 일정), L(채널 성과) |
 | nomad-blog | E(발행 캘린더) | B, J, N |
 | flora-publishing | 오늘 처리할 일(원고 단계) | D(제작 단계), J(원고 편집), N, I(출판 신청) |
 | toon-factory | 최근 작업물(회차) | M, D(회차·컷 진행), J, N |

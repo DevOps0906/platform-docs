@@ -20,7 +20,7 @@
 | 2 이후 | nomad-docs | [`nomad-docs_develop_v2.md`](nomad-docs/nomad-docs_develop_v2.md) | compliance, media | - | 3 | 2 |
 | 3 | nomad-blog | [`nomad-blog_develop_v2.md`](nomad-blog/nomad-blog_develop_v2.md) | compliance, media, editorial | editorial | 5 | 5 |
 | 3 | nomad-commerce | [`nomad-commerce_develop_v2.md`](nomad-commerce/nomad-commerce_develop_v2.md) | compliance, media | - | 3 | 3 |
-| 3 | nomad-video | [`nomad-video_develop_v2.md`](nomad-video/nomad-video_develop_v2.md) | compliance | - | 2 | 3 |
+| 3 | shortsflow | [`shortsflow_develop_v2.md`](shortsflow/shortsflow_develop_v2.md) | compliance | - | 2 | 3 |
 | 4 | book-trailer | [`book-trailer_develop_v2.md`](book-trailer/book-trailer_develop_v2.md) | compliance | - | 2 | 3 |
 | 4 | live-poll | [`live-poll_develop_v2.md`](live-poll/live-poll_develop_v2.md) | compliance, community(부분) | - | 3 | 2 |
 | 4 | microweb-studio | [`microweb-studio_develop_v2.md`](microweb-studio/microweb-studio_develop_v2.md) | compliance, media, community | community | 5 | 5 |
@@ -36,7 +36,7 @@
 
 | 모듈 | 기준 구현 제품 | 다음에 쓰는 제품 |
 |---|---|---|
-| compliance | website-floria | study-note, astro-ai, flora-publishing, nomad-docs, nomad-blog, nomad-commerce, nomad-video, book-trailer, live-poll, microweb-studio, toon-factory, admin-suite, stock-dashboard, local-news, arch-studio |
+| compliance | website-floria | study-note, astro-ai, flora-publishing, nomad-docs, nomad-blog, nomad-commerce, shortsflow, book-trailer, live-poll, microweb-studio, toon-factory, admin-suite, stock-dashboard, local-news, arch-studio |
 | media | flora-publishing | nomad-docs, nomad-blog, nomad-commerce, microweb-studio, toon-factory, local-news |
 | community | microweb-studio | live-poll, local-news |
 | search | local-news | - |

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- 1200_video.sql
--- nomad-video (NOMAD AI Factory) 도메인. 선행: core 0000~0006 (+ seed.sql 권장)
--- 기획: docs/products/nomad-video/05_DATA_MODEL.md
+-- shortsflow (ShortsFlow) 도메인. 선행: core 0000~0006 (+ seed.sql 권장)
+-- 기획: docs/products/shortsflow/05_DATA_MODEL.md
 --
 -- 원칙 (SECURITY_BASELINE.md, DB_CONVENTIONS.md)
 --   - 모든 테이블 RLS ON. 읽기는 core.is_org_member(org_id) and core.has_entitlement(org_id, 'video').
@@ -19,14 +19,14 @@
 -- =====================================================================
 
 create schema if not exists video;
-comment on schema video is 'nomad-video (NOMAD AI Factory): 숏폼/롱폼/Lofi/플리 Track A~F';
+comment on schema video is 'shortsflow (ShortsFlow): 숏폼/롱폼/Lofi/플리 Track A~F';
 grant usage on schema video to anon, authenticated, service_role;
 alter default privileges in schema video grant all on tables to service_role;
 alter default privileges in schema video grant all on sequences to service_role;
 alter default privileges in schema video grant execute on functions to service_role;
 alter default privileges in schema video revoke execute on functions from public;
 
-insert into core.apps (id, name, schema_name, signup_policy) values ('video', 'NOMAD AI Factory', 'video', 'open')
+insert into core.apps (id, name, schema_name, signup_policy) values ('video', 'ShortsFlow', 'video', 'open')
 on conflict (id) do nothing;
 
 -- =====================================================================
@@ -1862,7 +1862,7 @@ grant execute on all functions in schema video to service_role;
 
 -- =====================================================================
 -- 11. AI·음성 기본값 (2026-10-13, 확정 결정 13~17)
---   설계: docs/products/nomad-video/02_ARCHITECTURE.md 5절, 01_PRD.md 4.1절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
+--   설계: docs/products/shortsflow/02_ARCHITECTURE.md 5절, 01_PRD.md 4.1절. 정본 규칙은 _platform-core/AI_ARCHITECTURE.md 4장,
 --   VOICE_ARCHITECTURE.md 3장. 모든 값은 제안이며 운영 화면이 아니라 이 조각과 모놀리스 seed 에서만 바꾼다.
 --   제품 전용 AI 테이블은 만들지 않았다(05_DATA_MODEL.md 6절). 이 절은 core.* 를 ALTER 하지 않고 데이터 행만 넣는다.
 --   11.1 기능별 라우팅 기본값: org_id null(플랫폼 기본), app_id 'video'. 기능 키는 소문자(core 체크 제약).

@@ -324,7 +324,7 @@ Mock 로그인(`/api/dev/login`)도 로그인 직후 2~5번을 같은 함수(`fi
 |---|---|---|---|---|---|---|
 | flora-publishing(`publishing`) | open | 작가 | - | Google + 이메일 | P1(D6 열린 결정 해소) | P1 |
 | astro-ai(`astro`) | open | 일반 소비자 | 환영 크레딧 미지급 상태 사용자 | Google + 이메일(환영 크레딧은 Google 로그인 확인 후, AS-F-002) | P1(B2C 핵심) | P1 |
-| nomad-video(`video`) | open | 크리에이터 | Advanced 팀 멤버 | Google + 이메일 | P1 | P1 |
+| shortsflow(`video`) | open | 크리에이터 | Advanced 팀 멤버 | Google + 이메일 | P1 | P1 |
 | nomad-blog(`blog`) | open | 블로거·제휴 마케터 | - | Google + 이메일 | P1 | P1(네이버 블로거 비중) |
 | nomad-commerce(`commerce`) | open | 셀러 | - | Google + 이메일 | P1(기존 MVP 카카오 이동) | P1 |
 | microweb-studio(`microweb`) | invite | 초대받은 운영자(하객은 로그인 없음) | `studio_access` 허용·미허용 | Google + 초대 메일 | P2 선택 | P2 선택 |

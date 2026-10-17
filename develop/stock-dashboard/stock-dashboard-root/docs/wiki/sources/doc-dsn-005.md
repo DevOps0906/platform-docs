@@ -9,7 +9,7 @@
 - 표 형식
 - flora-publishing (Flora, AI 전자책 출판)
 - astro-ai (신비로운AI, 사주/타로 + 크레딧팩)
-- nomad-video (NOMAD AI Factory, 숏폼/롱폼/Lofi/플리 자동화)
+- shortsflow (ShortsFlow, 숏폼/롱폼/Lofi/플리 자동화)
 - nomad-blog (AI 블로그 작성 + 네이버/티스토리/워드프레스 자동 발행)
 - nomad-commerce (NOMAD Commerce, 소싱 → AI 상세페이지 → 마켓 업로드)
 - microweb-studio (모바일 청첩장 / 마이크로 웹사이트 빌더, 대행 쇼룸)

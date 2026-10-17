@@ -2319,7 +2319,7 @@ create policy public_assets_delete on storage.objects for delete to authenticate
 
 -- =====================================================================
 -- SECTION 9. affiliate  [선택: video, blog 계열만]  -- flora-publishing 에서 제거함
--- 제거 사유: 제휴마케팅 모듈 소비 제품은 nomad-video, nomad-blog 뿐이다(SHARED_MODULES.md 1장, 확정 결정 12).
+-- 제거 사유: 제휴마케팅 모듈 소비 제품은 shortsflow, nomad-blog 뿐이다(SHARED_MODULES.md 1장, 확정 결정 12).
 -- 원본 줄: _platform-core/MONOLITH_CORE_LITE.sql:2356-2692. SECTION 10 은 to_regclass/to_regprocedure 로
 --          존재하는 객체에만 권한을 주므로 이 절이 없어도 그대로 동작한다.
 -- 유지한 [선택] 절: 3(Toss), 4(크레딧), 6-B(아웃바운드 웹훅 서명 비밀 보관), 6-C(생성 API 레이트 리밋),

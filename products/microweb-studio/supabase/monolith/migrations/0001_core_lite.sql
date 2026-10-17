@@ -2259,7 +2259,7 @@ create policy public_assets_delete on storage.objects for delete to authenticate
 
 -- =====================================================================
 -- SECTION 9. affiliate  [선택: video, blog 계열만] -- microweb-studio 에서 제거함
--- 이유: 제휴마케팅은 nomad-video, nomad-blog 전용(확정 결정 12, CORE_SPEC.md 13장). 청첩장에 제휴 링크를 넣지 않는다.
+-- 이유: 제휴마케팅은 shortsflow, nomad-blog 전용(확정 결정 12, CORE_SPEC.md 13장). 청첩장에 제휴 링크를 넣지 않는다.
 --       의존하던 SECTION 6-B 도 제거했다. SECTION 10 의 affiliate_* 권한 부여는 존재 검사로 건너뛴다.
 -- =====================================================================
 

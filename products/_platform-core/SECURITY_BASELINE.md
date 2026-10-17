@@ -150,7 +150,7 @@ if (!role || !['owner', 'admin'].includes(role)) return forbidden()
 | `/r/[code]` 리다이렉트 | IP 해시당 60회/분 | `core.rate_limit_hit` |
 | 비회원 데모(astro Live Demo) | IP당 3회/일, 영속 저장 | `core.rate_limit_hit`(`docs/products/00_MERGE_ANALYSIS.md:379`, `:432`) |
 | 브랜드커넥트 자동 지원 | 계정당 5건/시간(blog 블로그형 + video 클립형 합산, 키 `brandconnect:apply:<account_id>`) | `core.rate_limit_hit` |
-| 네이버 클립 자동 업로드(Playwright) | 계정당 상한은 `docs/products/nomad-video/01_PRD.md` VD-F-075가 정한다. 위험 동의(`clip-2026-10-v1`) 없으면 잡 생성 금지 | `core.rate_limit_hit` |
+| 네이버 클립 자동 업로드(Playwright) | 계정당 상한은 `docs/products/shortsflow/01_PRD.md` VD-F-075가 정한다. 위험 동의(`clip-2026-10-v1`) 없으면 잡 생성 금지 | `core.rate_limit_hit` |
 | 가입 크레딧 반복 수령 | 멱등 키 `signup:<org>:<app>` + 이메일 인증 필수 | `migrations/0003_core_credits.sql:426` |
 
 함수 근거: `migrations/0004_core_security.sql:678-699`. 수치는 모두 제안이며 제품 01_PRD 비기능 절에서 확정한다.
