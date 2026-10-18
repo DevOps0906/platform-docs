@@ -441,3 +441,100 @@ Next.js는 이 그래프들을 직접 부르지 않는다(사람 승인 단계�
 | VD409 | 낙관적 동시성 충돌: 장면 또는 스토리보드 revision이 현재 값과 다름 | 409 + detail `{current_revision}`. 화면은 최신본을 다시 불러온다 |
 
 기존 코드의 Track S 쓰임: `VD001`(렌더할 장면에 `ready` 소재 없음, detail `scene_ids`), `VD009`(storyboard 엔타이틀먼트 없음, `storyboard_max_minutes`·`shorts_extract_max` 초과), `VD010`(주제 점수 60 미만), `VD013`(장면 내레이션 보이스가 기록된 값과 다름), `22023`(비연속 쇼츠 컷, 쇼츠 형식에 쇼츠 추출, 마스터 컷 없음, 마지막 장면 삭제).
+
+## 10. AI 자동편집·화면비 API (2026-10-18 추가, 01장 11장)
+
+정본은 01장 11장(VD-F-143~159, 명령 허용 목록 11.4절, 단가 11.5절)이고 구조는 02장 11장, 데이터는 05장 12장이다. 기존 장의 줄은 바꾸지 않았다(9.1절 `/command` 행만 같은 줄 안에서 이 장을 가리키도록 고치지 않고 아래 "바뀌는 동작" 표에 적는다). 1절 원칙(인증, zod, `request_id` 멱등, 선차감 → `enqueue_job`, 응답 봉투, 레이트 리밋)이 그대로 걸린다.
+
+### 10.1 Route Handler (2절 표와 같은 열)
+
+| 메서드 경로 | 역할/플랜 | 입력(zod 요약) | 출력 | 크레딧 | 코어 RPC | 오류 |
+|---|---|---|---|---|---|---|
+| PATCH `/api/storyboards/[id]/settings` | member+ | `{aspect?, resolution?: '720p'\|'1080p'\|'1440p'\|'2160p', fps?: 24\|30\|60, shorts_aspect?: '9:16'\|'1:1'\|'4:5', caption_style?: 'clean'\|'bold_box'\|'word_pop', caption_hanja?, bgm_level_db?(-40~0), loudnorm?, edit_preset_id?}` | storyboard + `{render_multiplier, dims: {width, height}}` | 0 | 사용자 세션 UPDATE(컬럼 GRANT, `1200_video.sql` 13.8·13.12절) | 422 23514(형식에 없는 화면비), 403 `VD009`(플랜 상한), 409 `VD020`, 409 `VD005`, 422 `VD002`(다른 고객 프리셋) |
+| POST `/api/storyboards/[id]/edit-plans` | member+, `features.ai_edit` | `{mode: 'command'\|'voice'\|'auto_polish'\|'broll'(P1), text?(1~1000자, command·voice 필수), broll_frequency?: 'low'\|'mid'\|'high'(broll), request_id}`. voice는 받아쓰기 후 사용자가 확인한 텍스트만(음성 원본 없음, VD-F-140) | edit_plan(`proposed`: id, commands, summary, estimate_credits, warnings[]) 또는 `{jobId}`(15초 초과 시) | command·voice 1, auto_polish 쇼츠 1 / 롱폼 10분당 2, broll 2 | consume → (service) `storyboard_fingerprint` → FastAPI `video.edit_plan` → 서버 검사(02장 11.3절) → `edit_plans` INSERT(service). 같은 입력 10분 안 재요청은 기존 편집안 반환, 0크레딧(제안) | 422 `VD023`(재작성 후에도 허용 밖), 403 `VD009`, 409 `VD020`, 402, 429(`video:ai-graph:<org>`), 200 + `commands: []` + "지시를 이해하지 못했습니다"(환불) |
+| GET `/api/storyboards/[id]/edit-plans` | 전 역할 | `?status=&limit=20` | 편집안 목록(지시 원문, 출처 `source`, 상태, 적용 명령 수, 적용자, 시각, 되돌리기 가능 여부) | 0 | RLS select | 404 |
+| POST `/api/edit-plans/[id]/apply` | member+ | `{command_ids?: int[](없으면 전부), request_id}` | `{applied[], pending_regenerate[], storyboard_revision, jobIds[]}` | 적용 0. `pending_regenerate`가 있으면 명령별 01장 11.5절 단가(이미지 3, 내레이션 1, 문장 1, 업스케일 1) | 사용자 세션 `rpc('video.apply_edit_plan', {p_plan_id, p_command_ids})` → regenerate 명령마다 consume(`consume:video:<request_id>:<command_id>`) → enqueue | 409 `VD409`(스토리보드가 바뀜, detail "다시 제안받기"), 409 `VD005`(이미 처리된 편집안), 422 `VD023`, 422 `VD018`, 422 `VD021`, 422 `VD022`, 403 `VD009`, 409 22023(마지막 장면 삭제, 없는 명령 id), 402(regenerate 잔액 부족: 적용은 이미 됐고 regenerate만 대기 표시) |
+| POST `/api/edit-plans/[id]/reject` | member+ | - | edit_plan(`rejected`) | 0(생성 크레딧 환불 없음) | `video.reject_edit_plan` | 409 `VD005` |
+| POST `/api/edit-plans/[id]/undo` | member+ | - | storyboard(새 revision) + 복원된 장면 | 0(다시 만들기 크레딧 환불 없음) | `video.undo_edit_plan` | 409 `VD409`(뒤 편집 있음 / 적용 뒤 바뀜), 409 `VD005` |
+| POST `/api/scenes/[id]/analyze-clip` | member+, `ai_edit` | `{strength: 'conservative'\|'normal'\|'strong'(기본 D-42), min_silence_ms?(200~3000, 기본 500), pad_ms?(0~500, 기본 120), extra_fillers?: string[](20개 이하), request_id}` | `{jobId}` → 완료 시 `source=silence_cut` 편집안 id | 클립 1분당 STT 3 + 무음 컷 2(올림). 전사가 있으면 STT분 0 | consume → enqueue `clip.analyze`(루트 `video.orchestrate`) | 409 22023(clip 장면 아님, ready 클립 소재 없음), 413(클립 60분 초과, 제안), 402 |
+| POST `/api/scenes/[id]/regenerate` | 9.1절 그대로 + `part: 'sentence'` | `{part: 'image'\|'narration'\|'sentence', lang?, sentence_index?(sentence 필수, 0부터), aspect?(image, 변형본용 화면비), request_id}` | `{jobId}` | sentence 1, image 3(aspect를 주면 그 화면비 이미지) | 9.1절과 같다 | 422 22023(문장 번호 범위 밖), 422 `VD013` |
+| POST `/api/storyboards/[id]/variants` | member+, `aspect_variants_max` ≥ 1 | `{aspect, image_mode: 'crop'\|'regenerate'(기본 D-32 크롭), languages[], request_id}` | `{rootJobId, cutId, snapshotVersion}` | 그 길이 렌더 단가 × 해상도·fps 배수 × 언어 수 + `regenerate`면 이미지 장면 수 × 3 + 1440p 이상이면 업스케일 | 마스터 ready 확인 → `storyboard_cuts` INSERT(kind `variant`, service) → `snapshot_storyboard(p_cut_id)` → 루트 잡 | 422 22023(마스터와 같은 화면비, 형식에 없는 화면비), 422 `VD022`, 409 22023(마스터 컷 없음) |
+| GET·POST·PATCH·DELETE `/api/pronunciation-lexicon` | GET 전 역할, 쓰기 member+ | `{term(1~50), reading(1~100), lang?: 'KO'\|'JA'\|'EN', note?}` / 일괄 붙여넣기 `{items[](200개 이하)}` | 항목 / 목록(검색 `?q=`) | 0 | 사용자 세션 INSERT/UPDATE/DELETE(RLS) | 409 23505(같은 표기), 422 54000(2,000개 초과) |
+| GET·POST·PATCH·DELETE `/api/edit-presets`(P1) | GET 전 역할, 쓰기 member+, `edit_presets_max` | `{name, client_id?, settings(01장 VD-F-155 키만), is_default?}` | 프리셋 | 0 | 사용자 세션(RLS) | 403 `VD009`(개수), 422 23514(모르는 키), 422 `VD002` |
+| POST `/api/scenes/[id]/retakes`(P1) | member+ | `{request_id}` | `{jobId}` → 리테이크 묶음 목록 → 고른 결과로 `source=retake` 편집안 | 클립 10분당 1 | consume → `clip.retake` | 409 22023(전사 없음: analyze-clip 먼저) |
+| POST `/api/storyboards/[id]/meta`(P1) | member+ | `{request_id}` | `{chapters: [{t, title}], titles[3], description}` 또는 챕터 조건 미달 시 `chapters: null` | 1 | consume → `storyboard.meta` | 409 22023(마스터 ready 없음) |
+| POST `/api/storyboards/[id]/thumbnails`(P1) | member+ | `{source: 'frame'\|'scene_image'\|'ai', request_id}` | `{jobId}` → 3안 경로 | 2(+ ai면 3) | consume → `storyboard.thumbnail` | 422 금지 문구(재생성 1회 후) |
+| POST `/api/storyboards/[id]/nle-export`(P1) | member+, `nle_export` | `{format: 'fcpxml'\|'premiere_xml', snapshot_version?}` | `{jobId}` → 서명 URL(24시간) | 0 | enqueue `storyboard.nle_export` | 403 `VD009` |
+
+기존 Route Handler에서 바뀌는 동작:
+
+| 경로 | 변경 |
+|---|---|
+| POST `/api/storyboards`(9.1절) | "화면비는 서버가 형식으로 정한다"를 대체: 입력에 `aspect?`(형식 기본값: 쇼츠 9:16, 롱폼 16:9), `resolution?`(기본 1080p, 플랜 상한이 낮으면 상한), `fps?`(기본 30), `shorts_aspect?`, `caption_style?`, `edit_preset_id?`를 받는다. 기본 프리셋이 있으면 그 값이 기본값 |
+| POST `/api/storyboards/[id]/command`(9.1절, P1) | MVP에서는 새 경로를 만들지 않고 `POST .../edit-plans {mode: 'voice'\|'command'}`로 대체한다. 9.1절 행은 대체됨으로 본다 |
+| POST `/api/storyboards/[id]/render`(9.1절) | 렌더 단가에 해상도·fps 배수(01장 11.5절)를 곱한다. 1440p 이상이면 업스케일 소재 없는 AI 이미지 장면 수 × 1을 더하고 `scene.upscale`을 루트 앞 단계로 넣는다. 응답에 `estimate: {render, upscale, tts, source_check, total}` |
+| POST `/api/storyboards/[id]/shorts`(9.1절) | `vertical` 대신 `image_mode: 'crop'\|'regenerate'`도 받는다(같은 뜻, 9:16 외 쇼츠 화면비 때문). 컷 화면비는 스토리보드 `shorts_aspect`. pick 결과 컷마다 `score`(0~100)와 `reasons[]`(P1, VD-F-152) |
+| POST `/api/uploads`(9.1절 변경 표) | P1 `meta`가 있으면 설명란 순서: 대가성 문구 첫 줄 → 설명 → 챕터 → 참고 자료(01장 VD-F-154). 9:16 롱폼 업로드는 D-43 |
+
+### 10.2 RPC (9.2절 표에 더함)
+
+| RPC | 호출자 | 인자 | 결과 | 오류 |
+|---|---|---|---|---|
+| `video.apply_edit_plan` | 사용자 세션(member+) | `p_plan_id uuid, p_command_ids int[] default null` | jsonb `{plan_id, applied[], pending_regenerate[], storyboard_revision, fingerprint}` | 42501, P0002, `VD009`(`ai_edit`), `VD020`, `VD005`, `VD409`, `VD023`, `VD018`, `VD021`, `VD022`, 22023, 23514 |
+| `video.undo_edit_plan` | 사용자 세션(member+) | `p_plan_id uuid` | `video.storyboards` | 42501, `VD005`, `VD409`, `VD020` |
+| `video.reject_edit_plan` | 사용자 세션(member+) | `p_plan_id uuid` | `video.edit_plans` | 42501, `VD005` |
+| `video.save_scene`(다시 정의) | 9.2절과 같다 | `p_patch` 허용 키에 `focus_x`, `focus_y`, `transition`, `transition_ms`, `caption_emphasis`(배열), `clip_in_ms`, `clip_out_ms`, `cut_ranges` 추가 | 같다 | 23514(범위, 강조어가 내레이션에 없음, 컷 구간 겹침·이미지 장면 컷 구간) |
+| `video.storyboard_fingerprint` | service_role | `p_storyboard_id` | text(md5) | - |
+| `video.render_dimensions` | 누구나(immutable, service가 씀) | `p_aspect, p_resolution` | `(width, height)` | - |
+| `video.snapshot_storyboard`(다시 정의) | service_role | 9.2절과 같다. variant 컷 지원 | 같다. 스냅샷에 `render`, `style`, 장면 `focus`·`transition`·`clip`·`caption_emphasis`·`crop_from` | 9.2절 + 22023(어떤 화면비든 ready 이미지 없음) |
+
+### 10.3 잡 페이로드 계약 (9.4절 표와 같은 열)
+
+| `job_type` | payload | result | progress 메시지 예 |
+|---|---|---|---|
+| `edit.plan` | `{storyboard_id, plan_request_id, mode, text?, base_fingerprint, summary_ref}`(요약 JSON은 서버가 만들어 잡 행에 넣지 않고 Storage 임시 경로로, 제안) | `{edit_plan_id, command_count}` | `"interpret"`, `"validate"`, `"compliance"` |
+| `clip.analyze` | `{scene_id, scene_asset_id, language, strength, min_silence_ms, pad_ms, extra_fillers[]}` | `{transcript_id, ranges: [{start_ms, end_ms, reason}], edit_plan_id}` | `"stt"`, `"silence"`, `"fillers"`, `"plan"` |
+| `scene.upscale` | `{scene_id, scene_asset_id, target: {width, height}}` | `{scene_asset_id(새 소재, meta.upscaled_from), width, height}` | - |
+| `scene.narration`(문장) | 9.4절 + `{sentence_index, sentence_text}` | 9.4절 + `{sentence_range_ms: {start, end}}` | `"tts sentence 3"` |
+| `storyboard.render`(variant 포함) | 9.4절 그대로(`cut_id`가 variant). 해상도·fps·스타일은 스냅샷에서만 | 9.4절 + 출력마다 `{width, height, fps}` | 9.4절 + `"upscale 4/30"`, `"xfade 12/40"`, `"loudnorm:KO"` |
+| `media.scene_clip`(제안, 9.4절 대체 키) | 9.4절 키에서 `layout`·`size` 대신 `{width, height, fps, crop: {from_aspect, focus_x, focus_y}\|null, clip: {in_ms, out_ms, cut_ranges[]}\|null, transition_in: {name, ms}}` | 9.4절 그대로 | - |
+| `media.bgm_mix`(제안, 9.4절 대체 키) | `{video_path, bgm_path\|null, bgm_level_db, sidechain: true, fade_ms: 2000, loudnorm: true\|false}` | 9.4절 그대로 | - |
+| `storyboard.meta`, `storyboard.thumbnail`, `storyboard.nle_export`(P1) | `{storyboard_id, snapshot_id, ...}` | 각각 `{chapters, titles, description}`, `{paths[3]}`, `{path, expires_at}` | - |
+
+스냅샷 키 추가(9.4절 목록에 더함, 05장 12장과 같아야 한다): `render`(resolution, fps, width, height), `style`(caption_style, caption_hanja, bgm_level_db, loudnorm), 장면 `focus`(x, y), `transition`(name, ms), `clip`(in_ms, out_ms, cut_ranges, clip 장면만), `caption_emphasis`, `crop_from`(컷 화면비 이미지가 없을 때 크롭할 원본 화면비, 없으면 null). 계약 스키마는 TS(zod)와 Python(pydantic)을 `packages/video-rules`의 JSON 스키마 하나에서 만든다(9.4절 규칙과 같다).
+
+### 10.4 FastAPI 그래프 계약 (9.5절 표에 더함)
+
+| 엔드포인트 | 호출자 | 인증 | video 사용 |
+|---|---|---|---|
+| `POST /graphs/video.edit_plan/runs`, `GET /graphs/runs/{id}` | Next.js 서버(동기) 또는 오케스트레이터(`edit.plan`) | Next.js 서명 토큰 또는 잡 토큰, scope `graph:video.edit_plan`, `jti` 1회 | 편집안 생성. 결과는 서버가 검사 후 `edit_plans`에 쓴다(FastAPI는 `edit_plans`를 쓰지 않는다) |
+| `POST /graphs/video.step/runs` kind `retake_group`, `chapters_meta`, `thumbnail_copy`(P1) | 오케스트레이터 | 잡 토큰 scope `graph:video.step` | 리테이크 묶음, 챕터·제목·설명, 썸네일 문구 |
+
+| 그래프 | 입력 | 출력 | 서버 재검증 |
+|---|---|---|---|
+| `video.edit_plan` | `{mode, text?, storyboard: {id, format, aspect, resolution, fps, shorts_aspect, caption_style, target_seconds, total_ms, plan_caps: {max_resolution, max_fps, allow_4k60, variants_left, shorts_left}}, scenes: [{id, ord, kind, duration_ms, chapter, narration_head(80자), on_screen_text, motion_preset, transition, shorts_candidate, has_image_aspects[]}], preset?: {VD-F-155 키}}` | `{commands: [{id, op, scene_id?, args}](01장 11.4절, 100개 이하), summary(2000자 이하), warnings[], compliance: {verdict, items}}` | 02장 11.3절 전부. 장면 id는 요청에 있던 id만 |
+
+`video.edit_plan` 출력 예:
+
+```json
+{
+  "commands": [
+    { "id": 1, "op": "set_duration", "scene_id": "8c3e...", "args": { "duration_ms": 6000 } },
+    { "id": 2, "op": "move_scene", "scene_id": "1f0a...", "args": { "to_ord": 5 } },
+    { "id": 3, "op": "set_transition", "scene_id": "77b2...", "args": { "name": "fade", "ms": 500 } },
+    { "id": 4, "op": "regenerate", "scene_id": "9d41...", "args": { "part": "image", "aspect": "9:16" } }
+  ],
+  "summary": "3번 장면을 8초에서 6초로 줄이고, 6번 장면을 5번 자리로 옮기고, 2장 시작에 페이드 전환을 넣고, 9번 장면 세로 이미지를 새로 만듭니다(이미지 3크레딧).",
+  "warnings": ["길이 합계가 목표보다 4% 짧아집니다"],
+  "compliance": { "verdict": "PASS", "items": [] }
+}
+```
+
+### 10.5 오류 코드 (9.6절 표에 더함)
+
+| 코드 | 의미 | HTTP |
+|---|---|---|
+| VD022 | 화면비 변형본 한도 초과(스토리보드당 최대 3, 플랜 `aspect_variants_max`) | 422 |
+| VD023 | 편집 명령이 허용 목록 밖이거나 대상 장면·형식이 맞지 않음(편집안 전체를 실행하지 않음) | 422 + detail `{command_id, reason}` |
+
+기존 코드의 11장 쓰임: `VD409`(편집안 기준 상태가 바뀜 → "다시 제안받기", 뒤 편집이 있어 되돌릴 수 없음), `VD005`(이미 적용·거절·만료된 편집안, 되돌린 편집안), `VD009`(`ai_edit`, 해상도·fps·4K60 상한, 프리셋 개수), `VD002`(다른 고객의 편집 프리셋), `23514`(형식에 없는 화면비, 전환 길이, 초점 범위, 강조어, 컷 구간), `54000`(발음 사전 2,000개 초과).

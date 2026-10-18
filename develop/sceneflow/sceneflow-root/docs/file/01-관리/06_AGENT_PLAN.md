@@ -2,21 +2,21 @@
 
 작업 ID는 `VID-06-###`(DB_CONVENTIONS 1장 SQLSTATE 접두사 `VD`의 작업 약어). 모델 기준은 `docs/file/03-설계/공용코어/DOC_TEMPLATE.md` 1장: Fable(결제, 권한, RLS, 데이터 모델), Opus(기능 구현, API 연동, 테스트 설계), Sonnet(UI, 메인페이지, 컴포넌트, 문서), Haiku(보일러플레이트, 린트/타입, 문구, 반복 체크).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 16개(VID-06-041~056)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(사용량 기록), 016(대본·TTS 이관), 036(디자인 시스템 2단계 토큰), 004·023·028·035·038(선행 추가), 001·003·005·021·039(수용 기준 보강)이다. 작업 수 56개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 기존 40개가 이미 한도를 넘었고(Track A~F 전부 MVP, 확정 결정 7) AI·음성·3D·디자인 시스템이 MVP에 들어와 작업 하나를 더 합칠 수 없어 분리했다. 이후 2026-10-13 2차 개정으로 클립·브랜드커넥트·대행 6개(057~062)가, 2026-10-14 인증 단계(확정 결정 22)로 3개(063~065, 8절)가 더해져 65개(모델 작업 64, 사람 1)가 되었고, 004는 Stage A 범위로 바뀌었다. 2026-10-18 스토리보드 디벨롭(01장 10장)으로 9장 19개(066~084)가 더해져 전체 ID 84개(모델 83, 사람 1)이고, 그중 MVP 계획 79개(모델 78, 사람 1; P0 66, P1 13), Phase 2로 옮긴 3개(019, 020, 031), 9장이 대체해 실행하지 않는 2개(018, 030)다(9.5절).
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/file/03-설계/디자인/DESIGN_SYSTEM.md` 4장) 작업 16개(VID-06-041~056)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(사용량 기록), 016(대본·TTS 이관), 036(디자인 시스템 2단계 토큰), 004·023·028·035·038(선행 추가), 001·003·005·021·039(수용 기준 보강)이다. 작업 수 56개는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 기존 40개가 이미 한도를 넘었고(Track A~F 전부 MVP, 확정 결정 7) AI·음성·3D·디자인 시스템이 MVP에 들어와 작업 하나를 더 합칠 수 없어 분리했다. 이후 2026-10-13 2차 개정으로 클립·브랜드커넥트·대행 6개(057~062)가, 2026-10-14 인증 단계(확정 결정 22)로 3개(063~065, 8절)가 더해져 65개(모델 작업 64, 사람 1)가 되었고, 004는 Stage A 범위로 바뀌었다. 2026-10-18 스토리보드 디벨롭(01장 10장)으로 9장 19개(066~084)가 더해져 전체 ID 84개(모델 83, 사람 1)이고, 그중 MVP 계획 79개(모델 78, 사람 1; P0 66, P1 13), Phase 2로 옮긴 3개(019, 020, 031), 9장이 대체해 실행하지 않는 2개(018, 030)다(9.5절). 같은 날 AI 자동편집·화면비(01장 11장, 주력 기능 SF-5)로 10장 30개(085~114)가 더해져 전체 ID 114개(모델 113, 사람 1), MVP 계획 108개(P0 88, P1 20), 실행하지 않는 것은 018·030·082(10장 흡수) 3개다(10.5절).
 
 ## 1. 원칙과 소유 경계
 
 | 원칙 | 내용 |
 |---|---|
 | 디렉토리 단위 소유 | 한 작업은 아래 표의 디렉토리만 만든다·고친다. 다른 작업의 디렉토리를 고쳐야 하면 그 작업 소유자에게 요청 작업을 남긴다 |
-| 공용 파일 | `apps/sceneflow/src/lib/**`(env, core 래퍼)은 VID-06-003, `src/server/billing/**`(게이팅·단가)는 VID-06-005만 수정(2026-10-18: `billing/storyboard.ts`만 069, 9장). 다른 작업은 import만. 예외: `src/lib/auth/**`(인증 모듈 경계)는 004(Stage A) → 063(B) → 064·065(C) 순서로 이어 받는다(8절, 동시 쓰기 없음) |
+| 공용 파일 | `apps/sceneflow/src/lib/**`(env, core 래퍼)은 VID-06-003, `src/server/billing/**`(게이팅·단가)는 VID-06-005만 수정(2026-10-18: `billing/storyboard.ts`만 069, 9장, `billing/ai-edit.ts`만 087, 10장). 다른 작업은 import만. 예외: `src/lib/auth/**`(인증 모듈 경계)는 004(Stage A) → 063(B) → 064·065(C) 순서로 이어 받는다(8절, 동시 쓰기 없음) |
 | 코어 | `_platform-core`, `_supabase-modular`의 다른 파일, 공용 패키지(`packages/core-*`) 수정 금지. 필요하면 6절 코어 요청 |
-| DB | 스키마 변경은 VID-06-001(Fable)만. 모놀리스는 변환 스크립트로만 생성(2026-10-18: 스토리보드 절은 001 담당이 001 뒤 066으로 이어 수행, 9장) |
-| 테스트 | 모든 P0 작업은 3절 웨이브 표의 테스트 작업(002, 007, 037, 038, 055) 중 하나에 대응한다(2026-10-18: 9장 작업은 068, 083, 084, 9.2절) |
-| AI 서비스 경계 | `apps/api/`는 VID-06-045가 공용 ai-service를 설치하고 공용 부분과 설정을 소유한다. video 확장은 작업별로 나눈다: 047 `app/ai/products/video/knowledge.py`, 048 `app/ai/products/video/wiki_config.py`, 049 `app/ai/graphs/`·`app/ai/compliance/video.py`, 050 `app/ai/tools/video/`. FastAPI는 영상·오디오 바이너리를 처리하지 않고 미디어 워커는 LLM 키를 갖지 않는다(02장 2절 경계 표). 2026-10-18: `app/ai/graphs/video_storyboard.py`·`video_shorts_pick.py`는 071(9장) |
+| DB | 스키마 변경은 VID-06-001(Fable)만. 모놀리스는 변환 스크립트로만 생성(2026-10-18: 스토리보드 절은 001 담당이 001 뒤 066으로 이어 수행, 9장. AI 자동편집 13절은 066 뒤 085, 10장) |
+| 테스트 | 모든 P0 작업은 3절 웨이브 표의 테스트 작업(002, 007, 037, 038, 055) 중 하나에 대응한다(2026-10-18: 9장 작업은 068, 083, 084, 9.2절. 10장 작업은 086, 105, 106, 10.2절) |
+| AI 서비스 경계 | `apps/api/`는 VID-06-045가 공용 ai-service를 설치하고 공용 부분과 설정을 소유한다. video 확장은 작업별로 나눈다: 047 `app/ai/products/video/knowledge.py`, 048 `app/ai/products/video/wiki_config.py`, 049 `app/ai/graphs/`·`app/ai/compliance/video.py`, 050 `app/ai/tools/video/`. FastAPI는 영상·오디오 바이너리를 처리하지 않고 미디어 워커는 LLM 키를 갖지 않는다(02장 2절 경계 표). 2026-10-18: `app/ai/graphs/video_storyboard.py`·`video_shorts_pick.py`는 071(9장), `video_edit_plan.py`·`products/video/edl_schema.py`는 089(10장) |
 | 공용 AI 패키지 | `packages/ai-gateway`, `packages/core-voice`, `services/ai-service` 원본, 공용 Dify·GPU 서버는 수정하지 않는다. 필요하면 6절 요청(R-V5~R-V10) |
 | 사람 작업 | VID-06-043(디자인 시스템 3단계)은 사람이 수행하고 Sonnet은 사람이 정한 수치를 코드에 옮기는 일만 돕는다 |
-| 디자인 시스템 순서 | 화면 작업(004, 023, 028~035, 048, 051, 054, 056, 2026-10-18: 9장 078~081 포함)은 VID-06-044(4단계) 뒤에 시작한다(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md:48`) |
+| 디자인 시스템 순서 | 화면 작업(004, 023, 028~035, 048, 051, 054, 056, 2026-10-18: 9장 078~081, 10장 099~103·110 포함)은 VID-06-044(4단계) 뒤에 시작한다(`docs/file/03-설계/디자인/DESIGN_SYSTEM.md:48`) |
 | 대가성 문구 | 문구 삽입은 VID-06-021만 한다. AI 작업(049, 050)은 문구를 쓰거나 지우지 않고 규칙 파일로 모방 문장을 제거만 한다(확정 결정 12) |
 
 | 영역 | 경로(제안 모노레포) |
@@ -112,23 +112,23 @@
 | W4 | 007, 010, 016, 017, 018, 019, 020, 027, 035, 047, 052 | 11 | 006, 015, 046 | 결제 E2E, 생산 API 전부, 스케줄러, 랜딩, RAG 색인, 음성 대화·STT 편입(2026-10-18: 018은 9장으로 대체, 019·020은 Phase 2. 병렬 수는 이전 값) |
 | W5 | 021, 024, 026, 029, 030, 031, 048, 049, 050, 051, 053 | 11 | W4 | 업로드 API, 레이더, 분석, 화면, 위키, 대본 그래프, Dify 채팅, 채팅 패널, 제품 음성 기능(2026-10-18: 030은 9장으로 대체, 031은 Phase 2. 병렬 수는 이전 값) |
 | W6 | 032, 033, 034, 037, 056 | 5 | 021, 024, 049 | 업로드·수익화·레이더 화면, 통합 테스트, 대본 기획 UI |
-| W7 | 063(G1 통과 후 먼저), 038, 055 | 1 + 2 | W6. 063은 G1 통과(`[DECISION] G1 통과`) 후 시작하고 038·055의 공개 베타 마무리 재실행은 063 완료를 기다린다. G1 근거인 Mock 핵심 플로우는 038이 W6 종료 직후 로컬에서 먼저 녹색으로 만든다(8.2절) | 인증 Stage B(Google + 이메일), 사용자 플로우 E2E, AI 보안 회귀. MVP 출시(공개 베타) 조건(2026-10-18: 9.2절 S8 완료 뒤 시작) |
+| W7 | 063(G1 통과 후 먼저), 038, 055 | 1 + 2 | W6. 063은 G1 통과(`[DECISION] G1 통과`) 후 시작하고 038·055의 공개 베타 마무리 재실행은 063 완료를 기다린다. G1 근거인 Mock 핵심 플로우는 038이 W6 종료 직후 로컬에서 먼저 녹색으로 만든다(8.2절) | 인증 Stage B(Google + 이메일), 사용자 플로우 E2E, AI 보안 회귀. MVP 출시(공개 베타) 조건(2026-10-18: 9.2절 S8과 10.2절 E7 완료 뒤 시작) |
 | W8(2026-10-13 추가) | 057, 058, 059, 060 → 061, 062, 064·065(G2 통과 후) | 4 → 2, 인증 2 | W7(057은 009, 059는 blog 브랜드커넥트 어댑터, 064·065는 G2 통과 `[DECISION] G2 통과`, 둘은 병렬 가능) | 네이버 클립 업로더·동의, 브랜드커넥트 클립, 대행 고객·승인·리포트, 인증 Stage C(카카오 C1, 네이버 C2). 002에 클립·대행 33항목 편입 |
 
 034(레이더·분석·크레딧·결제 화면)는 선행 024와 같은 웨이브에 있던 것을 W6으로 옮겼다(2026-10-13 정리).
 
-P0 작업과 테스트 작업 대응: DB·권한(001, 003, 005, 008) → 002 / 결제(006) → 007 / 워커·생산·업로드(009, 011~021, 025, 027) → 037 / 화면·공개 페이지(023, 028~036, 042, 054, 056) → 038 / 인증 Stage A(004) → 038(Mock storageState)·002(`outsider`)·039(금지 문자열·배포 빌드 검사) / 인증 Stage B(063) → 콜백 단위 테스트(B-2, B-3)·배포 빌드 검사(B-4)·038 재실행(B-5)·Google 실로그인 수동 점검표 / AI·음성(045~053) → 055 / 디자인 시스템(041~044)은 043(사람 검토) / 039는 전체 게이트. (2026-10-18: 9장 작업 대응은 9.2절)
+P0 작업과 테스트 작업 대응: DB·권한(001, 003, 005, 008) → 002 / 결제(006) → 007 / 워커·생산·업로드(009, 011~021, 025, 027) → 037 / 화면·공개 페이지(023, 028~036, 042, 054, 056) → 038 / 인증 Stage A(004) → 038(Mock storageState)·002(`outsider`)·039(금지 문자열·배포 빌드 검사) / 인증 Stage B(063) → 콜백 단위 테스트(B-2, B-3)·배포 빌드 검사(B-4)·038 재실행(B-5)·Google 실로그인 수동 점검표 / AI·음성(045~053) → 055 / 디자인 시스템(041~044)은 043(사람 검토) / 039는 전체 게이트. (2026-10-18: 9장 작업 대응은 9.2절, 10장은 10.2절)
 
 ## 4. 모델별 비율
 
 | 모델 | 작업 수 | 비율 | 규모 가중(S=1, M=2, L=3) 비율 |
 |---|---|---|---|
-| Fable | 16 | 20.5% | 33/159 = 20.8% |
-| Opus | 39 | 50.0% | 85/159 = 53.5% |
-| Sonnet | 19 | 24.4% | 37/159 = 23.3% |
-| Haiku | 4 | 5.1% | 4/159 = 2.5% |
+| Fable | 19 | 17.8% | 39/217 = 18.0% |
+| Opus | 57 | 53.3% | 123/217 = 56.7% |
+| Sonnet | 26 | 24.3% | 50/217 = 23.0% |
+| Haiku | 5 | 4.7% | 5/217 = 2.3% |
 
-2026-10-18부터 비율은 MVP 계획의 모델 작업 78개 기준이다(9.5절: 64개 + 9장 19개 − 대체 018·030 − Phase 2 019·020·031). 그 직전 64개 기준 값은 Fable 12(18.8%), Opus 33(51.6%), Sonnet 16(25.0%), Haiku 3(4.7%), 규모 가중 27·68·31·3 / 129였다. 64개 기준의 셈법(2026-10-14: 2절 모델 작업 61개(2절 62행 중 사람 작업 043 제외) + 8절 인증 3개, 060의 "Sonnet(UI) + Opus"는 앞의 Sonnet으로 셈, 004는 Sonnet S → Opus M). 사람 작업 1개(VID-06-043, M)는 비율에서 뺐다. 2026-10-14 직전 표는 W8 작업 6개(057~062)가 빠진 55개 기준(Fable 16.4%, Opus 50.9%, Sonnet 27.3%, Haiku 5.5%)이었고, 61개로 다시 세면 Fable 10(16.4%), Opus 31(50.8%), Sonnet 17(27.9%), Haiku 3(4.9%), 규모 가중 23·65·32·3 / 123이었다(8.5절). 2026-10-13 이전(40개)은 Fable 15.0%, Opus 52.5%, Sonnet 25.0%, Haiku 7.5%였다.
+2026-10-18 10장 추가 뒤 비율은 MVP 계획의 모델 작업 107개 기준이다(10.5절: 78개 + 10장 30개 − 흡수 082). 그 직전 78개 기준 값은 Fable 16(20.5%), Opus 39(50.0%), Sonnet 19(24.4%), Haiku 4(5.1%), 규모 가중 33·85·37·4 / 159였다. 78개 기준의 셈법(9.5절: 64개 + 9장 19개 − 대체 018·030 − Phase 2 019·020·031). 그 직전 64개 기준 값은 Fable 12(18.8%), Opus 33(51.6%), Sonnet 16(25.0%), Haiku 3(4.7%), 규모 가중 27·68·31·3 / 129였다. 64개 기준의 셈법(2026-10-14: 2절 모델 작업 61개(2절 62행 중 사람 작업 043 제외) + 8절 인증 3개, 060의 "Sonnet(UI) + Opus"는 앞의 Sonnet으로 셈, 004는 Sonnet S → Opus M). 사람 작업 1개(VID-06-043, M)는 비율에서 뺐다. 2026-10-14 직전 표는 W8 작업 6개(057~062)가 빠진 55개 기준(Fable 16.4%, Opus 50.9%, Sonnet 27.3%, Haiku 5.5%)이었고, 61개로 다시 세면 Fable 10(16.4%), Opus 31(50.8%), Sonnet 17(27.9%), Haiku 3(4.9%), 규모 가중 23·65·32·3 / 123이었다(8.5절). 2026-10-13 이전(40개)은 Fable 15.0%, Opus 52.5%, Sonnet 25.0%, Haiku 7.5%였다.
 
 Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, OAuth에 더해 AI 보안 경계(서명 토큰 검증 045, AI 게이트의 선차감·정산·동의 046, AI 회귀 055)와 인증 단계의 세션 발급 경계(Stage B 063, Stage C2 네이버 065)를 맡는다. Stage A(004)와 C1 카카오(064)는 Opus다. 그래프·RAG·위키·Dify·음성 구현은 Opus, 채팅 패널·대본 기획 UI·3D 히어로·디자인 시스템 컴포넌트는 Sonnet이다(`docs/file/03-설계/공용코어/DOC_TEMPLATE.md:253`).
 
@@ -229,7 +229,7 @@ AI·음성 요청(2026-10-13, 01장 D-13~D-22와 연결):
 | 사용자 플로우 | VID-06-038 통과(AI 플로우 3개 포함, Mock 페르소나 storageState), DESIGN_PRINCIPLES 7단계 체크리스트. 공개 베타 전 인증 Stage B: VID-06-063 수용 기준 B-1~B-6 통과(B-5 Google 실로그인 수동 점검표를 task `log.md`에 기록) |
 | AI·음성 | `pytest apps/api` 통과, VID-06-055 녹색, 금지 문구 평가셋 30문항(대본 그래프)·채팅 평가셋 30문항 위반 0, RAG 평가셋 40문항 재현율 기준 충족, 같은 목소리 강제 실패 테스트 통과, 파이프라인 STT 국외 제공자 호출 0 |
 | 3D·디자인 시스템 | `HERO_3D.md` 4절 수용 기준(VID-06-054), 디자인 시스템 4단계(VID-06-044) 완료, `tailwind.config.js`·hex 하드코딩 0 |
-| 작업 | 2절 62개 + 8절 인증 3개 + 9장 19개 = 84개 중 MVP 계획 79개의 P0 66개 전부 완료(2026-10-18: Phase 2 019·020·031과 대체된 018·030 제외, 9.5절. 사람 작업 043 포함, P1·P2 작업은 기존 규칙대로 출시 후 가능, 인증 C1·C2 064·065는 G2 후), 리뷰 "높음" 26건 차단 설계 구현 확인 |
+| 작업 | 2절 62개 + 8절 인증 3개 + 9장 19개 = 84개 중 MVP 계획 79개의 P0 66개 전부 완료(2026-10-18: Phase 2 019·020·031과 대체된 018·030 제외, 9.5절. 10장 추가 뒤에는 114개 중 MVP 계획 108개의 P0 88개, 흡수된 082 제외, 10.5절. 사람 작업 043 포함, P1·P2 작업은 기존 규칙대로 출시 후 가능, 인증 C1·C2 064·065는 G2 후), 리뷰 "높음" 26건 차단 설계 구현 확인 |
 
 ## 8. 인증 단계 작업 (2026-10-14 추가, 확정 결정 22)
 
@@ -250,7 +250,7 @@ AI·음성 요청(2026-10-13, 01장 D-13~D-22와 연결):
 | 게이트·웨이브 | 작업 | 진입 조건 | 판정 |
 |---|---|---|---|
 | Stage A | VID-06-004(W3, 2절 범위 변경) | 003, 044. 004보다 앞 웨이브(W0~W2, W1-D)의 작업은 시드 스크립트 없이 SQL·단위 테스트(002의 PGlite·로컬 Supabase 스모크)로 검증한다. W4 이후 화면·API 작업은 Mock 페르소나로 로그인해 개발한다 | - |
-| G1 | - | `AUTH_ROADMAP.md` 4장. video 기준: (1) 2절 MVP P0 기능 작업 완료(인증 B·C 작업과 공개 베타 직전 통합 작업 038·055 제외), (2) 핵심 플로우 E2E(038)가 Mock 페르소나 storageState로 로컬 녹색, (3) RLS 스모크(002) 전 항목 + `outsider` 교차 테넌트 거부, (4) 결제 E2E(007, Toss 테스트 키) 녹색, (5) 단계 분기 코드가 인증 모듈 밖 0건(039 CI), (6) Google Cloud 프로젝트·OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL, 승인된 도메인)·로그인용 웹 클라이언트 ID·운영 Supabase 프로젝트 준비(`AUTH_ROADMAP.md` 5.1절) | 사람(대표님)이 task `log.md`에 `[DECISION] G1 통과`. 2026-10-18: (1)에 9장 P0 18개, (2)에 084, 파이프라인 083 녹색을 더한다(9.2절) |
+| G1 | - | `AUTH_ROADMAP.md` 4장. video 기준: (1) 2절 MVP P0 기능 작업 완료(인증 B·C 작업과 공개 베타 직전 통합 작업 038·055 제외), (2) 핵심 플로우 E2E(038)가 Mock 페르소나 storageState로 로컬 녹색, (3) RLS 스모크(002) 전 항목 + `outsider` 교차 테넌트 거부, (4) 결제 E2E(007, Toss 테스트 키) 녹색, (5) 단계 분기 코드가 인증 모듈 밖 0건(039 CI), (6) Google Cloud 프로젝트·OAuth 동의 화면(앱 이름, 지원 이메일, 로고, 개인정보처리방침·이용약관 URL, 승인된 도메인)·로그인용 웹 클라이언트 ID·운영 Supabase 프로젝트 준비(`AUTH_ROADMAP.md` 5.1절) | 사람(대표님)이 task `log.md`에 `[DECISION] G1 통과`. 2026-10-18: (1)에 9장 P0 18개, (2)에 084, 파이프라인 083 녹색을 더한다(9.2절). 10장: (1)에 P0 22개, (2)에 106, 파이프라인 105 녹색(10.2절) |
 | Stage B | VID-06-063 | W7의 맨 앞(마지막 기능 웨이브 W6 다음, 공개 베타 직전 통합·E2E 웨이브). 038·055의 공개 베타 마무리 재실행은 063 완료를 기다린다 | - |
 | G2 | - | `AUTH_ROADMAP.md` 6장: Google 실로그인 공개 베타 운영 2주(제안), 인증 P0·P1 장애 0, `/auth/callback` 오류율 1% 미만(제안), open 앱 신규 가입자 중 `entitled=false` 0, 카카오 디벨로퍼스 앱·비즈 앱 전환(01장 D-26), 네이버 애플리케이션 등록·검수 자료 준비·C2 스파이크 결과 기록 | 사람이 `[DECISION] G2 통과` |
 | Stage C | VID-06-064, VID-06-065 | W8(MVP 출시 후 웨이브), G2 통과 후. 064·065 병렬 가능. 네이버 검수 기간 때문에 065의 신청 자료 준비는 G2 직후 시작 | - |
@@ -324,7 +324,7 @@ AI·음성 요청(2026-10-13, 01장 D-13~D-22와 연결):
 | VID-06-079 | 편집기 3단: 장면 목록(챕터 묶음, 끌어 옮기기, 키보드 옮기기, 쇼츠 후보·출처·AI 배지), 장면 상세(자동 저장, 소재 고르기·업로드·재사용, 권리 근거, 출처 칸), 상단 길이 게이지·장면 수·출처 경고 수·예상 크레딧, 하단 바 | `src/app/(dashboard)/dashboard/storyboards/[id]/page.tsx`, `src/components/storyboard/editor/**` | 044, 074, 077 | P0 | L | Sonnet(UI) | 03장 8.3~8.8절 구성, 키보드만으로 장면 순서 변경 + `aria-live` 알림, 게이지 `role="meter"`와 글자 상태, `VD409` 최신본 + 내 입력 보존, `VD020` 입력 비활성, viewer 읽기 전용, 767px 이하 읽기 전용, 1,000ms 안 저장 상태 표시(제안), 240장면에서 스크롤 끊김 없음(가상 목록, 제안) | VD-F-132~134, 138, 03장 8장 |
 | VID-06-080 | 브라우저 미리보기 타임라인: 장면 이미지·클립·글자 카드 순서 재생, 모션 프리셋 근사, 내레이션·음악 오디오 맞춤, 자막 언어 전환, 장면 클릭 이동 | `src/components/storyboard/preview/**` | 044, 074 | P0 | M | Sonnet(UI) | 미리보기가 잡·원장 행 0(네트워크 기록 확인), 다운로드 버튼·경로 0, 시작 2초 안 첫 프레임(제안), 소재 없는 장면 자리표시, reduced-motion이면 모션 정지, 렌더러 패키지 import 0 | VD-F-135 |
 | VID-06-081 | 렌더·쇼츠 추출·언어판 화면과 스냅샷 열람: 마스터 컷 언어별 렌더 행, 쇼츠 후보 고르기·컷 카드(훅 문구, 세로 구도 선택), 언어판 행, 스냅샷 목록과 읽기 전용 편집기, 업로드 준비 연결 | `src/app/(dashboard)/dashboard/storyboards/[id]/render/**`, `src/components/storyboard/{render,shorts,snapshot}/**` | 075, 079 | P0 | M | Sonnet(UI) | 03장 8.9절 구성, 진행률 없는 무한 스피너 0(패턴 N), 실패 행 원인 한 줄 + 환불 표시, `VD021`·`VD009` 안내, 남은 컷 수 표시, 스냅샷 열람 중 편집 0, 업로드 준비가 기존 `/dashboard/publish/[uploadId]`로 이동, AI 생성 표시 기본 체크 전달(01장 10.5절) | VD-F-136, 137, 139 |
-| VID-06-082 | 음성 지시 편집(P1): 받아쓰기(052 경로) → 텍스트 확인 → 편집 패치 변환(049 `video.step` kind `scene_command` 1줄 요청, 1크레딧 제안) → 변경 미리보기 → 적용(`save_scene`) | `src/components/storyboard/voice-command/**`, `src/app/api/storyboards/[id]/command/**`(제안 경로, 04장 9장에 없으면 04장에 추가 요청) | 052, 074, 079 | P1 | M | Opus(기능·연동) | 사용자 확인 전 장면 변경 0, 음성 고지 미확인 403, `store_audio=false` 100%, 해석 실패 시 변경 0 + "알아듣지 못했습니다", 적용 시 revision 검사(`VD409`), 마이크 없이도 편집기 정상 | VD-F-140 |
+| VID-06-082 | (10장 VID-06-090·099로 흡수, 실행 안 함) 음성 지시 편집(P1): 받아쓰기(052 경로) → 텍스트 확인 → 편집 패치 변환(049 `video.step` kind `scene_command` 1줄 요청, 1크레딧 제안) → 변경 미리보기 → 적용(`save_scene`) | `src/components/storyboard/voice-command/**`, `src/app/api/storyboards/[id]/command/**`(제안 경로, 04장 9장에 없으면 04장에 추가 요청) | 052, 074, 079 | P1 | M | Opus(기능·연동) | 사용자 확인 전 장면 변경 0, 음성 고지 미확인 403, `store_audio=false` 100%, 해석 실패 시 변경 0 + "알아듣지 못했습니다", 적용 시 revision 검사(`VD409`), 마이크 없이도 편집기 정상 | VD-F-140 |
 | VID-06-083 | Track S 파이프라인 통합 테스트(가짜 제공자, 로컬 Python 워커): 주제 → 대본 → 스토리보드 → 장면 소재 → 렌더 → 쇼츠 3편 → JA 언어판, 부분 환불 | `tests/integration/storyboard/**` | 072, 073, 075, 076 | P0 | M | Opus(테스트 설계) | 끝까지 통과, 이미지 1장 실패 주입 시 그 장면분만 환불, JA 실패 주입 시 JA분만 환불, 렌더 중 편집 `VD020`, 같은 스냅샷 다시 렌더 결과의 장면 순서·길이 동일, 원장 drift 0, 미리보기 경로 잡 0 | VD-F-131~139 |
 | VID-06-084 | 스토리보드 사용자 플로우 E2E(03장 8.2절 16단계, 현우 흐름) | `tests/e2e/storyboard/**` | 078, 079, 080, 081 | P0 | M | Opus(테스트 설계) | Mock 페르소나 storageState: `adv_owner`(롱폼 10분 + 쇼츠 3편 + 업로드 준비까지), `owner`(Starter 안내 화면), `viewer`(읽기 전용), `outsider`(404). 키보드만으로 장면 옮기기, 두 탭 동시 편집 `VD409`, 뷰포트 4종(375/768/1024/1440) 스크린샷, 063 완료 뒤 재실행 | 03장 8장, VD-F-130~139 |
 
@@ -342,7 +342,7 @@ Track S 작업은 3절 웨이브와 나란히 가는 S 웨이브로 묶는다. �
 | S6 | 072 | 1 | 071, 053(W5), 016 | W6 뒤 새 웨이브 | 생성·소재 단계(실제 그래프 경로) |
 | S7 | 075 → 081 | 1 → 1 | 072, 073, 074 / 081은 075·079 | 새 웨이브 | 렌더·쇼츠·스냅샷 API와 화면 |
 | S8 | 083, 084 | 2 | S7 | 새 웨이브, W7 직전 | 통합 테스트, E2E |
-| W8 | 082 | 1 | G1 뒤, 052·079 | W8 | 음성 지시 편집(P1) |
+| W8 | 082 | 1 | G1 뒤, 052·079 | W8 | 음성 지시 편집(P1)(10장 090·099로 흡수되어 MVP P0 E5·E6에서 실행) |
 
 | 게이트 | 조건 | 판정 |
 |---|---|---|
@@ -413,4 +413,139 @@ P0 작업과 테스트 작업 대응(3절 규칙에 더함): 스키마·단가(0
 | 음악 큐의 음원 출처 | 장면 `music_cue`는 큐 이름만 저장한다. Track S BGM을 어디서 가져올지(운영자 제공 BGM 묶음, 조직 라이선스 곡, 음악 없음)는 01장 10장에 없다. `music_library`는 Track F용이고 Phase 2로 옮겼다. 제안: 새 결정 D-35로 올리고, 결정 전 073은 "음악 없음"과 운영자 BGM 묶음 경로만 구현한다 |
 | 쇼츠 후보 없이 고르기 | 쇼츠 후보 표시 장면이 없을 때 전체 장면에서 고르는 경로(03장 8.6절)는 01장에 없다(제안) |
 | 장면 하나의 길이 범위 | 장면별 최소·최대 길이는 정하지 않았다(03장 8.4절 제안 1~60초) |
-| 음성 지시 경로 | `POST /api/storyboards/[id]/command`는 04장 9장 목록에 없는 제안 경로다(082) |
+| 음성 지시 경로 | `POST /api/storyboards/[id]/command`는 04장 9장 목록에 없는 제안 경로다(082)(10장: 04장 10.1절 `POST .../edit-plans {mode: 'voice'}`로 대체, 090) |
+
+## 10. AI 자동편집·화면비 작업 (2026-10-18 추가, 01장 11장)
+
+정본은 01장 11장(확정 SF-5~SF-8, 11.2절 VD-F-143~159, 11.4절 편집 명령 허용 목록, 11.5절 단가, 11.6절 플랜 키, 11.9절 D-38~D-44)이다. 구조는 02장 11장, 화면은 03장 9장, API·잡·오류 코드는 04장 10장, 테이블·RPC는 05장 12장과 `D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/1200_video.sql` 13절(`:3038-4195`)을 따른다. **SceneFlow의 주력 기능은 AI 자동편집이다(SF-5, `01_PRD.md:573`).** 그래서 이 장의 P0 작업은 공개 베타(W7, G1) 전에 끝나야 한다. 새 작업은 30개(VID-06-085~114)이고 ID는 9장 최대 번호 084 다음부터다. 기존 작업 행은 지우지 않았고, 범위가 바뀐 행에만 같은 줄로 "(10장 ...)"를 달았다(10.4절). 모델 배분은 머리말 원칙을 따른다: Fable(데이터 모델, RLS, 과금·권한), Opus(기능 구현, API 연동, 그래프, 워커, 테스트 설계), Sonnet(UI, 문서), Haiku(문구).
+
+| 경로 기준 | 내용 |
+|---|---|
+| 화면 | `src/components/storyboard/{ai-edit,render-settings,variants,focus,silence-review,captions}/**`(03장 9.8절 컴포넌트). 편집기 페이지(`dashboard/storyboards/[id]/page.tsx`)와 렌더 페이지는 079·081 소유라 장착은 1줄 요청. 설정 화면은 `dashboard/settings/{pronunciation,edit-presets}/**`(034 소유 `settings/` 중 이 하위만, 064 `login-methods/`와 같은 예외) |
+| API | `src/app/api/storyboards/[id]/{edit-plans,settings,variants,meta,thumbnails,nle-export}/**`, `src/app/api/edit-plans/**`, `src/app/api/scenes/[id]/{analyze-clip,retakes}/**`, `src/app/api/{pronunciation-lexicon,edit-presets}/**`(04장 10.1절) |
+| 서버 도메인 | `src/server/storyboards/{edit,render-settings,clip-analysis,lexicon,meta}/**`(02장 11.1절 `src/server/storyboards/edit/**`) |
+| 과금 | `src/server/billing/ai-edit.ts`(005 소유 `billing/` 중 이 파일만, 069 `storyboard.ts`와 같은 예외) |
+| 워커 | `workers/video-orchestrator/src/storyboard/{edit,clip,upscale,sentence,meta}/**`, `services/media-worker/handlers/storyboard/{silence_detect,retake_detect,upscale}/**`(02장 11.1절). FFmpeg 렌더 확장은 073 소유 `handlers/ffmpeg/storyboard/**`를 073 완료 뒤 이어 받는다(동시 쓰기 없음) |
+| AI 서비스 | `apps/api/app/ai/graphs/video_edit_plan.py`, `apps/api/app/ai/products/video/edl_schema.py`(02장 11.1절, 049 소유 `graphs/` 중 이 파일만), `apps/api/tests/video/edit/` |
+| 규칙 | `packages/video-rules/edit/**`(049 소유 `video-rules/` 중 이 하위만): `edl.schema.json`(TS·Python 공용 정본, CLAUDE.md AI 자동편집 규칙), `fillers.ko.json`, `safe_zones.json`, `caption_styles.json`, `hanja_glossary.json`(02장 11.1절) |
+| 스키마 | 1절 규칙 그대로 VID-06-001 소유 파일에 들어간다. 001·066 담당(Fable)이 066 완료 뒤 085로 이어서 수행한다 |
+
+이 장의 어떤 작업도 LLM 출력으로 FFmpeg 인자·셸 문자열·SQL·파일 경로를 만들지 않는다(SF-6, 02장 11.1절 경계 규칙). 장면 변경은 `video.apply_edit_plan` 한 번으로만 한다.
+
+### 10.1 작업 목록 (2절과 같은 열)
+
+| ID | 작업 | 소유 파일/디렉토리 | 선행 작업 | 우선순위 | 규모 | 권장 모델 | 수용 기준 | 출처 |
+|---|---|---|---|---|---|---|---|---|
+| VID-06-085 | AI 자동편집·화면비 스키마(05장 12장, `1200_video.sql` 13절) 적용: 기획 저장소의 13절 SQL(체커·행동 검사 62항목 통과, 05장 12.8절)을 개발 저장소 `1200_video.sql` 끝에 옮기고, 모놀리스 재생성(변환 스크립트), 타입 재생성. 새 테이블 4개(`edit_plans`, `edit_presets`, `pronunciation_lexicon`, `clip_transcripts`), storyboards 컬럼 8개(`resolution`, `fps`, `shorts_aspect`, `caption_style`, `caption_hanja`, `bgm_level_db`, `loudnorm`, `edit_preset_id`), scenes 컬럼(`focus_x/y`, `transition(_ms)`, `clip_in/out_ms`, `cut_ranges`, `caption_emphasis`), cut kind `variant`, `outputs.width/height/fps`, RPC `apply_edit_plan`·`undo_edit_plan`·`reject_edit_plan`·`storyboard_fingerprint`, `snapshot_storyboard` 다시 정의, 오류 코드 `VD022`·`VD023`, 플랜 키 7개 병합 UPDATE(`:4179-4195`) | 001·066과 같은 파일: `supabase/migrations/1200_video.sql`(끝 13절), `supabase/monolith/**`(변환 스크립트로만), `apps/sceneflow/src/types/supabase.ts`. 066 완료 뒤 직렬로 이어 받는다 | 066 | P0 | M | Fable(데이터 모델·RLS) | `supabase db reset` 성공(1200 2회 연속 적용 포함), 체커 OK(`--vector` 모듈러·모놀리스), 타입 파일에 새 테이블 4개와 새 컬럼. 05장 12.8절 13절 행동 검사 62항목이 개발 저장소에서도 같은 결과: 롱폼 4:5 23514, Basic 2160p `VD009`, 렌더 중 설정 변경 `VD020`, rendered 뒤 설정 변경 시 status `ready`, 같은 화면비 변형본 22023, 4번째 변형본 `VD022`, 허용 밖 op 23514(CHECK)·다른 스토리보드 장면 `VD023`, 지문 불일치 `VD409`, 다시 적용 `VD005`, 뒤 편집이 있으면 되돌리기 `VD409`, 사용자 세션의 `edit_plans` INSERT·`clip_transcripts` 쓰기 42501, 발음 사전 중복 23505·2,001번째 54000. 라우팅 키 `video.edit_plan` 행 추가 여부는 10.6절 결정을 따른다 | VD-F-143~151, 155, 05장 12장 |
+| VID-06-086 | AI 자동편집 RLS·동작 회귀 테스트 | `supabase/tests/ai-edit/**`(002 소유 `supabase/tests/` 중 이 하위 폴더만) | 085, 068 | P0 | M | Fable(RLS) | 05장 12.8절 13절 검사 62항목을 CI 테스트로 옮긴다. 추가: `outsider`로 다른 조직 편집안·프리셋·사전·전사 0행·쓰기 42501, `viewer`의 `apply_edit_plan`·`undo_edit_plan`·사전 쓰기 42501, `owner`(Starter, `ai_edit=false`) 적용 `VD009`, `storyboard_fingerprint` 사용자 EXECUTE 42501, 대행 조직 고객 A 프리셋을 고객 B 스토리보드에 연결 `VD002`, 변형본 스냅샷 `crop_from`·픽셀 크기가 `render_dimensions`와 같음. CI에서 002·068과 함께 실행, 실패 시 머지 불가 | VD-F-144, 146, 150, 151, 155, SECURITY_BASELINE |
+| VID-06-087 | AI 편집 단가·렌더 배수·플랜 게이팅: 01장 11.5절 단가(편집 지시 1, 자동 다듬기 쇼츠 1 / 롱폼 10분당 2, 클립 분석 1분당 STT 3 + 무음 컷 2, 문장 1, 업스케일 1장 1, 변형본 = 그 길이 렌더 단가, P1 단가)를 `priceOf`에 등록, 해상도·fps 배수(1080p30 = 1, 1440p 1.5, 2160p 2, 60fps 1.5, 곱 후 올림, D-41 전까지 제안값 상수), 플랜 키 판정(`ai_edit`, `render_max_resolution`, `render_max_fps`, `render_4k60`, `aspect_variants_max`, `nle_export`, `edit_presets_max`), 누락 키 기본값(Starter 값), 명령별 부분 환불 키(`refund:edit:<plan_id>:<command_id>`, 제안) | `src/server/billing/ai-edit.ts`. `priceOf` 등록 1줄은 005 파일에, 렌더 단가에 배수를 곱하는 1줄은 069 파일(`billing/storyboard.ts`)에 요청 | 005, 069, 085 | P0 | M | Fable(과금·권한) | 01장 11.5절 표와 같은 단위 테스트, 예시 재현(현우 세트 136 + 22 = 158, 2160p 세트는 렌더 10 → 20 + 업스케일 30), 적용·일부 적용·되돌리기·거절·프리셋 저장 0, 1440p 10분 렌더 15, 2160p60 10분 렌더 30(2 × 1.5), Starter 편집안 생성 403 `VD009`, Basic 1440p 403 `VD009`, Pro 4K60 403 `VD009`, 서버 키 값이 `1200_video.sql:4179-4195`와 같다(스크립트 비교), 동시 50요청 음수 잔액 0. 배수 상수 옆에 "D-41 확정 전 제안값" 주석 | VD-F-143, 144, 146~150, 01장 11.5·11.6절 |
+| VID-06-088 | 편집 규칙 파일과 평가 자료: 한국어 군더더기 말 사전(강도 3단계, 운영자 seed, D-42 기본 보수), 세이프존 비율(02장 11.6절 제안값), 자막 스타일 3종 수치, 한자 병기 용어집 형식과 첫 항목(운영자 검수 항목만), 한국어 편집 지시 평가 문장(제안 60개: 길이·순서·전환·문구·강조·렌더 설정·쇼츠·해석 불가 지시 포함, 지시마다 기대 명령) | `packages/video-rules/edit/{fillers.ko.json,safe_zones.json,caption_styles.json,hanja_glossary.json}`, `packages/video-rules/edit/eval/**`(`edl.schema.json`은 089) | 085 | P0 | S | Sonnet(문서) | JSON 스키마 검사 통과, 용어집 항목마다 검수자·근거 칸, 근거 없는 한자 0, 세이프존 값이 02장 11.6절과 같다(스크립트 비교), 평가 문장 중 허용 목록 밖 요청(예: "배경을 실사로 바꿔")과 해석 불가 문장이 각 5개 이상(제안), 금지 문구 0(01장 11.7절) | VD-F-145, 146, 148, 149, D-42 |
+| VID-06-089 | FastAPI 그래프 `video.edit_plan`: 지시(`mode=command\|voice`) + 스토리보드 요약 → 01장 11.4절 허용 명령 JSON(최대 100개) + 사람이 읽는 요약 + compliance, 온도 0, 출력 pydantic 스키마(`edl.schema.json`에서 생성), 스토리보드 요약 정렬 직렬화, 허용 밖 출력 1회 재작성. 자동 다듬기(`mode=auto_polish`): 규칙 단계(내레이션 끝 + 300ms 길이, 같은 모션 3연속 금지, 챕터 경계 `fade` 500ms, 덕킹·loudnorm 켜기, 프리셋 값 우선) + LLM 1회(강조어, 쇼츠 후보). 평가셋 실행기 | `apps/api/app/ai/graphs/video_edit_plan.py`, `apps/api/app/ai/products/video/edl_schema.py`, `packages/video-rules/edit/edl.schema.json`, `apps/api/tests/video/edit/` | 045, 049, 071, 088 | P0 | L | Opus(그래프) | 088 평가 문장에서 기대 명령 일치율 측정값을 task `log.md`에 기록(목표는 01장 11.8절 해석 실패율 5% 이하, 제안), 허용 밖 op·키 0(재작성 후), 요청에 없던 장면 id 0, 같은 입력 3회 실행 결과 비교 기록(제공자 비결정성은 미확인이라 "같은 결과 보장" 문구를 쓰지 않는다, 02장 11.3절), 자동 다듬기 적용 후 길이 합계 ±10% 밖이면 길이 명령 제외 + 경고, `set_text` 값 금지 문구 0(평가셋 + 01장 11.7절), 실행 1건 = `ai_runs` 1행 + 노드별 `ai_run_steps`, 잡 토큰 scope `graph:video.edit_plan` 밖 토큰 401, 영상·오디오 바이너리 import 0 | VD-F-146, 147, 01장 11.4절 |
+| VID-06-090 | 편집안 생성 API와 EDL 서버 검사: `POST /api/storyboards/[id]/edit-plans`(`mode` command·voice·auto_polish, P1 broll은 111), `GET .../edit-plans`, 선차감 → `storyboard_fingerprint` → 그래프(동기 p95 15초, 넘으면 잡 `edit.plan`) → 서버 검사(02장 11.3절 7항목) → `edit_plans` INSERT(service_role, `proposed`, `estimate_credits`), 같은 입력 10분 안 재요청은 기존 편집안(0크레딧, 제안), 명령 0개·`VD023` 환불. 음성 지시는 받아쓰기 텍스트를 `mode=voice`로 받는다(기존 082 흡수) | `src/app/api/storyboards/[id]/edit-plans/{route.ts}`, `src/server/storyboards/edit/{create,validate,summary}/**`, `workers/video-orchestrator/src/storyboard/edit/**`(잡 `edit.plan`) | 074, 085, 087, 089(평가 통과 전에는 고정 JSON 픽스처) | P0 | L | Opus(기능·연동) | 04장 10.1절 계약, 같은 `request_id` 재요청 차감 1회, 서버 검사가 DB CHECK보다 먼저 걸린다(같은 장면 같은 op 두 번이면 뒤의 것 + 경고, 쇼츠 형식 `propose_short` `VD023`, 플랜 밖 `set_render` `VD023`), 해석 실패 시 `commands: []` + 환불 1행, 15초 넘는 요청이 잡으로 전환, 레이트 리밋 429, 음성 원본을 받는 입력 칸 0, 대행 조직 고객 범위(VD-F-122) 밖 문서 0, 목업 응답 0 | VD-F-140, 146, 147, 02장 11.2·11.3절 |
+| VID-06-091 | 편집안 적용·거절·되돌리기 API와 `regenerate` 실행: `POST /api/edit-plans/[id]/{apply,reject,undo}`, 사용자 세션 `rpc('video.apply_edit_plan', {p_plan_id, p_command_ids})` → `pending_regenerate` 명령마다 consume(`consume:video:<request_id>:<command_id>`) → `scene.image`·`scene.narration`(문장 범위) enqueue, 승인 화면 합계와 다르면 차감하지 않고 409(제안) | `src/app/api/edit-plans/**`, `src/server/storyboards/edit/{apply,undo}/**` | 072, 085, 087, 090 | P0 | M | Opus(기능) | 승인 전 장면 변경 0, 일부 명령만 고르면 그 명령만 적용, 한 트랜잭션(중간 실패 시 장면 변경 0), `VD409` 응답에 "다시 제안받기" detail, regenerate 잔액 부족 402여도 비용 없는 명령 적용은 유지되고 regenerate만 대기 표시, regenerate 잡 실패 시 그 명령분만 환불 1행, 되돌리기 0크레딧·다시 만들기 환불 없음, 되돌리기 후 장면 필드가 적용 전과 같다, 서버가 명령을 `save_scene`으로 쪼개 부르는 코드 0 | VD-F-146, 151, 02장 11.2절 |
+| VID-06-092 | 렌더 설정·변형본 API와 렌더 요청 변경: `PATCH /api/storyboards/[id]/settings`(화면비·해상도·fps·쇼츠 화면비·자막 스타일·BGM 음량·프리셋, 응답에 배수와 픽셀 크기), `POST /api/storyboards/[id]/variants`(variant 컷 INSERT(service) → `snapshot_storyboard(p_cut_id)` → 루트 잡), 렌더 요청에 배수·업스케일 선행 단계·`estimate` 분해 추가, 쇼츠 `image_mode`, 새로 만들기 입력의 `aspect`·`resolution`·`fps` | `src/app/api/storyboards/[id]/{settings,variants}/**`, `src/server/storyboards/render-settings/**`. 렌더·쇼츠 요청 변경은 075 소유 `api/storyboards/[id]/{render,shorts}`·`server/storyboards/render/**`에, 새로 만들기 입력은 074 소유 `api/storyboards/route.ts`에 각 1줄 요청(075·074 완료 뒤) | 074, 075, 085, 087 | P0 | M | Opus(기능) | 04장 10.1절 계약과 "바뀌는 동작" 표, 형식에 없는 화면비 422 23514, 플랜 상한 403 `VD009`, 렌더 중 409 `VD020`, 마스터와 같은 화면비 22023, 4번째 변형본 `VD022`, 1440p 이상 렌더 요청 시 업스케일 소재 없는 AI 이미지 장면 수만큼 `scene.upscale`이 루트 앞에 들어가고 `estimate.upscale`에 합산, 픽셀 크기를 코드 표가 아니라 `video.render_dimensions`에서 읽음 | VD-F-143, 144, 04장 10.1절 |
+| VID-06-093 | FFmpeg 렌더 프로필: 스냅샷 `render.width×height·fps`로 출력, 장면 초점(`focus`) 기준 크롭(`crop_from`, 창이 이미지 밖이면 안쪽으로), 전환 `xfade`(01장 11.4절 8종, 200~1,500ms, 길이 합계 유지), `clip` 트림 + `cut_ranges` 제외 이어 붙이기(경계 오디오 페이드 10ms, 제안), variant 컷 렌더, 출력 `width/height/fps` 결과 보고 | `services/media-worker/handlers/ffmpeg/storyboard/**`(073 완료 뒤 이어 받음) | 073, 085 | P0 | L | Opus(기능) | 04장 10.3절 `media.scene_clip` 계약, 화면비 4종 × 해상도 4종 픽셀 크기가 `render_dimensions`와 같다(ffprobe), 같은 스냅샷 두 번 렌더 시 장면 순서·길이 동일, 전환이 있어도 출력 길이 = 장면 길이 합계(±1프레임), `cut_ranges` 경계가 지정 ms와 1프레임 안에서 일치, 원본 클립 파일 수정·삭제 0(해시 비교), 2160p 장면 클립 타임아웃 900초(02장 11.7절), LLM 키·LLM 출력 입력 0 | VD-F-143~145, 148, 02장 11.5절 |
+| VID-06-094 | FFmpeg 오디오·자막: 2패스 `loudnorm`(-14 LUFS, 제안), BGM 덕킹 `sidechaincompress`(내레이션 사이드체인, 기본 `bgm_level_db`), 자막 스타일 3종(`caption_styles.json`), `word_pop` 단어 시각 강조, 강조어 굵게 + 강조색, 한자 병기(`caption_hanja=true`이고 `hanja_glossary.json` 항목만), 자막 위치는 컷 화면비 세이프존 안 | `services/media-worker/handlers/ffmpeg/storyboard/{audio,captions}/**`(093과 같은 폴더의 하위, 093과 파일 분리) | 088, 093 | P0 | M | Opus(기능) | `loudnorm=true` 출력의 통합 음량이 목표 ±1 LU(측정값 기록), 내레이션 구간 BGM이 비구간보다 낮다(측정), 강조어가 내레이션에 없으면 렌더 전에 22023(DB CHECK와 같은 규칙), 용어집 밖 한자 0, 9:16·4:5·1:1·16:9 각 샘플에서 자막 박스가 세이프존 안(좌표 테스트), 자막 레이어 순서는 VD-F-033 그대로 | VD-F-147, 149, 02장 11.5절 |
+| VID-06-095 | 4K 업스케일 단계(D-39 (a)): 잡 `scene.upscale`(`video.media.gpu`), 1440p 이상 렌더의 AI 이미지 장면마다 1장 1크레딧, 새 소재(`meta.upscaled_from`), 실패 장면은 원본 해상도로 렌더하지 않고 렌더 요청을 멈춤. 업스케일 모델·경로(오픈소스 자체 운영 / fal 업스케일 API)는 상업 이용 라이선스와 원가 확인 뒤 정한다(미확인) | `services/media-worker/handlers/storyboard/upscale/**`, `workers/video-orchestrator/src/storyboard/upscale/**` | 011, 085, 087, 092 | P0 | M | Opus(기능·연동) | 04장 10.3절 `scene.upscale` 계약, 출력 크기 = `target`, 같은 소재 두 번 요청 시 업스케일 1회(멱등), 실패 주입 시 그 장면 1크레딧만 환불 1행 + 렌더 잡 미생성, 업스케일 실패 장면이 원본 해상도로 렌더된 출력 0, 사용 모델·라이선스 근거·1장 처리 시간이 task `log.md`에 기록(가격 문서 12장 원가 입력), D-39가 (b)로 정해지면 이 작업은 실행하지 않는다 | VD-F-143, D-39 |
+| VID-06-096 | 렌더 원가 벤치(D-41): 같은 스냅샷(롱폼 10분 40장면, 쇼츠 60초)을 1080p30, 1440p30, 2160p30, 1080p60, 2160p60으로 렌더해 처리 시간, CPU 시간, 최대 메모리, 출력 크기를 잰다. 2160p 코덱(H.264 High 5.1 / HEVC) 업로드 호환 확인(02장 11.5절 8단계 미확인 항목) | `services/media-worker/bench/**`, `docs/sceneflow/bench/render-cost.md`(제안) | 093, 094 | P0 | S | Opus(측정) | 측정 표에 조건(서버 사양, FFmpeg 버전, 3회 평균)과 1080p30 대비 배수, 그 배수로 다시 계산한 01장 11.5절 배수 제안과 가격 문서 12장 원가를 함께 적는다. 측정 전 수치를 확정값으로 쓰지 않는다. 결과는 사람이 D-41 `[DECISION]`으로 판정 | D-41, 01장 11.5절 |
+| VID-06-097 | 클립 무음·군더더기 말 분석: `POST /api/scenes/[id]/analyze-clip`, 잡 `clip.analyze`(루트 `video.orchestrate` → `video.media.gpu` Whisper 단어 시각(`video.stt` = `oss-voice`, 012 핸들러 재사용) + `video.media.cpu` `silencedetect`), 군더더기 말 사전(088) + 조직 추가 단어, 강도·최소 무음·앞뒤 여유, 단어 경계 컷, 전사 `clip_transcripts` INSERT(service_role), 결과로 `remove_ranges`만 담은 편집안(`source=silence_cut`, LLM 없음) | `src/app/api/scenes/[id]/analyze-clip/**`(074 소유 `api/scenes/` 중 이 하위만), `src/server/storyboards/clip-analysis/**`, `workers/video-orchestrator/src/storyboard/clip/**`, `services/media-worker/handlers/storyboard/silence_detect/**` | 012, 085, 087, 088, 090 | P0 | L | Opus(워커·연동) | 04장 10.1·10.3절 계약, 컷 경계가 단어 타임스탬프 경계와 일치(테스트 샘플), 어절 중간 컷 0, 원본 파일 수정·삭제 0, 전사가 있으면 STT분 0크레딧, 클립 1분당 5크레딧(올림), 실패 시 전액 환불, 원본 오디오가 FastAPI·상용 STT로 가는 경로 0(`ai_usage` stt 행 provider `oss-voice` 100%), clip 장면이 아니면 22023, 승인 전 `cut_ranges` 변경 0 | VD-F-148, D-42, 01장 11.7절 |
+| VID-06-098 | 문장 단위 내레이션 다시 만들기와 발음 사전: `regenerate` `part=sentence`(장면 내레이션 문장 분할 규칙, 같은 목소리 규칙 VD-F-106, 문장 범위만 교체 후 이어 붙임), 발음 사전 API(`/api/pronunciation-lexicon` CRUD·일괄 붙여넣기 200개)와 TTS 직전 텍스트 치환 모듈(조직 사전만, `scenes.narration` 원문 불변) | `workers/video-orchestrator/src/storyboard/sentence/**`, `workers/video-orchestrator/src/storyboard/lexicon/**`, `src/app/api/pronunciation-lexicon/**`, `src/server/storyboards/lexicon/**`. `scene.narration` 단계에서 치환 모듈을 부르는 1줄은 053 파일(`steps/tts`)에, `part: 'sentence'` 입력 1줄은 074 파일(`api/scenes/[id]/regenerate`)에 요청 | 053, 072, 074, 085 | P0 | L | Opus(기능·연동) | 문장 다시 만들기 1크레딧, 실패 시 그 문장분 환불 1행, 다시 만든 문장 앞뒤 이음매 무음 100ms 이하(측정값 기록, 제안 기준), 제공자·보이스가 기록값과 다르면 422 `VD013`·대체 호출 0, 문장 번호 범위 밖 22023, 사전 치환 후에도 `scenes.narration` 변화 0, 다른 조직 사전 항목 적용 0, 중복 표기 409 23505, 2,001번째 422 54000 | VD-F-150, 01장 11.7절 |
+| VID-06-099 | AI 편집 패널·편집안 검토 시트·편집 기록: AiEditPanel(지시 1,000자, 마이크 받아쓰기 → 텍스트 확인 → `mode=voice`, [자동 다듬기], 편집안 목록), EditPlanReviewSheet(명령 체크박스, 장면별 묶음, BeforeAfterDiff, 예상 크레딧 합계, [적용] [거절]), EditHistorySheet(맨 위 적용 편집안만 [되돌리기]). 기존 082의 음성 지시 UI를 흡수(VoiceCommandSheet 대신 VoiceButton, 03장 9.9절) | `src/components/storyboard/ai-edit/**`. 편집기 오른쪽 칸·상단 버튼 장착 1줄은 079 파일에 요청 | 044, 052, 079, 090, 091, 104 | P0 | L | Sonnet(UI) | 03장 9.1~9.5절 구성, 승인 전 미리보기만(장면 변경 0), 비용 있는 명령에 크레딧 배지와 합계, `VD409` → "다시 제안받기", `VD023` 안내, 402 충전 모달, 명령 0개 "지시를 이해하지 못했습니다", viewer 버튼 0, 음성 고지 미확인 시 마이크 비활성·텍스트 입력 정상, 키보드만으로 명령 선택·적용, `aria-live` 결과 알림, 금지 문구 "AI가 완벽 편집" 0 | VD-F-140, 146, 147, 151, 03장 9장 |
+| VID-06-100 | 렌더 설정 패널·변형본 대화상자·초점·세이프존: RenderSettingsPanel(AspectPicker, 해상도·fps, 플랜 밖 값 잠금 표시, CreditMultiplierPreview), AspectVariantDialog(마스터와 다른 화면비만, 크롭 0 / 다시 만들기 장면당 3, 남은 변형본 수), FocusPointPicker, SafeZoneOverlay(YouTube 쇼츠·릴스·틱톡) | `src/components/storyboard/{render-settings,variants,focus}/**`. 새로 만들기 1단계 장착은 078 파일에, 렌더 화면 장착은 081 파일에 1줄 요청 | 044, 078, 079, 081, 088, 092 | P0 | M | Sonnet(UI) | 03장 9.1절 렌더 설정·변형본·초점 행 구성, 형식이 허용하지 않는 화면비 선택지 0, 잠긴 값에 플랜 이름 글자 표시(색만으로 구분하지 않음), 배수 미리보기 값이 서버 응답(`render_multiplier`)과 같다, 초점 키보드 이동(방향키 0.05 단위, 제안), 세이프존 값이 `safe_zones.json`과 같다, 세이프존 밖 화면 문구 경고(차단 아님) | VD-F-143~145 |
+| VID-06-101 | 무음·군더더기 말 컷 검토 시트: SilenceCutReview(강도·최소 무음·앞뒤 여유 설정, 분석 진행, 구간 목록(사유, 시작~끝, [듣기], 개별 해제), 잘라낼 합계) → 검토 시트(099)로 넘김 | `src/components/storyboard/silence-review/**` | 097, 099 | P0 | M | Sonnet(UI) | 03장 9.1절 무음 컷 행, 구간마다 듣기·해제, 해제한 구간은 편집안 명령에서 빠짐, 진행률 없는 무한 스피너 0, clip 장면이 아니면 진입 버튼 0, 분석 실패 시 원인 한 줄 + 환불 표시 | VD-F-148 |
+| VID-06-102 | 자막 스타일·강조어 편집기: CaptionStyleEditor(3종, 한자 병기 토글), EmphasisChips(장면당 10개, 내레이션 안 단어만) | `src/components/storyboard/captions/**`. 장면 상세 칸 장착 1줄은 079 파일에 요청 | 044, 079, 088, 094 | P0 | M | Sonnet(UI) | 03장 9.1절 자막 행, 내레이션에 없는 단어 칩 추가 불가(서버 23514도 처리), 11번째 칩 비활성, 스타일 미리보기가 `caption_styles.json` 수치와 같다, 한자 병기 켜기 전 "운영자 용어집 항목만" 안내 | VD-F-149 |
+| VID-06-103 | 발음 사전 설정 화면: PronunciationTable(언어, 표기 → 읽기, 메모, 검색, 추가·수정·삭제, "n / 2,000") | `src/app/(dashboard)/dashboard/settings/pronunciation/**`(034 소유 `settings/` 중 이 하위만, 설정 메뉴 링크 1줄은 034 파일에 요청) | 034, 044, 098 | P0 | S | Sonnet(UI) | 03장 9.1절 발음 사전 행, viewer 읽기 전용, 중복 표기 안내(23505), 한도 안내(54000), 일괄 붙여넣기 200개 이하 | VD-F-150 |
+| VID-06-104 | AI 편집 문구 키와 오류 문구(03장 9.5절), 명령 표시 문장(03장 9.4절), `VD022`·`VD023` 문구 키 | `src/i18n/ai-edit/**`(036 소유 `src/i18n/` 중 이 하위만) | 036, 077 | P0 | S | Haiku(문구) | 03장 9.4·9.5절 문구와 글자 하나까지 같음(스크립트 비교), 01장 11.4절 op 17종 표시 문장 전부, 금지 문구 0(01장 11.7절: "바이럴 보장", "조회수 예측", "편집 시간 N% 절감", "AI가 완벽 편집"), 하드코딩 한국어 문자열 0(린트, 제안) | 03장 9.4·9.5절 |
+| VID-06-105 | AI 자동편집 통합 테스트(가짜 제공자, 로컬 Python 워커): 지시 → 편집안 → 일부 승인 → 적용 → regenerate 차감·잡 → 되돌리기, 자동 다듬기, 클립 분석 → 무음 컷 편집안 → 적용 → 렌더, 9:16 변형본, 2160p 렌더(업스케일 포함), 문장 다시 만들기 + 발음 사전 | `tests/integration/ai-edit/**` | 090~095, 097, 098 | P0 | M | Opus(테스트 설계) | 끝까지 통과, 원장 drift 0, 승인 전 장면 변경 0, 편집안 생성 후 장면을 바꾸면 적용 `VD409`, regenerate 1개 실패 주입 시 그 명령분만 환불, 업스케일 실패 주입 시 렌더 잡 0, 변형본 출력 `width/height/fps`가 설정과 같다, 원본 클립 해시 불변 | VD-F-143~151 |
+| VID-06-106 | AI 자동편집 사용자 플로우 E2E(03장 9.2절, 현우 흐름) | `tests/e2e/ai-edit/**` | 099~104 | P0 | M | Opus(테스트 설계) | Mock 페르소나 storageState: `adv_owner`(지시 → 검토 → 일부 적용 → 되돌리기 → 9:16 변형본 → 렌더), Basic 조직 페르소나(2160p 잠금 표시·변형본 1개, 05장 10절 페르소나에 없어 004 시드 훅에 추가 요청), `owner`(Starter, AI 편집 잠금 안내), `viewer`(읽기 전용), `outsider`(404). 두 탭에서 편집 후 오래된 편집안 적용 `VD409`, 키보드만으로 명령 선택·적용, 뷰포트 4종(375/768/1024/1440) 스크린샷, 063 완료 뒤 재실행 | 03장 9장, VD-F-143~151 |
+| VID-06-107 | 쇼츠 적합도 점수(P1): `video.shorts_pick` 결과에 컷마다 0~100과 근거 태그, ShortsScoreTags | `apps/api/app/ai/graphs/video_shorts_pick.py`(071 완료 뒤 이어 받음), `src/components/storyboard/shorts-score/**`(081 쇼츠 탭 장착 1줄 요청) | 071, 081 | P1 | S | Opus(그래프) | 점수마다 근거 태그 1개 이상, 화면 이름 "쇼츠 적합도(참고용)", 금지 문구 "바이럴 보장"·"조회수 예측" 0, 크레딧 추가 0(선정 2에 포함) | VD-F-152 |
+| VID-06-108 | 리테이크 감지와 테이크 선택(P1): `POST /api/scenes/[id]/retakes`, 잡 `clip.retake`(`video.step` kind `retake_group` 1줄 요청), RetakePicker → `source=retake` 편집안 | `src/app/api/scenes/[id]/retakes/**`, `workers/video-orchestrator/src/storyboard/clip/retake/**`, `services/media-worker/handlers/storyboard/retake_detect/**`, `src/components/storyboard/retake/**` | 097, 099 | P1 | M | Opus(기능·연동) | 전사 없으면 409 22023, 기본 선택 마지막 테이크(제안), 고른 테이크 외 구간만 편집안에, 클립 10분당 1크레딧, LLM에 오디오 0(전사 단어·시각만) | VD-F-153 |
+| VID-06-109 | 자동 챕터·제목·설명(P1): `POST /api/storyboards/[id]/meta`, 잡 `storyboard.meta`(`video.step` kind `chapters_meta`), YouTube 챕터 조건 미달이면 `chapters: null`, 설명란 순서(대가성 문구 첫 줄 → 설명 → 챕터 → 참고 자료) | `src/app/api/storyboards/[id]/meta/**`, `src/server/storyboards/meta/**`, `workers/video-orchestrator/src/storyboard/meta/**`. 업로드 설명란 조립 1줄은 021 파일에 요청(문구 삽입은 021만, 1절) | 021, 075, 076 | P1 | M | Opus(기능) | 타임스탬프 = 스냅샷 장면 시작 시각, 첫 타임스탬프 0:00·3개 이상·각 10초 이상, `has_affiliate=true` 첫 줄은 대가성 문구 그대로, 금지 문구 0, 1크레딧 | VD-F-154 |
+| VID-06-110 | 편집 프리셋(P1): `/api/edit-presets` CRUD, EditPresetForm, 설정 화면, 새 스토리보드·자동 다듬기의 기본 프리셋 적용(089·092에 1줄 요청) | `src/app/api/edit-presets/**`, `src/server/edit-presets/**`, `src/app/(dashboard)/dashboard/settings/edit-presets/**`(034 소유 `settings/` 중 이 하위만), `src/components/storyboard/presets/**` | 089, 092, 103 | P1 | M | Sonnet(UI) | 03장 9.1절 프리셋 행, 개수 초과 403 `VD009`, 모르는 키 422 23514, 다른 고객 프리셋 `VD002`, 저장 0크레딧, 고객 A 프리셋이 고객 B 스토리보드 선택지에 0 | VD-F-155, 08장 규칙 |
+| VID-06-111 | 자동 B-roll 제안(P1): `mode=broll`(빈도 낮음·보통·많음), 명령은 `add_scene` + `set_text`만, 사실 주장 카드 `source_required=true`, AI 이미지는 승인 후 regenerate | `apps/api/app/ai/graphs/video_edit_plan.py`의 broll 노드(089 완료 뒤 이어 받음), `src/components/storyboard/broll/**`(099 패널 장착 1줄 요청) | 089, 090, 099 | P1 | M | Opus(그래프) | 편집안 명령 종류가 두 가지뿐, 장면 수 한도(`VD018`)·길이 합계를 넘는 명령 제외 + 안내, 제안 2크레딧 + 승인한 AI 이미지 장면 3 | VD-F-156 |
+| VID-06-112 | 자동 썸네일 3안(P1): `POST /api/storyboards/[id]/thumbnails`, 잡 `storyboard.thumbnail`(문구 `video.step` kind `thumbnail_copy` + FFmpeg 합성), ThumbnailOptions(업로드 화면 썸네일 칸) | `src/app/api/storyboards/[id]/thumbnails/**`, `workers/video-orchestrator/src/storyboard/thumbnail/**`, `services/media-worker/handlers/storyboard/thumbnail/**`, `src/components/storyboard/thumbnail/**`(032 업로드 화면 장착 1줄 요청) | 032, 075 | P1 | M | Opus(기능) | 3안 1280x720, 문구 30자 이하, 금지 문구가 든 안 0(재생성 1회 후 422), AI 이미지 썸네일은 AI 생성 표시 규칙(01장 10.5절), 2크레딧(+ AI 이미지 3) | VD-F-157 |
+| VID-06-113 | NLE 내보내기(P1): `POST /api/storyboards/[id]/nle-export`, 잡 `storyboard.nle_export`(FCPXML, Premiere XML, SRT, 소재 zip), 서명 URL 24시간 | `src/app/api/storyboards/[id]/nle-export/**`, `services/media-worker/handlers/storyboard/nle_export/**` | 075, 085, 087 | P1 | M | Opus(기능) | XML의 장면 순서·길이·전환이 렌더 스냅샷과 같다(스크립트 비교), DaVinci·Final Cut·Premiere 가져오기 수동 점검표 기록(자동화 불가 항목), `nle_export=false` 403 `VD009`, 0크레딧 | VD-F-158 |
+| VID-06-114 | 연도·인물 표기 일관성 점검(P1): 076 출처 점검 잡에 같은 인물·사건 연도·이름 표기 불일치 WARN 추가 | `workers/video-orchestrator/src/storyboard/source-check/**`(076 완료 뒤 이어 받음), `packages/video-rules/edit/eval/consistency/**`(평가 샘플) | 076 | P1 | S | Opus(기능) | 불일치 샘플에서 WARN 1건 이상, FAIL로 올리지 않음(D-33), 추가 크레딧 0(출처 점검 1 안), "사실 확인 완료" 같은 보증 문구 0 | VD-F-159 |
+
+### 10.2 웨이브와 게이트
+
+AI 자동편집 작업은 3절 웨이브, 9.2절 S 웨이브와 나란히 가는 E 웨이브로 묶는다. 주력 기능(SF-5)이라 P0 작업(085~106)은 모두 W7(G1, 공개 베타) 전에 끝낸다. W7은 9.2절 S8과 이 절 E7 완료를 함께 기다린다.
+
+| 웨이브 | 작업 ID | 병렬 수 | 진입 조건 | 같은 시기 | 산출물 |
+|---|---|---|---|---|---|
+| E1 | 085 | 1 | 066 완료 | W2(S2) | AI 편집·화면비 스키마, 타입 |
+| E2 | 086, 087, 088, 104 | 4 | 085(+ 086은 068, 087은 069, 104는 077) | W3(S3) | RLS 테스트, 단가·배수·게이팅, 규칙 파일·평가 문장, 문구 키 |
+| E3 | 093 → 094 | 1 → 1 | 073 완료(093이 이어 받음), 085 / 094는 088·093 | W4~W5 | 렌더 프로필, 오디오·자막 |
+| E4 | 089, 096, 097 | 3 | 089는 049(W5)·071·088, 096은 093·094, 097은 012·088·090(편집안 저장 경로만, 090 전에는 서버 함수 스텁) | W5~W6 | 편집 그래프, 렌더 원가 벤치(01장 D-41의 "W5 렌더 벤치"), 클립 분석 |
+| E5 | 090 → 091, 092, 095, 098 | 1 → 4 | 090은 074·087(그래프 평가 전에는 픽스처), 091은 072(S6), 092는 075(S7 전반), 095는 092, 098은 053·072 | W6 뒤 새 웨이브(S6~S7) | 편집안 생성·적용·되돌리기 API, 렌더 설정·변형본 API, 업스케일, 문장 다시 만들기·발음 사전 |
+| E6 | 099, 100, 102, 103 → 101 | 4 → 1 | 화면은 044·079(S5), 100은 081(S7), 101은 097·099 | S7과 같은 시기 | AI 편집 패널·검토 시트·기록, 렌더 설정·변형본·초점, 자막 편집, 발음 사전 화면, 무음 컷 검토 |
+| E7 | 105, 106 | 2 | E6, S7 | S8과 같은 시기, W7 직전 | 통합 테스트, E2E |
+| W8 | 107~114 | 8(선행 따라 순서) | G1 뒤, 각 행 선행 | W8 | P1 8개 |
+
+| 게이트 | 조건 | 판정 |
+|---|---|---|
+| E-스키마 | 085 수용 기준과 086 녹색 전에는 편집안 API(090·091)와 렌더 설정 API(092)를 머지하지 않는다 | CI(039, 086) |
+| E-EDL 계약 | 명령 허용 목록 정본은 01장 11.4절 하나다. `edl.schema.json`(089) ↔ zod(090) ↔ pydantic(089) ↔ DB `video.valid_edit_commands`(`1200_video.sql:3254`)가 같은 op·키·범위를 받는지 계약 테스트(op 17종 × 허용·거부 샘플) 통과 전에는 090·091 머지 금지 | 089·090 단위 테스트 |
+| E-그래프 평가 | 089 평가 결과(일치율, 허용 밖 0, 금지 문구 0)를 기록하기 전에는 090이 실제 제공자 경로를 켜지 않는다. 그 전 099는 090의 고정 JSON 픽스처로 개발한다 | `pytest apps/api -k edit` |
+| E-렌더 계약 | 093·094의 스냅샷 입력과 092·075가 만드는 스냅샷이 04장 10.3절 키(`render`, `style`, `focus`, `transition`, `clip`, `caption_emphasis`, `crop_from`)와 같다는 계약 테스트 통과 전에는 092 머지 금지 | 092 단위 테스트 |
+| 결정 게이트 | D-41: 096 측정 결과로 사람이 판정한다. 판정 전 087은 01장 11.5절 제안 배수를 상수로 두고, 판매 페이지(035)에 1440p·2160p·60fps 단가를 확정값으로 쓰지 않는다. D-39: (a)면 095 실행, (b)면 095 실행 안 함. D-42: 088 기본 보수. D-40: 090은 버튼 방식(b)만 구현(첫 1회 무료는 가격 결정 뒤 087에 1줄). D-38: 10.6절. D-43: 9:16 롱폼 업로드는 결정 전 (a) 제안값으로 021에 1줄 요청. D-44: Phase 2 | 사람이 task `log.md`에 `[DECISION]` |
+| G1(8.2절에 더함) | video 기준 (1)에 10장 P0 작업 22개 완료, (2)에 106 녹색, 파이프라인 기준에 105 녹색을 더한다 | 사람(대표님) `[DECISION] G1 통과` |
+
+P0 작업과 테스트 작업 대응(3절, 9.2절 규칙에 더함): 스키마·단가(085, 087) → 086 / 그래프·API·워커(088~095, 097, 098) → 105 / 화면(099~103), 문구(104) → 106 / 벤치(096)는 테스트가 아니라 D-41 판정 자료 / AI 경계(그래프 토큰 scope `graph:video.edit_plan`, 클립 오디오 국외 전송 0, 음성 지시 원본 미저장)는 055에 항목 1줄 요청.
+
+### 10.3 코어·공용 요청 (6절, 8.3절, 9.3절 표에 이어서)
+
+| ID | 대상 | 요청 | 이유 | 그때까지의 우회 | 시점 |
+|---|---|---|---|---|---|
+| R-V16 | `_supabase-modular/seed.sql` | video 플랜 4행 `features`에 `render_max_resolution`, `render_max_fps`, `render_4k60`, `aspect_variants_max`, `ai_edit`, `nle_export`, `edit_presets_max` 추가(값은 01장 11.6절, 제안). 모놀리스 seed에는 반영됨(05장 12.8절) | R-V1·R-V12와 같다: seed가 1200보다 나중에 실행되면 085의 병합 UPDATE가 덮어써진다 | 서버(087)가 누락 키를 기본값(Starter 값)으로 읽는다 | MVP |
+| R-V17 | ai_providers | (a) 업스케일 경로(D-39)를 외부 API로 정하면 그 제공자를 레지스트리에 편입(국외 이전 필터, R-V3과 같은 방식) (b) D-38 (b) 채택 시 고품질 이미지 제공자(GPT Image 2 등) 편입 | 국외 이전 동의 필터를 코어 라우팅 밖 제공자에도 걸어야 한다 | (a) 오픈소스 업스케일 모델(라이선스 확인 뒤) (b) 고품질 선택지를 노출하지 않는다 | D-38·D-39 판정 뒤 |
+| R-V18 | `_platform-core`, 공용 패키지 | R-V13 공용 스토리보드 모듈에 편집 명령 목록(EDL) 스키마·승인 흐름·되돌리기 패턴 포함 검토. book-trailer·toon-factory와 함께 | 세 제품이 장면 편집 명령을 따로 정의하면 갈린다 | MVP는 `packages/video-rules/edit/edl.schema.json`(제품 이름 하드코딩 없이) | Phase 2 |
+
+### 10.4 기존 작업에서 범위가 바뀐 것
+
+같은 줄 수정으로 "(10장 ...)"를 단 줄은 1절 12·14·15·16·19행, 3절 115·120행, 4절 표(126~129행)와 131행, 7절 232행, 8.2절 253행, 9.1절 082 행(327행), 9.2절 W8 행(345행), 9.6절 음성 지시 경로 행(416행), 머리말 5행이다. 줄 수는 그대로다.
+
+| 작업 ID | 이전 범위 | 바뀐 범위 | 대체·이동 |
+|---|---|---|---|
+| VID-06-082 | 음성 지시 편집(P1, W8): 받아쓰기 → `video.step` kind `scene_command` 패치 → `save_scene` 적용, 별도 `POST .../command` 경로 | 실행하지 않는다(흡수). 음성 입력은 AI 편집 지시의 입력 방식 하나가 되어 MVP P0로 올라간다(01장 VD-F-140 "MVP로 올림", 04장 10.1절 `/command` 대체). 적용은 `save_scene`이 아니라 `apply_edit_plan` | 090(`mode=voice` 서버 경로), 099(마이크 버튼 UI) |
+| VID-06-073 | FFmpeg 스토리보드 렌더: 16:9·9:16, 전환 없음(10.3절 "Phase 2"), 고정 -12dB 덕킹 | 화면비 4종·해상도·fps, 초점 크롭, xfade 전환, `clip` 컷 구간, sidechain 덕킹·loudnorm, 자막 스타일·강조·한자 병기. 073 완료 뒤 같은 폴더를 093·094가 이어 받는다 | 093, 094 |
+| VID-06-074 | 스토리보드 API(화면비는 형식이 정함, 장면 다시 만들기 image·narration) | 새로 만들기 입력에 `aspect`·`resolution`·`fps` 등(092가 1줄 요청), `regenerate` `part=sentence`(098이 1줄 요청), `api/scenes/[id]/analyze-clip`·`retakes` 하위는 097·108 소유 | 092, 097, 098, 108 |
+| VID-06-075 | 렌더·쇼츠 API(단가 = 길이 렌더 단가) | 렌더 단가 × 해상도·fps 배수, 업스케일 선행 단계, `estimate` 분해, 쇼츠 `image_mode`(092가 1줄 요청). 변형본은 새 경로 `variants`(092) | 092 |
+| VID-06-069 | Track S 단가 | 렌더 단가에 배수를 곱하는 1줄(087이 요청). AI 편집 단가는 `billing/ai-edit.ts`(087) | 087 |
+| VID-06-053 | 장면 내레이션 TTS | TTS 직전 발음 사전 치환 1줄(098이 요청) | 098 |
+| VID-06-071, 076 | `video.shorts_pick`, 출처 점검 | P1에서 쇼츠 적합도 점수(107), 일관성 점검(114)이 완료 뒤 이어 받는다 | 107, 114 |
+| VID-06-034 | 설정 화면 `settings/` 단독 | `pronunciation/`(103), `edit-presets/`(110) 하위만 예외 | 103, 110 |
+| VID-06-001, 002, 005, 049 | 스키마, RLS 테스트, 단가표, `graphs/`·`video-rules/` | 13절은 085, 테스트는 086(`tests/ai-edit/`), 단가는 087(`billing/ai-edit.ts`), 그래프 파일 `video_edit_plan.py`는 089, `video-rules/edit/`는 088·089 | 085~089 |
+
+### 10.5 작업 수와 모델 비율
+
+| 구분 | 작업 수 | 내용 |
+|---|---|---|
+| 전체 ID | 114개 | 2절 62 + 8절 3 + 9장 19 + 10장 30. 모델 작업 113, 사람 1(043) |
+| MVP 계획 | 108개(모델 107, 사람 1) | P0 88(9.5절 66 + 10장 22), P1 20(9.5절 13 − 흡수 082 + 10장 8). P1 중 W8 작업(057~062, 064, 065, 107~114)은 MVP 출시 뒤 웨이브 |
+| Phase 2로 옮김 | 3개 | 019, 020, 031(변화 없음) |
+| 대체·흡수되어 실행하지 않음 | 3개 | 018, 030(9장 작업이 대체), 082(10장 090·099로 흡수) |
+
+10장 30개 내역: Fable 3(085 M, 086 M, 087 M), Opus 19(089·090·093·097·098 L, 091·092·094·095·105·106 M, 096 S / P1 108·109·111·112·113 M, 107·114 S), Sonnet 7(099 L, 100·101·102 M, 088·103 S / P1 110 M), Haiku 1(104 S). 빠진 것: Opus 1(082, M).
+
+모델 비율(MVP 계획의 모델 작업 107개 기준, 4절 표를 같은 줄 수정으로 갱신함):
+
+| 모델 | 이전(78개, 9.5절) | 지금(107개) | 규모 가중(S=1, M=2, L=3) 이전 → 지금 |
+|---|---|---|---|
+| Fable | 16(20.5%) | 19(17.8%) | 33/159(20.8%) → 39/217(18.0%) |
+| Opus | 39(50.0%) | 57(53.3%) | 85/159(53.5%) → 123/217(56.7%) |
+| Sonnet | 19(24.4%) | 26(24.3%) | 37/159(23.3%) → 50/217(23.0%) |
+| Haiku | 4(5.1%) | 5(4.7%) | 4/159(2.5%) → 5/217(2.3%) |
+
+변화 요인: 그래프·워커·API·테스트가 많아 Opus 몫이 늘었다(규모 가중 56.7%). Fable 비율은 줄었지만 과금(087)·스키마(085)·RLS(086) 경계는 그대로 Fable이 맡는다. 작업 수 114개는 `DOC_TEMPLATE.md`의 15~40개 권장을 크게 넘는다. 9장까지와 같은 이유(트랙·AI 계층이 모두 MVP)에 주력 기능 SF-5가 더해졌고, 화면·워커·그래프의 소유 경로가 달라 합치면 동시 쓰기가 생겨 나눴다. 저장소 전체 작업 합계는 981 + 30 = 1,011개다(루트 README 반영은 별도).
+
+### 10.6 확인 필요(열린 항목)
+
+| 항목 | 내용 |
+|---|---|
+| 라우팅 기능 키 | `video.edit_plan`(llm) 행이 1200 11절 라우팅 seed(`1200_video.sql:1882-1898`)와 02장 5.1절에 없다. 9장 그래프(`video.storyboard`, `video.shorts_pick`)도 같은 상태다(미확인: 049 체인을 그대로 쓰는지). 제안: 085가 `video.edit_plan` 행을 더하고 055 라우팅 스냅샷(17행)을 갱신한다. 기본 체인은 가격 문서 12장 SF-P-7(저가 모델 우선, 제안)을 따른다 |
+| D-38 고품질 이미지 경로 | 이 장에 작업이 없다. (b)로 정하면 072 이미지 단계·087 단가·099 비용 배지에 걸친 새 작업이 필요하다(제안: 그때 VID-06-115부터, Phase 2 또는 P1). 가격은 가격 문서 12장 SF-P-9 |
+| 업스케일 모델 | 오픈소스 자체 운영과 fal 업스케일 API 중 무엇을 쓸지, 상업 이용 라이선스와 1장 원가가 미확인이다(095, 02장 11.4절) |
+| 2160p 코덱 | H.264 High 5.1과 HEVC 중 플랫폼 업로드 호환 확인은 096 벤치에서 한다(02장 11.5절 8단계 미확인) |
+| Basic 페르소나 | 05장 10절 시드 페르소나에 Basic 조직이 없다. 106의 Basic 잠금 시나리오용 페르소나(제안 `basic_owner`)를 004 시드 훅에 1줄 요청한다 |
+| 편집 지시 평가 기준 | 089 일치율의 통과 기준은 정하지 않았다. 01장 11.8절 KPI(해석 실패율 5% 이하, 제안)를 첫 기준으로 쓰고 첫 측정 뒤 사람이 정한다 |
