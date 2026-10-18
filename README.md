@@ -11,7 +11,7 @@
 | 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
 | 기획 제품 | 16개(모두 01~07 완료) | `products/<제품>/` |
-| 개발 묶음 | 16개, 작업 합계 981개 | `develop/<제품>/` |
+| 개발 묶음 | 16개, 작업 합계 1,011개 | `develop/<제품>/` |
 | 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
 | 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
 | 가격 플랜 | 제품 15개 + 서비스 사업 1개(arch-studio는 아직 없음, 요금은 01_PRD 4장) | `Price_Plans/` |
@@ -116,7 +116,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | flora-publishing (FLORA Publishing) | 1인 작가가 AI와 기획·집필·판형 조정을 거쳐 인쇄 PDF·ePub 완성 | `publishing`(1000) | 2 | 65 | [기획](products/flora-publishing/) · [개발](develop/flora-publishing/) · [가격](Price_Plans/flora-publishing/PRICE_PLAN.md) |
 | astro-ai (신비로운AI) | 사주 원국 + 타로 3장 AI 해설을 A4 책자형 PDF 리포트로 | `astro`(1100) | 2 | 57 | [기획](products/astro-ai/) · [개발](develop/astro-ai/) · [가격](Price_Plans/astro-ai/PRICE_PLAN.md) |
 | nomad-docs (NOMAD Docs) | 체크리스트 한 번으로 견적서·요구사항정의서·계약서 등 실무 문서 묶음 생성, CRM형 작업 공간 | `docs`(2300) | 2 이후 | 65 | [기획](products/nomad-docs/) · [개발](develop/nomad-docs/) · [가격](Price_Plans/nomad-docs/PRICE_PLAN.md) |
-| sceneflow (SceneFlow) | 스토리보드 하나로 롱폼·장면 단위 쇼츠·언어판을 만들고 다채널 배포, 드라마·커머스 숏폼 재편집, 쇼츠 대행(음원·플리는 Phase 2) | `video`(1200) | 3 | 84 | [기획](products/sceneflow/) · [개발](develop/sceneflow/) · [가격](Price_Plans/sceneflow/PRICE_PLAN.md) |
+| sceneflow (SceneFlow) | AI 자동편집(주력)으로 스토리보드 하나에서 롱폼·장면 단위 쇼츠·언어판을 만들고 다채널 배포, 드라마·커머스 숏폼 재편집, 쇼츠 대행(음원·플리는 Phase 2) | `video`(1200) | 3 | 114 | [기획](products/sceneflow/) · [개발](develop/sceneflow/) · [가격](Price_Plans/sceneflow/PRICE_PLAN.md) |
 | nomad-blog (NOMAD Blog) | 키워드 하나로 블로그 원고 + 제휴 카드 + 대가성 문구, 예약 발행 | `blog`(1300) | 3 | 59 | [기획](products/nomad-blog/) · [개발](develop/nomad-blog/) · [가격](Price_Plans/nomad-blog/PRICE_PLAN.md) |
 | nomad-commerce (NOMAD Commerce) | 셀러용 상품 소싱·AI 상세페이지·마켓 업로드 | `commerce`(1400) | 3 | 60 | [기획](products/nomad-commerce/) · [개발](develop/nomad-commerce/) · [가격](Price_Plans/nomad-commerce/PRICE_PLAN.md) |
 | microweb-studio (Microweb Studio) | 모바일 청첩장 등 마이크로웹 템플릿 엔진 + 대행 제작 쇼룸 | `microweb`(1500) | 4 | 56 | [기획](products/microweb-studio/) · [개발](develop/microweb-studio/) · [가격](Price_Plans/microweb-studio/PRICE_PLAN.md) |
@@ -281,7 +281,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 |---|---|
 | 기획 | 16개 제품 완료(01~07, CLAUDE.md, SQL. book-trailer는 08_DESIGN_SYSTEM 추가, arch-studio는 2026-10-16 완료). 인증 단계(확정 결정 22) 반영. 검증 기록: `products/_supabase-modular/VERIFICATION.md`, `products/_STRUCTURE_CHECK.md` |
 | 통합 DB | 코어 `0000~0009` + 제품 조각 17개(`1000~2300`, `2400_arch`, `2500_news`, `2600_trailer`). PGlite 기준 적용 검증 완료, 실제 Supabase 재검증은 남음 |
-| 개발 묶음 | 16개 제품(작업 981개, 2026-10-18 sceneflow 스토리보드 트랙 19개 추가, book-trailer 2026-10-15·arch-studio 2026-10-16 추가, 2026-10-17 설득형 랜딩 15개 추가: flora-publishing·nomad-docs·arch-studio 각 5개), 공용모듈 V2 개발서 16개 |
+| 개발 묶음 | 16개 제품(작업 1,011개, 2026-10-18 sceneflow AI 자동편집 30개·스토리보드 트랙 19개 추가, book-trailer 2026-10-15·arch-studio 2026-10-16 추가, 2026-10-17 설득형 랜딩 15개 추가: flora-publishing·nomad-docs·arch-studio 각 5개), 공용모듈 V2 개발서 16개 |
 | 공용모듈 | 7개 기획·개발 지시서 완료(상태: 제안). 패키지 저장소 `nomad-modules`는 아직 없음 |
 | 가격 | 제품 15개 + Web-App-Agency 초안(정본은 각 PRD 4장) |
 | 화이트라벨 | `Multi-tenant_Theming/` 설계 완료, 코어 확장 SQL `0011`은 제안(PGlite 적용·RLS 스모크 91/91 통과). 코어 반영은 승인 후 |
@@ -330,3 +330,16 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | DB | `1200_video.sql` 12절·모놀리스 `0002` 끝 절: storyboards, scenes, scene_assets, storyboard_cuts, storyboard_snapshots, storyboard_templates. PGlite 적용·행동 검사 통과 |
 | 가격·검증 | `Price_Plans/sceneflow/PRICE_PLAN.md` 11장(이익률 검증: 기본 단가로는 70% 미달 → D-31·D-36·D-37 함께 결정), 검증 키트 `01_VALIDATION_PLAN.md`~`04_INTAKE_AND_INTERVIEW.md` |
 | 랜딩 | `templates/persuasion-landing/data/sceneflow.json` "SceneFlow 스토리보드 여정"(6단계 24페이지) |
+
+### 8.5 2026-10-18 SceneFlow AI 자동편집·화면비·해상도 (검토용)
+
+| 항목 | 내용 |
+|---|---|
+| 핵심 | **SceneFlow의 주력 기능은 AI 자동편집(확정 SF-5).** 한국어 텍스트·음성 지시 → AI 편집안(허용 명령 17종 EDL) → 장면별 전·후 비교와 예상 크레딧 → 일부·전체 승인 → 한 트랜잭션 실행 → 되돌리기 |
+| 벤치마킹 | Descript(Underlord), CapCut, Opus Clip, Vrew, VEED, FireCut, Submagic, Wisecut, Kapwing, invideo AI, Premiere, DaVinci 등. 출처는 01장 11.10절 |
+| 확정 결정(사용자) | SF-5 주력 기능 AI 자동편집, SF-6 AI는 편집 명령 목록만 만든다, SF-7 승인 전 변경 0·실행 전 비용 표시, SF-8 화면비와 형식 분리(16:9·9:16·1:1·4:5, 720p~4K, 24/30/60fps) |
+| 기획서 | `products/sceneflow/` 01장 11장(VD-F-143~159, D-38~D-44), 02장 11장(편집 엔진·렌더 변경), 03장 9장(AI 편집 화면), 04장 10장(API·오류 VD022·VD023), 05장 12장(데이터), 06장 10장(작업 30개 VID-06-085~114), CLAUDE.md·README 끝 절 |
+| DB | `1200_video.sql` 13절·모놀리스 `0002` 끝 절: edit_plans, edit_presets, pronunciation_lexicon, clip_transcripts, RPC apply/undo/reject_edit_plan. PGlite 적용, 행동 검사 기존 56 + 신규 62 통과(모듈러·모놀리스) |
+| 가격 | `Price_Plans/sceneflow/PRICE_PLAN.md` 12장: 편집 LLM을 저가 모델로 두지 않으면 70% 미달, 2160p 배수 2배로는 렌더 원가를 덮지 못함 → SF-P-7~10 제안(D-38·D-39·D-41) |
+| 대시보드 시안 | Design 캔버스 "SceneFlow AI 자동편집 대시보드"(A안 문서 토큰, B안 랜딩 엔진 테마, 둘 다 실제 동작) |
+

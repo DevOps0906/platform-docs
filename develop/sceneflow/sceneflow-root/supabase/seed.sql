@@ -146,3 +146,21 @@ update public.plans
 update public.plans
    set features = features || '{"storyboard": true, "storyboard_max_minutes": 60, "shorts_extract_max": 10}'::jsonb
  where app_id = 'video' and code = 'advanced';
+
+-- 13.16 데이터: 플랜 키(01장 11.6절, 제안 값). [모놀리스] 1200_video.sql 13.16절을 옮겼다.
+update public.plans
+   set features = features || '{"render_max_resolution": "720p", "render_max_fps": 30, "render_4k60": false, "aspect_variants_max": 0,
+                                "ai_edit": false, "nle_export": false, "edit_presets_max": 0}'::jsonb
+ where app_id = 'video' and code = 'starter';
+update public.plans
+   set features = features || '{"render_max_resolution": "1080p", "render_max_fps": 30, "render_4k60": false, "aspect_variants_max": 1,
+                                "ai_edit": true, "nle_export": false, "edit_presets_max": 3}'::jsonb
+ where app_id = 'video' and code = 'basic';
+update public.plans
+   set features = features || '{"render_max_resolution": "2160p", "render_max_fps": 60, "render_4k60": false, "aspect_variants_max": 3,
+                                "ai_edit": true, "nle_export": true, "edit_presets_max": 20}'::jsonb
+ where app_id = 'video' and code = 'pro';
+update public.plans
+   set features = features || '{"render_max_resolution": "2160p", "render_max_fps": 60, "render_4k60": true, "aspect_variants_max": 3,
+                                "ai_edit": true, "nle_export": true, "edit_presets_max": 20}'::jsonb
+ where app_id = 'video' and code = 'advanced';

@@ -584,3 +584,121 @@ MVP에는 Remotion·Chrome·Node 렌더러를 넣지 않는다(SF-2). Phase 2에
 | 언어판 | 언어마다 내레이션·자막만 바꿔 같은 장면 영상에 얹는다 | 트레일러 1개 = 언어 1개 |
 | 라이선스 | 새 의존성 없음(기존 media-worker 이미지) | Remotion Company License 조건(D-2) |
 | 성능 예산 | 롱폼 10분 1언어 p95 30분(제안, 10.7절) | 60초 1080p p95 6분(`docs/products/book-trailer/01_PRD.md:249`) |
+
+## 11. AI 자동편집 엔진과 화면비·해상도 렌더 (2026-10-18 추가, 01장 11장)
+
+정본은 01장 11장(SF-5~SF-8, VD-F-143~159, 명령 허용 목록 11.4절, 단가 11.5절)이고 테이블·RPC는 05장 12장, `1200_video.sql` 13절(`docs/products/_supabase-modular/migrations/1200_video.sql:3038-4195`)이다. 기존 장의 줄은 바꾸지 않았다. 10장 렌더 파이프라인 위에서 달라지는 점만 적는다.
+
+### 11.1 모듈 경계 (10.1절 표에 더함)
+
+| 모듈 | 디렉토리(제안) | 책임 | 계약 |
+|---|---|---|---|
+| server domain(편집) | `apps/sceneflow/src/server/storyboards/edit/**` | 편집안 생성 요청(선차감 → 그래프), EDL 서버 검사(11.3절), `edit_plans` INSERT(service_role, `base_fingerprint`), 적용 뒤 `regenerate` 명령 선차감·enqueue, 되돌리기·거절 중계 | 04장 10장, RPC `apply_edit_plan`·`undo_edit_plan`·`reject_edit_plan` |
+| ai-service(편집 그래프) | `apps/api/app/ai/graphs/video_edit_plan.py`, `apps/api/app/ai/products/video/edl_schema.py` | 그래프 `video.edit_plan`: 지시 + 스토리보드 요약 → 명령 배열 JSON + 사람이 읽는 요약. 자동 다듬기(`mode=auto_polish`)는 규칙 단계 + LLM 1회 | 잡 토큰 scope `graph:video.edit_plan`. 텍스트만 다룬다 |
+| media-worker(분석) | `services/media-worker/handlers/storyboard/{silence_detect,retake_detect,upscale}` | 클립 STT(Whisper 단어 시각, `video.stt` = `oss-voice`) + `silencedetect` → 잘라낼 구간 후보, 리테이크 묶음 후보(P1), 1440p 이상 렌더용 이미지 업스케일(D-39) | `video.media.gpu`(STT·업스케일), `video.media.cpu`(silencedetect). 결과는 서버 RPC 없이 잡 result로 돌려주고, 전사는 오케스트레이터가 `clip_transcripts`에 service_role로 쓴다 |
+| rules | `packages/video-rules/edit/{fillers.ko.json,safe_zones.json,caption_styles.json,hanja_glossary.json}` | 한국어 군더더기 말 사전(강도별), 플랫폼 세이프존 비율, 자막 스타일 3종 수치, 한자 병기 용어집(운영자 검수 항목만) | TS 편집기·Python 워커·FastAPI가 같은 파일을 읽는다(10.1절 `storyboard-layout.json`과 같은 방식) |
+| web-app(AI 편집 패널) | `src/components/storyboard/ai-edit/**` | 지시 입력(텍스트·마이크), 편집안 검토 시트, 편집 기록·되돌리기 | 03장 9장 |
+
+경계 규칙(10.1절에 더함):
+
+| 경계 | 규칙 |
+|---|---|
+| LLM과 파일 | LLM은 명령 JSON만 만든다(SF-6). 영상·이미지 바이너리를 받지 않고, FFmpeg 인자·셸 문자열을 만들지 않는다. 워커는 스냅샷 JSON만 읽고 LLM 출력을 직접 받지 않는다 |
+| 적용 경로 | 장면 변경은 `apply_edit_plan` 하나로만 한다(사용자 세션 RPC, 한 트랜잭션). 서버가 명령을 하나씩 `save_scene`으로 쪼개 부르지 않는다(부분 적용·되돌리기 불일치 방지) |
+| 비용 있는 명령 | `regenerate`는 RPC가 실행하지 않고 돌려준다. Route Handler가 01장 11.5절 단가로 선차감 → `scene.image`·`scene.narration` 잡. 승인 화면 합계와 실제 차감이 다르면 차감하지 않고 409(제안) |
+| 클립 오디오 | 업로드 클립 STT는 미디어 워커 Whisper만(국외 전송 없음, 01장 6장). 전사 단어는 FastAPI에 보낼 때 장면 id·단어·시각만 보내고 오디오는 보내지 않는다 |
+
+### 11.2 편집안 흐름
+
+```
+브라우저(AI 편집 패널) ─ POST /api/storyboards/[id]/edit-plans {text|mode, request_id}
+  → src/server/storyboards/edit: 게이팅(ai_edit) → consume(1 또는 자동 다듬기 단가)
+  → storyboard_fingerprint(service) → 스토리보드 요약 JSON(장면 id·순서·길이·문구 앞 80자·종류·챕터·쇼츠 후보·렌더 설정)
+  → FastAPI POST /graphs/video.edit_plan/runs (Next.js 서명 토큰, 동기 p95 15초, 넘으면 잡 edit.plan으로 전환)
+  → 서버 EDL 검사(11.3절) → edit_plans INSERT(status proposed, base_fingerprint, estimate_credits) → 응답
+브라우저(검토 시트) ─ 명령 고르기 → POST /api/edit-plans/[id]/apply {command_ids[], request_id}
+  → 사용자 세션 rpc('video.apply_edit_plan') → {applied, pending_regenerate}
+  → pending_regenerate 가 있으면 consume → enqueue scene.image / scene.narration(문장 범위)
+브라우저 ─ POST /api/edit-plans/[id]/undo → rpc('video.undo_edit_plan')
+```
+
+자동 다듬기(VD-F-147)는 같은 경로에 `mode=auto_polish`를 준다. 무음·군더더기 말 컷(VD-F-148)은 먼저 분석 잡(`clip.analyze`)이 구간 후보를 만들고, 서버가 그 결과로 `remove_ranges` 명령만 담은 편집안을 직접 만든다(LLM 없음, `source=silence_cut`).
+
+### 11.3 EDL 서버 검사 (그래프 출력 → `edit_plans`)
+
+DB CHECK(`video.valid_edit_commands`, 허용 `op`·키·명령 수 100)는 마지막 방어선이고, 서버가 먼저 아래를 검사한다. 하나라도 걸리면 편집안을 저장하지 않고 `VD023`(그래프 1회 재작성 후에도 실패하면 환불).
+
+| 검사 | 규칙 |
+|---|---|
+| 스키마 | 01장 11.4절 표의 인자 타입·범위(zod, `packages/video-rules/edit/edl.schema.json` 하나를 TS·Python이 같이 쓴다) |
+| 대상 | `scene_id`가 요청 시점 스토리보드 장면인지. 같은 장면에 같은 `op`가 두 번이면 뒤의 것만 남기고 요약에 표시 |
+| 형식 | 쇼츠 형식에서 `propose_short`·`set_shorts_candidate` 금지, `set_clip_trim`·`remove_ranges`는 `clip` 장면만 |
+| 플랜 | `set_render` 값이 플랜 상한 안(`render_max_resolution`, `render_max_fps`, `render_4k60`), 변형본 수, 쇼츠 컷 한도 |
+| 길이 | 적용 후 예상 길이 합계를 계산해 ±10% 밖이면 요약에 경고(차단 아님, 렌더 때 `VD017`) |
+| 문구 | `set_text`·`add_scene`의 문구 값은 compliance(01장 6장, 10.5절, 11.7절) 통과. 출처 없는 연도·수치를 새로 넣는 문구는 `source_required=true` 표시 |
+| 비용 | `regenerate` 명령마다 01장 11.5절 단가로 `estimate_credits` 합계 |
+
+결정성: 그래프는 온도 0, 출력 스키마 고정, 스토리보드 요약을 정렬된 키로 직렬화한다(같은 입력 = 같은 출력 목표, 제공자 비결정성은 미확인이라 보장 문구를 쓰지 않는다). 입력 해시(`instruction` + `base_fingerprint`)가 같은 `proposed` 편집안이 10분 안에 있으면 새로 만들지 않고 그 편집안을 돌려준다(제안, 크레딧 0).
+
+### 11.4 잡과 큐 (10.2절 표와 같은 열)
+
+| `job_type` | 큐 | 런타임 | 크레딧 선차감 | 재시도 | 환불 조건 |
+|---|---|---|---|---|---|
+| `edit.plan`(동기 응답이 15초를 넘을 때만) | `video.ai` | TS → FastAPI `video.edit_plan` | 지시 1, 자동 다듬기 쇼츠 1 / 롱폼 10분당 2 | 1 | 최종 실패·명령 0개·`VD023` 시 전액 |
+| `clip.analyze` | `video.orchestrate`(루트) → `video.media.gpu`(STT) + `video.media.cpu`(silencedetect) | Python | 클립 1분당 STT 3 + 무음 컷 2(올림) | 2 | 최종 실패 시 전액. 전사가 이미 있으면(`clip_transcripts`) STT분 0 |
+| `clip.retake`(P1) | `video.ai` | TS → FastAPI `video.step` kind `retake_group` | 클립 10분당 1 | 1 | 실패 시 전액 |
+| `scene.narration`(문장 범위) | `video.ai` | 10.2절 그대로 + `sentence_index` | 1 | 3(같은 제공자·보이스) | 그 문장분 |
+| `scene.upscale` | `video.media.gpu` | Python(업스케일 모델, 상업 이용 라이선스 확인 전에는 fal 업스케일 API, D-39·미확인) | 1장 1 | 2 | 그 장면분. 실패 장면은 원본 해상도로 렌더하지 않고 렌더 요청을 막는다(조용한 품질 저하 금지) |
+| `storyboard.render`(variant 컷) | `video.orchestrate` | 10.2절과 같다. 스냅샷 cut kind `variant` | 그 길이의 렌더 단가 × 해상도·fps 배수 | 0(자식) | 10.8절 |
+| `storyboard.meta`(P1, 챕터·제목·설명) | `video.ai` | FastAPI `video.step` kind `chapters_meta` | 1 | 1 | 전액 |
+| `storyboard.thumbnail`(P1) | `video.ai` → `video.media.cpu` | 문구 LLM + FFmpeg 합성 | 3안 2 | 1 | 전액 |
+| `storyboard.nle_export`(P1) | `video.media.cpu` | Python(FCPXML, Premiere XML, SRT, zip) | 0 | 2 | - |
+
+### 11.5 렌더 파이프라인 변경 (10.3절 단계에 더함)
+
+| 단계 | 변경 |
+|---|---|
+| 0 요청 검사 | 플랜 상한(`render_max_resolution`, `render_max_fps`, `render_4k60`, VD009). 1440p 이상이면 AI 이미지 장면마다 업스케일 소재 존재 확인, 없으면 `scene.upscale`을 먼저 돌린다(크레딧 합계를 렌더 전에 표시, 03장 9장) |
+| 3 장면별 클립 | 출력 크기는 스냅샷 `render.width × render.height`, fps는 `render.fps`(`video.render_dimensions`, 짧은 변 기준). `crop_from`이 있으면 원본 이미지를 컷 화면비로 크롭: 크롭 창 중심 = (`focus.x`, `focus.y`), 창이 이미지 밖으로 나가면 안쪽으로 밀어 넣는다. 그다음 모션 프리셋. `clip` 장면은 `clip.in_ms ~ out_ms`를 자른 뒤 `cut_ranges`를 뺀 구간들을 잇는다(구간 경계에 오디오 10ms 페이드, 제안). 비파괴: 원본 파일은 그대로 |
+| 4 연결 | 전환 효과를 쓴다(10.3절 "Phase 2" 대체). 장면 `transition`이 `cut`이 아니면 앞 장면과 `xfade=transition=<name>:duration=<ms>`로 겹친다. 겹친 시간만큼 전체 길이가 줄지 않도록 앞 장면 끝을 `transition_ms`만큼 늘린 클립을 쓴다(제안: 장면 길이 합계 = 출력 길이 유지). 내레이션은 장면 시작 시각 기준 그대로 |
+| 5~6 자막 | 스타일은 스냅샷 `style.caption_style`(`packages/video-rules/edit/caption_styles.json`). `word_pop`은 단어 시각으로 말하는 단어만 강조색. `caption_emphasis` 단어는 굵게 + 강조색(3종 공통). `caption_hanja=true`면 용어집에 있는 용어 뒤에 작은 글씨 괄호 한자. 자막 위치는 컷 화면비의 세이프존(11.6절) 안 |
+| 7 BGM·음량 | 덕킹을 고정 -12dB 대신 `sidechaincompress`(내레이션을 사이드체인)로 하고 기본 음량은 `style.bgm_level_db`. `loudnorm=true`면 2패스 `loudnorm` -14 LUFS(제안, 10.3절 8단계 목표값과 같음) |
+| 8 인코딩 | fps는 스냅샷 값. 2160p는 H.264 High 5.1 또는 HEVC 중 플랫폼 업로드 호환을 확인한 쪽(미확인, VID-06 렌더 벤치 작업에서 결정). 출력 `outputs.width/height/fps` 기록 |
+| 9 컷별 출력 | variant 컷은 `outputs.kind`를 형식으로 정한다(롱폼 = `longform`, 쇼츠 = `short`). `aspect`는 컷 화면비 |
+
+### 11.6 세이프존 (제안, `safe_zones.json` 정본)
+
+플랫폼 UI가 덮는 영역의 비율이다. 플랫폼별 공식 수치는 확인하지 못했다(미확인). 편집기 겹쳐 보기와 자막 기본 위치에만 쓰고 업로드를 막지 않는다.
+
+| 화면비 | 위 | 아래 | 오른쪽 | 왼쪽 | 근거 |
+|---|---|---|---|---|---|
+| 9:16(쇼츠·릴스·틱톡 공통 보수값) | 12% | 22% | 14% | 5% | 제안(미확인). 세 플랫폼 중 가장 넓은 값을 쓴다 |
+| 4:5 | 6% | 12% | 6% | 6% | 제안 |
+| 1:1 | 5% | 10% | 5% | 5% | 제안 |
+| 16:9 | 5% | 10% | 5% | 5% | 제안(플레이어 컨트롤) |
+
+### 11.7 성능 예산 (제안, 10.7절에 더함)
+
+| 항목 | 예산 | 비고 |
+|---|---|---|
+| 편집안 생성(지시 1회) | p95 15초(넘으면 잡 전환) | 롱폼 240장면 요약 기준 |
+| 자동 다듬기 | p95 30초 | |
+| 편집안 적용 RPC | p95 500ms(명령 100개, 240장면) | 한 트랜잭션 |
+| 되돌리기 RPC | p95 1초 | |
+| 클립 분석(10분 클립) | p95 5분 | STT GPU 1 |
+| 렌더 해상도 배수 | 1080p30 = 1. 1440p, 2160p, 60fps의 처리 시간 배수는 렌더 벤치로 측정(01장 D-41) | 4K60은 1080p30 대비 픽셀·프레임 약 8배(산술) |
+| 장면 클립 1개(10초) | 1080p p95 30초 / 2160p p95 120초(제안) | 타임아웃 2160p 900초 |
+
+### 11.8 실패와 환불 (10.8절에 더함)
+
+| 실패 위치 | 처리 | 환불 |
+|---|---|---|
+| 편집안 생성 | 그래프 실패, 명령 0개, `VD023`(재작성 1회 후) | 전액 |
+| 편집안 적용 | 한 트랜잭션이라 부분 적용 없음. `VD409`면 화면이 "다시 제안받기"를 띄운다 | 편집안 생성 크레딧은 환불하지 않는다(결과가 전달됐으므로, 제안) |
+| `regenerate` 잡 | 10.8절 `scene.image`·`scene.narration` 규칙 | 그 장면분 |
+| 업스케일 실패 | 렌더 요청 전 단계에서 멈추고 실패 장면 표시 | 그 장면분 1 |
+| 변형본 렌더 | 10.8절 렌더 언어판 규칙 | 그 언어분 |
+
+### 11.9 Phase 2 경계
+
+피사체 추적 리프레임, 업로드 클립 장면 감지, 립싱크 더빙, 비트 싱크, 멀티캠(01장 11.3절)은 MVP 코드에 자리(인터페이스·플래그)를 만들지 않는다. 초점은 장면당 한 점(`focus_x/y`)만 둔다. 추적이 들어오면 장면별 초점 시계열을 새 컬럼으로 더한다(그때 05장 개정).

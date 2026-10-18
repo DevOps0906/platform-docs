@@ -443,7 +443,7 @@ Apple 로그인과 매직링크는 이 로드맵 범위 밖이다(`AUTH_ROADMAP.
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| VD-F-130 | 스토리보드 프로젝트 만들기 | 신규 | 순서: 형식(`shorts`/`longform`) → 길이 프리셋(10.3절) → 템플릿(10.3절 5종) → 주제 → 언어(KO/JA/EN, 플랜 `languages` 안). 화면비는 형식이 정한다(쇼츠 9:16, 롱폼 16:9). 롱폼 길이는 `storyboard_max_minutes` 이하. 대행 조직은 `client_id`를 붙일 수 있고 VD-F-122 규칙을 따른다. 주제 점수 게이트(VD-F-013)를 그대로 쓴다 | 점수 59 요청 시 409 `VD010` + `alternatives` 3개. `storyboard=false` 조직 403 `VD009`. Basic 조직의 20분 롱폼 요청 403 `VD009`. 성공 시 `video.storyboards` 1행(status `draft`, version 1) | VD-F-013(`docs/file/02-요구사항/01_PRD.md:85`), TR-F-031(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:83`) |
+| VD-F-130 | 스토리보드 프로젝트 만들기 | 신규 | 순서: 형식(`shorts`/`longform`) → 길이 프리셋(10.3절) → 템플릿(10.3절 5종) → 주제 → 언어(KO/JA/EN, 플랜 `languages` 안). 화면비 기본값은 형식이 정한다(쇼츠 9:16, 롱폼 16:9). 화면비·해상도·fps 선택은 11장 VD-F-143. 롱폼 길이는 `storyboard_max_minutes` 이하. 대행 조직은 `client_id`를 붙일 수 있고 VD-F-122 규칙을 따른다. 주제 점수 게이트(VD-F-013)를 그대로 쓴다 | 점수 59 요청 시 409 `VD010` + `alternatives` 3개. `storyboard=false` 조직 403 `VD009`. Basic 조직의 20분 롱폼 요청 403 `VD009`. 성공 시 `video.storyboards` 1행(status `draft`, version 1) | VD-F-013(`docs/file/02-요구사항/01_PRD.md:85`), TR-F-031(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:83`) |
 | VD-F-131 | 스토리보드 생성 | 신규(VD-F-032 Mode1, VD-F-040 대체) | 대본은 그래프 `video.script`(VD-F-103)를 재사용한다. 사용자가 대본을 확인하면 그래프 `video.storyboard`가 대본 + 템플릿 비트 + 목표 길이로 장면 목록 JSON을 만든다. 장면마다 종류(`scene_kind`), 길이, 화면 문구(160자 이하), 내레이션(600자 이하), 시각 설명(600자 이하), 모션 프리셋, 음악 큐, 챕터(롱폼), 쇼츠 후보 표시, 사실 주장 여부(`source_required`). 마지막 노드는 compliance(6장 금지 문구 + 10.5절). 결과 저장은 서버 RPC `video.apply_storyboard_result`만 한다. 잡 `storyboard.generate`. 전체 다시 생성은 장면을 교체하고 version을 1 올린다 | 장면 길이 합계 = 목표 길이 ±10%. 그래프가 범위를 벗어나면 1회 재작성, 그래도 벗어나면 run `failed` + 환불(`VD017`). 장면 수: 쇼츠 3~12, 롱폼 분당 3~8, 최대 240(초과 `VD018`). 실행 1건 = `core.ai_runs` 1행 + 노드별 `ai_run_steps`. 출처 없는 수치 0(VD-F-103 규칙). 다시 생성 후 version +1 | TR-F-031(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:83`), TN-F-052 콘티 그래프(`D:/WorkSpace/platform/docs/products/toon-factory/01_PRD.md:136`), VD-F-032(`docs/file/02-요구사항/01_PRD.md:90`), VD-F-040(`:94`), VD-F-103(`:116`) |
 | VD-F-132 | 장면 편집 | 신규 | 문구·내레이션·길이·시각 설명·모션·음악 큐·챕터 수정, 장면 추가·삭제·순서 변경, 쇼츠 후보 표시. 사용자 RPC `video.save_scene(p_scene_id, p_revision, p_patch)`, `video.reorder_scenes`, `video.add_scene`, `video.delete_scene`, `video.set_shorts_candidate`. 장면 저장은 장면 `revision`, 순서 변경·추가·삭제는 스토리보드 `revision`으로 낙관적 동시성을 지킨다. 편집 중에는 길이 합계가 잠시 범위를 벗어나도 저장하고 상단 게이지로 경고한다(제안). 범위 검사는 렌더 요청 때 서버가 한다. 편집 저장은 0크레딧 | 두 탭에서 같은 장면을 고치면 늦은 쪽이 `VD409`를 받고 최신본을 다시 불러온다. status `rendering`일 때 편집 `VD020`. 241번째 장면 추가 `VD018`. 다른 조직 장면 저장 0행(RLS) | TR-F-032(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:84`), toon 컷 저장(`D:/WorkSpace/platform/docs/products/_supabase-modular/migrations/2000_toon.sql:476-497`), VD-F-040 섹션 편집(`docs/file/02-요구사항/01_PRD.md:94`) |
 | VD-F-133 | 장면 단위 다시 만들기 | 디벨롭(TR-F-033 이식) | 장면 하나의 이미지 또는 내레이션(언어 하나)만 다시 만든다(`{part: image\|narration, lang?}`, 잡 `scene.image`, `scene.narration`). 이전 소재는 `superseded`로 남긴다. 내레이션은 같은 목소리 규칙(VD-F-106)을 따른다: 그 스토리보드에 처음 기록된 제공자·보이스를 쓴다. 이전 소재로 되돌리기 1단계는 P1 | 비용은 그 장면 단가만(이미지 3, 내레이션 1, 10.4절). 다시 만든 뒤 같은 장면·종류·언어의 `ready` 소재는 1행, 나머지는 `superseded`. 보이스가 다르면 422 `VD013`. 실패하면 그 장면분 환불 1행 | TR-F-033(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:85`), VD-F-106(`docs/file/02-요구사항/01_PRD.md:119`) |
@@ -453,7 +453,7 @@ Apple 로그인과 매직링크는 이 로드맵 범위 밖이다(`AUTH_ROADMAP.
 | VD-F-137 | 쇼츠 추출 | 신규(VD-F-041 대체) | 마스터 컷 ready 뒤, 그래프 `video.shorts_pick`이 쇼츠 후보 장면에서 연속 장면 묶음과 훅 문구를 제안한다(잡 `storyboard.shorts`). 사용자가 고른 묶음을 9:16 컷(`storyboard_cuts.kind=short`)으로 렌더한다. 최대 10편, 플랜 `shorts_extract_max` 이하. 16:9 이미지 장면의 세로 구도는 다시 만들기(이미지 단가) 또는 크롭 중 고른다(기본값은 D-32). `text_card`·`title` 장면은 9:16으로 다시 그린다(0크레딧, 제안). 컷 길이는 60초 이하(제안: 기존 VD-F-041 규칙 유지) | 11번째 컷 `VD021`. 플랜 한도 초과 403 `VD009`(제안). 컷의 `scene_ids`가 연속이 아니면 22023. 컷마다 `outputs` 1행 | VD-F-041(`docs/file/02-요구사항/01_PRD.md:95`), TR-F-050 멀티포맷(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:102`) |
 | VD-F-138 | 출처 칸과 사실 확인 경고 | 신규 | 장면마다 출처 칸(최대 5개: 제목, URL, 메모). 그래프가 사실 주장 장면에 `source_required=true`를 표시한다. 출처 점검(잡 `storyboard.source_check`)이 출처 없는 사실 주장 장면을 WARN으로 표시한다. WARN은 업로드 compliance에서 사용자 확인 후 진행한다(VD-F-072 WARN 규칙과 같음). FAIL 승격 여부는 D-33. 업로드 설명란에 "참고 자료" 목록을 자동으로 넣는다(대가성 문구 첫 줄 규칙 다음). 그래프는 출처 URL을 지어내지 않는다: 근거 id(RAG·검색 결과)가 있는 출처만 제안한다 | 편집기 상단에 출처 경고 수가 보인다. 출처 없는 사실 주장 장면이 있는 업로드는 compliance verdict WARN. 설명란에 장면 출처 목록이 있다. `has_affiliate=true`면 첫 줄은 여전히 대가성 문구(DB CHECK) | VD-F-072(`docs/file/02-요구사항/01_PRD.md:105`), VD-F-103 근거 id 규칙(`:116`) |
 | VD-F-139 | 스토리보드 버전과 렌더 스냅샷 | 신규 | 렌더 요청마다 서버 RPC `video.snapshot_storyboard`가 장면 내용과 소재 참조를 `video.storyboard_snapshots`에 1행 저장한다. 스냅샷은 읽기 전용이며 버전별로 열람한다 | 렌더마다 스냅샷 1행. 스냅샷 UPDATE·DELETE 42501. 이전 버전을 열면 그때의 장면 목록이 보인다 | TR-F-050 렌더 시점 스냅샷(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:102`) |
-| VD-F-140 | 음성 지시 편집 | 신규, P1 | 편집기 마이크 버튼. 받아쓰기(공용 음성 규칙: 60초, 원본 미저장, 첫 사용 고지) → 텍스트 확인 → 서버가 편집 패치로 바꾼다("3번 장면 더 짧게") → 사용자가 변경 내용을 보고 적용한다(`save_scene`과 같은 경로). 확인 없이 적용하지 않는다 | 사용자 확인 전 장면 변경 0. `voice_jobs.store_audio=false` 100%. 크레딧: STT는 4.1절 단가, 패치 변환 1(제안) | VD-F-104(`docs/file/02-요구사항/01_PRD.md:117`), VD-F-107(`:120`) |
+| VD-F-140 | 음성 지시 편집(11장 VD-F-146 AI 편집 지시의 음성 입력으로 흡수, MVP로 올림) | 신규, P1 → MVP(11장) | 편집기 마이크 버튼. 받아쓰기(공용 음성 규칙: 60초, 원본 미저장, 첫 사용 고지) → 텍스트 확인 → 서버가 편집 패치로 바꾼다("3번 장면 더 짧게") → 사용자가 변경 내용을 보고 적용한다(`save_scene`과 같은 경로). 확인 없이 적용하지 않는다 | 사용자 확인 전 장면 변경 0. `voice_jobs.store_audio=false` 100%. 크레딧: STT는 4.1절 단가, 패치 변환 1(제안) | VD-F-104(`docs/file/02-요구사항/01_PRD.md:117`), VD-F-107(`:120`) |
 | VD-F-141 | 스토리보드 템플릿 5종 | 신규 | `video.storyboard_templates`에 운영자 seed 5종(10.3절). 템플릿은 비트(이야기 단계와 비중)와 기본 장면 길이를 가진다. 쇼츠·롱폼 모두에 쓴다. 사용자 템플릿 만들기는 MVP에 없다 | 비트 비중 합계 100(seed 검사). `status`가 비활성인 템플릿은 선택지에 없다. 사용자 세션의 템플릿 쓰기 42501 | TR-F-030 문법 카탈로그(`D:/WorkSpace/platform/docs/products/book-trailer/01_PRD.md:82`) |
 | VD-F-142 | 기존 Track D 데이터 이전 경로 | 신규(개발 착수 전 정리 작업) | `longform_projects`/`longform_sections`/`longform_highlights` → `storyboards`/`scenes`/`storyboard_cuts` 대응표와 이전 스크립트를 만든다. 섹션 1개 → `image` 장면 1개(섹션 이미지·내레이션을 소재로), 하이라이트 1개 → `short` 컷 1개. 기존 테이블은 지우지 않고 "Track S로 대체" 주석을 단다. 삭제 시점은 D-34 | 대응표가 05장 새 장에 있다. 새 Track D 생성 경로 0(API는 Track S로 안내). 이전 스크립트 dry-run에서 섹션 수 = 장면 수 | VD-F-040(`docs/file/02-요구사항/01_PRD.md:94`), VD-F-041(`:95`) |
 
@@ -561,3 +561,168 @@ Track S는 `video.productions`를 쓰지 않고 `video.storyboards`를 쓴다(05
 | D-35 | Track S 배경음악(BGM) 출처 | (a) 운영자가 상업 이용 라이선스를 확인한 BGM 묶음을 제공(장면 `music_cue`는 묶음 안 곡 이름) (b) 조직이 올린 라이선스 곡만 (c) MVP는 음악 없음, Phase 2에 (a) | (a)(제안). 기존 `music_library`는 Track F용이라 SF-3에 따라 Phase 2로 갔으므로, Track S용 BGM은 라이선스 근거 칸이 있는 별도 묶음으로 둔다. 확정 전까지 렌더는 음악 없이도 완료되어야 한다(06장 9.6절) |
 | D-36 | 롱폼 내레이션 TTS 과금 방식 | (a) 정액(롱폼 10분 언어당 ElevenLabs 5 / 오픈소스 2, 4.1절) 유지 (b) 글자 수 과금(4.1절 "대본 읽어 주기" 단가와 같은 천 자 단위, 10분 약 3,300자면 ElevenLabs 약 20) | (b)(제안). 정액이면 롱폼 TTS 원가가 크레딧 가치를 넘는다(`D:/WorkSpace/platform/docs/Price_Plans/sceneflow/PRICE_PLAN.md` 11.3절, SF-P-1) |
 | D-37 | Basic 쇼츠 추출 한도(`shorts_extract_max`) | (a) 3 (b) 5 | (b)(제안). 첫 고객 현우의 주 1세트(롱폼 + 쇼츠 5편) 목표를 Basic에서 막는 것은 크레딧이 아니라 이 한도다(같은 문서 11.4절, SF-P-3) |
+
+## 11. AI 자동편집과 화면비·해상도 (2026-10-18 추가, 경쟁사 벤치마킹)
+
+10장 Track S 위에 얹는 장이다. 기존 장의 줄 수는 바꾸지 않았고, 10장 VD-F-130·140 두 줄만 같은 줄 안에서 이 장을 가리키도록 고쳤다. **SceneFlow의 주력 기능은 AI 자동편집이다(확정 SF-5).** 스토리보드는 AI가 편집할 수 있는 구조(장면·챕터·쇼츠 구간·출처)를 처음부터 갖고 있다는 점이 경쟁사와 다른 출발점이다.
+
+### 11.1 확정 결정
+
+| # | 결정 | 내용 |
+|---|---|---|
+| SF-5 | 주력 기능 = AI 자동편집 | 랜딩·온보딩·편집기 첫 화면의 중심은 "말로 지시하면 AI가 편집안을 만들고, 확인하면 실행"이다. 스토리보드 생성은 그 재료를 만드는 단계로 설명한다 |
+| SF-6 | AI는 편집 명령 목록(EDL)만 만든다 | LLM은 영상·이미지 파일을 직접 고치지 않는다. 11.4절 허용 명령만 담은 JSON을 만들고, 서버가 스키마·권한·한도를 검사한 뒤 사용자 승인으로 실행한다. 허용 목록 밖 명령은 실행하지 않는다(`VD023`) |
+| SF-7 | 승인 전 변경 0, 실행 전 비용 표시 | 모든 AI 편집(지시, 자동 다듬기, 무음 컷, 리테이크, B-roll)은 같은 "편집안 → 변경 미리보기 + 예상 크레딧 → 승인(일부 선택 가능) → 실행 → 되돌리기" 흐름을 쓴다 |
+| SF-8 | 화면비는 형식과 분리 | 화면비 4종(16:9, 9:16, 1:1, 4:5)을 고른다. 형식은 길이·장면 수 규칙만 정한다. 해상도 720p/1080p/1440p/2160p(4K), fps 24/30/60은 플랜 상한 안에서 고른다 |
+
+벤치마킹 요약(2026-10-18 조사, 2차 출처 포함, 수치는 공식 페이지 재확인 필요): Descript Underlord(자연어 편집, 필러·리테이크 제거), Vrew(무음 구간 제거, 자막 기반 편집, 한국어), Opus Clip(하이라이트 점수, 추적 리프레임), FireCut(리테이크 목록에서 골라 승인), Submagic(키워드 강조 자막, Magic Zoom, B-roll 빈도), Wisecut(자동 덕킹), invideo AI(모든 AI 변경 승인 후 반영·되돌리기), Premiere·DaVinci(Auto/Smart Reframe, 음성 보정). 경쟁사가 약한 곳: 실행 전 비용 예측(Descript 도움말은 같은 프롬프트도 실행마다 크레딧이 다르다고 안내), 한국어 자연어 편집(VEED Magic Cut 영어만, Vrew 자연어 명령 미확인), 사실 검증 표시, 점수 근거 공개. 출처는 11.10절.
+
+### 11.2 기능 요구사항과 수용 기준
+
+| ID | 기능 | 단계 | 요구사항 | 수용 기준 | 벤치마크 |
+|---|---|---|---|---|---|
+| VD-F-143 | 화면비·해상도·fps 설정 | MVP | 새로 만들기 첫 단계(형식 다음)에서 화면비를 고른다. 쇼츠: 9:16(기본), 1:1, 4:5. 롱폼: 16:9(기본), 9:16(세로 롱폼), 1:1. 해상도 720p/1080p(기본)/1440p/2160p, fps 24/30(기본)/60. 롱폼은 쇼츠 추출 화면비(`shorts_aspect`, 9:16 기본)도 고른다. 렌더 전에는 설정 패널에서 바꿀 수 있다. 플랜 상한(11.6절 키) 밖 값은 잠금 표시. 픽셀 크기는 짧은 변 기준(1080p 세로 = 1080x1920, 4:5 = 1080x1350) | 롱폼 4:5 요청 23514. Basic 조직 2160p 요청 `VD009`. 렌더 중 설정 변경 `VD020`. 렌더된 스토리보드의 설정을 바꾸면 status `ready`(다시 렌더 필요 표시). 출력물 `outputs.width/height/fps`가 설정과 같다 | Opus·Submagic·CapCut 화면비 4종, Kapwing·Descript Free 720p / 유료 4K |
+| VD-F-144 | 화면비 변형본(리포맷) | MVP | 마스터 컷이 ready면 같은 장면 전체를 다른 화면비로 다시 렌더한 변형본을 만든다(컷 kind `variant`, 화면비마다 1개, 최대 3개, 플랜 `aspect_variants_max`). 장면 이미지는 컷 화면비 이미지가 있으면 쓰고, 없으면 크롭(장면 초점 기준, 0크레딧) 또는 다시 만들기(이미지 단가) 중 고른다(D-32 기본 크롭). `text_card`·`title`은 새 화면비로 다시 그린다(0크레딧) | 변형본 화면비 = 마스터 화면비면 22023. 4번째 변형본 `VD022`. 변형본마다 `outputs` 언어당 1행. 크롭 장면은 스냅샷 `crop_from`에 원본 화면비가 남는다 | Opus·CapCut Auto Reframe, Premiere 시퀀스 복제. 차별: 크롭 대신 장면 이미지를 새 화면비로 다시 생성 |
+| VD-F-145 | 크롭 초점과 세이프존 | MVP | 장면마다 크롭 초점(`focus_x`, `focus_y`, 0~1)을 이미지 위 점으로 정한다. 기본은 가운데. 편집기 미리보기에 플랫폼 UI 세이프존 겹쳐 보기(YouTube 쇼츠·릴스·틱톡, 제안 값은 02장 11장). 자막·화면 문구 기본 위치는 화면비마다 세이프존 안 | 초점 저장은 `save_scene`(0크레딧). 세이프존 밖에 놓인 화면 문구는 편집기 경고(차단 아님). 범위 밖 초점 23514 | Opus 추적 리프레임(실사), Premiere Auto Reframe. 피사체 자동 추적은 Phase 2(11.3절) |
+| VD-F-146 | AI 편집 지시(자연어 → 편집안) | MVP | 편집기 오른쪽 "AI 편집" 패널에 텍스트(또는 VD-F-140 음성 받아쓰기)로 지시한다. 예: "3번 장면 2초 줄이고 5·6번 순서 바꿔", "챕터 바뀔 때마다 페이드 넣어", "임진왜란 연도 나오는 장면 글자 크게", "쇼츠는 반전 장면부터 45초로". 서버가 현재 스토리보드 요약 + 지시를 FastAPI 그래프 `video.edit_plan`에 보내고, 그래프는 11.4절 허용 명령 배열(최대 100개)과 사람이 읽는 변경 요약을 돌려준다. 같은 입력이면 같은 편집안이 나오도록 온도 0, 출력 스키마 고정(제안). 편집안은 `video.edit_plans`에 `proposed`로 저장되고 화면은 명령마다 전·후 비교, 예상 크레딧(다시 만들기 명령만 비용 발생), 영향 장면을 보여준다. 사용자가 명령을 골라 승인하면 사용자 RPC `video.apply_edit_plan`이 비용 없는 명령을 한 트랜잭션으로 적용하고, 비용 있는 명령(`regenerate`)은 Route Handler가 선차감 후 잡으로 실행한다 | 승인 전 장면 변경 0. 허용 밖 명령·스키마 오류 `VD023`(그 편집안 전체를 실행하지 않음). 편집안 생성 후 스토리보드가 바뀌었으면(revision 불일치) 적용 시 `VD409` + "다시 제안받기". 일부 명령만 고르면 고른 것만 적용. 편집안 1건 = `core.ai_runs` 1행. 해석 실패 시 명령 0 + "지시를 이해하지 못했습니다" + 환불 | Descript Underlord, invideo AI(승인 후 반영), Captions AI Edit. 차별: 실행 전 비용 확정, 한국어 지시 |
+| VD-F-147 | 원클릭 AI 자동 다듬기 | MVP | 버튼 하나로 편집안을 만든다(실행은 VD-F-146과 같은 승인). 규칙 + LLM: (1) 내레이션 길이에 맞춘 장면 길이 조정(내레이션 끝 + 300ms, 제안) (2) 정지 이미지 장면에 모션 프리셋 자동 배정(같은 모션 3연속 금지, 제안) (3) 챕터 경계에 전환(`fade` 500ms, 제안) (4) 인명·연도·지명 자막 강조어 지정 (5) BGM 덕킹·음량 정규화 켜기 (6) 쇼츠 후보 표시. 조직 편집 프리셋(VD-F-155)이 있으면 그 값을 쓴다 | 다듬기 편집안은 `source=auto_polish`. 적용 후 길이 합계가 ±10% 안(밖이면 길이 조정 명령을 빼고 경고). 같은 스토리보드·같은 revision이면 같은 편집안. 결과가 명령 0개면 "다듬을 곳이 없습니다" + 크레딧 정산 0 | Submagic Magic Zoom·전환, Wisecut 자동 덕킹, Descript 편집 선호 기억 |
+| VD-F-148 | 무음·군더더기 말 자동 컷 | MVP | 대상: `clip` 장면(사용자 업로드 영상·녹음) 소재. 미디어 워커가 Whisper 단어 타임스탬프(`video.stt` = `oss-voice`, 원본 국외 전송 없음)와 FFmpeg `silencedetect`로 무음 구간과 한국어 군더더기 말(기본 사전: "음", "어", "그", "저", "뭐지", "이제" 등 운영자 seed, 조직이 추가)을 찾는다. 설정: 최소 무음 길이(기본 500ms), 앞뒤 여유(기본 120ms), 강도(보수·보통·강하게). 결과는 잘라낼 구간 목록 편집안(`remove_ranges`)이며 구간마다 소리 듣기 후 개별 해제할 수 있다. 어절 중간을 자르지 않는다(단어 경계에만 컷) | 컷 경계가 단어 타임스탬프 경계와 일치(테스트 샘플). 승인 전 소재 변경 0, 원본 파일은 지우지 않는다(구간 정보만 저장, 비파괴). 클립 STT 결과는 `video.clip_transcripts`에 1행. 크레딧: 클립 1분당 기존 무음 컷 2(4장, `:182`) + STT는 기존 파이프라인 STT 5(`:180`) 중 STT분만 3(제안, 번역 없음) | Vrew 무음 구간 제거, VEED Magic Cut(영어만), Gling, TimeBolt. 차별: 한국어 필러 사전, 어절 경계 컷 |
+| VD-F-149 | 자막 자동 생성과 키워드 강조 | MVP | 자막 타이밍은 TTS 정렬(내레이션) 또는 Whisper 단어 타임스탬프(클립)로 만든다. 장면마다 강조어 최대 10개(`caption_emphasis`): 그래프가 인명·연도·지명·숫자를 기본 제안한다. 자막 스타일 3종(`clean`, `bold_box`, `word_pop`(말하는 단어 강조), 제안). 한자 병기 옵션(역사 용어 뒤 괄호 한자, 그래프가 근거 없는 한자를 만들지 않도록 운영자 용어집에 있는 것만, 제안). 위치는 화면비 세이프존 안. 레이어 순서·단일 엔진은 VD-F-033 | 강조어가 장면 내레이션에 없는 단어면 저장 거부 22023. 한자 병기는 용어집 항목만(용어집 밖 0). 자막 스타일 변경은 0크레딧(렌더에 포함) | Submagic·Opus 키워드·이모지 강조, Descript 단어 강조. 차별: 한자 병기, 역사 고유명사 |
+| VD-F-150 | 문장 단위 내레이션 다시 만들기와 발음 사전 | MVP | 장면 내레이션 중 한 문장만 다시 만든다(같은 목소리 규칙 VD-F-106, 잡 `scene.narration` 재사용, 문장 범위만 교체 후 이어 붙임). 조직 발음 사전(`video.pronunciation_lexicon`: 표기 → 읽기, 예: "광해군" → "광:해군", "1592년" → "천오백구십이 년")을 TTS 직전 텍스트 치환으로 적용한다(제공자 발음 사전 API는 미확인이라 치환 방식, 제안). 사전은 조직 안에서 모든 스토리보드에 적용 | 문장 다시 만들기 1크레딧(장면 내레이션 단가와 같음). 다시 만든 문장 앞뒤 이음매에서 무음 100ms 이하(제안 측정). 사전 항목 최대 2,000개(제안), 중복 표기 23505 | Descript Regenerate·Overdub(사용자 목소리 복제는 범위 밖) |
+| VD-F-151 | 편집 되돌리기와 편집 기록 | MVP | 적용된 편집안마다 영향받은 장면의 이전 상태를 저장한다(`edit_plans.undo_state`). "되돌리기"는 가장 최근 적용 편집안부터 순서대로, 스토리보드당 최근 20건까지(제안). 적용 뒤 다른 편집이 같은 장면을 바꿨으면 그 편집안은 되돌릴 수 없다(`VD409`, 먼저 뒤 편집을 되돌리라고 안내). 다시 만들기로 생긴 소재는 되돌리면 이전 소재를 ready로 돌린다(크레딧 환불 없음) | 되돌리기 후 장면 내용이 적용 전 스냅샷과 같다(필드 비교). 되돌리기 0크레딧. 편집 기록 목록에 지시 원문·적용 명령 수·적용자·시각 | invideo AI 되돌리기, Descript 응답 단위 되돌리기 |
+| VD-F-152 | 쇼츠 적합도 점수(근거 공개) | P1 | VD-F-137 `video.shorts_pick` 결과에 컷마다 적합도 0~100과 근거 태그(훅 문장, 반전, 질문, 숫자·연도, 감정 단어, 길이 적합)를 붙인다. 화면 이름은 "쇼츠 적합도(참고용)". 조회수 예측이라고 쓰지 않는다 | 점수마다 근거 태그 1개 이상. 금지 문구 "바이럴 보장", "조회수 예측"(10.5절에 추가). 크레딧은 기존 선정 2에 포함 | Opus Clip 바이럴 점수(근거 비공개). 차별: 근거 공개 |
+| VD-F-153 | 리테이크 감지와 테이크 선택 | P1 | 업로드 녹음·클립에서 같은 문장을 여러 번 말한 구간을 Whisper 전사 유사도로 묶어 목록으로 보여준다. 사용자가 미리 듣고 하나를 고르면 나머지를 `remove_ranges` 편집안으로 만든다(VD-F-146 승인 흐름) | 기본 선택은 마지막 테이크(제안). 고른 테이크 외 구간만 편집안에 들어간다. 크레딧 1(클립 10분당, LLM 묶음 판정, 제안) | FireCut 리테이크 목록, Descript, Submagic |
+| VD-F-154 | 자동 챕터·제목·설명 | P1 | 롱폼 마스터 컷 ready 뒤 챕터 타임스탬프(장면 `chapter` 경계, 스냅샷 기준)와 제목 후보 3개·설명 초안을 만든다. YouTube 챕터 규칙(첫 타임스탬프 0:00, 3개 이상, 각 10초 이상)을 만족하지 않으면 챕터 블록을 넣지 않는다. 설명란 순서: 대가성 문구 첫 줄(VD-F-062) → 설명 → 챕터 → 참고 자료(VD-F-138) | 타임스탬프가 스냅샷 장면 시작 시각과 같다. 금지 문구 0. 크레딧 1(제안) | Gling·Descript·FireCut 챕터 |
+| VD-F-155 | 조직·고객별 편집 프리셋 | P1 | 페이싱(장면 기본 길이 배수), 자막 스타일, 전환 기본값, 모션 자동 배정 여부, BGM 음량, 군더더기 말 추가 단어, 기본 화면비·해상도를 프리셋으로 저장한다. 대행 조직은 고객(`client_id`)마다 프리셋을 둔다(고객 A 프리셋을 고객 B에 쓰지 않는다, 08장 규칙). 새 스토리보드와 자동 다듬기가 기본 프리셋을 쓴다 | 프리셋 저장 0크레딧. 다른 고객 프리셋 적용 시도 `VD002`. 조직당 20개(제안) | Descript 편집 선호 기억(2026-06) |
+| VD-F-156 | 자동 B-roll 제안 | P1 | 설명이 긴 장면(내레이션 15초 이상, 제안)에 보조 장면을 끼우는 편집안을 만든다: 연표 카드·인물 카드·지도 설명 카드(`text_card` 템플릿, 0크레딧) 또는 AI 이미지(이미지 단가). 빈도 슬라이더(적게·보통·많이). 사실 주장 카드는 `source_required=true` | 편집안 명령은 `add_scene` + `set_text`만. 추가 후 장면 수 한도(VD018)·길이 합계를 넘으면 그 명령을 빼고 안내. 제안 2크레딧 + 승인한 AI 이미지 장면 단가 | Submagic B-roll 빈도, Opus·Kapwing Smart B-roll |
+| VD-F-157 | 자동 썸네일 3안 | P1 | 마스터 컷 프레임 또는 장면 이미지 + 제목 문구(30자 이하)로 썸네일 3안을 만든다(16:9, 1280x720, 렌더 워커 글자 합성). AI 이미지 새로 만들기는 선택(이미지 단가). 문구는 10.5절 금지 문구 검사 | 3안 2크레딧(제안). 금지 문구가 든 안 0. 업로드 화면에서 1개 선택 | 업계 일반(경쟁사별 확인은 미확인) |
+| VD-F-158 | NLE 내보내기 | P1 | 렌더 스냅샷을 FCPXML(Final Cut·DaVinci)과 Premiere XML로 내보낸다. 장면 소재·내레이션·자막(SRT) 묶음 zip. 렌더 컷의 장면 순서·길이·전환이 XML과 같다 | 내보내기 0크레딧(제안), 플랜 `nle_export`(Pro 이상, 제안). 서명 URL 24시간 | Gling·TimeBolt·Opus XML 내보내기 |
+| VD-F-159 | 연도·인물 표기 일관성 점검 | P1 | VD-F-138 출처 점검 잡에서 같은 인물·사건의 연도·이름 표기가 장면마다 다르면 WARN을 더한다(예: 3번 장면 1592년, 12번 장면 1593년 임진왜란 발발) | 출처 점검과 같은 1크레딧 안. WARN만(D-33 규칙). 사실이라고 보증하는 문구 0 | 경쟁사 사례 찾지 못함(미확인). 차별 기능 |
+
+### 11.3 Phase 2로 미루는 것
+
+| 기능 | 이유 | 벤치마크 |
+|---|---|---|
+| 피사체 추적 리프레임(실사 클립) | 첫 고객은 AI 이미지 위주라 초점 한 점으로 충분. 추적 모델 운영 비용 큼 | Opus, CapCut, Premiere Auto Reframe |
+| 업로드 클립 장면 감지 | Track S는 장면을 스토리보드가 정한다 | Kapwing Find Scenes |
+| 번역 더빙·립싱크 | 언어판(TTS 교체)은 이미 있다. 립싱크는 실사에만 의미 | Captions, Kapwing, VEED |
+| 비트 싱크 컷 | 지식·역사 채널에서 중요도 낮음 | CapCut AutoCut |
+| 멀티캠 자동 전환 | 대담형 콘텐츠 한정 | AutoPod, DaVinci SmartSwitch |
+| 사용자 목소리 복제 | 동의·도용 위험, 별도 동의 절차 필요 | Descript Overdub |
+
+### 11.3.1 Phase 2 결정 근거 요약
+
+MVP는 "스토리보드 구조를 아는 편집"에 집중한다. 실사 영상 분석(추적·장면 감지·멀티캠)은 첫 고객군(현우, 지식·역사 채널)의 주 소재가 AI 이미지와 내레이션이라 우선순위가 낮다.
+
+### 11.4 편집 명령 허용 목록 (EDL, 정본)
+
+그래프 출력·서버 검사·`apply_edit_plan`이 같은 목록을 쓴다. 명령 객체는 `{id, op, scene_id?, args}`이고, `id`는 편집안 안에서 1부터의 번호다.
+
+| `op` | 인자 | 실행 위치 | 크레딧 | 비고 |
+|---|---|---|---|---|
+| `set_duration` | `{duration_ms}`(1,000~60,000) | `apply_edit_plan` | 0 | "2초 줄여"는 그래프가 새 값으로 바꿔 넣는다 |
+| `move_scene` | `{to_ord}` | 같음 | 0 | 여러 개면 서버가 최종 순서를 한 번에 계산 |
+| `delete_scene` | `{}` | 같음 | 0 | 마지막 장면 삭제 22023 |
+| `add_scene` | `{after_ord, kind, duration_ms, on_screen_text?, visual_prompt?, narration?}` | 같음 | 0(소재 없음) | 소재 생성은 별도 `regenerate` |
+| `set_text` | `{field: narration\|on_screen_text\|visual_prompt\|chapter, value}` | 같음 | 0 | 내레이션이 바뀌면 그 장면 내레이션 소재 superseded(10장 규칙) |
+| `set_motion` | `{preset}` | 같음 | 0 | 10.3절 5종 |
+| `set_transition` | `{name, ms}` | 같음 | 0 | `cut`, `fade`, `dissolve`, `fadeblack`, `slideleft`, `slideup`, `zoomin`, `wipeleft`, 200~1,500ms |
+| `set_focus` | `{x, y}` | 같음 | 0 | 0~1 |
+| `set_music_cue` | `{cue}` | 같음 | 0 | 10장 큐 5종 |
+| `set_caption_emphasis` | `{words[]}`(10개 이하) | 같음 | 0 | 내레이션 안 단어만 |
+| `set_clip_trim` | `{in_ms, out_ms}` | 같음 | 0 | clip 장면만 |
+| `remove_ranges` | `{ranges: [{start_ms, end_ms, reason: silence\|filler\|retake\|user}]}` | 같음 | 0(분석 비용은 VD-F-148·153에서 이미 정산) | clip 장면만, 비파괴 |
+| `set_shorts_candidate` | `{value}` | 같음 | 0 | 롱폼만 |
+| `propose_short` | `{scene_ids[], hook_text}` | 같음(`storyboard_cuts` proposed 1행) | 0(렌더는 VD-F-137 단가) | 연속 장면, 한도 VD021 |
+| `set_render` | `{aspect?, resolution?, fps?, shorts_aspect?}` | 같음 | 0 | 플랜 상한 VD009 |
+| `set_style` | `{caption_style?, caption_hanja?, bgm_level_db?, loudnorm?}` | 같음 | 0 | 스토리보드 단위 |
+| `regenerate` | `{part: image\|narration\|sentence, lang?, sentence_index?, aspect?}` | Route Handler(선차감 → 잡) | 이미지 3, 내레이션 1, 문장 1 | 승인 화면에 합계 표시 |
+
+검사 규칙: 한 편집안의 명령 수 100개 이하, 같은 장면에 같은 `op`가 두 번이면 뒤의 것만 남기고 경고, 대상 장면이 스토리보드에 없으면 `VD023`, 형식에 맞지 않는 명령(쇼츠 형식의 `propose_short`)은 `VD023`. LLM이 만든 텍스트 값(`set_text`)은 10.5절 금지 문구 compliance를 다시 통과해야 한다.
+
+### 11.5 크레딧 단가 (제안)
+
+이 절이 11장 기능 단가의 정본이다. 10.4절 단가는 바꾸지 않았다.
+
+| 작업 | 크레딧 | 근거 |
+|---|---|---|
+| AI 편집 지시 1회(편집안 생성) | 1 | 10.4절 음성 지시 패치 변환 1과 같게. 받아쓰기 STT는 4.1절 |
+| 원클릭 자동 다듬기 | 쇼츠 1 / 롱폼 10분당 2 | 제안: 스토리보드 전체를 읽는 LLM 1회 |
+| 편집안 적용·일부 적용·되돌리기·프리셋 저장 | 0 | 제안 |
+| 무음·군더더기 말 분석(클립 1분당) | STT 3 + 무음 컷 2 | 제안: 4장 STT+번역 5에서 번역 제외, 무음 컷 2(`:182`) |
+| 문장 단위 내레이션 다시 만들기 | 1 | 10.4절 장면 내레이션 다시 만들기와 같게 |
+| 렌더 해상도·fps 배수 | 1080p30 = 1배, 1440p 1.5배, 2160p 2배, 60fps 1.5배(곱, 올림) | 제안: 4K60은 1080p30 대비 처리량 약 8배라 원가 측정 후 확정(D-41) |
+| 4K 이미지 업스케일(1440p 이상 렌더의 AI 이미지 1장) | 1 | 제안: D-39 |
+| 화면비 변형본 렌더 | 그 길이의 렌더 단가와 같음 + 다시 만들기를 고른 장면 이미지 단가 | 10.4절 렌더 단가 |
+| 쇼츠 적합도 점수 | 0(선정 2에 포함) | 10.4절 |
+| 리테이크 감지(클립 10분당) | 1 | 제안 |
+| 자동 챕터·제목·설명 | 1 | 제안 |
+| 자동 B-roll 제안 | 2 + 승인한 AI 이미지 장면 3 | 제안 |
+| 자동 썸네일 3안 | 2(+ AI 이미지 새로 만들기 3) | 제안 |
+| NLE 내보내기, 일관성 점검 | 0 / 0(출처 점검 1에 포함) | 제안 |
+
+예시(현우, 롱폼 10분 1080p30, 10.4절 136크레딧 세트에 더함): 자동 다듬기 2 + 편집 지시 5회 5 + 문장 다시 만들기 4 + 챕터·제목 1 + 9:16 세로 변형본 렌더 10 = +22크레딧. 같은 세트를 2160p로 렌더하면 렌더 10이 20으로, AI 이미지 30장 업스케일 +30. 4K는 크레딧이 크게 늘어나므로 편집기에서 렌더 전에 합계를 보여준다(03장 9장).
+
+### 11.6 플랜 키 (`plans.features`, 서버만 읽는다. 키 추가는 VID-06-001 경로)
+
+| 키 | 타입 | Starter | Basic | Pro | Advanced | 비고 |
+|---|---|---|---|---|---|---|
+| `render_max_resolution` | text | `720p` | `1080p` | `2160p` | `2160p` | 제안. 벤치마크: Free 720p / 유료 1080p / 상위 4K |
+| `render_max_fps` | int | 30 | 30 | 60 | 60 | 제안 |
+| `render_4k60` | bool | false | false | false | true | 제안. Pro는 4K30 또는 1080p60까지 |
+| `aspect_variants_max` | int | 0 | 1 | 3 | 3 | 제안 |
+| `ai_edit` | bool | false | true | true | true | 제안. Starter는 스토리보드가 없다(10.4절) |
+| `nle_export` | bool | false | false | true | true | 제안(P1) |
+| `edit_presets_max` | int | 0 | 3 | 20 | 20 | 제안(P1) |
+
+### 11.7 법, 고지, 금지 문구 (11장 추가분)
+
+| 항목 | 내용 |
+|---|---|
+| 업로드 클립 STT | 원본 오디오는 `video.stt` = `oss-voice`로만 처리한다(국외 전송 없음, 6장). 전사 단어는 그 조직 안에서만 쓴다 |
+| 원본 비파괴 | 무음·리테이크 컷은 구간 정보만 저장하고 원본 파일을 고치거나 지우지 않는다 |
+| 점수 표현 | 쇼츠 적합도는 "참고용"으로 표시한다. 금지: "바이럴 보장", "조회수 예측", "알고리즘 최적화 보장" |
+| 썸네일 문구 | 10.5절 금지 문구 + 사실과 다른 과장(예: 없는 "최초 공개") 금지. AI 이미지 썸네일은 AI 생성 표시 규칙(10.5절) 적용 |
+| 마케팅 금지 | "편집 시간 90% 절감" 같은 미검증 수치, "AI가 알아서 완벽 편집", 경쟁사 이름을 쓴 비교 우위 단정 |
+| 목소리 | 사용자 목소리 복제는 하지 않는다(11.3절). 문장 다시 만들기는 스토리보드에 고정된 TTS 목소리만 쓴다 |
+
+### 11.8 KPI (제안)
+
+| 지표 | 목표 | 측정 방법 | 기간 |
+|---|---|---|---|
+| AI 편집안 승인율 | 60%(제안) | 적용된 편집안(일부 포함) / 생성된 편집안 | 3개월 |
+| 명령 일부 해제율 | 측정만 | 승인 화면에서 해제된 명령 / 제안 명령 | 월 |
+| 되돌리기율 | 15% 이하(제안) | 되돌린 편집안 / 적용된 편집안 | 월 |
+| 지시 해석 실패율 | 5% 이하(제안) | 명령 0 또는 `VD023` 편집안 / 전체 | 월 |
+| 편집 지시 사용 스토리보드 비율 | 70%(제안, SF-5 검증) | 편집안 1건 이상 적용 스토리보드 / 렌더된 스토리보드 | 3개월 |
+| 변형본 생성률 | 측정만 | 변형본 1개 이상 / 마스터 ready 스토리보드 | 3개월 |
+
+### 11.9 열린 결정
+
+| # | 항목 | 선택지 | 권고 |
+|---|---|---|---|
+| D-38 | 프리미엄 이미지 경로 | (a) 저가 모델만(D-31) (b) 저가 기본 + 고품질 선택(GPT Image 2 medium 등, 장면 8크레딧) + 초안 미리보기(저품질 1크레딧) | (b)(제안). 2026-10-18 조사에서 GPT Image 2 medium이 Text-to-Image Arena 1위(Elo 1,381, 2026-08 기준), 1024² 약 $0.053. 썸네일·핵심 장면에만 쓰도록 장면 단위 선택. 단가는 가격 검증 뒤 확정 |
+| D-39 | 1440p 이상 렌더의 AI 이미지 처리 | (a) 업스케일(1장 1크레딧) (b) 처음부터 고해상도 생성(이미지 단가 상승) | (a)(제안). 1080p 렌더는 업스케일 없음 |
+| D-40 | 자동 다듬기 실행 시점 | (a) 스토리보드 생성 직후 자동으로 편집안만 만들어 둔다(승인 필요) (b) 버튼을 눌렀을 때만 | (b)(제안). 사용자가 원하지 않는 크레딧 사용을 막는다. 온보딩에서 첫 1회 무료 체험(제안) |
+| D-41 | 해상도·fps 배수 확정 | (a) 11.5절 제안 배수 (b) 렌더 원가 측정 후 재산정 | (b). 개발 W5 렌더 벤치에서 1080p30 대비 처리 시간을 재고 확정한다 |
+| D-42 | 군더더기 말 기본 강도 | (a) 보수(명확한 "음·어"만) (b) 보통 | (a)(제안). 말투를 해치지 않는 쪽에서 시작 |
+| D-43 | 세로 롱폼(9:16 롱폼) 업로드 대상 | (a) YouTube 일반 영상으로 업로드 (b) 숨김 | (a)(제안). 쇼츠 길이를 넘으면 쇼츠가 아닌 일반 영상이 된다(플랫폼 판정 기준 미확인) |
+| D-44 | 피사체 추적 리프레임 도입(Phase 2) | (a) 오픈소스 검출 모델 자체 운영 (b) 외부 API | 결정 보류. 실사 클립 사용 비율을 보고 정한다 |
+
+### 11.10 벤치마킹 출처 (2026-10-18 조사)
+
+- Descript Underlord: https://help.descript.com/hc/en-us/articles/36803785502221-Underlord-beta-Your-AI-co-editor-in-Descript , 편집 선호 기억: https://www.createwith.com/tool/descript/updates/descripts-underlord-now-remembers-your-editing-preferences-across-projects
+- CapCut: https://www.capcut.com/help/auto-cut-in-capcut , https://www.capcut.com/tools/auto-reframe
+- Opus Clip: https://www.opus.pro/pricing
+- VEED Magic Cut: https://support.veed.io/en/articles/11589317-magic-cut
+- Vrew 무음 구간 제거: https://vrew.ai/en/feature/auto-silence-removal
+- FireCut 리테이크: https://firecut.ai/features/remove-repetition
+- Kapwing: https://www.kapwing.com/pricing
+- Submagic: https://www.submagic.co/de/features/auto-video-editor
+- invideo AI: https://invideo.io/make/ai-video-editor-web
+- Premiere Pro: https://helpx.adobe.com/premiere-pro/using/whats-new.html
+- DaVinci Resolve 21(2차 출처): https://nofilmschool.com/davinci-resolve-21
+- Wisecut(2차 출처): https://sendshort.ai/guides/wisecut-review/
+- Text-to-Image Arena 2026-08(2차 출처): https://www.blogdumoderateur.com/ia-10-generateurs-images-performants-aout-2026/
+- GPT Image 2 가격(2차 출처): https://aireiter.com/blog/gpt-image-2-api-pricing
+- OpenAI Videos API·Sora 2 종료(2026-09-24, 2차 출처): https://techjacksolutions.com/ai-brief/openai-videos-api-sora-2-deprecated-september-2026/

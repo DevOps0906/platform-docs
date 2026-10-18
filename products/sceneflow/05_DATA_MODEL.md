@@ -577,3 +577,155 @@ id, org_id(RLS용, 명세에 추가), storyboard_id, cut_id, version(`unique(sto
 | longform_highlights | 지우지 않음, 주석 | storyboard_cuts(kind short) | 시간 구간이라 장면 단위로 바로 옮길 수 없다. 이전하지 않고 기존 출력물만 남긴다(제안) |
 
 정책·RPC는 그대로 두어 기존 행 읽기와 진행 중 작업이 깨지지 않는다. 새 코드는 Track D 경로에 넣지 않는다. 삭제 시점은 D-34(이전 완료 확인 뒤)이며 그때 outputs의 longform_id·highlight_id와 CHECK도 함께 정리한다.
+
+## 12. AI 자동편집·화면비 데이터 (2026-10-18 추가, 01장 11장)
+
+정본 SQL은 `1200_video.sql` 13절(1200:3038-4195)이다. 12절 테이블은 지우지 않고 ALTER·`create or replace`로 넓혔다(반복 실행 가능). 위쪽 장은 고치지 않았다. 11장 표에서 값이 바뀐 항목(화면비 CHECK, 컷 kind, save_scene 허용 키, 상태 전이 표, snapshot 내용)은 이 장이 정본이다.
+
+### 12.1 ERD 조각 (11.1절에 더함)
+
+```
+video.storyboards (+ resolution, fps, shorts_aspect, caption_style, caption_hanja, bgm_level_db, loudnorm, edit_preset_id)
+ ├─ video.scenes (+ focus_x/y, transition/_ms, clip_in_ms/clip_out_ms, cut_ranges, caption_emphasis)
+ │    └─ video.scene_assets (aspect 4종)
+ │         └─ video.clip_transcripts (clip 소재 1:1, 단어 전사, 서버만)
+ ├─ video.storyboard_cuts (kind master | short | variant, aspect 4종)
+ │    └─ video.outputs (+ width, height, fps)
+ └─ video.edit_plans (AI 편집안: proposed → applied → undone, 서버 INSERT, 사용자는 RPC로 적용·거절·되돌리기)
+core.organizations
+ ├─ video.edit_presets (조직·고객별 편집 프리셋, P1) ← storyboards.edit_preset_id
+ └─ video.pronunciation_lexicon (조직 발음 사전)
+```
+
+### 12.2 바뀐 테이블
+
+#### storyboards (1200:3086-3108, 3327-3335, 3368)
+
+| 열 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| aspect | text | N | - | CHECK 4종 `16:9`, `9:16`, `1:1`, `4:5`. `storyboards_preset_check`가 `video.storyboard_aspect_allowed(format, aspect)`(1200:3048)로 형식별 허용을 본다: 쇼츠 9:16/1:1/4:5, 롱폼 16:9/9:16/1:1. 길이 프리셋은 11장과 같다 |
+| resolution | text | N | `1080p` | 720p/1080p/1440p/2160p(짧은 변 기준). 플랜 `render_max_resolution` 이하(VD009, 트리거 `storyboards_limits` 1200:3155-3191) |
+| fps | smallint | N | 30 | 24/30/60. `render_max_fps` 이하, 2160p+60은 `render_4k60`(VD009) |
+| shorts_aspect | text | N | `9:16` | 쇼츠 컷 화면비 9:16/1:1/4:5 |
+| caption_style | text | N | `clean` | `clean`/`bold_box`/`word_pop` |
+| caption_hanja | boolean | N | false | 한자 병기(용어집 항목만) |
+| bgm_level_db | smallint | N | -18 | -40~0 |
+| loudnorm | boolean | N | true | 2패스 loudnorm |
+| edit_preset_id | uuid | Y | - | `edit_presets`(set null). 같은 조직이고, 고객 프리셋이면 같은 `client_id`(VD002, `check_edit_refs` 1200:3487) |
+
+렌더 설정(aspect, resolution, fps, shorts_aspect)이 바뀌면 `rendered` → `ready`(트리거 `storyboards_render_settings` 1200:3194-3209). 렌더 중 변경은 `guard_storyboard_edit`가 VD020.
+
+#### scenes (1200:3110-3122, 3337-3350)
+
+| 열 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| focus_x, focus_y | numeric(4,3) | N | 0.5 | 크롭 초점 0~1(VD-F-145) |
+| transition | text | N | `cut` | `cut`, `fade`, `dissolve`, `fadeblack`, `slideleft`, `slideup`, `zoomin`, `wipeleft`(FFmpeg xfade 이름) |
+| transition_ms | int | N | 0 | `cut`이면 0, 그 밖은 200~1500 |
+| clip_in_ms, clip_out_ms | int | Y | - | clip 장면만, 둘 다 null이거나 0 ≤ in < out |
+| cut_ranges | jsonb | N | `[]` | 잘라낼 구간 `[{start_ms, end_ms, reason: silence/filler/retake/user}]` 500개 이하, 겹침 없음(`valid_cut_ranges` 1200:3278). clip 장면만. 비파괴 |
+| caption_emphasis | text[] | N | `{}` | 강조어 10개 이하, 각 1~30자, clip이 아니면 내레이션 안 단어만(`valid_caption_emphasis` 1200:3301) |
+
+이 열들도 장면 `revision`을 올린다(`scenes_before_update` 다시 정의 1200:3460-3484).
+
+#### scene_assets, storyboard_cuts, outputs (1200:3124-3150)
+
+| 테이블 | 변경 |
+|---|---|
+| scene_assets | `aspect` CHECK 4종. (scene, kind, lang, aspect)마다 ready 1개 규칙 그대로 |
+| storyboard_cuts | kind에 `variant` 추가. `aspect` CHECK 4종. 모양 CHECK: master(ord 0), short(쇼츠 화면비, ord 1~10, 장면 12개 이하), variant(ord 1~3, 훅 없음). `storyboard_cuts_variant_aspect_uniq (storyboard_id, aspect) where kind='variant'`. 트리거 `check_cut_variant`(1200:3212-3244): 마스터와 다른 화면비, 형식 허용 화면비, 플랜 `aspect_variants_max`(최대 3, VD022) |
+| outputs | `aspect` CHECK 4종. `width`, `height`(240~4096, 둘 다 null이거나 둘 다 값), `fps`(24/25/30/60) 서버 기록 |
+
+### 12.3 새 테이블
+
+#### edit_plans (1200:3397-3428)
+
+| 열 | 타입 | NULL | 설명 |
+|---|---|---|---|
+| storyboard_id | uuid | N | 같은 조직(VD002) |
+| source | text | N | `command`, `voice`, `auto_polish`, `silence_cut`, `retake`, `broll` |
+| instruction | text | Y | 사용자 지시 원문 1,000자 이하(자동 편집안은 null) |
+| commands | jsonb | N | 01장 11.4절 명령 배열 100개 이하. CHECK `valid_edit_commands`(1200:3254): 허용 `op`, 키 `id/op/scene_id/args`만, id 중복 없음, 장면 대상 명령은 `scene_id` 필수 |
+| summary | text | Y | 사람이 읽는 요약 2,000자 이하 |
+| estimate_credits | int | N | `regenerate` 명령 합계(서버 계산) |
+| base_fingerprint | text | N | 만들 때의 `storyboard_fingerprint` |
+| after_fingerprint | text | Y | 적용 직후 지문(되돌리기 판정) |
+| applied_command_ids | int[] | Y | 실제 적용한 명령 id(일부 승인) |
+| undo_state | jsonb | Y | 적용 전 스토리보드 설정, 장면 행 전체, 지운 장면의 소재 행, 만든 장면·컷 id, superseded로 돌린 소재 id |
+| status | text | N | proposed/applied/rejected/expired/undone/failed |
+| ai_run_id, created_by, applied_by, applied_at, undone_at, last_error | | Y | |
+
+내용 열(storyboard_id, org_id, commands, base_fingerprint)은 만든 뒤 바꿀 수 없다(22023). 사용자 쓰기 정책 없음 + guard. 크기: 240장면 `undo_state` 약 0.3~0.6MB(제안 추정). 보존: 적용·되돌린 편집안은 스토리보드와 함께, `proposed`는 24시간 뒤 서버가 `expired`(제안).
+
+#### edit_presets (1200:3352-3368, P1)
+
+| 열 | 설명 |
+|---|---|
+| client_id | 대행 고객(같은 조직, VD002). null이면 조직 공용 |
+| name | 1~60자 |
+| settings | 키 `pacing`, `caption_style`, `caption_hanja`, `transition`, `transition_ms`, `auto_motion`, `bgm_level_db`, `loudnorm`, `extra_fillers`, `filler_strength`, `min_silence_ms`, `pad_ms`, `aspect`, `resolution`, `fps`만(`valid_preset_settings` 1200:3314), 4KB 이하 |
+| is_default | (org, client)마다 기본 1개(`edit_presets_default_uniq`) |
+
+조직당 개수는 플랜 `edit_presets_max`(VD009).
+
+#### pronunciation_lexicon (1200:3370-3382)
+
+`(org_id, lang, term)` unique. term 1~50자, reading 1~100자, note 200자 이하. 조직당 2,000개(54000). TTS 직전 텍스트 치환에 쓴다(VD-F-150).
+
+#### clip_transcripts (1200:3384-3395)
+
+clip 소재 1개당 1행(`scene_asset_id` unique, clip 소재만 22023). `provider = 'oss-voice'` 고정(원본 오디오 국외 전송 없음). `words` = `[{w, s, e, filler?}]`(ms), 2MB 이하. 서버만 쓴다(guard).
+
+### 12.4 상태 전이 (11.3절 표를 대체하는 함수 1200:3433-3457)
+
+| 테이블.열 | 현재 → 허용 | 누가 |
+|---|---|---|
+| scene_assets.status | ready→superseded, **superseded→ready**(되돌리기) | 서버, `apply_edit_plan`·`undo_edit_plan` |
+| edit_plans.status | proposed→applied/rejected/expired/failed, applied→undone | `apply_edit_plan`, `reject_edit_plan`, 서버(만료·실패), `undo_edit_plan` |
+| storyboards, storyboard_templates, storyboard_cuts | 11.3절과 같다 | |
+
+### 12.5 RLS와 GRANT (1200:3246-3249, 3567-3598, 4164-4177)
+
+| 테이블 | SELECT | INSERT | UPDATE | DELETE | GRANT(authenticated) |
+|---|---|---|---|---|---|
+| storyboards | 11.4절 | 11.4절 | 11.4절 | 11.4절 | insert 열에 `resolution, fps, shorts_aspect, caption_style, caption_hanja, bgm_level_db, loudnorm, edit_preset_id` 추가. update 열에 `aspect, resolution, fps, shorts_aspect` + 스타일 4열 + `edit_preset_id` 추가 |
+| edit_presets, pronunciation_lexicon | 멤버 + 엔타이틀먼트 | owner/admin/member + 엔타이틀먼트 | owner/admin/member | owner/admin/member | 컬럼 GRANT(프리셋 `org_id, client_id, name, settings, is_default` / 사전 `org_id, lang, term, reading, note`) |
+| edit_plans, clip_transcripts | 멤버 + 엔타이틀먼트 | 없음(서버) | 없음 | 없음 | select + guard |
+
+사용자가 직접 쓰는 표의 CHECK 헬퍼(`storyboard_aspect_allowed`, `valid_preset_settings`)는 호출자 권한으로 실행되므로 authenticated EXECUTE를 준다(1200:4175-4176). 나머지 헬퍼는 SECURITY DEFINER RPC 안에서만 쓰여 사용자 EXECUTE가 없다.
+
+### 12.6 RPC
+
+| 함수 | 호출자 | 핵심 규칙 | 오류 |
+|---|---|---|---|
+| `apply_edit_plan(p_plan_id, p_command_ids)` (1200:3690-3901) | authenticated(member+) | `lock_storyboard_for_edit` → `ai_edit` → proposed만 → 지문 일치 → 명령 재검사 → 고른 명령을 id 순서로 한 트랜잭션 적용(실패 시 전체 롤백). `regenerate`는 적용하지 않고 돌려준다. 구성 변경(이동·추가·삭제)이 있으면 스토리보드 revision +1, rendered면 ready. `undo_state`·`after_fingerprint` 저장, 감사 `storyboard.edit_plan.apply` | P0002, 42501, VD009, VD020, VD005, VD409, VD023, VD018, VD021, VD022, 22023, 23514 |
+| `undo_edit_plan(p_plan_id)` (1200:3904-3993) | authenticated(member+) | applied만, 그 스토리보드의 가장 최근 적용 편집안만, 지금 지문 = `after_fingerprint`일 때만. 추가한 장면·제안 컷 삭제, 장면 행 복원(지운 장면은 같은 id로 다시 넣고 소재 행도 복원), superseded 소재를 ready로, 스토리보드 설정 복원, revision +1 | P0002, 42501, VD005, VD409, VD020 |
+| `reject_edit_plan(p_plan_id)` (1200:3996-4019) | authenticated(member+) | proposed → rejected | P0002, 42501, VD005 |
+| `storyboard_fingerprint(p_storyboard_id)` (1200:3603-3616) | service_role(DEFINER 내부) | md5(구성 revision, 렌더·스타일 설정, 장면 id·revision·ord·쇼츠 후보) | - |
+| `save_scene` 다시 정의 (1200:3619-3685) | authenticated | 11.5절 + 허용 키 `focus_x, focus_y, transition, transition_ms, caption_emphasis, clip_in_ms, clip_out_ms, cut_ranges` | 11.5절 + 23514 |
+| `snapshot_storyboard` 다시 정의 (1200:4021-4162) | service_role | variant 컷(마스터와 같은 장면 수·합계 검사, 스토리보드 상태 유지), 마스터 다시 렌더 때 컷 화면비 = 스토리보드 화면비, 어떤 화면비든 ready 이미지면 통과(없으면 22023) + 컷 화면비가 없으면 `crop_from`. 스냅샷에 `render`(`render_dimensions`), `style`, 장면 `focus`·`transition`·`clip`·`caption_emphasis` | 11.5절 |
+| `render_dimensions(p_aspect, p_resolution)` (1200:3062), `resolution_rank` (1200:3077) | 헬퍼 | 짧은 변 기준 픽셀 크기 | - |
+
+새 SQLSTATE: VD022 화면비 변형본 한도 초과, VD023 편집 명령 허용 목록 밖·대상 불일치. 기존 VD409·VD005·VD009·VD002·23514를 11장 쓰임에 더해 쓴다(04장 10.5절). 54000은 발음 사전 개수 한도.
+
+### 12.7 인덱스
+
+| 인덱스 | 조회 패턴 |
+|---|---|
+| `edit_plans_storyboard_idx (storyboard_id, created_at desc)` | 편집 기록 목록 |
+| `edit_plans_applied_idx (storyboard_id, applied_at desc) where status='applied'` | 되돌리기 대상(가장 최근 적용) |
+| `edit_presets_default_uniq (org_id, coalesce(client_id,'')) where is_default`, `edit_presets_org_idx` | 기본 프리셋, 목록 |
+| `pronunciation_lexicon_term_uniq (org_id, lang, term)` | TTS 치환 조회, 중복 방지 |
+| `clip_transcripts_asset_uniq (scene_asset_id)` | 클립 전사 재사용(STT 0크레딧) |
+| `storyboard_cuts_variant_aspect_uniq` | 화면비별 변형본 1개 |
+
+### 12.8 모놀리스 차이
+
+| 항목 | 모듈러 | 모놀리스 |
+|---|---|---|
+| 위치 | `1200_video.sql` 13절 | `0002_video_domain.sql` 끝 13절(0002:2947-, 같은 변환 규칙 (a)~(d)) |
+| 기본 권한 | default privileges | 새 테이블 4개(`edit_presets`, `pronunciation_lexicon`, `clip_transcripts`, `edit_plans`) `revoke all` 후 service_role GRANT(0002 13.10절 앞 블록) |
+| 플랜 키 | 13.16절 | `seed.sql` 끝(seed.sql:150-166) |
+| 함수 EXECUTE 정리 | `in schema video` | `in schema public` |
+
+검증(2026-10-18): 체커 `--vector mod`(0000~0009 + seed + 1200, 1200 2회 연속) OK, `--vector mono` OK. 행동 검사: 기존 12절 56/56 + 13절 62/62(모듈러·모놀리스 각각). 13절 검사 항목: 형식별 화면비 허용·거부, 플랜별 해상도·fps·4K60, 픽셀 크기, 초점·전환·강조어·컷 구간 CHECK, 편집안 사용자 직접 INSERT 42501, 허용 밖 op 23514, 다른 조직 적용 42501, 10개 명령 적용(9개 적용 + regenerate 1개 대기), 다시 적용 VD005, 지문 불일치 VD409, 다른 스토리보드 장면 VD023, 되돌리기 후 장면 id·길이·내레이션·설정 원복과 제안 컷 삭제, 일부 승인, 뒤 편집이 있으면 되돌리기 VD409, 변형본 같은 화면비 22023·한도 VD022, 변형본 스냅샷 `crop_from`·픽셀 크기, 렌더 설정 변경 → ready, 프리셋 개수 VD009·모르는 키 23514, 발음 사전 중복 23505·조직 격리, 전사 사용자 쓰기 42501.
