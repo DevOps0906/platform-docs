@@ -190,6 +190,10 @@ web ──enqueue_job(service_role)──> Supabase jobs <──claim_jobs──
 | `NEXT_PUBLIC_GOOGLE_MAPS_BROWSER_KEY` | 지도 렌더(리퍼러 제한) | 공개 | 지도 대신 목록만 표시 + 운영 알림 |
 | `GOOGLE_MAPS_SERVER_KEY` | 지오코딩·장소 자동완성(Route Handler) | 서버 전용 | 위치 입력 단계 비활성 |
 | `MAP_PROVIDER` | `google`(기본) / `kakao` / `naver`(D6) | 서버 | 기본 `google` |
+| `NEXT_PUBLIC_KAKAO_MAP_KEY`, `KAKAO_REST_API_KEY` | 카카오맵 렌더(JavaScript 키, 도메인 제한) / 주소 검색(REST 키) — 변수명은 제안, 발급 절차 미확인 | 공개 / 서버 전용 | 해당 제공자 비활성 |
+| `NEXT_PUBLIC_NAVER_MAP_CLIENT_ID`, `NAVER_MAP_CLIENT_SECRET` | 네이버 지도 렌더 / 지오코딩 — 변수명은 제안, 발급 절차 미확인 | 공개 / 서버 전용 | 해당 제공자 비활성 |
+| `OPENWEATHER_API_KEY` | OpenWeatherMap 날씨(04장 6.5절). **키 값은 저장소·문서·디자인·로그에 넣지 않는다** | 서버 전용(Route Handler) | 날씨 위젯 숨김 + 운영 알림 |
+| `FX_PROVIDER`, `FX_API_KEY` | 환율 제공자 선택·키(04장 6.6절, D19) | 서버 전용 | 환산 표기 숨김, 원화 가격만 표시 |
 | `STAY_IP_HMAC_SECRET` | 비로그인 레이트 리밋 키 HMAC(32바이트 이상) | 서버 전용 | 기동 실패 |
 | `CRON_SECRET` | Vercel Cron을 쓸 때만 크론 Route Handler 인증 | 서버 전용 | 크론 라우트 404 |
 | `EMAIL_PROVIDER_API_KEY`, `EMAIL_FROM` | 거래 메일 | 워커 전용 | 메일 잡 실패 + 운영 알림(예약 흐름은 계속) |
