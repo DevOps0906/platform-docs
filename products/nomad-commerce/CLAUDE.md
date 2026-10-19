@@ -118,3 +118,17 @@
 | 단계 전환 | 에이전트가 스스로 단계를 올리지 않는다. 사람(대표님)이 G1(A→B)·G2(B→C) 조건(`AUTH_ROADMAP.md` 4장, 6장)을 판정하고 task `log.md`에 `[DECISION] G1 통과`·`[DECISION] G2 통과`로 남긴 뒤에만 B·C 작업을 시작한다 |
 | 소유 경로 | 007: `lib/auth/`(`naver/` 제외), `app/(auth)/login/`, `app/api/dev/login/`, `proxy.ts`, `lib/session/`, `scripts/dev/`. 058: `components/auth/`(`kakao/` 제외), `app/auth/callback/`, `app/(auth)/{signup,reset-password}/`, `app/onboarding/terms/`. 059: `components/auth/kakao/`, `app/(app)/settings/login/`. 060: `lib/auth/naver/`, `app/auth/naver/`(브리지만), `scripts/auth/`. `finishLogin` 약관 단계 연결은 007 파일에, `supabase/config.toml` 제공자 블록은 001 파일에 1줄 요청(06장 8.1절) |
 | 이 제품의 작업 | A: CM-06-007(W1). B: CM-06-058(P0, Fable, W7 맨 앞, G1 후). C1: CM-06-059(P1, Opus, W8, G2 후). C2: CM-06-060(P1, Fable, W8, G2 후, 브리지면 코어 요청 R-9) |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D-21~D-24). nomad-commerce 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열은 `apps/nomad-commerce/components/shell/nav.ts` 한 곳에 두고(제안, 소유 CM-06-027) 화면마다 따로 만들지 않는다. GNB의 모든 경로는 03장 1절 표(로그인 방법만 7절)에 있는 것만 쓰고 새 경로를 만들지 않는다 |
+| 역할 | 역할 접근이 없는 메뉴(member·viewer의 마켓 계정, 플랜·크레딧)는 렌더하지 않는다. 판정은 `requireSession('commerce')` → `session_context`이고 쿠키·localStorage의 역할 값을 읽지 않는다. 접기 상태 외에 브라우저 저장소를 쓰지 않는다 |
+| 플랜 잠금 | 플랜이 안 되는 메뉴·탭(쇼츠 내레이션, 엑셀 내보내기)은 숨기지 않고 잠금 배지로 보인다. 판정은 `entitled_plan_code` + `plans.features`(01장 4.4절)이고 클라이언트 값을 믿지 않는다. 실제 차단은 Route Handler·트리거가 한다 |
+| 운영 콘솔 | `/admin/*` 화면을 `(app)` 셸 안에 넣지 않는다. `platform_admin`에게만 아래 고정 링크 1개, 일반 사용자에게는 렌더하지 않는다 |
+| 홈 데이터 | KPI·배지·흐름 숫자는 전부 실데이터(CM-F-007). 목 상수·난수 0, 데이터가 없으면 칩을 숨기거나 03장 5장 빈 상태. 큰 숫자 KPI 카드는 D-21 결정 전 만들지 않는다 |
+| 범위 밖 메뉴 | 블로그·제휴 화면을 만들지 않는다(확정 결정 1·12). 쇼츠 영상·자동화·카드뉴스·SNS·판매관리 메뉴는 D-24 결정 전 만들지 않는다. 영상 렌더 코드 0줄(확정 결정 6) |
+| 색 | 토큰만(`styles/tokens.css`). 셸에 hex를 하드코딩하지 않는다. 현재 위치·주 행동은 `--color-accent`(송장 블루), 상태색은 배지에만. 다크 값은 CM-06-043 전까지 정하지 않는다 |

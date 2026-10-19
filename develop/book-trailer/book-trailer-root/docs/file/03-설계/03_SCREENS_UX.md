@@ -383,3 +383,147 @@
 ### 7.4 설정 → 로그인 방법 (C단계, P1)
 
 연결된 제공자 목록, 연결·해제(마지막 1개는 해제 불가).
+
+## 8. 대시보드 셸과 좌측 GNB (2026-10-19 추가, 원본 프로젝트 메뉴 이행)
+
+이 장은 NOMAD Book Trailer 앱 셸(1절 :7 "앱 셸(A)")의 헤더 + 좌측 GNB와 홈(`/home`) 구성을 정한다. 이 제품은 원본 저장소가 없는 신규 제품이라(`README.md` 2장, `01_PRD.md:3`) "원본"은 이식 원천 리뷰 2개다. NOMAD Shorts Maker(대시보드 13개 메뉴 `docs/reference/reviews/NOMAD_Shorts_Maker.md:27`, 핵심 기능 목록 `:36-44`, 마케팅·공개 화면 `:52`·`:55`)와 Toon-Factory(MVP 기능 4개 `docs/reference/reviews/Toon-Factory.md:30`, 편집·출력·수익 계층 `:37-39`, MVP 범위 `:98-101`)의 메뉴·기능이 모두 새 구조 어딘가(이 제품 메뉴, 다른 제품, 폐기, 미정)로 이행되게 한다. 이 제품의 주 앱 셸은 `/dashboard`가 아니라 `/home`·`/books`·`/coach`·`/settings/*`이고(1절 :17-33), 공개 화면(`/`, `/samples`, `/pricing`, `/login`, `/onboarding/*`, `/review/[token]`, `/b/[code]`, `/legal/*`)은 셸 밖이다. 1절 화면 표의 경로·권한·플랜은 그대로이고, 이 장은 메뉴 순서·묶음·셸 동작과 새 경로 1개(`/trailers`, 8.4절)만 더한다. 다른 제품과 `_design-guide` 공용 패턴은 바꾸지 않는다(book-trailer 전용).
+
+디자인 시안: Design 캔버스 "Book Trailer 대시보드 · GNB 초안"(홈, GNB 접힘, 모바일 서랍 + 메뉴 화면 6개: 책, 새 책 등록, 트레일러, 코치, 요금·크레딧, 설정). 시안의 로고 표시는 "Book Trailer"(브랜드명은 01장 D-1 가칭, 390px 헤더에서 "NOMAD Book Trailer"는 "새로 만들기" 버튼과 겹쳐 줄였다)이고, 라이트(교정지) 테마만 그린다. 시안의 책 제목·수치·데이터는 모두 [예시]다.
+
+### 8.1 결정 상태
+
+| 항목 | 상태 | 이 장의 기본값 |
+|---|---|---|
+| 1절 왼쪽 내비게이션(홈, 책, 코치, 설정) | 확정(1절 :7) | 네 메뉴를 그대로 두고 "새 책 등록", "트레일러", "요금·크레딧"을 더한다(8.3절) |
+| 트레일러 화면(`/trailers/[id]/*`)에서 GNB | 미정(01장 D-18) | 숨기고 트레일러 머리줄로 바꾼다(8.5절) |
+| 트레일러 전체 목록 새 경로 `/trailers` | 미정(01장 D-19) | 둔다(8.4절) |
+| 운영 카탈로그(`/ops/catalog`) 위치 | 미정(01장 D-20) | 플랫폼 관리자에게만 아래 고정 링크 1개. 화면은 `(ops)` 경로 묶음(06장 TR-06-045) |
+| 연결된 앱 링크 | 미정(01장 D-21) | FLORA Publishing 1개(P1, 조건부). SceneFlow 링크는 두지 않는다 |
+| 다채널 예약·레이더·숏폼 트랙·자동화 | 확정(07장 TS-03, 01장 D-10) | GNB 자리 없음. 다른 제품(SceneFlow) |
+| 셸 색 | 확정(08장 3.1절 :55-77, 원칙 1 :41) | 무채색 크롬. 주 버튼·현재 위치는 인쇄 먹 #1A1C21, 형광 밑줄 #F5D547은 셸에 쓰지 않는다 |
+
+### 8.2 헤더
+
+| 위치 | 요소 | 규칙 |
+|---|---|---|
+| 왼쪽 | 햄버거(1024px 미만만), GNB 접기/펼치기, 로고 | 접기 상태는 사용자별로 기억(localStorage, 실패해도 기본 펼침). 접기 상태 외에 플랜·역할을 브라우저에 저장하지 않는다(CLAUDE.md 7절 "localStorage 잠금해제" 금지) |
+| 가운데 | 검색 버튼 "메뉴·책·트레일러 검색 ⌘K" | 메뉴 이름, 원본 기능 이름(8.8절 원본 열), 책 제목, 트레일러 제목으로 찾는다. 예: "쿠팡" → 책 상세 › 구매 링크·성과, "레이더" → "SceneFlow 제품 기능" 안내, "워터마크" → 요금·크레딧. 단축키 ⌘K/Ctrl+K는 셸 화면에서만(작업실 단축키 3.5절 :218과 겹치지 않는다) |
+| 오른쪽 | + 새로 만들기 ▼ | 새 책 등록, FLORA에서 가져오기(P1, creator 이상, 모듈러만), 새 트레일러(책 고르기 → `/trailers/new?book=`), 코치에게 묻기. 버튼은 primary(먹 바탕, 3.1절 "[새 책 등록] 주 행동, 먹색 버튼" :125). viewer에게는 비활성 |
+| 오른쪽 | 플랜 배지, 크레딧 잔액, 조직 전환, 알림(제안), 도움말 | 잔액은 1절 :7 "상단 잔액"과 TR-F-002(`01_PRD.md:55`). 누르면 요금·크레딧. 조직 전환·도움말은 1절 :7 그대로. 알림(제안)은 렌더 완료, 실패 환불, 렌더 만료 7일 전(TR-F-054 `01_PRD.md:106`), 승인 결과(P1)를 해당 화면으로 연결하고 새 표를 만들지 않는다(`renders`, `generation_runs`, `reviews` 조회) |
+
+### 8.3 GNB 메뉴 순서
+
+| 묶음 | 메뉴 | 경로(1절) | 탭·하위 | 배지 | 원본 |
+|---|---|---|---|---|---|
+| (맨 위) | 홈 | `/home`(:17) | 8.6절 | - | SM 대시보드(더미 → 실데이터, TS-11), Toon 첫 진입 빠른 완성 |
+| 제작 | 책 | `/books`(:18) | 하위 `/books/[id]`(:20) 탭 개요 · 트레일러 · 구매 링크·성과 · 브랜드 키트 · 위키, `/books/[id]/wiki`(:21) | - | SM 쿠팡 링크 관리, Toon 프로젝트 목록 |
+| 제작 | 새 책 등록 | `/books/new`(:19) | 원고 → 서지 → 권리 → 표지·키트(3.2절), 1단계 탭 업로드 · 붙여넣기 · FLORA(P1) | FLORA P1 | Toon 온보딩 템플릿·5분 완성 |
+| 제작 | 트레일러 | `/trailers`(새 경로, 8.4절) | 단계 필터, 하위 `/trailers/new?book=`(:22) | 확인 필요 수 · (제안) | SM 작업(jobs) 화면, Toon 숏폼 변환 |
+| 도우미 | 코치 | `/coach`(:27) | 대화 목록 + 본문(책 선택) | - | SM STT·TTS, 확정 결정 13·14·16 |
+| (아래 고정) | 요금·크레딧 | `/settings/billing`(:29) | 플랜 · 잔액 · 이번 달 사용 · 원장 · 결제 내역 · 크레딧팩 | - | SM 크레딧 선차감/환불, SM Toss 결제/구독, Toon 무료 워터마크·구독 |
+| (아래 고정) | 설정 | `/settings/profile`(:28) | 계정 · 조직(:28) · 멤버(:28, publisher, P1) · 브랜드 키트(:30) · AI 처리(:31) · 로그인 방법(:32, C단계, P1) · YouTube 채널(:33, creator+, P1) | - | SM 계정, SM YouTube 40채널 OAuth |
+| (아래 고정, 조건부) | FLORA Publishing ↗ | FLORA 제품(새 탭) | - | - | 01장 TR-F-015(:67), D-3 |
+| (아래 고정, 플랫폼 관리자만) | 운영 카탈로그 ↗ | `/ops/catalog`(:35) | 문법 · 템플릿 · 음악 · 라이선스 검증(별도 `(ops)` 화면) | - | Toon 에셋 라이브러리(운영자 측), TR-F-120 |
+
+트레일러 안 화면(`/trailers/[id]/brief`(:23), `/studio`(:24), `/renders`(:25), `/publish`(:26))은 GNB 메뉴가 아니다. 홈 "이어서 하기", 트레일러 목록, 책 상세 트레일러 탭에서 들어가고 셸은 8.5절을 따른다. "설정" 메뉴는 1절에 `/settings` 첫 화면 경로가 없어 `/settings/profile`(계정)로 연다. "요금·크레딧"은 1절 경로상 설정 아래(`/settings/billing`)지만 헤더 잔액·잠금 안내·크레딧 부족 시트가 모두 이 화면으로 가므로(5절 :337-338) 아래 고정 메뉴로 따로 둔다. 설정 탭 목록에도 같은 화면이 남는다.
+
+SM 13개 메뉴의 정확한 이름은 원본 `src/components/layout/Sidebar.tsx`에 있으나 이 저장소에 없다(`docs/reference/reviews/NOMAD_Shorts_Maker.md:10`, 미확인). 8.8절은 리뷰의 기능 목록(`:36-44`)과 디렉토리 표(`:52-55`) 기준이다. Toon-Factory는 기획 문서만 있어 메뉴가 없고(`docs/reference/reviews/Toon-Factory.md:4`) 기능 이름 기준이다.
+
+### 8.4 트레일러 목록 (`/trailers`, 새 경로)
+
+| 항목 | 내용 |
+|---|---|
+| 목적 | 모든 책의 트레일러를 단계와 렌더 상태로 한 곳에서 본다. 1절에는 트레일러 목록 경로가 없고 홈은 최근 12개(3.1절 :138), 책 상세는 그 책의 것만(3.3절 :156) 보여 준다. publisher는 책 100권 × 책당 20편까지라(`01_PRD.md:169`) 책을 하나씩 열어서는 찾기 어렵다 |
+| 구성 | 단계 칸(브리프 고르기 · 장면 편집 · 렌더 · 렌더 완료·게시) + 전체 표(트레일러, 책, 문법, 포맷·길이, 최근 렌더, 상태). 필터: 책, 단계, 포맷, 확인 필요만 |
+| 데이터 | `trailer.trailers`, `scenes` 개수·에셋 상태, `renders`(상태, 진행률, `expires_at`), compliance 결과. 새 테이블 없음 |
+| 행동 | 행을 누르면 그 트레일러의 현재 단계 화면(`/trailers/[id]/brief`·`studio`·`renders`·`publish`), "새 트레일러"는 책 고르기 → `/trailers/new?book=`, 실패·만료 렌더 다시 렌더(같은 스냅샷, 5절 :349) |
+| 패턴 / 시각 | B + N(제안) / - |
+| 권한 / 플랜 | 멤버(viewer 읽기) / 전 플랜 |
+| 우선순위 | P0(제안). 소유 작업은 TR-06-033(홈·책 목록·책 상세)에 1줄 더한다(06장 반영은 별도 승인 후). D-19가 (b)로 닫히면 이 절과 GNB 행을 지운다 |
+
+### 8.5 트레일러 화면 셸 (브리프·작업실·렌더·게시, D-18 기본값)
+
+| 항목 | 내용 |
+|---|---|
+| 목적 | 작업실(3.5절, "제품의 핵심 화면")에서 장면 목록 + 상영관 무대 + 속성 3단을 넓게 쓰고, 트레일러 밖으로 나갈 길은 하나만 둔다 |
+| 구성(제안) | GNB 대신 트레일러 머리줄 1줄: "← 책 이름"(책 상세 트레일러 탭으로), 트레일러 제목, 단계 탭 [브리프] [작업실] [렌더] [게시], 오른쪽에 잔액과 렌더 버튼. 3.5절 와이어프레임 머리줄(:189)과 3.4절 경로 줄("북위 37도의 약속 > 북위 37도 티저 > 브리프", :165)을 이 한 줄로 합친다 |
+| 근거 | 작업실은 1280px 이상에서만 3단이고 1024~1279px은 속성 패널을 시트로 바꾼다(6절 :357). 펼친 GNB 248px를 두면 1440px 화면의 작업실 폭이 1192px로 3단 기준(1280px)보다 좁아진다. 3단 각 패널 폭 수치는 03장·08장에 없다(미확인) |
+| 데이터 | `trailers`(제목, `status`, 책), 잔액은 대시보드 셸과 같은 조회 |
+| 행동 | 단계 탭은 1절에 있는 4개 경로로만 간다. 선행 단계가 없으면 그 탭은 열리되 빠진 단계 버튼을 안내한다(5절 `TR004` 행 :340) |
+| 반응형 | 768px 이하는 단계 탭을 가로 스크롤 탭으로. 작업실 본문은 6절 :357 그대로(미리보기 + 장면 목록 탭 + 속성 시트) |
+| 권한 / 플랜 | 1절 각 행 그대로(viewer는 작업실 속성 읽기 전용, :24) |
+| 우선순위 | P0. 셸 공통 부분은 TR-06-033이 만들고 머리줄 장착은 TR-06-035(브리프)·036(작업실)·037(렌더·게시)에 1줄 요청한다(06장 반영은 별도 승인 후) |
+
+`/trailers/new?book=`(:22, 마법사 I 2단계)은 아직 트레일러가 없는 설정 화면이라 GNB를 그대로 두고 현재 위치는 "트레일러"로 표시한다. `/books/new` 마법사도 GNB를 그대로 둔다(4단계 폼이고 폭 제약이 없다).
+
+### 8.6 홈 구성 (`/home`, 1절 홈 행 구체화)
+
+위에서 아래 순서. 1절 홈 행 "최근 작업물 + '새 책' 주 행동", 패턴 "M + 최근 목록(`DASHBOARD_PATTERNS.md` 5장 '만드는 도구')"(:17)과 3.1절 와이어프레임(:121-136)을 따르고, 맨 위에 "오늘 처리할 일"을 더한다(제안). 주인공은 만들던 트레일러다(3.1절 목적 "만들던 트레일러를 이어서 하거나 새 책을 시작한다"). 큰 숫자 KPI 카드와 크레딧 잔액 칸을 두지 않는다(3.1절 :138 "크레딧 표시 없음(조회만)". 랜딩 원칙 4.3절 :279 "숫자 통계 없음"을 홈에도 적용, 제안). 잔액은 헤더에만 있다.
+
+| 순서 | 영역 | 내용 | 누르면 |
+|---|---|---|---|
+| 1 | 오늘 처리할 일 | 검사 확인 필요(compliance WARN·FAIL, 5절 :342), 원고와 다른 인용(:341), 실패한 작업(환불 완료, :344), 7일 안에 만료되는 렌더(TR-F-054), 권리 확인 전 책(:339). 각 개수, 0이면 칩을 숨긴다 | 트레일러 목록(필터 적용), 해당 장면, 렌더 기록, 렌더 기록, 책 상세 |
+| 2 | 이어서 하기(넓게) + 새 책 등록(좁게) | 트레일러: 최근 수정순, 각 행에 5단계 진행 막대(브리프 · 스토리보드 · 장면 에셋 · 렌더 · 게시)와 단계 배지(3.1절 "장면 6/8 · 렌더 완료 · 브리프 고름", :131). 썸네일은 상영관 무대 위 포스터(:129). 새 책: 원고 파일 올리기, 붙여넣기, FLORA에서 가져오기(P1) | 트레일러의 현재 단계 화면, 새 책 등록 |
+| 3 | 진행 중 작업(넓게) + 최근 활동(좁게) | 작업: 원고 분석(장 단위 12/24장), 장면 이미지·내레이션(장면 칸 진행 점), 렌더(프레임 비율 % + 예상 남은 시간). 모두 Realtime, 서버가 보고한 값만(5절 :336, CLAUDE.md "실행 상태" 시간 기반 가짜 진행률 금지). 활동: 렌더 완료, 환불, 브리프 도착, 분석 완료, 승인 결과(P1) | 작업 상세(렌더 기록·책 상세), 해당 화면 |
+
+데이터가 없으면 숫자 0 대신 빈 상태 문구를 쓴다(5절 :348 홈 "첫 책을 등록하면 30초 트레일러를 무료로 만들 수 있습니다. [새 책 등록]").
+
+### 8.7 셸 동작 규칙
+
+| 항목 | 규칙 |
+|---|---|
+| 폭 | 펼침 248px, 접힘 64px 아이콘 레일(제안). 접힌 상태에서 메뉴 이름은 툴팁, 개수 배지는 점 |
+| 현재 위치 | 왼쪽 3px 막대(인쇄 먹) + 배경 + `aria-current="page"`. 헤더 아래 경로 표시("Book Trailer › 묶음 › 메뉴"). 책 상세·위키는 "책", 트레일러 만들기는 "트레일러"가 현재 위치 |
+| 잠금 | 메뉴 단위 잠금은 없다(7개 메뉴 모두 전 플랜). 탭·버튼 단위 잠금(FLORA 가져오기 creator+, 멤버 publisher, YouTube 채널 creator+, 포맷 4종·1080p·90초 creator+)은 숨기지 않고 Lucide `Lock` 아이콘 + 플랜 배지로 보인다. 들어가면 5절 플랜 부족 문구(:338) + 플랜 비교. 판정은 서버 `plans.features`이고 클라이언트 표시는 보조다(CLAUDE.md 2절 "서버가 정본") |
+| 개수 배지 | 트레일러(확인 필요: WARN·FAIL·원고와 다른 인용). 0이면 숨긴다 |
+| 트레일러 화면 | 8.5절(D-18 기본값) |
+| 반응형 | 1024px 미만은 GNB를 숨기고 햄버거 → 왼쪽 서랍(264px, 배경 딤, 바깥 누르면 닫힘). 플랜 배지·검색은 서랍 안으로. 375px에서 가로 스크롤 없음(6절 :357) |
+| 접근성 | GNB는 `<nav aria-label="주 메뉴">`, 묶음 제목은 목록 머리, 모든 메뉴 버튼 높이 40px 이상(`--row-default`), 포커스 링은 안쪽 2px `--color-focus` + 바깥 2px `--color-highlight`(08장 3.7절), 서랍은 포커스 가둠 + Esc 닫기(6절 "모든 대화상자 Esc"). 상태는 색 + 아이콘 + 글자 |
+| 색 | 08장 3.1절 의미 토큰만 쓴다(`--color-canvas`, `--color-surface`, `--color-text`, `--color-text-muted`, `--color-primary`, `--color-border`, 상태색). `--color-highlight`는 포커스 링 바깥 고리 외에는 셸에 쓰지 않는다(인용·선택 장면 전용). 사용자 브랜드 키트 색은 앱 크롬에 쓰지 않는다(08장 0장). 08장에 없는 GNB 보조 값(보조 글자색 2단, 떠 있는 면 배경)은 시안에서 제안 값을 쓰고 TR-06-010 비주얼 검토에서 정한다 |
+| 금지 | 메뉴에 이모지(08장 3.6절), 판매·순위·수상 보장 문구(01장 6.5절), 수집하지 않은 지표의 0 표시, 다채널 예약·레이더·블로그 포스팅 메뉴(다른 제품) |
+
+### 8.8 원본 메뉴 → 새 위치
+
+| 원본 | 원본 메뉴·기능 | 새 위치 | 근거 |
+|---|---|---|---|
+| NOMAD Shorts Maker | 대시보드(하드코딩 더미) | 홈. 더미 배열·난수 지표는 폐기(07장 TS-11), 실데이터만 | `docs/reference/reviews/NOMAD_Shorts_Maker.md:27`, `:94` |
+| NOMAD Shorts Maker | 트렌드 레이더(플레이보드·채널파인더·블링) | 다른 제품(SceneFlow 트렌드 레이더 `/dashboard/radar`). 이 제품은 폐기(07장 TS-03) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:36`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:974` |
+| NOMAD Shorts Maker | Track A/B/C 숏폼 파이프라인 | 다른 제품(SceneFlow 숏폼 A·B). 이 제품의 영상 제작은 트레일러(문법 6종 → 스토리보드 → 렌더)로 새로 만든다(07장 TS-03) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:37`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:977` |
+| NOMAD Shorts Maker | Track D 롱폼, Track E Lofi | 다른 제품(SceneFlow 스토리보드·음원). 이 제품은 폐기(07장 TS-03) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:38` |
+| NOMAD Shorts Maker | YouTube 40채널 OAuth/쿼터 관리 | 설정 › YouTube 채널(P1, creator+, 업로드만). 다채널은 다른 제품(SceneFlow 채널, 01장 D-10) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:39`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:981` |
+| NOMAD Shorts Maker | 크레딧 선차감/환불 | 요금·크레딧 + 헤더 잔액 + 버튼 옆 `CreditCost`. 환불은 진행 중 작업·최근 활동에 표시 | `docs/reference/reviews/NOMAD_Shorts_Maker.md:40` |
+| NOMAD Shorts Maker | Toss 결제/구독 | 요금·크레딧(`/settings/billing`) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:41` |
+| NOMAD Shorts Maker | 블로그/인스타 멀티채널 포스팅(구 제품 Content Automator) | 다른 제품(NOMAD Blog). 인스타그램은 게시 화면의 메타데이터 팩 인스타 탭(복사·ZIP만, 3.7절 :226) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:10`, `:42` |
+| NOMAD Shorts Maker | n8n/Make/ReactFlow 자동화(노드 29종) | 다른 제품(SceneFlow 자동화 캔버스). 이 제품 범위에 없다(01장 2장) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:27`, `:43`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:989` |
+| NOMAD Shorts Maker | 스케줄 큐(Vercel cron) | 트레일러 › 게시의 YouTube 업로드 예약(P1, 3.7절 :226). 다채널 예약은 다른 제품(SceneFlow 업로드 큐·캘린더, 01장 D-10) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:44`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:980` |
+| NOMAD Shorts Maker | Compliance 검증 | 트레일러 › 작업실 하단 compliance 바와 렌더 전 검사(3.5절 :204, `ComplianceList`). 홈 "검사 확인 필요" 칩 | `docs/reference/reviews/NOMAD_Shorts_Maker.md:8` |
+| NOMAD Shorts Maker | STT → 번역 → TTS, 무음컷 | TTS는 작업실 내레이션(같은 목소리 규칙), STT는 코치 음성·내레이션 받아쓰기(3.8절 :233-234), 번역은 다국어판 Phase 2(TR-F-134), 무음컷은 다른 제품(SceneFlow) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:8` |
+| NOMAD Shorts Maker | 쿠팡(파트너스 링크) | 책 상세 › 구매 링크·성과(제휴 여부 표시, 대가성 문구 자동 첫 줄 TR-F-061). 쿠팡파트너스 계정 연동은 다른 제품(SceneFlow 제휴 링크) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:28`, `01_PRD.md` 6.7절, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:982` |
+| NOMAD Shorts Maker | 링크인바이오(`/lb/[username]`) | 셸 밖 공개 단축 링크 `/b/[code]`가 책 구매 링크 역할을 한다. 링크인바이오 자체는 다른 제품(SceneFlow 링크인바이오) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:55`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:984` |
+| NOMAD Shorts Maker | 공개 랜딩(`/landing/[slug]`) | 다른 제품(SceneFlow 랜딩 페이지). 이 제품의 공개 화면은 셸 밖 `/samples` | `docs/reference/reviews/NOMAD_Shorts_Maker.md:55`, `D:/WorkSpace/platform/docs/products/sceneflow/03_SCREENS_UX.md:983` |
+| NOMAD Shorts Maker | 마케팅·가격·로그인(`/`, `/pricing`, `/login`) | 셸 밖 공개 화면(1절 :13·:15·:16) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:52` |
+| NOMAD Shorts Maker | 브랜드커넥트(Playwright) | 다른 제품(NOMAD Blog 브랜드커넥트, SceneFlow 브랜드커넥트) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:21`, `D:/WorkSpace/platform/docs/products/nomad-blog/03_SCREENS_UX.md:505` |
+| NOMAD Shorts Maker | 계정(CRUD) | 설정 › 계정·조직 | `docs/reference/reviews/NOMAD_Shorts_Maker.md:28` |
+| NOMAD Shorts Maker | Mock 로그인(localStorage) | 폐기(07장 TS-08). 개발용 패널은 셸 밖 `/login` A단계만(7.1절) | `docs/reference/reviews/NOMAD_Shorts_Maker.md:83` |
+| Toon-Factory | 모듈형 캔버스(3단 에디터: 좌 에셋 탭 · 중앙 캔버스 · 우 레이어 패널) | 트레일러 › 작업실의 3단 구조(장면 목록 · 상영관 무대 · 속성)만 이어받는다. 자유 캔버스·말풍선·표정 교체는 폐기(07장 TS-04) | `docs/reference/reviews/Toon-Factory.md:30`, `:37`, `:119` |
+| Toon-Factory | 컷 스트립, Undo/Redo, 자동 저장 | 트레일러 › 작업실 띠지 스트립(`SceneStrip`), 장면 저장(`save_scene` 낙관적 동시성), 되돌리기 1단계 | `docs/reference/reviews/Toon-Factory.md:98`, `:119` |
+| Toon-Factory | 에셋 라이브러리 | 운영자 측은 운영 카탈로그(`/ops/catalog`, 플랫폼 관리자 링크). 사용자 측은 작업실 음악 큐·이미지 올리기. 캐릭터 모듈은 다른 제품(toon-factory, Phase 2 연계 TR-F-131) | `docs/reference/reviews/Toon-Factory.md:30`, `:36` |
+| Toon-Factory | 숏폼 변환(컷 → 9:16 MP4) | 트레일러 › 렌더(포맷 5종, 서버 렌더) | `docs/reference/reviews/Toon-Factory.md:38` |
+| Toon-Factory | 브라우저 FFmpeg.wasm 렌더 | 폐기(07장 TS-09). 작업실 브라우저 미리보기는 다운로드 경로 없음 | `docs/reference/reviews/Toon-Factory.md:38`, `:45` |
+| Toon-Factory | PNG/ZIP 내보내기 | 트레일러 › 렌더 기록 내려받기(포스터 PNG · SRT · ZIP), 게시 ZIP | `docs/reference/reviews/Toon-Factory.md:99` |
+| Toon-Factory | Freemium(무료 워터마크, 구독 시 영상 내보내기) | 요금·크레딧. 워터마크는 서버가 플랜으로 결정(free·480p) | `docs/reference/reviews/Toon-Factory.md:39`, `:100` |
+| Toon-Factory | GEO·공개 작품 페이지 | 셸 밖 `/samples`(JSON-LD VideoObject, TR-06-044) | `docs/reference/reviews/Toon-Factory.md:39`, `:101`, `:127` |
+| Toon-Factory | 랜딩·가격, 온보딩 템플릿 3종(첫 진입 5분 완성) | 랜딩·가격은 셸 밖. 첫 진입은 홈 빈 상태 + 새 책 등록(KPI "첫 트레일러 20분", 07장 :75) | `docs/reference/reviews/Toon-Factory.md:126` |
+| Toon-Factory | LoRA 화풍 통일·자동 누끼 | 폐기(07장 TS-05) | `docs/reference/reviews/Toon-Factory.md:36` |
+| Toon-Factory | B2B 마스코트 모듈화 셋업 | 이 제품 범위 밖. 소유 제품은 toon-factory로 보되 그 제품 범위에 들어 있는지는 미확인. 출판사 자기 브랜드 납품은 화이트라벨 Phase 2(TR-F-133) | `docs/reference/reviews/Toon-Factory.md:39` |
+
+### 8.9 1절과 달라진 점
+
+| 1절 위치 | 이전 | 지금 |
+|---|---|---|
+| 셸 문장(:7) | 왼쪽 내비게이션 홈, 책, 코치, 설정 4개, 묶음 없음 | 8.3절 순서가 GNB 정본. "새 책 등록"(경로 :19), "트레일러"(새 경로), "요금·크레딧"(경로 :29)을 더하고 묶음 "제작"·"도우미"와 아래 고정을 둔다. :7 문장은 고치지 않는다 |
+| 화면 표 | 트레일러 전체 목록 경로 없음 | `/trailers` 추가(8.4절, D-19 결정 전 기본값) |
+| 화면 표 `/ops/catalog`(:35) | 셸 구분 없음(:7 "모든 앱 화면은 앱 셸") | 작가 GNB에는 플랫폼 관리자용 링크 1개만, 화면은 `(ops)` 경로 묶음(D-20 기본값) |
+| 홈 행(:17), 3.1절(:121-136) | 새 책 등록 버튼 → 이어서 하기 → 진행 중 작업 | 8.6절: "오늘 처리할 일"을 맨 위로(제안), 새 책 등록은 이어서 하기 옆 좁은 칸으로. 주 행동 "새 책 등록"은 헤더 "+ 새로 만들기"의 첫 항목으로도 남는다 |
+| 작업실·브리프 와이어프레임(:165, :189) | 셸과의 관계가 적혀 있지 않음 | 8.5절: 트레일러 화면은 GNB를 숨기고 트레일러 머리줄(D-18 기본값) |
+| 08장 3.1절 토큰 | - | 그대로. 셸은 의미 토큰만 쓰고 hex를 하드코딩하지 않는다. 시안의 보조 값 2개는 TR-06-010 전까지 제안 |

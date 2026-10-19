@@ -104,3 +104,18 @@
 | 단계 전환 | 에이전트가 스스로 단계를 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한 뒤에만 B·C 작업을 시작한다. 네이버 경로도 스파이크 뒤 `[DECISION]`으로 기록 |
 | 소유 경로 | 004: `src/lib/auth/`, `src/app/api/dev/login/`, `scripts/dev/`, `src/proxy.ts`. 027: `(auth)/login/`. 067: `(auth)/signup/`·`reset/`·`auth/callback/`, `(auth)/login/providers/`(027에서), `src/lib/auth/oauth/`와 콜백 연결부(004에서 이어 받음), `onboarding/terms/`. 068: `oauth/kakao.ts`, `app/settings/login-methods/`. 069: `oauth/naver.ts`, `(auth)/auth/naver/`(브리지만), `scripts/auth/`. 다른 작업 파일은 1줄 요청(06장 8.1·8.4절) |
 | 이 제품의 작업 | A: TN-06-004(모듈 경계, Mock, 시드, 가드, `finishLogin`), TN-06-027(개발용 패널). B: TN-06-067(P0, W6 맨 앞, G1 후). C1: TN-06-068(P1, W7, G2 후). C2: TN-06-069(P1, W7, G2 후) |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D25~D28). toon-factory 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 셸 범위 | 셸은 `/app/*`와 `/admin/catalog`에만 둔다. `/editor/*`, 온보딩(`/onboarding/*`, `/app/onboarding`), 공개 화면(`/`, `/pricing`, 인증, 약관)에는 GNB를 렌더하지 않는다. 에디터 머리줄은 03장 3.1절 그대로 |
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열은 `src/components/shell/nav.ts` 한 곳에 두고(제안) 화면마다 따로 만들지 않는다. 셸(`src/app/app/layout.tsx`, `src/components/shell/**`)은 TN-06-017에 더한다(제안, 06장 반영은 별도 승인 후). 공용 진입 파일 `src/app/layout.tsx`는 TN-06-004 소유 그대로 |
+| 현재 작품 | "현재 작품" 묶음의 `seriesId`는 URL에서만 읽는다. 최근 연 작품 기억은 표시 편의(localStorage, 실패해도 작품 목록으로)이고, 작품 접근 판정은 RLS다. 다른 조직 작품 id면 404 |
+| 잠금 | 플랜이 안 되는 메뉴를 숨기지 않고 잠금 배지로 보인다(협찬 Pro). 판정은 서버 `toon.plan_features(org)`이고 클라이언트 값을 믿지 않는다. 예외: 운영 묶음은 `platform_admin`이 아니면 렌더하지 않고 서버도 403 |
+| 미정 자리 | 협찬 경로(D26)는 결정 전까지 `/app/series/[seriesId]/sponsorships` 기본값으로 문서·시안만 두고, TN-06-063 착수 전에 D26을 닫는다. `/app/settings` 탭 우선순위는 D27 결정 전까지 1절 P1 |
+| 홈 데이터 | 더미 배열·난수 지표 금지. 데이터가 없으면 03장 5장 빈 상태. 개수 배지는 기존 표 조회(`toon.exports`, `toon.episodes.script`, `core.wiki_pages`, `core.ai_documents`, `toon.sponsorships`, `core.jobs`)로만 만들고 새 표를 만들지 않는다 |
+| 색 | 토큰만(`apps/toon/src/styles/tokens.css`). 셸에 hex를 하드코딩하지 않는다. 선택·강조는 `--color-text`(펜선 남색), 효과선 노랑(`--color-accent`)은 셸에 쓰지 않는다(랜딩 CTA·내보내기 확정·스크롤 진행 표시 전용). 상태는 아이콘 + 텍스트 |
+| 협찬·AI 표시 | 셸·홈 어디에도 대가성 문구, 가상인물 표시, AI 생성 표기를 끄는 토글을 두지 않는다(2절 협찬 표시·AI 표시) |

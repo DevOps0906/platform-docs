@@ -126,3 +126,17 @@
 | 단계 전환 | 에이전트가 스스로 넘기지 않는다. 사람(대표님)이 G1·G2 조건(`AUTH_ROADMAP.md` 4장, 6장, `06_AGENT_PLAN.md` 8.2절)을 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 남긴 뒤에만 B·C 작업을 시작한다 |
 | 소유 경로 | 003: `src/lib/auth/`, `src/app/(auth)/`, `src/app/api/dev/login/`, `scripts/dev/`. 055: `src/app/(auth)/`·`src/lib/auth/`(003에서 이어 받음), `src/components/auth/`, `src/app/auth/callback/`, `src/app/onboarding/terms/`, `src/app/api/onboarding/terms/`. 056: `src/lib/auth/providers/kakao.ts`, `src/components/auth/kakao/`, `src/app/dashboard/settings/login-methods/`. 057: `src/lib/auth/providers/naver.ts`, `src/components/auth/naver/`, `scripts/auth/`, 브리지면 `src/app/auth/naver/`. `supabase/config.toml` 제공자 설정은 001 파일에 요청(06장 8절) |
 | 작업 ID | A: AS-06-003(W1). B: AS-06-055(P0, W6, G1 통과 후 시작. 028·054의 공개 베타 재실행이 055를 기다린다). C1: AS-06-056(P1, W7, G2 후). C2: AS-06-057(P1, W7, G2 후) |
+
+## 9. 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D-22~D-25). 신비로운AI 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열은 `apps/astro-ai/src/components/shell/nav.ts` 한 곳에 두고(제안) 화면마다 따로 만들지 않는다. 셸(`src/app/dashboard/layout.tsx`, `src/components/shell/**`)은 대시보드 레이아웃 소유 작업 AS-06-021에 더한다(제안, 06장 반영은 별도 승인 후). GNB의 모든 경로는 03장 1절 표에 있는 것만 쓴다 |
+| 잠금 | 플랜으로 잠그는 메뉴가 없다. `features.ai_chat`이 false면 "AI 대화" 메뉴와 헤더 버튼을 숨긴다. 판정은 서버 `session_context('astro')`이고 클라이언트 값을 믿지 않는다. 접기 상태 외에 역할·플랜·사용자 id를 localStorage·쿠키에 쓰지 않는다(8절 금지 패턴) |
+| 없는 메뉴 | 크리에이터·마켓·구독·궁합·연간 운세·카카오 알림톡·ePub 메뉴를 만들지 않는다(07장 P-03·P-04, 01장 2절 Phase 2). 해설서 편집 화면을 만들지 않는다(07장 P-01) |
+| 셸 밖 | `/wiki`, `/onboarding/*`, 인증·마케팅 화면, `/admin/*`은 이 셸을 쓰지 않는다. 운영 콘솔 링크는 `platform_admin`에게만 렌더한다(D-25) |
+| 검색 | 헤더 검색은 메뉴 이름, 03장 8.7절 원본 이름, 보관함 호칭(`alias`)만(D-23). 생년월일·실명·질문 같은 암호화 필드를 검색 색인이나 클라이언트 상태에 두지 않는다 |
+| 색 | 3.2절 의미 토큰만 쓰고 셸에 hex를 하드코딩하지 않는다. 금니(`--color-accent`)는 셸에 쓰지 않는다. 현재 위치·헤더 "+ 리딩 시작"·진행 막대는 쪽빛. 오행 5색은 명식표·오행 막대에서 범례와 함께만 |
+| 수치 | 홈과 배지에 데이터가 없으면 칩을 숨기거나 03장 5절 빈 상태 문구를 쓴다. 가짜 수치·큰 숫자 KPI 카드를 넣지 않는다(7절 가상 후기·카운터 금지와 같은 이유) |

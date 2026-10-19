@@ -106,3 +106,20 @@ pnpm lint && pnpm -r typecheck && pnpm -r build && pnpm test:e2e && pnpm test:pe
 | 경계 | 모듈은 자기 표만 쓴다. 다른 모듈은 `server/index.ts` 공개 함수나 잡으로만 부른다(`modules/README.md`) |
 | 이벤트 | 별도 이벤트 버스 없음. 게시 후 처리 등은 잡(`news.post_publish` 등)으로 보낸다 |
 | 추출 | 두 번째 제품이 쓰면 공용 스키마로 꺼낸다(`D:/WorkSpace/platform/docs/products/_platform-core/COMMON_MODULES_ROADMAP.md` 2·3장). 꺼내기 전에 다른 제품이 이 제품 코드를 복사하지 않는다 |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D-19~D-22). local-news 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다. 원본 없음(신규 기획).
+
+| 항목 | 규칙 |
+|---|---|
+| 대상 | 셸은 편집국 콘솔 `(newsroom)` 하나와 운영 콘솔 `(ops)`(D-22 기본값: 같은 AppShell, 메뉴 배열만 다름)이다. 독자 사이트 `(reader)`·플랫폼 사이트 `(marketing)`·로그인·개설 신청·온보딩에는 셸을 씌우지 않는다 |
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열은 편집국·운영 각 1개 파일(예: `src/components/patterns/app-shell/nav.newsroom.ts`, `nav.ops.ts`, 제안)에만 두고 화면마다 따로 만들지 않는다. AppShell과 `(newsroom)/layout.tsx`·`(ops)/layout.tsx`의 소유 작업이 06장에 없다(미확인). 06장 반영은 별도 승인 후 |
+| 역할 | 역할 밖 메뉴는 렌더하지 않는다(자물쇠로 보이지 않는다). 판정은 서버 `news.is_newsroom(org, 역할)`이고 쿠키·localStorage의 역할·플랜을 믿지 않는다. 직접 URL은 403 |
+| 플랜 잠금 | D-21 기본값: 플랜 밖 메뉴(지면 PDF·리포트 프로, 업소 스탠다드)는 잠금 배지로 보인다. 판정은 서버 `core.plans.features`(01장 4.2절)만 |
+| 조직 | 현재 신문사는 경로 `/[org]`로 정한다(03장 1.2절, 제안). 조직 전환기는 경로를 바꾸고 쿠키에 현재 조직을 두지 않는다 |
+| 헤더 | AI 크레딧 잔액은 편집국 상단 상시(03장 3장 머리). 매체정보 미완성 띠는 publisher·editor에게 모든 화면 상단 고정이고 닫기 버튼을 두지 않는다. `MOCK AUTH · 로컬 전용` 배지는 Stage A에서만 |
+| 설정 | D-19 기본값: 새 `/settings` 경로를 만들지 않는다. GNB "설정"은 역할에 보이는 첫 탭(publisher·editor는 `/settings/profile`). `/taxonomy/*`, `/import`, `/export`도 설정 탭 줄에 보인다 |
+| 홈 데이터 | 숫자는 오늘 게시 기사·오늘 조회 2개만(03장 3.1절). 유입은 05장 리퍼러 분류 확정 전까지 "—"와 "유입 집계 준비 중". 가짜 숫자·난수 지표 금지. contributor는 내 초안만 |
+| 색 | 셸은 플랫폼 토큰(`--color-brand` 데스크 청)만 쓴다. 테넌트 색·hex 하드코딩 금지, 테넌트는 사이드바 로고만 |
+| 미정 자리 | 속보 바 등록·웹 푸시 발송·SNS 공유(D-20)는 결정 전까지 GNB 메뉴를 만들지 않는다 |
