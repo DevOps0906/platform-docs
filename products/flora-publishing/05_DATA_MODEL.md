@@ -379,3 +379,19 @@ AUTH_ROADMAP 8장의 publishing "A 추가 페르소나"는 "-"(필수 추가 없
 | 이미지 생성 크레딧 | `credit_ledger` ref_type 'image_gen' | — | 선차감·실패 환불(01장 13.3절 D48). 단가 미정 |
 
 저장 경로: `exports/<org_id>/publishing/assets/<book_id>/<asset_id>.<확장자>`. 책 삭제 시 함께 삭제한다. RLS는 `book_id`의 조직 기준(기존 `books`와 같음).
+
+---
+
+## 13. 발행본과 산출물 (2026-10-20 추가, 검토용)
+
+01장 14절 D49~D54의 데이터다. 아래는 제안이며 확정 전이다. 기존 `book_exports`는 그대로 두고 발행본이 그것을 참조한다.
+
+| 테이블 | 필드 | 설명 |
+|---|---|---|
+| `publishing.book_releases` | `id, org_id, book_id, version_label('1.0'…), content_hash, status('queued'\|'running'\|'succeeded'\|'partially_failed'\|'failed'), requested_by, created_at, completed_at, note` | 발행본. `content_hash`는 그 시점 원고·표지·판형 해시. 한 책의 `(book_id, content_hash)`는 중복 발행본을 만들지 않고 기존 것을 가리킨다 |
+| `publishing.release_artifacts` | `id, release_id, format('pdf'\|'epub'\|'print_interior'\|'print_cover'\|'audiobook'), export_id → book_exports(pdf·epub), voice_job_ids uuid[](audiobook), status, storage_path, bytes, pages, spine_mm, expires_at, credit_ledger_id, meta jsonb(판형·용지·제본·블리드·구간 목록)` | 발행본의 형식별 산출물. 부분 실패는 산출물 단위로 기록 |
+| `books.published_version` | text | 가장 최근 성공 발행본의 판. 서가·준비 목록에서 "개정판 가능" 판단에 쓴다 |
+
+- 서가 쿼리: `book_releases` + `release_artifacts`를 조직 기준으로 조회(RLS는 `book_id`의 조직, 기존 `book_exports`와 같음).
+- 보관: 산출물 파일은 90일(제안) 뒤 `expires_at`로 만료, 메타는 남긴다. 크레딧 규칙은 기존 선차감·환불을 그대로 쓴다(`ref_type='release_artifact'`).
+- 일괄 발행은 책 × 형식마다 산출물 1행이고 각각 독립으로 성공·실패한다.
