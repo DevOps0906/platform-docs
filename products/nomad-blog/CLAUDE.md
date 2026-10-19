@@ -146,3 +146,17 @@
 | 단계 전환 | G1(AUTH_ROADMAP 4장)·G2(6장)는 사람(대표님)이 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한다. 에이전트가 스스로 판정하지 않는다. C2 경로도 `[DECISION]`(스파이크 결과) |
 | 소유 경로 | 004: `src/lib/auth/`, `src/app/(auth)/`(`signup/`, `reset-password/` 제외), `src/app/api/dev/`, `src/components/dev-auth/`, `scripts/dev/`. 057: `src/app/auth/callback/`, `src/app/(auth)/signup/`, `src/app/(auth)/reset-password/`, `src/components/auth-providers/`, `src/app/onboarding/terms/`(로그인 페이지 버튼 장착·`finishLogin` 연결은 004 파일에 1줄 요청). 058: `src/components/auth-providers/kakao.tsx`(057 디렉토리에 파일 추가 요청), `src/app/(app)/settings/login-methods/`. 059: `src/components/auth-providers/naver.tsx`, `src/app/auth/naver/`, `src/app/auth/link/`, `src/server/auth-bridge/`, `scripts/auth/`. `supabase/config.toml`은 001에 요청 |
 | 이 제품의 작업 ID | A: BL-06-004(W1). B: BL-06-057(P0, G1 후, W6에서 054 뒤·056 앞). C1: BL-06-058(P1, G2 후, W7). C2: BL-06-059(P1, G2 후, W7, 네이버 블로거 비중으로 검수 신청 먼저) |
+
+## 9. 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D-25~D-28). nomad-blog 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열은 `src/components/shell/nav.ts` 한 곳에 두고(제안) 화면마다 따로 만들지 않는다. 셸(`src/app/(app)/layout.tsx`, `src/components/shell/**`)은 BL-06-021에 더한다(제안, 06장 반영은 별도 승인 후) |
+| 잠금 | 플랜이 안 되는 메뉴를 숨기지 않고 잠금 배지로 보인다. 판정은 `src/server/entitlements`(내부에서 `entitled_plan_code` + `plans.features`, 4장)이고 클라이언트 값을 믿지 않는다. 발행 캘린더는 Free도 열리고 예약만 잠근다 |
+| 대가성 문구 | GNB 수익 묶음에 보여도 경로는 `/settings/disclosure`, 편집은 owner/admin. 셸·홈 어디에도 문구를 끄거나 숨기는 토글을 두지 않는다(2장 대가성 문구) |
+| 영상 기능 | 클립형 캠페인 지원과 원고 → 클립 OSMU는 "연결된 앱: 영상(SceneFlow)" 링크와 BL-F-036 넘김만. 영상 화면을 blog 안에 만들지 않는다(확정 결정 1, 19) |
+| 홈 데이터 | 더미 배열·난수 지표 금지(7장). 데이터가 없으면 03장 5장 빈 상태. 제휴 수익 열은 제공자 리포트가 있을 때만, 제휴 클릭 영역은 owner/admin만 |
+| 색 | 토큰만(`src/styles/tokens.css`). 셸에 hex를 하드코딩하지 않는다. 선택 상태는 `--color-link`(잉크 청), 교정 적색(`--color-accent`)은 셸에 쓰지 않는다(승인 버튼 한 곳, 03장 3.10절). 다크 기본값은 D-25 결정 전까지 정하지 않는다 |
+| 미정 자리 | 자동화 메뉴(D-28), `/publications`(D-27)는 결정 전까지 만들지 않는다. `/settings`는 D-26 기본값으로 목록 화면만 |

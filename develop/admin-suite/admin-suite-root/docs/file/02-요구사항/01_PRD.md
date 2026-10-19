@@ -427,3 +427,16 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 | D-24 | erp·sms Stage C 도입 여부 | (a) G2 후 도입(C1·C2, P2) (b) 도입하지 않음(Google + 이메일 유지) | 미정(P2 선택, `AUTH_ROADMAP.md` 8장). 기관 직원은 업무 이메일로 초대·승인되므로 소셜 로그인 수요는 고객 기관 요청으로 판단한다(제안). (b)면 ADM-06-059, 060을 실행하지 않고 취소한다 | G2 판정 때 |
 
 이메일+비밀번호 로그인은 열린 결정이 아니다: 운영자 프로비저닝·초대 메일(비밀번호 설정)과 hms의 유일한 로그인 수단이므로 유지한다(3.5절).
+
+## 9. 대시보드 셸·GNB 결정 대기 (2026-10-19 추가, 03장 8장)
+
+03장 8장(헤더 + 좌측 GNB + 홈 구성)에서 사용자 결정이 필요한 항목이다. 결정 전에는 03장 8.1절 기본값으로 시안과 문서를 둔다. admin-suite 전용이고 다른 제품에는 적용하지 않는다. 앱 전환 메뉴를 두지 않는 것(확정 결정 2)과 역할 밖 메뉴를 렌더하지 않는 것(KIT-F-003)은 이미 정해진 규칙이라 여기에 넣지 않는다.
+
+| 번호 | 항목 | 선택지 | 기본값(제안) |
+|---|---|---|---|
+| D-25 | 플랜 기능 키가 꺼진 메뉴의 표시(erp·sms default 플랜의 `ai_wiki` false → 운영 위키·위키 검수, `ai_assistant` false → 어시스턴트 대화) | (a) 숨긴다(역할 밖 메뉴와 같은 방식) (b) 보이되 "Standard 플랜에서 사용" 안내 배지와 안내 화면 | (a)(제안). 03장 1절은 "화면 단위 플랜 제한이 없다"고 하면서 1.1절 위키 행은 `ai_wiki`로 막아 둘 사이 표시 규칙이 비어 있다. 이 제품은 계약형 출시(D-6 A)라 메뉴 업셀 경로의 쓸모가 작고, 잠긴 메뉴를 보이는 방식은 자물쇠 노출 금지 규칙과 헷갈린다. (b)로 바꾸면 안내 문구는 01장 6.4절 금지 문구를 통과해야 한다 |
+| D-26 | hms 역할 홈과 MVP 동안 admin 홈 | (a) doctor `/queue`, staff `/calendar`, lab_tech `/lab`, admin은 `/dashboard`(P1) 전까지 `/queue` (b) admin MVP 홈을 `/staff`로 (c) `/dashboard`를 MVP로 앞당긴다 | (a)(제안). 03장 1.3절에서 `/dashboard`는 admin 전용 P1이라 MVP 기간 admin이 갈 홈이 정해져 있지 않다. 역할 홈은 `apps/hms/src/access.ts` 한 곳에만 적는다(02장 2절). 원본 `ROLE_HOME` 값은 이 저장소에 없다(미확인, `docs/reference/reviews/Hospital.md:72`) |
+| D-27 | sms 학교 설정 화면 | (a) 새 경로 `/admin/settings`(03장 8.4절, admin, P2) (b) 화면 없이 운영자 프로비저닝 값만 쓴다 | (a)(제안). `sms.workspaces.teacher_backfill_days`(05장)와 `sms.update_workspace_settings`(04장)가 있는데 03장 1.4절에 이를 고칠 화면이 없다. SMS-F-006은 "학교 설정 0~60"을 전제로 한다. 원본 HEAD에도 `admin/settings`가 있었다(`docs/reference/reviews/School_Management_System.md:17`) |
+| D-28 | 헤더 메뉴 검색 | (a) 지금 역할에 보이는 메뉴 이름과 원본 이름만 찾는 검색(⌘K) (b) 두지 않는다 | (a)(제안). 앱마다 GNB 메뉴가 15~17개(03장 8.3절)라 이름으로 찾는 길이 있으면 좋다. 상품·환자·학생 같은 업무 데이터는 찾지 않는다(hms 환자 검색은 접근 기록 대상, HMS-F-003). 원본 ERP 헤더 검색은 동작 없는 장식이었다(`docs/reference/reviews/ERP-Wesite.md:80`) |
+
+같이 확인할 것(결정 항목 아님): ERP 회사 설정의 우선순위가 이 문서 2절("설정 저장" MVP 직후 P1)과 03장 1.2절(`/settings` P2)에서 다르다(미확인). 03장 8장 GNB 배지는 03장 1.2절을 따랐다.
