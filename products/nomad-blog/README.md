@@ -48,6 +48,7 @@
 | `05_DATA_MODEL.md` | `blog` 스키마 4테이블, 상태 전이, RLS, 보안·데이터 결함 차단 설계, 모놀리스 차이, 검증 결과, 개발용 시드 페르소나(10절, 스키마 변경 없음, `owner_pro` 포함) |
 | `06_AGENT_PLAN.md` | 멀티에이전트 작업 59개(AI·음성·3D·디자인 시스템 16개, 인증 단계 3개(BL-06-057~059, 8절) 포함), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청(AI-R1~R7, 인증 8.3절) |
 | `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기 자산, 분석 "폐기" 전 항목, 복사 금지 결함, 아카이브 절차, 인증 단계 복사 금지(6절: 원본 `mock-auth`, 쿠키 역할 Mock, 콜백 `next` 무검증) |
+| `08_AGENCY_OPERATIONS.md` | 네이버 블로그 대행 운영 기준(통합 번들 연계, `../00_AGENCY_BUNDLE_STRATEGY.md`) |
 | `CLAUDE.md` | 개발 에이전트 지침, 인증 단계 규칙(8절) |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 `0001_core_lite.sql`(코어 원본 그대로), `0002_blog_domain.sql`, `seed.sql`(AI 라우팅 기본값 12행 포함) |
 | `../_supabase-modular/migrations/1300_blog.sql` | 통합 DB용 `blog` 스키마 조각 |

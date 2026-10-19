@@ -44,6 +44,7 @@
 | `05_DATA_MODEL.md` | `microweb` 스키마 10개 표(방명록 음성 연결 컬럼 2개 추가), 상태 전이, RLS, 리뷰 "높음" 결함(보안/데이터) 차단 설계, 모놀리스 차이, 개발용 시드 페르소나(10절: `studio_access` 허용·미허용) |
 | `06_AGENT_PLAN.md` | 작업 56개(AI·음성·3D·디자인 시스템 18개, 인증 단계 B·C 3개(8절) 포함. Stage A는 기존 MW-06-003), 웨이브, 모델 비율, 리뷰 작업 흡수표, 코어 요청 |
 | `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기, 복사 금지 결함(인증 단계 6절), 노출된 `.env.local` 처리, 아카이브 |
+| `08_AGENCY_OPERATIONS.md` | 웹 에이전시 영업·상품·제작 기준(통합 번들 연계, `../00_AGENCY_BUNDLE_STRATEGY.md`) |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | `0001_core_lite.sql`(6-A, 6-B, 9절 제거), `0002_microweb_domain.sql`, `seed.sql` |
 | 모듈러 조각 | `docs/products/_supabase-modular/migrations/1500_microweb.sql` |
