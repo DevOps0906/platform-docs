@@ -341,3 +341,25 @@ AUTH_ROADMAP 8장의 publishing "A 추가 페르소나"는 "-"(필수 추가 없
 |---|---|---|
 | `no_app` | `entitled=false`로 생성, `finishLogin`의 `bootstrap_app_for_org`가 메운다 | 앱 행이 1개라 가입 트리거가 자동 부트스트랩(`entitled=true`), `finishLogin`의 부트스트랩 단계는 무동작 |
 | 시드 대상 | `--app`을 여러 번 줄 수 있다(두 번째 앱부터 service_role `bootstrap_app_for_org`) | `--app publishing` 한 번 |
+
+## 11. 책 구성 페이지 저장 (2026-10-20 추가, 검토용)
+
+01장 11장(PB-F-070~076)의 저장 구조. 새 테이블은 만들지 않는다(1권 1행 JSON이면 충분, 제안). 2장 `books`의 기존 `layout_settings`(여백·본문 pt)와 `book_info`는 그대로 쓰고, 쪽별 편집 값만 새 컬럼 1개에 둔다.
+
+| 이름 | 타입 | NULL | 기본 | 설명 |
+|---|---|---|---|---|
+| `books.page_layout` | jsonb | N | '{}' | 쪽별 필드와 타이포. 키는 `cover`, `colophon`, `toc`, `chapter`, `content`, `epilogue`, `bookinfo`, `back`와 `preset`(예: `deep_navy_v1`). 각 쪽은 `{fields…, typo:{…}}`. 사용자 UPDATE 허용(원고와 같은 정책), 크기 제한 64KB(CHECK) |
+
+예시 구조(값은 예시):
+
+```json
+{ "preset": "deep_navy_v1",
+  "cover": { "publisher": "[예시] 출판사", "titleLine1": "[예시] 제목", "typo": { "titleSize": 38, "subtitleSize": 14 } },
+  "toc":   { "entries": [ { "text": "제1장", "num": "3", "bold": true }, { "text": "소제목", "num": "3", "indent": true } ] } }
+```
+
+- 병합 규칙: 저장된 값이 기본값 위에 얹힌다(없는 키는 기본값). 두 파일의 `loadData`와 같은 방식이고, 서버가 조립할 때(PB-F-023) 적용한다. 이렇게 하면 새 필드가 추가돼도 옛 책이 깨지지 않는다.
+- 검증: 키 화이트리스트(8종 + `preset`), 타이포 숫자 범위(PB-F-072), 모든 텍스트 escape. 쪽번호·판권 AI 표시 문구는 이 JSON이 아니라 서버가 고정으로 넣는다(사용자가 지울 수 없음).
+- RLS: `books`의 기존 정책을 그대로 쓴다(4절). 새 정책 없음.
+- 마이그레이션: `books`에 컬럼 추가 1건(기본 '{}', 기존 행 영향 없음). 파일 번호는 9절 규칙을 따르고 기획 승인 뒤에 만든다.
+- `layout_settings`와의 관계: `layout_settings`는 판형별 본문 pt·행간·여백(PB-F-007), `page_layout`은 쪽별 내용·타이포다. 두 값이 충돌하면(예: 본문 크기) `layout_settings`가 이긴다(제안).
