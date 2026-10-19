@@ -44,6 +44,7 @@
 | `07_SOURCE_MIGRATION.md` | 원본 자산 분류, 이식 자산 상세, 폐기 목록, 복사 금지 결함(인증 단계 6절), 아카이브 절차 |
 | `08_DESIGN_SYSTEM.md` | 디자인 시스템: 방향, 토큰(라이트/다크 대비 계산), 기본·제품 컴포넌트, 배지 매핑, 접근성, 구축 순서 |
 | `design/tokens.css` | Tailwind v4 토큰 초안(`apps/web/src/styles/tokens.css`의 출발점) |
+| `09_LANDING_PLAN.md` | 랜딩 v2 기획: v1 진단, 벤치마킹(Airbnb·Vrbo·스테이폴리오), 섹션 구조, 시각 규칙, 린 검증 |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/migrations/0001_core_lite.sql` | `MONOLITH_CORE_LITE.sql` 사본. SECTION 6-A, 6-B, 9를 이유 주석과 함께 지웠다 |
 | `supabase/monolith/migrations/0002_stay_domain.sql` | 도메인 테이블 7개, 트리거, RLS, 공개·호스트·게스트·정리 RPC. 현재는 이 파일이 정본(05장 8절) |
