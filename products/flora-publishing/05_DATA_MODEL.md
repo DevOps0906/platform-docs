@@ -363,3 +363,19 @@ AUTH_ROADMAP 8장의 publishing "A 추가 페르소나"는 "-"(필수 추가 없
 - RLS: `books`의 기존 정책을 그대로 쓴다(4절). 새 정책 없음.
 - 마이그레이션: `books`에 컬럼 추가 1건(기본 '{}', 기존 행 영향 없음). 파일 번호는 9절 규칙을 따르고 기획 승인 뒤에 만든다.
 - `layout_settings`와의 관계: `layout_settings`는 판형별 본문 pt·행간·여백(PB-F-007), `page_layout`은 쪽별 내용·타이포다. 두 값이 충돌하면(예: 본문 크기) `layout_settings`가 이긴다(제안).
+
+---
+
+## 12. 제작 모드와 이미지 자리 (2026-10-20 추가, 검토용)
+
+01장 13절 D44~D48의 데이터다. 아래는 제안이며 확정 전이다.
+
+| 대상 | 필드·테이블 | 타입 | 설명 |
+|---|---|---|---|
+| `books.production_mode` | text | 기본 'prose' | 'prose'(글형), 'poetry'(시집형), 'picturebook'(그림책형), 'tech'(기술서형). 집필 시작 뒤 변경 불가 |
+| `book_assets` | 테이블 | — | 책의 이미지 자리. `id, book_id, kind('screenshot'\|'diagram'\|'illustration'\|'poem_image'), anchor_section_id, page_no, status('empty'\|'filled'\|'stale'), source('upload'\|'ai'\|'mermaid'), storage_path, alt_text, meta jsonb(소프트웨어 버전·촬영일, 프롬프트, 시드), created_at` |
+| `book_characters` | 테이블 | — | 그림책 캐릭터 시트. `id, book_id, name, description, style_ref_path, palette jsonb, locked_at` |
+| `poems` | 테이블 | — | 시집형 시. `id, book_id, position, title, body, asset_id` |
+| 이미지 생성 크레딧 | `credit_ledger` ref_type 'image_gen' | — | 선차감·실패 환불(01장 13.3절 D48). 단가 미정 |
+
+저장 경로: `exports/<org_id>/publishing/assets/<book_id>/<asset_id>.<확장자>`. 책 삭제 시 함께 삭제한다. RLS는 `book_id`의 조직 기준(기존 `books`와 같음).
