@@ -141,3 +141,18 @@
 | 금지 패턴 | 쿠키·localStorage에 역할·플랜 저장, `mock-auth`, `nomad_role`, `nomad_plan`, `dev-user` 우회, `DEV_SEED_PASSWORD`를 `NEXT_PUBLIC_*`·브라우저 번들에 두기, 원격 Supabase에 시드 실행, 배포 환경에서 `/api/dev/login` 응답(404여야 함), 콜백 `next` 무검증, 이메일 일치만으로 계정 자동 병합, 하객·시안·쇼룸 화면에 로그인 버튼 |
 | 배포 env | `AUTH_MODE=live`, `AUTH_PROVIDERS=google,email`(B. `email`은 초대 수락 때 비밀번호를 정한 운영자의 이메일 로그인이며 공개 가입 폼은 없다). `AUTH_MODE=mock`이면 배포 빌드가 실패해야 한다 |
 | 초대 메일 | 발송·`studio_access` 부여는 관리자 라우트(MW-06-026, service_role). 수락은 `/auth/invite`(MW-06-054, `verifyOtp` type invite → 비밀번호 설정 → `finishLogin`). 초대 이메일과 다른 Google 계정으로 로그인하면 엔타이틀먼트 없는 새 사용자라 `/no-access` |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D-22~D-24). microweb-studio 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 셸 범위 | GNB 셸은 `src/app/studio/**`에만 둔다. 쇼룸(`src/app/(showroom)`), 하객 `/i/*`, 시안 `/p/*`, 로그인·초대·온보딩, `/pending`·`/403`·`/no-access`는 셸 밖이다. 하객·시안·쇼룸 번들에 셸 코드를 넣지 않는다 |
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열은 `src/studio/shell/nav.ts` 한 곳에 두고(제안) 화면마다 따로 만들지 않는다. 셸 레이아웃(`src/app/studio/layout.tsx`)의 소유 작업은 06장에 없으니(02장 3절 auth 행 `02_ARCHITECTURE.md:98`에만 있음) 착수 전에 06장에서 정한다(미확인) |
+| 역할 | 지식 관리 묶음은 platform_admin에게만 렌더한다. owner/admin 전용 행동은 메뉴를 숨기지 않고 버튼만 비활성 + 5장 권한 부족 문구. 판정은 `requireSession('microweb')` + `studio_access`이고 클라이언트 값(쿠키·localStorage 역할)을 믿지 않는다 |
+| 단계 배지 | P1·Phase 2 메뉴는 배지로 자리만 보이고 기능 코드를 미리 만들지 않는다. 크레딧 화면은 `self_service` 조직에만 동작하고 대행 조직에는 안내만(D-9) |
+| 색 | 토큰만(`src/styles/tokens.css`). 셸에 hex를 하드코딩하지 않는다. 선택 상태는 청자(`--color-accent`), 인주(`--color-cta`)는 셸에 쓰지 않는다(쇼룸 "견적 문의"와 3D 도장 전용, 03장 4.3절) |
+| 홈 데이터 | 개수·목록은 서버 집계에서 받는다. 더미 배열·난수 지표 금지, 데이터가 없으면 03장 5장 빈 상태. 검색·알림·최근 활동에 문의자·하객의 이름·연락처·계좌·본문을 보이지 않는다(감사 기록 규칙과 같음) |
+| 번들 | 셸·홈에 three.js를 import하지 않는다(스튜디오 번들 0바이트, 03장 4.6절) |
+| 미정 자리 | 관리자 초대·포트폴리오 화면(D-22), `/studio/guests`(D-23), 셀프 사용자 전용 GNB(D-24)는 결정 전까지 만들지 않는다 |

@@ -186,3 +186,17 @@ P0 작업은 대응 테스트 작업(`06_AGENT_PLAN.md` 7.1절)이 녹색이어�
 | 컴포넌트 경계 | `web/src/components/marketing/**`은 웹 `(marketing)` 경로에서만. 데스크톱 앱 공용 `packages/ui`에 넣지 않는다 |
 | 소유 경로 | 065 `web/src/features/landing-proof/**`, `web/public/proof/**`, `scripts/proof/**`. 066 `docs/arch-studio/experiments/`. 067 `web/src/features/adoption-steps/**`. 068 `web/src/app/(marketing)/tools/**`, `web/src/features/proposal-time/**`. 069 `web/src/components/marketing/**` |
 
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 11장(D-31~D-34). Arch Studio 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다. 셸은 데스크톱 앱 창(Tauri)이고 웹(`web/`)에는 이 셸이 없다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 8.3절 표가 정본: 프로젝트 / 법규(법규 채팅, 법규 위키) / 아래 고정(크레딧, 라이선스, 설정). 메뉴 배열은 `desk/src/routes/` 옆 한 곳(예: `nav.ts`, 제안, AR-06-004)에 두고 화면마다 따로 만들지 않는다. GNB의 모든 경로는 03장 1절 표에 있는 것만 쓴다 |
+| 프로젝트 화면 | 프로젝트 안 화면 8개는 GNB 메뉴가 아니라 상단 탭이다. D-31 결정 전에는 GNB를 64px 레일로 접고 셸 헤더 한 줄에 탭을 둔다(03장 8.4절) |
+| 잠금 | 메뉴를 숨기지 않는다(03장 1절 :37). 로컬 기능은 Rust `license.rs`가 검증한 라이선스 파일, 클라우드 기능은 호출마다 서버 `arch.org_features`로만 판정한다. GNB 접기 상태 외의 상태·플랜·권한을 `local_settings`·`localStorage`에 쓰지 않는다(2장 "로컬 SQLite는 권한을 정하지 않는다") |
+| 로그인·오프라인 | 로그인 없이 쓰는 PC와 오프라인에서도 클라우드 메뉴를 숨기지 않고 "로그인"·"오프라인" 배지로 보인다. 프로젝트·라이선스 상태 보기·설정은 막지 않는다 |
+| 브라우저 화면 | 결제·구매·`/account/*`는 셸 안에 넣지 않고 `openExternal`로만 연다 |
+| 없는 메뉴 | 사주·운세 메뉴(FortuneDocs 원본 기능)를 만들지 않는다. 이식하는 것은 "결정적 수치는 엔진, LLM은 서술만" 원칙뿐이다(03장 8.7절) |
+| 색·수치 | 4.3절 토큰만. 엔벨로프 청록은 셸에 쓰지 않고, 콘크리트는 글자·아이콘에 쓰지 않는다. 홈에 큰 숫자 KPI 카드와 크레딧 잔액 칸을 두지 않고, 데이터가 없으면 칩을 숨기거나 빈 상태 문구를 쓴다. 진행률은 서버가 보고한 단계만 |

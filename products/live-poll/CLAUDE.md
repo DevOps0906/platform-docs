@@ -92,3 +92,21 @@
 | 단계 전환 | 에이전트가 스스로 단계를 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과` / `[DECISION] G2 통과`로 기록한 뒤에만 LP-06-049 / 050·051을 시작한다. C2 경로도 `[DECISION]`(01장 D20) |
 | 소유 경로 | 003: `src/lib/auth/`, `src/app/api/dev/login/`, `src/proxy.ts`, `scripts/dev/`, `src/app/(auth)/`(A 구성). 049: `src/app/(auth)/`(003에서 이어 받음), `src/app/auth/callback/`, `src/app/onboarding/terms/`. 050: `src/lib/auth/providers/kakao.ts`, `src/app/(host)/settings/login-methods/`. 051: `src/lib/auth/providers/naver.ts`, `src/lib/auth/naver/`, `src/app/auth/naver/`(브리지만), `scripts/auth/`. 배지·`db:seed-users`는 001, 약관 단계 연결은 037, 설정 탭 링크는 021 파일에 1줄 요청(06장 8.1, 8.4절) |
 | 이 제품 작업 ID | A: LP-06-003(W1). B: LP-06-049(W6 맨 앞). C1: LP-06-050, C2: LP-06-051(W7, G2 후). 남은 결정: 01장 8.1절 D19(카카오 이메일), D20(네이버 경로), D21(이메일 가입 유지) |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D22~D25). live-poll 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다. 대상은 진행자 셸(`(host)`)이고 청중·발표·오버레이 화면은 셸 밖이다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 8.3절 표가 정본. 메뉴 배열·묶음은 `src/components/shell/nav.ts` 한 곳에 두고(제안) 화면마다 따로 만들지 않는다. 셸 레이아웃 소유 작업은 06장 반영 전까지 미정(01장 9장) |
+| 경로 | 메뉴 경로는 03장 1절 표에 있는 것만. 홈은 `/events`이고 `/dashboard`를 만들지 않는다. 새 경로 없음 |
+| 현재 행사 | "현재 행사" 묶음은 URL `[id]`로만 정한다. localStorage·쿠키에 현재 행사나 역할·플랜을 적지 않는다. 다른 조직 행사 `[id]`는 서버 404, 칩·경로 표시에 그 제목을 렌더하지 않는다 |
+| 역할 | 역할 밖 메뉴는 렌더하지 않는다(member는 설정 없음, viewer는 행사 목록·결과·위키 읽기·로그인 방법만). 판정은 서버 `session_context('poll')`의 `org.role` |
+| 셸 밖 | `/present/[id]`는 GNB에서 새 창으로만 연다. `/overlay/*`, `/join`, `/e/*`에 셸·GNB·로그인 버튼을 넣지 않는다. 청중 경로 코드(`(participant)`, `api/p`, `lib/realtime-auth`)를 셸 작업에서 import하거나 고치지 않는다 |
+| 어시스턴트 | 헤더 전역 버튼을 만들지 않는다. 진행자 콘솔·행사 편집의 오른쪽 시트만(03장 1절) |
+| 개수 배지 | 서버 집계 값만, 0이면 숨김. 주기 fetch로 갱신하지 않는다(폴링 금지). 콘솔 배지는 진행자 토픽 수신 때만 |
+| 검색 | 메뉴 이름·원본 이름·조직 행사 제목만. 청중 질문·닉네임을 검색 대상에 넣지 않는다 |
+| 크레딧 | 헤더는 AI 크레딧 잔액만 보인다(D24 기본값). 셸 코드가 `consume_credits`를 부르지 않는다 |
+| 토큰 | 셸은 `src/styles/tokens.css` 의미 기반 이름만. GNB 배경은 객석 남색(03장 4.3절). 셸 코드에 hex를 하드코딩하지 않는다. 응답 주황은 셸에 쓰지 않는다 |
+| 금지 | 메뉴 이모지, 하드코딩 개수·KPI, 미검증 수치("0.5초 실시간" 등), 잠금 배지(판매 플랜 모두 기능 키 true) |

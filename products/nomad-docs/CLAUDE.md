@@ -166,3 +166,20 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 | 외부 랜딩 자료 | 다른 회사 랜딩의 문구·수치·주장과 다크 글래스 비주얼 금지(`LANDING_PERSUASION.md` 1장) |
 | 컴포넌트 경계 | `web/src/components/marketing/`은 `(marketing)` 경로에서만 import |
 | 소유 경로 | 066 `web/src/features/landing-proof/`, `web/public/proof/`, `scripts/proof/`. 067 `docs/nomad-docs/experiments/`. 068 `web/src/app/(marketing)/insight/`, `web/content/insight/`. 069 `web/src/app/(marketing)/tools/time-compare/`, `web/src/features/time-compare/`. 070 `web/src/components/marketing/` |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본 03장 9장, 결정 대기 01장 10장(D-28~D-31). NOMAD Docs 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다. 변경 기록: 2026-10-19 03장 9장, 01장 D-28~D-31(7장 변경 기록 표의 추가분).
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 9.3절 표가 정본. 메뉴 배열은 한 파일(`web/src/features/shell/nav.ts`, 제안, 소유 DC-06-038)에 두고 화면마다 따로 만들지 않는다. GNB 경로는 03장 1절 표에 있는 것과 D-28 기본값 `/app/documents`만 쓴다 |
+| 잠금 | 메뉴는 숨기지 않는다. 탭·버튼 잠금(DOCX·ZIP, 연결·구성원, 발신 웹훅, Phase 2 유형)은 잠금 배지 + 5절 플랜 한도 문구. 판정은 서버 `docs.org_features`·`DC006`이고 클라이언트 값을 믿지 않는다. localStorage에는 GNB 접기 상태만 쓴다(역할·플랜 금지) |
+| 현재 프로젝트 | D-29 결정 전에는 `/app/projects/[pid]/**`에서만 "현재 프로젝트" 묶음을 보인다. `pid`는 URL에서만 읽고 서버가 조직을 다시 확인한다(다른 조직 id는 404) |
+| 새 경로 | `/app/documents` 화면과 `GET /api/documents`는 D-28 확정과 04장·06장 반영 승인 전에는 만들지 않는다. 시안과 03장 9.4절은 기본값으로만 둔다 |
+| 단축키 | ⌘K/Ctrl+K는 커맨드 팔레트(D-31 기본값). 편집기에서 같은 키를 다른 동작에 등록하지 않는다 |
+| 모바일 | D-30 결정 전에는 1024px 미만 서랍만. 하단 탭을 만들지 않는다 |
+| 색 | 3.25절 의미 토큰만, hex 하드코딩 금지. 선택 상태·새로 만들기는 `--color-accent`(결재청). `--color-seal`(인주)은 셸·GNB·배지에 쓰지 않는다 |
+| 수치 | 홈과 배지에 데이터가 없으면 칩을 숨기거나 5절 빈 상태 문구를 쓴다. 가짜 수치·큰 숫자 KPI 카드·시간 기반 진행률을 넣지 않는다 |
+| 셸 밖 | 랜딩·요금·약관·계산기·인사이트(`(marketing)`), 로그인·온보딩, `/admin/*`는 이 셸을 쓰지 않는다. 운영 콘솔 링크는 `platform_admin`에게만 렌더한다 |
+| 경로 불일치 | 02장 디렉토리 표(:41-44)와 06장 DC-06-038·061 소유 경로(`(app)/dashboard/`, `(app)/pipeline/`)는 `/app/*` URL과 맞지 않는다(03장 9.9절). 셸 작업 전에 사람이 기준을 정하고, 그 전에는 03장 1절 URL을 정본으로 본다 |
