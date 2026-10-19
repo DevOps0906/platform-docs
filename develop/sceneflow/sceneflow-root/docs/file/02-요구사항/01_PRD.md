@@ -726,3 +726,14 @@ MVP는 "스토리보드 구조를 아는 편집"에 집중한다. 실사 영상 
 - Text-to-Image Arena 2026-08(2차 출처): https://www.blogdumoderateur.com/ia-10-generateurs-images-performants-aout-2026/
 - GPT Image 2 가격(2차 출처): https://aireiter.com/blog/gpt-image-2-api-pricing
 - OpenAI Videos API·Sora 2 종료(2026-09-24, 2차 출처): https://techjacksolutions.com/ai-brief/openai-videos-api-sora-2-deprecated-september-2026/
+
+## 12. 대시보드 셸·GNB 결정 대기 (2026-10-19 추가, 03장 10장)
+
+03장 10장(헤더 + 좌측 GNB + 홈 구성)에서 사용자 결정이 필요한 항목이다. 결정 전에는 03장 10.1절 기본값으로 시안과 문서를 둔다. SceneFlow 전용이고 다른 제품에는 적용하지 않는다.
+
+| 번호 | 항목 | 선택지 | 기본값(제안) |
+|---|---|---|---|
+| D-45 | 대시보드 포인트 색 | (a) 민트 #00C9A7(원본 Shorts Maker 토큰) (b) 타임코드 블루(현재 03장 3.2절) | (a)(제안). 원본 브랜드를 이어 간다. Track E 민트와 겹치므로 E는 문자 라벨로 구분. 결정 전 정본은 (b) |
+| D-46 | 작업 현황 메뉴 따로 두기 | (a) `/dashboard/jobs` 메뉴 (b) 홈 안 잡 목록만 | (a)(제안). 원본 BS "작업" 메뉴와 YSM 5단계 스튜디오를 잇는다 |
+| D-47 | 자동화 캔버스 메뉴 노출 | (a) Advanced 잠금 + "저장만" 배지로 보인다 (b) 실행 기능 전까지 숨긴다 | (a)(제안). 잠금 메뉴는 업셀 경로가 된다. 실행은 Phase 2 |
+| D-48 | YSM Track C "SaaS"의 뜻 | 원본 확인 필요 | 미확인. 확인 전까지 GNB에 자리를 두지 않는다 |
