@@ -99,3 +99,19 @@ pnpm test:ai
 | 단계 전환 | 에이전트가 단계를 스스로 바꾸지 않는다. 사람(대표님)이 G1·G2를 판정하고 task `log.md`에 `[DECISION] G1 통과`, `[DECISION] G2 통과`로 기록한 뒤에 B·C 작업을 시작한다. C는 G2 때 D-24("도입")도 함께 기록돼야 시작하고, C2 경로(`supabase_custom` 또는 `bridge`)는 스파이크 결과를 `[DECISION]`으로 남긴다(D-23) |
 | 소유 경로 | 007: `packages/admin-kit/src/auth/`(아래 하위 제외), 앱 3개 `src/app/api/dev/login/`, `scripts/dev/`. 058: `packages/admin-kit/src/auth/{callback,providers,terms}/`, 앱 3개 `src/app/auth/callback/`, `src/app/(auth)/`(014·022·029에서 이어 받음). 059: `providers/kakao.ts`, `login-methods/`. 060: `providers/naver.ts`, erp·sms `src/app/auth/naver/`(브리지만), `scripts/auth/`. 개발용 패널 장착은 014·022·029, 배지 장착은 020·028·033, `db:seed-users` 스크립트 등록은 005에 1줄 요청 |
 | 남은 결정 | 01장 8.1절 D-21(hms Google), D-22(카카오 이메일), D-23(네이버 경로), D-24(erp·sms Stage C 도입 여부) |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 8장, 결정 대기 01장 9장(D-25~D-28). admin-suite 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 8.3절 표(앱별 8.3.1 erp, 8.3.2 hms, 8.3.3 sms)가 정본. 메뉴 배열·묶음·역할 홈은 앱의 `src/access.ts` 한 곳에 두고(02장 2절, `defineAccess`에 묶음·순서를 함께 선언, 제안) 화면이나 AppShell 안에서 따로 만들지 않는다. 셸은 admin-kit AppShell 하나(KIT-F-008) |
+| 역할 밖 메뉴 | 렌더하지 않는다. 자물쇠·흐린 메뉴·"권한 없음" 배지도 금지(KIT-F-003). 판정은 서버의 `session_context`·`my_role`과 같은 매트릭스이고 클라이언트 값을 믿지 않는다. 직접 URL은 서버 403 |
+| 플랜 | 화면 단위 플랜 잠금이 없다. `ai_wiki`·`ai_assistant`가 꺼진 조직은 해당 메뉴를 숨긴다(D-25 결정 전 기본값). 판정은 서버의 `plans.features` |
+| 앱 전환 | 헤더·GNB에 다른 앱(erp·hms·sms) 링크를 두지 않는다(확정 결정 2). hms 셸에 공용 서버·다른 앱 주소를 넣지 않는다 |
+| 경로 | 메뉴 경로는 03장 1절 표에 있는 것만. 새 경로는 8.4절 sms `/admin/settings` 1개(D-27 기본값). 경로가 아직 없는 화면은 배열에 넣지 않는다(사이드바 링크 404 0, ADM-06-035) |
+| 개수 배지 | 서버 집계 값만, 0이면 숨김. 하드코딩 금지 |
+| 개인정보 | 경로 표시·메뉴 검색·개수 배지에 환자·학생·직원 이름을 넣지 않는다. 헤더 검색은 메뉴 이름만(D-28), hms 환자 검색은 `/patients` 화면에서만(접근 기록) |
+| 토큰 | 셸은 `apps/<app>/src/theme/tokens.css`의 의미 기반 이름만 쓴다(03장 3.2절). 앱별 테마(ERP 코발트 라이트, HMS 야간 병동 다크, SMS 칠판 인디고 라이트)를 섞지 않고 셸 코드에 hex를 하드코딩하지 않는다 |
+| 금지 | 메뉴 이모지, 알림 벨 장식, 크레딧 표시, sms student 셸의 어시스턴트·마이크 버튼 |

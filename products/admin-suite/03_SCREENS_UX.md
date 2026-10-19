@@ -426,3 +426,200 @@ OAuth 가입은 가입 폼을 거치지 않으므로 이 제품의 온보딩 첫
 ### 7.4 설정 → 로그인 방법 (Stage C, erp·sms만)
 
 `/settings/account` 안의 구역. 연결된 제공자 목록, 연결(`linkIdentity`), 해제(남는 로그인 수단이 1개 이상일 때만), 감사 `auth.identity_link`·`auth.identity_unlink`(`AUTH_ROADMAP.md` 7.3절). D-24가 "도입하지 않음"이면 만들지 않는다. hms는 Stage C 제외라 이 구역이 없다.
+
+## 8. 대시보드 셸과 좌측 GNB (2026-10-19 추가, 원본 프로젝트 메뉴 이행)
+
+이 장은 admin-suite 앱 3개(erp, hms, sms)의 공통 셸(헤더 + 좌측 GNB)과 홈 구성을 정한다. 목적은 원본 프로젝트의 메뉴와 기능이 모두 새 구조 어딘가로 이행되게 하는 것이다: ERP-Wesite 화면 5개(대시보드/재고/판매/인사/설정, `docs/reviews/ERP-Wesite.md:23`, 사이드바 링크 라우트 `:51`), Hospital 핵심 기능 7개(`docs/reviews/Hospital.md:19-25`, 화면 경로 `:39-43`), School_Management_System 사이드바 4개 메뉴와 HEAD에만 남은 관리자·학생 화면(`docs/reviews/School_Management_System.md:17`, `:37`, `:39`), basic-master-module의 기본 AppShell 제안(`docs/reviews/basic-master-module.md:103`). 1절 화면 표의 경로·역할·플랜·우선순위는 그대로이고, 이 장은 메뉴 순서·묶음·셸 동작과 새 경로 1개(sms `/admin/settings`)만 더한다. 셸 컴포넌트는 admin-kit AppShell(KIT-F-008, 01장 3.1절) 하나이고 앱은 메뉴 배열과 토큰만 바꾼다. 다른 제품과 `_design-guide` 공용 패턴은 바꾸지 않는다(admin-suite 전용).
+
+세 앱은 따로 배포되는 별개 앱이다(확정 결정 2, README 2절). 그래서 한 앱 안에 다른 앱으로 가는 전환 메뉴를 두지 않는다. 메뉴 묶음은 앱마다 다르고, 공통 화면(1.1절 `/assistant`, `/wiki`, `/settings/*`)만 세 앱이 같은 이름·같은 경로로 쓴다.
+
+디자인 시안: Design 캔버스 "Admin Suite 대시보드 · GNB 초안". 시안 기본은 ERP 앱, master_admin 역할, standard 플랜 화면이다. 캔버스의 앱 전환(ERP · HMS · SMS · SMS 학생)은 메뉴 묶음을 비교하기 위한 시안 보기 전용이며 실제 앱 헤더에는 없다. 시안의 토큰은 ERP 라이트(4.3절)이고 HMS 야간 병동 다크, SMS 칠판 인디고는 8.6절 표에 적는다. 시안의 수치·이름·데이터는 모두 [예시]다.
+
+### 8.1 결정 상태
+
+| 항목 | 상태 | 이 장의 기본값 |
+|---|---|---|
+| 앱 전환 메뉴 | 확정(확정 결정 2, 앱 3개 별도 배포. hms는 별도 DB) | 헤더·GNB에 다른 앱 링크를 두지 않는다. 시안 캔버스의 전환은 보기 전용 |
+| 역할 밖 메뉴 | 확정(KIT-F-003 "매트릭스 밖 메뉴는 렌더되지 않는다(자물쇠 노출 금지)", 01장 3.1절, 이 장 5절 "권한 없음") | 렌더하지 않는다. 직접 URL은 서버 403(5절) |
+| 플랜 기능이 꺼진 메뉴(`ai_wiki`, `ai_assistant`) | 미정(01장 D-25) | 숨긴다(역할 밖 메뉴와 같은 방식) |
+| hms 역할 홈과 MVP 동안 admin 홈 | 미정(01장 D-26) | doctor `/queue`, staff `/calendar`, lab_tech `/lab`, admin은 `/dashboard`(P1) 전까지 `/queue`(제안) |
+| sms 학교 설정 화면 | 미정(01장 D-27) | 새 경로 `/admin/settings`를 둔다(8.4절) |
+| 헤더 메뉴 검색 | 미정(01장 D-28) | 메뉴 이름만 찾는 검색을 둔다(제안). 업무 데이터 검색은 하지 않는다 |
+| 앱 표시 이름 | 미정(01장 D-9) | "Admin Suite ERP", "Admin Suite Hospital", "Admin Suite School"(상표 확인 전) |
+
+### 8.2 헤더
+
+| 위치 | 요소 | 규칙 |
+|---|---|---|
+| 맨 위(Stage A만) | 고정 배지 `MOCK AUTH · 로컬 전용` | 7.1절 그대로. 배포 환경에서는 렌더하지 않는다 |
+| 왼쪽 | 햄버거(1024px 미만만, 6절), GNB 접기/펼치기(제안), 앱 이름 "Admin Suite ERP"(D-9) | 접기 상태는 사용자별로 기억(localStorage, 실패해도 기본 펼침). 역할·플랜은 localStorage에 쓰지 않는다(CLAUDE.md 인증 단계 규칙) |
+| 가운데 | 검색 버튼 "메뉴 검색 ⌘K"(제안, D-28) | 지금 역할에 보이는 메뉴 이름과 8.7절 원본 이름(예: "인사" → 임직원)만 찾는다. 상품·환자·학생 같은 업무 데이터를 찾지 않는다. hms 환자 검색은 접근 기록 대상이라(HMS-F-003) `/patients` 화면 안에서만 한다. 원본 ERP 헤더 검색은 동작 없는 장식이었다(`docs/reviews/ERP-Wesite.md:80`) |
+| 오른쪽 | + 새로 만들기 ▼(제안) | 역할이 할 수 있는 등록만. erp: 판매 등록, 입출고 기록, 상품 등록. hms: 예약 만들기, 환자 등록. sms: 출석 체크, 구성원 초대. 각 항목은 해당 화면이나 그 화면의 기존 모달·시트를 연다(새 화면 없음). 원본 ERP 헤더 액션 버튼은 어느 페이지도 연결하지 않은 무동작이었다(`docs/reviews/ERP-Wesite.md:80`) |
+| 오른쪽 | 어시스턴트 버튼 | 2.8절 1단계, 3.1절 채팅 패널(오른쪽 시트 400px). `ai_assistant`가 꺼졌거나 sms student면 버튼을 숨긴다(1.1절 채팅 패널 행) |
+| 오른쪽 | 계정 메뉴: 이름 + 역할 배지(RoleBadge, 3.2절), 플랜 이름(owner에게만, 제안), 로그아웃 | 로그아웃은 AppShell에 둔다(01장 3.5절). 원본 School은 로그아웃이 작업 트리 어디에도 없었다(`docs/reviews/School_Management_System.md:53`) |
+| 헤더 아래 띠 | Realtime 연결 끊김 "실시간 연결이 끊겼습니다. 다시 연결 중" + 마지막 갱신 시각 | 5절 그대로 |
+| 두지 않는 것 | 알림 벨, 크레딧 잔액 | 원본 ERP 알림 벨은 장식뿐이었고(`docs/reviews/ERP-Wesite.md:80`) 이식 대상에서 버렸다(README 3절 "헤더 장식"). 크레딧은 이 제품에 없다(CLAUDE.md 2절) |
+
+### 8.3 GNB 메뉴 순서
+
+모든 표는 그 앱에서 가장 넓은 역할(erp master_admin, hms admin, sms admin) 기준이다. 다른 역할은 01장 역할 매트릭스(3.2절 ERP 표, 1.3·1.4절 역할 접근 열)에 있는 메뉴만 보고, 묶음 안 메뉴가 0개면 묶음 제목도 숨긴다. 우선순위 배지(P1, P2, Phase 2)는 시안과 문서 표시용이며, 코드에서는 경로가 생긴 메뉴만 배열에 넣는다(사이드바 링크 404 0, 06장 ADM-06-035).
+
+#### 8.3.1 ERP (시안 기본)
+
+| 묶음 | 메뉴 | 경로(1절) | 탭·하위 | 배지 | 원본 |
+|---|---|---|---|---|---|
+| (맨 위) | 홈 | `/dashboard` | 8.5절 | - | ERP-Wesite 대시보드 |
+| 재고·판매 | 재고 | `/inventory` | 카테고리 필터 · 상품 상세 `/inventory/[id]`(P1) · 입출고/조정 시트 | 부족 SKU 수 | ERP-Wesite 재고 |
+| 재고·판매 | 판매 | `/sales` | 상태 탭(전체/대기/완료/취소) · 등록 모달 | - | ERP-Wesite 판매 |
+| 인사 | 임직원 | `/hr` | 권한 변경 모달 | - | ERP-Wesite 인사, 권한 수정 모달 |
+| 인사 | 가입 요청 | `/hr/requests` | 가입 코드 조회·재발급 | 대기 수 | ERP PRD Pending 승인 |
+| 인사 | 부서 | `/hr/departments` | 부서 트리 | P1 | ERP-Wesite 부서(조회만) |
+| 인사 | 내 정보 | `/me` | 전화 수정 | P1 | ERP PRD 임직원 정보 |
+| 지식 | 어시스턴트 대화 | `/assistant` | 대화 목록(채팅은 헤더 버튼) | - | 확정 결정 13 |
+| 지식 | 운영 위키 | `/wiki`, `/wiki/[...slug]` | 검색 · 분류 | - | 확정 결정 13 |
+| AI·지식 관리 | 문서 관리 | `/settings/knowledge` | 컬렉션 탭 · 업로드 | 색인 실패 수 | 확정 결정 13 |
+| AI·지식 관리 | 위키 검수 | `/settings/wiki` | 페이지 · 변경 이력 · 점검 결과 | - | 확정 결정 13 |
+| AI·지식 관리 | AI 사용량 | `/settings/ai-usage` | 기간 변경 | P1 | KIT-F-020 |
+| AI·지식 관리 | AI 처리 방식 | `/settings/ai` | 국외 이전 동의·철회 | - | 확정 결정 17 |
+| 관리 | 회사 설정 | `/settings` | 회사명 · 기본 안전재고 · 재고 부족 알림 | P2 | ERP-Wesite 설정 |
+| 관리 | 감사 로그 | `/settings/audit` | 기간 · 행위자 · action 필터 | P1 | ERP-Wesite 시스템 로그 |
+| 관리 | 플랜과 구독 | `/settings/billing` | - | Phase 2 | 없음(01장 2절 Toss 구독) |
+| (아래 고정) | 계정 | `/settings/account` | 이름 · 비밀번호 · 로그인 방법(Stage C, 7.4절) | - | KIT-F-013 |
+
+ERP 역할별로 보이는 메뉴(01장 3.2절 매트릭스): inventory_manager 홈·재고·지식, sales_manager 홈·재고(조회+출고)·판매·지식, staff 홈·내 정보·지식(`erp-rules-all`만). AI·지식 관리와 관리 묶음은 master_admin만 본다(문서 관리·위키 검수는 1.1절 "앱 관리자", AI 처리 방식·플랜은 owner).
+
+#### 8.3.2 HMS
+
+| 묶음 | 메뉴 | 경로(1절) | 탭·하위 | 배지 | 원본 |
+|---|---|---|---|---|---|
+| (맨 위) | 관리자 대시보드 | `/dashboard` | 8.5절 | P1 | Hospital 관리자 대시보드 |
+| 접수·진료 | 예약 캘린더 | `/calendar` | 월 · 주 · 일, 의사 필터 | - | Hospital 예약 캘린더 |
+| 접수·진료 | 대기열 | `/queue` | 의사별 열 · 가용 토글 | 대기 수 | Hospital 실시간 대기열 |
+| 접수·진료 | 환자 | `/patients` | 환자 상세 `/patients/[id]` · 환자 360 차트 `/patients/[id]/chart`(doctor) | - | Hospital 환자 목록·상세 |
+| 접수·진료 | 검사 | `/lab` | 상태 필터 · 입력 패널 | 승인 대기 수 | Hospital 실험실 검사 입력 |
+| 접수·진료 | 수납 | `/billing` | - | P1 | Hospital PRD 수납 |
+| 지식 | 어시스턴트 대화 | `/assistant` | - | - | 확정 결정 13 |
+| 지식 | 운영 위키 | `/wiki`, `/wiki/[...slug]` | - | - | 확정 결정 13 |
+| AI·지식 관리 | 문서 관리 | `/settings/knowledge` | - | 색인 실패 수 | 확정 결정 13 |
+| AI·지식 관리 | 위키 검수 | `/settings/wiki` | - | - | 확정 결정 13 |
+| AI·지식 관리 | AI 사용량 | `/settings/ai-usage` | - | P1 | KIT-F-020 |
+| 관리 | 직원 | `/staff` | 초대 · 역할 · 상태 | - | Hospital 역할 4개 |
+| 관리 | 의료정보 접근 기록 | `/settings/access-log` | 기간 · 행위자 · 환자 필터 | - | 기획 공백 3 |
+| 관리 | 감사 로그 | `/settings/audit` | - | P1 | KIT-F-012 |
+| (아래 고정) | 계정 | `/settings/account` | 이름 · 비밀번호(로그인 방법 구역 없음) | - | - |
+
+"접수·진료" 묶음의 순서는 2.5절 흐름(예약 → 접수·대기열 → 차트 → 검사 → 수납) 그대로다. hms에는 `/settings/ai`(2.11절 끝, 404)와 `/settings/billing`(contract 플랜)이 없다. 역할별: doctor 대기열·캘린더(조회)·환자·검사·지식, staff 캘린더·환자·수납·지식, lab_tech 검사·지식(1.3절 역할 접근 열).
+
+#### 8.3.3 SMS
+
+| 묶음 | 메뉴 | 경로(1절) | 탭·하위 | 배지 | 원본 |
+|---|---|---|---|---|---|
+| (맨 위) | 홈 | `/admin/dashboard` | 8.5절 | - | School 관리자 대시보드 |
+| 출석 | 출석 체크 | `/admin/attendance` | 학급 · 과목 · 날짜 선택 바 | 미체크 수 | School HEAD 출석 체크 보드 |
+| 출석 | 출석 추이 | `/admin/trend` | 학급 필터 · 기간 | P1 | School PRD F-DASH-01 |
+| 학급 | 학급 | `/admin/classes` | - | - | School HEAD 학급 CRUD |
+| 학급 | 과목 | `/admin/subjects` | - | - | School HEAD 과목 CRUD |
+| 학급 | 구성원 | `/admin/members` | 교사·학생 초대 · 학급 배정 | - | School HEAD 학생 관리 |
+| 지식 | 어시스턴트 대화 | `/assistant` | - | - | 확정 결정 13 |
+| 지식 | 운영 위키 | `/wiki`, `/wiki/[...slug]` | - | - | 확정 결정 13 |
+| AI·지식 관리 | 문서 관리 | `/settings/knowledge` | - | 색인 실패 수 | 확정 결정 13 |
+| AI·지식 관리 | 위키 검수 | `/settings/wiki` | - | - | 확정 결정 13 |
+| AI·지식 관리 | AI 사용량 | `/settings/ai-usage` | - | P1 | KIT-F-020 |
+| AI·지식 관리 | AI 처리 방식 | `/settings/ai` | - | - | 확정 결정 17 |
+| 관리 | 학교 설정 | `/admin/settings`(새 경로, 8.4절) | 학교 이름 · 학년도 · 교사 출석 수정 기간 | (제안) | School HEAD 설정 |
+| 관리 | 감사 로그 | `/settings/audit` | - | P1 | KIT-F-012 |
+| 관리 | 플랜과 구독 | `/settings/billing` | - | Phase 2 | 없음(01장 2절) |
+| (아래 고정) | 계정 | `/settings/account` | 로그인 방법(Stage C, 7.4절) | - | School 로그아웃(삭제된 settings 추정) |
+
+teacher는 홈·출석 체크·출석 추이·학급(조회)·과목(조회)·지식을 본다(1.4절, D-2 B). student는 다른 셸 메뉴를 쓴다:
+
+| 묶음 | 메뉴 | 경로(1절) | 탭·하위 | 배지 | 원본 |
+|---|---|---|---|---|---|
+| (맨 위) | 내 출석 | `/student/dashboard` | - | - | School HEAD 학생 대시보드 |
+| 지식 | 운영 위키 | `/wiki` | `sms-guide-all` 범위만(01장 3.7절) | - | 확정 결정 13 |
+| (아래 고정) | 계정 | `/settings/account` | - | - | - |
+
+student 셸에는 어시스턴트 버튼, 마이크, 새로 만들기, 메뉴 검색을 두지 않는다(D-16 A, SMS-F-013).
+
+원본 사이드바의 정확한 메뉴 이름은 원본 파일(`ERP-Wesite/components/layout/Sidebar.tsx:10-16`, `Hospital/src/components/layout/sidebar.tsx`, `School_Management_System/src/components/ui/Sidebar.tsx:6-9`)에 있으나 이 저장소에 없다(미확인). ERP는 리뷰의 화면 5개(`docs/reviews/ERP-Wesite.md:23`), Hospital은 화면 경로(`docs/reviews/Hospital.md:39-43`), School은 404로 이어진 3개 경로 + 대시보드(`docs/reviews/School_Management_System.md:17`, `:37`)로 추정했다. 원본 파일을 확인하면 8.3절과 8.7절 표를 고친다.
+
+### 8.4 학교 설정 (sms `/admin/settings`, 새 경로)
+
+| 항목 | 내용 |
+|---|---|
+| 목적 | 학교 단위 설정을 저장한다. 데이터와 RPC는 이미 있으나(05장 `sms.workspaces`의 `school_name`, `school_year`, `teacher_backfill_days` 0..60 기본 7, 04장 `sms.update_workspace_settings`) 1.4절에 화면 경로가 없다. 원본 HEAD에는 `admin/settings` 화면이 있었다(`docs/reviews/School_Management_System.md:17`, `:39`) |
+| 구성 | 폼 1개: 학교 이름, 학년도, 교사 출석 수정 기간(일, 0~60). 수정 기간 아래에 "교사는 오늘(KST)부터 n일 전까지 출석을 고칠 수 있습니다. 관리자는 제한이 없습니다"(SMS-F-006) |
+| 데이터 | `sms.workspaces` |
+| 행동 | 저장(`sms.update_workspace_settings`, 감사 기록). 범위 밖 값은 입력칸 오류 |
+| 패턴 / 시각 | H / -(ERP `/settings`와 같음) |
+| 권한 / 플랜 | admin / 전체 |
+| 우선순위 | P2(제안, ERP `/settings`와 같은 단계). 소유 작업은 sms 화면 작업에 더한다(06장 반영은 별도 승인 후) |
+
+D-27이 (b)로 정해지면 이 경로를 만들지 않고 8.3.3절 표에서 행을 지운다.
+
+### 8.5 홈 구성 (ERP `/dashboard`, 1.2절 홈 행 구체화)
+
+위에서 아래 순서. 4.3절 와이어프레임과 4.4절 판정을 따라 큰 숫자는 "오늘 매출" 1개만 두고 나머지 지표는 한 줄 텍스트로 쓴다(KPI 카드 나열 금지, `docs/products/_design-guide/DASHBOARD_PATTERNS.md:128` "ERP: C(매출 1개 크게)").
+
+| 순서 | 영역 | 내용 | 누르면 |
+|---|---|---|---|
+| 1 | 오늘 처리할 일(제안) | 부족 재고 SKU, 대기 판매, 가입 요청 대기, 색인 실패 문서. 각 개수, 0이면 칩을 숨긴다. 역할에 보이는 메뉴의 칩만 | 재고, 판매, 가입 요청, 문서 관리 |
+| 2 | 오늘 매출 | 당일(KST) 매출 합 1개 크게 + 한 줄 텍스트(판매·취소 건수, 활성 SKU, 부족 SKU, 활성 직원). `erp.dashboard_metrics` 1회(ERP-F-006) | 판매 |
+| 3 | 위험 재고 표(넓게) + 최근 재고 변동(좁게) | 위험 재고: `is_low_stock` 품목만(ERP-F-003), SKU·이름·수량·안전재고. 최근 변동: 실시간 5건, 수량 증감 +/- 표기(ERP-F-008) | 상품 상세, 재고 |
+| 4 | 판매 추이(P1) | 시간(당일) 버킷, KST(ERP-F-007). 기간은 `sales_trend_days` 안에서 | 판매 |
+
+HMS와 SMS 홈:
+
+| 앱 | 경로 | 순서(위 → 아래) | 근거 |
+|---|---|---|---|
+| hms admin | `/dashboard`(P1) | 1 오늘 처리할 일(제안: 검사 승인 대기, 미수 수납) → 2 오늘 예약·내원·완료·취소·노쇼(분리된 숫자, 한 줄) → 3 진료과 비율 + 수납액(오늘·어제·이번 달) | HMS-F-013. 원본 하드코딩 KPI는 버린다(`docs/reviews/Hospital.md:64`). P1 전까지 admin 홈은 D-26 |
+| hms doctor·staff·lab_tech | `/queue`, `/calendar`, `/lab` | 각 화면이 홈(D-26 기본값). 홈 전용 화면을 따로 만들지 않는다 | 4.2절 주된 일 |
+| sms admin·teacher | `/admin/dashboard` | 1 오늘 처리할 일(미체크 학급·교시) → 2 숫자 1~2개(오늘 출석률, 미체크 수) → 3 학급별 출석률 + 실시간 피드 | 1.4절 홈 행, `DASHBOARD_PATTERNS.md:128` "SMS: 오늘 처리할 일(출결)", SMS-F-008 |
+| sms student | `/student/dashboard` | 이번 달 출석률, 지각·조퇴·결석 횟수, 오늘 과목 목록 | 3절 표, SMS-F-009 |
+
+### 8.6 셸 동작 규칙
+
+| 항목 | 규칙 |
+|---|---|
+| 폭 | 펼침 240px, 접힘 64px 아이콘 레일(제안). 원본 ERP는 260px 고정에 햄버거가 없었다(`docs/reviews/ERP-Wesite.md:84`). 접힌 상태에서 메뉴 이름은 툴팁, 개수 배지는 점 |
+| 현재 위치 | 왼쪽 3px 막대(`--color-accent`) + 배경 + `aria-current="page"`. 헤더 아래 경로 표시("Admin Suite ERP › 묶음 › 메뉴"). 경로 표시에 환자·학생·직원 이름을 넣지 않는다(메뉴 이름까지만) |
+| 역할 밖 메뉴 | 렌더하지 않는다. 자물쇠·흐린 메뉴로도 보이지 않는다(KIT-F-003). 원본 Hospital은 권한 없는 메뉴를 자물쇠와 함께 클릭 가능하게 노출해 우회 경로를 안내했다(`docs/reviews/Hospital.md:73`) |
+| 플랜 | 화면 단위 플랜 잠금이 없다(1절 머리). 기능 키가 꺼진 메뉴(`ai_wiki` false의 위키·위키 검수, `ai_assistant` false의 어시스턴트 대화)는 D-25 기본값으로 숨긴다. 수량 한도 초과는 해당 화면의 402 안내(5절) |
+| 개수 배지 | erp 재고(부족 SKU, 경고색), 가입 요청(대기), hms 대기열(대기), 검사(승인 대기), sms 출석 체크(오늘 미체크), 문서 관리(색인 실패, 위험색). 0이면 숨긴다. 값은 서버 집계 RPC에서 받고 화면에서 하드코딩하지 않는다 |
+| 반응형 | 1024px 미만은 GNB를 숨기고 햄버거 → 왼쪽 서랍(264px, 배경 딤, 바깥 누르면 닫힘). 검색·계정 메뉴는 서랍 안으로. 출석 보드는 768px 태블릿 우선(6절) |
+| 접근성 | GNB는 `<nav aria-label>`, 묶음 제목은 목록 머리, 메뉴 버튼 높이 40px(`--space-row-default`) 이상, `:focus-visible` 포커스 링, 서랍은 포커스 가둠 + Esc 닫기. 상태 배지는 아이콘 + 텍스트(색만으로 구분하지 않음, 3.2절) |
+| 앱별 토큰 | 셸은 `apps/<app>/src/theme/tokens.css`의 의미 기반 이름만 쓴다(3.2절). ERP 라이트: 코발트 전표 #0047AB(accent), 장부 회색 #F8FAFC, 먹선 #1E293B, 괘선 #CBD5E1, 경고 오렌지 #FF8C00(부족 배지만). HMS 다크: 야간 병동 #0F172A, 패널 #1E293B, 차트 회백 #E2E8F0, 수술포 청록 #14B8A6, 메디컬 레드 #E11D48(경고만). SMS 라이트: 칠판 인디고 #4F46E5, 분필 회색 #F9FAFB, 잉크 #111827, 출석 4색은 출석 화면 범례와 함께만(4.3절) |
+| 셸 밖 화면 | `/login`, `/signup`, `/pending`, `/invite/accept`, `/no-access`, `/dev/components`는 GNB 없이 그린다(1.1절) |
+| 금지 | 메뉴 이모지(원본 School 이모지 아이콘, `docs/reviews/School_Management_System.md:62`), 자물쇠 메뉴, 하드코딩 개수·KPI, 컴포넌트 안 hex, 앱 전환 링크, 헤더에서 업무 데이터 검색 |
+
+### 8.7 원본 메뉴 → 새 위치
+
+| 원본 | 원본 메뉴·기능 | 새 위치 |
+|---|---|---|
+| ERP-Wesite(화면 5개, `docs/reviews/ERP-Wesite.md:23`, `:51`) | 대시보드 · 재고 · 판매 · 인사 · 설정 | 홈 · 재고 · 판매 · 임직원 · 회사 설정(P2) |
+| ERP-Wesite | 역할별 메뉴 접근 제어 미구현(`:30`), Pending 승인(`:29`), 부서(`:37`), 권한 수정 모달(`:39`), Storage 이미지(`:40`) | 역할 매트릭스 GNB(8.3절) · 가입 요청 + 셸 밖 `/pending` · 부서(P1) · 임직원 권한 모달 · 재고 상품 상세(P1, ERP-F-014) |
+| ERP-Wesite | 시스템 로그(`app/actions/logs.ts`, `:53`, `:90`) | 감사 로그(P1, master_admin만) |
+| ERP-Wesite | 중복 라우트 `/inventory` 등(`:52`, `:74`) | 버림. 1.2절 경로 하나만 |
+| ERP-Wesite | 헤더 검색·알림 벨·액션 버튼(`:80`) | 메뉴 검색(제안, D-28) · 버림(벨) · 새로 만들기(제안) |
+| ERP-Wesite | 설정 화면의 프로젝트 URL·키 표시(`:72`), 저장 목업(`:73`) | 버림 · 회사 설정 실제 저장(ERP-F-013) |
+| Hospital(기능 목록, `docs/reviews/Hospital.md:19-25`, 화면 `:39-43`) | 관리자 대시보드 · 환자 목록/상세 · 예약 캘린더 · 실시간 대기열 · 실험실 검사 입력 | 관리자 대시보드(P1) · 환자 · 예약 캘린더 · 대기열 · 검사 |
+| Hospital | 로그인 역할 선택 UI(`:19`, `:60`) · 비밀번호 임시 접근 게이트(`:25`) · 자물쇠 메뉴(`:73`) | 버림(07장 4절). 역할은 DB만, 역할 밖 메뉴는 렌더하지 않음 |
+| Hospital | `ROLE_HOME`/`ROLE_LABEL` 3곳 복제(`:72`) | `apps/hms/src/access.ts` 한 곳(02장 2절). 홈 값은 D-26 |
+| Hospital | (원본에 없음) 수납, 직원 초대, 접근 기록 | 수납(P1) · 직원 · 의료정보 접근 기록 |
+| School_Management_System(사이드바 4개, `docs/reviews/School_Management_System.md:37`) | 대시보드 · 학급 · 과목 · 출석(3개는 404, `:17`) | 홈 · 학급 · 과목 · 출석 체크 |
+| School_Management_System(HEAD만, `:17`, `:39`) | `admin/students` · `admin/settings` · 학생 대시보드 | 구성원 · 학교 설정(새 경로, D-27) + 계정(로그아웃, `:53`) · 내 출석 |
+| School_Management_System | 학생 실시간 알림 `RealtimeStudentNotif`(`:22`, `:36`) | 내 출석 화면 5초 토스트(SMS-F-011, P1). GNB 메뉴 없음 |
+| School_Management_System | 이모지 아이콘(`:62`) | 버림. lucide 아이콘 |
+| basic-master-module | 기본 AppShell(사이드바 + 헤더) 제안(`docs/reviews/basic-master-module.md:103`) | admin-kit AppShell(KIT-F-008) 하나로 세 앱 공용 |
+| basic-master-module | 로그인·콜백·로그아웃 골격(`:76`, `:101`) | 셸 밖 인증 화면(7절) · 계정 메뉴 로그아웃 |
+| basic-master-module | 기본 랜딩 `app/page.tsx`(`:64`) | 버림(공개 랜딩 없음, 4절) |
+
+### 8.8 1절과 달라진 점
+
+| 1절 위치 | 이전 | 지금 |
+|---|---|---|
+| 화면 표 전체 | 메뉴 순서·묶음 없음 | 8.3절 순서가 GNB 정본. 1절 행은 고치지 않는다 |
+| 1.4절 SMS | 학교 설정 경로 없음(데이터·RPC만 있음) | `/admin/settings` 추가(8.4절, D-27 결정 전 기본값) |
+| 1.1절 공통 | 공통 화면 묶음 없음 | 세 앱 모두 "지식"(대화·위키), "AI·지식 관리", "관리" 묶음으로 같은 이름·같은 순서. hms는 `/settings/ai`, `/settings/billing` 행이 원래 없다 |
+| 1.2절 ERP 홈 행 | "대시보드(지표, 위험 재고, 최근 변동, 판매 추이)" | 8.5절 4개 영역으로 구체화. 맨 위 "오늘 처리할 일" 줄은 새로 제안 |
+| 1.2절 ERP `/settings` 우선순위 | P2 | GNB 배지는 1.2절대로 P2. 01장 2절은 "설정 저장"을 MVP 직후(P1)로 적어 서로 다르다(미확인, 어느 쪽이 맞는지 확인 후 한쪽을 고친다) |

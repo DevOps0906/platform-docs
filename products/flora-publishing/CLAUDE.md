@@ -153,3 +153,17 @@ AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 �
 | 외부 랜딩 자료 | 다른 회사 랜딩의 문구·수치·경로 이름과 다크 글래스 비주얼을 쓰지 않는다(`LANDING_PERSUASION.md` 1장) |
 | 컴포넌트 경계 | `web/src/components/marketing/`은 `(marketing)` 경로에서만 import. 앱 화면(TaskTimeline 등)은 같은 구조를 앱 토큰으로 따로 만든다 |
 | 소유 경로 | 066 `web/src/features/landing-proof/`, `web/public/proof/`, `scripts/proof/`. 067 `docs/flora-publishing/experiments/{claims-ledger,v0-interviews,v1-task-timing}.md`. 068 `web/src/app/(marketing)/insight/`, `web/content/insight/`. 069 `web/src/app/(marketing)/tools/cost-compare/`, `web/src/features/cost-compare/`. 070 `web/src/components/marketing/` |
+
+## 대시보드 셸·GNB 규칙 (2026-10-19)
+
+정본: 03장 10장, 결정 대기 01장 10장(D33~D36). FLORA Publishing 전용이며 `_design-guide` 공용 패턴과 다른 제품 문서를 고치지 않는다.
+
+| 항목 | 규칙 |
+|---|---|
+| 메뉴 순서 | 03장 10.3절 표가 정본. 메뉴 배열은 `web/src/components/shell/nav.ts` 한 곳에 두고(제안, 소유 PB-06-023) 화면마다 따로 만들지 않는다. GNB의 모든 경로는 03장 1절 표에 있는 것만 쓴다 |
+| 잠금 | 플랜이 안 되는 탭(내 원고로 시작, 나만의 페르소나, 알림 연동)을 숨기지 않고 잠금 배지 "Basic"으로 보인다. 판정은 서버 `feature(ctx, key)`(01장 4.4절)이고 클라이언트 값을 믿지 않는다. 접기 상태 외에 플랜·역할을 localStorage에 쓰지 않는다 |
+| 책 화면 | D33 결정 전에는 위저드·원고 편집기·설정집·완성에서 GNB를 숨기고 책 머리줄(03장 10.4절)만 둔다. 셸 검색 단축키(⌘K/Ctrl+K)는 책 화면에서 등록하지 않는다(D35, 에디터 툴바 `Ctrl+K`) |
+| 없는 메뉴 | 오디오북·자동화·교육·판매·정산·시장 조사 메뉴를 만들지 않는다(03장 1절 :47, 07장 D-15·D-16). 낭독 미리듣기는 책 화면 › 완성 안에만 |
+| 운영 콘솔 | 작가 셸 안에 `/admin/*` 화면을 넣지 않는다. `platform_admin`에게만 아래 고정 링크 1개(D36), 일반 사용자에게는 렌더하지 않는다 |
+| 색·레이어 | 셸은 `data-surface="workspace"`. 3.2절 의미 토큰만 쓰고 hex를 하드코딩하지 않는다. 맞춤 마젠타는 셸에 쓰지 않고, 공정 시안은 현재 위치·헤더 "+ 새 책"·진행 막대에만 |
+| 수치 | 홈과 배지에 데이터가 없으면 칩을 숨기거나 빈 상태 문구를 쓴다. 가짜 수치·큰 숫자 KPI 카드를 넣지 않는다 |
