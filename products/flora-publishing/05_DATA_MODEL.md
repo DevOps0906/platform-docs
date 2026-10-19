@@ -395,3 +395,23 @@ AUTH_ROADMAP 8장의 publishing "A 추가 페르소나"는 "-"(필수 추가 없
 - 서가 쿼리: `book_releases` + `release_artifacts`를 조직 기준으로 조회(RLS는 `book_id`의 조직, 기존 `book_exports`와 같음).
 - 보관: 산출물 파일은 90일(제안) 뒤 `expires_at`로 만료, 메타는 남긴다. 크레딧 규칙은 기존 선차감·환불을 그대로 쓴다(`ref_type='release_artifact'`).
 - 일괄 발행은 책 × 형식마다 산출물 1행이고 각각 독립으로 성공·실패한다.
+
+---
+
+## 14. 연재물·편·권 (2026-10-20 추가, 검토용)
+
+01장 15절 D55~D63의 데이터다. 아래는 제안이며 확정 전이다.
+
+| 대상 | 필드·테이블 | 타입 | 설명 |
+|---|---|---|---|
+| `books.production_mode` | text | 값 추가 | 'serial'(연재형). 기존 값 4개는 12절 그대로 |
+| `publishing.series` | 테이블 | — | 연재물. `id, org_id, title, genre('webnovel'), subgenre_tags text[], episodes_per_volume int 기본 25, target_chars int 기본 5000, weekly_goal int, created_at` |
+| `books.series_id`, `books.volume_no` | uuid, int | null 허용 | 권인 책만 값이 있다. `(series_id, volume_no)` unique. 이 책의 챕터는 권 묶기 때 편에서 만든다 |
+| `publishing.series_episodes` | 테이블 | — | 편. `id, series_id, episode_no, title, outline, body, char_count, summary, status('outline'\|'drafting'\|'done'\|'bound'), volume_book_id → books(null=아직 권에 안 묶임), updated_at`. `(series_id, episode_no)` unique |
+| 설정집 | 기존 설정집 테이블 | — | `series_id`로도 참조할 수 있게 확장(제안) |
+| 삽화 | `book_assets` | — | `episode_id` 컬럼 추가(null 허용, `kind='illustration'`) |
+
+- 권 묶기: 트랜잭션 하나로 books 행 생성 + 선택한 편을 챕터로 복사 + `series_episodes.volume_book_id` 채움 + `status='bound'`. 한 편은 한 권에만 묶인다.
+- 발행된 권(`books.published_version` 있음)의 편을 고치면 `bound` 편의 변경이 권 원고와 갈라지므로 "권에 반영" 확인 단계를 둔다(개정판으로 이어짐, D63). 이 부분의 UX는 확정 전.
+- 집필 요청 입력: 설정집 + 최근 N편 `summary` + 이전 편 말미(≤800자 제안). 전문 주입 금지(D59).
+- RLS는 `series.org_id` 기준이며 편·권은 부모 연재물의 조직을 따른다.
