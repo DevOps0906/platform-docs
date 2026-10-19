@@ -296,3 +296,14 @@ AI·음성 코어 객체(0001 SECTION 11, 12):
 | 멱등 | 같은 이메일이 있으면 건너뛴다. 숙소는 제목 `[DEV] 숙소 A`, `[DEV] 숙소 B`로 찾는다. 예약은 같은 기간이 있으면 만들지 않는다(배타 제약이 어차피 막는다) |
 | 이미지 | 저장소에 넣는 더미 이미지는 직접 만든 단색·패턴 이미지(원본 `public/static/image/*.jpg` 사용 금지, 07장 4절) |
 | 국외 이전 | 기본 미동의(오픈소스 경로). 상용 경로 테스트는 해당 세션에서 `set_ai_cross_border_ack` 호출 |
+
+## 11. 호스트 유형 (D18)
+
+| 항목 | 설계(제안) |
+|---|---|
+| 위치 | `stay.host_profiles`(조직당 1행) 신규 제안. 코어 `profiles`·`organizations`는 수정하지 않고 참조만 한다 |
+| 컬럼 | `org_id`, `host_type`('individual'\|'business'), `display_name`, `business_no`, `business_name`, `representative`, `tax_email`, `lodging_kind`, `license_no`, `verify_status`(none/pending/approved/rejected) |
+| RLS | 본인 조직 owner만 읽기·쓰기. 게스트에게는 공개하지 않고 표시 이름만 공개 RPC로 노출 |
+| 증빙 파일 | 비공개 버킷, 운영자만 열람. 게스트 경로와 분리 |
+| 금지 | 사업자번호·증빙을 로그·AI 경로에 넣지 않는다 |
+| 미확인 | 보관 기간, 법정 보존 의무 |
