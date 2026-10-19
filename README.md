@@ -8,24 +8,24 @@
 
 | 항목 | 수 | 위치 |
 |---|---|---|
-| 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
+| 원본 프로젝트 코드 리뷰 | 26개(PDF 25개, airbnb는 PDF 없음) | `reviews/`, `pdf/` |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
-| 기획 제품 | 16개(모두 01~07 완료) | `products/<제품>/` |
-| 개발 묶음 | 16개, 작업 합계 1,011개 | `develop/<제품>/` |
+| 기획 제품 | 17개(모두 01~07 완료) | `products/<제품>/` |
+| 개발 묶음 | 17개(airbnb는 핵심만: setup·root 없음), 작업 합계 1,056개 | `develop/<제품>/` |
 | 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
 | 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
 | 가격 플랜 | 제품 15개 + 서비스 사업 1개(arch-studio는 아직 없음, 요금은 01_PRD 4장) | `Price_Plans/` |
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `products/_design-guide/templates/persuasion-landing/` |
-| 전체 파일 | 1,636개, 폴더 444개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
+| 전체 파일 | 1,654개, 폴더 451개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
 
 이 저장소의 문서는 아래 순서로 만들어졌고, 앞 단계가 뒤 단계의 근거입니다.
 
 ```
-reviews/  원본 25개 코드 리뷰(결함, 이식할 자산)
+reviews/  원본 26개 코드 리뷰(결함, 이식할 자산)
    │
    ▼
 products/00_MERGE_ANALYSIS.md  통합 분석 + 확정 결정 22개(분석 본문보다 우선)
@@ -55,9 +55,9 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 
 | 폴더 | 무엇이 있나 | 성격 | 언제 보나 |
 |---|---|---|---|
-| [`reviews/`](reviews/) | 원본 프로젝트 25개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
+| [`reviews/`](reviews/) | 원본 프로젝트 26개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
 | [`pdf/`](pdf/) | `reviews/`의 PDF 변환본 25개 | 근거 사본 | 인쇄·공유 |
-| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 16개 기획서 | **정본** | 무엇을 만들지 볼 때 |
+| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 17개 기획서 | **정본** | 무엇을 만들지 볼 때 |
 | [`Price_Plans/`](Price_Plans/README.md) | 공용 가격 결정 방법(`_common/`), 제품별 가격 플랜, 서비스 사업 Web-App-Agency | 분석·계획(요금 정본은 01_PRD 4장) | 가격을 정하거나 바꿀 때 |
 | [`develop/`](develop/README.md) | 제품별 개발 안내서, setup 스크립트(`.sh`/`.ps1`), 개발 폴더에 붙일 묶음(`<제품>-root/`), 공용 설치 가이드(`_shared/`) | 묶음은 생성물(`build_root.py`) | 개발을 시작할 때 |
 | [`develop_V2/`](develop_V2/README.md) | 공용모듈 7개를 쓰는 제품별 개발서, V2 공통 규칙, 생성 스크립트 | 생성물(`gen_v2.py`) | 공용모듈로 개발할 때 |
@@ -105,7 +105,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`dify/`](develop/_shared/dify/README.md), [`llm/`](develop/_shared/llm/README.md), [`voice/`](develop/_shared/voice/README.md) | 공용 Dify, LLM 키·오픈소스 LLM 서버·라우팅, 음성 서버 |
 | [`tools/build_root.py`](develop/_shared/tools/build_root.py) | `products/`를 고친 뒤 `<제품>-root/` 묶음을 다시 만드는 스크립트 |
 
-## 3. 제품 목록 (16개)
+## 3. 제품 목록 (17개)
 
 개발 순서는 `develop/README.md` "권장 개발 순서"를 따릅니다(0단계 = 공용 코어). 작업 수는 V1 개발 묶음 기준입니다.
 
@@ -127,6 +127,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(화이트라벨), 공용모듈 7개의 출처 | `news`(2500) | 6 | 56 | [기획](products/local-news/) · [개발](develop/local-news/) · [가격](Price_Plans/local-news/PRICE_PLAN.md) |
 | book-trailer (NOMAD Book Trailer, 가칭) | 원고 → 훅 브리프 3안 → 장르 문법 스토리보드 → 규격 4종 + 표지 루프 트레일러 렌더(Remotion) → 구매 링크 클릭 측정 | `trailer`(2600) | 4(대행 판매로 수요 검증 후) | 60 | [기획](products/book-trailer/) · [개발](develop/book-trailer/) · [가격](Price_Plans/book-trailer/PRICE_PLAN.md) |
 | arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱(Windows, Tauri 2): 정보 입력 → 도면 자동 생성(DXF·SVG·PDF), 법규 엔벨로프 판정, AI 렌더, 제안서, 시리얼 라이선스 | `arch`(2400) | 공용 코어 다음 언제든(설치형, 도면 스파이크 먼저) | 66 | [기획](products/arch-studio/) · [개발](develop/arch-studio/) · 가격 플랜 없음(요금은 01_PRD 4장) |
+| airbnb (Stay, 가칭) | 게스트가 지도·날짜·인원으로 숙소를 찾아 예약을 요청하고 호스트가 13단계로 숙소를 올려 승인하는 숙소 공유 서비스 | `stay`(2700) | 공용 코어 다음(제안) | 45 | [기획](products/airbnb/) · [개발](develop/airbnb/) · 가격 플랜 없음(요금은 01_PRD 4장) |
 
 모든 제품이 같은 공용 기반(로그인·조직, 크레딧·결제, 잡 워커, AI 계층, 음성)을 쓰고, 공개 랜딩이 있는 제품은 3D 히어로를 씁니다. 제품별 상세 설명은 [`develop/README.md`](develop/README.md), 공용모듈 채택 현황은 [`develop_V2/README.md`](develop_V2/README.md)에 있습니다.
 

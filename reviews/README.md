@@ -1,4 +1,4 @@
-# reviews — 원본 프로젝트 코드 리뷰 25개
+# reviews — 원본 프로젝트 코드 리뷰 26개
 
 통합 기획의 근거 자료입니다. 각 리뷰는 원본 프로젝트의 구조, 결함("높음" 결함은 기획서 02·05장에서 차단 설계로 처리), 이식할 자산을 적었습니다. 작성 형식은 [`_tools/REVIEW_TEMPLATE.md`](../_tools/REVIEW_TEMPLATE.md), PDF 변환본은 [`pdf/`](../pdf/)에 있습니다.
 
@@ -29,5 +29,6 @@
 | [`Toon-Factory.md`](Toon-Factory.md) | 웹툰 제작 | toon-factory |
 | [`study-note-organizer-codex-01.md`](study-note-organizer-codex-01.md) | 학습 노트 정리 | study-note |
 | [`WebSite.md`](WebSite.md) | 브랜드 웹사이트 | website-floria, microweb-studio |
+| [`Airbnb_CloneCoding.md`](Airbnb_CloneCoding.md) | 숙소 공유(Airbnb 클론) | airbnb |
 
 "참고"는 그 제품의 설계에 패턴만 참고했다는 뜻입니다(코드 이식 대상 아님). 원본 폴더 위치와 이식·폐기 목록은 각 제품 `07_SOURCE_MIGRATION.md`에 있습니다.

@@ -25,6 +25,7 @@
 | `arch-studio/` (Arch Studio, 가칭) | 신설(설치형 데스크톱 + 시리얼 라이선스, 정보 입력 → 도면 자동 생성) | 없음(설계 이식: nomad-docs, flora-publishing, `_platform-core` AI 계층) | `arch` | 2400 |
 | `local-news/` (로컬뉴스 클라우드, 가칭) | 신설(멀티테넌트 SaaS, 화이트라벨) | 없음(설계 이식: `Multi-tenant_Theming`, `_platform-core`, 언론사 디자인 벤치마크) | `news` | 2500 |
 | `book-trailer/` (NOMAD Book Trailer, 가칭) | 신설 | 없음(설계 이식: sceneflow, toon-factory, flora-publishing, nomad-docs. 리뷰 NOMAD Shorts Maker, Toon-Factory) | `trailer` | 2600 |
+| `airbnb/` (Stay, 가칭) | 단독 | Airbnb_CloneCoding | `stay` | 2700 |
 
 ## 제품 폴더 표준 구성
 | 파일 | 내용 |
