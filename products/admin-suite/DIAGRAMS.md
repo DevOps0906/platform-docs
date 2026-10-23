@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의:** 중소기업(ERP), 의원급 병원(HMS), 학교(SMS)의 내부 직원이 역할별로 업무를 보는 관리 시스템 묶음이다. 보안 보일러플레이트를 한 번만 만든 공유 코어 `packages/admin-kit`(KIT) 위에 앱 3개(`apps/erp`, `apps/hms`, `apps/sms`)를 올린다. HMS는 의료정보 격리를 위해 병원마다 단독 Supabase(모놀리스)와 전용 AI 서버만 쓴다.
 
-**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, 공통 맥락은 `../_platform-core/SECURITY_BASELINE.md`(§ = 장 번호), `CORE_SPEC.md`.
+**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`, 공통 맥락은 `../_platform-core/SECURITY_BASELINE.md`(§ = 장 번호), `CORE_SPEC.md`.
 
 **표기:** 실선 화살표 = 호출·데이터 흐름. 점선 = 검증·참조·구독·금지된 경로. "(제안)" = 문서가 제안이라 한 값, 확정 전. "P1"은 MVP 직후, "Phase 2"는 그 이후(01장 2절 구분 그대로). 이 제품은 크레딧을 쓰지 않는다(01장 4.1절).
 
@@ -48,6 +48,8 @@
 | 7-3 | HMS AI 전용 서버 격리 | 보안 경계(flowchart) | SECURITY T5, 02 5.5절, 01 6.6절 |
 | 7-4 | ERP·SMS AI 경계 | 보안 경계(flowchart) | SECURITY T6·T8, 02 5.3절, 04 6.2절 |
 | 7-5 | 위협-대응 지도 | 보안 경계(flowchart) | SECURITY 2절 T1~T8 |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | MCP 1~3절, MCP_BASELINE 1·7절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | MCP 1·2절, MCP_BASELINE 2절 |
 
 ---
 
@@ -1464,6 +1466,66 @@ flowchart LR
 
 ---
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 DB RPC를 호출합니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 이 제품은 MVP에서 에이전트에 아무것도 노출하지 않고, 점선은 Phase 2 후보이거나 미결정(D-M#)입니다. 예약·결제처럼 준비와 확정을 나눌 쓰기 도구가 없어 시퀀스(8-2)는 그리지 않았습니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    ST["기관 직원<br/>브라우저"]
+    AG["AI 에이전트<br/>ERP 관리자 SMS 관리자"]
+  end
+
+  subgraph WEB["기존 웹 경로 앱별"]
+    NX["Next.js 서버 계층<br/>requireSession requireRole"]
+  end
+
+  subgraph MCPL["새 MCP 층 Phase 2 후보 앱별 분리"]
+    TR["Streamable HTTP<br/>Bearer만 익명 없음"]
+    RL["사용자 레이트 리밋"]
+    TL["도구 3개 집계 읽기<br/>필드 허용 목록 출력"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RPC["erp.dashboard_metrics<br/>erp.sales_trend<br/>sms.dashboard_stats"]
+    RLS["has_access my_role<br/>RLS org 분리"]
+  end
+
+  subgraph HMSX["HMS 격리 DB"]
+    HM["환자 차트 검사 수납<br/>MCP 없음"]
+  end
+
+  ST --> NX
+  AG -.-> TR
+  TR --> RL
+  RL --> TL
+  NX -->|"사용자 세션"| RPC
+  TL -.->|"사용자 토큰 D-M2"| RPC
+  RPC --> RLS
+  AG -.->|"연결 안 함"| HM
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R2["R2 조직 집계 읽기 Phase 2 후보 D-M1 승인 후"]
+    T1["admin_erp_get_dashboard_metrics"]
+    T2["admin_erp_get_sales_trend"]
+    T3["admin_sms_get_dashboard_stats"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["HMS 전부<br/>환자 차트 검사 수납"]
+    N2["가입 승인 역할 변경 정지<br/>등급 A"]
+    N3["판매 등록 입출고 출석 기록 환불<br/>사람이 웹에서"]
+    N4["가입 코드 직원 학생 개인 행"]
+  end
+  R2 -.->|"쓰기는 웹 화면에서만"| N3
+```
+
 ## 문서 불일치
 
 그림에는 아래 "택한 쪽"을 그렸다.
@@ -1476,6 +1538,9 @@ flowchart LR
 | 4 | 복합 FK 형태와 장 번호 | `SECURITY.md` T1 "(id, org_id, app_id) 복합 외래키(§16)" (§16은 AI·음성 표 규칙) | `05_DATA_MODEL.md` 1절 도메인 표는 `(org_id, id)` 복합 FK | 05. 그림 3-1~3-3은 `(org_id, id)` 기준 |
 | 5 | HMS 서명 토큰 수명 | `04_API.md` 1절 공통 10분 | `04_API.md` 6.3절 hms 5분 이하 권고(제안) | 그림 7-3에 "5분 이하 권고 (제안)"로 표기 |
 | 6 | SMS teacher 역할 | `README.md` 1절 "교사 단독 역할은 제안", `01_PRD.md` D-2 B 권고 | `05_DATA_MODEL.md`, `04_API.md`는 `sms_role` teacher를 전제로 서술 | teacher를 그리되 "(제안)"을 붙였다 |
+| 7 | MCP 대시보드 지표 범위 | `04_API.md` 3.2절 `erp.dashboard_metrics`는 `has_access`(모든 구성원) | `04_API.md` 3.2절 `erp.sales_trend`는 master_admin·sales_manager만. 대시보드 반환 jsonb의 키 목록은 어느 문서에도 없음 | MCP에서 `admin_erp_get_dashboard_metrics` 출력 필드를 정할 수 없어 "확인 필요"(`MCP.md` D-M3). 그림 8-1은 3개 RPC만 표시 |
+| 8 | MCP와 제품 AI의 수치 정책 | `01_PRD.md` ERP-F-015·SMS-F-012: 제품 AI는 재고·판매·출석 수치를 답하지 않음 | `MCP.md` 2절: 집계 수치 읽기 도구를 Phase 2 후보로 제안 | 기본값은 "열지 않음"으로 두고 사람 결정을 기다림(`MCP.md` D-M1). 그림은 점선으로 표시 |
+
 
 ## 그림에 못 담은 것
 

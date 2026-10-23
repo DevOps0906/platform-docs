@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의:** 쿠팡·스마트스토어 셀러가 아마존·국내 도매 상품을 상품DB에 모으고, AI로 슬롯형 상세페이지(이미지 10장/15장, 카피, 금지어 검사)를 만든 뒤 마켓 규격으로 변환해 API 업로드하거나 엑셀/ZIP으로 내려받는 SaaS (`README.md` 1절).
 
-**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, 공통 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`, 공통 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기:** 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·비동기 폴링, "(제안)" = 문서가 제안이라고 밝힌 값. 숫자 CM-F-nnn은 `01_PRD.md` 기능 ID.
 
@@ -24,6 +24,9 @@
 | 5-3 | 마켓 업로드 상태 | 상태 머신 | `05_DATA_MODEL.md` 3절 |
 | 6 | 화면 흐름 | flowchart | `03_SCREENS_UX.md` 1절, 2절 |
 | 7 | 보안 신뢰 경계 | flowchart | `SECURITY.md` 1~4절 |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | `MCP.md` 1~3절, `MCP_BASELINE.md` 1·7절 |
+| 8-2 | 상세페이지 생성 준비와 사람 확정 | 시퀀스 | `MCP.md` 2·6절, `04_API.md` 2절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | `MCP.md` 2절, `MCP_BASELINE.md` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -656,10 +659,107 @@ flowchart TB
 
 SECURITY.md 3절의 세션 만료, CSP 도메인, 레이트 리밋 수치, 감사 로그 보존, 백업, 알림 수신자는 "(작성 필요)"라서 그림에 수치를 넣지 않았습니다. 세션·헤더는 §18, 공급망은 §19, 운영은 §20, 계정 보호는 §21을 참조합니다.
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 DB와 같은 확정 경로를 씁니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다. 이 제품은 읽는 전용 RPC가 없어 읽기 도구가 테이블 SELECT(RLS)를 씁니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["셀러 브라우저"]
+    AG["AI 에이전트<br/>셀러 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>requireSession Route Handler"]
+    WK["워커 잡<br/>업로드 내보내기 생성"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer만 익명 없음"]
+    RL["레이트 리밋 사용자 조직"]
+    TL["도구 5개<br/>필드 허용 목록 출력"]
+    SAN["상품명 이슈 untrusted 처리<br/>길이 제한 링크 제거"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    TB["products detail_pages<br/>market_uploads banned_words"]
+    RLS["RLS 멤버십 엔타이틀먼트<br/>키 원가 스냅샷은 출력 제외"]
+  end
+
+  BR --> NX
+  NX --> TB
+  NX -.-> WK
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  TL -.->|"사용자 토큰 D-M1<br/>테이블 SELECT D-M3"| TB
+  TB --> RLS
+  TL -.->|"확인 링크 D-M2"| NX
+```
+
+### 8-2. 상세페이지 생성 준비와 사람 확정 (`commerce_prepare_detail_page`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor S as 셀러
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB 읽기
+  participant W as 웹 생성 화면
+  participant C as 크레딧 차감
+
+  S->>A: 상품 5개 15장 상세페이지 만들어줘
+  A->>M: commerce_prepare_detail_page 상품 목록 슬롯 구성
+  M->>D: 상품과 기존 상세페이지 읽기
+  D-->>M: 상품 상태 한도 정보
+  Note over M: 저장하지 않음 크레딧 차감 안 함<br/>POST detail-pages 호출 안 함
+  M-->>A: 가능 여부 필요 크레딧 확정 전 문구 확인 링크 15분
+  A-->>S: 필요 크레딧은 이만큼이고 아직 시작 전입니다 링크에서 확인하세요
+  S->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>S: 상품 슬롯 크레딧 표시
+  S->>W: 생성 클릭
+  W->>C: consume_credits 선차감 후 잡 등록 기존 경로
+  C-->>W: 대기 상태 또는 CR001 CM002 CM007 오류
+  W-->>S: 결과 안내
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R2["R2 조직 데이터 읽기 MVP"]
+    T1["commerce_list_products"]
+    T2["commerce_get_detail_page_status"]
+    T3["commerce_list_market_uploads"]
+  end
+  subgraph R1["R1 입력 문구 검사 1.5"]
+    T4["commerce_check_banned_words"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T5["commerce_prepare_detail_page"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["생성 업로드 내보내기 삭제"]
+    N2["결제 크레딧 구매 구독"]
+    N3["마켓 키 계정 추가 원가 공급사"]
+    N4["WARN 확인 AI 보조 호출"]
+  end
+  R2 --> R1 --> PR
+  PR -.->|"사람이 웹에서 확정"| N1
+```
+
 ## 문서 불일치
 
 - 해당하는 모순은 확인하지 못했습니다(없음). 다만 `SECURITY.md` 3절에 값이 비어 있는 항목이 있고, 마켓 API 약관·업로드 승인 조회 방식·환율 API 키는 문서가 "미확인"으로 둔 상태라 그림에서도 확정값으로 그리지 않았습니다.
 - 참고(모순 아님): `README.md`는 AI·음성·3D 히어로를 MVP로 적고, `01_PRD.md` 2절은 카카오·네이버 로그인을 Stage C(P1, G2 후)로, 비회원 AI 상담을 Phase 2로 적습니다. 그림 1-1은 후자를 따랐습니다.
+- MCP 작성 중 발견(`MCP.md` D-M3): `04_API.md`에는 상품·상세페이지·업로드를 읽는 전용 RPC나 GET Route Handler가 없고 화면은 서버 컴포넌트가 테이블을 직접 읽습니다. 그림 8-1은 MCP 읽기 도구가 같은 테이블을 사용자 세션 RLS로 SELECT하는 것으로 그렸습니다.
+- MCP 작성 중 발견(`MCP.md` D-M4, D-M6): 금지어 매처의 외부 호출 함수 이름(`CM-06-017`)과 크레딧 잔액 조회 경로가 `04_API.md`에 없어 해당 도구는 "확인 필요"로 두었습니다.
+
 
 ## 갱신 규칙
 

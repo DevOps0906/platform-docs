@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 고급 주거·갤러리·기업 공간의 식물 설치를 의뢰하려는 방문자가 작업물을 보고 문의 또는 뉴스레터 구독으로 이어지게 하는 Floria "Botanic Architecture" 브랜드 사이트와, 그 문의를 받아 처리하는 초대제 운영 콘솔. 방문자 AI 상담(문의 전환), 음성 상담, 브랜드 지식 위키, 3D 히어로가 MVP에 들어 있다.
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
 
 **표기**: 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·구독, "(제안)" = 문서가 제안이라 한 값. Phase 2·3 항목은 이름에 `P2`, `P3`를 붙였다.
 
@@ -20,6 +20,8 @@
 | 5-B | 상태: 뉴스레터 구독 | 상태 머신 | 05_DATA_MODEL 3절 |
 | 6 | 화면 흐름 | flowchart | 03_SCREENS_UX 1절, 2절 |
 | 7 | 보안 신뢰 경계 | flowchart | 05_DATA_MODEL 4절·7절, 01_PRD 5~6장, 02_ARCHITECTURE 6~7절 |
+| 8-1 | 구성요소: API 위에 얹는 MCP 층 | 컴포넌트(flowchart) | MCP 1~3절, MCP_BASELINE 1·7절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | MCP 1·2절, MCP_BASELINE 2절 |
 
 > 이 제품의 `SECURITY.md`는 아직 템플릿 상태("작성 필요")라서 7번 그림은 `05_DATA_MODEL` 4·7장, `01_PRD` 5·6장, `02_ARCHITECTURE` 6·7장을 근거로 그렸다. 맨 끝 "문서 불일치" 참고.
 
@@ -519,11 +521,78 @@ flowchart TB
 
 ---
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법**: 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 운영자 콘솔의 집계 읽기 2개만 사용자 세션과 RLS 뒤에서 읽는다. 방문자 쓰기(문의, 뉴스레터)와 방문자 AI 상담은 에이전트에 연결하지 않는다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`이다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)이다. 쓰기·준비 도구가 없어 시퀀스(8-2)는 그리지 않았다.
+
+### 8-1. 구성요소: API 위에 얹는 MCP 층
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    VIS["방문자 브라우저"]
+    OPS["운영자 브라우저"]
+    AG["운영자의 AI 에이전트"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    PUB["공개 Route Handler<br/>문의 뉴스레터 AI 상담<br/>Turnstile 허니팟 한도"]
+    CON["콘솔 서버 액션<br/>requireSession site"]
+  end
+
+  subgraph MCPL["새 MCP 층 Phase 1.5 후보"]
+    TR["Streamable HTTP<br/>Bearer만"]
+    RL["사용자 레이트 리밋"]
+    TL["도구 2개 집계 읽기<br/>개인정보 필드 제외"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RPC["site submit_inquiry 등 RPC<br/>service_role 한 줄기"]
+    TB["site inquiries 건수<br/>core ai_usage 집계"]
+    RLS["RLS 소유 조직 멤버"]
+  end
+
+  VIS --> PUB
+  PUB --> RPC
+  OPS --> CON
+  CON --> TB
+  AG -.-> TR
+  TR --> RL
+  RL --> TL
+  TL -.->|"사용자 토큰 D-M2<br/>집계 방식 D-M4"| TB
+  TB --> RLS
+  AG -.->|"연결 안 함"| PUB
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R2["R2 운영자 집계 읽기 1.5 후보"]
+    T1["floria_get_ai_usage"]
+    T2["floria_get_inquiry_counts"]
+  end
+  subgraph R0["R0 공개 읽기 보류 D-M1"]
+    T3["floria_get_guide_page"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["문의 제출 뉴스레터 구독 확인 해지"]
+    N2["문의 목록 본문 연락처 미답변 질문"]
+    N3["설정 변경 AI 스위치 국외 이전 동의"]
+    N4["방문자 AI 상담 재호출"]
+  end
+  R2 --> R0
+  R2 -.->|"사람이 웹에서만"| N1
+```
+
 ## 문서 불일치
 
 1. **`SECURITY.md` 미작성**: 자산, 위협, 공통 규칙 제품별 수치, 외부 서비스 이전 표가 모두 "(작성 필요)"다. 그림 7과 위 표는 다른 문서에서 가져왔으므로 SECURITY.md가 채워지면 다시 맞춘다.
 2. **구독자 관리와 사이트 설정의 단계**: `01_PRD` 2장은 구독자 관리와 사이트 설정(알림 이메일, 접수 중지, 동의 버전)을 Phase 2로 두는데 3장의 SI-F-012, SI-F-013은 단계 표기가 없고 `03_SCREENS_UX` 1절은 `/admin/subscribers`, `/admin/settings`를 P1로 둔다. 그림 1은 01_PRD 2장을 따랐다.
 3. **코어 점검 결과 미반영**: `05_DATA_MODEL` 6절은 모듈러 코어에서 명시적 `revoke`가 없는 함수에 PUBLIC EXECUTE가 남는다는 점검 결과를 적고 코어는 고치지 않았다고 한다. 그림 7의 "service_role 전용 RPC"는 이 제품 함수가 `is_service_caller`로 2차 방어한다는 전제로 그렸다.
+4. **MCP 작성 중 발견, 읽기 경로 부재**: `04_API.md`에는 문의 건수를 집계하는 RPC·Route Handler가 없고(콘솔은 컬럼 명시 select), 공개 `/guide` 위키는 service_role 서버 컴포넌트가 읽는데 anon은 `core.wiki_*` 권한이 없다. 그래서 `MCP.md`의 `floria_get_inquiry_counts`와 `floria_get_guide_page`는 새 읽기 경로가 필요하다(D-M1, D-M4). 그림 8-1은 집계를 사용자 세션 RLS로 읽는 것으로, 공개 읽기 도구는 그리지 않았다.
+5. **MCP 작성 중 발견, `submit_inquiry`의 anon 허용**: `04_API.md` 3절은 `site.submit_inquiry`를 anon에도 열어 두고(방어 2선) 브라우저의 직접 RPC 호출은 설계에서 제외한다고 한다. 에이전트가 anon 키로 이 RPC를 직접 부르면 Turnstile·허니팟 검사를 우회하므로 `MCP.md`는 이 RPC를 호출하는 도구를 만들지 않는다. 필요하면 anon 직접 호출을 막는 방안은 별도 결정이다.
+
 
 ## 갱신 규칙
 

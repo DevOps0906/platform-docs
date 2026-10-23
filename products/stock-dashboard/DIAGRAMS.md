@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 본인이 직접 연결한 증권사 계좌(1차는 모의투자)의 잔고·보유·체결을 한 화면에서 조회하고, AI가 포트폴리오의 분산과 위험 요인을 "진단"해 주는 초대제 개인 투자 대시보드. 종목 추천과 매수가·목표가·손절가는 제시하지 않는다.
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
 
 **표기**: 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·구독, "(제안)" = 문서가 제안이라 한 값(확정 전). Phase 2·3 항목은 노드 이름에 `P2`, `P3`를 붙였다.
 
@@ -26,6 +26,8 @@
 | 5-D | 상태: 모의주문 (P3) | 상태 머신 | 05_DATA_MODEL 3절 |
 | 6 | 화면 흐름 | flowchart | 03_SCREENS_UX 1절, 2절, 8절 |
 | 7 | 보안 신뢰 경계 | flowchart | 05_DATA_MODEL 7절, 02_ARCHITECTURE 2절·6절, 01_PRD 6장, SECURITY_BASELINE |
+| 8-1 | 구성요소: API 위에 얹는 MCP 층 | 컴포넌트(flowchart) | MCP 1~3절, MCP_BASELINE 1·7절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | MCP 1·2절, MCP_BASELINE 2절 |
 
 > 이 제품의 `SECURITY.md`는 아직 템플릿 상태(자산, 위협, 수치가 "작성 필요")라서 7번 그림은 `05_DATA_MODEL` 7장, `02_ARCHITECTURE` 2·6장, `01_PRD` 6장의 보안 서술을 근거로 그렸다. 자세한 내용은 맨 끝 "문서 불일치"에 있다.
 
@@ -863,11 +865,78 @@ flowchart TB
 
 ---
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법**: 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 계좌와 무관한 읽기 3개만 같은 게이트(로그인, 베타, 고지 동의)와 RLS 뒤에서 읽는다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`이다. 점선은 데이터 이용 조건 확인(D-M1) 등 결정 뒤에 켜는 것이다. 쓰기·준비 도구가 없어 시퀀스(8-2)는 그리지 않았다.
+
+### 8-1. 구성요소: API 위에 얹는 MCP 층
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["베타 투자자<br/>브라우저"]
+    AG["AI 에이전트<br/>외부 모델"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>requireSession 베타 동의 확인"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer만 익명 없음"]
+    GT["같은 게이트<br/>베타 활성 고지 동의"]
+    TL["도구 3개 읽기 전용<br/>고정 안내 문구 출력"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    OK["broker_connections 상태<br/>instruments fundamentals<br/>ai_reports research briefing"]
+    RLS["RLS has_stock_access"]
+  end
+
+  subgraph NOEXP["에이전트에 연결하지 않음"]
+    SEC["보유 체결 잔고 진단<br/>시세 스트림 주문 킬 스위치<br/>증권사 키 계좌번호"]
+  end
+
+  BR --> NX
+  NX --> OK
+  NX --> SEC
+  AG --> TR
+  TR --> GT
+  GT --> TL
+  TL -.->|"사용자 토큰 D-M6<br/>데이터 이용 조건 D-M1"| OK
+  OK --> RLS
+  AG -.->|"연결 안 함"| SEC
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R1A["R1 계좌 상태만 조건부 D-M2"]
+    T1["stock_get_connection_status"]
+  end
+  subgraph R1B["R1 공개 지표 요약 보류 D-M1 D-M3"]
+    T2["stock_get_instrument"]
+    T3["stock_get_ai_report<br/>research briefing만"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["보유 체결 잔고 손익 진단"]
+    N2["시세 틱 스트림"]
+    N3["주문 확인 한도 킬 스위치"]
+    N4["AI 실행 결제 동의 연결 생성"]
+  end
+  R1A --> R1B
+  R1B -.->|"사람이 웹에서만"| N3
+```
+
 ## 문서 불일치
 
 1. **`SECURITY.md` 미작성**: 자산, 위협(T1~), 공통 규칙 제품별 수치(세션 만료, CSP 도메인, 2단계 인증 역할, 감사 보존 등), 외부 서비스 이전 표가 모두 "(작성 필요)"다. 그림 7과 위 요약 표는 `05_DATA_MODEL` 7장, `02_ARCHITECTURE` 2·6장, `01_PRD` 6장에서 가져왔고 SECURITY.md 값이 채워지면 다시 맞춰야 한다. 한편 `01_PRD` 5장은 감사 로그 2년, `order_events` 3년을 이미 적고 있어 SECURITY.md 3절 수치와 맞춰야 한다.
 2. **상태 전이의 부분 기재**: `05_DATA_MODEL` 3절은 `ai_reports`에 `queued`, `running`, `succeeded`, `failed`, `canceled`가 나오지만 `succeeded` 이후 전이를 따로 적지 않았다(종료 상태로 그렸다). `beta_invites`의 `expired` 처리 주체는 "만료 처리"로만 쓰여 있고 02_ARCHITECTURE 4절의 "매 1분 초대 만료 처리"를 근거로 연결했다.
 3. **GNB와 3.1절 와이어프레임**: `03_SCREENS_UX` 8.7절이 스스로 밝히듯 1절 화면 표와 3.1절 와이어프레임은 8.3절 GNB 정본과 다르다(헤더 상단 내비 → 좌측 GNB, 채팅 패널은 헤더 버튼). 그림 6은 1절 경로 기준이고 GNB 배치는 그리지 않았다. 결정 대기 D-24~D-27(Phase 2·3 메뉴, 운영자 셸, 설정 위치, 색)은 미정이다.
+4. **MCP 작성 중 발견, 읽기 RPC와 목록 경로 없음**: `04_API.md`에는 연결·종목·리포트를 읽는 전용 RPC가 없고(Route Handler가 RLS SELECT), 리포트는 id로 한 건 읽는 `GET /api/ai/reports/{id}`만 있어 목록 조회 경로가 없다(`MCP.md` D-M4, D-M5). 그림 8-1은 같은 게이트와 RLS 뒤에서 읽는 것으로 그렸다.
+5. **MCP 작성 중 발견, 국외 이전·외부 에이전트 동의**: `04_API.md` 2.1절의 `ai_overseas_transfer`·`voice_processing` 동의는 제품 내부 AI 경로 기준이고, 사용자가 쓰는 외부 AI 에이전트에 결과가 넘어가는 경우의 고지·동의는 어느 문서에도 없다(`MCP.md` D-M2, MT8). 그림 8-1의 점선은 이 결정 이후에 켜진다.
+
 
 ## 갱신 규칙
 
