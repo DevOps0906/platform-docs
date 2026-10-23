@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 키워드 하나로 AI가 블로그 원고를 쓰고, 제휴 상품 카드와 대가성 문구를 자동으로 넣은 뒤, 네이버 블로그·티스토리·워드프레스에 예약 발행까지 해 주며, 네이버 브랜드커넥트 지원도 자동 제출하는 조직 단위 SaaS입니다(`README.md` 1절).
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`(미작성 초안, 아래 "문서 불일치" 참조), 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`(미작성 초안, 아래 "문서 불일치" 참조), 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기**: 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·조건부, "(제안)" = 문서가 확정 전이라고 적은 값. `01_PRD.md` 2절의 범위 표가 "제안"이라 적혀 있어, MVP/Phase 구분은 그 표를 그대로 따랐습니다.
 
@@ -23,6 +23,9 @@
 | 5-4 | AI 초안 실행(run)과 승인 | 상태 머신 | `02_ARCHITECTURE.md` 5.2절 |
 | 6 | 화면 흐름 | flowchart | `03_SCREENS_UX.md` 1절, 2장 |
 | 7 | 보안 경계 | flowchart | `04_API.md` 1절, `05_DATA_MODEL.md` 4절, 7절, `01_PRD.md` 6.4절, `SECURITY_BASELINE.md` |
+| 8-1 | 웹 경로와 MCP 층 (제안) | 컴포넌트 | `MCP.md` 2·3절, `04_API.md` 1절 |
+| 8-2 | 발행 준비와 사람 확정 | 시퀀스 | `MCP.md` 6절, `04_API.md` 2절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | 블록 | `MCP.md` 1·2절 |
 
 ## 1. 사용자와 기능
 
@@ -602,6 +605,105 @@ flowchart TB
 | 결제 위조 | 주문 선저장 + `confirm_payment_order` 금액 대조, 웹훅은 상태 동기화만(`05` 7절) | §6 |
 | 승인 없는 AI 초안 발행 | 발행 라우트가 `ai_runs` 상태를 읽어 `AI_APPROVAL_REQUIRED` 409. 단 DB 불변식이 아닌 서버 규칙이라 회귀 테스트로 보장(`05` 6절) | §16 |
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 같은 서버 계층과 RLS 조회를 거칩니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다. 이 제품에는 익명 공개 읽기가 없어 모든 도구가 로그인 후 읽기입니다.
+
+### 8-1. 웹 경로 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 블로거"]
+    AG["AI 에이전트<br/>블로거 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    RH["Next.js Route Handler<br/>requireSession 후 zod"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer 토큰 필수"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 7개<br/>필드 허용 목록 출력"]
+    SAN["발행본 본문 untrusted 처리<br/>초안 본문 자격증명 제외"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RLS["RLS 멤버십 엔타이틀먼트<br/>posts publications channel_accounts"]
+    RPC["blog.monthly_post_usage"]
+  end
+
+  subgraph NO["MCP가 부르지 않는 것"]
+    WK["발행 잡 브라우저 잡<br/>AI 생성 크레딧 차감"]
+  end
+
+  BR --> RH
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  RH -->|"사용자 세션"| RLS
+  RH --> RPC
+  RH --> WK
+  TL -->|"사용자 토큰 D-M1"| RLS
+  TL --> RPC
+  TL -.->|"확인 링크 D-M3"| RH
+```
+
+### 8-2. 발행 준비와 사람 확정 (`blog_prepare_publish`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor B as 블로거
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB RLS와 RPC
+  participant W as 웹 발행 화면
+
+  B->>A: 이 글 네이버에 올려줘
+  A->>M: blog_prepare_publish 원고 id
+  M->>D: 원고 상태 규정 결과 월 사용량 채널 상태 읽기
+  D-->>M: verdict 사용량 채널 status
+  Note over M: 저장 안 함 잡 만들지 않음<br/>publish 경로 호출 안 함
+  M-->>A: 가능 여부 막는 사유 확정 전 문구 확인 링크 15분
+  A-->>B: 아직 발행 전입니다 링크에서 문구와 경고를 확인하세요
+  B->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>B: 채널 선택 대가성 문구 정책 경고 표시
+  B->>W: 발행 또는 예약 클릭
+  W->>D: 기존 publish 경로 서버 검사 후 발행 행 INSERT와 잡 등록
+  D-->>W: 접수 또는 BL003 등 오류
+  W-->>B: 상태 안내
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R1["R1 로그인 읽기 MVP"]
+    T1["blog_list_posts"]
+    T2["blog_get_post"]
+    T3["blog_list_publications"]
+    T4["blog_list_channels"]
+    T5["blog_get_monthly_usage"]
+  end
+  subgraph R2["R2 소유자 관리자 읽기 1.5"]
+    T6["blog_get_affiliate_stats"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T7["blog_prepare_publish"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["발행 예약 재시도 취소"]
+    N2["규정 경고 확인 AI 초안 승인"]
+    N3["AI 생성 호출 크레딧 소비"]
+    N4["채널 제휴 자격증명 브랜드커넥트 제출"]
+  end
+  R1 --> R2 --> PR
+  PR -.->|"사람이 웹에서 확정"| N1
+```
+
 ## 문서 불일치
 
 1. **`SECURITY.md`가 미작성 초안**입니다(자산, 위협, 제품별 수치가 모두 "작성 필요"). 7장 그림과 위협표는 다른 문서에서 모은 임시본이며, 세션 만료·CSP 도메인·백업 주기 등 제품별 수치는 담지 못했습니다.
@@ -609,6 +711,8 @@ flowchart TB
 3. **AI 초안 실행의 "대기" 상태**: `02_ARCHITECTURE.md` 5.2절은 `approve` 스텝이 running이고 run도 running이라고 적어, 별도 상태 이름이 없습니다. 그림 5-4의 `waiting_approve`는 읽기 쉽게 붙인 이름이며 실제 컬럼 값이 아닙니다.
 4. **MVP 범위가 제안**: `01_PRD.md` 2절은 확정 결정 7이 blog의 MVP를 따로 정하지 않아 범위가 제안이라고 밝힙니다. 그림 1의 MVP/Phase 구분도 그 제안을 따랐습니다.
 5. **원고 상태 집계 전이**: `05_DATA_MODEL.md` 3.1절은 집계 상태 사이 전이를 개별 쌍으로 나열하지 않고 규칙으로 서술합니다. 그림 5-1의 집계 상태 간 화살표는 그 규칙에서 읽어 낸 대표 경로입니다.
+6. **MCP 읽기 경로**: `04_API.md`에는 원고·발행·채널 목록을 읽는 GET Route Handler가 없고 RLS 직접 조회만 있습니다(`MCP.md` D-M5). `GET /api/affiliate/stats`가 service_role로 집계하는지도 문서에 없습니다(D-M4). 그림 8-1은 RLS 조회를 실선으로 그렸고 통계 도구의 경로는 확정하지 않았습니다.
+7. **MCP 플랜 한도**: `blog.monthly_post_usage`는 사용 건수만 반환하고 플랜 한도 값을 읽는 방법이 `04_API.md`에 없습니다(`MCP.md` D-M6). 그림은 "월 사용량 읽기"만 그렸습니다.
 
 ## 갱신 규칙
 

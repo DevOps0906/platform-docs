@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 원고는 있지만 편집·조판 경험이 없는 1인 작가가 AI와 함께 기획, 집필, 판형 조정을 거쳐 인쇄용 PDF와 ePub을 완성하는 전자책 출판 SaaS(`README.md` 1절).
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기**: 실선 화살표는 호출·데이터 흐름, 점선은 검증·참조·주기 실행입니다. "(제안)"은 문서가 제안이라고 밝힌 값입니다. 기능 ID `PB-F-###`는 `01_PRD.md` 3장, `PB-06-###`는 `06_AGENT_PLAN.md`의 작업입니다. 보안 규칙 번호 `§n`은 `SECURITY_BASELINE.md`의 장 번호입니다.
 
@@ -30,6 +30,9 @@
 | 6-b | 에이전트·결제·설정·운영 화면 흐름 | 화면 흐름 | `03_SCREENS_UX.md` 1·8·10절 |
 | 7-a | 보안 신뢰 경계 | 배치+흐름 | `01_PRD.md` 6절, `02_ARCHITECTURE.md` 6절, `05_DATA_MODEL.md` 7절 |
 | 7-b | 위협과 통제 지도 | 블록 | `02_ARCHITECTURE.md` 6절, `05_DATA_MODEL.md` 7절 |
+| 8-1 | 웹 경로와 MCP 층 (제안) | 컴포넌트 | `MCP.md` 2·3절, `04_API.md` 1절 |
+| 8-2 | 내보내기 준비와 사람 확정 | 시퀀스 | `MCP.md` 6절, `04_API.md` 2절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | 블록 | `MCP.md` 1·2절 |
 
 ## 1. 사용자와 기능
 
@@ -815,6 +818,104 @@ flowchart LR
   T8 --> C8
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 같은 서버 계층과 RLS 조회를 거칩니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다. 이 제품은 원고 본문을 도구로 내보내지 않는 것이 기본입니다.
+
+### 8-1. 웹 경로 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 작가"]
+    AG["AI 에이전트<br/>작가 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    RH["Next.js Route Handler<br/>requireSession 후 zod"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer 토큰 필수"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 7개<br/>필드 허용 목록 출력"]
+    SAN["제목 파일 이름 untrusted 처리<br/>본문 Diff 제외"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RLS["RLS 멤버십 엔타이틀먼트<br/>books chapters sections agent_tasks"]
+    CORE["core 위키 ai_documents<br/>읽기 경로 D-M5"]
+  end
+
+  subgraph NO["MCP가 부르지 않는 것"]
+    CR["크레딧 차감 AI 호출<br/>렌더 내보내기 결제"]
+  end
+
+  BR --> RH
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  RH -->|"사용자 세션"| RLS
+  RH --> CR
+  TL -->|"사용자 토큰 D-M3"| RLS
+  TL -.->|"RLS 확인 후 D-M5"| CORE
+  TL -.->|"확인 링크 D-M4"| RH
+```
+
+### 8-2. 내보내기 준비와 사람 확정 (`publishing_prepare_export`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor W as 작가
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB RLS 조회
+  participant S as 웹 내보내기 화면
+
+  W->>A: 이 책 PDF로 내보내줘
+  A->>M: publishing_prepare_export 책 id 형식
+  M->>D: 책 상태 읽기 사용자 세션
+  D-->>M: 상태 본문 유무
+  Note over M: 저장 안 함 크레딧 차감 안 함<br/>exports 생성 호출 안 함
+  M-->>A: 가능 여부 예상 크레딧 확정 전 문구 확인 링크 15분
+  A-->>W: 내보낼 수 있습니다 아직 시작 전입니다 링크에서 확인하세요
+  W->>S: 링크 열기 로그인 세션 일치 확인
+  S-->>W: 형식 크레딧 표시
+  W->>S: 내보내기 클릭
+  S->>D: 기존 exports 경로 크레딧 선차감과 잡 등록
+  D-->>S: 접수 또는 402 plan_limit 오류
+  S-->>W: 진행 상태 안내
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R1["R1 로그인 읽기 MVP"]
+    T1["publishing_list_books"]
+    T2["publishing_get_book_outline"]
+    T3["publishing_list_agent_tasks"]
+    T4["publishing_get_agent_task"]
+  end
+  subgraph R15["R1 로그인 읽기 1.5"]
+    T5["publishing_list_book_references"]
+    T6["publishing_list_wiki_pages"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T7["publishing_prepare_export"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["원고 본문 Diff 내보낸 파일"]
+    N2["AI 생성 호출 크레딧 소비"]
+    N3["작업 승인 출간 유통 ISBN"]
+    N4["결제 삭제 공개 전환 계정"]
+  end
+  R1 --> R15 --> PR
+  PR -.->|"사람이 웹에서 확정"| N2
+```
+
 ## 문서 불일치
 
 | # | 내용 | 그림에서 고른 쪽 |
@@ -822,6 +923,8 @@ flowchart LR
 | 1 | `SECURITY.md`가 초안(자산, 위협, 수치 모두 "작성 필요")이어서 보안 그림의 근거가 `01_PRD.md` 6장, `02_ARCHITECTURE.md` 6절, `05_DATA_MODEL.md` 7절로 대체됨. 세션·CSP·감사 보존 등 제품 수치는 `SECURITY.md`에 없음 | 그림 7은 PRD·아키텍처·데이터 모델 문서의 값만 사용. `SECURITY.md` 작성 후 7-a, 7-b를 다시 맞출 것 |
 | 2 | `SECURITY.md` 머리말은 공통 규칙을 "1~21장"으로 적지만 `SECURITY_BASELINE.md`에는 22장(제품별 `SECURITY.md`)까지 있음 | 그림은 §1~§21만 참조하므로 영향 없음 |
 | 3 | 인증 로그인은 단계(Mock, Google+이메일, 카카오·네이버)로 켜지는데 `03_SCREENS_UX.md` 1절은 `/signup`이 Stage B부터라고 적음 | 그림 6-a는 최종(Stage B 이상) 흐름을 그림. Stage A에서는 `/login` 개발용 패널로 바로 `/dashboard`로 감 |
+| 4 | MCP 읽기 경로: `04_API.md` 2.1절의 `GET /api/books/[id]/references`는 `ai_documents`를 service_role로 읽고, 책 구조(chapters, sections)를 읽는 Route Handler는 없음(RLS 직접 조회). MCP는 service_role을 쓰지 않으므로 `MCP.md` D-M5, D-M8 | 그림 8-1은 RLS 조회를 실선, 참고 파일·설정집 읽기를 점선(미확정)으로 그림 |
+| 5 | MCP 내보내기 준비: `POST /api/books/[id]/exports`가 검사와 크레딧 차감을 함께 하고 읽기 전용 점검 함수가 없음(`MCP.md` D-M4) | 그림 8-2는 "책 상태 읽기"만 그림. 점검 함수는 확인 필요 |
 
 그림에 못 담은 것: 글쓰기 도우미 채팅·음성·낭독 시퀀스(`03_SCREENS_UX.md` 2.9~2.11절), Basic 구독 빌링키 흐름(2.4절), 웹훅 발신 재시도(5회), 계정 삭제·purge, 로그인 Stage 상세(`AUTH_ROADMAP.md`), 3D 히어로·디자인 시스템.
 

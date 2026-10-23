@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 원고(PDF·EPUB·DOCX·MD·TXT)나 FLORA 책을 넣으면 AI가 "팔리는 훅"을 찾아 브리프를 만들고, 장르별 문법으로 스토리보드를 짜고, 장면 이미지·내레이션·자막·음악을 붙여 쇼츠(9:16)·유튜브(16:9)·인스타(1:1, 4:5)·표지 루프 영상을 한 번에 렌더하고, 구매 링크 클릭까지 측정하는 북트레일러 자동화 SaaS입니다(`README.md` 1절).
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`(미작성 상태, 7번 그림 참고), 공통 `../_platform-core/SECURITY_BASELINE.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`(미작성 상태, 7번 그림 참고), 공통 `../_platform-core/SECURITY_BASELINE.md`.
 
 **표기**: **실선 화살표** = 호출·데이터 흐름, **점선** = 검증·참조·보조 경로, "(제안)" = 문서가 제안이라고 한 값, "(P1)" = MVP 직후 단계. 기능 ID는 `TR-F-nnn`(01_PRD), 오류 코드는 `TRnnn`(04_API 7절)입니다.
 
@@ -22,6 +22,9 @@
 | 5-3 | 외부 승인 상태 | 상태 머신 | 05_DATA_MODEL 2.15절, 3절 |
 | 6 | 화면 흐름 | 흐름도 | 03_SCREENS_UX 1절, 2절, 8절 |
 | 7 | 보안 경계 | 신뢰 경계 | 05_DATA_MODEL 4절, 7절, 02_ARCHITECTURE 2절, 6절, 04_API 1절 |
+| 8-1 | 웹 경로와 MCP 층 (제안) | 컴포넌트 | MCP.md 2·3절, 04_API 1·2절 |
+| 8-2 | 렌더 준비와 사람 확정 | 시퀀스 | MCP.md 6절, 04_API 2절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | 블록 | MCP.md 1·2절 |
 
 ## 1. 사용자와 기능
 
@@ -596,6 +599,102 @@ flowchart TB
   SRV -.-> LAW
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 같은 서버 계층과 RLS 조회를 거칩니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다. 이 제품은 원고와 그 파생물(분석, 브리프, 장면)과 렌더 파일을 도구로 내보내지 않고, 생성·렌더·배포 도구를 만들지 않습니다. 읽는 범위가 좁아 이 층 전체를 베타 이후 호출 로그를 보고 넓히거나 접는 것이 기본안입니다(`MCP.md` D-M5).
+
+### 8-1. 웹 경로 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 마케터"]
+    AG["AI 에이전트<br/>마케터 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    RH["Next.js Route Handler<br/>requireSession 후 zod"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer 토큰 필수"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 6개<br/>필드 허용 목록 출력"]
+    SAN["제목 라벨 untrusted 처리<br/>원고 파생물 파일 경로 제거"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RLS["RLS 멤버십 엔타이틀먼트<br/>books trailers runs renders"]
+    ST["클릭 통계 읽기<br/>경로 확인 D-M3"]
+  end
+
+  subgraph NO["MCP가 부르지 않는 것"]
+    RUN["start_run start_render<br/>크레딧 차감 AI 호출 업로드 배포"]
+  end
+
+  BR --> RH
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  RH -->|"사용자 세션"| RLS
+  RH --> RUN
+  TL -->|"사용자 토큰 D-M1"| RLS
+  TL -.->|"service 여부 확인"| ST
+  TL -.->|"확인 링크 D-M2"| RH
+```
+
+### 8-2. 렌더 준비와 사람 확정 (`trailer_prepare_render`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor M as 마케터
+  participant A as AI 에이전트
+  participant S as MCP 서버
+  participant D as DB RLS 조회
+  participant W as 웹 렌더 화면
+
+  M->>A: 이 트레일러 1080p 쇼츠로 렌더해줘
+  A->>S: trailer_prepare_render 트레일러 포맷 해상도
+  S->>D: 권리 확인 인용 검증 음악 권리 장면 수 읽기
+  D-->>S: 조건 충족 여부
+  Note over S: 저장 안 함 크레딧 차감 안 함<br/>start_render 호출 안 함
+  S-->>A: 가능 여부 막는 사유 TR 코드 예상 크레딧 확정 전 문구 확인 링크 15분
+  A-->>M: 아직 렌더 전입니다 링크에서 권리와 인용을 확인하세요
+  M->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>M: 포맷 해상도 워터마크 AI 표시 크레딧 표시
+  M->>W: 권리 인용 경고 확인 후 렌더 클릭
+  W->>D: 기존 renders 경로 compliance 사전 검사 후 start_render 선차감
+  D-->>W: 접수 또는 TR003 TR006 TR011 CR001 오류
+  W-->>M: 진행 상태 안내 파일은 웹에서만 받기
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R1["R1 로그인 읽기 MVP"]
+    T1["trailer_list_books"]
+    T2["trailer_list_trailers"]
+    T3["trailer_get_run_status"]
+    T4["trailer_list_renders"]
+    T5["trailer_get_link_stats"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T6["trailer_prepare_render"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["원고 분석 브리프 장면 내용"]
+    N2["분석 이미지 내레이션 렌더 시작"]
+    N3["렌더 파일 다운로드"]
+    N4["권리 인용 음악 확인"]
+    N5["승인 링크 유튜브 업로드 구매 링크 변경"]
+  end
+  R1 --> PR
+  PR -.->|"사람이 웹에서 확정"| N2
+```
+
 ## 문서 불일치
 
 | # | 내용 | 그림에서 고른 쪽 |
@@ -603,6 +702,7 @@ flowchart TB
 | 1 | `SECURITY.md`가 양식 상태(자산, 위협, 수치 표가 "작성 필요")라 7번 그림에 쓸 제품 위협 표가 없음. 대신 05장 4절·7절, 02장 6절, 04장 1절을 근거로 사용 | 위 3개 문서 |
 | 2 | 화면 내비게이션: `03_SCREENS_UX.md` 1절 머리말은 왼쪽 내비게이션 "홈, 책, 코치, 설정"이고 8.3절은 GNB 메뉴 순서를 새로 정하며, `/trailers` 목록(8.4절)은 1절 화면 목록에 없는 새 경로(D-19 미정) | 6번 그림은 8.4절의 `/trailers`와 8.5절의 단계 탭을 포함 |
 | 3 | `03_SCREENS_UX.md` 8.5절은 단계 화면 머리줄을 D-18 기본값(제안)으로 둠. 확정 아님 | 6번 그림에 포함하되 본문에 제안 표시 |
+| 4 | MCP 읽기 경로: `04_API.md`에는 책·트레일러·실행·렌더를 읽는 GET이 없고(통계 `GET /api/books/:id/stats`만 있음) 화면은 RLS 직접 조회와 Realtime 구독을 쓴다. 렌더 전 compliance 사전 검사는 `POST .../renders` 안에서 `start_render` 직전에 일어나 읽기 전용으로 따로 부를 수 없다(`MCP.md` D-M3, D-M4) | 그림 8-1은 RLS 조회를 실선으로, 통계의 읽기 방식은 점선(확인 필요)으로 그림 |
 
 ## 갱신 규칙
 

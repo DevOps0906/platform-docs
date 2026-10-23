@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 회사·거래처·프로젝트 정보를 한 번 입력하고 체크리스트에 체크하면, 체크 하나가 요구사항·화면·비용·계약 조항·검수 항목까지 연결되어 실무 문서 묶음(견적서, 과업지시서, 요구사항정의서, WBS, 화면목록, 개발용역계약서, 검수확인서, 회의록)을 한 번에 만들고, 버전·요구사항 추적표·PDF/DOCX 내보내기와 CRM·ERP 연동까지 이어지는 문서 자동화 SaaS(`README.md` 1절).
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기**: 실선 화살표는 호출·데이터 흐름, 점선은 검증·참조·주기 실행·아직 만들지 않은 Phase입니다. "(제안)"은 문서가 제안이라고 밝힌 값입니다. 기능 ID `DC-F-###`는 `01_PRD.md` 2·3장, 보안 규칙 `§n`은 `SECURITY_BASELINE.md` 장 번호입니다. 역할은 owner, admin, member, viewer와 운영자 platform_admin이며, 04장의 `oa`는 owner/admin입니다.
 
@@ -30,6 +30,9 @@
 | 6-b | 연동·설정·결제·운영 화면 흐름 | 화면 흐름 | `03_SCREENS_UX.md` 1.3절, 9절 |
 | 7-a | 보안 신뢰 경계 | 배치+흐름 | `01_PRD.md` 5·6장, `02_ARCHITECTURE.md` 6절, `05_DATA_MODEL.md` 7절 |
 | 7-b | 위협과 통제 지도 | 블록 | `02_ARCHITECTURE.md` 6절, `05_DATA_MODEL.md` 7절 |
+| 8-1 | 웹 경로와 MCP 층 (제안) | 컴포넌트 | `MCP.md` 2·3절, `04_API.md` 1·2절 |
+| 8-2 | 문서 생성 준비와 사람 확정 | 시퀀스 | `MCP.md` 6절, `04_API.md` 2절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | 블록 | `MCP.md` 1·2절 |
 
 ## 1. 사용자와 기능
 
@@ -855,6 +858,104 @@ flowchart LR
   T9 --> C9
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 같은 서버 계층과 RLS 조회를 거칩니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다. 이 제품은 문서 본문, 금액, 거래처 연락처를 도구로 내보내지 않고, 확정·채택·서명·전송 도구를 만들지 않습니다.
+
+### 8-1. 웹 경로 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 PM 프리랜서"]
+    AG["AI 에이전트<br/>업무 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    RH["Next.js Route Handler<br/>requireSession 후 zod"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer 토큰 필수"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 7개<br/>필드 허용 목록 출력"]
+    SAN["제목 untrusted 처리<br/>본문 금액 연락처 제거"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RLS["RLS 멤버십 엔타이틀먼트<br/>projects documents requirements"]
+    VW["security_invoker 뷰<br/>project_pipeline"]
+  end
+
+  subgraph NO["MCP가 부르지 않는 것"]
+    GEN["문서 생성 확정 채택<br/>서명 전송 크레딧 차감 연동"]
+  end
+
+  BR --> RH
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  RH -->|"사용자 세션"| RLS
+  RH --> VW
+  RH --> GEN
+  TL -->|"사용자 토큰 D-M1"| RLS
+  TL --> VW
+  TL -.->|"확인 링크 D-M3"| RH
+```
+
+### 8-2. 문서 생성 준비와 사람 확정 (`docs_prepare_generate`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as PM
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB RLS 조회
+  participant W as 웹 문서 생성 화면
+
+  U->>A: 개발용역계약서 만들어줘
+  A->>M: docs_prepare_generate 프로젝트 문서 유형
+  M->>D: 문서 유형 카탈로그와 체크리스트 진행 읽기
+  D-->>M: 단가 위험 등급 필수 누락
+  Note over M: 저장 안 함 크레딧 차감 안 함<br/>start_generation 호출 안 함
+  M-->>A: 가능 여부 누락 목록 예상 크레딧 고위험이면 웹 고지 필요 확인 링크 15분
+  A-->>U: 아직 생성 전입니다 링크에서 입력 확인과 고지 동의가 필요합니다
+  U->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>U: 누락 입력 크레딧 고지 표시
+  U->>W: 생성 클릭
+  W->>D: 기존 documents 경로 start_generation 크레딧 선차감
+  D-->>W: 접수 또는 CR001 DC007 오류
+  W-->>U: 진행 상태 안내 검토와 확정은 웹에서
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R1["R1 로그인 읽기 MVP"]
+    T1["docs_list_projects"]
+    T2["docs_get_project_progress"]
+    T3["docs_get_pipeline"]
+    T4["docs_search"]
+    T5["docs_get_document_status"]
+    T6["docs_list_requirements"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T7["docs_prepare_generate"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["문서 확정 보관 개정"]
+    N2["체크리스트 요구사항 채택"]
+    N3["서명 승인 요청 전송"]
+    N4["본문 금액 거래처 연락처"]
+    N5["AI 생성 연동 결제"]
+  end
+  R1 --> PR
+  PR -.->|"사람이 웹에서 확정"| N1
+```
+
 ## 문서 불일치
 
 | # | 내용 | 그림에서 고른 쪽 |
@@ -864,6 +965,7 @@ flowchart LR
 | 3 | `SECURITY.md`가 초안(자산, 위협, 수치 모두 "작성 필요")이고 "1~21장"이라 적지만 `SECURITY_BASELINE.md`는 22장까지 있음 | 그림 7은 PRD·아키텍처·데이터 모델의 값만 사용. `SECURITY.md` 작성 후 7-a, 7-b를 다시 맞출 것 |
 | 4 | 앱 내비 목록이 `03_SCREENS_UX.md` 1절, 3.1절, 3.26절, 9.3절에서 서로 다름(9.1절이 스스로 인정, 정본은 9.3절 표) | 그림 6은 메뉴 구성을 그리지 않고 1절의 경로 이동만 그림 |
 | 5 | `02_ARCHITECTURE.md` 2절 폴더 트리는 `(app)/dashboard/`, `(app)/projects/[id]/`를 쓰지만 `03_SCREENS_UX.md` 1절은 `/app/...`(02장이 "경로는 03장이 정본"이라 명시) | 03장 경로 사용 |
+| 6 | MCP 읽기 경로: `04_API.md`에는 프로젝트별 문서 목록 GET과 `generation_runs` 상태 GET이 없고(`GET /api/search`로만 문서를 찾음), `GET /api/documents/[id]`는 응답에 `version` 본문을 포함해 MCP가 서버에서 걸러야 함. `CLAUDE.md` 셸 규칙의 `GET /api/documents`는 D-28 대기(`MCP.md` D-M5, D-M6) | 그림 8-1은 문서 상태 읽기를 RLS 조회로 그림. 목록 경로는 확정하지 않음 |
 
 그림에 못 담은 것: 회의록(`docs.minutes`)·음성 대화·채팅 시퀀스, 결제 시퀀스(코어 공통, `flora-publishing` 4-c와 같음), PDF/DOCX 내보내기 시퀀스, shorts_agency 패키지, CRM형 보드의 단계 계산(뷰 `project_pipeline`), 생성 진행 애니메이션, 연동 동기화 시퀀스, 3D 히어로.
 
