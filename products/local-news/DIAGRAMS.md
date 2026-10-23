@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의:** 기자 1~10명 규모의 지역신문이 기사 작성, 데스크 승인, 독자 사이트, 광고, 뉴스레터, 법정 표기를 한 곳에서 운영하도록, 신문사마다 자기 제호와 도메인으로 쓰는 멀티테넌트 뉴스룸 SaaS.
 
-**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, 공통은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`. 주의: 이 제품의 `SECURITY.md`는 아직 빈 양식이라 그림 7은 `05_DATA_MODEL.md` 7절, `02_ARCHITECTURE.md` 6절, `01_PRD.md` 6절을 근거로 그렸습니다(문서 불일치 1).
+**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`, 공통은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`. 주의: 이 제품의 `SECURITY.md`는 아직 빈 양식이라 그림 7은 `05_DATA_MODEL.md` 7절, `02_ARCHITECTURE.md` 6절, `01_PRD.md` 6절을 근거로 그렸습니다(문서 불일치 1).
 
 **표기:** 실선 = 호출·데이터 흐름, 점선 = 검증·참조·Phase 2 이후, "(제안)" = 문서가 제안이라고 한 값. 우선순위는 `01_PRD.md` 2절을 따라 P0 = MVP, P1 = Phase 2, P2 = Phase 3입니다. `NW-F-###`은 기능 ID, `NW###`은 오류 코드입니다.
 
@@ -27,6 +27,8 @@
 | 6-2 | 편집국 콘솔 화면 흐름 | flowchart | 03 1.2절, 2.1~2.3절 |
 | 6-3 | 개설과 운영 화면 흐름 | flowchart | 03 1.3절, 2.1절 |
 | 7 | 보안 신뢰 경계 | flowchart | 05 7절, 02 6·10절, 01 6절 |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | `MCP` 1~3절, `MCP_BASELINE` 1·7절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | `MCP` 2절, `MCP_BASELINE` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -748,6 +750,80 @@ flowchart TB
   VLT -.-> PII
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 독자 사이트가 쓰는 공개 RPC를 읽기 전용으로 호출합니다. 편집국 쓰기(작성·승인·게시), 제보, 정정 청구, 댓글, 결제는 도구가 없어 승인 흐름 그림(8-2)은 없습니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 미결정(D-M#) 또는 신문사 허용 설정이 필요한 부분입니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    RD["독자 브라우저<br/>신문사 도메인"]
+    ST["편집국 브라우저"]
+    AG["AI 에이전트<br/>독자 비서 편집국 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    RS["독자 사이트 서버 컴포넌트<br/>anon 키 ISR"]
+    NR["편집국 Route Handler<br/>requireSession news"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>익명 또는 편집국 Bearer"]
+    TN["신문사 해석<br/>resolve_tenant"]
+    PL["AI 접근 허용 확인<br/>ai_crawler_policy D-M1"]
+    RL["레이트 리밋 IP 신문사 일일 상한"]
+    TL["도구 5개 읽기 전용<br/>필드 허용 목록 출력"]
+    SAN["본문 발췌 untrusted 처리<br/>프리미엄 전재 본문 제외"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    PUB["공개 RPC<br/>read_article search_articles most_read"]
+    STF["편집국 RPC<br/>compliance_weekly_stats"]
+    RLS["article_is_live 판정<br/>엠바고 예약 초안 0행"]
+  end
+
+  RD --> RS
+  ST --> NR
+  RS --> PUB
+  NR -->|"사용자 세션"| STF
+  AG --> TR
+  TR --> TN
+  TN --> PL
+  PL --> RL
+  RL --> TL
+  TL --> SAN
+  TL -->|"익명 anon"| PUB
+  TL -.->|"편집국 토큰 D-M2"| STF
+  PUB --> RLS
+  STF --> RLS
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R0["R0 익명 읽기 1.5 신문사 허용 후"]
+    T1["news_search_articles"]
+    T2["news_get_article"]
+    T3["news_get_most_read"]
+    T4["news_get_newspaper_info"]
+  end
+  subgraph R2["R2 편집국 읽기 1.5"]
+    T5["news_get_compliance_weekly"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["작성 승인 게시 정정 게재<br/>사람 승인 규칙"]
+    N2["제보 취재원 정정 청구인<br/>독자 명단 댓글"]
+    N3["AI 초안 교정 크레딧 소비"]
+    N4["독자 결제 광고 업소 경조사<br/>구성원 도메인 운영"]
+  end
+  R0 --> R2
+  R0 -.->|"제보와 정정 청구는 웹 폼 링크 안내만"| N2
+  R2 -.->|"게시는 데스크가 웹에서"| N1
+```
+
 ## 문서 불일치
 
 1. **`SECURITY.md` 미작성:** 자산, 위협, 제품별 수치, 외부 서비스 표가 모두 "(작성 필요)"이고 공통 규칙 범위를 "1~21장"으로 적었는데 현재 `SECURITY_BASELINE.md`는 22장까지 있습니다. 그림 7은 05 7절, 02 6절, 01 6절을 근거로 했고 SECURITY 위협 번호(T#)는 쓰지 않았습니다.
@@ -756,6 +832,9 @@ flowchart TB
 4. **광고 비컨:** `03_SCREENS_UX.md` 2.6절은 `/api/r/ad`와 일 배치 집계, `04_API.md` 2.1절과 `02_ARCHITECTURE.md` 2절은 `/api/r/ad-event`가 집계 RPC를 바로 호출합니다. 그림에는 개별 경로를 넣지 않았습니다.
 5. **뉴스레터 확정 상태명:** `03_SCREENS_UX.md` 2.4절은 확정 후 `active`, `05_DATA_MODEL.md`는 `confirmed`입니다. 그림 5-4는 05장 기준입니다.
 6. **편집국 경로 접두:** `03_SCREENS_UX.md` 1.2절은 모든 경로가 `/[org]` 접두 아래이고, `02_ARCHITECTURE.md` 2절 트리는 접두 없이 적었습니다. 그림 6-2는 접두를 생략했습니다.
+7. **MCP 신문사 공개 정보 읽기**: `MCP.md`의 `news_get_newspaper_info`는 필요적 게재사항을 익명이 읽는 경로가 필요한데 `04_API.md` 3절의 anon 허용 RPC는 `is_public_newspaper`·`is_profile_complete`이고 공개 프로필 조회 RPC가 없습니다(독자 푸터는 서버 컴포넌트가 읽는 것으로 추정, `MCP.md` D-M4). 그림 8-1은 "공개 RPC"로 묶어 그렸습니다.
+8. **MCP 기사 반환 키**: `read_article`은 jsonb를 돌려주지만 `04_API.md` 3절·`05_DATA_MODEL.md`에 키 이름이 없습니다(`locked` 외). `MCP.md`의 출력 필드는 확인 전입니다(D-M5).
+9. **AI 접근 정책의 단계**: `01_PRD.md` NW-F-045(AI 크롤러 정책)는 P1(Phase 2)이고 `syndication_settings.ai_crawler_policy`는 `05_DATA_MODEL.md`에 있습니다. `MCP.md`는 이 설정이 구현되기 전에는 익명 기사 도구를 열지 않는 것으로 제안했습니다(D-M1). 그림 8-1의 "AI 접근 허용 확인"은 그 제안입니다.
 
 ## 갱신 규칙
 

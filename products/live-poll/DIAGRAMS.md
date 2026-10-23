@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 진행자(강연자, 행사 진행자, 방송인)가 행사(방)를 만들면 청중이 로그인 없이 6자리 코드나 QR로 들어와 투표하고 질문하며, 결과가 발표 화면과 OBS 오버레이에 실시간으로 반영되는 웹 서비스. 진행자용 AI 어시스턴트, Q&A AI 정리, 행사 위키, 음성이 MVP에 들어 있다.
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
 
 **표기**: 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·구독, "(제안)" = 문서가 제안이라 한 값. Phase 2·3 항목은 이름에 `P2`, `P3`를 붙였다.
 
@@ -24,6 +24,8 @@
 | 5-C | 상태: Q&A 질문 | 상태 머신 | 05_DATA_MODEL 3절, 01_PRD LP-F-013, 015 |
 | 6 | 화면 흐름 | flowchart | 03_SCREENS_UX 1절, 2절 |
 | 7 | 보안 신뢰 경계 | flowchart | 05_DATA_MODEL 7절, 02_ARCHITECTURE 5-1·5-4·6절, 01_PRD 6장 |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | `MCP` 1~3절, `MCP_BASELINE` 1·7절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | `MCP` 2절, `MCP_BASELINE` 2절 |
 
 > 이 제품의 `SECURITY.md`는 아직 템플릿 상태("작성 필요")라서 7번 그림은 `05_DATA_MODEL` 7장, `02_ARCHITECTURE` 5·6장, `01_PRD` 6장을 근거로 그렸다. 맨 끝 "문서 불일치" 참고.
 
@@ -683,12 +685,82 @@ flowchart TB
 
 ---
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)는 진행자 본인 세션으로 읽기만 합니다. 청중 입구(`/api/p/*`)와 오버레이 입구는 MCP가 호출하지 않으며 쓰기 도구가 없어 승인 흐름 그림(8-2)은 없습니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 미결정(D-M#)입니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    HB["진행자 브라우저"]
+    PB["청중 브라우저<br/>코드 입장"]
+    AG["AI 에이전트<br/>진행자 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    HOST["진행자 콘솔<br/>supabase js RLS RPC"]
+    AUD["청중 Route Handler<br/>api p join vote question"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>진행자 Bearer 필수"]
+    RL["레이트 리밋 행사당 결과 6회 분<br/>5초 캐시"]
+    TL["읽기 도구 5개<br/>필드 허용 목록 출력"]
+    SAN["AI 요약 untrusted 처리<br/>입장 코드 질문 원문 제외"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    HR["host_poll_results<br/>events polls poll_results RLS"]
+    QA["qna_questions 건수<br/>core ai_runs 요약"]
+    SV["청중 service_role RPC<br/>cast_vote ask_question"]
+  end
+
+  HB --> HOST
+  HOST -->|"사용자 세션"| HR
+  HOST --> QA
+  PB --> AUD
+  AUD --> SV
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  TL -.->|"사용자 토큰 D-M1"| HR
+  TL -.->|"요약 읽기 D-M2 D-M5"| QA
+  TL -. "호출하지 않음" .-x SV
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R2["R2 진행자 읽기 Phase 1.5"]
+    T1["poll_list_events"]
+    T2["poll_list_polls"]
+    T3["poll_get_poll_results"]
+    T4["poll_get_qna_counts"]
+    T5["poll_get_qna_summary"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["투표 질문 추천 입장<br/>청중 쓰기 전부"]
+    N2["행사 시작 종료 삭제<br/>문항 열기 닫기"]
+    N3["질문 숨김 참가자 차단<br/>금칙어"]
+    N4["참가자 닉네임 질문 원문<br/>입장 코드 오버레이 키"]
+    N5["AI 채팅 음성 결제 계정"]
+  end
+  R2 -.->|"실시간 조작은 콘솔에서만"| N2
+```
+
 ## 문서 불일치
 
 1. **`SECURITY.md` 미작성**: 자산, 위협, 공통 규칙의 제품별 수치, 외부 서비스 이전 표가 모두 "(작성 필요)"다. 그림 7과 위 표는 다른 문서에서 가져왔으므로 SECURITY.md가 채워지면 다시 맞춘다.
 2. **공동 진행자 범위**: `01_PRD` 2장은 공동 진행자(팀 멤버)를 Phase 2로 두었는데 `05_DATA_MODEL` 10절의 시드 페르소나와 `README.md`는 `host`·`cohost`를 MVP 개발용으로 둔다. 그림 1-B는 01_PRD를 따랐다. RLS의 쓰기 역할(owner, admin, member)은 MVP에 이미 있다.
 3. **브로드캐스트 간격**: `01_PRD` LP-F-009는 인원별 간격(300명 이하 250ms, 1,000명 이하 500ms, 초과 1,000ms, 제안)을 말하고 `02_ARCHITECTURE` 4절은 MVP(참가자 100명 한도)는 모두 250ms 고정, 인원별 간격은 Phase 2라고 한다. 그림 4-B는 250ms 틱으로 그렸다.
 4. **JWT 서명 방식 미확인**: `02_ARCHITECTURE` 5-1절은 Supabase 새 JWT 서명 체계에서 사용자 정의 JWT를 Realtime이 받는지 "미확인"이라 쓰고 대안(공개 채널 + 워커 Ed25519 서명)을 적었다. 그림 2-A와 7은 기본안(HS256 단기 JWT)으로 그렸다.
+5. **MCP 읽기 경로**: `MCP.md`의 `poll_list_events`·`poll_list_polls`·`poll_get_qna_counts`는 읽기 전용 RPC가 필요한데 `04_API.md` 3절의 진행자 읽기 RPC는 `host_poll_results`뿐이고 나머지는 RLS 직접 읽기입니다(`MCP.md` D-M3). 그림 8-1은 "RLS RPC"로만 묶어 그렸습니다.
+6. **MCP 요약 조회 경로**: `poll_get_qna_summary`가 행사 기준으로 Q&A 정리 실행을 찾으려면 `core.ai_runs`의 `input->>'event_id'` 조회가 필요한데 `04_API.md` 2.1절에는 `run_id`를 아는 `GET /api/ai/qna-assist/[run_id]`만 있습니다(`MCP.md` D-M5). 점선으로 표시했습니다.
+7. **열린 문항의 결과 공개**: `04_API.md` 4절은 공개 방송에서 `host_only`·`after_close` 열린 문항의 결과를 null로 하는데, 진행자 RPC `host_poll_results`(3절)는 상태와 관계없이 집계를 돌려줍니다. `MCP.md`는 방송 규칙을 따르도록 제안했고 규칙을 어디에 둘지는 미결정입니다(D-M4).
 
 ## 갱신 규칙
 

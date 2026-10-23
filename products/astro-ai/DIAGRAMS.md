@@ -2,7 +2,7 @@
 
 작성일 2026-10-23. 제품 한 줄 정의: 만세력 엔진이 결정적으로 계산한 사주 원국과 사용자가 뽑은 타로 3장을 AI가 해설해, 본인과 가족·지인의 리포트를 A4 책자형 PDF로 소장하게 하고 이메일과 대시보드로 전달하는 크레딧팩 결제형 SaaS입니다(`README.md` 1절).
 
-근거 문서: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`. 정본은 각 문서이며, 그림과 문서가 다르면 문서가 우선입니다. 문서끼리 어긋난 곳은 파일 끝 "문서 불일치"에 적었습니다. GitHub에서 그림이 바로 렌더링됩니다(Mermaid).
+근거 문서: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`. 정본은 각 문서이며, 그림과 문서가 다르면 문서가 우선입니다. 문서끼리 어긋난 곳은 파일 끝 "문서 불일치"에 적었습니다. GitHub에서 그림이 바로 렌더링됩니다(Mermaid).
 
 표기: **실선 화살표** = 호출·데이터 흐름, **점선** = 검증·참조·구독, "(제안)" = 문서가 제안값이라고 밝힌 것. 기능 ID(AS-F-###)는 `01_PRD.md` 3절의 ID입니다.
 
@@ -25,6 +25,9 @@
 | 6-1 | 화면 흐름: 공개·가입·온보딩 | flowchart | `03` 1절, 2.1절, 7절 |
 | 6-2 | 화면 흐름: 대시보드와 어드민 | flowchart | `03` 1절, 2.2~2.4절, 8절 |
 | 7-1 | 보안 경계 | flowchart (신뢰 경계) | `SECURITY.md` 1~2절, `SECURITY_BASELINE` |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | `MCP` 1~3절, `MCP_BASELINE` 1·7절 |
+| 8-2 | 리딩 준비와 사람 확정 | 시퀀스 | `MCP` 2·6절, `04` 2절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | `MCP` 2절, `MCP_BASELINE` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -700,6 +703,103 @@ flowchart TB
 
 위협별 미결정(`SECURITY.md` 3절·6절): 세션 유휴·절대 만료, CSP 외부 허용 도메인, 감사 로그 보존 기간, 백업·복구 훈련 주기, 알림 수신자, 사고 대응 담당은 "작성 필요"이고, 유출 신고 시한·제3자 동의 문구·미성년 처리·국외 이전 고지·백업과 purge 충돌·운세 광고 규제는 "미확인" 또는 "미결정"이라 그림에 값을 넣지 않았습니다.
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 Route Handler 응답과 RLS 읽기를 이용합니다. 이 제품은 생년월일시 등 민감 정보가 중심이라 노출 도구가 6개로 적고, 크레딧을 쓰는 도구는 없습니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 사용자"]
+    AG["AI 에이전트<br/>회원 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>requireSession Route Handler"]
+    CR["크레딧 선차감<br/>POST api readings 등"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>익명 또는 Bearer"]
+    RL["레이트 리밋 IP 사용자"]
+    TL["도구 6개<br/>필드 허용 목록 출력"]
+    SAN["위키 untrusted 처리<br/>민감 필드 제거"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    PUB["themes 공개 읽기<br/>anon RLS"]
+    USR["readings 상태 읽기<br/>사용자 세션 RLS"]
+    ENC["암호문 컬럼 제외<br/>생년월일시 질문 본문"]
+  end
+
+  BR --> NX
+  NX --> CR
+  NX -->|"사용자 세션"| USR
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  TL -->|"익명"| PUB
+  TL -.->|"사용자 토큰 D-M1"| USR
+  TL -.->|"공개 위키 RPC 신설 D-M3"| PUB
+  USR --> ENC
+  TL -.->|"확인 링크 D-M6"| NX
+```
+
+### 8-2. 리딩 준비와 사람 확정 (`astro_prepare_reading`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as 회원
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB 읽기
+  participant W as 웹 리딩 화면
+
+  U->>A: 사주 리딩 하나 만들고 싶어
+  A->>M: astro_prepare_reading 종류 테마
+  M->>D: 엔타이틀먼트 테마 잔액 진행 중 건수 읽기
+  D-->>M: 읽기 결과
+  Note over M: 저장하지 않음<br/>consume_credits 호출 안 함<br/>생년월일시 입력 안 받음
+  M-->>A: 가능 여부 비용 15 확정 전 문구 확인 링크 15분
+  A-->>U: 15크레딧이 필요합니다 아직 차감 전입니다 링크에서 진행하세요
+  U->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>U: 대상 선택 질문 입력 크레딧 수 표시
+  U->>W: 확인 버튼 클릭
+  W->>D: POST api readings 선차감 멱등 request_id
+  D-->>W: 202 reading_id 또는 CR001
+  W-->>U: 만드는 중 안내
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R0["R0 익명 읽기"]
+    T1["astro_list_themes MVP"]
+    T2["astro_get_wiki_page 1.5 D-M3 후"]
+  end
+  subgraph R1["R1 로그인 읽기 1.5"]
+    T3["astro_list_my_readings"]
+    T4["astro_get_reading_status"]
+    T5["astro_get_credit_balance"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T6["astro_prepare_reading"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["리딩 생성 취소 삭제 재렌더"]
+    N2["보관함 생년월일시 원국 본문"]
+    N3["AI 채팅 음성 낭독 결제 환불"]
+    N4["다운로드 URL 계정 삭제 어드민"]
+  end
+  R0 --> R1 --> PR
+  PR -.->|"사람이 웹에서 확정"| N1
+```
+
 ## 문서 불일치
 
 그림에는 아래 각 항목의 앞쪽(01·05·04 문서) 값을 골랐습니다.
@@ -710,6 +810,10 @@ flowchart TB
 | 2 | PDF 서명 URL 만료 | `SECURITY.md` T3: "만료 시간 짧게" | `01_PRD.md` AS-F-016, `04_API.md`: 7일 서명 URL | 7일(01, 04). 보안 문서의 "짧게"가 7일보다 짧은 값을 뜻하는지 확인 필요 |
 | 3 | Live Demo 입력 저장 여부 | `SECURITY.md` T5: "입력은 저장하지 않는지 확인 필요"(미확인) | `01_PRD.md` AS-F-024, `04_API.md`: 입력 저장·로그 금지(확정 문장) | 저장 안 함(01, 04) |
 | 4 | 히스토리 화면의 범위 | `01_PRD.md` AS-F-021: 대시보드에 히스토리 포함(MVP 기능) | `03_SCREENS_UX.md` 1절: `/dashboard/history` 우선순위 P1 | 03의 P1 표기(그림 6-2) |
+| 5 | MCP 공개 위키 읽기 | `MCP.md`의 `astro_get_wiki_page`는 읽기 전용 공개 RPC가 필요 | `04_API.md` 2.1절 하단: 공개 위키는 서버 컴포넌트가 service_role로 읽음(MCP 경로는 service_role 금지) | 그림 8-1에 점선(D-M3)으로 표시 |
+| 6 | MCP 리딩 목록 | `MCP.md`의 `astro_list_my_readings`는 목록 읽기 경로가 필요 | `04_API.md`에는 `GET /api/readings/[id]`만 있고 목록 Route Handler 없음(`03_SCREENS_UX.md` 3절은 RLS로 `readings` 직접 읽기) | RLS 직접 읽기(D-M4) |
+| 7 | MCP 잔액 읽기 | `MCP.md`의 `astro_get_credit_balance`는 잔액 읽기 경로가 필요 | `03_SCREENS_UX.md` 3절은 `credit_balances`를 쓰지만 `04_API.md`·`05_DATA_MODEL.md`에 정의 없음 | 정의 확인 필요(D-M5), 그림에서는 "DB 읽기"로만 표기 |
+| 8 | 외부 AI 제공자 전송 범위 | `SECURITY.md` T8·`CLAUDE.md`: 생년월일시 원문과 실명은 어떤 AI 제공자에도 보내지 않음 | `MCP.md`: 에이전트의 모델 제공자는 이 제품이 통제하지 못하는 경로. 도구 출력에서 해당 필드를 빼는 것으로만 대응 | 도구 출력에서 제외(D-M7 법무 확인) |
 
 ## 갱신 규칙
 

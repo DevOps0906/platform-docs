@@ -2,7 +2,7 @@
 
 작성일 2026-10-23. 제품 한 줄 정의: 수업이나 회의 원문을 붙여넣으면 서버가 AI 모델 2개로 병렬 정리한 뒤 통합 모델이 하나의 "학습 일지"로 합쳐 주고 TXT와 보관함에 남기며, 노트·교재를 과목별로 색인(RAG)해 개념 위키·퀴즈·Q&A 채팅·강의 녹음 노트 생성까지 제공하는 학습 노트 정리 서비스입니다(`README.md` 1절).
 
-근거 문서: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`. 정본은 각 문서이며, 그림과 문서가 다르면 문서가 우선입니다. 어긋난 곳은 파일 끝 "문서 불일치"에 적었습니다. GitHub에서 그림이 바로 렌더링됩니다(Mermaid).
+근거 문서: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`, `MCP.md`, 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`. 정본은 각 문서이며, 그림과 문서가 다르면 문서가 우선입니다. 어긋난 곳은 파일 끝 "문서 불일치"에 적었습니다. GitHub에서 그림이 바로 렌더링됩니다(Mermaid).
 
 표기: **실선 화살표** = 호출·데이터 흐름, **점선** = 검증·참조·구독, "(제안)" = 문서가 제안값이라고 밝힌 것. 기능 ID(NT-F-###)는 `01_PRD.md` 3절의 ID입니다.
 
@@ -28,6 +28,9 @@
 | 6-1 | 화면 흐름: 공개·가입·온보딩 | flowchart | `03` 1절, 2.1절, 7절 |
 | 6-2 | 화면 흐름: 앱 셸 | flowchart | `03` 1절, 2절, 8절 |
 | 7-1 | 보안 경계 | flowchart (신뢰 경계) | `01_PRD` 6장, `02` 6절, `05` 7절 |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | `MCP` 1~3절, `MCP_BASELINE` 1·7절 |
+| 8-2 | 정리 준비와 사람 확정 | 시퀀스 | `MCP` 2·6절, `04` 2.1절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | `MCP` 2절, `MCP_BASELINE` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -712,6 +715,103 @@ flowchart TB
   FAP --> DFY
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 Route Handler 응답과 RLS 읽기를 이용합니다. 이 제품은 학습자 원문이 중심이고 익명에게 줄 공개 데이터가 없어, 도구는 로그인 후 상태 조회와 비용 안내 5개(+ Phase 2 위키 1개)뿐입니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 2 또는 미결정(D-M#)입니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 학습자"]
+    AG["AI 에이전트<br/>학습자 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>requireSession notes Route Handler"]
+    CR["크레딧 선차감<br/>start_run ai organize"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>Bearer 필수 익명 없음"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 5개 Phase 2에 1개 추가<br/>필드 허용 목록 출력"]
+    SAN["문서 제목 untrusted 처리<br/>본문 결과 퀴즈 정답 제외"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RUN["runs run_steps ai_runs<br/>멤버 RLS"]
+    DOC["ai_documents wiki_pages<br/>멤버 RLS"]
+    OWN["본인 행만 걸러냄<br/>created_by 제안 D-M4"]
+  end
+
+  BR --> NX
+  NX --> CR
+  NX -->|"사용자 세션"| RUN
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  TL -.->|"사용자 토큰 D-M1 D-M2"| RUN
+  TL -.->|"목록 읽기 D-M3"| DOC
+  RUN --> OWN
+  DOC --> OWN
+  TL -.->|"확인 링크 D-M7"| NX
+```
+
+### 8-2. 정리 준비와 사람 확정 (`study_prepare_organize`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor L as 학습자
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB 읽기
+  participant W as 웹 과목 화면
+
+  L->>A: 이 문서 3개 정리하면 크레딧 얼마야
+  A->>M: study_prepare_organize 과목 문서 id
+  M->>D: 문서 상태 글자 수 한도 잔액 읽기
+  D-->>M: 읽기 결과
+  Note over M: 저장하지 않음<br/>consume_credits 호출 안 함<br/>문서 본문 입력 안 받음
+  M-->>A: 가능 여부 예상 크레딧 확정 전 문구 확인 링크 15분
+  A-->>L: 약 N크레딧이 필요합니다 아직 차감 전입니다 링크에서 진행하세요
+  L->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>L: 문서 선택과 예상 크레딧 표시
+  L->>W: 정리 시작 클릭
+  W->>D: POST api ai organize 선차감 멱등 request_id
+  D-->>W: run_id 또는 CR001 AI_PLAN_LIMIT
+  W-->>L: 진행률 표시
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R1["R1 로그인 읽기 1.5"]
+    T1["study_list_subjects"]
+    T2["study_list_documents"]
+    T3["study_get_run_status"]
+    T4["study_get_ai_run_status"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T5["study_prepare_organize"]
+  end
+  subgraph P2["Phase 2 결정 후"]
+    T6["study_get_wiki_page"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["일지 원문 정리 결과 위키 퀴즈 정답"]
+    N2["정리 실행 재시도 취소 채팅 채점"]
+    N3["강의 녹음 전사 음성"]
+    N4["업로드 삭제 내보내기 계정 삭제 결제"]
+  end
+  R1 --> PR --> P2
+  PR -.->|"사람이 웹에서 확정"| N2
+```
+
 ## 문서 불일치
 
 그림에는 아래 각 항목에서 표시한 쪽을 골랐습니다.
@@ -721,6 +821,10 @@ flowchart TB
 | 1 | 제품 보안 문서의 상태 | `SECURITY.md`는 자산·위협·수치가 모두 "작성 필요"인 템플릿이고 "1~21장"을 가리킴 | `SECURITY_BASELINE.md`는 22장까지 있고 22장이 제품별 `SECURITY.md` 규칙 | 그림 7-1은 `01_PRD` 6장, `02` 6절, `04` 1절, `05` 7절 내용으로 구성, 장 번호는 baseline 기준 |
 | 2 | 문서 색인 상태의 정의 위치 | `05_DATA_MODEL.md`에는 `ai_documents` 상태 전이 표가 없음(코어 객체라 참조만) | `01_PRD.md` NT-F-020, 031과 `03` 2.5절에만 상태 이름이 나옴 | 그림 5-4는 01·03에서 구성, 코어 SQL로 확인 필요 |
 | 3 | 퀴즈 풀이 진입 경로 | `03_SCREENS_UX.md` 1절은 `/app/quiz/[run_id]`만 있고 목록 경로 없음 | 같은 문서 8.1절 D-25(퀴즈 목록 메뉴)가 결정 대기 | 목록 없이 노트 상세에서 진입(그림 6-2) |
+| 4 | MCP 과목·문서 목록 | `MCP.md`의 `study_list_subjects`·`study_list_documents`는 목록 읽기 경로가 필요 | `04_API.md` 2.1절 하단은 RLS 직접 읽기만 말하고 목록 Route Handler와 `ai_documents` 컬럼 정의가 없음(`05_DATA_MODEL.md` 6절은 표 이름만) | 그림 8-1은 "멤버 RLS 읽기"로만 표기(D-M3) |
+| 5 | MCP 본인 행 필터 | `MCP.md` 5절 MT4: 도구는 호출 사용자 본인이 만든 행만 돌려줌 | `05_DATA_MODEL.md` 4절: `runs`·`run_steps` SELECT는 조직 멤버 전체. `runs`에 `created_by`가 있는지 문서에 없음 | 그림 8-1의 "본인 행만 걸러냄"은 제안(D-M4) |
+| 6 | MCP 예상 크레딧 읽기 | `MCP.md`의 `study_prepare_organize`는 한도와 예상 크레딧을 읽기만 해야 함 | `04_API.md` 3절: `notes.org_features`는 service 전용이고 예상 크레딧은 `POST /api/ai/organize` 응답(선차감과 한 번에)으로만 나옴 | 읽기 전용 경로 필요(D-M6), 그림 8-2는 "DB 읽기"로만 표기 |
+| 7 | 보안 문서 범위 | `SECURITY.md`는 아직 템플릿("작성 필요")이고 MCP 위협 행(T2)은 그 표의 첫 실제 행임 | `MCP.md`: 학습자 원문·미성년·제3자 음성 통제는 `01_PRD.md` 6장에 흩어져 있음 | `MCP.md` 5절에 필요한 부분만 인용 |
 
 ## 갱신 규칙
 
