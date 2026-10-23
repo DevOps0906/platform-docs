@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 말로 지시하면 AI가 편집안을 만들고 승인하면 실행하는 AI 자동편집(주력, SF-5)으로, 스토리보드 하나에서 롱폼 1편 + 장면 단위 쇼츠 + 언어판(KO/JA/EN)을 만들어 다채널에 배포하는 조직 단위 영상 SaaS입니다(`README.md` 1절).
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `08_AGENCY_OPERATIONS.md`(참고), `SECURITY.md`(미작성 초안, 아래 "문서 불일치" 참조), 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `08_AGENCY_OPERATIONS.md`(참고), `MCP.md`, `SECURITY.md`(미작성 초안, 아래 "문서 불일치" 참조), 공통 맥락은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기**: 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·조건부, "(제안)" = 문서가 확정 전이라고 적은 값. 스토리보드 트랙(Track S, 2026-10-18)과 AI 자동편집(2026-10-18) 이후의 정본 장(01장 10~11장, 02장 10~11장, 03장 8~9장, 04장 9~10장, 05장 11~12장)을 기준으로 그렸습니다. Track E·F(Lofi, 플레이리스트)는 Phase 2라 그림에서 흐릿하게만 표시합니다.
 
@@ -24,6 +24,9 @@
 | 5-5 | 고객 승인 상태 | 상태 머신 | `05_DATA_MODEL.md` 3절 |
 | 6 | 화면 흐름 | flowchart | `03_SCREENS_UX.md` 1절, 7.3절, 8~9장 |
 | 7 | 보안 경계 | flowchart | `04_API.md` 1절, `05_DATA_MODEL.md` 4절, 7절, `02_ARCHITECTURE.md` 2절, 7절, `SECURITY_BASELINE.md` |
+| 8-1 | 기존 경로와 MCP 층 | 컴포넌트(flowchart) | `MCP.md` 2~4절, `04_API.md` 1절 |
+| 8-2 | 생성 준비와 사람 확정 | 시퀀스 | `MCP.md` 6절, `04_API.md` 9.1절 |
+| 8-3 | 도구 등급과 노출 단계 | flowchart | `MCP.md` 2절, `_platform-core/MCP_BASELINE.md` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -669,6 +672,104 @@ flowchart TB
 | 원본 저작권·대가성 문구 누락 | clip은 `rights_basis` 필수(VD019), 제휴 링크가 있으면 문구 CHECK로 끌 수 없음(`01` 6절) | §12 |
 | 개발용 로그인 노출 | 배포 빌드에서 `/api/dev/login` 404, 쿠키 역할 Mock 금지(`05` 7절 SM #6) | §17 |
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 서버 계층과 RLS 읽기를 호출합니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 미결정(D-M#)이거나 Phase 2입니다. MCP에는 생성, 렌더, 업로드, 결제 도구가 없습니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 사용자"]
+    AG["AI 에이전트<br/>운영자 비서 대행 PD 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>Route Handler requireSession"]
+    CR["선차감 consume_credits<br/>enqueue_job"]
+  end
+
+  subgraph MCPL["새 MCP 층 apps/mcp 제안"]
+    TR["Streamable HTTP<br/>Bearer 필수 익명 없음"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 6개<br/>필드 허용 목록 출력"]
+    SAN["내레이션 편집 지시 채널명<br/>untrusted 처리"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RLS["RLS 조직 멤버십<br/>사용자 세션 클라이언트만"]
+    CRED["encrypted_credentials<br/>도구에서 접근 안 함"]
+  end
+
+  BR --> NX
+  NX --> RLS
+  NX --> CR
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  TL -.->|"사용자 토큰 D-M1"| RLS
+  TL -.->|"서버 함수 호출 D-M2"| NX
+  TL -. "호출 안 함" .-> CR
+  RLS -.-> CRED
+```
+
+### 8-2. 생성 준비와 사람 확정 (`sceneflow_prepare_generation`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as 운영자
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant S as 서버 계층 읽기
+  participant W as 웹 스토리보드 화면
+  participant C as 기존 렌더 경로
+
+  U->>A: 이 스토리보드 렌더하면 크레딧이 얼마야 그리고 진행해줘
+  A->>M: sceneflow_prepare_generation 스토리보드 id
+  M->>S: 스토리보드 조회와 estimate 읽기
+  S-->>M: 합계 항목 막는 사유 코드
+  Note over M: 저장하지 않음<br/>consume_credits enqueue_job 호출 안 함
+  M-->>A: 예상 크레딧 확정 전 차감 안 됨 확인 링크 15분
+  A-->>U: 예상 크레딧은 이만큼이며 아직 렌더 전입니다 링크에서 확인하세요
+  U->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>U: 예상 크레딧 장면 구성 표시
+  U->>W: 렌더 클릭
+  W->>C: render request_id 사용자 세션
+  C-->>W: rootJobId 또는 VD017 VD018 VD019 VD001 오류
+  W-->>U: 결과 안내
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R2["R2 조직 읽기 MVP"]
+    T1["sceneflow_get_storyboard"]
+    T2["sceneflow_get_production"]
+    T3["sceneflow_list_edit_plans"]
+    T4["sceneflow_list_channels"]
+    T5["sceneflow_get_analytics"]
+  end
+  subgraph PR["준비 저장 안 함 MVP"]
+    T6["sceneflow_prepare_generation"]
+  end
+  subgraph P2["W1 Phase 2 후보 D-M6"]
+    F1["장면 저장 편집안 적용"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["생성 렌더 다시 만들기"]
+    N2["업로드 예약 고객 승인"]
+    N3["채널 연결 해제 토큰"]
+    N4["결제 구독"]
+  end
+  R2 --> PR
+  PR -.->|"사람이 웹에서 확정"| N1
+  PR -.-> P2
+```
+
 ## 문서 불일치
 
 1. **`SECURITY.md`가 미작성 초안**입니다(자산, 위협, 제품별 수치가 모두 "작성 필요"). 7장 그림과 위협표는 다른 문서에서 모은 임시본이며, 세션 만료·CSP 도메인·감사 보존 기간 등 제품별 수치는 그림에 담지 못했습니다.
@@ -678,6 +779,9 @@ flowchart TB
 5. **컷 종류와 화면비**: `05` 11장은 컷 `master`/`short`와 화면비 2종, 12장은 `variant`와 화면비 4종으로 넓혔습니다. 12장이 11장을 대체한다고 적혀 있어 그림 3·5-2는 12장 기준입니다.
 6. **`/command` 경로**: `04` 9.1절의 `POST /api/storyboards/[id]/command`는 10.1절에서 `edit-plans`로 대체되었습니다. 그림은 `edit-plans`만 썼습니다.
 7. **`Track` 값**: `04` 1절 "Track `A-F`"와 `/api/ai/script`의 `'B'|'C'|'D'`는 9장에서 `S`로 바뀐다고 적혀 있으나 앞 장 표는 그대로입니다(문서가 이미 인정). 그림은 S 기준입니다.
+8. **MCP용 목록 읽기 경로 없음**: `04_API.md`에는 `GET /api/storyboards/[id]`와 `GET /api/productions/[id]`만 있고 스토리보드·생산 목록 Route Handler 또는 RPC가 없습니다(화면 `/dashboard/storyboards`는 RLS 직접 조회로 추정). 에이전트가 id를 모르면 `MCP.md`의 읽기 도구를 쓸 수 없어 `MCP.md` D-M5로 올렸습니다.
+9. **잔액 읽기 경로 미확인**: `sceneflow_prepare_generation`이 잔액 충분 여부를 말하려면 크레딧 잔액을 읽어야 하는데 `GET /api/session`의 SessionContext 필드가 `04_API.md`에 적혀 있지 않습니다(`MCP.md` D-M4). 그림 8-2는 예상 크레딧과 막는 사유 코드만 돌려주는 것으로 그렸습니다.
+10. **Route Handler 내부 서버 함수 이름 없음**: MCP가 쿠키 세션 기반 Route Handler를 직접 부를 수 없으므로 그 안의 서버 계층 함수를 재사용해야 하는데, 함수 이름이 문서에 없습니다(`MCP.md` D-M2). 그림 8-1의 "서버 함수 호출"은 이 확인 전까지 점선입니다.
 
 ## 갱신 규칙
 

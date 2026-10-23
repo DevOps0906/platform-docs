@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의:** 하객에게 보내는 모바일 마이크로웹(1차 청첩장, 이후 돌잔치·부고장)을 템플릿 엔진으로 만들고, 같은 사이트의 쇼룸(포트폴리오, 가격표, 시뮬레이터, 견적 문의)으로 대행 제작을 파는 제품. AI 문구 제안, 문구 위키·RAG, 제작 상담 채팅, 음성 대화·인사말 음성·하객 음성 방명록이 MVP에 들어 있습니다 (`README.md` 1절).
 
-**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`(미작성, 아래 7절 참조), 공통 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`, `SECURITY.md`(미작성, 아래 7절 참조), 공통 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기:** 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·예약 실행, "(제안)" = 문서가 제안이라고 밝힌 값, "Phase 2" = MVP 이후. 숫자 MW-F-nnn은 `01_PRD.md` 기능 ID.
 
@@ -25,6 +25,8 @@
 | 6-1 | 화면 흐름: 공개 영역 | flowchart | `03_SCREENS_UX.md` 1절, F1~F3 |
 | 6-2 | 화면 흐름: 스튜디오 | flowchart | `03_SCREENS_UX.md` 1절, 8절 |
 | 7 | 보안 신뢰 경계 | flowchart | `04_API.md` 1절, `05_DATA_MODEL.md` 4절·7절, `01_PRD.md` 6절 |
+| 8-1 | 기존 경로와 MCP 층 | 컴포넌트 | `MCP.md` 2~4절, `04_API.md` 1절 |
+| 8-3 | 도구 등급과 노출 단계 | flowchart | `MCP.md` 2절, `_platform-core/MCP_BASELINE.md` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -719,10 +721,90 @@ flowchart TB
 
 SECURITY.md 3절(세션 만료, CSP 도메인, 레이트 리밋 수치, 감사 보존, 백업, 알림 수신자)은 전부 "(작성 필요)"라서 그림에 수치를 넣지 않았습니다. 세션·헤더 §18, 공급망 §19, 운영 §20은 공통 규칙을 참조합니다.
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 RLS 읽기를 호출합니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 미결정(D-M#)이거나 Phase 2입니다. 이 제품은 게시와 동의가 사람 확정이어서 준비 도구가 없고, 그래서 시퀀스 그림(8-2)은 없습니다.
+
+### 그림 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    OP["스튜디오 운영자<br/>브라우저"]
+    AG["AI 에이전트<br/>운영자 비서"]
+    VIS["방문자 비서<br/>익명"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>requireSession studio_access"]
+    PUBL["게시 동의 시안 주문 쓰기<br/>request_publish 등"]
+  end
+
+  subgraph MCPL["새 MCP 층 apps/mcp 제안"]
+    TR["Streamable HTTP<br/>익명 R0 또는 Bearer"]
+    RL["레이트 리밋 IP 사용자"]
+    TL["도구 7개 모두 읽기<br/>필드 허용 목록 출력"]
+    AGG["방명록 참석 집계<br/>이름 본문 제외 D-M3"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    PUB["templates 공개 RLS<br/>anon"]
+    RLS["RLS has_studio_access<br/>sites leads orders guestbook rsvp"]
+    PRIV["content props 하객 이름 연락처 계좌<br/>도구 출력에서 제외"]
+  end
+
+  OP --> NX
+  NX --> RLS
+  NX --> PUBL
+  VIS --> TR
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> AGG
+  TL -->|"익명"| PUB
+  TL -.->|"사용자 토큰 D-M1"| RLS
+  TL -. "호출 안 함" .-> PUBL
+  RLS -.-> PRIV
+```
+
+### 그림 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R0["R0 익명 읽기 MVP"]
+    T1["microweb_list_templates"]
+  end
+  subgraph R2["R2 스튜디오 읽기 MVP"]
+    T2["microweb_list_sites"]
+    T3["microweb_get_site_status"]
+    T4["microweb_get_site_outline"]
+    T5["microweb_get_guest_summary"]
+    T6["microweb_list_leads"]
+    T7["microweb_list_orders"]
+  end
+  subgraph W1["W1 쓰기 Phase 2 후보 D-M5"]
+    F1["본문 수정 방명록 숨김 문의 상태"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["게시 재게시 준비 도구 포함"]
+    N2["게시 중단 보관 만료"]
+    N3["공개 동의 시안 토큰 고객 승인"]
+    N4["주문 생성 입금 전이 결제"]
+    N5["하객 이름 본문 문의자 연락처 계좌"]
+    N6["관리자 studio_access 템플릿 편집"]
+  end
+  R0 --> R2
+  R2 -.-> W1
+  R2 -.->|"사람이 웹 스튜디오에서 확정"| N1
+```
+
 ## 문서 불일치
 
 - `SECURITY.md`가 템플릿 그대로(자산·위협·외부 서비스·고유 위험 모두 "작성 필요")인데, 같은 제품의 `01_PRD.md` 6절·`05_DATA_MODEL.md` 7절에는 보안 설계가 이미 구체적으로 있습니다. 그림 7은 후자를 따랐습니다. 또 SECURITY.md는 공통 규칙을 "1~21장"이라 하나 SECURITY_BASELINE은 22장까지 있습니다(22장은 제품별 SECURITY.md 규정).
 - 그 밖의 모순은 확인하지 못했습니다. 참고: `04_API.md` 2절의 관리자 행(studio_access 부여, 템플릿·포트폴리오 편집)은 라우트만 있고 화면이 없습니다(`03_SCREENS_UX.md` 8.1절 D-22 결정 대기).
+- `MCP.md`가 필요로 하는 읽기 전용 "게시 전 점검" RPC가 없음: `04_API.md` 3절의 `request_publish`는 검사와 함께 상태를 `publishing`으로 바꾸는 service_role 함수라서 준비 도구를 만들 수 없습니다(`MCP.md` D-M6). 그림 8-3에서 게시 계열은 준비 도구도 "만들지 않음"에 넣었습니다.
+- 방명록·참석 응답 집계용 뷰·RPC가 없음: 이름 없이 건수만 돌려주려면 MCP 서버가 행을 읽어 계산해야 하며 규모 한계가 있습니다(`MCP.md` D-M3). 그림 8-1의 집계 상자는 이 가정에 따른 것입니다.
+- `CLAUDE.md` 2절은 실명·전화·계좌·주소를 "어떤 AI 제공자에도" 보내지 않는다고 하는데, MCP는 사용자가 연결한 외부 AI에 데이터를 주는 새 경로입니다. 이 문서군에 그 경우의 정책이 없어 `MCP.md`는 본문 값을 전부 제외하는 쪽으로 정했고 완화 여부는 D-M4로 남겼습니다.
 
 ## 갱신 규칙
 

@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 이야기를 넣으면 AI가 회차 콘티(컷 구성, 대사)를 짜고, 미리 만든 캐릭터 모듈(포즈와 표정)로 컷을 조립하며, 배경은 AI로 생성해 인스타툰 PNG/ZIP, 세로 스크롤 웹툰 이미지, 9:16 MP4로 내보내는 AI 웹툰 제작 도구입니다(`README.md` 1절).
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `SECURITY.md`(미작성 상태, 7번 그림 참고), 공통 `../_platform-core/SECURITY_BASELINE.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`, `SECURITY.md`(미작성 상태, 7번 그림 참고), 공통 `../_platform-core/SECURITY_BASELINE.md`.
 
 **표기**: **실선 화살표** = 호출·데이터 흐름, **점선** = 검증·참조·보조 경로, "(제안)" = 문서가 제안이라고 한 값. 기능 ID는 `TN-F-nnn`(01_PRD), 오류 코드는 `TNnnn`(04_API 7절)입니다.
 
@@ -22,6 +22,9 @@
 | 5-3 | 에셋 팩 상태 | 상태 머신 | 05_DATA_MODEL 2.1절, 3절 |
 | 6 | 화면 흐름 | 흐름도 | 03_SCREENS_UX 1절, 2절, 8절 |
 | 7 | 보안 경계 | 신뢰 경계 | 05_DATA_MODEL 4절, 7절, 02_ARCHITECTURE 6절, 04_API 1절 |
+| 8-1 | 기존 경로와 MCP 층 | 컴포넌트 | MCP.md 2~4절, 04_API 1~2절 |
+| 8-2 | 생성 준비와 사람 확정 | 시퀀스 | MCP.md 6절, 04_API 2절 |
+| 8-3 | 도구 등급과 노출 단계 | 흐름도 | MCP.md 2절, `_platform-core/MCP_BASELINE.md` 2절 |
 
 ## 1. 사용자와 기능
 
@@ -578,6 +581,107 @@ flowchart TB
   LIC -.-> CAT
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 RLS 읽기와 서버 계층을 호출합니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 1.5단계 이후 또는 미결정(D-M#)입니다. MCP에는 생성, 내보내기, 승인, 결제 도구가 없습니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 사용자<br/>에디터"]
+    AG["AI 에이전트<br/>작가 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>Route Handler requireSession"]
+    CR["선차감 consume_credits<br/>enqueue_job 워커"]
+    FA["FastAPI 위키 읽기<br/>서명 토큰"]
+  end
+
+  subgraph MCPL["새 MCP 층 apps/mcp 제안"]
+    TR["Streamable HTTP<br/>Bearer 필수 익명 없음"]
+    RL["레이트 리밋 사용자"]
+    TL["도구 5개 MVP 2개 1.5<br/>필드 허용 목록 출력"]
+    SAN["시놉시스 대사 위키 브리프<br/>untrusted 처리"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    RLS["RLS 조직 멤버십<br/>series episodes cuts exports"]
+    PRIV["에셋 원본 경로 프롬프트 브리프<br/>도구 출력에서 제외"]
+  end
+
+  BR -->|"RLS 직접 조회"| RLS
+  BR --> NX
+  NX --> CR
+  NX --> FA
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  TL -.->|"사용자 토큰 D-M1"| RLS
+  TL -.->|"위키 읽기 D-M2"| NX
+  TL -. "호출 안 함" .-> CR
+  RLS -.-> PRIV
+```
+
+### 8-2. 생성 준비와 사람 확정 (`toon_prepare_generation`, 1.5단계)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as 작가
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant R as 읽기 전용 검사 D-M3
+  participant W as 웹 에디터
+  participant C as 기존 생성 경로
+
+  U->>A: 이 장면 배경 만들면 얼마야 만들어줘
+  A->>M: toon_prepare_generation 종류 작품 장면 설명
+  M->>R: 규칙 검사와 단가 계산 읽기 전용
+  R-->>M: 예상 크레딧 통과 여부 또는 막는 사유 분류
+  Note over M: 저장하지 않음<br/>consume_credits generations INSERT enqueue_job 호출 안 함
+  M-->>A: 예상 크레딧 확정 전 차감 안 됨 확인 링크 15분
+  A-->>U: 예상 크레딧은 이만큼이며 아직 생성 전입니다 링크에서 확인하세요
+  U->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>U: 장면 설명 예상 크레딧 표시
+  U->>W: 생성 클릭
+  W->>C: POST generations requestId 사용자 세션
+  C-->>W: 202 jobId 또는 TN006 TN007 CR001 오류
+  W-->>U: 진행 상태 안내
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R2["R2 조직 읽기 MVP"]
+    T1["toon_list_series"]
+    T2["toon_get_episode"]
+    T3["toon_list_exports"]
+    T4["toon_get_generation_status"]
+    T5["toon_list_sponsorships"]
+  end
+  subgraph R15["R2 읽기 1.5"]
+    T6["toon_get_setting_wiki"]
+  end
+  subgraph PR["준비 저장 안 함 1.5 선행 D-M3"]
+    T7["toon_prepare_generation"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["콘티 배경 로그라인 생성"]
+    N2["내보내기 다운로드 서명 URL"]
+    N3["협찬 승인 반려"]
+    N4["컷 저장 위키 수정"]
+    N5["카탈로그 원본 에셋"]
+    N6["결제 삭제 보관"]
+  end
+  R2 --> R15 --> PR
+  PR -.->|"사람이 웹에서 확정"| N1
+```
+
 ## 문서 불일치
 
 | # | 내용 | 그림에서 고른 쪽 |
@@ -585,6 +689,8 @@ flowchart TB
 | 1 | 협찬 화면 경로: `03_SCREENS_UX.md` 2.11절은 `/series/[id]/sponsorships`, 8.4절과 8.1절은 `/app/series/[seriesId]/sponsorships`(D26 미정, 기본값). 06_AGENT_PLAN TN-06-063도 앞쪽 경로 | 6번 그림은 8.4절 경로 |
 | 2 | `SECURITY.md`가 양식 상태(자산, 위협, 수치 표가 "작성 필요")라 7번 그림에 쓸 제품 위협 표가 없음. 대신 05장 4절·7절, 02장 6절, 04장 1절을 근거로 사용 | 위 3개 문서 |
 | 3 | `02_ARCHITECTURE.md` 4절 표에는 잡 유형 외에 동기 호출(로그라인)까지 11행인데 3절 jobs 행은 "10개 job_type"이라 적음. 구성요소 그림은 개수를 쓰지 않음 | 개수 미표기 |
+| 4 | MCP 읽기 도구가 부를 이름 있는 읽기 RPC·Route Handler가 없음: `04_API.md` 2절은 작품·회차·컷·내보내기 조회를 "브라우저 직접 호출(RLS)"로만 적음. `MCP.md`는 RLS 테이블 읽기로 적었고 집계용 뷰·RPC 필요 여부는 D-M7 | 8-1은 RLS 직접 읽기로 그림 |
+| 5 | `toon_prepare_generation`의 근거가 되는 읽기 전용 검사·단가 계산 경로가 04장에 없음(규칙 검사 TN-F-023과 단가는 `POST /api/generations`·`/api/storyboard` 안). `MCP.md` D-M3 | 8-2는 1.5단계, "읽기 전용 검사"를 새 구성요소로 표시 |
 
 ## 갱신 규칙
 

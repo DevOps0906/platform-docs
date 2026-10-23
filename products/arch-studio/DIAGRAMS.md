@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의**: 건축사무소·시공사 설계자가 Windows PC에 설치하는 데스크톱 앱(Tauri 2)에서 대지를 불러와 법규 엔벨로프, 매스, 실시간 판정, 기획설계 도면 시트(DXF·SVG·PDF)를 만들고, 클라우드(웹·FastAPI)에서 법규 검토, AI 렌더, 제안서 PDF를 크레딧으로 쓰는 제품이다. 영구 라이선스는 시리얼 번호로 PC 2대에 활성화한다.
 
-**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
+**근거 문서**: `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `MCP.md`. 공통은 `../_platform-core/SECURITY_BASELINE.md`, `CORE_SPEC.md`, `AI_ARCHITECTURE.md`.
 
 **표기**: 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·서명 확인, "(제안)" = 문서가 제안이라 한 값. Phase 2·3 항목은 이름에 `P2`, `P3`를 붙였다.
 
@@ -30,6 +30,8 @@
 | 6-A | 화면 흐름: 데스크톱 | flowchart | 03_SCREENS_UX 1.1절, 2장 |
 | 6-B | 화면 흐름: 웹 | flowchart | 03_SCREENS_UX 1.2절, 2.6절 |
 | 7 | 보안 신뢰 경계 | flowchart | 02_ARCHITECTURE 6절, 05_DATA_MODEL 7절, 01_PRD 5장·6장 |
+| 8-1 | 로컬 앱과 MCP 후보 위치 | 컴포넌트(flowchart) | MCP.md 1~3절, 05_DATA_MODEL 2.16절, 04_API 1절 |
+| 8-3 | 도구 등급과 노출 단계 | flowchart | MCP.md 2절, _platform-core/MCP_BASELINE.md 2절 |
 
 > 이 제품의 `SECURITY.md`는 아직 템플릿 상태("작성 필요")라서 7번 그림은 `02_ARCHITECTURE` 6장(위험 #1~#14), `05_DATA_MODEL` 7장(위험 #4~#20), `01_PRD` 5·6장을 근거로 그렸다. 맨 끝 "문서 불일치" 참고.
 
@@ -864,6 +866,75 @@ flowchart LR
 
 ---
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 이 제품은 프로젝트 데이터의 정본이 데스크톱 로컬 SQLite이고, 서버 API는 라이선스·결제·크레딧 AI 작업뿐입니다. 그래서 **MVP에서는 원격 MCP를 열지 않고 노출 도구가 0개**입니다. 아래 그림은 "열 경우의 모양"입니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 후보이거나 미결정(D-M#)입니다. 준비·확정 흐름을 가진 도구가 없어 시퀀스 그림(8-2)은 없습니다.
+
+### 그림 8-1. 로컬 앱과 MCP 후보 위치
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 PC"]
+    UI["Tauri 화면<br/>모델러 판정 패널"]
+    EW["Web Worker 엔진<br/>판정 도면 로컬 0크레딧"]
+    RS["Rust 명령<br/>local_db 라이선스 파일"]
+    DB["로컬 SQLite 정본<br/>projects judgment_snapshots"]
+    AGL["사용자 MCP 클라이언트<br/>AI 에이전트"]
+  end
+
+  subgraph MCPL["MCP 후보 로컬 stdio D-M1"]
+    LT["도구 2개 읽기<br/>필드 허용 목록 출력"]
+    OFF["기본 꺼짐<br/>앱 설정에서 허용"]
+  end
+
+  subgraph CLOUD["클라우드 기존 경로"]
+    RH["Route Handler<br/>라이선스 규칙 팩 AI 작업"]
+    RPC["arch RPC 크레딧 선차감<br/>start_ai_run"]
+  end
+
+  subgraph REM["원격 MCP"]
+    NR["MVP 열지 않음<br/>Bearer 인증 T-C1 미반영 D-M2"]
+  end
+
+  UI --> EW
+  UI --> RS
+  RS --> DB
+  UI -->|"사용자가 실행할 때만"| RH
+  RH --> RPC
+  AGL -.->|"stdio"| OFF
+  OFF -.-> LT
+  LT -.->|"읽기 전용 D-M1"| RS
+  AGL -. "호출 안 함" .-> RH
+  NR -. "후보 계정 수준 읽기 2개" .-> RH
+```
+
+### 그림 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph MVP["MVP 노출 도구 없음"]
+    N0["원격 MCP 미개방"]
+  end
+  subgraph LOC["후보 로컬 R1 D-M1 결정 후"]
+    T1["arch_local_list_projects"]
+    T2["arch_local_get_judgment_record"]
+  end
+  subgraph REMC["후보 원격 R1 보류 D-M2"]
+    R1["규칙 팩 버전 읽기"]
+    R2["라이선스 상태 읽기"]
+  end
+  subgraph NO["만들지 않음"]
+    X1["도면 모델 시트 원본<br/>대지 좌표 주소 PNU"]
+    X2["건축주 이름 연락처"]
+    X3["렌더 검토 제안서 크레딧 AI"]
+    X4["라이선스 활성화 시리얼 결제"]
+    X5["파일 쓰기 내보내기 로컬 DB 수정"]
+  end
+  MVP --> LOC
+  MVP -.-> REMC
+  LOC -.->|"사람이 앱 화면에서 실행"| X3
+```
+
 ## 문서 불일치
 
 그림을 그리며 확인한 문서 사이의 어긋남과, 문서에 없어서 그리지 못한 것이다. 그림은 아래 "그림에 쓴 쪽"을 따랐다.
@@ -880,6 +951,10 @@ flowchart LR
 | 8 | `04_API` 5절 | Toss 웹훅 서명 방식과 이벤트 id 필드는 "미확인"이다 | 4-A는 "서명 검증"과 멱등까지만 쓰고 방식은 쓰지 않음 |
 | 9 | `02_ARCHITECTURE` 9.2절 | 딥링크가 Supabase Redirect URLs에 등록되는지, Windows에서 동작하는지 미확인(D-15 스파이크). 막히면 루프백(b) | 4-B는 (a) 딥링크 경로를 그렸다 |
 | 10 | 코드 서명 | 인증서 종류·비용 미확인(T-D5). 서명 전에는 SmartScreen 경고가 뜬다 | 2-B에 "코드 서명"만 표시, 경고는 03장 2.1절 참고 |
+| 11 | `MCP.md` 전체 / `04_API.md` 1절 | 원격 MCP 인증이 기댈 Bearer 검증(코어 요청 T-C1)이 아직 반영 전이라고 04장이 적고 있다. MCP.md는 이를 원격 MCP를 열지 않는 이유 중 하나로 썼다 | 8-1에서 원격 MCP를 "MVP 열지 않음"으로 표시 |
+| 12 | `MCP.md` D-M1 / `02_ARCHITECTURE.md` 2.1절, `05_DATA_MODEL.md` 2.16절 | 로컬 DB는 Rust `local_db_*` 명령으로만 접근한다고 하나 명령의 구체 이름이 문서에 없다. 로컬 MCP 도구가 부를 읽기 명령을 특정할 수 없다 | 8-1은 "Rust 명령"으로만 표기, MCP.md는 "확인 필요"로 표시 |
+| 13 | `MCP.md` D-M1 / `CLAUDE.md` 7절 | 로컬 stdio MCP를 별도 프로세스로 번들에 넣으면 "사이드카 동봉 금지"에 걸린다. 앱 Rust가 서버를 겸하는 구성은 문서에 없다 | 8-1은 로컬 MCP를 점선 후보로만 그림 |
+| 14 | `MCP.md` D-M3 / `05_DATA_MODEL.md` 2.16절 | 화면 판정은 매번 재계산(D 분류)이고 저장된 `judgment_snapshots`는 기록용이라고 한다. 따라서 로컬 읽기 도구가 줄 수 있는 것은 "현재 판정"이 아니라 마지막 기록뿐이다 | 도구 이름을 `arch_local_get_judgment_record`로 하고 출력에 기록 시점 문구를 넣음 |
 
 그리지 못한 것: 플랫폼 공통 AI 계층(Dify, LangGraph 내부 그래프 `arch.review` `arch.intake`)의 노드 구조는 이 제품 문서가 아니라 `AI_ARCHITECTURE.md`에 있어 상세 시퀀스로 그리지 않았다. 환불 시 라이선스 해제(웹훅 환불 후처리)와 법규 검토 시퀀스도 4번에 넣지 않았다(2.2절 표와 `AR012` 규칙으로 4-D에 일부 반영).
 
