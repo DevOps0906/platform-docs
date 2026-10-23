@@ -7,8 +7,10 @@
 | [`CORE_SPEC.md`](CORE_SPEC.md) | 플랫폼 공통 코어 명세(인증, 조직·역할, 엔타이틀먼트, 크레딧, Toss 결제, 잡, 브랜드커넥트 등) |
 | [`SHARED_MODULES.md`](SHARED_MODULES.md) | 공용 모듈 경계와 인터페이스(누가 소유하고 누가 쓰는지, 예: PDF 렌더는 flora-publishing 소유) |
 | [`SECURITY_BASELINE.md`](SECURITY_BASELINE.md) | 모든 제품이 지켜야 하는 보안 규칙(RLS, service_role, 웹훅 서명, AI 보안 등) |
-| [`ARCHITECTURE_DIAGRAMS.md`](ARCHITECTURE_DIAGRAMS.md) | 전체 구조 UML 12종(컨텍스트, 컴포넌트, 배치, 제품 지도, 데이터 모델, 시퀀스 4, 상태 머신, 보안 신뢰 경계·통제 지도). 이해관계자 소통용, Mermaid |
+| [`ARCHITECTURE_DIAGRAMS.md`](ARCHITECTURE_DIAGRAMS.md) | 전체 구조 UML 13종(컨텍스트, 컴포넌트, 배치, 제품 지도, 데이터 모델, 시퀀스 4, 상태 머신, 보안 신뢰 경계·통제 지도, 에이전트 접근 층 MCP). 이해관계자 소통용, Mermaid |
 | [`SECURITY_PRODUCT_TEMPLATE.md`](SECURITY_PRODUCT_TEMPLATE.md) | 제품별 `SECURITY.md` 틀(자산, 위협, 제품별 수치, 외부 이전, 법무 확인, 테스트). 공통 규칙은 SECURITY_BASELINE 18~22장 |
+| [`MCP_BASELINE.md`](MCP_BASELINE.md) | 에이전트 접근 층(MCP) 공통 기준: API 위에 얹는 입구, 도구 위험 등급, 설계·인증·보안 규칙, 사람 승인 흐름, 배치 옵션, 린 검증 순서 |
+| [`MCP_PRODUCT_TEMPLATE.md`](MCP_PRODUCT_TEMPLATE.md) | 제품별 `MCP.md` 틀(도구 표, scope, 제한값, 위협, 승인 흐름, 평가셋) |
 | [`DB_CONVENTIONS.md`](DB_CONVENTIONS.md) | 제품 스키마 작성 규칙(이름, 번호 범위, RLS 패턴, 모놀리스 변환) |
 | [`DOC_TEMPLATE.md`](DOC_TEMPLATE.md) | 제품 기획서(README, 01~07, CLAUDE.md)의 장 구조 정본 |
 | [`AI_ARCHITECTURE.md`](AI_ARCHITECTURE.md) | AI 계층(RAG, LangChain·LangGraph, Dify, 모델 라우팅, 서명 토큰) |

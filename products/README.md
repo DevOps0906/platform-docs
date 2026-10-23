@@ -40,6 +40,7 @@
 | `07_SOURCE_MIGRATION.md` | 원본별 이식/폐기 자산, 복사 금지 결함 |
 | `SECURITY.md` | 제품별 보안 문서(자산, 위협, 공통 규칙의 제품별 수치, 외부 이전, 법무 확인, 테스트). 틀은 `_platform-core/SECURITY_PRODUCT_TEMPLATE.md` |
 | `DIAGRAMS.md` | 제품별 UML 구조도(유스케이스, 컴포넌트, 클래스, 시퀀스, 상태, 화면 흐름, 보안 경계). Mermaid. 웹으로 본 페이지: https://claude.ai/artifact/15sKdqseEd2NYw2pW5EX4w (비공개, 공유 설정 필요) |
+| `MCP.md` | 제품별 에이전트 접근 층(MCP) 문서(도구 표, 인증·scope, 제한값, 위협, 승인 흐름). 현재 airbnb만 작성. 틀은 `_platform-core/MCP_PRODUCT_TEMPLATE.md`, 공통은 `MCP_BASELINE.md` |
 | `CLAUDE.md` | 개발 에이전트 지침 |
 | `supabase/monolith/` | 단독 Supabase 프로젝트용 마이그레이션과 seed |
 

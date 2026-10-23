@@ -4,7 +4,7 @@
 
 **제품 한 줄 정의:** 게스트가 지도와 날짜·인원으로 숙소를 찾아 예약을 요청하고, 개인 호스트가 13단계 마법사로 숙소를 올려 예약을 승인·관리하는 숙소 공유 웹 서비스(MVP는 결제 없는 예약 요청·확정).
 
-**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `10_HOST_DASHBOARD.md`, `SECURITY.md`, 공통은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
+**근거 문서:** `README.md`, `01_PRD.md`, `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `10_HOST_DASHBOARD.md`, `SECURITY.md`, `MCP.md`, 공통은 `../_platform-core/ARCHITECTURE_DIAGRAMS.md`, `SECURITY_BASELINE.md`, `CORE_SPEC.md`.
 
 **표기:** 실선 화살표 = 호출·데이터 흐름, 점선 = 검증·참조·Phase 2, "(제안)" = 문서가 제안이라고 한 값. 노드 안 `SY-F-###`은 `01_PRD.md` 3절 기능 ID입니다.
 
@@ -25,6 +25,9 @@
 | 6-1 | 게스트 화면 흐름 | flowchart | 03 1·2절 |
 | 6-2 | 호스트 화면 흐름 | flowchart | 03 1·2·8절, 10 2절 |
 | 7 | 보안 신뢰 경계 | flowchart | SECURITY 1~4절, SECURITY_BASELINE |
+| 8-1 | API 위에 얹는 MCP 구성 | 컴포넌트(flowchart) | MCP 1~3절, MCP_BASELINE 1·7절 |
+| 8-2 | 예약 준비와 사람 확정 | 시퀀스 | MCP 2·6절 |
+| 8-3 | 도구 위험 등급과 노출 단계 | flowchart | MCP 2절, MCP_BASELINE 2절 |
 
 ## 1. 사용자와 기능
 
@@ -660,6 +663,106 @@ flowchart TB
   KEY -.-> AIG
 ```
 
+## 8. 에이전트 접근 층 (MCP)
+
+**읽는 법:** 기존 웹 경로(위)는 그대로이고, 에이전트용 입구(아래)가 같은 DB RPC를 호출합니다. 정본은 `MCP.md`, 공통 규칙은 `../_platform-core/MCP_BASELINE.md`입니다. 점선은 Phase 1.5 이후 또는 미결정(D-M#)입니다.
+
+### 8-1. API 위에 얹는 MCP 구성
+
+```mermaid
+flowchart LR
+  subgraph U["사용자 쪽"]
+    BR["브라우저 사용자"]
+    AG["AI 에이전트<br/>게스트 비서 호스트 비서"]
+  end
+
+  subgraph WEB["기존 웹 경로"]
+    NX["Next.js 서버 계층<br/>Route Handler Server Action"]
+  end
+
+  subgraph MCPL["새 MCP 층 mcp-server"]
+    TR["Streamable HTTP<br/>익명 R0 또는 Bearer"]
+    RL["레이트 리밋 IP 사용자"]
+    TL["도구 8개<br/>필드 허용 목록 출력"]
+    SAN["후기 소개글 untrusted 처리<br/>길이 제한 링크 제거"]
+  end
+
+  subgraph DB["DB 최종 방어선"]
+    PUB["공개 RPC 4개<br/>anon"]
+    USR["사용자 RPC<br/>my_trips my_wishlist host_reservations"]
+    RLS["RLS 멤버십 검사<br/>listing_private 분리"]
+  end
+
+  BR --> NX
+  AG --> TR
+  TR --> RL
+  RL --> TL
+  TL --> SAN
+  NX -->|"사용자 세션"| USR
+  NX --> PUB
+  TL -->|"익명"| PUB
+  TL -.->|"사용자 토큰 D-M1"| USR
+  PUB --> RLS
+  USR --> RLS
+  TL -.->|"확인 링크 D-M3"| NX
+```
+
+### 8-2. 예약 준비와 사람 확정 (`stay_prepare_reservation`)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor G as 게스트
+  participant A as AI 에이전트
+  participant M as MCP 서버
+  participant D as DB RPC
+  participant W as 웹 예약 화면
+
+  G->>A: 이 숙소 10월 30일부터 2박 예약해줘
+  A->>M: stay_prepare_reservation 숙소 날짜 인원
+  M->>D: 읽기 RPC 상세와 불가 날짜
+  D-->>M: 가능 여부와 요금 정보
+  Note over M: 저장하지 않음<br/>create_reservation 호출 안 함
+  M-->>A: 가능 총액 확정 전 문구 확인 링크 15분
+  A-->>G: 예약 가능합니다 아직 확정 전입니다 링크에서 확인하세요
+  G->>W: 링크 열기 로그인 세션 일치 확인
+  W-->>G: 숙소 날짜 금액 표시
+  G->>W: 예약 요청 클릭
+  W->>D: create_reservation 사용자 세션
+  D-->>W: requested 또는 SY003 등 오류
+  W-->>G: 결과 안내 호스트 응답 대기
+```
+
+### 8-3. 도구 위험 등급과 노출 단계
+
+```mermaid
+flowchart TB
+  subgraph R0["R0 익명 읽기 MVP"]
+    T1["stay_search_listings"]
+    T2["stay_get_listing"]
+    T3["stay_get_unavailable_dates"]
+    T4["stay_get_listing_reviews"]
+  end
+  subgraph R1["R1 R2 로그인 읽기 1.5"]
+    T5["stay_my_trips"]
+    T6["stay_my_wishlist"]
+    T7["stay_host_reservations"]
+  end
+  subgraph PR["준비 저장 안 함 1.5"]
+    T8["stay_prepare_reservation"]
+  end
+  subgraph W1["W1 쓰기 Phase 2"]
+    T9["stay_toggle_wishlist"]
+  end
+  subgraph NO["만들지 않음"]
+    N1["예약 확정 승인 취소"]
+    N2["숙소 삭제 정지 결제"]
+    N3["정확한 주소 좌표"]
+  end
+  R0 --> R1 --> PR --> W1
+  PR -.->|"사람이 웹에서 확정"| N1
+```
+
 ## 문서 불일치
 
 1. **호스트 GNB 항목 수:** `10_HOST_DASHBOARD.md` 2절은 7개(홈, 예약, 숙소, 캘린더, 위키, 크레딧, 설정)이고 `03_SCREENS_UX.md` 8.1절은 6개(홈, 예약함, 숙소, 달력, 위키, 여행 모드로)입니다. 그림 6-2는 03장 경로 기준으로 그렸고 크레딧·설정은 `/settings/host`만 반영했습니다.
@@ -667,6 +770,9 @@ flowchart TB
 3. **테이블 수와 호스트 유형:** `README.md`와 `05_DATA_MODEL.md` 머리는 "테이블 7개"인데 11절은 `stay.host_profiles` 신설을 제안합니다. 그림 3은 7개 + 제안 1개로 그렸고 `(제안)`을 붙였습니다. 모놀리스 SQL에는 아직 없습니다.
 4. **`fx_rates`:** `04_API.md` 6.6절이 환율 캐시 `fx_rates`를 말하지만 `05_DATA_MODEL.md`에는 테이블이 없어 그림 3에서 뺐습니다.
 5. **익명 호출 가능 RPC 수:** `04_API.md` 3절은 공개 RPC 4개와 `stay_today()`도 anon에 허용하고, `05_DATA_MODEL.md` 4절은 "공개 RPC 4개만"이라고 합니다. 그림은 4개로 적었습니다.
+
+6. **MCP 가격 계산:** `MCP.md`의 `stay_prepare_reservation`이 총액을 돌려주려면 읽기용 가격 계산 RPC가 필요한데 `04_API.md` 3절에는 없고 `create_reservation`이 내부에서 계산합니다(`MCP.md` D-M5). 그림 8-2는 "요금 정보"를 DB가 준다고만 그렸습니다.
+7. **MCP 인증:** 로그인 도구가 사용자 토큰을 어떻게 받는지 문서에 없습니다(`MCP.md` D-M1). 그림 8-1의 점선이 그 부분입니다.
 
 ## 갱신 규칙
 

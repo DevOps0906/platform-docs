@@ -608,8 +608,28 @@ flowchart LR
   T9 --> C9
 ```
 
+## 13. 에이전트 접근 층 (MCP)
+
+**읽는 법:** API 구조는 그대로이고, 에이전트용 입구(MCP)가 같은 서버 계층·DB RPC 위에 하나 더 얹힙니다. 에이전트는 사용자 본인 권한으로만 읽고, 금전·약속이 걸린 확정은 사람이 웹에서 합니다. 규칙은 `MCP_BASELINE.md`, 제품별 도구는 `products/<제품>/MCP.md`(현재 airbnb만).
+
+```mermaid
+flowchart LR
+  USER["사용자"] --> WEBUI["제품 웹 화면"]
+  AGENT["AI 에이전트"] --> MCPS["MCP 서버<br/>도구 위험 등급 R0 R1 R2<br/>레이트 리밋 감사"]
+
+  WEBUI --> SRV["제품 서버 계층<br/>Route Handler Server Action"]
+  MCPS -->|"익명 또는 사용자 토큰<br/>service_role 금지"| RPC
+  SRV -->|"사용자 세션"| RPC["DB RPC 와 RLS<br/>정본 규칙"]
+  RPC --> DB[("Supabase")]
+
+  MCPS -.->|"준비 도구 W2<br/>저장 없음 확인 링크"| WEBUI
+  WEBUI -->|"사람이 확정"| SRV
+  SRV -.->|"결제 정산 정기 동기화"| JOB["잡 n8n Make<br/>MCP 거치지 않음"]
+```
+
 ## 갱신 규칙
 
 - 구조가 바뀌는 문서(`CORE_SPEC`, `AI_ARCHITECTURE`, `AUTH_ROADMAP`, `SECURITY_BASELINE`, 제품 02·05)를 고치면 이 파일의 해당 그림도 같은 커밋에서 고친다.
+- MCP 도구를 추가한 제품은 `MCP.md`를 만들고 13번 그림 설명에 반영한다.
 - 새 제품은 4번 그림에 넣고, 보안 통제가 늘면 12번에 한 줄을 추가한다.
 - 그림은 개요다. 열 이름, 수치, 예외는 정본 문서를 따른다.
