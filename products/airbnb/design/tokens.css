@@ -1,0 +1,163 @@
+/* Stay(가칭) 디자인 토큰 초안 — apps/web/src/styles/tokens.css 로 복사해 시작한다.
+   정답은 이 파일이 복사된 제품 저장소의 코드다(DESIGN_SYSTEM.md 3장). 문서와 다르면 코드가 이긴다.
+   스택: Tailwind CSS v4.x (CSS 우선 설정). tailwind.config.js, @tailwind base 금지.
+   값의 근거와 대비 계산: products/airbnb/08_DESIGN_SYSTEM.md 3장. 수정은 사람 검토(SY-06-009) 뒤에만. */
+@import "tailwindcss";
+
+/* 다크 전환은 data-theme 하나로 통일한다 */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ── 1. 원시 값: 라이트(기본) ─────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --surface: #FAF7F2;          /* 모래 백색: 페이지 배경 */
+  --surface-raised: #FFFFFF;   /* 카드·입력·시트 */
+  --surface-sunken: #F1EBE0;   /* 종이 지도·우물 영역 */
+  --text: #1F2A2E;             /* 먹 남청 */
+  --text-muted: #5B6670;       /* 비석 회색 */
+  --text-subtle: #8A949B;      /* 비활성 글자 전용(대비 면제) */
+  --accent: #1F6F5C;           /* 솔숲 녹색: 주 행동 */
+  --accent-hover: #195A4B;
+  --accent-fg: #FFFFFF;        /* accent 위 글자 */
+  --accent-subtle: #E0EEE9;    /* accent 옅은 배경 */
+  --highlight: #B5541C;        /* 노을 주황: 화면당 한 곳 */
+  --highlight-text: #9C4515;   /* 옅은 배경 위 글자용 */
+  --highlight-subtle: #F7E4D7;
+  --highlight-fg: #FFFFFF;
+  --line: #D9D3C7;             /* 장식 선(글자 금지) */
+  --line-strong: #8A949B;      /* 입력 테두리(비텍스트 3:1) */
+  --success: #2E7D4F;
+  --success-text: #276B43;
+  --success-subtle: #E4F1E8;
+  --warning: #8A5A00;
+  --warning-subtle: #F6EBD3;
+  --danger: #B42318;
+  --danger-subtle: #F9E3E0;
+  --focus-ring: #1F6F5C;
+  --overlay: rgb(20 27 30 / 0.48);
+  --map-paper: #F1EBE0;        /* 랜딩 히어로·지도 바탕 */
+}
+
+/* ── 2. 원시 값: 다크 ─────────────────────────────────── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface: #141B1E;
+  --surface-raised: #1C2528;
+  --surface-sunken: #0F1416;
+  --text: #EDE8DF;
+  --text-muted: #9AA5AB;
+  --text-subtle: #66727A;
+  --accent: #5FB39C;
+  --accent-hover: #7CC4AF;
+  --accent-fg: #0F1416;
+  --accent-subtle: #17302A;
+  --highlight: #E08A55;
+  --highlight-text: #E08A55;
+  --highlight-subtle: #3A2517;
+  --highlight-fg: #0F1416;
+  --line: #2C373B;
+  --line-strong: #66727A;
+  --success: #5FBF86;
+  --success-text: #5FBF86;
+  --success-subtle: #1B2E24;
+  --warning: #E0A93B;
+  --warning-subtle: #33290F;
+  --danger: #F07A6E;
+  --danger-subtle: #3A1D1A;
+  --focus-ring: #7CC4AF;
+  --overlay: rgb(0 0 0 / 0.64);
+  --map-paper: #1A2326;
+}
+
+/* ── 3. Tailwind 토큰(@theme): 의미 이름만 노출. 값은 위 원시 값을 참조 ── */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-subtle: var(--text-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-highlight: var(--highlight);
+  --color-highlight-text: var(--highlight-text);
+  --color-highlight-subtle: var(--highlight-subtle);
+  --color-highlight-fg: var(--highlight-fg);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-success: var(--success);
+  --color-success-text: var(--success-text);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-focus-ring: var(--focus-ring);
+  --color-overlay: var(--overlay);
+  --color-map-paper: var(--map-paper);
+}
+
+/* 라이트/다크와 무관한 값 */
+@theme {
+  /* 서체: Pretendard(미확인: 라이선스 확인 전). 없으면 시스템 한글 서체 */
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+
+  /* 글자 크기 / 행 높이 */
+  --text-display: 2.5rem;   --text-display--line-height: 3rem;
+  --text-h1: 2rem;          --text-h1--line-height: 2.5rem;
+  --text-h2: 1.5rem;        --text-h2--line-height: 2rem;
+  --text-h3: 1.25rem;       --text-h3--line-height: 1.75rem;
+  --text-body-lg: 1.125rem; --text-body-lg--line-height: 1.75rem;
+  --text-body: 1rem;        --text-body--line-height: 1.5rem;
+  --text-small: 0.875rem;   --text-small--line-height: 1.25rem;
+  --text-caption: 0.75rem;  --text-caption--line-height: 1rem;
+
+  /* 간격: 4px 기준 */
+  --spacing: 0.25rem;
+
+  /* 반경 */
+  --radius-sm: 6px;
+  --radius-control: 10px;
+  --radius-photo: 12px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  /* 그림자: 카드 호버 1단계, 떠 있는 층 2단계. 사진에는 쓰지 않는다 */
+  --shadow-hover: 0 4px 16px rgb(31 42 46 / 0.10);
+  --shadow-float: 0 12px 32px rgb(31 42 46 / 0.16);
+
+  /* 모션 */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+  /* 분기점 */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+}
+
+/* ── 4. 기본 규칙 ────────────────────────────────────── */
+@layer base {
+  html { background: var(--surface); color: var(--text); font-family: var(--font-sans); }
+  body { font-size: var(--text-body); line-height: var(--text-body--line-height); }
+  :focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+  /* 숫자(가격·날짜·인원)는 자릿수를 맞춘다 */
+  .tabular { font-variant-numeric: tabular-nums; }
+  @media (max-width: 47.99rem) {
+    :root { --text-display: 2rem; --text-display--line-height: 2.5rem; --text-h1: 1.75rem; --text-h1--line-height: 2.25rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  }
+}
+
+/* ── 5. 밀도: 호스트 표·목록용 ───────────────────────── */
+:root { --row-h: 44px; --control-h: 40px; }
+[data-density="compact"] { --row-h: 36px; --control-h: 32px; }
