@@ -67,16 +67,16 @@ GPL·AGPL 구성요소는 설치 파일·웹 번들에 넣지 않는다(PRD:232)
 
 | 구성요소 | 처리 | 대상 위치 | 라이선스 | 결정·근거 |
 |---|---|---|---|---|
-| Manifold WASM | 번들 | `packages/geometry/src/**` | Apache-2.0(PRD:232) | 엔벨로프·매스 솔리드 |
-| web-ifc | 번들(소스 무수정, 제안: 파일 단위 공개 의무 회피) | `packages/io/src/ifc/**` | MPL-2.0(PRD:232) | AR-F-016(PRD:58) |
-| That Open components | 후보 | `packages/io/src/ifc/**` | MIT(PRD:232) | 안 쓰면 고지에서 뺀다 |
-| rhino3dm | 번들 | `packages/io/src/rhino/**` | 미확인(PRD:232) | 02장 AR-02-D2(1주 스파이크, 실패 시 .3dm 내보내기 보류) |
-| three.js, R3F, drei | 번들 | `packages/features/src/modeler/**`, `hero3d` | 미확인 | lockfile 기준 고지 |
-| Tauri 2.x·플러그인, rusqlite | 번들 | `apps/desktop/src-tauri/**` | 미확인 | `cargo audit`(Tauri:212) |
-| 2D 다각형 연산(후보 Clipper2 계열) | 후보 | `packages/geometry/src/**` | 미확인(포팅본마다 다를 수 있음) | 02장 AR-02-D1. GPL 포팅이면 채택 안 함(정수 좌표 자체 구현) |
-| 벡터 PDF(후보 jsPDF + svg2pdf.js) | 후보 | `packages/drafting/src/writers/pdf/**` | 미확인 | D-23 (a)(PRD:482) |
+| Manifold WASM | 번들 | `packages/geometry/src/**` | Apache-2.0(PRD:232). npm `manifold-3d` 3.5.4 메타데이터와 일치(2026-10-26 확인) | 엔벨로프·매스 솔리드 |
+| web-ifc | 번들(소스 무수정, 제안: 파일 단위 공개 의무 회피) | `packages/io/src/ifc/**` | MPL-2.0(PRD:232). npm `web-ifc` 0.0.78 메타데이터와 일치(2026-10-26 확인) | AR-F-016(PRD:58) |
+| That Open components | 후보 | `packages/io/src/ifc/**` | MIT(PRD:232). npm `@thatopen/components` 3.6.0 메타데이터도 MIT(2026-10-26 확인) | 안 쓰면 고지에서 뺀다 |
+| rhino3dm | 번들 | `packages/io/src/rhino/**` | MIT(npm `rhino3dm` 8.35.0 메타데이터, 2026-10-26 확인). 단 패키지에 LICENSE 파일이 없고 내장 openNURBS 고지는 미확인이라 번들 전 원문 확인 | 02장 AR-02-D2(1주 스파이크, 실패 시 .3dm 내보내기 보류) |
+| three.js, R3F, drei | 번들 | `packages/features/src/modeler/**`, `hero3d` | MIT(three 0.186.1, @react-three/fiber 9.8.2, @react-three/drei 10.7.9, npm 메타데이터, 2026-10-26 확인). 하위 의존성은 lockfile 점검 | lockfile 기준 고지 |
+| Tauri 2.x·플러그인, rusqlite | 번들 | `apps/desktop/src-tauri/**` | tauri 2.12.5 Apache-2.0 OR MIT, rusqlite 0.41.0 MIT(crates.io 메타데이터, 2026-10-26 확인). 플러그인별은 미확인 | `cargo audit`(Tauri:212) |
+| 2D 다각형 연산(후보 Clipper2 계열) | 후보 | `packages/geometry/src/**` | 포트마다 다르다(npm 메타데이터, 2026-10-26 확인): clipper2-ts 2.0.1-18·clipper2-wasm 0.4.0은 BSL-1.0, js-angusj-clipper 1.3.1·polygon-clipping 0.15.7은 MIT. BSL-1.0은 3장 5번 허용 목록에 없어 01장 D-36 결정 전 채택 금지 | 02장 AR-02-D1. GPL 포팅이면 채택 안 함(정수 좌표 자체 구현) |
+| 벡터 PDF(후보 jsPDF + svg2pdf.js) | 후보 | `packages/drafting/src/writers/pdf/**` | jsPDF 4.2.1 MIT, svg2pdf.js 2.8.1 MIT(npm 메타데이터, 2026-10-26 확인). 하위 의존성은 lockfile 점검 | D-23 (a)(PRD:482) |
 | 오픈소스 JS DXF 라이브러리 | 미사용 | - | 미확인 | D-20 (b) 미채택(PRD:479) |
-| Python ezdxf `audit` | CI 전용(런타임 미포함) | `.github/workflows/golden.yml` | 미확인 | D-20, PRD:380 |
+| Python ezdxf `audit` | CI 전용(런타임 미포함) | `.github/workflows/golden.yml` | MIT(PyPI ezdxf 1.4.5 메타데이터, 2026-10-26 확인) | D-20, PRD:380 |
 | LibreCAD | 미사용(개발 PC 열람 확인만) | - | GPL 계열(미확인) | PRD:380 |
 | LibreDWG 등 오픈소스 DWG, Bonsai | 미사용 | - | GPL(PRD:232, PRD:481) | D-22 (a) DXF만 |
 | ODA SDK | 미사용(조건부) | - | 상용, 비용 미확인 | D-22 (b)(PRD:481) |
