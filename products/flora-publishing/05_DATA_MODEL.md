@@ -363,3 +363,35 @@ AUTH_ROADMAP 8장의 publishing "A 추가 페르소나"는 "-"(필수 추가 없
 - RLS: `books`의 기존 정책을 그대로 쓴다(4절). 새 정책 없음.
 - 마이그레이션: `books`에 컬럼 추가 1건(기본 '{}', 기존 행 영향 없음). 파일 번호는 9절 규칙을 따르고 기획 승인 뒤에 만든다.
 - `layout_settings`와의 관계: `layout_settings`는 판형별 본문 pt·행간·여백(PB-F-007), `page_layout`은 쪽별 내용·타이포다. 두 값이 충돌하면(예: 본문 크기) `layout_settings`가 이긴다(제안).
+
+---
+
+## 12. 제작 모드와 이미지 자리 (2026-10-20 추가, 검토용)
+
+01장 13절 D44~D48의 데이터다. 아래는 제안이며 확정 전이다.
+
+| 대상 | 필드·테이블 | 타입 | 설명 |
+|---|---|---|---|
+| `books.production_mode` | text | 기본 'prose' | 'prose'(글형), 'poetry'(시집형), 'picturebook'(그림책형), 'tech'(기술서형). 집필 시작 뒤 변경 불가 |
+| `book_assets` | 테이블 | — | 책의 이미지 자리. `id, book_id, kind('screenshot'\|'diagram'\|'illustration'\|'poem_image'), anchor_section_id, page_no, status('empty'\|'filled'\|'stale'), source('upload'\|'ai'\|'mermaid'), storage_path, alt_text, meta jsonb(소프트웨어 버전·촬영일, 프롬프트, 시드), created_at` |
+| `book_characters` | 테이블 | — | 그림책 캐릭터 시트. `id, book_id, name, description, style_ref_path, palette jsonb, locked_at` |
+| `poems` | 테이블 | — | 시집형 시. `id, book_id, position, title, body, asset_id` |
+| 이미지 생성 크레딧 | `credit_ledger` ref_type 'image_gen' | — | 선차감·실패 환불(01장 13.3절 D48). 단가 미정 |
+
+저장 경로: `exports/<org_id>/publishing/assets/<book_id>/<asset_id>.<확장자>`. 책 삭제 시 함께 삭제한다. RLS는 `book_id`의 조직 기준(기존 `books`와 같음).
+
+---
+
+## 13. 발행본과 산출물 (2026-10-20 추가, 검토용)
+
+01장 14절 D49~D54의 데이터다. 아래는 제안이며 확정 전이다. 기존 `book_exports`는 그대로 두고 발행본이 그것을 참조한다.
+
+| 테이블 | 필드 | 설명 |
+|---|---|---|
+| `publishing.book_releases` | `id, org_id, book_id, version_label('1.0'…), content_hash, status('queued'\|'running'\|'succeeded'\|'partially_failed'\|'failed'), requested_by, created_at, completed_at, note` | 발행본. `content_hash`는 그 시점 원고·표지·판형 해시. 한 책의 `(book_id, content_hash)`는 중복 발행본을 만들지 않고 기존 것을 가리킨다 |
+| `publishing.release_artifacts` | `id, release_id, format('pdf'\|'epub'\|'print_interior'\|'print_cover'\|'audiobook'), export_id → book_exports(pdf·epub), voice_job_ids uuid[](audiobook), status, storage_path, bytes, pages, spine_mm, expires_at, credit_ledger_id, meta jsonb(판형·용지·제본·블리드·구간 목록)` | 발행본의 형식별 산출물. 부분 실패는 산출물 단위로 기록 |
+| `books.published_version` | text | 가장 최근 성공 발행본의 판. 서가·준비 목록에서 "개정판 가능" 판단에 쓴다 |
+
+- 서가 쿼리: `book_releases` + `release_artifacts`를 조직 기준으로 조회(RLS는 `book_id`의 조직, 기존 `book_exports`와 같음).
+- 보관: 산출물 파일은 90일(제안) 뒤 `expires_at`로 만료, 메타는 남긴다. 크레딧 규칙은 기존 선차감·환불을 그대로 쓴다(`ref_type='release_artifact'`).
+- 일괄 발행은 책 × 형식마다 산출물 1행이고 각각 독립으로 성공·실패한다.
