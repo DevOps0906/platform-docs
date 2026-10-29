@@ -8,7 +8,7 @@
 
 | 항목 | 수 | 위치 |
 |---|---|---|
-| 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, `pdf/` |
+| 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, PDF는 별도 레포 PDF_Collections |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
 | 기획 제품 | 16개(모두 01~07 완료) | `products/<제품>/` |
 | 개발 묶음 | 16개, 작업 합계 1,011개 | `develop/<제품>/` |
@@ -18,7 +18,7 @@
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `nomad-design-modules/_design-guide/templates/persuasion-landing/` |
-| 전체 파일 | 1,588개, 폴더 439개(별도 레포 `nomad-design-modules` 제외, 이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
+| 전체 파일 | 1,540개, 폴더 434개(별도 레포 `nomad-design-modules`, `PDF_Collections` 제외, 이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
 
@@ -57,7 +57,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 |---|---|---|---|
 | `nomad-design-modules/` (이 저장소 밖) | 별도 레포 [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules): 공통 디자인 가이드(`_design-guide/`)와 설득형 랜딩 템플릿. 로컬은 `D:/WorkSpace/DEV/nomad-design-modules` | 정본(별도 레포) | 디자인 기준을 볼 때. 9장 |
 | [`reviews/`](reviews/) | 원본 프로젝트 25개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
-| [`pdf/`](pdf/) | `reviews/`의 PDF 변환본 25개 | 근거 사본 | 인쇄·공유 |
+| `PDF_Collections/` (이 저장소 밖) | 별도 레포 [PDF_Collections](https://github.com/DevOps0906/PDF_Collections): 코드 리뷰 PDF 25개(제품별)와 북트레일러 문서 PDF 20개. 로컬은 `D:/WorkSpace/DEV/PDF_Collections` | 근거 사본(별도 레포) | 인쇄·공유. 9장 |
 | [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 16개 기획서 | **정본** | 무엇을 만들지 볼 때 |
 | [`Price_Plans/`](Price_Plans/README.md) | 공용 가격 결정 방법(`_common/`), 제품별 가격 플랜, 서비스 사업 Web-App-Agency | 분석·계획(요금 정본은 01_PRD 4장) | 가격을 정하거나 바꿀 때 |
 | [`develop/`](develop/README.md) | 제품별 개발 안내서, setup 스크립트(`.sh`/`.ps1`), 개발 폴더에 붙일 묶음(`<제품>-root/`), 공용 설치 가이드(`_shared/`) | 묶음은 생성물(`build_root.py`) | 개발을 시작할 때 |
@@ -378,5 +378,6 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | [Arch-Studio](https://github.com/DevOps0906/Arch-Studio) | 건축 설계실무 도구 | `products/arch-studio/`의 개발 레포 |
 | [nomad-classroom](https://github.com/DevOps0906/nomad-classroom) | 오프라인·하이브리드 교육 강의실 SaaS 기획 | 이 저장소 16개 제품에는 없는 별도 기획 레포 |
 | [replica-collect-system](https://github.com/DevOps0906/replica-collect-system) | 서비스 분석·재구현 수집 시스템 | 레퍼런스 서비스 분석 시 |
+| [PDF_Collections](https://github.com/DevOps0906/PDF_Collections) | 이 저장소 문서의 PDF 사본(코드 리뷰 25개, 북트레일러 20개) | `reviews/`와 제품 문서의 PDF 사본. 변환 도구(`_tools/md2pdf.py`, `book_trailer_pdf.py`)는 이 저장소에 있고 결과만 그 레포에 보관 |
 
 위 표의 역할은 각 레포 README 첫머리를 근거로 적었습니다. 모듈 레포(blueprints·docker·secure-pack)의 설치는 각 README의 `nomad-os module add` 안내를 따릅니다.

@@ -1,7 +1,7 @@
 # PDF 생성 가이드 (PDF 에이전트용)
 
 입력: `D:\WorkSpace\platform\docs\reviews\*.md`
-출력: `D:\WorkSpace\platform\docs\pdf\<동일 파일명>.pdf`
+출력: 별도 레포 PDF_Collections(로컬 `D:WorkSpaceDEVPDF_Collectionsde-reviews<제품><동일 파일명>.pdf`). 제품 폴더는 reviews/README.md 표의 "반영된 통합 제품" 첫 번째 기준
 도구: `python D:\WorkSpace\platform\docs\_tools\md2pdf.py <input.md> <output.pdf>` (reportlab, 맑은 고딕 내장, 설치 완료)
 
 ## 절차 (파일마다)
