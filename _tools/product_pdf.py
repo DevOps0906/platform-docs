@@ -3,7 +3,7 @@
 
 usage: python -X utf8 product_pdf.py <저장소 루트> <출력 폴더> <제품> [<제품> ...]
        python -X utf8 product_pdf.py <저장소 루트> <출력 폴더> --all      (book-trailer 제외: 전용 도구 book_trailer_pdf.py)
-       python -X utf8 product_pdf.py <저장소 루트> <출력 폴더> --common   공용 문서 2종(통합 결정 분석, 공용 코어 규격)
+       python -X utf8 product_pdf.py <저장소 루트> <PDF 레포 루트> --common   공용 문서 2종(통합 결정 분석, 공용 코어 규격) -> <레포 루트>/common-docs/
 출력: <출력 폴더>/<제품>/<제품>_기획서_통합본.pdf  (표지, 문서 목록과 쪽 번호, 장·절 책갈피)
 변환기: md2pdf.py의 convert() (reportlab, 맑은 고딕). 정본은 md이며 PDF는 사본이다.
 """
@@ -110,7 +110,7 @@ MODULES = ['README.md', 'compliance.md', 'media.md', 'editorial.md', 'community.
 
 
 def build_common(root, out):
-    d = os.path.join(out, '_common'); os.makedirs(d, exist_ok=True)
+    d = os.path.join(out, 'common-docs'); os.makedirs(d, exist_ok=True)
     P = os.path.join(root, 'products')
     note = '정본은 platform-docs 저장소 products/ 의 Markdown 문서이며, 이 PDF는 인쇄·공유용 사본입니다.'
     m = os.path.join(P, '00_MERGE_ANALYSIS.md')
