@@ -4,7 +4,16 @@
 
 로컬 위치는 `D:\WorkSpace\platform\docs`를 기준으로 합니다. 문서 안의 경로가 이 위치를 씁니다.
 
-## 0. 한눈에 보기 (2026-10-18 기준)
+디자인 기준과 PDF 사본은 별도 레포에 있습니다. 로컬은 같은 상위 폴더(`D:\WorkSpace\DEV\`) 아래에 나란히 둡니다. 읽는 방법과 전체 연관 레포는 9장입니다.
+
+| 레포 | 내용 | 로컬 위치 |
+|---|---|---|
+| [platform-docs](https://github.com/DevOps0906/platform-docs) | 이 저장소: 통합 기획·개발 문서 정본 | `D:\WorkSpace\DEV\platform-docs` |
+| [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules) | 공통 디자인 가이드·설득형 랜딩 템플릿 | `D:\WorkSpace\DEV
+omad-design-modules` |
+| [PDF_Collections](https://github.com/DevOps0906/PDF_Collections) | 코드 리뷰·북트레일러 PDF 사본 | `D:\WorkSpace\DEV\PDF_Collections` |
+
+## 0. 한눈에 보기 (2026-10-30 기준)
 
 | 항목 | 수 | 위치 |
 |---|---|---|
@@ -51,7 +60,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 
 ## 2. 폴더 지도
 
-폴더 444개를 모두 펼친 트리는 [`FOLDER_TREE.md`](FOLDER_TREE.md)에 있습니다(`python3 -I _tools/folder_tree.py`로 다시 만듦).
+폴더 434개를 모두 펼친 트리는 [`FOLDER_TREE.md`](FOLDER_TREE.md)에 있습니다(`python3 -I _tools/folder_tree.py`로 다시 만듦).
 
 | 폴더 | 무엇이 있나 | 성격 | 언제 보나 |
 |---|---|---|---|
