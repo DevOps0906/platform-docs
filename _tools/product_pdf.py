@@ -3,6 +3,7 @@
 
 usage: python -X utf8 product_pdf.py <저장소 루트> <출력 폴더> <제품> [<제품> ...]
        python -X utf8 product_pdf.py <저장소 루트> <출력 폴더> --all      (book-trailer 제외: 전용 도구 book_trailer_pdf.py)
+       python -X utf8 product_pdf.py <저장소 루트> <출력 폴더> --common   공용 문서 2종(통합 결정 분석, 공용 코어 규격)
 출력: <출력 폴더>/<제품>/<제품>_기획서_통합본.pdf  (표지, 문서 목록과 쪽 번호, 장·절 책갈피)
 변환기: md2pdf.py의 convert() (reportlab, 맑은 고딕). 정본은 md이며 PDF는 사본이다.
 """
@@ -45,36 +46,46 @@ def docs_of(root, prod):
     return [f for f in ORDER if f in names] + mid + (['CLAUDE.md'] if 'CLAUDE.md' in names else [])
 
 
-def build(root, prod, out_pdf):
-    files = docs_of(root, prod)
+def title_of(path, fallback):
+    for l in io.open(path, encoding='utf-8'):
+        if l.startswith('# '):
+            return l[2:].strip()[:46]
+    return fallback
+
+
+def build(root, prod, out_pdf, items=None, subtitle='기획서 통합본', note=None, foot='기획서'):
+    """items: [(md 절대경로, 표시 이름, 설명)]. 없으면 products/<제품>/ 문서 목록."""
+    if items is None:
+        items = [(os.path.join(root, 'products', prod, f), f, LABEL.get(f, f[:-3])) for f in docs_of(root, prod)]
+    if note is None:
+        note = '정본은 platform-docs 저장소의 products/%s/ 의 Markdown 문서이며, 이 PDF는 인쇄·공유용 사본입니다.' % prod
     starts = {}
     for final in (False, True):
         starts.pop('_last', None)
         story = []
         cover = [Spacer(1, 70 * mm),
                  Paragraph(prod, ParagraphStyle('ct', fontName='MalgunB', fontSize=30, leading=38, textColor=M.ACCENT)),
-                 Spacer(1, 4 * mm), Paragraph('기획서 통합본', ParagraphStyle('cs', fontName='Malgun', fontSize=14, leading=20)),
+                 Spacer(1, 4 * mm), Paragraph(subtitle, ParagraphStyle('cs', fontName='Malgun', fontSize=14, leading=20)),
                  Spacer(1, 8 * mm),
-                 Paragraph('정본은 platform-docs 저장소의 products/%s/ 의 Markdown 문서이며, 이 PDF는 인쇄·공유용 사본입니다.' % prod,
-                           M.S['body']), PageBreak()]
+                 Paragraph(note, M.S['body']), PageBreak()]
         rows = [['문서', '내용', '쪽']]
-        for f in files:
-            rows.append([f, LABEL.get(f, f[:-3]), str(starts.get(f, '')) if final else ''])
+        for _, key, label in items:
+            rows.append([key, label, str(starts.get(key, '')) if final else ''])
         toc = Table(rows, colWidths=[62 * mm, 70 * mm, 20 * mm], repeatRows=1)
         toc.setStyle(TableStyle([('FONTNAME', (0, 0), (-1, -1), 'Malgun'), ('FONTSIZE', (0, 0), (-1, -1), 9.5),
                                  ('BACKGROUND', (0, 0), (-1, 0), M.LIGHT), ('LINEBELOW', (0, 0), (-1, -1), 0.3, colors.HexColor('#CCCCCC')),
                                  ('ALIGN', (2, 0), (2, -1), 'RIGHT'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
         story += cover + [Paragraph('문서 목록', M.S['h2']), toc, PageBreak()]
-        for k, f in enumerate(files):
-            md = io.open(os.path.join(root, 'products', prod, f), encoding='utf-8').read()
-            story.append(Mark(f, '%s  %s' % (f[:-3], LABEL.get(f, '')), starts))
+        for k, (path, key, label) in enumerate(items):
+            md = io.open(path, encoding='utf-8').read()
+            story.append(Mark(key, '%s  %s' % (key[:-3] if key.endswith('.md') else key, label), starts))
             story += M.convert(md)
-            if k < len(files) - 1:
+            if k < len(items) - 1:
                 story.append(PageBreak())
 
         def footer(canvas, doc):
             canvas.saveState(); canvas.setFont('Malgun', 8); canvas.setFillColor(colors.HexColor('#888888'))
-            canvas.drawRightString(A4[0] - 18 * mm, 12 * mm, str(doc.page)); canvas.drawString(18 * mm, 12 * mm, prod + ' 기획서')
+            canvas.drawRightString(A4[0] - 18 * mm, 12 * mm, str(doc.page)); canvas.drawString(18 * mm, 12 * mm, prod + ' ' + foot)
             canvas.restoreState()
 
         class Doc(BaseDocTemplate):
@@ -86,15 +97,42 @@ def build(root, prod, out_pdf):
                     self.canv.addOutlineEntry(fl.getPlainText()[:80], key, level=lvl, closed=True)
                     starts['_last'] = lvl
         doc = Doc(out_pdf, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm, topMargin=18 * mm, bottomMargin=20 * mm,
-                  title=prod + ' 기획서 통합본')
+                  title=prod + ' ' + subtitle)
         doc.addPageTemplates([PageTemplate(id='p', frames=[Frame(18 * mm, 20 * mm, A4[0] - 36 * mm, A4[1] - 38 * mm, id='f')],
                                            onPage=footer)])
         doc.build(story)
-    return len(files), doc.page
+    return len(items), doc.page
+
+
+CORE = ['README.md', 'CORE_SPEC.md', 'SHARED_MODULES.md', 'SECURITY_BASELINE.md', 'DB_CONVENTIONS.md', 'DOC_TEMPLATE.md',
+        'AI_ARCHITECTURE.md', 'VOICE_ARCHITECTURE.md', 'LLM_WIKI.md', 'AUTH_ROADMAP.md', 'COMMON_MODULES_ROADMAP.md']
+MODULES = ['README.md', 'compliance.md', 'media.md', 'editorial.md', 'community.md', 'search.md', 'membership.md', 'ads.md']
+
+
+def build_common(root, out):
+    d = os.path.join(out, '_common'); os.makedirs(d, exist_ok=True)
+    P = os.path.join(root, 'products')
+    note = '정본은 platform-docs 저장소 products/ 의 Markdown 문서이며, 이 PDF는 인쇄·공유용 사본입니다.'
+    m = os.path.join(P, '00_MERGE_ANALYSIS.md')
+    r = build(root, 'NOMAD 통합 결정 분석', os.path.join(d, '00_통합결정분석.pdf'),
+              [(m, '00_MERGE_ANALYSIS.md', title_of(m, '통합 분석'))], '통합 결정 분석(확정 결정 22개 포함)', note, '')
+    print('%-20s 문서 %d개, %d쪽' % ('통합결정분석', *r))
+    items = []
+    for f in CORE:
+        pth = os.path.join(P, '_platform-core', f)
+        items.append((pth, f if f != 'README.md' else 'core/README.md', title_of(pth, f[:-3])))
+    for f in MODULES:
+        pth = os.path.join(P, '_platform-core', 'common-modules', f)
+        items.append((pth, 'common-modules/' + f, title_of(pth, f[:-3])))
+    r = build(root, 'NOMAD 공용 코어 규격', os.path.join(d, '01_공용코어규격_통합본.pdf'), items, '공용 코어 규격·공용모듈 통합본', note, '')
+    print('%-20s 문서 %d개, %d쪽' % ('공용코어규격', *r))
 
 
 def main():
     root, out, *prods = sys.argv[1:]
+    if prods == ['--common']:
+        build_common(root, out)
+        return
     if prods == ['--all']:
         prods = sorted(p for p in os.listdir(os.path.join(root, 'products'))
                        if not p.startswith('_') and p != 'book-trailer' and os.path.isfile(os.path.join(root, 'products', p, '01_PRD.md')))
