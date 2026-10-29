@@ -49,7 +49,7 @@ def docs_of(root, prod):
 def title_of(path, fallback):
     for l in io.open(path, encoding='utf-8'):
         if l.startswith('# '):
-            return l[2:].strip()[:46]
+            return l[2:].strip()[:120]
     return fallback
 
 
@@ -68,13 +68,17 @@ def build(root, prod, out_pdf, items=None, subtitle='기획서 통합본', note=
                  Spacer(1, 4 * mm), Paragraph(subtitle, ParagraphStyle('cs', fontName='Malgun', fontSize=14, leading=20)),
                  Spacer(1, 8 * mm),
                  Paragraph(note, M.S['body']), PageBreak()]
-        rows = [['문서', '내용', '쪽']]
+        # 목차 칸은 Paragraph로 감싸서, 내용이 칸 폭을 넘으면 같은 칸 안에서 다음 줄로 내려가게 한다(쪽 번호 칸과 겹침 방지)
+        cell = ParagraphStyle('tc', fontName='Malgun', fontSize=9.5, leading=13)
+        head = ParagraphStyle('th', parent=cell, fontName='MalgunB')
+        pg = ParagraphStyle('tp', parent=cell, alignment=2)
+        rows = [[Paragraph('문서', head), Paragraph('내용', head), Paragraph('쪽', ParagraphStyle('thp', parent=head, alignment=2))]]
         for _, key, label in items:
-            rows.append([key, label, str(starts.get(key, '')) if final else ''])
-        toc = Table(rows, colWidths=[62 * mm, 70 * mm, 20 * mm], repeatRows=1)
-        toc.setStyle(TableStyle([('FONTNAME', (0, 0), (-1, -1), 'Malgun'), ('FONTSIZE', (0, 0), (-1, -1), 9.5),
-                                 ('BACKGROUND', (0, 0), (-1, 0), M.LIGHT), ('LINEBELOW', (0, 0), (-1, -1), 0.3, colors.HexColor('#CCCCCC')),
-                                 ('ALIGN', (2, 0), (2, -1), 'RIGHT'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
+            rows.append([Paragraph(M.esc(key), cell), Paragraph(M.esc(label), cell), Paragraph(str(starts.get(key, '')) if final else '', pg)])
+        toc = Table(rows, colWidths=[62 * mm, 90 * mm, 22 * mm], repeatRows=1)
+        toc.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), M.LIGHT), ('LINEBELOW', (0, 0), (-1, -1), 0.3, colors.HexColor('#CCCCCC')),
+                                 ('VALIGN', (0, 0), (-1, -1), 'TOP'), ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                                 ('LEFTPADDING', (0, 0), (-1, -1), 4), ('RIGHTPADDING', (0, 0), (-1, -1), 6)]))
         story += cover + [Paragraph('문서 목록', M.S['h2']), toc, PageBreak()]
         for k, (path, key, label) in enumerate(items):
             md = io.open(path, encoding='utf-8').read()
