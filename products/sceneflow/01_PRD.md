@@ -2,7 +2,7 @@
 
 근거 약칭: PRD=`NOMAD Shorts Maker/PRD.md`, ADD=`NOMAD Shorts Maker/PRD_add.md`, PRC=`NOMAD Shorts Maker/PRD_pricing.md`, MA=`docs/products/00_MERGE_ANALYSIS.md`, SM/BS/YSM=`docs/reviews/NOMAD_Shorts_Maker.md` / `Nomad-BlogStudio.md` / `Youtube_shots_Maker.md`. 근거 없는 값은 "제안", 외부 사실을 확인하지 않은 값은 "미확인"으로 표시한다.
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(채널 코치 채팅, RAG, 채널·브랜드 가이드 위키, LangGraph `video.script`), 음성(음성 대화, 오픈소스 TTS 내레이션 선택, Whisper STT의 공용 음성 구조 편입), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 기능 ID는 `VD-F-100`번대(AI), 열린 결정은 `D-13` 이후다(기존 #1~#12는 `D-1`~`D-12`와 같다).
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(채널 코치 채팅, RAG, 채널·브랜드 가이드 위키, LangGraph `video.script`), 음성(음성 대화, 오픈소스 TTS 내레이션 선택, Whisper STT의 공용 음성 구조 편입), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 기능 ID는 `VD-F-100`번대(AI), 열린 결정은 `D-13` 이후다(기존 #1~#12는 `D-1`~`D-12`와 같다).
 
 2026-10-13 2차 개정(확정 결정 18, 19, 21): (1) 업로드 채널에 **네이버 클립**(`naver_clip`)을 추가한다. 공식 업로드 API를 찾지 못해(2026-10-13 조사, 미확인) Playwright 브라우저 자동화로 게시하고, owner/admin의 위험 동의(고지문 `clip-2026-10-v1`)를 채널마다 받는다(VD-F-075, D-23). (2) 브랜드커넥트 지원을 blog 전용에서 범용으로 넓힌 코어 변경(`core.brandconnect_applications.target_kind`, `source_app`)에 맞춰 video가 **클립 캠페인 지원을 요청**하고 선정 영상에 대가성 문구를 강제한다(VD-F-063). (3) 숏폼 **직접 대행 사업**의 내부 도구로 쓰도록 대행 고객(clients), 고객 채널 묶음, 고객 승인, 월간 리포트를 넣는다(VD-F-120~126). 외부 대행사 판매·화이트라벨은 Phase 2(D-24). 사업 운영 기준은 `08_AGENCY_OPERATIONS.md`.
 
@@ -47,7 +47,7 @@
 | LangGraph `video.script`(트렌드 검색 → 기획 → 대본 → 메타데이터 → compliance) | MVP | 확정 결정 13, `docs/products/_platform-core/AI_ARCHITECTURE.md:109-119` |
 | 음성 대화, 대본 받아쓰기, 오픈소스 TTS 내레이션 선택(ElevenLabs와 병행), Whisper STT의 공용 음성 구조 편입 | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 랜딩 3D 히어로(소싱 → 가공 → 다채널 배포 영상 타일 파이프라인) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:83` |
+| 랜딩 3D 히어로(소싱 → 가공 → 다채널 배포 영상 타일 파이프라인) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:83` |
 | 비회원 AI 상담(랜딩 채팅) | Phase 2 | 제안: 비로그인 상담은 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/products/_platform-core/AI_ARCHITECTURE.md:130`) |
 | Distrokid 자동 배포 | Phase 2 | 확정 결정 7 |
 | YouTube 24시간 라이브 | Phase 2 | 확정 결정 7 |
@@ -120,7 +120,7 @@
 | VD-F-107 | 대본 받아쓰기, 샘플 듣기 | 신규 | (a) 생산 요청의 주제·대본 입력란 마이크 버튼: 음성을 받아 써 준다(`dictation`, 60초, 원본 미저장). (b) 보이스 선택 옆 "샘플 듣기": 대본 첫 100자를 선택한 제공자로 합성해 들려준다(`narration`, 대체 없음). (c) 대본 검수용 "읽어 주기"(`voice_chat` tts) | 받아쓰기 텍스트는 사용자가 수정해 보낼 수 있다. 샘플 듣기에서 쓴 제공자와 본 작업의 제공자가 같다. 샘플은 저장하지 않는다 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110` |
 | VD-F-108 | AI 라우팅과 국외 이전 동의 | 신규 | 첫 로그인 직후 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`을 호출하고 설정에서 철회한다. 기능별 기본 체인은 02장 5절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. 코어 제공자 목록에 없는 외부 서비스(DeepL, fal, Suno)는 라우팅 대상이 아니므로 같은 화면에서 별도 항목으로 고지한다(6장, D-21) | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings`에 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | VD-F-109 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴·음성·위키·그래프 정밀 모드는 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 기존 생산 합계에 묶이는 그래프 빠른 모드·내레이션은 정액(4.1절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
-| VD-F-110 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원본 클립 타일이 소싱 레인에서 들어와 가공 게이트에서 언어판(KO/JA/EN) 타일로 갈라지며 번인 자막 띠가 붙고 다채널 슬롯에 안착하는 풀 3D, 모바일은 타일 수를 줄인 1줄 흐름, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 사용자 결정 2026-10-13으로 기존 "플레이헤드 1회 스윕" 연출을 대체한다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과. 생성 건수·수익 같은 미검증 수치 0 | `docs/design-module/_design-guide/HERO_3D.md:5-81`, `:83` |
+| VD-F-110 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원본 클립 타일이 소싱 레인에서 들어와 가공 게이트에서 언어판(KO/JA/EN) 타일로 갈라지며 번인 자막 띠가 붙고 다채널 슬롯에 안착하는 풀 3D, 모바일은 타일 수를 줄인 1줄 흐름, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 사용자 결정 2026-10-13으로 기존 "플레이헤드 1회 스윕" 연출을 대체한다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과. 생성 건수·수익 같은 미검증 수치 0 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-81`, `:83` |
 | VD-F-111 | AI 출력 규칙(대본·채팅·메타) | 신규 | 6장 금지 문구와 6.1절 AI 대화 규칙을 그래프 compliance 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`packages/video-rules/banned.json`, 제안 위치)로 적용한다. 수익·조회수 보장, 가상 후기, "1위"·"최저가" 단정, 의료·금융 단정, 타사 상표 오용 문구를 차단한다. 제휴 대가성 문구를 LLM이 쓰거나 지우지 못하게 한다 | 금지 문구 평가셋 30문항(제안) 위반 0. 대가성 문구 첫 줄 규칙 위반 업로드 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 확정 결정 12 |
 
 ### 3.1 대행 운영(직접 대행 + 내부 도구, 확정 결정 21)
@@ -251,7 +251,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `ai_script`)는 20
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 음성 발화 60초·5MB, 샘플 100자, 위키 문서 1건 2MB | 제안 |
 | AI 응답 시간 | 채팅 첫 토큰 p95 5초(Dify HTTP 노드 경로는 전체 답 도착 후 표시라 "근거를 찾는 중" 표시), 그래프 정밀 모드 p95 90초, 샘플 듣기 p95 5초 | 제안 |
 | 공용 음성 서버 한도 | 요청당 STT 10분, TTS 5,000자, 파일 50MB. 이를 넘는 파이프라인 STT(롱폼 역방향 자막, 원본 500MB)는 미디어 워커가 처리한다(02장 2절) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:61` |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 조직 삭제 후 30일, 성과·대본 컬렉션은 해당 업로드·생산물 삭제 시 함께 삭제 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 
 ## 6. 법, 개인정보, 금지 문구
@@ -368,7 +368,7 @@ nomad-blog의 채널 자동 게시 고지(`ch-2026-10-v1`)와 같은 구조다. 
 | D-16 | 같은 목소리 규칙의 범위 | (a) 언어판(숏폼)·롱폼 프로젝트 단위 (b) 채널 시리즈 단위까지 보이스 고정 | (a)(제안). (b)는 채널·브랜드 가이드 위키에 "채널 보이스" 항목을 두고 권고만 표시하는 선에서 시작 |
 | D-17 | 3D 히어로 타일 질감 | (a) 자체 제작 샘플 영상의 정지 프레임만 (b) 단색 타일 | (a)(제안). 도우인 등 제3자 원본 프레임은 쓰지 않는다. 샘플은 운영사가 권리를 가진 자체 제작물 |
 | D-18 | 트렌드 RAG 수집 범위 | (a) 플레이보드·SerpApi 지표 요약 + 출처 링크만 색인 (b) 제목·본문 전문 색인 | (a)(제안). 제공자 약관의 재가공·보관 허용 범위는 미확인이므로 확인 전까지 요약 지표만. 약관이 금지하면 해당 출처 제외 |
-| D-19 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). VID-06-041에서 확인 결과를 기록 |
+| D-19 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). VID-06-041에서 확인 결과를 기록 |
 | D-20 | 파이프라인 LLM 단계(translate, analyze, bling, compliance LLM)의 경로 | (a) FastAPI 1노드 그래프 `video.step`으로 등록해 서명 토큰 경로 사용 (b) 코어에 단일 호출 엔드포인트 추가 요청(R-V4) 후 사용 | (a)(제안). 코어 엔드포인트가 생기면 (b)로 옮긴다. 어느 쪽이든 LLM 키는 FastAPI에만 둔다 |
 | D-21 | 코어 제공자 목록에 없는 외부 서비스(DeepL, fal, Suno)의 국외 이전 고지 | (a) 온보딩 국외 이전 화면에 별도 항목으로 고지하고 동의 없으면 해당 기능 비활성 (b) 약관·처리방침 고지만 | (a)(제안). 라우팅 레지스트리 편입은 코어 요청 R-V3 |
 | D-23 | 네이버 클립 업로드 방식(VD-F-075) | (a) Playwright 자동 업로드 + 위험 동의 (b) 업로드 패키지(영상·메타·문구)만 만들고 사용자가 PC 웹에서 직접 올림 (c) 공식 API | (a)로 확정(사용자 결정 2026-10-13). 공식 업로드 API·파트너 제휴가 확인되면 (c)로 어댑터만 교체한다. 셀렉터 실패율이 주 10%를 넘으면 (b)를 대체 경로로 연다(제안) |

@@ -1,6 +1,6 @@
 # 03 화면과 UX: NOMAD Docs
 
-작성일 2026-10-13. 장 구조는 `docs/products/_platform-core/DOC_TEMPLATE.md:144-177`(2.4절, AI·음성·3D와 디자인 시스템 필수 내용 포함)을 따른다. 메인페이지 절은 `docs/design-module/_design-guide/DESIGN_PRINCIPLES.md` 절차(`docs/products/_PRODUCT_AGENT_BRIEF.md:65-67`), 3D 히어로는 `docs/design-module/_design-guide/HERO_3D.md`, 디자인 시스템은 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다. 음성 공통 요소는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`, 위키 화면은 `docs/products/_platform-core/LLM_WIKI.md:45`, 채팅 동작은 `docs/products/_platform-core/AI_ARCHITECTURE.md` 2·5·7절을 인용만 한다.
+작성일 2026-10-13. 장 구조는 `docs/products/_platform-core/DOC_TEMPLATE.md:144-177`(2.4절, AI·음성·3D와 디자인 시스템 필수 내용 포함)을 따른다. 메인페이지 절은 `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md` 절차(`docs/products/_PRODUCT_AGENT_BRIEF.md:65-67`), 3D 히어로는 `docs/nomad-design-modules/_design-guide/HERO_3D.md`, 디자인 시스템은 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다. 음성 공통 요소는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`, 위키 화면은 `docs/products/_platform-core/LLM_WIKI.md:45`, 채팅 동작은 `docs/products/_platform-core/AI_ARCHITECTURE.md` 2·5·7절을 인용만 한다.
 
 표기 규칙:
 - 테이블·RPC·잡·SQLSTATE 이름은 설계 기준서(제품 공통) 6~8장 이름을 그대로 쓴다(`docs.projects`, `docs.finalize_document`, `docs.generate`, `DC005` 등). 기능 ID는 01장 `DC-F-###`.
@@ -12,7 +12,7 @@
 
 역할은 코어 조직 역할 owner/admin/member/viewer(`docs/products/_platform-core/CORE_SPEC.md:71`)와 운영자 `platform_admin`(`docs/products/_platform-core/CORE_SPEC.md:69`)을 쓴다. viewer는 모든 프로젝트 화면을 읽기 전용으로 본다(생성·편집·확정 버튼 숨김, 제안). 플랜 접근은 `core.plans.features` 키(01장 4절: `projects_max`, `formats`, `watermark`, `doc_phase`, `members_max`, `integrations`, `approvals`, `share_links`)로 판정하며 화면 잠금은 UX 보조이고 서버(`DC006`)가 정본이다.
 
-화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 ### 1.1 공개, 인증, 온보딩
 
@@ -667,20 +667,20 @@
 
 ### 3.25 디자인 시스템
 
-`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9장 제품 문서 반영 규칙, `:96-99`). 이 절은 NOMAD Docs의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9장 제품 문서 반영 규칙, `:96-99`). 이 절은 NOMAD Docs의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 앱 화면(체크리스트 마법사 3단계, 요구사항 보드, 패키지 진행, 확정 게이트, 모달·사이드바 중첩, 상태 배지): **Atlassian**. 보조: **Primer**(비용 항목 표, 추적표, 버전 이력, 내보내기 기록의 정보 밀도, 숫자 열 정렬, 컴팩트/기본 두 밀도). AI 채팅·음성·위키 화면: Astryx 패턴(존재·라이선스 미확인, 확인 전에는 패턴 이름으로만) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md`(4.1절) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:51-61`(협업·워크플로·보드 행 `:56`, B2B 밀도 행 `:55`, AI 채팅 행 `:57`) |
+| 주 레퍼런스 | 앱 화면(체크리스트 마법사 3단계, 요구사항 보드, 패키지 진행, 확정 게이트, 모달·사이드바 중첩, 상태 배지): **Atlassian**. 보조: **Primer**(비용 항목 표, 추적표, 버전 이력, 내보내기 기록의 정보 밀도, 숫자 열 정렬, 컴팩트/기본 두 밀도). AI 채팅·음성·위키 화면: Astryx 패턴(존재·라이선스 미확인, 확인 전에는 패턴 이름으로만) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md`(4.1절) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:51-61`(협업·워크플로·보드 행 `:56`, B2B 밀도 행 `:55`, AI 채팅 행 `:57`) |
 | 가져올 것 | Atlassian: 단계형 폼과 진행 표시, 칸반 열과 드래그의 키보드 대안, 상태 lozenge(아이콘 + 텍스트), 모달 중첩 최소화, 포커스 링 기준. Primer: 고밀도 표, tabular 숫자, 상태 라벨, `kbd` 단축키 표시 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`, Astryx 패키지), 두 시스템의 색·아이콘(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js·React 버전은 02장 1절 스택 표를 따른다. **Tailwind CSS v4**(4.x 고정, `latest` 금지), shadcn/ui(Tailwind CSS v4 지원 버전, 구현 시 확인), Lucide, Tiptap(버전은 02장). `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `apps/nomad-docs/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수(디렉토리는 02장 2절과 맞춘다). 의미 기반 이름: `--color-canvas`(서류철), `--color-surface`(용지), `--color-text`(먹회), `--color-text-muted`, `--color-rule`(괘선), `--color-accent`(결재청), `--color-seal`(인주: 직인·확정 표시와 3D 히어로에만), `--color-success`·`--color-warning`·`--color-danger`, `--color-diff-add`·`--color-diff-remove`, `--radius-control`, `--radius-sheet`, `--space-row-compact`/`--space-row-default`. 다크 전환은 `data-theme` 하나(`@custom-variant dark`). 값은 4.3절 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:26-37` |
-| 컴포넌트(정답) | `apps/nomad-docs/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안), 이모지 아이콘 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:31` |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다. UUPM이 만든 `design-system/nomad-docs/MASTER.md`는 초안이며 정답이 아니다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:32`, `docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:68-81` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다. 3단계(비주얼 검토)는 사람이 수행한다. 화면 작업은 4단계 뒤 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:39-49` |
-| 작업 지시 | 컴포넌트 1개 단위로 8장 템플릿(대상, 근거, 스택 버전, 배리언트, 수치, 금지, 검증) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:84-94` |
+| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`, Astryx 패키지), 두 시스템의 색·아이콘(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js·React 버전은 02장 1절 스택 표를 따른다. **Tailwind CSS v4**(4.x 고정, `latest` 금지), shadcn/ui(Tailwind CSS v4 지원 버전, 구현 시 확인), Lucide, Tiptap(버전은 02장). `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/nomad-docs/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수(디렉토리는 02장 2절과 맞춘다). 의미 기반 이름: `--color-canvas`(서류철), `--color-surface`(용지), `--color-text`(먹회), `--color-text-muted`, `--color-rule`(괘선), `--color-accent`(결재청), `--color-seal`(인주: 직인·확정 표시와 3D 히어로에만), `--color-success`·`--color-warning`·`--color-danger`, `--color-diff-add`·`--color-diff-remove`, `--radius-control`, `--radius-sheet`, `--space-row-compact`/`--space-row-default`. 다크 전환은 `data-theme` 하나(`@custom-variant dark`). 값은 4.3절 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:26-37` |
+| 컴포넌트(정답) | `apps/nomad-docs/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안), 이모지 아이콘 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:31` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다. UUPM이 만든 `design-system/nomad-docs/MASTER.md`는 초안이며 정답이 아니다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32`, `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md:68-81` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다. 3단계(비주얼 검토)는 사람이 수행한다. 화면 작업은 4단계 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 작업 지시 | 컴포넌트 1개 단위로 8장 템플릿(대상, 근거, 스택 버전, 배리언트, 수치, 금지, 검증) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:84-94` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -754,7 +754,7 @@
 
 ### 3.26 로그인 후 CRM형 워크스페이스 (DC-F-047)
 
-목적: 로그인 후 화면을 "문서 도구"가 아니라 "고객·프로젝트·문서를 한곳에서 굴리는 작업 공간"으로 만든다. 벤치마킹(2026-10-14, 화면 패턴만 참고하고 코드·자산·색은 가져오지 않는다. URL은 `docs/design-module/_design-guide/REFERENCES.md` nomad-docs 절, C-4 반영):
+목적: 로그인 후 화면을 "문서 도구"가 아니라 "고객·프로젝트·문서를 한곳에서 굴리는 작업 공간"으로 만든다. 벤치마킹(2026-10-14, 화면 패턴만 참고하고 코드·자산·색은 가져오지 않는다. URL은 `docs/nomad-design-modules/_design-guide/REFERENCES.md` nomad-docs 절, C-4 반영):
 
 | 서비스 | 가져올 패턴 | 이 제품에서의 모습 | 가져오지 않을 것 |
 |---|---|---|---|
@@ -889,11 +889,11 @@
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
-`docs/design-module/_design-guide/DESIGN_PRINCIPLES.md` 1~5단계(`:27-131`)를 따른다.
+`docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md` 1~5단계(`:27-131`)를 따른다.
 
-### 4.1 레퍼런스 (URL은 `docs/design-module/_design-guide/REFERENCES.md`에 있는 것만)
+### 4.1 레퍼런스 (URL은 `docs/nomad-design-modules/_design-guide/REFERENCES.md`에 있는 것만)
 
-`REFERENCES.md`에 nomad-docs 절이 있다(`docs/design-module/_design-guide/REFERENCES.md:309`, 2026-10-14 C-4 반영). 아래 표는 그 절과 같다. 항목은 같은 파일의 다른 제품 절에서 확인된 URL 중 문서·생산성 도구에 맞는 것을 골랐고, 원래 제품과 다른 참고 포인트로 쓴다(`docs/design-module/_design-guide/REFERENCES.md:23`). 마지막 열은 원래 제품 절의 위치다. 로그인 후 CRM 패턴(3.26절)의 서비스 URL도 같은 절에 있고, `HERO_3D.md` 5장 소재 행과 6장 영상 단계도 반영됐다(06장 6절 C-4).
+`REFERENCES.md`에 nomad-docs 절이 있다(`docs/nomad-design-modules/_design-guide/REFERENCES.md:309`, 2026-10-14 C-4 반영). 아래 표는 그 절과 같다. 항목은 같은 파일의 다른 제품 절에서 확인된 URL 중 문서·생산성 도구에 맞는 것을 골랐고, 원래 제품과 다른 참고 포인트로 쓴다(`docs/nomad-design-modules/_design-guide/REFERENCES.md:23`). 마지막 열은 원래 제품 절의 위치다. 로그인 후 CRM 패턴(3.26절)의 서비스 URL도 같은 절에 있고, `HERO_3D.md` 5장 소재 행과 6장 영상 단계도 반영됐다(06장 6절 C-4).
 
 | 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 | REFERENCES.md 위치 |
 |---|---|---|---|---|---|---|---|
@@ -903,7 +903,7 @@
 | 앱 | Scribbler - Writing App | Dribbble | https://dribbble.com/shots/15364448-Scribbler-Writing-App | 본문 폭과 도구 노출을 최소화한 편집 화면 | 종이 질감 배경, 크림 배경 | 문서 편집기 본문 영역 | flora-publishing 절 `:53` |
 | 앱 | Table data view for admin dashboard | Dribbble | https://dribbble.com/shots/22988094-Table-data-view-for-admin-dashboard | 행 선택 상태, 페이지네이션, 페이지당 행 수 | 행 호버 전환 효과 | 비용 항목, 요구사항 표, 버전 이력, 내보내기 기록 | admin-suite 절 `:176` |
 
-Dribbble 링크는 인용 전에 브라우저에서 한 번 열어 본다(`docs/design-module/_design-guide/REFERENCES.md:30`).
+Dribbble 링크는 인용 전에 브라우저에서 한 번 열어 본다(`docs/nomad-design-modules/_design-guide/REFERENCES.md:30`).
 
 ### 4.2 브리프 (DP 2단계, 제안: 사용자 확인 필요)
 
@@ -913,7 +913,7 @@ Dribbble 링크는 인용 전에 브라우저에서 한 번 열어 본다(`docs/
 | 대상 | 1인 개발자·프리랜서, 5~30인 외주 개발사의 PM. 계약 전후로 같은 숫자를 여러 문서에 손으로 옮겨 적는 사람 |
 | 주된 일 | "체크 하나가 여러 문서의 같은 자리를 함께 채운다"를 첫 화면에서 보여 주고 무료 가입으로 이끈다 |
 | 고유 어휘 | 체크박스, 서류 낱장이 쌓이는 묶음, 문서번호(QT-2026-013), 인주색 직인, 괘선 표의 합계 행 |
-| 피할 인상 | 법률 서비스처럼 보이는 저울·법봉 그림, 보라 그라디언트 AI 툴(UUPM 안티패턴 `docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:133`), 계약서 "보장" 문구, 크림색 + 세리프 + 테라코타(기본값 1) |
+| 피할 인상 | 법률 서비스처럼 보이는 저울·법봉 그림, 보라 그라디언트 AI 툴(UUPM 안티패턴 `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md:133`), 계약서 "보장" 문구, 크림색 + 세리프 + 테라코타(기본값 1) |
 
 ### 4.3 토큰 플랜 (DP 4단계, 제안)
 
@@ -990,7 +990,7 @@ B안: 중앙 헤드라인 + 앱 스크린샷 + 기능 카드 6개(기각)
 
 B안 기각 이유: 중앙 헤드라인 + 기울인 목업 + 같은 카드 6개는 어느 SaaS에나 나오는 구성(기본값 4)이고, "체크가 문서로 이어진다"는 주제를 보여 주지 못한다.
 
-### 4.5 생성형 기본값 회피 검토 (DP 5단계, `docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:116-131`)
+### 4.5 생성형 기본값 회피 검토 (DP 5단계, `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md:116-131`)
 
 | # | 기본값 | 이 계획의 상태 |
 |---|---|---|
@@ -1008,7 +1008,7 @@ B안 기각 이유: 중앙 헤드라인 + 기울인 목업 + 같은 카드 6개�
 
 ### 4.6 3D 히어로 (체크가 접혀 서류 묶음이 되고 직인이 찍힌다)
 
-정본은 `docs/design-module/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`)이고, 이 절은 제품 소재와 장면만 정한다. `HERO_3D.md` 5장 표(`:77-92`)에 nomad-docs 행이 없으므로 아래 소재를 C-4로 추가 요청한다.
+정본은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`)이고, 이 절은 제품 소재와 장면만 정한다. `HERO_3D.md` 5장 표(`:77-92`)에 nomad-docs 행이 없으므로 아래 소재를 C-4로 추가 요청한다.
 
 | 항목 | 내용 |
 |---|---|
@@ -1049,13 +1049,13 @@ reduced-motion이면 0~5단계 없이 정지 이미지와 HTML 견적서만 보�
 | 위치 | `apps/nomad-docs/src/components/hero3d/`(`ChecklistBoard`, `SheetFold`, `DocStack`, `SealStamp`, `MobileStack`, `StaticFallback`, `useHeroTier`), 정지 이미지 `apps/nomad-docs/public/hero/`. 디렉토리는 02장 2절과 맞춘다 |
 | 형상 | 코드 생성 도형(Box, Plane, Line, Cylinder). 외부 glTF·텍스처·3D 글자 없음 |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/design-module/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:17-30`) |
 | 태블릿 기울기 | iOS Safari는 [기울여 보기] 버튼 탭으로 권한 요청, 거부·미지원이면 터치 드래그만 |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초, 첫 화면 전 3D 초기화 0ms(HERO_3D 2절). 모바일 장면은 three.js 코어 + 박스 3개 |
 | 공용 키트 | `packages/ui-3d`(제안) 위에 소재만 얹는다. 키트가 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다 |
-| 피할 인상 | 저울·법봉, 보라/핑크 그라디언트, 별 파티클, 네온 그리드, 지구본(`docs/design-module/_design-guide/HERO_3D.md:53`) |
+| 피할 인상 | 저울·법봉, 보라/핑크 그라디언트, 별 파티클, 네온 그리드, 지구본(`docs/nomad-design-modules/_design-guide/HERO_3D.md:53`) |
 | 접근성 | 캔버스 `aria-hidden`, 견적서 예시는 HTML(이미지에는 대체 텍스트), [움직임 멈춤] 키보드 조작 |
-| 검증 | PC·태블릿·모바일 스크린샷 3종, Lighthouse 모바일·데스크톱, 프레임 측정, 고문(Fable) 디자인 검토(`docs/design-module/_design-guide/HERO_3D.md:70-75`) |
+| 검증 | PC·태블릿·모바일 스크린샷 3종, Lighthouse 모바일·데스크톱, 프레임 측정, 고문(Fable) 디자인 검토(`docs/nomad-design-modules/_design-guide/HERO_3D.md:70-75`) |
 
 #### 4.6.1 3D 영상 레이어 (DC-F-049, 2026-10-14 추가)
 
@@ -1084,7 +1084,7 @@ reduced-motion이면 0~5단계 없이 정지 이미지와 HTML 견적서만 보�
 | 위치 | 문구(제안) | 점검 |
 |---|---|---|
 | 헤드라인 | 체크리스트에 답하면 견적서부터 검수확인서까지 같은 숫자로 채워집니다 | 기능 설명. 수치·보장 없음 |
-| 보조 문장 | 회사와 거래처 정보를 한 번 넣고 체크하면 요구사항, 화면 목록, 비용, 계약 조항이 함께 정리되고 문서 묶음과 PDF로 나옵니다 | 설명 우선(`docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:198`) |
+| 보조 문장 | 회사와 거래처 정보를 한 번 넣고 체크하면 요구사항, 화면 목록, 비용, 계약 조항이 함께 정리되고 문서 묶음과 PDF로 나옵니다 | 설명 우선(`docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md:198`) |
 | CTA | 무료로 문서 묶음 만들기 / 샘플 PDF 보기 | 누르면 일어나는 일 |
 | 변경 영향 표 제목 | 체크 하나가 바뀌면 이 자리들이 함께 바뀝니다 | - |
 | 계약서 안내(필수) | 개발용역계약서는 표준 조항으로 만든 초안이며 법률 자문이 아닙니다. 서명 전 변호사 검토를 권합니다. AI는 계약 조항을 만들거나 고치지 않습니다 | 법적 고지 |
@@ -1214,7 +1214,7 @@ Stage A에는 1단계 화면이 없다. 시드 페르소나도 첫 로그인 때
 
 ## 8. 설득형 랜딩과 "왜 NOMAD Docs인가" 검증 (2026-10-17, 검토용)
 
-요구는 01장 9.1절(DC-F-050~055), 결정은 01장 9.4절(D-23~D-27), 공용 규칙은 `docs/design-module/_design-guide/LANDING_PERSUASION.md`(아래 LP), 작업은 06장 9절이다. 같은 분야 다른 회사 랜딩과 주제가 겹치기 쉬우므로 그 주장 문장·시리즈 제목·비교 연출을 쓰지 않는다(LP 1장). 시각은 4.3절 토큰과 4.5절 점검 그대로이고 추가 섹션은 모두 정지 상태다.
+요구는 01장 9.1절(DC-F-050~055), 결정은 01장 9.4절(D-23~D-27), 공용 규칙은 `docs/nomad-design-modules/_design-guide/LANDING_PERSUASION.md`(아래 LP), 작업은 06장 9절이다. 같은 분야 다른 회사 랜딩과 주제가 겹치기 쉬우므로 그 주장 문장·시리즈 제목·비교 연출을 쓰지 않는다(LP 1장). 시각은 4.3절 토큰과 4.5절 점검 그대로이고 추가 섹션은 모두 정지 상태다.
 
 이 장은 1장 화면 표와 4절 랜딩 방향의 추가분이다(다른 문서가 이 파일을 줄 번호로 인용하므로 앞 절을 고치지 않고 여기에 모은다).
 

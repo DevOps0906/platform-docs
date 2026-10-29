@@ -106,7 +106,7 @@ AI 계층·디자인 시스템 도입(2026-10-13)으로 생긴 추가 폐기. �
 
 | # | 폐기 항목 | 사유 | 근거 |
 |---|---|---|---|
-| A-1 | 원본의 Tailwind v3식 설정 파일과 문법 | 모든 앱을 Tailwind CSS v4로 통일한다. 설정이 둘이면 AI가 v3로 만든다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:23`, `:67` |
+| A-1 | 원본의 Tailwind v3식 설정 파일과 문법 | 모든 앱을 Tailwind CSS v4로 통일한다. 설정이 둘이면 AI가 v3로 만든다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23`, `:67` |
 
 ## 4. 복사 금지 결함
 
@@ -137,8 +137,8 @@ AI 계층·디자인 시스템 도입(2026-10-13)으로 생긴 추가 폐기. �
 | hms에서 상용 API·공용 AI 서버·공용 Dify 사용, 장애 시 대체 | 사용자 결정 2026-10-13 | 진료 관련 정보의 외부 반출 | 전용 서버만, 대체 없이 실패, 금지 변수 기동 검사 |
 | 환자 식별정보를 질문·문서로 AI에 보내기 | 01장 6.6절 | 의료정보 유출 | 입력 차단(`AI_PHI_BLOCKED`), 문서 반입 탐지, 환자 테이블 비접근 |
 | 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용 | DB의 assistant 메시지만 낭독 |
-| 설정 파일 없이 "Tailwind로"만 지시해 v3 설정 생성 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지(린트) |
-| 3D 라이브러리를 업무 앱에 추가 | `docs/design-module/_design-guide/HERO_3D.md:92` | 번들 증가, 업무 효율 저해 | 적용 제외(03장 4.5절), import 금지 린트 |
+| 설정 파일 없이 "Tailwind로"만 지시해 v3 설정 생성 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지(린트) |
+| 3D 라이브러리를 업무 앱에 추가 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:92` | 번들 증가, 업무 효율 저해 | 적용 제외(03장 4.5절), import 금지 린트 |
 
 ## 5. 아카이브 절차
 

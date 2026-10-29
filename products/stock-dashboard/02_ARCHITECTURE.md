@@ -16,7 +16,7 @@
 | 검증 | zod(Route Handler 입력, AI 출력), pydantic(FastAPI 경계, zod와 같은 스키마), Vitest, pytest, Playwright | 3.x | `docs/products/_platform-core/SECURITY_BASELINE.md:171` |
 | 인증/DB | Supabase Auth + Postgres 15 + RLS, 모놀리스(`public`) | - | `docs/products/_supabase-modular/ARCHITECTURE.md:43` |
 | 워커 | Node 22 LTS 상주 프로세스 2개: `quote-relay`(시세 중계), `stock-jobs`(core.jobs 소비) | 제안 | `docs/reviews/Stock_Trader_nomad.md:71`. 확정 결정 6은 video 대상이며 이 제품은 Python 미디어 처리가 없어 워커는 TS만 쓴다. Python은 AI 서비스(아래)에만 있다 |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), `src/components/hero3d/`에서만 import | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:47` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), `src/components/hero3d/`에서만 import | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:47` |
 | AI 서비스 | FastAPI(Python) `apps/api`. 공용 ai-service(`services/ai-service`) 위에 stock 확장만 둔다 | Python 3.12(제안, 구현 시 확인) | 확정 결정 13, `docs/products/_platform-core/AI_ARCHITECTURE.md:132-160`, `docs/products/_platform-core/SHARED_MODULES.md:17` |
 | AI 오케스트레이션 | LangChain(채팅 모델, text splitter), LangGraph + `langgraph-checkpoint-postgres`(스키마 `ai_runtime`) | 구현 시 확인 | `docs/products/_platform-core/AI_ARCHITECTURE.md:83`, `:114` |
 | LLM | FastAPI 라우터: 상용 `anthropic`, `openai`, `google`, `openrouter` + 오픈소스 `oss-llm`(vLLM, OpenAI 호환). 기능별 체인은 5.1절. 이전의 "Next.js llm gateway 직접 호출"은 폐기(2026-10-13) | 모델 id는 `core.ai_model_prices` 행으로 | 확정 결정 17, `docs/products/_platform-core/AI_ARCHITECTURE.md:73-92` |

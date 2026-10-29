@@ -30,7 +30,7 @@
    - `CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`
    - AI 계층 문서: `AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`. 3D 히어로는 `_design-guide/HERO_3D.md`. 인증 단계(확정 결정 22)는 `AUTH_ROADMAP.md`(필독: 8장 매트릭스에서 자기 제품 행, 10장 문서별 반영 위치)
 4. `docs/products/_supabase-modular/README.md`, `migrations/0000_*` ~ `0009_*`(0008 AI, 0009 음성. SQL 검사에 0008 이후가 포함되면 `node check.mjs --vector ...`)
-5. `docs/design-module/_design-guide/`의 전 파일. 이 중 `REFERENCES.md`는 자기 제품 절을 읽는다.
+5. `docs/nomad-design-modules/_design-guide/`의 전 파일. 이 중 `REFERENCES.md`는 자기 제품 절을 읽는다.
 6. 배정된 리뷰 md 전체와 원본 기획 문서(PRD, CLAUDE, DESIGN 등)
    - 코드는 기능 확인이 필요한 부분만 읽는다.
    - node_modules, .next, dist, venv, __pycache__, ckpts는 읽지 않는다.

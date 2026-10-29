@@ -51,7 +51,7 @@
 | 학습 Q&A 채팅(Dify `notes-chat`) | O | | | 확정 결정 13, 14 |
 | 퀴즈 풀이(텍스트) | O | | | 그래프 산출물 |
 | 음성 대화, 강의 녹음 → 노트 생성(핵심), 퀴즈 음성 문제·답 | O | | | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:5-20` |
-| 랜딩 3D 히어로(흩어진 메모 카드 → 정리된 노트) | O | | | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:90` |
+| 랜딩 3D 히어로(흩어진 메모 카드 → 정리된 노트) | O | | | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:90` |
 | 퀴즈 응시 기록, 오답 노트 | | O | | 열린 결정 D-15. 제품 테이블이 필요해진다 |
 | 비회원 AI 체험, 사용자 보이스 선택, 보이스 클로닝 | | O | | `AI_ARCHITECTURE.md:130`, `VOICE_ARCHITECTURE.md:80` 근거(제안) |
 | 위키 자동 점검 예약 실행, 일지 최종본의 노트 연동 | | O | | 비용 통제를 위해 MVP는 수동 실행(D-19). 일지 연동은 D-12 이후 |
@@ -358,7 +358,7 @@ AI 대화 규칙(6.1절에 더해 채팅·퀴즈 해설·위키에 적용):
 | D-14 | 교재(저작물) 업로드 정책 | (a) 권한 확인 체크 + 개인 학습용 + 연속 복제 억제 (b) 업로드 형식을 본인 필기로 제한 | (a). 약관 문구는 법무 확인. 스캔 PDF OCR은 Phase 2 |
 | D-15 | 퀴즈 형식과 응시 기록 | (a) MVP는 객관식·OX·단답, 기록 저장 없음 (b) 응시 기록·오답 노트 테이블 `notes.quiz_attempts` 추가 | (a). (b)는 복습 플래시카드(D-5)와 같이 Phase 2에서 결정 |
 | D-16 | 과목 모델 | (a) 위키 index 페이지 + 컬렉션 이름 규칙(제품 테이블 없음) (b) `notes.subjects` 테이블 | (a)(제안). 정렬, 색, 시험 일정 같은 메타가 필요해지면 (b) |
-| D-17 | 채팅·노트 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). NT-06-031에서 확인 결과를 기록 |
+| D-17 | 채팅·노트 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). NT-06-031에서 확인 결과를 기록 |
 | D-18 | ElevenLabs 데이터 보관·학습 사용·제로 리텐션, 읽어 주기 보이스 | (a) 기본 보이스 1종 + 오픈소스 보이스 1종 (b) 사용자 선택 | (a). 계약 조건은 구현 시 ElevenLabs 약관으로 확인해 처리방침에 반영(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:75-83`) |
 | D-19 | 위키 자동 갱신 상한과 점검 실행 방식 | (a) 문서당 5페이지, 점검은 수동 (b) 상한 상향, 주 1회 자동 점검 | (a). 연쇄 갱신으로 비용이 폭증하지 않게 한다(`LLM_WIKI.md:47`). 실측 후 값 조정 |
 

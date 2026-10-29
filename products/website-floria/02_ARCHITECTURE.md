@@ -11,9 +11,9 @@
 | 프레임워크 | Next.js App Router | 16 | `docs/products/00_MERGE_ANALYSIS.md:1089`(platform-core Next.js 16 + Supabase 권고). 서버 Route Handler에 service_role을 두고 메타/JSON-LD를 서버에서 만들어야 해서 정적 SPA(Vite)를 쓰지 않는다(제안) |
 | UI | React | 19.2 | `docs/reviews/WebSite.md:34`, `:66` |
 | 언어 | TypeScript | 6.0 | `docs/reviews/WebSite.md:66`(NEO_02 설정 재사용). Botanic의 JSX는 TS로 전환(작업 12) |
-| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지) | `docs/reviews/WebSite.md:67`, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67`. 인라인 style 객체 금지(`:185`) |
-| UI 컴포넌트 | shadcn/ui(Tailwind CSS v4 지원 버전)를 토큰으로 재스타일. 콘솔·상담 위젯·폼에 쓰고, 공개 섹션은 직접 만든 컴포넌트 | 구현 시 확인 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19.2 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:47-48` |
+| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지) | `docs/reviews/WebSite.md:67`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67`. 인라인 style 객체 금지(`:185`) |
+| UI 컴포넌트 | shadcn/ui(Tailwind CSS v4 지원 버전)를 토큰으로 재스타일. 콘솔·상담 위젯·폼에 쓰고, 공개 섹션은 직접 만든 컴포넌트 | 구현 시 확인 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19.2 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:47-48` |
 | 아이콘 | lucide-react(dependencies에 둔다) | 리뷰 확인 버전 | `docs/reviews/WebSite.md:36`, `:260` |
 | 폰트 | Pretendard(본문), Gowun Batang(제목) self-host, `font-display: swap`, 가중치 합계 4개 이하 | 제안 | 리뷰 `:198`, `:250`(preconnect/self-host, 가중치 축소). 라이선스(OFL) 확인은 SI-06-005 수용 기준 |
 | DB/인증 | Supabase(PostgreSQL 15, Auth) | 모듈러 `site` 스키마 또는 모놀리스 `public` | 05_DATA_MODEL.md |

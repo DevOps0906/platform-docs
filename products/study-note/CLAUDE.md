@@ -10,7 +10,7 @@
 | 2 | 이 폴더의 `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` (특히 02장 6절, 05장, 06장 1절) |
 | 3 | DB 작업이면 `docs/products/_supabase-modular/migrations/2100_notes.sql` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
-| 3-UI | UI 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` study-note 절, 랜딩이면 `HERO_3D.md` |
+| 3-UI | UI 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` study-note 절, 랜딩이면 `HERO_3D.md` |
 
 ## 2. 절대 규칙
 

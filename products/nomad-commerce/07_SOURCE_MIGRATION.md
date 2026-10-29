@@ -148,8 +148,8 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 목록 밖이라
 | 클라이언트가 보낸 임의 텍스트를 그대로 TTS | 제안 | 음성 생성 남용, 과금 우회 | 읽어 주기는 DB의 assistant 메시지만, 내레이션은 600자 상한과 금지어 검사 통과 스크립트만 |
 | 내레이션 도중 다른 제공자로 대체 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 목소리가 바뀜 | 대체 금지, 실패 + 환불 |
 | 위키·규칙 근거 없이 마켓 규정 단정, 승인·반려 보장 문형 | 01장 6.1절 | 허위 안내, 셀러 손해 | 근거 없음 응답, 기준일 표기, compliance 후처리 |
-| 3D 재질에 토큰 밖 색, 보라/핑크 그라디언트·별 파티클·흔한 지구본 | `docs/design-module/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.5절 토큰 표 |
-| "Tailwind로"만 지시해 v3 설정 생성 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
+| 3D 재질에 토큰 밖 색, 보라/핑크 그라디언트·별 파티클·흔한 지구본 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.5절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 | 마이그레이션에 개인 이메일 | `sellingstudio/supabase/migrations/002_add_admin_plan.sql:14-24` | 개인정보·권한 하드코딩 | platform_admin은 운영 스크립트로 |
 
 ## 5. 아카이브 절차

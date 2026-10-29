@@ -9,7 +9,7 @@
 | 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·가입·콜백 작업이면 `AUTH_ROADMAP.md`(이 파일 끝 "인증 단계 규칙" 절) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
 | 2 | 이 폴더 `01_PRD.md` → `02_ARCHITECTURE.md` → `05_DATA_MODEL.md` → `04_API.md` → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md`(자기 작업 행) → `07_SOURCE_MIGRATION.md` 4절 |
-| 3 | UI 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` toon-factory 절, 랜딩이면 `HERO_3D.md`. 디자인 정답은 코드(`tokens.css`, `components/ui/`)이고 문서는 `docs/file/03-설계/디자인/DESIGN.md`·`COMPONENTS.md` |
+| 3 | UI 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` toon-factory 절, 랜딩이면 `HERO_3D.md`. 디자인 정답은 코드(`tokens.css`, `components/ui/`)이고 문서는 `docs/file/03-설계/디자인/DESIGN.md`·`COMPONENTS.md` |
 
 ## 2. 절대 규칙
 

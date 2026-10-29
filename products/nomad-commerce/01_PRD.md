@@ -2,7 +2,7 @@
 
 표기: 원본·리뷰에 근거가 없는 수치와 정책은 "제안"으로 쓰고 이유를 단다. 외부 사실(API 존재, 약관)을 확인하지 않았으면 "미확인". 리뷰 경로 `docs/reviews/`, 분석 경로 `docs/products/00_MERGE_ANALYSIS.md`(이하 "분석").
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(상품 스펙·마켓 규칙 RAG, 마켓 규칙 위키, LangGraph 상세페이지 생성 그래프, Dify 셀러 어시스턴트 채팅), 음성(상품 설명 음성 입력, 쇼츠 내레이션, 음성 대화), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 이 개정으로 기존 LLM 호출 경로(OpenRouter 단일 게이트웨이를 워커·Route Handler에서 직접 호출)와 fal whisper STT는 FastAPI 모델 라우터와 `packages/core-voice` 어댑터로 대체됐다(02장 3절, 5절). 쇼츠 영상 렌더 엔진은 sceneflow 소유이고 commerce는 워커 API만 호출한다(확정 결정 6).
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(상품 스펙·마켓 규칙 RAG, 마켓 규칙 위키, LangGraph 상세페이지 생성 그래프, Dify 셀러 어시스턴트 채팅), 음성(상품 설명 음성 입력, 쇼츠 내레이션, 음성 대화), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 이 개정으로 기존 LLM 호출 경로(OpenRouter 단일 게이트웨이를 워커·Route Handler에서 직접 호출)와 fal whisper STT는 FastAPI 모델 라우터와 `packages/core-voice` 어댑터로 대체됐다(02장 3절, 5절). 쇼츠 영상 렌더 엔진은 sceneflow 소유이고 commerce는 워커 API만 호출한다(확정 결정 6).
 
 ## 1. 페르소나와 핵심 과제
 
@@ -38,7 +38,7 @@
 | 상세페이지 생성 그래프 `commerce.detail_page`(정보 추출 → 규칙 검색 → 카피 → 금지어 → 마켓 변환 → compliance), 보조 그래프 `commerce.assist` | MVP | 확정 결정 13 |
 | 음성 대화, 쇼츠 내레이션 음성(TTS) 생성 | MVP. 쇼츠 영상 렌더와 결합은 Phase 2(sceneflow 워커 API) | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`), 확정 결정 6 |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17, `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 3D 히어로(랜딩) | MVP | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:85` |
+| 3D 히어로(랜딩) | MVP | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:85` |
 | 비회원 AI 상담(랜딩 채팅) | Phase 2 | 제안: 비로그인 상담은 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/products/_platform-core/AI_ARCHITECTURE.md:130`) |
 | 금지어 필터 + compliance 게이트 | MVP | 분석:786, C-6(분석:963) |
 | 인라인 편집, 단일 슬롯 재생성 | MVP | 분석:799 |
@@ -167,7 +167,7 @@ V.2 PRD(`PRD.md:243-251`), DETAIL(`DETAIL_PAGE_SYSTEM.md:360-437`), CLAUDE 진�
 | CM-F-049 | AI 라우팅과 국외 이전 동의 | 신규 | 가입 직후 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`을 호출하고(owner/admin), 설정에서 언제든 철회한다. 기능별 기본 체인은 02장 5.1절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. 이미지 생성(fal)은 라우팅 체인 밖이며 D-15 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 감사 `ai.cross_border.ack`에 같게 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | CM-F-050 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴·STT·TTS·내레이션은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고, 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 상세페이지 그래프와 보조 그래프 작업은 4.2절 정액 차감에 묶고 정산 차액이 없다(4.6절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
 | CM-F-051 | AI 출력 규칙(생성물·채팅·내레이션·위키) | 신규 | 6절 금지 문구와 6.1절 AI 대화 규칙을 그래프 compliance 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`packages/commerce-compliance/rules/*.json`, 금지어 사전은 `banned_words`와 같은 출처)로 적용한다. 승인·반려 보장, 법률 단정, 질병 효능 단정은 거절하거나 완곡하게 바꾸고 전문가·마켓 공지 확인을 안내한다 | 채팅 평가셋 30문항(제안) 위반 0. 그래프 평가셋 20건에서 금지 문형 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 6절 |
-| CM-F-052 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 상품 상자가 열리며 상세페이지 패널로 펼쳐지고 마켓 진열대에 놓이는 풀 3D, 모바일은 상자 열림만 있는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:85` |
+| CM-F-052 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 상품 상자가 열리며 상세페이지 패널로 펼쳐지고 마켓 진열대에 놓이는 풀 3D, 모바일은 상자 열림만 있는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-75`, `:85` |
 
 ## 4. 요금과 크레딧
 
@@ -306,7 +306,7 @@ AI 키 4개(`ai_chat`, `ai_chat_turns_per_day`, `voice_chat`, `shorts_narration`
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 `ai_chat_turns_per_day`, STT 사용자당 10회/분, 내레이션 조직당 10회/시간, 보조 AI는 생성 API 조직당 60회/분에 포함, 잡 토큰 발급 120회/분 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 기준 |
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 음성 대화 60초·5MB, 상품 설명 음성 입력 120초·10MB, 쇼츠 스크립트 600자 | 제안 |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 탈퇴 후 30일, 상품 스펙 청크는 상품 purge와 같은 시점 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 | 레이트 리밋 | 생성 API 조직당 60회/분, 로그인 IP당 10회/10분, 웹훅 600회/분 | `SECURITY_BASELINE.md` 8장 |
 | 가용성 | 월 99.5%(웹), 워커 장애 시 잡은 대기 후 재개 | 제안 |
 | 브라우저 | 최신 Chrome/Edge/Safari, 375px 이상 | 제안 |
@@ -394,7 +394,7 @@ AI 대화 추가 규칙(6절 금지 문구에 더해 생성물·채팅·내레�
 | D-10 | AI 채팅 무료 제공 | (a) 무료 없음(턴 선차감, Free 하루 20턴 상한) (b) Free 월 N턴 무료 | (a)(제안). (b)는 전환 효과를 본 뒤 결정 |
 | D-11 | 상품 스펙 RAG 색인 대상과 상한 | 색인 필드(상품 행만 / 업로드 스펙 시트 포함), 조직별 월 색인 문서 상한, 보존 | 상품 행 + 스펙 시트(md, txt, csv, xlsx), 조직당 활성 문서는 플랜 상품 수 한도와 같게, 월 업로드 20건(제안). 공급자 자료 저작권은 셀러 책임 |
 | D-12 | 쇼츠 내레이션 MVP 범위, 보이스, ElevenLabs 데이터 보관 | (a) MVP는 스크립트 + 음성 mp3까지, 영상 결합은 Phase 2 (b) MVP에 video 워커 연동 포함. 보이스: ElevenLabs 기본 1종 + 오픈소스 1종 vs 사용자 선택. ElevenLabs 입력 보관·학습 사용·제로 리텐션 | (a), 보이스 고정 2종. 보이스 id는 환경변수(02장 8절). 오픈소스 보이스는 `VOICE_ARCHITECTURE.md` 4.1절 후보 중 코드·가중치 라이선스와 한국어 품질을 확인해 고른다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:63-73`). 생성 음성 상업 이용 조건과 데이터 보관 조건은 ElevenLabs 계약으로 구현 시 확인(`:81-83`) |
-| D-13 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). CM-06-041에서 확인 결과를 기록 |
+| D-13 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). CM-06-041에서 확인 결과를 기록 |
 | D-14 | 워커의 그래프 호출 방식과 인증 | (a) 워커가 1~3단계에서 FastAPI 그래프를 호출하고, 인증은 Next.js 잡 토큰 발급 엔드포인트(`/api/internal/ai-token`) (b) 그래프가 이미지 단계까지 소유(Python으로 이미지 엔진 재구현) (c) 워커에 서명 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/products/_platform-core/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 06장 6.1절 R-3 |
 | D-15 | 이미지 생성(fal)과 국외 이전 동의 | (a) fal은 라우팅 체인 밖의 처리 위탁으로 보고 이용약관·처리방침 고지로 처리(동의와 무관하게 사용) (b) 국외 이전 미동의 조직은 AI 씬 이미지 비활성(인포그래픽·법적고지 슬롯만 가능) (c) 국내 이미지 생성 오픈소스 서버 도입 | (a)(제안) + 법무 확인. 이미지 제공자는 `core.ai_providers`의 kind에 없어 `resolve_ai_route`가 걸러 내지 못한다 |
 | D-16 | Vision(이미지 분석)의 오픈소스 경로 | 오픈소스 멀티모달 모델을 공용 서버에서 서빙하는지 | 서빙하지 않으면 국외 이전 미동의 조직은 Vision을 끄고 수동 속성 입력을 안내한다(구현 시 확인) |

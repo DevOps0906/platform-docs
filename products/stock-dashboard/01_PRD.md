@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 원본은 기능 목록 수준 PRD 61행뿐이고(`docs/reviews/Stock_Trader_nomad.md:27`) 백엔드, 데이터 모델, 연동 방식, 법적 검토가 없다(`:21`). 이 문서는 그 공백을 수치, 상태, 정책으로 채운다. 원본·리뷰·분석에 근거가 없는 수치와 정책은 "제안"으로 표시하고 이유를 단다. 외부 사실(증권사 API, 약관, 법령 해석)은 확인하지 않았으면 "미확인"으로 적는다. 이 문서의 법률 관련 서술은 법률 자문이 아니며, 출시 전 전문가 검토가 필요하다(`docs/reviews/Stock_Trader_nomad.md:61`).
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(공시 RAG, LangGraph 리서치 요약, 주식 용어 위키, Dify 채팅), 음성(음성 질의, 브리핑 낭독), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로(시세 흐름 지형), 디자인 시스템을 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 유사투자자문업·투자자문업 해당 여부에 대한 법률 의견은 아직 받지 못했다(D-3). 그래서 AI 기능은 모두 초대제 무료 베타 안에서 "공개 자료의 사실 요약과 현재 상태 설명"으로 범위를 좁혔고, 모든 AI 출력에 투자 권유 금지 검사(ST-F-022)를 필수 단계로 둔다. 공시·뉴스 데이터의 이용 허락은 확인 전이라 열린 결정이다(D-10).
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(공시 RAG, LangGraph 리서치 요약, 주식 용어 위키, Dify 채팅), 음성(음성 질의, 브리핑 낭독), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로(시세 흐름 지형), 디자인 시스템을 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 유사투자자문업·투자자문업 해당 여부에 대한 법률 의견은 아직 받지 못했다(D-3). 그래서 AI 기능은 모두 초대제 무료 베타 안에서 "공개 자료의 사실 요약과 현재 상태 설명"으로 범위를 좁혔고, 모든 AI 출력에 투자 권유 금지 검사(ST-F-022)를 필수 단계로 둔다. 공시·뉴스 데이터의 이용 허락은 확인 전이라 열린 결정이다(D-10).
 
 ## 1. 페르소나와 핵심 과제
 
@@ -41,7 +41,7 @@
 | AI 리서치 채팅(Dify, 투자 조언 아님) | MVP | 확정 결정 13, 14(`docs/products/00_MERGE_ANALYSIS.md:21-22`) |
 | 음성 질의, 브리핑 생성과 낭독(TTS) | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 랜딩 3D 히어로(시세 흐름 지형, `/` 초대 전용 안내 화면) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:88` |
+| 랜딩 3D 히어로(시세 흐름 지형, `/` 초대 전용 안내 화면) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:88` |
 | AI 관심 아이디어 + 성과 평가 + 내부 리더보드 | Phase 2 | `docs/products/00_MERGE_ANALYSIS.md:1279`, `docs/reviews/Stock_Trader_nomad.md:109` |
 | AI 3사 비교 | Phase 2 | `docs/products/00_MERGE_ANALYSIS.md:1278` "3사 비교는 2단계" |
 | 실계좌 조회 전용 연결 | Phase 2 | 제안: 리뷰 MVP는 모의 계좌만(`docs/reviews/Stock_Trader_nomad.md:101`). 실계좌 조회는 spike와 약관 확인 뒤 |
@@ -67,7 +67,7 @@ ID 접두사 `ST`는 `DB_CONVENTIONS.md` 1장 SQLSTATE 접두사다(`docs/produc
 | ST-F-003 | 증권사 연결 | 디벨롭 | `BrokerAdapter`(getBalance, getHoldings, getExecutions, subscribeQuotes)를 구현한 어댑터만 쓴다. MVP는 `mock`과 spike에서 고른 증권사 1곳의 모의투자 환경. 연결 수는 플랜 `broker_connections_max`(beta 2). 실계좌(live) 연결은 서버 플래그 `BROKER_LIVE_READ_ENABLED=false`로 막는다 | 연결 생성 시 토큰 발급 테스트에 실패하면 행이 `error`로 남고 사용자에게 원인 코드가 보인다. `mock` 연결은 즉시 `active`이고 화면에 "샘플 데이터" 배지가 붙는다. 세 번째 연결 시도는 409 | `docs/reviews/Stock_Trader_nomad.md:70`, `:101`, `:121` |
 | ST-F-004 | 키 보관과 마스킹 | 신규 | app key/secret, 접근 토큰은 `encrypted_credentials`(AES-256-GCM, `key_version`)에만 저장한다. 계좌번호는 `account_masked`(숫자 5자리 이상 연속 금지 CHECK)와 HMAC-SHA256 해시만 저장한다. 키는 브라우저로 내려가지 않고 로그·오류·감사에 남지 않는다. ID/비밀번호, 공동인증서는 받지 않는다 | `50123456-01` 같은 원문 계좌번호 INSERT는 `23514`. 브라우저 번들에서 `CREDENTIALS_KEY`, `appSecret` 문자열 검색 결과 0건. 사용자 세션의 `encrypted_credentials` SELECT는 `42501` | `docs/reviews/Stock_Trader_nomad.md:39`, `:59`, `:79-80` |
 | ST-F-005 | 동기화(조회 전용) | 유지 | 잔고·보유는 장중 5분, 장외 60분 주기(제안: 증권사 호출 한도 미확인이라 보수적으로), 체결은 장 마감 뒤 15:40 KST 1회 + 수동 동기화(연결당 60초에 1회). 체결은 `(connection_id, broker_exec_id)` 유니크로 중복 없이 upsert. 연속 오류 5회면 연결을 `error`로 바꾸고 알림 | 같은 체결을 두 번 동기화해도 `trades` 1행. 수동 동기화를 60초 안에 다시 누르면 429와 남은 초. 오류 5회 뒤 화면 상단에 "연결 오류, 다시 연결하세요" | `docs/products/00_MERGE_ANALYSIS.md:1280`, `docs/reviews/Stock_Trader_nomad.md:124` |
-| ST-F-006 | 포트폴리오 홈 | 유지 | 증권사별/Total 탭, 총 평가금액, 예수금, 평가손익, 수익률, 보유 그리드(종목, 수량, 평균단가, 현재가, 평가금액, 손익률). 탭 전환 시 스켈레톤. 상승 빨강, 하락 파랑(한국 관례) | Total 탭의 합계가 각 연결의 최신 스냅샷 합과 일치한다. 연결이 0개면 빈 상태 안내 | `PRD.md:21-24`, `docs/design-module/_design-guide/REFERENCES.md:207` |
+| ST-F-006 | 포트폴리오 홈 | 유지 | 증권사별/Total 탭, 총 평가금액, 예수금, 평가손익, 수익률, 보유 그리드(종목, 수량, 평균단가, 현재가, 평가금액, 손익률). 탭 전환 시 스켈레톤. 상승 빨강, 하락 파랑(한국 관례) | Total 탭의 합계가 각 연결의 최신 스냅샷 합과 일치한다. 연결이 0개면 빈 상태 안내 | `PRD.md:21-24`, `docs/nomad-design-modules/_design-guide/REFERENCES.md:207` |
 | ST-F-007 | 시세 중계와 블링크 | 디벨롭 | 상주 워커가 **사용자 본인의 증권사 연결**로 시세를 구독해 그 조직의 브라우저에만 SSE로 보낸다. 다른 조직과 시세를 공유하지 않는다. 브라우저는 zustand 종목별 셀렉터로 해당 셀만 다시 그린다. 값이 바뀐 셀은 400ms 동안 상승/하락 색으로 깜빡인다(`prefers-reduced-motion`이면 색만 바뀜) | 한 종목 틱이 오면 그 행 외 컴포넌트 리렌더 0회(React Profiler). 장중 마지막 틱 10초 초과면 "지연" 배지, 60초 초과면 "시세 끊김" 배지 | `docs/reviews/Stock_Trader_nomad.md:44`, `:48`, `:71` |
 | ST-F-008 | 종목 상세 모달 | 유지 | 행 클릭 시 배경 블러 모달. 당일 라인 차트(사용자 본인 연결에서 받은 분 단위 시세, 서버에 저장하지 않음), 내 포지션(수량, 평단, 손익), 재무지표 PER/PBR/ROE/EPS/배당수익률과 출처·기준일 | 재무지표 카드마다 "출처: DART, 기준 2025FY" 같은 표기. 값이 없으면 "-"와 사유 | `PRD.md:43-47`, `docs/reviews/Stock_Trader_nomad.md:50` |
 | ST-F-009 | 매매 일지 | 유지 | 체결 목록(기간·종목·매수/매도 필터), 체결별 메모(2,000자, 태그 10개), CSV 내보내기(최대 1년, 1만 행) | 메모는 작성자만 수정, owner/admin은 삭제 가능. CSV는 UTF-8 BOM, 계좌번호 마스킹 값만 포함 | `PRD.md:43-45` |
@@ -83,7 +83,7 @@ ID 접두사 `ST`는 `DB_CONVENTIONS.md` 1장 SQLSTATE 접두사다(`docs/produc
 | ST-F-028 | 브리핑 생성과 낭독 | 신규 | 사용자가 요청할 때만 만든다(정기 자동 생성·푸시 없음, D-15). 입력은 관심 종목 코드 최대 10개(보유 종목에서 고르거나 직접 입력, 수량·금액 미전송)와 기간(전일 또는 1주). 그래프 `stock.research_summary`의 `briefing` 모드가 공시 요약, 장 상태, 용어 링크를 낭독용 대본(`output.script`, 600~1,500자)으로 만든다. 대본 앞뒤에 고정 안내("AI가 생성한 음성 브리핑이며 투자 권유가 아닙니다")를 붙인다. **낭독은 `ai_reports`(kind `briefing`, status `succeeded`)의 `output.script`만 읽고(`advice_check.passed=true`를 DB가 보장), 클라이언트가 보낸 텍스트는 읽지 않는다.** 한 브리핑은 한 제공자로만 만든다(작업 도중 대체 금지, 실패 시 전체 실패 + 환불). 재생·재다운로드는 무료 | 검사 통과 전 대본으로 TTS 호출 0(임의 텍스트 요청 400). 한 낭독의 `ai_usage` 제공자가 모두 같고 `voice_jobs.fallback_from` null. 중간 실패 시 파일·크레딧 변동 없음(전액 환불 1행). 국외 이전 미동의 조직은 처음부터 오픈소스 보이스. 같은 브리핑 재요청은 기존 결과 반환(추가 차감 0) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:44-47`, 확정 결정 16 |
 | ST-F-029 | AI 라우팅과 국외 이전 동의 | 신규 | 온보딩(`/onboarding/disclaimer`)에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`(사용자 세션, owner)과 `consents(ai_overseas_transfer)`를 함께 기록하고, 설정에서 철회할 수 있다. 기능별 기본 체인은 02장 5절이며 seed와 일치한다. 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓰고 채팅 패널 상단에 "국내 오픈소스 AI로 답하고 있습니다"를 표시한다. 제품 화면에서 `set_ai_routing`을 쓰지 않는다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 `consents.version`에 같게 남는다. `dify.aux`는 동의 후에도 `oss-llm` | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | ST-F-030 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴·STT·TTS·낭독은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 진단·리서치 요약·브리핑 생성은 정액 선차감에 묶고 정산 차액이 없다(재생성과 판정 호출 비용은 정액에 포함). 투자 권유 금지 검사 실패로 결과가 나가지 않은 경우도 전액 환불한다(4.4절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0. 검사 실패 환불 1행 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
-| ST-F-031 | 3D 히어로(시세 흐름 지형) | 신규 | 랜딩(`/` 초대 전용 안내)의 히어로: PC·태블릿은 시세 흐름을 지형으로 보여 주는 풀 3D(가로 = 장 시간 구간, 깊이 = 업종, 높이 = 거래 활동의 상대 크기, 고정 시드의 샘플 데이터), 모바일은 2D 지형 단면(SVG), WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 수익률·퍼센트 숫자·상승/하락 색을 장면에 쓰지 않고 "샘플 데이터, 실제 시세 아님" 배지를 고정한다 | `HERO_3D.md` 4절 수용 기준 전부(기기 3종 동작, 번들+에셋 PC·태블릿 1MB / 모바일 300KB 이하, LCP 2.5초, 3D 전에 제목·CTA 사용 가능, 스크린샷 3종 고문 검토). 빌드 산출물과 정지 이미지에 `%` 기호와 수익 관련 단어 0 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:88`, 01_PRD 6.6절 |
+| ST-F-031 | 3D 히어로(시세 흐름 지형) | 신규 | 랜딩(`/` 초대 전용 안내)의 히어로: PC·태블릿은 시세 흐름을 지형으로 보여 주는 풀 3D(가로 = 장 시간 구간, 깊이 = 업종, 높이 = 거래 활동의 상대 크기, 고정 시드의 샘플 데이터), 모바일은 2D 지형 단면(SVG), WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 수익률·퍼센트 숫자·상승/하락 색을 장면에 쓰지 않고 "샘플 데이터, 실제 시세 아님" 배지를 고정한다 | `HERO_3D.md` 4절 수용 기준 전부(기기 3종 동작, 번들+에셋 PC·태블릿 1MB / 모바일 300KB 이하, LCP 2.5초, 3D 전에 제목·CTA 사용 가능, 스크린샷 3종 고문 검토). 빌드 산출물과 정지 이미지에 `%` 기호와 수익 관련 단어 0 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-75`, `:88`, 01_PRD 6.6절 |
 
 ### 3.2 Phase 2
 
@@ -214,7 +214,7 @@ AI 키 5개는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/se
 | 음성 | 10초 이하 발화의 STT 결과 p95 5초, 브리핑 낭독 시작 p95 8초(대본 저장 후) | 제안 |
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 음성 발화 60초·5MB, 요약 종목 5개, 브리핑 종목 10개 | 제안 |
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 `ai_chat_turns_per_day`, 요약·브리핑 조직당 분당 3회 + 하루 `ai_research_per_day`, STT 사용자당 10회/분, 낭독 조직당 5회/시간, 서명 토큰 발급 사용자당 120회/분 | `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 기준 + 제품 값(제안) |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 탈퇴 후 30일, 리서치·브리핑 리포트는 `history_days` | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 | 동시 SSE 연결 | 베타 100(사용자당 탭 3개까지) | 초대 30명 x 탭 3 + 여유 |
 | 가용성 | 베타 99.5%(월 3.6시간 이내 중단) | 무료 베타 |
@@ -358,7 +358,7 @@ AI 출력은 서버 금칙어 검사(정규식 사전, 한글 경계 처리)와 
 | D-14 | 음성 제공자 조건 | ElevenLabs 입력 보관·학습 사용·제로 리텐션 여부, 브리핑·읽어 주기 보이스 선택, 오픈소스 TTS 후보 | 보이스는 ElevenLabs 기본 1종 + 오픈소스 1종 고정(환경변수). 후보 라이선스는 `VOICE_ARCHITECTURE.md` 4.1절에서 코드·가중치 각각 확인(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:63-73`, `:75-83`). 확인 전까지 처리방침에 보관 조건을 단정하지 않는다 |
 | D-15 | 브리핑 제공 방식 | (a) 사용자 요청 때만 생성 (b) 정시 자동 생성·푸시 | (a). (b)는 불특정 다수에게 보내는 통신물로 해석될 소지가 있어 법률 의견 뒤 |
 | D-16 | 위키 공개 범위 | (a) 로그인한 베타 사용자만 (b) 공개(SEO) | (a). 공개 랜딩을 법률 검토 뒤로 미룬 것과 일관 |
-| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 뒤 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). ST-06-035에서 확인 결과를 기록 |
+| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 뒤 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). ST-06-035에서 확인 결과를 기록 |
 | D-18 | 랜딩 3D 지형의 데이터 | (a) 고정 시드 샘플 + "샘플 데이터" 배지 (b) 실제 시세·시장 데이터 | (a). (b)는 시세 재배포 제한(6.1절)과 수익 약속 오인 위험 때문에 법률·약관 확인 뒤 |
 
 ### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)

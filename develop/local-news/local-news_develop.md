@@ -107,7 +107,7 @@ D:\WorkSpace\DEV\local-news\                            베이스를 복사해 �
 | `docs/products/local-news/02~05_*.md` | `docs/file/03-설계/` | DOC-DES-001~004 | 아키텍처·화면·인터페이스·데이터 설계서 |
 | `docs/products/local-news/modules/` 9개(M1~M8, README) | `docs/file/03-설계/모듈/` | DOC-MOD-001~009 | 공통모듈 기획서 |
 | `docs/products/_platform-core/` 9개 | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(AUTH_ROADMAP = DOC-CORE-009) |
-| `docs/design-module/_design-guide/` 5개 + DASHBOARD_PATTERNS | `docs/file/03-설계/디자인/` | DOC-DSN-001~005, 008 | 디자인 기준 |
+| `docs/nomad-design-modules/_design-guide/` 5개 + DASHBOARD_PATTERNS | `docs/file/03-설계/디자인/` | DOC-DSN-001~005, 008 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 03장 3.9절 초기값에서 생성 |
 | `docs/products/local-news/CLAUDE.md`, `07_SOURCE_MIGRATION.md` | `docs/file/04-구현/` | DOC-IMP-001, 002 | 개발지침, 이관 계획 |
 | `docs/products/local-news/research/` 2개 | `docs/reference/research/` | 참고 | 언론사 디자인 벤치마크, 시장·법규 조사 |

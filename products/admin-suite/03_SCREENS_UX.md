@@ -3,7 +3,7 @@
 ## 1. 정보 구조와 화면 목록
 
 플랜 접근 열: 세 앱 모두 기능 게이팅은 수량 한도(01장 4절)뿐이라 화면 단위 플랜 제한이 없다("전체"). Phase 2 엑셀 내보내기 버튼만 `export_xlsx`로 숨긴다.
-화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 
 ### 1.1 공통(admin-kit 제공, 앱마다 같은 경로)
@@ -220,20 +220,20 @@ hms 채팅 패널은 같은 구성에 두 가지가 다르다: 머리에 "병원
 
 ### 3.2 디자인 시스템
 
-`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 admin-suite의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 admin-suite의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | **Primer**(정보 밀도, 표·목록·상태 표시, 컴팩트/기본 두 밀도) + 보조 **Atlassian**(권한 표시, 상태 배지/로젠지, 모달·사이드바 중첩, 승인 흐름). AI 채팅·음성·위키 화면은 Astryx 패턴(존재·라이선스 미확인, D-18)을 참고하되 확인 실패 시 Primer + shadcn/ui 패턴. 랜딩은 없다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | **Primer**(정보 밀도, 표·목록·상태 표시, 컴팩트/기본 두 밀도) + 보조 **Atlassian**(권한 표시, 상태 배지/로젠지, 모달·사이드바 중첩, 승인 흐름). AI 채팅·음성·위키 화면은 Astryx 패턴(존재·라이선스 미확인, D-18)을 참고하되 확인 실패 시 Primer + shadcn/ui 패턴. 랜딩은 없다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Primer: 컴팩트(행 32px)/기본(행 40px) 밀도, 숫자 열 정렬, 상태 라벨(아이콘 + 텍스트), 필터 바. Atlassian: 역할·상태 배지, 승인/대기/정지 흐름 표시, 권한 없는 항목은 숨김(자물쇠 노출 금지는 기존 규칙). Astryx(확인 후): 메시지 스레드 구조, 출처 칩 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Atlassian, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX, 마케팅 랜딩 패턴 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js 16.x, React 19.x, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), lucide-react. `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | 앱별 `apps/<app>/src/theme/tokens.css`의 `@theme` 블록과 라이트/다크 변수 + 공통 기반 `packages/admin-kit/src/theme/base.css`(간격, radius, 밀도). 앱 토큰 값은 4.3절 토큰 플랜(ERP 코발트, HMS 야간 병동, SMS 칠판 인디고). 의미 기반 이름: `--color-surface`, `--color-surface-raised`, `--color-text`, `--color-text-muted`, `--color-border`, `--color-accent`, `--color-success`, `--color-warning`, `--color-danger`, `--radius-panel`(8px), `--radius-control`(6px), `--radius-badge`(999px), `--space-row-compact`(32px), `--space-row-default`(40px). 전환은 `data-theme` 하나 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:26-37` |
-| 라이트/다크 | 세 앱 모두 두 벌의 토큰을 둔다. 기본값: ERP, SMS 라이트(장부 회색/분필 회색 바탕), HMS 다크(야간 병동 바탕, 장시간 응시). 앱마다 기본 모드는 바뀌지 않고 사용자가 계정 설정에서 전환(제안) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:70` |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Atlassian, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX, 마케팅 랜딩 패턴 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16.x, React 19.x, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), lucide-react. `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | 앱별 `apps/<app>/src/theme/tokens.css`의 `@theme` 블록과 라이트/다크 변수 + 공통 기반 `packages/admin-kit/src/theme/base.css`(간격, radius, 밀도). 앱 토큰 값은 4.3절 토큰 플랜(ERP 코발트, HMS 야간 병동, SMS 칠판 인디고). 의미 기반 이름: `--color-surface`, `--color-surface-raised`, `--color-text`, `--color-text-muted`, `--color-border`, `--color-accent`, `--color-success`, `--color-warning`, `--color-danger`, `--radius-panel`(8px), `--radius-control`(6px), `--radius-badge`(999px), `--space-row-compact`(32px), `--space-row-default`(40px). 전환은 `data-theme` 하나 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:26-37` |
+| 라이트/다크 | 세 앱 모두 두 벌의 토큰을 둔다. 기본값: ERP, SMS 라이트(장부 회색/분필 회색 바탕), HMS 다크(야간 병동 바탕, 장시간 응시). 앱마다 기본 모드는 바뀌지 않고 사용자가 계정 설정에서 전환(제안) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:70` |
 | 컴포넌트(정답) | `packages/admin-kit/src/ui/`(shadcn/ui를 토큰으로 재스타일). 앱은 토큰만 바꿔 같은 컴포넌트를 쓴다. 컴포넌트 안 hex 금지(린트로 `bg-[#...]` 차단, ADM-06-039) | 같은 곳 |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드가 이긴다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | 앱마다 `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다: 1단계 ADM-06-041(W0), 2단계 ADM-06-042(W1), 3단계 사람 비주얼 검토 ADM-06-043, 4단계 ADM-06-044. 앱 화면 작업은 044 뒤 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드가 이긴다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | 앱마다 `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다: 1단계 ADM-06-041(W0), 2단계 ADM-06-042(W1), 3단계 사람 비주얼 검토 ADM-06-043, 4단계 ADM-06-044. 앱 화면 작업은 044 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:39-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -252,7 +252,7 @@ hms 채팅 패널은 같은 구성에 두 가지가 다르다: 머리에 "병원
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
-공개 마케팅 랜딩은 없다(`docs/design-module/_design-guide/REFERENCES.md:165`, `SKILLS.md:98`). 이 제품의 "메인페이지"는 각 앱의 로그인 화면과 로그인 직후 역할 홈이다. 절차는 `DESIGN_PRINCIPLES.md` 1~5단계를 따른다.
+공개 마케팅 랜딩은 없다(`docs/nomad-design-modules/_design-guide/REFERENCES.md:165`, `SKILLS.md:98`). 이 제품의 "메인페이지"는 각 앱의 로그인 화면과 로그인 직후 역할 홈이다. 절차는 `DESIGN_PRINCIPLES.md` 1~5단계를 따른다.
 
 ### 4.1 레퍼런스
 
@@ -337,7 +337,7 @@ ERP 홈 와이어프레임(좌측 정렬)
 
 ### 4.5 3D 히어로: 적용하지 않음 (2026-10-13)
 
-2026-10-13 확정 결정 15(전 제품 메인페이지 히어로 3D)에 대해 admin-suite는 **적용 제외**다. 이유: 공개 마케팅 랜딩이 없는 내부 업무용 앱이고(`docs/design-module/_design-guide/REFERENCES.md:165`), `HERO_3D.md` 5장 표도 admin-suite를 "적용 제외(제안). 공개 랜딩이 없는 업무용 앱이라 로그인 화면만 가볍게"로 두었다(`docs/design-module/_design-guide/HERO_3D.md:92`). 따라서 이 장 4.1~4.4의 디자인 방향(토큰, 피할 인상, 안 B 로그인 화면)은 바뀌지 않았다.
+2026-10-13 확정 결정 15(전 제품 메인페이지 히어로 3D)에 대해 admin-suite는 **적용 제외**다. 이유: 공개 마케팅 랜딩이 없는 내부 업무용 앱이고(`docs/nomad-design-modules/_design-guide/REFERENCES.md:165`), `HERO_3D.md` 5장 표도 admin-suite를 "적용 제외(제안). 공개 랜딩이 없는 업무용 앱이라 로그인 화면만 가볍게"로 두었다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:92`). 따라서 이 장 4.1~4.4의 디자인 방향(토큰, 피할 인상, 안 B 로그인 화면)은 바뀌지 않았다.
 
 | 항목 | 규칙 |
 |---|---|
@@ -559,7 +559,7 @@ D-27이 (b)로 정해지면 이 경로를 만들지 않고 8.3.3절 표에서 �
 
 ### 8.5 홈 구성 (ERP `/dashboard`, 1.2절 홈 행 구체화)
 
-위에서 아래 순서. 4.3절 와이어프레임과 4.4절 판정을 따라 큰 숫자는 "오늘 매출" 1개만 두고 나머지 지표는 한 줄 텍스트로 쓴다(KPI 카드 나열 금지, `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md:128` "ERP: C(매출 1개 크게)").
+위에서 아래 순서. 4.3절 와이어프레임과 4.4절 판정을 따라 큰 숫자는 "오늘 매출" 1개만 두고 나머지 지표는 한 줄 텍스트로 쓴다(KPI 카드 나열 금지, `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md:128` "ERP: C(매출 1개 크게)").
 
 | 순서 | 영역 | 내용 | 누르면 |
 |---|---|---|---|

@@ -6,7 +6,7 @@
    - 인증 작업(SI-06-019, 049)이면 `AUTH_ROADMAP.md`와 이 파일 맨 끝 "인증 단계 규칙" 절도 읽는다.
    - AI·음성 작업이면 `AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`도 읽는다.
 2. 이 폴더의 `01_PRD.md` ~ `07_SOURCE_MIGRATION.md`. 작업 전에 `06_AGENT_PLAN.md`에서 자기 작업 ID와 소유 디렉터리를 확인한다.
-3. UI 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` website-floria 절, 히어로면 `HERO_3D.md`.
+3. UI 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` website-floria 절, 히어로면 `HERO_3D.md`.
 
 ## 2. 절대 규칙
 

@@ -16,8 +16,8 @@
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 웹 | Next.js App Router + `proxy.ts` | 16.2.7 | `sellingstudio/PRD.md:16`, `docs/reviews/sellingstudio.md:13` |
-| UI | React, Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전), sonner. `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | 19.2 / Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | 같은 줄, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:45-50` |
+| UI | React, Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전), sonner. `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | 19.2 / Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | 같은 줄, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:45-50` |
 | 상태 | Zustand(UI 상태만. 큐 루프 금지) | 5 | `docs/reviews/Nomad-AI-Factory_V.2.md:44` |
 | 검증 | zod(웹/워커 경계), pydantic(FastAPI 경계, 같은 JSON 스키마에서 생성), Vitest, pytest(FastAPI), Playwright | zod 4 | `docs/reviews/sellingstudio.md:14`, `docs/products/_platform-core/SECURITY_BASELINE.md:10장` |
 | 캔버스(Phase 2) | @xyflow/react | 12 (V.2의 "v11" 표기는 오류) | `docs/reviews/Nomad-AI-Factory_V.2.md:54` |

@@ -10,8 +10,8 @@
 |---|---|---|---|
 | 웹 앱 | Next.js (App Router, Route Handler) | 16.2.9 | basic-master-module 템플릿 기준(`docs/products/00_MERGE_ANALYSIS.md:1333`). 원본 Vite SPA를 서버 호출이 필요해 전환 |
 | UI | React 19.2.6, TypeScript 6.0.3(strict), lucide-react | 고정 | 리뷰 `:85`의 설치본 버전. `latest` 금지(SB 13장) |
-| 스타일 | **Tailwind CSS v4**(4.3.0 고정, CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | 4.x 고정, shadcn 버전 구현 시 확인 | 리뷰 `:85`, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 공용 키트 `packages/ui-3d`(제안) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:43-68` |
+| 스타일 | **Tailwind CSS v4**(4.3.0 고정, CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | 4.x 고정, shadcn 버전 구현 시 확인 | 리뷰 `:85`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 공용 키트 `packages/ui-3d`(제안) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:43-68` |
 | 상태 | React Context + useReducer | - | 원본 유지(리뷰 `:44`, 규모상 충분) |
 | 인증/DB | Supabase (Auth, Postgres 15, Realtime), `@supabase/ssr` 0.12 | | 분석 `:1124`, `SHARED_MODULES.md` 2장 |
 | 워커 | Node(TS) 프로세스 1개, Railway. 일지 정리(OpenRouter)와 AI 정산 호출 크론만 맡는다 | Node LTS 고정 | 확정 결정 6의 TS 오케스트레이션과 일치. 새 AI 생성은 FastAPI가 맡는다 |

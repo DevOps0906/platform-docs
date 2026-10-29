@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 원본: `study-note-organizer-codex-01/` (React 19 + Vite 8 + Tailwind CSS v4, 코드 약 1,090줄, 백엔드 없음).
 
-AI 관련 원본 자산 점검(2026-10-13): 원본의 AI 사용은 브라우저에서 OpenRouter를 직접 부르는 일지 정리 한 가지뿐이다(`study-note-organizer-codex-01/src/hooks/useOpenRouter.ts`, 프롬프트 `src/utils/prompts.ts`). RAG, 과목별 위키, 노트 정리 그래프, 퀴즈, 채팅, 음성(강의 녹음 포함), Dify, 3D는 원본에 없어 모두 신규다. 원본 PRD에도 복습·퀴즈 근거가 없다(`docs/design-module/_design-guide/REFERENCES.md:246-248`이 방향만 제시). 아래 1.1절이 AI·디자인 관련 이식 판단을 모은다.
+AI 관련 원본 자산 점검(2026-10-13): 원본의 AI 사용은 브라우저에서 OpenRouter를 직접 부르는 일지 정리 한 가지뿐이다(`study-note-organizer-codex-01/src/hooks/useOpenRouter.ts`, 프롬프트 `src/utils/prompts.ts`). RAG, 과목별 위키, 노트 정리 그래프, 퀴즈, 채팅, 음성(강의 녹음 포함), Dify, 3D는 원본에 없어 모두 신규다. 원본 PRD에도 복습·퀴즈 근거가 없다(`docs/nomad-design-modules/_design-guide/REFERENCES.md:246-248`이 방향만 제시). 아래 1.1절이 AI·디자인 관련 이식 판단을 모은다.
 
 ## 1. 원본별 자산 분류
 
@@ -31,7 +31,7 @@ AI 관련 원본 자산 점검(2026-10-13): 원본의 AI 사용은 브라우저�
 | `src/hooks/useOpenRouter.ts`의 브라우저 직접 호출 | 동작(보안 결함) | AI 기능에 쓰지 않는다. 새 AI 기능은 FastAPI 라우터 경유. 일지 정리는 이미 서버 워커로 이동 | 02장 4·5절 | 리뷰 #1, `docs/products/_platform-core/SECURITY_BASELINE.md:299` |
 | `src/utils/prompts.ts` 일지 프롬프트 2종 | 동작 | 일지 전용으로 이식(기존 계획). 노트 정리·퀴즈·채팅 프롬프트는 신규이고 입력 구분자 방식(`<<<원문 시작>>>`)을 같은 원리로 쓴다 | `src/lib/pipeline/`(일지), `apps/api/app/ai/`(신규) | 2절, NT-F-017 |
 | `src/utils/constants.ts` 모델 13종 | 부분 | 일지 정리의 `notes.model_catalog`로만 이식. AI 기능은 `ai_routing_settings` 체인을 쓰고 모델을 사용자가 고르지 않는다 | 05장 2.1절, 02장 5.3절 | 01장 D-12 |
-| `src/index.css`의 `@import "tailwindcss"`, `@custom-variant dark (&:where(.dark, .dark *))` (`:1-3`) | 동작 | 이미 Tailwind CSS v4 CSS 우선 설정이다. 그대로 이식하되 `package.json`의 `latest`(`tailwindcss`, `@tailwindcss/vite`)는 4.3.0 고정. 하드코딩 hex는 `tokens.css`의 의미 기반 토큰으로 대체 | `src/styles/tokens.css`(NT-06-032) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73`, 리뷰 #8 |
+| `src/index.css`의 `@import "tailwindcss"`, `@custom-variant dark (&:where(.dark, .dark *))` (`:1-3`) | 동작 | 이미 Tailwind CSS v4 CSS 우선 설정이다. 그대로 이식하되 `package.json`의 `latest`(`tailwindcss`, `@tailwindcss/vite`)는 4.3.0 고정. 하드코딩 hex는 `tokens.css`의 의미 기반 토큰으로 대체 | `src/styles/tokens.css`(NT-06-032) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73`, 리뷰 #8 |
 | `html.dark` 테마 클래스 | 동작 | 유지(전환 방식 하나) | 디자인 시스템 | NT-F-010 |
 | `components/Header, ResultCard, ErrorDisplay, LoadingSpinner` | 동작 | 디자인 시스템 기본 컴포넌트(NT-06-032~034) 위에서 이식(016은 034 뒤) | `src/components/common/` | 1절 |
 | 랜딩 | 원본에 없음 | 신규. 3D 히어로는 03장 4.6절 | `src/components/hero3d/` | 확정 결정 15 |

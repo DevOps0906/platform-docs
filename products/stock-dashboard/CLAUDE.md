@@ -9,7 +9,7 @@
 | 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성), `DB_CONVENTIONS.md`(14장 pgvector), `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 2 | 이 폴더 `01_PRD.md`(특히 6장 법·금지 문구), `02_ARCHITECTURE.md`, `03_SCREENS_UX.md`, `04_API.md`, `05_DATA_MODEL.md`, `06_AGENT_PLAN.md`(자기 작업 행), `07_SOURCE_MIGRATION.md` 4장 |
-| 3 | UI 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` stock-dashboard 절, 랜딩이면 `HERO_3D.md` |
+| 3 | UI 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` stock-dashboard 절, 랜딩이면 `HERO_3D.md` |
 
 ## 2. 절대 규칙
 

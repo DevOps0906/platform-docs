@@ -4,7 +4,7 @@
 
 역할: 1인 1워크스페이스라 owner가 기본. member는 생성·편집, viewer는 읽기만(서버 판정). 플랜 접근은 `01_PRD.md` 4.4절 features.
 
-화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -205,19 +205,19 @@ ASCII(상품DB):
 
 ### 3.2 디자인 시스템
 
-`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 commerce의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 commerce의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 앱 화면(대시보드, 상품DB, 소싱, 상세페이지 뷰어, 등록 폼, 업로드 이력, 내보내기, 설정): Primer(정보 밀도, 표·목록·상태 표시). 상태 배지와 권한 표시(compliance PASS/WARN/FAIL, 잡·업로드 상태, 역할·플랜 잠금)는 Atlassian 보조. AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-13) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` nomad-commerce 절 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | 앱 화면(대시보드, 상품DB, 소싱, 상세페이지 뷰어, 등록 폼, 업로드 이력, 내보내기, 설정): Primer(정보 밀도, 표·목록·상태 표시). 상태 배지와 권한 표시(compliance PASS/WARN/FAIL, 잡·업로드 상태, 역할·플랜 잠금)는 Atlassian 보조. AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-13) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` nomad-commerce 절 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Primer: 컴팩트/기본 두 밀도(상품 표 행 32/40px), 상태 라벨(아이콘 + 텍스트), 숫자 열 정렬(tabular-nums), 하단 일괄 작업 바. Atlassian: 상태 배지(색 + 텍스트 + 아이콘), 태그, 잠금·권한 안내, 모달·사이드 시트 중첩 규칙. Astryx(확인 후): 메시지 스레드 구조, 스트리밍 표시, 출처 칩, 입력 영역 구성 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Atlassian 패키지, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, V.2의 다크 + 민트 토큰(`REFERENCES.md:128`) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js 16.2.7, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `apps/nomad-commerce/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(검수지), `--color-text`(먹선), `--color-border`(분할선), `--color-accent`(송장 블루), `--color-success`(승인 그린), `--color-danger`(반려 레드), `--color-warning`(#B45309), `--radius-control`(6px), `--radius-panel`(0~4px), `--space-row-compact`(32px)/`--space-row-default`(40px), 서체 Pretendard. 전환은 `data-theme` 하나. 대시보드 기본은 라이트, 다크 값은 3단계 사람 검토에서 확정(V.2 다크 민트는 쓰지 않는다) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Atlassian 패키지, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, V.2의 다크 + 민트 토큰(`REFERENCES.md:128`) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16.2.7, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/nomad-commerce/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(검수지), `--color-text`(먹선), `--color-border`(분할선), `--color-accent`(송장 블루), `--color-success`(승인 그린), `--color-danger`(반려 레드), `--color-warning`(#B45309), `--radius-control`(6px), `--radius-panel`(0~4px), `--space-row-compact`(32px)/`--space-row-default`(40px), 서체 Pretendard. 전환은 `data-theme` 하나. 대시보드 기본은 라이트, 다크 값은 3단계 사람 검토에서 확정(V.2 다크 민트는 쓰지 않는다) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
 | 컴포넌트(정답) | `apps/nomad-commerce/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | 같은 곳 |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(CM-06-041, CM-06-042, CM-06-043 사람 검토, CM-06-044). 화면 작업은 4단계 뒤 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(CM-06-041, CM-06-042, CM-06-043 사람 검토, CM-06-044). 화면 작업은 4단계 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:39-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -321,7 +321,7 @@ ASCII(상품DB):
 
 ### 4.5 3D 히어로 (상품 상자 → 상세페이지 패널 → 마켓 진열대)
 
-정본은 `docs/design-module/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 commerce 소재(`:85`)와 장면만 정한다. 이 히어로는 2026-10-13 사용자 결정(확정 결정 15)으로 4.3절의 "롱이미지 띠 분할 연출"을 대체했다.
+정본은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 commerce 소재(`:85`)와 장면만 정한다. 이 히어로는 2026-10-13 사용자 결정(확정 결정 15)으로 4.3절의 "롱이미지 띠 분할 연출"을 대체했다.
 
 | 기기 | 구성(HERO_3D 1절) | commerce 장면 |
 |---|---|---|
@@ -357,7 +357,7 @@ ASCII(상품DB):
 | 위치 | `apps/nomad-commerce/components/hero3d/`(`BoxScene`, `PanelUnfold`, `ShelfPlacement`, `MobileBox`, `StaticFallback`, `useHeroTier`), 정지 이미지 `public/hero/` |
 | 형상 | 코드 생성 도형(Box, Plane). 외부 glTF 없음 |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급, `deviceMemory`·`hardwareConcurrency`(4 이하 낮음). `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/design-module/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급, `deviceMemory`·`hardwareConcurrency`(4 이하 낮음). `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:17-30`) |
 | 공용 키트 | 공용 `packages/ui-3d`(제안: 로더·토큰 재질·조명·대체 이미지·성능 모니터) 위에 commerce 소재(상자, 패널, 선반)만 얹는다. 키트가 아직 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 6.1절 R-6) |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |
 | 피할 인상 | 4.2절의 다크 + 민트, 쇼핑몰 프론트 느낌, 모노스페이스 라벨, 허위 실적 숫자에 더해 HERO_3D의 보라/핑크 그라디언트, 별 파티클, 흔한 지구본·네온 그리드. 쿠팡·네이버 로고를 선반에 붙이지 않는다 |
@@ -479,7 +479,7 @@ C단계 "설정 → 로그인 방법"(`/settings/login`, 제안 경로, P1): 연
 | (아래 고정) | 설정 | `/settings/shipping`(:28, 첫 탭) | 배송·반품 · 금지어 사전(`/settings/banned-words` :29, P1) · AI 처리 방식(`/onboarding/ai` :31) · 로그인 방법(`/settings/login`, 7절 :432 제안 경로, C단계 P1) | - | CM 통합 설정(배송 템플릿), v1 설정 모달 |
 | (아래 고정, `platform_admin`만) | 운영 콘솔 ↗ | `/admin/wiki`(:36) | 위키 검수 · 원고 색인(`/admin/knowledge` :35) · 점검(`/admin/wiki/lint` :36) | 운영자만 | CM 슈퍼 어드민 설정(운영 쪽) |
 
-뼈대는 4.3절 흐름 4단계 "가져오기 > 생성 > 검수 > 등록/내보내기"(:289)다. 묶음 "상품"이 가져오기, "상세페이지"가 생성·검수(검수는 결과 뷰어 안), "등록·내보내기"가 등록이다. 마켓 계정은 경로가 `/settings` 아래지만 마켓 업로드 흐름의 첫 단계(2.4절 :75)이고 빈 상태 문구가 "계정 없음"을 직접 안내하므로(5장 :379) 등록 묶음에 둔다. 메뉴는 14개로 그룹 5개 + 아래 고정 3개다(`docs/design-module/_design-guide/DASHBOARD_PATTERNS.md:49` "15개 이상 평면 나열" 피함).
+뼈대는 4.3절 흐름 4단계 "가져오기 > 생성 > 검수 > 등록/내보내기"(:289)다. 묶음 "상품"이 가져오기, "상세페이지"가 생성·검수(검수는 결과 뷰어 안), "등록·내보내기"가 등록이다. 마켓 계정은 경로가 `/settings` 아래지만 마켓 업로드 흐름의 첫 단계(2.4절 :75)이고 빈 상태 문구가 "계정 없음"을 직접 안내하므로(5장 :379) 등록 묶음에 둔다. 메뉴는 14개로 그룹 5개 + 아래 고정 3개다(`docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md:49` "15개 이상 평면 나열" 피함).
 
 제외: 생성 모달(:22)·내레이션 패널(:33)·채팅 패널(:32)은 화면 안 요소라 메뉴가 아니다. `/onboarding/ai`의 첫 진입(2.1절 :48), `/onboarding/terms`(7절 :430 제안), `/dev/components`(:37, 개발 환경만)는 GNB 메뉴가 아니다.
 

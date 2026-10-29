@@ -2,7 +2,7 @@
 
 작업 ID는 `AS-06-###`(DB_CONVENTIONS 1장 SQLSTATE 접두사 `AS`). 모델 기준은 `docs/products/_platform-core/DOC_TEMPLATE.md` 1장: Fable(결제, 권한, RLS, 데이터 모델), Opus(기능 구현, API 연동, 테스트 설계), Sonnet(UI, 메인페이지, 컴포넌트, 문서), Haiku(보일러플레이트, 린트/타입, 문구, 반복 체크).
 
-2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/design-module/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(AS-06-039~054)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(그래프 호출), 017(디자인 시스템 2단계), 018~023(선행에 041 추가), 001·002·025·028·033(수용 기준 보강)이다. 2026-10-14 개정: 확정 결정 22(인증 단계)에 따라 AS-06-003을 Stage A(Mock 로그인) 범위로 바꾸고 B·C1·C2 작업 3개(AS-06-055~057)를 8절에 붙여 작업 수는 57개다. 작업 수 54개(현재 57개)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
+2026-10-13 개정: AI 계층·음성·3D 히어로·디자인 시스템(확정 결정 13~17, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md` 4장) 작업 16개(AS-06-039~054)를 뒤에 붙였다. 기존 ID는 바꾸지 않았고, 내용이 바뀐 기존 작업은 012(그래프 호출), 017(디자인 시스템 2단계), 018~023(선행에 041 추가), 001·002·025·028·033(수용 기준 보강)이다. 2026-10-14 개정: 확정 결정 22(인증 단계)에 따라 AS-06-003을 Stage A(Mock 로그인) 범위로 바꾸고 B·C1·C2 작업 3개(AS-06-055~057)를 8절에 붙여 작업 수는 57개다. 작업 수 54개(현재 57개)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. AI·음성·3D·디자인 시스템이 MVP 필수가 되면서 늘어난 것이고, 검증할 수 있는 크기(`DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
 
 ## 1. 원칙과 소유 경계
 
@@ -18,7 +18,7 @@
 | 공용 AI 패키지 | `packages/ai-gateway`, `packages/core-voice`, `services/ai-service` 원본, 공용 Dify·GPU 서버는 수정하지 않는다. 필요하면 6절 요청(R-8~R-12) |
 | 언어 중립 파일 | `packages/astro-report/prompts/`, `rules/`, `schema/`는 AS-06-011 소유. FastAPI는 빌드 때 복사해 읽기만 한다 |
 | 사람 작업 | AS-06-040(디자인 시스템 3단계)은 사람이 수행하고 Sonnet은 사람이 정한 수치를 코드에 옮기는 일만 돕는다 |
-| 디자인 시스템 순서 | 화면 작업(018~023, 047, 050, 053)은 AS-06-041(4단계) 뒤에 시작한다(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:48`) |
+| 디자인 시스템 순서 | 화면 작업(018~023, 047, 050, 053)은 AS-06-041(4단계) 뒤에 시작한다(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:48`) |
 
 ## 2. 작업 목록
 
@@ -46,7 +46,7 @@
 | AS-06-020 | 리딩 시작 스테퍼, 타로 부채꼴 선택, 진행률(Realtime), 결과 뷰어 | `apps/astro-ai/src/components/reading/`, `src/app/dashboard/readings/` | 010, 017, 019, 041 | P0 | M | Opus | `postgres_changes` 구독으로 단계 표시, 402 시 충전 모달, 키보드로 카드 3장 선택 | Astro 5장 #9 |
 | AS-06-021 | 대시보드 홈, 히스토리, 크레딧, 설정 | `apps/astro-ai/src/app/dashboard/page.tsx`, `dashboard/history/`, `dashboard/credits/`, `dashboard/settings/`(`login-methods/` 제외, AS-06-056) | 008, 017, 041 | P1 | M | Sonnet | 빈 상태·스켈레톤, 원장 표, 설정의 기본 테마 저장(사용자 세션 `preferences`), 설정의 AI 처리 방식·자동 읽어 주기 항목(API는 043) | Astro 5장 #11 |
 | AS-06-022 | 최소 어드민(유저, 결제·환불, 크레딧 지급, 발송 모니터) | `apps/astro-ai/src/app/admin/`, `src/app/api/admin/`(둘 다 `wiki/`, `knowledge/` 제외, AS-06-046 소유) | 008, 010, 041 | P1 | M | Opus | 일반 사용자 403, 사유 없는 환불·지급 400, 모든 쓰기 감사 1행 | Astro 5장 #12 |
-| AS-06-023 | 랜딩, 샘플, 가격, JSON-LD, `/llms.txt` | `apps/astro-ai/src/app/(marketing)/page.tsx`, `(marketing)/layout.tsx`, `(marketing)/sample/`, `(marketing)/pricing/`, `public/llms.txt` | 017, 024, 041, 053 | P1 | M | Sonnet | 빌드 산출물에 `aggregateRating` 0, LCP 2.5초, Lighthouse 성능 90/접근성 95, 금지 문구 0, 히어로에 AS-06-053 장착, `/llms.txt`에 공개 위키 링크 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/design-module/_design-guide/REFERENCES.md:16-23`). | Astro 5장 #13, FD 5장 #14 |
+| AS-06-023 | 랜딩, 샘플, 가격, JSON-LD, `/llms.txt` | `apps/astro-ai/src/app/(marketing)/page.tsx`, `(marketing)/layout.tsx`, `(marketing)/sample/`, `(marketing)/pricing/`, `public/llms.txt` | 017, 024, 041, 053 | P1 | M | Sonnet | 빌드 산출물에 `aggregateRating` 0, LCP 2.5초, Lighthouse 성능 90/접근성 95, 금지 문구 0, 히어로에 AS-06-053 장착, `/llms.txt`에 공개 위키 링크 랜딩 레퍼런스는 `03_SCREENS_UX.md` 4.1절의 Awwwards 행만 쓰고, 각 행의 "참고 포인트" 대비 PC·모바일 스크린샷을 남긴다. 로고·카피·이미지 복제 0(`docs/nomad-design-modules/_design-guide/REFERENCES.md:16-23`). | Astro 5장 #13, FD 5장 #14 |
 | AS-06-024 | Live Demo API와 키워드 규칙 | `apps/astro-ai/src/app/api/demo/`, `packages/saju-engine/src/demo/` | 005, 027 | P1 | S | Opus | IP 해시당 4번째 429, LLM 호출 0, 입력 로그 0 | Astro 5장 #14 |
 | AS-06-025 | 법적 페이지(약관, 개인정보처리방침, 환불, 면책)와 동의 문구 | `apps/astro-ai/src/app/(marketing)/legal/`, `apps/astro-ai/content/legal/` | 없음 | P0 | S | Sonnet | 01장 6절 항목 전부 반영, 국외 이전 표(AI·음성 제공자 포함), 상용 AI 국외 이전 고지문·음성 처리 고지문과 버전 상수, AI 생성 표시 문구, Dify 로그 보존 30일, 통신판매업 정보 자리 | FD 5장 #14 |
 | AS-06-026 | 대상 삭제, 탈퇴(30일 유예 purge), 데이터 내보내기, 파일 purge 핸들러 | `apps/astro-ai/src/app/api/account/`, `apps/astro-worker/src/handlers/purge.ts` | 007, 012 | P1 | M | Fable | 대상 삭제 후 리딩 0행·파일 0개(24시간), 탈퇴 30일 뒤 조직 0행, 감사 기록 | 01장 AS-F-026, AS-F-027 |
@@ -62,7 +62,7 @@
 | AS-06-036 | 카카오 알림톡(Phase 2) | `apps/astro-worker/src/delivery-kakao/` | 016 | P2 | M | Opus | 수신 동의 없는 번호 발송 0, 템플릿 심사 통과 후 활성 | 01장 2절 |
 | AS-06-037 | 구독 플랜과 빌링키(Phase 2) | `apps/astro-ai/src/app/api/billing/subscriptions/` | 008 | P2 | L | Fable | 코어 5.3절 시퀀스, Master 월 3,000cr 공정 사용 서버 강제 | 01장 4.1절 |
 | AS-06-038 | 궁합·연간 운세(Phase 2) | `packages/astro-report/phase2/`, `packages/saju-engine/src/compat/` | 005, 011 | P2 | L | Opus | 보관함에서 2명 선택, 연간 12섹션 병렬 생성 | 01장 2절 |
-| AS-06-039 | 디자인 시스템 1단계: 레퍼런스 확정(앱 화면 Primer, 채팅 Astryx 패턴 확인, 랜딩 HERO_3D), 가져올 것과 안 가져올 것 | `docs/file/03-설계/디자인/DESIGN.md`(1절 "레퍼런스와 방향") | 없음 | P0 | S | Sonnet | 03장 3.2절의 주 레퍼런스·가져올 것·안 가져올 것이 1절 표로 있다. Astryx 존재·라이선스 확인 결과와 미확인 시 대체안 기록(01장 D-17). 고문(Fable) 검토 기록 시각 레퍼런스: `03_SCREENS_UX.md` 4.1절 표(랜딩은 Awwwards, 앱 화면은 Dribbble. 후보는 `docs/design-module/_design-guide/REFERENCES.md:59` astro-ai 절)를 DESIGN.md 1절에 옮기고, 각 링크를 브라우저로 열어 본 결과(열림/교체)를 적는다(`docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:29-38`). | DESIGN_SYSTEM 4장 1단계, 9절 |
+| AS-06-039 | 디자인 시스템 1단계: 레퍼런스 확정(앱 화면 Primer, 채팅 Astryx 패턴 확인, 랜딩 HERO_3D), 가져올 것과 안 가져올 것 | `docs/file/03-설계/디자인/DESIGN.md`(1절 "레퍼런스와 방향") | 없음 | P0 | S | Sonnet | 03장 3.2절의 주 레퍼런스·가져올 것·안 가져올 것이 1절 표로 있다. Astryx 존재·라이선스 확인 결과와 미확인 시 대체안 기록(01장 D-17). 고문(Fable) 검토 기록 시각 레퍼런스: `03_SCREENS_UX.md` 4.1절 표(랜딩은 Awwwards, 앱 화면은 Dribbble. 후보는 `docs/nomad-design-modules/_design-guide/REFERENCES.md:59` astro-ai 절)를 DESIGN.md 1절에 옮기고, 각 링크를 브라우저로 열어 본 결과(열림/교체)를 적는다(`docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md:29-38`). | DESIGN_SYSTEM 4장 1단계, 9절 |
 | AS-06-040 | 디자인 시스템 3단계: 사람 비주얼 검토(라이트/다크, 상태 6종, 크기 배리언트) | `docs/file/03-설계/디자인/review/`(스크린샷, 수정 기록) | 017 | P0 | M | 사람(보조 Sonnet) | 03장 3.2절 기본 컴포넌트 전부의 라이트/다크·상태별 스크린샷과 사람이 고친 수치 기록, 대비 4.5:1·포커스 링 확인. 이 단계는 줄이지 않는다 | DESIGN_SYSTEM 4장 3단계 |
 | AS-06-041 | 디자인 시스템 4단계: 코드(Tailwind v4 CSS + 컴포넌트)를 정답으로 확정하고 문서를 코드 기준으로 재작성 | `docs/file/03-설계/디자인/DESIGN.md`(2절 이후), `docs/file/03-설계/디자인/COMPONENTS.md` | 040 | P0 | S | Opus | 문서 토큰 값과 `tokens.css`가 스크립트 비교로 100% 일치, 피그마 노드 id·외부 파일 링크 0, `tailwind.config.js` 0 | DESIGN_SYSTEM 4장 4단계 |
 | AS-06-042 | AI 서비스 설치: `apps/api`에 공용 ai-service 적용, astro 설정(app, `ASTRO_KNOWLEDGE_ORG_ID`, 컬렉션 이름), JWKS 검증, 라우터·국외 동의 필터 연동 테스트 | `apps/api/`(`app/ai/graphs/`, `app/ai/tools/astro/`, `app/ai/compliance/astro.py`, `app/ai/products/astro/knowledge.py`, `wiki_config.py` 제외), `apps/api/tests/platform/` | 001 | P0 | M | Fable | 다른 app `aud`·만료·재사용 `jti` 토큰 401, 토큰 org와 다른 org 리딩 요청 403, 미동의 조직 라우팅에 상용 0, `dify.aux` 상용 0, 필수 변수 누락 시 기동 실패 | 02장 2·5절, AI_ARCHITECTURE 2·4·8장 |
@@ -157,7 +157,7 @@ Fable은 데이터 모델, RLS, 결제, 크레딧 차감 경로, 엔진 사양·
 | R-10 | ai-service | (a) OpenAI 호환 `/v1/chat/completions`의 `model` 값을 기능 키로 해석 (b) 위키 페이지 사람 편집 저장 엔드포인트(`AI_ARCHITECTURE.md` 8장 목록에 없음) | Dify 보조 노드 라우팅(`dify.aux`, `wiki.query`)과 관리자 위키 편집 | (a) Dify에 기능별 모델 이름을 따로 등록 (b) astro 확장(`app/ai/products/astro/wiki_config.py`)에 임시 구현 |
 | R-11 | core-voice | 기능별 대체 금지 옵션(`feature='narration'`)과 "시작 제공자 고정" 동작을 `VoiceAdapter` 계약에 명시 | `VOICE_ARCHITECTURE.md` 3장 대체 금지를 코드 계약으로 강제 | 낭독 Route Handler가 체인 첫 제공자 하나만 넘겨 호출 |
 | R-12 | 공용 Dify | `astro-chat` 앱 생성, 내부 키 환경 변수, 외부 지식 `astro-knowledge` 등록, 로그 보존 30일 | 공용 인프라는 코어 소유 | 없음(필수). 장애 시 `/tools/answer-direct` |
-| R-13 | `_design-guide` 3D 키트 | 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/design-module/_design-guide/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
+| R-13 | `_design-guide` 3D 키트 | 공용 3D 장면 키트 `packages/ui-3d`(로더, 저사양 판정, 토큰 재질, 대체 이미지, 성능 모니터) 제공(`docs/nomad-design-modules/_design-guide/HERO_3D.md:56-68`, 제안) | 12개 제품이 같은 판정·강등 로직을 따로 만들지 않게 | `hero3d/` 안에 같은 인터페이스로 두고 키트가 생기면 옮긴다 |
 
 ## 7. 완료 정의
 

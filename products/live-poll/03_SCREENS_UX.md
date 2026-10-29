@@ -4,7 +4,7 @@
 
 ## 1. 정보 구조와 화면 목록
 
-화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -217,19 +217,19 @@ Q&A AI 정리 패널 와이어프레임(콘솔 오른쪽 Q&A 열 안):
 
 ### 3.8 디자인 시스템
 
-`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 live-poll의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 live-poll의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 진행자 콘솔(진행 화면, Q&A 큐, 모더레이션, 행사 편집, 설정): Atlassian Design System(보드·상태 배지·사이드바와 모달 중첩·권한 패턴). 보조: Primer(데이터 밀도, 숫자·표 정렬, 상태 표시). AI 어시스턴트 패널은 Astryx 패턴(존재·라이선스 미확인, 01장 D17)이고 확인 실패 시 Primer + shadcn/ui. 발표 화면·오버레이·청중 화면은 B2B 레퍼런스가 아니라 4장 브리프와 토큰을 쓴다. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` live-poll 절 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:53-61` |
+| 주 레퍼런스 | 진행자 콘솔(진행 화면, Q&A 큐, 모더레이션, 행사 편집, 설정): Atlassian Design System(보드·상태 배지·사이드바와 모달 중첩·권한 패턴). 보조: Primer(데이터 밀도, 숫자·표 정렬, 상태 표시). AI 어시스턴트 패널은 Astryx 패턴(존재·라이선스 미확인, 01장 D17)이고 확인 실패 시 Primer + shadcn/ui. 발표 화면·오버레이·청중 화면은 B2B 레퍼런스가 아니라 4장 브리프와 토큰을 쓴다. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` live-poll 절 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:53-61` |
 | 가져올 것 | Atlassian: 상태 배지(아이콘 + 텍스트), 큐/보드 레이아웃(Q&A 큐), 모달·시트 중첩 규칙, 권한에 따른 비활성 표시. Primer: 컴팩트/기본 두 밀도, 숫자 열 정렬 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`), Atlassian·Primer 색과 아이콘(Lucide 사용), 마케팅 랜딩과 청중·발표 화면에 B2B 레퍼런스 적용, StyleX | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js 16.2.9, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67-68` |
-| 토큰 파일(정답) | `apps/live-poll/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(스크린 백색), `--color-text`(객석 남색), `--color-accent`(막대 청록), `--color-highlight`(응답 주황, 방금 바뀐 막대 1회 300ms), `--color-seat`(좌석 회색, 구분선·비활성), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 전환은 `data-theme` 하나. 진행자 콘솔 기본은 라이트, 다크는 객석 남색 바탕. 발표 화면은 별도 투사용 큰 글자 스케일 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:30`, 4.3절 |
-| 컴포넌트(정답) | `apps/live-poll/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:31`, `:69` |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다. UUPM 초안(`design-system/live-poll/MASTER.md`)은 입력 자료일 뿐 정답이 아니다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(LP-06-033 1단계, LP-06-023 2단계, LP-06-034 3단계 사람 검토, LP-06-035 4단계). 화면 작업은 4단계 뒤 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:41-49` |
+| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`), Atlassian·Primer 색과 아이콘(Lucide 사용), 마케팅 랜딩과 청중·발표 화면에 B2B 레퍼런스 적용, StyleX | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16.2.9, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67-68` |
+| 토큰 파일(정답) | `apps/live-poll/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(스크린 백색), `--color-text`(객석 남색), `--color-accent`(막대 청록), `--color-highlight`(응답 주황, 방금 바뀐 막대 1회 300ms), `--color-seat`(좌석 회색, 구분선·비활성), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 전환은 `data-theme` 하나. 진행자 콘솔 기본은 라이트, 다크는 객석 남색 바탕. 발표 화면은 별도 투사용 큰 글자 스케일 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:30`, 4.3절 |
+| 컴포넌트(정답) | `apps/live-poll/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:31`, `:69` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다. UUPM 초안(`design-system/live-poll/MASTER.md`)은 입력 자료일 뿐 정답이 아니다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(LP-06-033 1단계, LP-06-023 2단계, LP-06-034 3단계 사람 검토, LP-06-035 4단계). 화면 작업은 4단계 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:41-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -247,7 +247,7 @@ Q&A AI 정리 패널 와이어프레임(콘솔 오른쪽 Q&A 열 안):
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
-`_design-guide/DESIGN_PRINCIPLES.md` 7단계 절차를 따른다. 2026-10-13 사용자 결정(확정 결정 15)으로 히어로가 CSS 막대 데모에서 3D 무대 장면으로 바뀌었다. 기기 구성·성능 예산·대체 화면은 `docs/design-module/_design-guide/HERO_3D.md`를 따르고(4.5절), 아래 레퍼런스·브리프·토큰 플랜·avoid 목록은 그대로 유지한다.
+`_design-guide/DESIGN_PRINCIPLES.md` 7단계 절차를 따른다. 2026-10-13 사용자 결정(확정 결정 15)으로 히어로가 CSS 막대 데모에서 3D 무대 장면으로 바뀌었다. 기기 구성·성능 예산·대체 화면은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`를 따르고(4.5절), 아래 레퍼런스·브리프·토큰 플랜·avoid 목록은 그대로 유지한다.
 
 ### 4.1 레퍼런스 (`_design-guide/REFERENCES.md:195-201`에서 고름)
 
@@ -336,7 +336,7 @@ Q&A AI 정리 패널 와이어프레임(콘솔 오른쪽 Q&A 열 안):
 
 ### 4.5 3D 히어로 (무대 위에서 솟는 막대와 구)
 
-정본은 `docs/design-module/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-68`, 수용 기준 `:70-75`)이고, 이 절은 live-poll 소재(`:87`)와 장면만 정한다.
+정본은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-68`, 수용 기준 `:70-75`)이고, 이 절은 live-poll 소재(`:87`)와 장면만 정한다.
 
 | 기기 | 구성(HERO_3D 1절) | live-poll 장면 |
 |---|---|---|
@@ -369,7 +369,7 @@ Q&A AI 정리 패널 와이어프레임(콘솔 오른쪽 Q&A 열 안):
 | 위치 | `apps/live-poll/src/components/hero3d/`(`StageScene`, `Bars`, `MobileBars`, `StaticFallback`, `useHeroTier`), 정지 이미지 `public/hero/` |
 | 형상 | 코드 생성 도형(Cylinder, Sphere, Plane). 외부 glTF 없음 |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급, `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/design-module/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급, `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:17-30`) |
 | 태블릿 기울기 | iOS Safari는 [기울여 보기] 버튼 탭으로 권한을 요청하고, 거부·미지원이면 터치 드래그만 쓴다 |
 | 공용 키트 | `packages/ui-3d`(제안, 로더·토큰 재질·조명·대체 이미지·성능 모니터) 위에 막대·구 소재만 얹는다. 키트가 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 R-5) |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |

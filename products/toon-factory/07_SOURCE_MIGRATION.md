@@ -106,8 +106,8 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 "폐기" 목록 
 | 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | 저장된 컷 문서·DB 메시지의 텍스트만 낭독 |
 | 영상 음성을 만드는 도중 다른 제공자로 대체 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 한 영상 안에서 목소리가 바뀜 | 대체 금지, 실패 + 환불 |
 | AI 표시 회피 조장("AI 티 안 나게") | 01장 6.5절 | 표시 의무 회피 | 거절. 메타데이터 표시는 끌 수 없음 |
-| 3D 재질에 토큰 밖 색, 만화 효과음·말풍선을 3D 장식으로 사용 | `docs/design-module/_design-guide/HERO_3D.md:52-53`, 03장 4.2절 | 피할 인상 | 03장 4.5절 토큰 표 |
-| `tailwind.config.js`, `@tailwind base`, 버전 없는 "Tailwind" 지시 | `Toon-Factory/Design.md:11`, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67`, `:81` | v3로 만들어지는 사고 | Tailwind CSS v4(4.x 고정), CSS 우선 설정 |
+| 3D 재질에 토큰 밖 색, 만화 효과음·말풍선을 3D 장식으로 사용 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53`, 03장 4.2절 | 피할 인상 | 03장 4.5절 토큰 표 |
+| `tailwind.config.js`, `@tailwind base`, 버전 없는 "Tailwind" 지시 | `Toon-Factory/Design.md:11`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67`, `:81` | v3로 만들어지는 사고 | Tailwind CSS v4(4.x 고정), CSS 우선 설정 |
 
 ## 5. 아카이브 절차
 

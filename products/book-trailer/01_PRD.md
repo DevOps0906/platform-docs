@@ -31,7 +31,7 @@
 | 포맷 5종 렌더(9:16, 16:9, 1:1, 4:5, 표지 루프), 브라우저 미리보기, 포스터·SRT·ZIP 내려받기 | MVP | 핵심 과제 2, 신규 |
 | 플랫폼별 메타데이터 팩, 구매 링크·클릭 집계, 제휴 링크 대가성 문구 | MVP | 핵심 과제 3, 대가성 문구 규칙은 `docs/products/_platform-core/CORE_SPEC.md` 13장과 같은 기준(이 제품은 코어 affiliate 대신 자체 테이블, 05장 6절) |
 | AI 트레일러 코치 채팅, 책 설정 위키, 음성 대화·받아쓰기, 내레이션 샘플 | MVP | 확정 결정 13, 14, 16(`docs/products/00_MERGE_ANALYSIS.md:21-24`) |
-| 랜딩 3D 히어로 + 3D 영상 단계 | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:95-110` |
+| 랜딩 3D 히어로 + 3D 영상 단계 | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:95-110` |
 | 결제(구독·크레딧팩, Toss) | MVP | 확정 결정 4(`docs/products/00_MERGE_ANALYSIS.md:12`) |
 | 가입/로그인 Stage A(Mock, MVP 개발) → B(Google + 이메일, 공개 베타 전) → C1 카카오·C2 네이버(G2 후, P1) | A·B MVP, C1·C2 P1 | 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`), `docs/products/_platform-core/AUTH_ROADMAP.md` 8장 매트릭스(이 제품 행은 06장 6절 코어 요청 R-T5로 추가 요청) |
 | FLORA(publishing) 책 가져오기 | P1(MVP 직후) | 모듈러 배포 전용(05장 8절), D-3 |
@@ -142,7 +142,7 @@
 
 | ID | 기능 | 처리 | 요구사항 | 수용 기준 | 근거 |
 |---|---|---|---|---|---|
-| TR-F-110 | 랜딩 | 신규 | 3D 히어로(펼친 책에서 장면 카드가 떠올라 세로 프레임으로 정렬되고 재생되는 장면) + 3D 영상 단계 + 정지 이미지. 샘플 갤러리는 자사(디지털노마드연구소) 도서로 실제 만든 결과만 | `HERO_3D.md` 4절 수용 기준 통과. 카피에 미검증 수치·가상 후기 없음(6.5절) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md` |
+| TR-F-110 | 랜딩 | 신규 | 3D 히어로(펼친 책에서 장면 카드가 떠올라 세로 프레임으로 정렬되고 재생되는 장면) + 3D 영상 단계 + 정지 이미지. 샘플 갤러리는 자사(디지털노마드연구소) 도서로 실제 만든 결과만 | `HERO_3D.md` 4절 수용 기준 통과. 카피에 미검증 수치·가상 후기 없음(6.5절) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md` |
 | TR-F-111 | 공개 리다이렉트 | 신규 | `/b/[code]`(로그인 없음), 분당 IP 60회(제안) 초과는 429 | 없는 코드는 404. 리다이렉트는 https 링크만 | `2600_trailer.sql` 7-7절 |
 | TR-F-120 | 운영자 카탈로그 | 신규 | 문법·템플릿·음악 등록, 라이선스 검증 기록(검증자·시각), 공개/은퇴 | 라이선스 검증 없이 음악을 공개하면 DB가 거부한다 | `2600_trailer.sql:230-253` |
 | TR-F-121 | 탈퇴·삭제 | 유지 | 책 삭제는 30일 유예 후 원고·에셋·렌더·위키·RAG 청크까지 삭제(purge) | 30일 뒤 Storage 경로와 `core.ai_chunks`에 그 책 행이 없다 | `docs/products/flora-publishing/01_PRD.md:107` |
@@ -314,7 +314,7 @@
 | 도서정가제 | 신간 정가 대비 15% 초과 할인 표현, "반값" | FAIL. 출판문화산업 진흥법의 가격 할인 10% + 경제상 이익 합계 15% 이내 기준(현행 조문 확인 필요, D-11) |
 | 스포일러 | 스포일러 수준을 넘는 결말·반전 노출 | none·teaser에서 WARN(분석의 결말 구간 문단 인용) |
 | 타사 상표 | 다른 출판사·서점 로고를 영상에 넣기 | WARN |
-| 랜딩 카피 | 미검증 사용자 수·제작 편수, 가상 고객 후기 | 출시 전 체크리스트에서 차단(`docs/design-module/_design-guide/DESIGN_PRINCIPLES.md` 카피 규칙) |
+| 랜딩 카피 | 미검증 사용자 수·제작 편수, 가상 고객 후기 | 출시 전 체크리스트에서 차단(`docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md` 카피 규칙) |
 
 ### 6.6 플랫폼 약관
 

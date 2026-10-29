@@ -7,7 +7,7 @@
 ## 1. 요약 트리 (개발 묶음은 sceneflow만 펼침)
 
 ```
-platform-docs/  (파일 1,588개, 폴더 439개)
+platform-docs/  (파일 1,586개, 폴더 439개)
 ├── _tools/  (6)
 ├── Capacitor/  (1)
 ├── develop/  (1153)
@@ -202,7 +202,7 @@ platform-docs/  (파일 1,588개, 폴더 439개)
 ## 2. 전체 트리
 
 ```
-platform-docs/  (파일 1,588개, 폴더 439개)
+platform-docs/  (파일 1,586개, 폴더 439개)
 ├── _tools/  (6)
 ├── Capacitor/  (1)
 ├── develop/  (1153)

@@ -11,7 +11,7 @@
 | 3 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 금지 패턴(`07_SOURCE_MIGRATION.md` 4·6절) |
 | 4 | DB 작업이면 `docs/products/_supabase-modular/migrations/2600_trailer.sql`(정본)과 `supabase/monolith/` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
-| 3-UI | 화면 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `08_DESIGN_SYSTEM.md`(층 A 앱 토큰, 11장 컴포넌트), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, 랜딩이면 `HERO_3D.md` |
+| 3-UI | 화면 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `08_DESIGN_SYSTEM.md`(층 A 앱 토큰, 11장 컴포넌트), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, 랜딩이면 `HERO_3D.md` |
 | 3-영상 | 컴포지션·렌더 작업이면 `08_DESIGN_SYSTEM.md` 4~10장(층 B 영상 토큰, 문법, 모션, 장면 컴포넌트, 변주 규칙)과 `04_API.md` 4.3·4.4절 |
 
 ## 2. 절대 규칙

@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 표기: "제안"은 원본 문서와 리뷰에 근거가 없어 이 기획이 정한 값이다(이유를 같이 적었다). "미확인"은 외부 사실을 확인하지 않은 것이다.
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 방문자 AI 상담(RAG, LangGraph `site.consult`, Dify 채팅), 방문자 음성 상담, 브랜드 지식 위키, 상용/오픈소스 모델 이원화와 운영자 조직의 국외 이전 동의, 3D 히어로(온실 구조물)를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 이 제품의 AI는 로그인하지 않은 방문자 상담이다. 크레딧이 없으므로 AI 비용은 운영자 조직의 예산이고(4장), 방문자에게는 강한 레이트 리밋만 둔다(5장). 기존 규칙(가상 후기·미검증 수치·가짜 연락처 폐기, 문의 경로의 허니팟·레이트 리밋)은 그대로 유지하며 AI 응답에도 같은 규칙을 적용한다(6장).
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 방문자 AI 상담(RAG, LangGraph `site.consult`, Dify 채팅), 방문자 음성 상담, 브랜드 지식 위키, 상용/오픈소스 모델 이원화와 운영자 조직의 국외 이전 동의, 3D 히어로(온실 구조물)를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 이 제품의 AI는 로그인하지 않은 방문자 상담이다. 크레딧이 없으므로 AI 비용은 운영자 조직의 예산이고(4장), 방문자에게는 강한 레이트 리밋만 둔다(5장). 기존 규칙(가상 후기·미검증 수치·가짜 연락처 폐기, 문의 경로의 허니팟·레이트 리밋)은 그대로 유지하며 AI 응답에도 같은 규칙을 적용한다(6장).
 
 ## 1. 페르소나와 핵심 과제
 
@@ -46,7 +46,7 @@
 | 방문자 음성 상담(STT, 읽어 주기 TTS) | O | | | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
 | 상용/오픈소스 모델 이원화, 운영자 조직 국외 이전 동의 | O | | | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
 | 운영자 AI 콘솔(스위치, 동의, 사용량, 미답변 질문) | O | | | 신규 |
-| 3D 히어로(식물과 건축이 어우러진 온실 구조물) | O | | | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:91` |
+| 3D 히어로(식물과 건축이 어우러진 온실 구조물) | O | | | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:91` |
 | 로그인 고객 대화 이력, 영문 상담, 보이스 선택·클로닝 | | O | | 제안: 방문자 상담의 운영 데이터를 본 뒤 결정. 보이스 클로닝은 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80` |
 
 확정 결정과 다른 범위는 없다. 결정 7(MVP 범위)은 이 제품에 적용 항목이 없다. AI·음성·3D는 12개 제품 공통 MVP(결정 13~17)다. 결정 22(인증 단계)는 운영자 로그인에만 적용하며 C단계(카카오·네이버)는 `AUTH_ROADMAP.md` 8장에 따라 제외한다.
@@ -86,7 +86,7 @@
 | SI-F-027 | 운영자 AI 설정과 국외 이전 동의 | 신규 | 콘솔 `/admin/ai`(owner/admin만 변경). (1) 상담·음성 스위치(`update_ai_settings`) (2) 국외 이전 동의: 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`, 철회 가능. 동의 전에는 모든 AI·음성이 오픈소스 제공자만 쓴다(`resolve_ai_route`가 상용을 걸러 낸다) (3) 최근 30일 사용량(`ai_usage` 집계, 제공자별·기능별) (4) 미답변 질문 목록(근거 없음 응답의 질문, 마스킹본, 30일). member는 읽기 전용, viewer는 접근 불가 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`에 남는다. 스위치 변경마다 감사 로그 1행(`site.ai_settings`). 상담을 끄면 음성도 꺼진다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | SI-F-028 | 비용 통제(운영자 예산, 방문자 한도) | 신규 | 크레딧이 없으므로 비용은 운영자 조직이 낸다. 방문자 한도는 5장 표(방문자·IP 해시·사이트 단위)이고 사이트 일일 상한(`SITE_AI_DAILY_TURNS`)에 닿으면 상담을 닫고 문의 폼을 안내한다. 응답 토큰 상한, 대화당 턴 수, 입력 길이도 제한한다. 사용량은 모두 `core.ai_usage`에 남고 정산 단계는 없다(`settled_at`을 기록 시점에 채움) | 사이트 일일 상한 도달 후 새 턴 429(`ai_budget_exhausted`) + 문의 안내. 방문자 11번째 시간당 턴 429. 원문 IP 저장 0(해시 키만). 같은 `request_id` 재전송은 1턴으로만 센다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:130` |
 | SI-F-029 | AI 출력 규칙 | 신규 | 6장의 금지 문구·AI 응답 규칙을 그래프 `compliance` 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`content/knowledge/rules/banned.json`)로 적용한다. 가격·할인·납기·재고를 약속하지 않고("문의로 안내") 후기·평점·고객 이름을 만들어 내지 않으며 연락처는 `business.ts`에 있는 값만 안내한다. 지식에 없는 수치와 주장은 말하지 않는다 | 금지 규칙 평가셋 40문항(제안)에서 위반 0. 프롬프트 인젝션 시도 10문장(제안)에서 시스템 지시 노출 0·범위 밖 응답 0. 응답 전문에 `aggregateRating`, `555` 패턴, 미검증 주장(`verified:false`) 0 | 이 문서 6장, `docs/products/_platform-core/AI_ARCHITECTURE.md:106`, `:117` |
-| SI-F-030 | 3D 히어로 | 신규 | 메인 히어로를 식물과 건축 구조가 어우러진 온실 구조물 3D로 바꾼다(사용자 결정 2026-10-13). PC·태블릿은 풀 3D, 모바일은 HTML 즉시 표시 + 단순화한 구조물을 첫 화면 뒤 자동 로드, WebGL 미지원·저사양·`prefers-reduced-motion`·데이터 절약은 정지 이미지(03장 4.8절). 제목·CTA는 HTML이고 3D 캔버스는 `aria-hidden` | `docs/design-module/_design-guide/HERO_3D.md` 4절 수용 기준 전부: 기기 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 로딩 전 저사양 판정과 `deviceMemory` 없는 Safari·Firefox 분기, 런타임 강등, 제목·CTA가 3D 전에 보임. 스크린샷 3종 고문 검토. 토큰 밖 3D 색 0 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:91` |
+| SI-F-030 | 3D 히어로 | 신규 | 메인 히어로를 식물과 건축 구조가 어우러진 온실 구조물 3D로 바꾼다(사용자 결정 2026-10-13). PC·태블릿은 풀 3D, 모바일은 HTML 즉시 표시 + 단순화한 구조물을 첫 화면 뒤 자동 로드, WebGL 미지원·저사양·`prefers-reduced-motion`·데이터 절약은 정지 이미지(03장 4.8절). 제목·CTA는 HTML이고 3D 캔버스는 `aria-hidden` | `docs/nomad-design-modules/_design-guide/HERO_3D.md` 4절 수용 기준 전부: 기기 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 로딩 전 저사양 판정과 `deviceMemory` 없는 Safari·Firefox 분기, 런타임 강등, 제목·CTA가 3D 전에 보임. 스크린샷 3종 고문 검토. 토큰 밖 3D 색 0 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-75`, `:91` |
 
 ## 4. 요금과 크레딧
 
@@ -137,7 +137,7 @@
 | 상담 응답 시간(p95) | 첫 표시 6초, 턴 완료 12초 이하 | 제안: Dify HTTP 노드가 전체 답을 돌려준 뒤 표시되므로 "근거를 찾는 중"을 보인다 |
 | STT(30초 발화, p95) | 4초 이하 | 제안: 오픈소스 GPU 서버 기준, 구현 시 확인 |
 | TTS 첫 오디오(p95) | 2초 이하 | 제안 |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상. 3D는 첫 화면 뒤에 불러오므로 SI-F-017의 첫 화면 전송량(2MB) 계산에 넣지 않고, 정지 대체 이미지(AVIF)는 150KB 이하(제안)로 첫 화면에 포함한다 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상. 3D는 첫 화면 뒤에 불러오므로 SI-F-017의 첫 화면 전송량(2MB) 계산에 넣지 않고, 정지 대체 이미지(AVIF)는 150KB 이하(제안)로 첫 화면에 포함한다 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 | AI 입력 상한 | 상담 메시지 300자, 대화당 10턴, 음성 30초·3MB, TTS 입력 500자 | 제안: 방문자 비용 남용 방지 |
 | 상담 기록 보존 | `core.ai_conversations`·`ai_messages` 30일 후 삭제, Dify 대화 로그 30일 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 
@@ -250,7 +250,7 @@ AI 응답 금지 규칙(기존 금지 문구 표를 상담·음성·위키에도
 | D-14 | 음성 상담 공개와 보이스, ElevenLabs 데이터 보관 | A) 음성 켠다 / B) 텍스트만. 보이스 기본값 1종 + 오픈소스 1종. ElevenLabs 입력 보관·학습 사용·제로 리텐션 여부 확인 | B로 시작(스위치 기본 꺼짐). A를 택하면 `docs/products/_platform-core/VOICE_ARCHITECTURE.md` 4.1절 후보의 라이선스·한국어 품질을 확인한 뒤 고르고 약관·보관 조건을 처리방침에 반영 |
 | D-15 | 방문자 대화 보존 기간 | A) 30일 / B) 즉시 삭제(저장 없음) / C) 90일 | A(제안). 미답변 질문 집계는 마스킹본을 쓴다 |
 | D-16 | 공개 지식 페이지 `/guide` 공개 | A) 공개(검수된 `published`만, SEO) / B) 상담 근거로만 쓰고 비공개 | A(제안). 사례 공개 동의(D-11)가 전제 |
-| D-17 | 채팅 위젯 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). SI-06-033에서 확인 결과를 기록. 위젯의 시각은 어느 쪽이든 브랜드 토큰(03장 4.3)을 쓴다 |
+| D-17 | 채팅 위젯 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). SI-06-033에서 확인 결과를 기록. 위젯의 시각은 어느 쪽이든 브랜드 토큰(03장 4.3)을 쓴다 |
 
 ### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)
 

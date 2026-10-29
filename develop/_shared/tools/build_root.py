@@ -19,7 +19,8 @@ import sys
 
 PLATFORM = 'D:/WorkSpace/platform'
 P = PLATFORM + '/docs/products'
-DESIGN = PLATFORM + '/docs/design-module/_design-guide'  # nomad-design-modules 서브모듈(2026-10-30 이전)
+DESIGN_REPO = 'D:/WorkSpace/DEV/nomad-design-modules'  # 별도 레포 nomad-design-modules의 로컬 클론(2026-10-30 platform-docs에서 분리)
+DESIGN = DESIGN_REPO + '/_design-guide'
 DEV = PLATFORM + '/docs/develop'
 STAMP = '20261013'
 
@@ -109,17 +110,22 @@ def plan(prod):
             refs.append((f'{res_dir}/{f}', f'docs/reference/research/{f}'))
     for r in REVIEWS[prod]:
         refs.append((f'{PLATFORM}/docs/reviews/{r}', f'docs/reference/reviews/{r}'))
+    def key(src):
+        # 디자인 모듈은 PLATFORM 밖의 별도 레포라 논리 경로 docs/nomad-design-modules/...로 맞춘다
+        if src.startswith(DESIGN_REPO):
+            return 'docs/nomad-design-modules' + src[len(DESIGN_REPO):]
+        return src[len(PLATFORM) + 1:]
     mapping = {}
     for src, dst, *_ in items:
-        mapping[src[len(PLATFORM) + 1:]] = dst
+        mapping[key(src)] = dst
     for src, dst in refs:
-        mapping[src[len(PLATFORM) + 1:]] = dst
+        mapping[key(src)] = dst
     mapping[f'docs/products/{prod}/'] = 'docs/file/'
     return items, refs, mapping
 
 
 # docs/Tauri, docs/develop_V2 등 묶음에 복사하지 않는 공용 가이드는 platform 절대경로로 바꾼다(2026-10-16 arch-studio부터)
-REF_RE = re.compile(r'(?<![\w/.-])((?:docs/(?:products|reviews|Tauri|Capacitor|develop_V2|develop|Price_Plans|Multi-tenant_Theming|design-module)/|_platform-core/|_design-guide/)[^\s`\'"|)\]:,;<>]*)')
+REF_RE = re.compile(r'(?<![\w/.-])((?:docs/(?:products|reviews|Tauri|Capacitor|develop_V2|develop|Price_Plans|Multi-tenant_Theming|nomad-design-modules)/|_platform-core/|_design-guide/)[^\s`\'"|)\]:,;<>]*)')
 
 
 def rewrite(text, mapping):
@@ -127,7 +133,7 @@ def rewrite(text, mapping):
         path = m.group(1)
         full = path
         if path.startswith('_platform-core/') or path.startswith('_design-guide/'):
-            full = ('docs/design-module/' if path.startswith('_design-guide/') else 'docs/products/') + path
+            full = ('docs/nomad-design-modules/' if path.startswith('_design-guide/') else 'docs/products/') + path
         if full in mapping:
             return mapping[full]
         for k, v in mapping.items():

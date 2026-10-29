@@ -1,13 +1,13 @@
 # 02 아키텍처: NOMAD Book Trailer (book-trailer)
 
-작성일 2026-10-15. AI 계층(FastAPI `apps/api`, LangGraph, RAG, 위키, 공용 Dify), 음성(`packages/core-voice`), 3D 히어로의 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`, `docs/design-module/_design-guide/HERO_3D.md`이고, 이 문서는 인용하며 book-trailer 고유 경계·잡·그래프·렌더 파이프라인만 정한다.
+작성일 2026-10-15. AI 계층(FastAPI `apps/api`, LangGraph, RAG, 위키, 공용 Dify), 음성(`packages/core-voice`), 3D 히어로의 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`이고, 이 문서는 인용하며 book-trailer 고유 경계·잡·그래프·렌더 파이프라인만 정한다.
 
 ## 1. 스택
 
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 웹 | Next.js App Router + React | 16.2.x / 19.2(lockfile 고정, `latest` 금지) | 저장소 공통(`README.md` 5.2절), 확정 결정 3 |
-| UI | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`, 4.x 고정) + shadcn/ui(Tailwind CSS v4 지원 버전), lucide. `tailwind.config.js`와 v3 문법 금지 | 4.x | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| UI | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`, 4.x 고정) + shadcn/ui(Tailwind CSS v4 지원 버전), lucide. `tailwind.config.js`와 v3 문법 금지 | 4.x | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
 | 영상 컴포지션 | Remotion(React 컴포지션). 앱 미리보기는 `@remotion/player`, 서버 렌더는 `@remotion/renderer` + `@remotion/bundler` | 4.0.x 정확한 버전 고정(2026-10-15 npm 최신 4.0.529 확인). 라이선스 D-2 | `01_PRD.md` D-2 |
 | 3D | three.js + React Three Fiber + drei. 히어로 전용 컴포넌트에서만 import, 동적 import(`ssr: false`) | React 19 호환(구현 시 확인) | 확정 결정 15 |
 | 폼/검증/데이터 | React Hook Form + zod, TanStack Query v5 | 구현 시 확인 | 다른 제품과 같음 |

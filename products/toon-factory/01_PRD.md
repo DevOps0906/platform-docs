@@ -46,7 +46,7 @@
 | 창작 어시스턴트 채팅(작품 설정 근거), 제품별 Dify 앱 `toon-chat` | MVP | 확정 결정 13, 14(`docs/products/00_MERGE_ANALYSIS.md:21-22`) |
 | 음성 대화, 대사 음성 미리듣기(TTS), MP4 음성 입히기 | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`). 리뷰는 TTS를 2단계로 뒀다(`docs/reviews/Toon-Factory.md:99`). 사용자 지시로 당긴다 |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 랜딩 3D 히어로(공간에 흩어진 웹툰 컷 → 세로 스크롤 만화로 정렬) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:89` |
+| 랜딩 3D 히어로(공간에 흩어진 웹툰 컷 → 세로 스크롤 만화로 정렬) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:89` |
 | 로그라인·시놉시스 생성기(TN-F-024) | MVP | 확정 결정 20. 투툰·WeToon·인서툰이 기획 단계를 돕는다(`08_BENCHMARK.md` G1). 페르소나 서진의 좌절 |
 | 플랫폼 내보내기 프리셋 4종(인스타 캐러셀, 웹툰 캔버스, 네이버 도전만화, 9:16 영상)(TN-F-038) | MVP | 확정 결정 20(`08_BENCHMARK.md` G2). 8절 D3를 프리셋으로 해소 |
 | 브랜디드 툰: 협찬 등록(광고주 브리프), 광고주 확인 결과 기록, 승인 회차만 최종 내보내기, 대가성 문구·가상인물 표시 자동 삽입(TN-F-070~073) | MVP(Pro) | 확정 결정 20(`08_BENCHMARK.md` G3·G4). 비교 대상에 없는 차별화 기능. 페르소나 도윤, 대행 운영(`docs/products/sceneflow/08_AGENCY_OPERATIONS.md`) |
@@ -120,7 +120,7 @@ ID 규칙 `TN-F-###`. 처리 분류는 분석 표(`docs/products/00_MERGE_ANALYS
 | TN-F-040 | 가입과 부트스트랩 | 신규 | 가입 수단은 이메일 + Google이고 단계로 켠다(8.1절). Stage A(MVP 개발): 로컬 Supabase 시드 계정 원클릭 로그인만(`docs/products/_platform-core/AUTH_ROADMAP.md` 2장). 쿠키 역할 Mock 금지, 개발용 로그인은 AUTH_ROADMAP 2장의 로컬 시드 계정만(배포 환경 404). Stage B(공개 베타 전, P0): Google + 이메일. 이메일 가입 시 `signup_app='toon'`, Google 첫 로그인은 `/auth/callback`이 `bootstrap_app_for_org('toon')`을 1회 호출(모듈러, 모놀리스는 트리거가 자동) → free 구독, 엔타이틀먼트, 첫 달 10크레딧. OAuth 가입자는 첫 로그인 뒤 온보딩 첫 단계에서 약관·만 14세 확인(6.6절). Stage C(G2 후, P1): 카카오(C1), 네이버(C2) | 가입 직후 세션의 plan_code가 `free`, 잔액 10(A: `owner` 페르소나, B: 새 Google 계정. 재로그인 3회 뒤에도 크레딧 원장 행 수 같음). 단계별 수용 기준은 AUTH_ROADMAP 5.3절 B-1~B-6, 7.1.3절 C1-1~C1-5, 7.2.4절 C2-1~C2-6을 그대로 따른다 | `CORE_SPEC.md:70-81`, `AUTH_ROADMAP.md` 2·3·5·7장 |
 | TN-F-041 | Pro 구독 | 신규 | Toss 빌링키 정기결제 월 14,900원. 해지는 기간 말 만료 | 결제 성공 후 새로고침 없이 워터마크 해제와 Pro 에셋 잠금 해제가 보인다 | 분석 `:1303`, `CORE_SPEC.md:196-237` |
 | TN-F-042 | 크레딧팩 | 신규 | 일반결제. 100크레딧, 300크레딧 | 결제 금액은 서버 `credit_packs.price_krw`이며 클라이언트 금액 변조 시 승인되지 않는다 | `SHARED_MODULES.md:127-151` |
-| TN-F-043 | 크레딧 부족 | 신규 | 402 응답 시 부족량과 크레딧팩 구매 버튼 | "크레딧이 2 부족합니다" 문구가 정확한 부족량으로 나온다 | `docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:197` |
+| TN-F-043 | 크레딧 부족 | 신규 | 402 응답 시 부족량과 크레딧팩 구매 버튼 | "크레딧이 2 부족합니다" 문구가 정확한 부족량으로 나온다 | `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md:197` |
 | TN-F-044 | 카탈로그 운영 | 신규 | platform_admin이 팩/캐릭터/에셋을 일괄 등록(CLI), 라이선스 증빙 확인 후 공개. 원본은 비공개 버킷, 썸네일만 공개 버킷 | 라이선스 검증 없이 팩을 published로 바꾸면 DB가 거부한다(`asset_packs_publish_license_check`) | 리뷰 #6, 작업 #8 |
 | TN-F-045 | 내 에셋 | 신규 | AI 배경 결과 목록, 보관(소프트 삭제), 저장 용량 표시(무료 100MB, Pro 2GB) | 보관한 에셋은 목록에서 사라지고, 그 에셋을 쓰는 컷은 내보내기 전 경고가 뜬다 | 신규. 용량은 제안 |
 | TN-F-046 | 데이터 삭제 | 신규 | 계정 삭제 → 조직 soft delete → 30일 뒤 purge | 삭제 요청 30일 뒤 작품, 컷, 생성물, 내보내기 파일이 남지 않는다 | `docs/products/_platform-core/SECURITY_BASELINE.md:197` |
@@ -143,7 +143,7 @@ MVP 필수(확정 결정 13~17). 모든 AI 기능은 텍스트·수동 편집만
 | TN-F-059 | AI 라우팅과 국외 이전 동의 | 신규 | 가입 직후 온보딩 `/onboarding/ai`에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`을 호출하고 설정에서 언제든 철회한다. 기능별 기본 체인은 02장 5.1절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. AI 배경 생성은 국외 사업자(fal)를 호출하므로 동의 없이는 쓸 수 없다(`TN007`, 8절 D11) | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`에 남는다. 미동의 조직의 배경 생성 요청은 403 `TN007`이고 크레딧이 차감되지 않는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | TN-F-060 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴, STT, TTS, 위키 갱신은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 그래프 실행(콘티, 대사 다듬기)과 AI 배경은 기존 정액 선차감에 묶고 정산 차액이 없다(4.6절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
 | TN-F-061 | AI 출력 규칙(콘티, 대사, 채팅, 음성) | 신규 | 6.3절 금지 대상과 6.7절 대화 규칙을 그래프 `compliance` 노드, `/tools/answer` 후처리, TTS 입력 검사에 같은 규칙 파일(`packages/toon-doc/rules/`)로 적용한다. 위반 요청은 정중히 거절하고 오리지널 설정으로의 대안을 제안한다. 자해·자살 언급은 상담 전화 안내로 전환한다 | 채팅 금지 문구 평가셋 30문항(제안) 위반 0. 위기 신호 테스트 문장 5개 모두 안내 문구로 응답. 실존 인물·타 작품 캐릭터·작가 화풍 요청 거절률 100%(평가셋 20문항) | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 6.3·6.7절 |
-| TN-F-062 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 공간에 흩어진 웹툰 컷 패널이 입력·스크롤에 따라 세로 스크롤 만화 스트립으로 정렬되는 풀 3D, 모바일은 컷 3장이 정렬되는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:89` |
+| TN-F-062 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 공간에 흩어진 웹툰 컷 패널이 입력·스크롤에 따라 세로 스크롤 만화 스트립으로 정렬되는 풀 3D, 모바일은 컷 3장이 정렬되는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-75`, `:89` |
 
 ### 3.7 브랜디드 툰 (2026-10-13 2차, 확정 결정 20)
 
@@ -280,7 +280,7 @@ Pro의 이미지 내보내기 월 300건과 작품당 500회차는 2026-10-14에
 | AI 채팅 | 첫 토큰 p95 4초 이하, 전체 응답 p95 20초 이하(제안). Dify 5xx·10초 무응답이면 직접 경로로 대체 | 제안 |
 | 음성 | STT 60초 발화 p95 8초 이하, TTS 대사 1개(120자) p95 4초 이하, MP4 음성 준비(대사 20개) p95 40초 이하 | 제안 |
 | 설정 위키·RAG | 위키 갱신 문서 1건 p95 60초 이하, 노트 색인 5분 이내, 검색 p95 1초 이하 | 제안 |
-| 3D 히어로 | 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하. 60fps / 30fps 이상, LCP 2.5초 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하. 60fps / 30fps 이상, LCP 2.5초 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 | 가용성 | 월 99.5%(웹), 렌더 워커 장애 시 잡은 대기열에 남고 `reap_stale_jobs`가 10분 뒤 재큐잉 | `CORE_SPEC.md:297-307` |
 
 ## 6. 법, 개인정보, 금지 문구
@@ -424,7 +424,7 @@ AI 대화 규칙(6.3·6.5절에 더해 콘티·대사·채팅·TTS 입력 모두
 | D12 | 설정 컬렉션 임베딩 | (a) `oss-embed` 고정 (b) Voyage(상용, 동의 시) | (a). 컬렉션마다 모델이 하나여야 하고 동의 여부와 무관하게 같은 모델로 질의해야 한다. 바꾸면 재색인 |
 | D13 | 보이스 6종과 ElevenLabs·오픈소스 TTS 조건 | (a) 기본 보이스 6종(제안) + 오픈소스 보이스 각각 지정 (b) 사용자 선택 확대 | (a). 보이스 id는 환경변수. 생성 음성 상업 이용 조건, 입력 보관·학습 사용·제로 리텐션 옵션은 ElevenLabs 계약으로, 오픈소스 TTS는 코드·가중치 라이선스와 한국어 품질을 확인한다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:63-83`) |
 | D14 | 무료 플랜 AI 채팅 한도 | (a) 하루 20턴 (b) 무료 채팅 없음 | (a)(제안). 10크레딧/월 한도 안에서 선차감되므로 실질 상한은 크레딧이다 |
-| D15 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). TN-06-041에서 확인 결과를 기록 |
+| D15 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). TN-06-041에서 확인 결과를 기록 |
 | D16 | 영상 음성의 AI 가시 표기 | (a) 마지막 컷 하단 문구 + 메타데이터(기본 ON, 끄려면 확인) (b) 메타데이터와 게시글용 문구 복사만 | (a). 법무 확인 후 확정. 협찬 영상은 첫 3초 대가성·가상인물 표시(TN-F-072·073)와 겹치지 않게 배치 |
 | D17 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트(02장 4절) (b) FastAPI가 잡을 직접 소비 (c) 워커에 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/products/_platform-core/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 6장 6절 요청 8 |
 | D18 | 네이버 클립 직접 업로드(TN-F-080) | (a) Playwright 자동 업로드 + 위험 고지·동의(sceneflow와 같은 방식) (b) 업로드 패키지(영상·제목·해시태그·문구) 다운로드만 | (a)(사용자 결정, 2026-10-13). 공식 API가 확인되면 어댑터를 교체한다. 약관 위반·계정 제한 위험을 고지문에 적는다 |

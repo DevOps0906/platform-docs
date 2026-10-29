@@ -28,7 +28,7 @@ Next.js 정적 생성  →  폼·자동화·리드 저장  →  DB·로그인·�
 | Lv3 3D·WebGL | React Three Fiber, Spline | 3D 제품 회전, 마우스 반응 오브젝트 | 높음 |
 | Lv4 셰이더 | 커스텀 GLSL 셰이더, 파티클 | 유체·노이즈 배경, 몰입형 브랜드 사이트 | 매우 높음 |
 
-품질 기준: Lv3 이상은 `design-module/_design-guide/HERO_3D.md`의 기기별 구성(1장), 저사양 판정(1.1절), 성능 예산(2장: 3D 번들 PC 1MB·모바일 300KB 이하, LCP 2.5초 이하)을 그대로 적용한다. `prefers-reduced-motion`과 저사양 기기는 정지 이미지로 대체한다.
+품질 기준: Lv3 이상은 `nomad-design-modules/_design-guide/HERO_3D.md`의 기기별 구성(1장), 저사양 판정(1.1절), 성능 예산(2장: 3D 번들 PC 1MB·모바일 300KB 이하, LCP 2.5초 이하)을 그대로 적용한다. `prefers-reduced-motion`과 저사양 기기는 정지 이미지로 대체한다.
 
 ## 3. 상품 등급과 제작기간
 
@@ -69,7 +69,7 @@ Next.js 정적 생성  →  폼·자동화·리드 저장  →  DB·로그인·�
 
 ## 6. 설득형 랜딩 패키지 (2026-10-17, 제안)
 
-설득형 랜딩 공용 규칙의 "문제 → 원인 → 근거 → 해결 → 왜 우리인가 → 비용 비교" 설득 구조를 B2B 고객용 상품으로 만든다. 제작 규칙은 `design-module/_design-guide/LANDING_PERSUASION.md`(아래 LP)를 그대로 쓴다. 가격은 `PRICE_PLAN.md` 11장.
+설득형 랜딩 공용 규칙의 "문제 → 원인 → 근거 → 해결 → 왜 우리인가 → 비용 비교" 설득 구조를 B2B 고객용 상품으로 만든다. 제작 규칙은 `nomad-design-modules/_design-guide/LANDING_PERSUASION.md`(아래 LP)를 그대로 쓴다. 가격은 `PRICE_PLAN.md` 11장.
 
 | 항목 | 내용 |
 |---|---|

@@ -110,7 +110,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 Claude API �
 | P-23 | Apple 로그인(연기) | `AA/공통/ROADMAP.md:15`, `docs/products/00_MERGE_ANALYSIS.md:313`, `:404` | MVP 범위 축소 |
 | P-24 | 매직링크 로그인(연기) | `FD/PRD.MD:49`, `docs/products/00_MERGE_ANALYSIS.md:313` | 무료 크레딧 반복 수령 문제 |
 | P-25 | Supabase Edge Function 단계 | `AA/공통/PRD.md:145`, `AA/공통/CLAUDE.md:143`, `docs/products/00_MERGE_ANALYSIS.md:385` | Vercel 서버와 역할 중복, 크레딧·AI 키 위치 모순 |
-| P-26 | 원본 랜딩의 canvas 별자리 파티클, 라이브 카운터, 페인포인트 카드 6개, 로고 마퀴 | `AA/랜딩페이지/PRD_LANDING.md:25-42` | 디자인 가이드 생성형 기본값과 피할 인상(`docs/design-module/_design-guide/REFERENCES.md:65`). 로고 마퀴는 제휴 근거 없는 로고 노출 위험 |
+| P-26 | 원본 랜딩의 canvas 별자리 파티클, 라이브 카운터, 페인포인트 카드 6개, 로고 마퀴 | `AA/랜딩페이지/PRD_LANDING.md:25-42` | 디자인 가이드 생성형 기본값과 피할 인상(`docs/nomad-design-modules/_design-guide/REFERENCES.md:65`). 로고 마퀴는 제휴 근거 없는 로고 노출 위험 |
 
 AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 B-2 목록 밖이라 따로 번호를 붙인다.
 
@@ -147,8 +147,8 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 B-2 목록 밖�
 | LLM이 격국·용신 판정 또는 수치 생성 | `FD/PRD.MD:39`, `:66` | 엔진과 불일치 | 엔진 값 주입 + compliance 노드 |
 | 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | DB의 assistant 메시지와 리딩 본문만 낭독 |
 | 낭독 도중 다른 제공자로 대체 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 목소리가 바뀜 | 대체 금지, 실패 + 환불 |
-| 3D 재질에 토큰 밖 색, 별 파티클·황도 기호 | `docs/design-module/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.5절 토큰 표 |
-| "Tailwind로"만 지시해 v3 설정 생성 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
+| 3D 재질에 토큰 밖 색, 별 파티클·황도 기호 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.5절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 

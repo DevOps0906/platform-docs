@@ -11,7 +11,7 @@
 | 3 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 1.1절 "불일치와 구현 기준", 금지 패턴(`07_SOURCE_MIGRATION.md` 4절) |
 | 4 | DB 작업이면 `docs/products/_supabase-modular/migrations/2300_docs.sql`(정본)과 `supabase/monolith/` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
-| 3-UI | 화면 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-docs 절, 랜딩이면 `HERO_3D.md`와 `LANDING_PERSUASION.md`(2026-10-17, 03장 8장) |
+| 3-UI | 화면 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` nomad-docs 절, 랜딩이면 `HERO_3D.md`와 `LANDING_PERSUASION.md`(2026-10-17, 03장 8장) |
 
 ## 2. 절대 규칙
 
@@ -155,7 +155,7 @@ P0 작업은 대응 테스트 작업이 녹색이어야 완료다(`06_AGENT_PLAN
 
 ## 설득형 랜딩 규칙 (2026-10-17, 검토용)
 
-정본 `docs/design-module/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 9장, 03장 8장, 06장 9절. 변경 기록: 2026-10-17 DC-F-050~055, DC-06-066~070, 01장 D-23~D-27(7장 변경 기록 표의 추가분).
+정본 `docs/nomad-design-modules/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 9장, 03장 8장, 06장 9절. 변경 기록: 2026-10-17 DC-F-050~055, DC-06-066~070, 01장 D-23~D-27(7장 변경 기록 표의 추가분).
 
 | 항목 | 규칙 |
 |---|---|

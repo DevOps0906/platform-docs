@@ -7,7 +7,7 @@
 | 모노레포 | pnpm workspace + Turborepo | pnpm 9, turbo 2 (제안) | 확정 결정 2(`packages/admin-kit` + `apps/*`) |
 | 프레임워크 | Next.js App Router, React | 16.x, 19.x | 세 원본 모두 Next 16 + React 19(`docs/reviews/ERP-Wesite.md:14`, `docs/reviews/Hospital.md:10`, `docs/reviews/School_Management_System.md:10`) |
 | 라우트 보호 | `src/proxy.ts`(Next 16 Proxy) | - | `docs/reviews/ERP-Wesite.md:82`, `docs/reviews/School_Management_System.md:63` |
-| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`) + shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인, 코어 UI만). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지) | `analysis:1149`(Hospital 미사용 shadcn을 코어 UI로 대체), `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67` |
+| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`) + shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인, 코어 UI만). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지) | `analysis:1149`(Hospital 미사용 shadcn을 코어 UI로 대체), `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67` |
 | 아이콘 | lucide-react | 최신 고정 버전 | `analysis:1190` |
 | 차트 | recharts 래퍼(admin-kit) | 3.x | `docs/reviews/Hospital.md:10` |
 | DB/인증 | Supabase(PostgreSQL 15, Auth, Realtime, Storage), `@supabase/ssr` | ssr 0.12 | `analysis:1124` |
@@ -20,7 +20,7 @@
 | RAG | Supabase pgvector(HNSW, cosine, 1024차원). 임베딩은 erp, sms `oss-embed`, hms `hms-embed` | pgvector 0.8 이상 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107` |
 | 채팅 운영 | erp, sms: 공용 자체 호스팅 Dify 1개, 앱 `erp-assistant`, `sms-assistant`(Chatflow). **hms: Dify 없음**, Next.js → FastAPI 직접 | 설치 버전 문서로 확인 | 확정 결정 14, `docs/products/_platform-core/AI_ARCHITECTURE.md:58-71` |
 | 음성 | `packages/core-voice`(ElevenLabs TS SDK + 오픈소스 음성 서버 클라이언트). erp, sms: `oss-voice` 우선. hms: `hms-voice`만(ElevenLabs 코드 경로 비활성) | 구현 시 확인 | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:22-73` |
-| 3D | 적용 안 함(three.js, React Three Fiber, drei 의존성 0). 공개 랜딩이 없고 로그인 화면은 가볍게 유지 | - | `docs/design-module/_design-guide/HERO_3D.md:92`, 03장 4절 |
+| 3D | 적용 안 함(three.js, React Three Fiber, drei 의존성 0). 공개 랜딩이 없고 로그인 화면은 가볍게 유지 | - | `docs/nomad-design-modules/_design-guide/HERO_3D.md:92`, 03장 4절 |
 
 도메인 백엔드는 Next.js Route Handler/Server Action + Supabase RPC만 쓴다. 확정 결정 3(FastAPI)의 출판·사주 렌더 용도와 확정 결정 6(영상 워커)은 해당 없다. 2026-10-13부터 AI 계층(확정 결정 13)에 한해 FastAPI(`apps/api`)를 쓴다: 도메인 쓰기와 권한은 계속 Next.js + RPC가 맡고, FastAPI는 문서 검색·답변 생성·위키·음성 외 AI 처리만 하며 업무 테이블을 쓰거나 읽지 않는다(5.3절).
 
