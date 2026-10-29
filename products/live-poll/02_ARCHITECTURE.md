@@ -17,7 +17,7 @@
 | 레이트 리밋 | `core.rate_limit_hit`(Postgres 고정 윈도우) | 코어 0004 | `SECURITY_BASELINE.md` 8장. Redis 없음(분석:1260) |
 | 배포 | Vercel(웹, 서울 리전 icn1), Supabase(ap-northeast-2), Railway(워커) | - | 리뷰:61 |
 | 테스트 | Vitest, Playwright(webapp-testing), k6 + Realtime 클라이언트 시뮬레이터, pytest(FastAPI) | - | 리뷰:94 |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 랜딩 히어로에서만 사용 | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:47-48` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 랜딩 히어로에서만 사용 | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:47-48` |
 | AI 서비스 | FastAPI(Python) `apps/api`. 공용 ai-service 위에 poll 확장만 둔다. WebSocket·투표·브로드캐스트 경로에는 들어오지 않는다 | Python 3.12(제안, 구현 시 확인) | 확정 결정 3, 13, `docs/products/_platform-core/AI_ARCHITECTURE.md:132-160`, `docs/products/_platform-core/SHARED_MODULES.md:17` |
 | AI 오케스트레이션 | LangChain(채팅 모델, text splitter), LangGraph + `langgraph-checkpoint-postgres`(스키마 `ai_runtime`) | 구현 시 확인 | `docs/products/_platform-core/AI_ARCHITECTURE.md:83`, `:114` |
 | LLM | FastAPI 라우터: 상용 `anthropic`, `openai`, `google`, `openrouter` + 오픈소스 `oss-llm`(vLLM). 기능별 체인은 5-2절 | 모델 id는 `core.ai_model_prices` 행으로 | 확정 결정 17 |
@@ -26,7 +26,7 @@
 | 음성 | `packages/core-voice`: ElevenLabs TypeScript 공식 SDK + 공용 오픈소스 음성 서버(faster-whisper + silero-vad + 상업 이용 가능 한국어 TTS) | 구현 시 확인 | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:5-72` |
 | 검증 | zod(웹 경계), pydantic(FastAPI 경계, zod와 같은 스키마) | - | `docs/products/_platform-core/SECURITY_BASELINE.md:10장` |
 
-쓰지 않는 것: Socket.io, FastAPI WebSocket, 상주 WebSocket 서버, Redis(분석:1259-1260), `postgres_changes` 구독(구독자마다 권한 검사가 일어나 대규모에 맞지 않는다, 리뷰:65). FastAPI는 AI 서비스(비동기 HTTP)로만 쓴다. 스타일은 반드시 Tailwind CSS v4(4.x 고정, CSS 우선 설정 `@import "tailwindcss"`, `@theme`)이고 `tailwind.config.js`와 v3 문법은 쓰지 않는다(`docs/products/_design-guide/DESIGN_SYSTEM.md:67`).
+쓰지 않는 것: Socket.io, FastAPI WebSocket, 상주 WebSocket 서버, Redis(분석:1259-1260), `postgres_changes` 구독(구독자마다 권한 검사가 일어나 대규모에 맞지 않는다, 리뷰:65). FastAPI는 AI 서비스(비동기 HTTP)로만 쓴다. 스타일은 반드시 Tailwind CSS v4(4.x 고정, CSS 우선 설정 `@import "tailwindcss"`, `@theme`)이고 `tailwind.config.js`와 v3 문법은 쓰지 않는다(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67`).
 
 ## 2. 모듈 경계
 

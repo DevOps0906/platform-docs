@@ -158,8 +158,8 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 CA의 Anthrop
 | 사용자 메모 없는 1인칭 체험·가상 후기 생성 | `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:41`, `:56` | 허위 후기 | BL-F-012, 규칙 파일, 평가셋 |
 | 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | DB의 assistant 메시지만 낭독 |
 | 녹음 원본 저장 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:85-95` | 보관·동의 부담 | `store_audio=false`, 변환 후 폐기 |
-| 3D 재질에 토큰 밖 색, 종이비행기·파티클·보라/핑크 그라디언트 | `docs/products/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.6절 토큰 표 |
-| "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지, CI 문자열 검사(BL-06-032) |
+| 3D 재질에 토큰 밖 색, 종이비행기·파티클·보라/핑크 그라디언트 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.6절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지, CI 문자열 검사(BL-06-032) |
 
 ## 5. 아카이브 절차
 

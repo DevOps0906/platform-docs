@@ -184,7 +184,7 @@ AI 관련 원천 자산 점검: 원천의 AI 사용은 flora v1의 `call_llm`/Op
 | 임의 텍스트 TTS | `docs/products/flora-publishing/07_SOURCE_MIGRATION.md:138` | 비용 남용 | TTS 입력은 DB의 assistant 메시지만(403) |
 | 사람 소유 위키 블록 덮어쓰기 | `docs/products/_platform-core/LLM_WIKI.md:30` | 사용자 수정 소실 | `expected_version` 잠금, 에이전트는 제안만 |
 | 웹훅·이벤트 본문에 연락처·문서 본문 포함 | `04_API.md:202` | 외부로 개인정보 유출 | id와 서명 링크만 |
-| 토큰 밖 3D 재질 색, "Tailwind"만 적은 지시 | `docs/products/_design-guide/HERO_3D.md:52-53`, `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | 제네릭 인상, v3 설정 혼입 | 토큰만, 지시와 문서에 "Tailwind CSS v4", `tailwind.config.js` 금지 |
+| 토큰 밖 3D 재질 색, "Tailwind"만 적은 지시 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | 제네릭 인상, v3 설정 혼입 | 토큰만, 지시와 문서에 "Tailwind CSS v4", `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 

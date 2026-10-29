@@ -42,8 +42,8 @@
 
 | 문서 | 관계 |
 |---|---|
-| `products/_design-guide/HERO_3D.md` | 3D 히어로 표준(기기별 구성, 저사양 판정, 성능 예산). 에이전시 히어로 상품의 품질 기준으로 그대로 쓴다 |
-| `products/_design-guide/REFERENCES.md` | Awwwards·Dribbble 레퍼런스. 히어로 데모 기획 시 참고 |
+| `nomad-design-modules/_design-guide/HERO_3D.md` | 3D 히어로 표준(기기별 구성, 저사양 판정, 성능 예산). 에이전시 히어로 상품의 품질 기준으로 그대로 쓴다 |
+| `nomad-design-modules/_design-guide/REFERENCES.md` | Awwwards·Dribbble 레퍼런스. 히어로 데모 기획 시 참고 |
 | `products/nomad-docs/` | 견적서·계약서·요구사항정의서 생성. 에이전시 운영 문서를 이 제품으로 만들어 실사용 검증 |
 | `products/website-floria/` | 회사 홈페이지. 에이전시 자체 사이트·포트폴리오 페이지 후보 |
 | `products/microweb-studio/` | 청첩장·마이크로 웹 대행. 대행가 구조를 참고 |

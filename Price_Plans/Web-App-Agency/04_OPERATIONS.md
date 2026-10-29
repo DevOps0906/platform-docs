@@ -40,7 +40,7 @@
 |---|---|---|
 | 상담 신청 | Tally 또는 자체 L1 폼 → Supabase `leads`(자기 자신도 고객 1번) | - |
 | 요구사항 정의서·견적서·계약서 | nomad-docs(`products/nomad-docs/`)로 생성해 제품 실사용 검증 | Sonnet 5.5, 검토 Fable 5.1 |
-| 디자인 브리프 | `products/_design-guide/DESIGN_PRINCIPLES.md` 절차(레퍼런스 → 브리프 → 토큰 → 기본값 회피 검토) | Sonnet 5.5 |
+| 디자인 브리프 | `nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md` 절차(레퍼런스 → 브리프 → 토큰 → 기본값 회피 검토) | Sonnet 5.5 |
 | 개발 | 모션 랜딩 보일러플레이트 + Claude Code | Opus 5.5 |
 | 검수 | QA 체크리스트(아래 4장) | Haiku 5.5 |
 | 배포 | Vercel Pro 팀 | - |
@@ -49,7 +49,7 @@
 
 | 항목 | 기준 |
 |---|---|
-| 성능 | LCP 2.5초 이하, 3D 번들 PC 1MB·모바일 300KB 이하(`products/_design-guide/HERO_3D.md` 2장) |
+| 성능 | LCP 2.5초 이하, 3D 번들 PC 1MB·모바일 300KB 이하(`nomad-design-modules/_design-guide/HERO_3D.md` 2장) |
 | 대체 화면 | `prefers-reduced-motion`, WebGL 미지원, 저사양에서 정지 이미지 표시 |
 | 반응형 | 375px, 768px, 1280px, 1920px 확인 |
 | SEO | title·description·OG 이미지, sitemap, robots, 네이버 서치어드바이저 등록 |

@@ -1,6 +1,6 @@
 # 08 디자인 시스템: NOMAD Book Trailer (book-trailer)
 
-작성일 2026-10-15. 이 제품의 디자인 시스템은 두 층이다. (A) 앱 UI(편집기·대시보드·랜딩)와 (B) 영상 시스템(렌더되는 트레일러의 캔버스·서체·모션·장면 규격). 공통 규칙은 `docs/products/_design-guide/DESIGN_SYSTEM.md`(정답 소스, 4단계 워크플로, 금지 사항), 절차는 `DESIGN_PRINCIPLES.md`, 앱 화면 구조는 `DASHBOARD_PATTERNS.md`를 따르고 이 문서는 book-trailer 값만 정한다. 수치는 모두 제안이며 4장 3단계(사람 비주얼 검토)에서 고친다. 화면 목록과 플로우는 `03_SCREENS_UX.md`.
+작성일 2026-10-15. 이 제품의 디자인 시스템은 두 층이다. (A) 앱 UI(편집기·대시보드·랜딩)와 (B) 영상 시스템(렌더되는 트레일러의 캔버스·서체·모션·장면 규격). 공통 규칙은 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(정답 소스, 4단계 워크플로, 금지 사항), 절차는 `DESIGN_PRINCIPLES.md`, 앱 화면 구조는 `DASHBOARD_PATTERNS.md`를 따르고 이 문서는 book-trailer 값만 정한다. 수치는 모두 제안이며 4장 3단계(사람 비주얼 검토)에서 고친다. 화면 목록과 플로우는 `03_SCREENS_UX.md`.
 
 ## 0. 정답 소스
 

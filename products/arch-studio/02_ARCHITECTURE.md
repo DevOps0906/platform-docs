@@ -7,7 +7,7 @@
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 데스크톱 셸 | Tauri 2.x + Rust 코어(`apps/desktop/src-tauri`). 플러그인: deep-link, updater, dialog, single-instance(딥링크를 실행 중 인스턴스로 넘김, Windows 동작 미확인) | 2.x 최신 고정(tauri 2.12.3, 2026-10-10 확인) | `docs/Tauri/README.md:22`, `:24` |
-| 데스크톱 화면 | Vite + React 19 + React Router(정적 번들), Tailwind CSS v4(`@import "tailwindcss"`, `@theme`, 4.x 고정, v3 문법 금지), shadcn/ui(Tailwind CSS v4 지원 버전) | 구현 시 고정, `latest` 금지 | `docs/Tauri/README.md:232`, `:362`, `docs/products/_design-guide/DESIGN_SYSTEM.md:67` |
+| 데스크톱 화면 | Vite + React 19 + React Router(정적 번들), Tailwind CSS v4(`@import "tailwindcss"`, `@theme`, 4.x 고정, v3 문법 금지), shadcn/ui(Tailwind CSS v4 지원 버전) | 구현 시 고정, `latest` 금지 | `docs/Tauri/README.md:232`, `:362`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:67` |
 | 3D 뷰포트 | three.js + React Three Fiber + drei. WebGL2 기준, WebGPU 미사용 | React 19 호환(구현 시 확인) | `docs/Tauri/README.md:258`, `01_PRD.md:45` |
 | 지오메트리 | Manifold WASM(Apache-2.0, 3D 불리언·압출). 2D 다각형 연산은 Clipper2 계열 후보(라이선스 미확인, AR-02-D1) | 구현 시 고정 | `01_PRD.md:232`, `docs/Tauri/README.md:290`(1주 스파이크) |
 | 도면 엔진 | 자체 TS 패키지 `packages/drafting`: 시트 모델 + 자체 DXF 작성기(D-20 (a)) + SVG 작성기 + 로컬 벡터 PDF(후보 jsPDF + svg2pdf.js, 라이선스 미확인, D-23) + PNG(WebView 캔버스 래스터화) | 자체 코드 | `01_PRD.md:479`, `:482` |

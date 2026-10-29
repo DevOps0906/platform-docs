@@ -7,7 +7,7 @@
 | 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장 |
-| 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저, 스튜디오), `DESIGN_PRINCIPLES.md`(공개 청첩장·쇼룸), `REFERENCES.md` microweb 절, 랜딩이면 `HERO_3D.md` |
+| 3 | UI 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저, 스튜디오), `DESIGN_PRINCIPLES.md`(공개 청첩장·쇼룸), `REFERENCES.md` microweb 절, 랜딩이면 `HERO_3D.md` |
 | 4 | DB 정본 `docs/products/_supabase-modular/migrations/1500_microweb.sql` |
 
 ## 2. 절대 규칙

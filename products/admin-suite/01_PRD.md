@@ -2,7 +2,7 @@
 
 이 문서는 공유 코어 `packages/admin-kit`(KIT)와 앱 3개(ERP, HMS, SMS)를 절마다 나눠 적는다(확정 결정 2). 근거 표기에서 `analysis`는 `docs/products/00_MERGE_ANALYSIS.md`다.
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(사내 규정·매뉴얼 RAG, 기관 운영 위키, LangGraph `admin.assistant`, 채팅 업무 어시스턴트)과 업무 음성 질의를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 3D 히어로는 공개 랜딩이 없어 적용하지 않는다(03장 4절). **hms는 사용자 결정(2026-10-13)으로 전용 서버만 쓴다**: 상용 AI·음성 API 없음, 공용 GPU·음성 서버 없음, 공용 Dify 없음. 아래 hms 항목은 모두 이 결정을 전제로 한다.
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(사내 규정·매뉴얼 RAG, 기관 운영 위키, LangGraph `admin.assistant`, 채팅 업무 어시스턴트)과 업무 음성 질의를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 3D 히어로는 공개 랜딩이 없어 적용하지 않는다(03장 4절). **hms는 사용자 결정(2026-10-13)으로 전용 서버만 쓴다**: 상용 AI·음성 API 없음, 공용 GPU·음성 서버 없음, 공용 Dify 없음. 아래 hms 항목은 모두 이 결정을 전제로 한다.
 
 ## 1. 페르소나와 핵심 과제
 
@@ -32,14 +32,14 @@
 | KIT: Toss 구독(standard 플랜) | Phase 2 | 원본에 결제 근거 없음. 출시는 계약형(수동 엔타이틀먼트) 제안 |
 | ERP: 상품, 입출고/조정, 판매(상태/취소), 대시보드, 직원/부서, 가입 승인 | MVP | `analysis:1159-1169` |
 | ERP: 판매 추이 차트, 설정 저장, 상품 이미지 | MVP 직후(P1) | `docs/reviews/ERP-Wesite.md:128`, `:130` |
-| ERP: 엑셀 내보내기 | Phase 2 | `docs/products/_design-guide/SKILLS.md:46` |
+| ERP: 엑셀 내보내기 | Phase 2 | `docs/nomad-design-modules/_design-guide/SKILLS.md:46` |
 | HMS: 직원 초대/역할, 환자 등록/검색/상세, 예약 캘린더, 실시간 대기열, 진료기록, 검사 의뢰/입력/승인, 접근 기록 | MVP | `analysis:1171-1182` |
 | HMS: 수납, 관리자 대시보드 실데이터 | P1 | `Hospital/PRD.md:19`, `docs/reviews/Hospital.md:120` |
 | HMS: 결과지 첨부(Storage), 처방전 출력 | Phase 2 | 근거 없음, 제안 |
 | SMS: 학급/과목 CRUD, 구성원 초대·배정, 출석 체크 보드, 관리자 통계, 학생 대시보드 | MVP | `analysis:1183-1190` |
 | SMS: 출석 추이 그래프, 학생 실시간 알림 | P1 | `docs/reviews/School_Management_System.md:108`, `:22` |
-| 공개 마케팅 랜딩 | 없음 | 내부 시스템, 로그인 화면만(`docs/products/_design-guide/REFERENCES.md:165`) |
-| 3D 히어로 | 적용 제외 | 공개 랜딩이 없는 업무용 앱(`docs/products/_design-guide/HERO_3D.md:92`). 로그인 화면은 가볍게 유지(03장 4절) |
+| 공개 마케팅 랜딩 | 없음 | 내부 시스템, 로그인 화면만(`docs/nomad-design-modules/_design-guide/REFERENCES.md:165`) |
+| 3D 히어로 | 적용 제외 | 공개 랜딩이 없는 업무용 앱(`docs/nomad-design-modules/_design-guide/HERO_3D.md:92`). 로그인 화면은 가볍게 유지(03장 4절) |
 | KIT: AI 업무 어시스턴트(채팅 위젯, 권한 확인 → 문서 검색 → 출처 포함 답변 → compliance) | MVP | 확정 결정 13, 14(`docs/products/00_MERGE_ANALYSIS.md:21-22`) |
 | KIT: 사내 규정·매뉴얼 RAG 컬렉션(업로드, 색인, 역할별 공개 범위) | MVP | 확정 결정 13 |
 | KIT: 기관 운영 위키(규정·매뉴얼을 정리한 기관별 위키, 검수·게시) | MVP | 확정 결정 13, `docs/products/_platform-core/LLM_WIKI.md:37-47` |
@@ -405,7 +405,7 @@ seed 주의: 통합 DB `seed.sql`은 2026-10-13부터 모놀리스 seed와 같�
 | D-15 | 문서 공개 범위 구조 | A) 공개 범위별 컬렉션 고정(3.7절) / B) 문서별 허용 역할 지정(ACL) | A. B는 청크 메타데이터 필터와 권한 변경 시 재색인 설계가 필요해 Phase 2 |
 | D-16 | SMS 학생의 AI 어시스턴트 접근 | A) MVP 제외, 교직원만 / B) 학생용 컬렉션 `sms-rules-all`로 허용 | A. 미성년자 접근은 학교 승인과 법정대리인 동의 절차 확인 뒤 Phase 2(6.3절) |
 | D-17 | 위키 게시 승인 | A) 기관 관리자 검수 후 `published` / B) 자동 게시 | A. 자동 게시는 오류가 규정처럼 퍼진다 |
-| D-18 | 채팅 위젯 레퍼런스 Astryx | 존재·라이선스 확인 뒤 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). ADM-06-041에서 결과 기록 |
+| D-18 | 채팅 위젯 레퍼런스 Astryx | 존재·라이선스 확인 뒤 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). ADM-06-041에서 결과 기록 |
 | D-19 | hms 음성 모델과 진료 구술 | 한국어 의료 용어 STT 정확도, 전용 TTS 라이선스(코드·가중치 각각) 확인. 진료 구술은 Phase 2 | 구현 시 확인(`VOICE_ARCHITECTURE.md` 4.1절 후보). 구술은 접근 기록 설계 뒤 |
 | D-20 | 위키 대상 컬렉션 범위 | A) 구성원 전원 공개 컬렉션만(3.7절, R-14 전) / B) 코어 RLS 개정(R-14) 뒤 전 컬렉션 | A로 출시, R-14 반영 뒤 B. 코어가 바뀌지 않으면 제한된 컬렉션의 위키는 만들지 않는다 |
 

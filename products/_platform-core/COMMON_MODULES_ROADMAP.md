@@ -123,7 +123,7 @@ analytics는 점수가 높지만 직접 만드는 부분이 얇아(외부 도구
 |---|---|
 | 목적 | 랜딩 → 폼(또는 챗봇) → 리드 → 자동 응답·리드 마그넷 전달 → 담당자 알림 → CRM. 모든 제품의 매출 입구 |
 | 표 | `funnel.forms`(필드 정의 JSON, 동의 문구 버전, 스팸 방지 설정), `funnel.submissions`(원본 제출, IP 해시), `funnel.leads`(연락처, 동의 기록, 상태 new·contacted·qualified·won·lost, 점수), `funnel.touches`(UTM source·medium·campaign·content·term, referrer, 랜딩 경로, 첫·마지막 접점), `funnel.sequences`(자동 응답 단계, notify 템플릿 연결) |
-| 화면 | 폼 빌더(필드 끌어놓기, 미리보기), 리드 목록(B 패턴), 리드 상세(G 패턴), 퍼널 보드(D 패턴: 단계별 칸반), 출처 리포트(L 패턴) — 패턴 코드는 `docs/products/_design-guide/DASHBOARD_PATTERNS.md` |
+| 화면 | 폼 빌더(필드 끌어놓기, 미리보기), 리드 목록(B 패턴), 리드 상세(G 패턴), 퍼널 보드(D 패턴: 단계별 칸반), 출처 리포트(L 패턴) — 패턴 코드는 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md` |
 | 공개 API | `POST /api/funnel/submit`(로그인 없음, 레이트 리밋 `anon:<app>:<ip 해시>`, 허니팟·Turnstile, 동의 체크 필수), 임베드 스크립트(`<script>` 1줄로 외부 사이트 폼) |
 | 연결 | notify(자동 응답·담당자 알림), sheets-sync(시트로 내보내기), crm(qualified 리드 → 연락처·거래), analytics(전환 이벤트), chat-widget(대화 중 리드 수집) |
 | MVP | 폼 1종(이름·연락처·문의), 리드 목록·상세, UTM 저장, 자동 응답 메일 1개, 담당자 알림톡, 시트 내보내기 |

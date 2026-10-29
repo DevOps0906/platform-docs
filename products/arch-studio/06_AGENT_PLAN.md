@@ -14,7 +14,7 @@
 | 화면 경로 | `desk/src/routes/**`는 AR-06-004가 03장 경로 전부를 `feat/<기능>` 진입점 지연 로드로 만든다. 기능 작업은 `feat/<기능>/**`만 쓴다. 공용 설정(`package.json`, `eslint.config.mjs`, `tsconfig.base.json`)은 AR-06-003에 요청한다 |
 | 도면 블록 소유 | `draft/src/{sheet,titleblock,layers,annotate}/**` = 020, `draft/src/writers/dxf/**`·`draft/golden/{_harness,writer-*}/**`·`.github/workflows/golden.yml` = 021, `draft/src/writers/{svg,png,pdf}/**` = 022, `draft/src/views/<kind>/**`와 `draft/golden/<kind>-*/**` = 뷰 작업(023~026). 뷰 생성기는 법규 값을 다시 계산하지 않고 JudgmentResult와 `packages/geometry`만 읽는다(`02_ARCHITECTURE.md:164`) |
 | 스파이크 코드 | `spikes/drafting/**`(AR-06-019)는 버리는 코드다. 패키지가 import하면 린트 실패. 스파이크 결과는 `[DECISION]`으로만 다음 작업에 넘긴다 |
-| 디자인 순서 | 화면 작업(W4 이후)은 디자인 시스템 4단계(AR-06-012)가 끝난 뒤 시작한다(`docs/products/_design-guide/DESIGN_SYSTEM.md:48`). 3단계(AR-06-011)는 사람이 판정한다 |
+| 디자인 순서 | 화면 작업(W4 이후)은 디자인 시스템 4단계(AR-06-012)가 끝난 뒤 시작한다(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:48`). 3단계(AR-06-011)는 사람이 판정한다 |
 | 코어 | `_platform-core/`, `_design-guide/`, `_supabase-modular/`의 다른 파일, `packages/core-*`, 공용 ai-service 원본을 고치지 않는다. 필요하면 6장 요청 |
 | 테스트 짝 | 모든 P0 작업은 수용 기준을 확인하는 테스트를 같은 작업 안에 두거나 테스트 작업(002, 021, 045, 049, 059, 060, 061)이 덮는다. 대응표는 7.1절 |
 | 인증 단계 | 단계 분기 코드는 인증 경로(`02_ARCHITECTURE.md:50`)에만. A(008) → G1 → B(062) → G2 → C1(063)·C2(064). 단계 전환은 사람이 판정한다(`docs/products/_platform-core/AUTH_ROADMAP.md:173-184`, `:221-229`) |
@@ -31,7 +31,7 @@
 | AR-06-006 | T-005 Rust 로컬 명령: `local_db_*` 이름 붙은 쿼리(B 분류 11테이블), 로컬 마이그레이션·업데이트 전 스냅샷, `fs.rs`(대화상자 경로·크기 상한), `export.rs`(저장 대화상자 경로만) | `rust/src/commands/{local_db,fs,export}.rs`, `desk/migrations/**` | 004 | P0 | M | Opus | 화면이 준 문자열 경로·임의 SQL 거부(테스트). 마이그레이션 재실행 멱등, 필드 추가만. DXF 20MB·IFC/.3dm 100MB 초과는 읽기 전 `AR055`, 쓰기 실패 `AR052`. `cargo test` 통과 | `docs/Tauri/README.md:317`, `:104`, `02_ARCHITECTURE.md:92`, `:387`(위험 #13) |
 | AR-06-007 | T-006 클라우드 API 클라이언트(Bearer, 재시도 대기열, 오류 코드 매핑) | `feat/api-client/**` | 005 | P0 | M | Opus | 오프라인 요청이 복귀 후 순서대로 처리되고 실패가 화면에 보인다. 금액·`org_id` 필드를 보내는 호출 0(타입으로 금지). 04장 7절 코드 → 03장 5.2절 문구 매핑 테스트. 코어 요청 R-A6·R-A7 반영 전 Route Handler 호출 머지 보류 | `docs/Tauri/README.md:318`, `:304`, `:353`, `04_API.md:508` |
 | AR-06-008 | 인증 Stage A: 인증 모듈 경계, 웹 Mock 패널 + `POST /api/dev/login`, 시드 스크립트(`--app arch`, PRD 4.3절 상태 페르소나), 데스크톱 개발 빌드 Mock(`signInWithPassword`), `POST /api/auth/finish`(finishLogin), `/onboarding` 골격(국외 이전 동의 포함) | `web/src/lib/auth/`, `web/src/app/(auth)/`, `web/src/app/api/dev/login/`, `web/src/app/api/auth/finish/`, `scripts/dev/`, `packages/shell-bridge/src/auth/**`, `feat/auth/**` | 001, 003, 005 | P0 | M | Opus | `owner` 로그인 → `session_context('arch')` `entitled=true`, 플랜 `trial`, 잔액 30, 재로그인 3회 뒤 가입 크레딧 원장 1행. 원격·배포에서 `/api/dev/login` 404, 데스크톱 릴리스 번들에 Mock 패널·시드 이메일 0. 인증 경로 밖 `AUTH_MODE`·`VITE_AUTH_MODE` 참조 0 | `01_PRD.md:59`, `docs/products/_platform-core/AUTH_ROADMAP.md:347`, `02_ARCHITECTURE.md:474`, `:388`(위험 #14) |
-| AR-06-009 | 디자인 레퍼런스 확정(1단계) | `docs/file/03-설계/디자인/DESIGN.md` 1절 | 없음 | P0 | S | Sonnet | 03장 3.19절 주 레퍼런스(Atlassian + Primer, AI 화면 Astryx 패턴만)와 4.1절 랜딩 레퍼런스 반영, 고문(Fable) 검토 기록 | `docs/products/_design-guide/DESIGN_SYSTEM.md:43`, `03_SCREENS_UX.md:511-521` |
+| AR-06-009 | 디자인 레퍼런스 확정(1단계) | `docs/file/03-설계/디자인/DESIGN.md` 1절 | 없음 | P0 | S | Sonnet | 03장 3.19절 주 레퍼런스(Atlassian + Primer, AI 화면 Astryx 패턴만)와 4.1절 랜딩 레퍼런스 반영, 고문(Fable) 검토 기록 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:43`, `03_SCREENS_UX.md:511-521` |
 | AR-06-010 | 디자인 시스템 2단계: `packages/ui/tokens.css`(라이트·다크, 컴팩트·기본, 3D·도면 미리보기 색 토큰) + 기본 컴포넌트 + CAD형 컴포넌트(03장 3.19절 목록) + `/dev/components` | `packages/ui/tokens.css`, `packages/ui/src/**`, `web/src/app/dev/components/**` | 009 | P0 | L | Sonnet | 3.19절 배리언트 전부, 라이트/다크 x 컴팩트/기본 스크린샷, 대비 AA(axe), `tailwind.config.js` 없음, hex 직접 사용 0(린트). DXF 색은 토큰이 아니라 ACI 고정 | `DESIGN_SYSTEM.md:44`, `:67-72`, `03_SCREENS_UX.md:513-521` |
 | AR-06-011 | 비주얼 검토(3단계, 판정은 사람) | (산출물) 스크린샷 표, 수정 기록 | 010 | P0 | M | Sonnet | Sonnet은 스크린샷 표와 수정 기록 양식만 준비한다. 상태·크기 배리언트별 수치 판정과 수정 결정은 사람(대표님)이 하고 기록을 남긴다 | `DESIGN_SYSTEM.md:45` |
 | AR-06-012 | 정답 확정(4단계) | `docs/file/03-설계/디자인/{DESIGN,COMPONENTS}.md` | 011 | P0 | S | Opus | 문서가 `packages/ui` 코드 토큰·컴포넌트와 일치(다르면 코드 기준으로 문서 수정). 완료가 화면 작업 진입 조건 | `DESIGN_SYSTEM.md:46` |
@@ -210,7 +210,7 @@ MVP·P1 기능 29개가 모두 1개 이상의 작업에 매핑된다. 열린 결
 
 | 항목 | 출처 | 작업 ID | 게이트·비고 |
 |---|---|---|---|
-| 디자인 1단계 레퍼런스 | `docs/products/_design-guide/DESIGN_SYSTEM.md:43` | 009 | W0 |
+| 디자인 1단계 레퍼런스 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:43` | 009 | W0 |
 | 디자인 2단계 토큰·컴포넌트 | `:44` | 010 | W0-D |
 | 디자인 3단계 비주얼 검토 | `:45` | 011 | 사람 판정 |
 | 디자인 4단계 정답 확정 | `:46` | 012 | 화면 작업 진입 조건 |
@@ -238,9 +238,9 @@ MVP·P1 기능 29개가 모두 1개 이상의 작업에 매핑된다. 열린 결
 | R-A9 | T-C8: 셸용 로그인 마무리 엔드포인트(`finishLogin`) | `packages/core-auth` | `POST /api/auth/finish`가 웹 콜백과 같은 검사를 쓰게 한다(`docs/Tauri/README.md:378`) | W1(008) |
 | R-A10 | T-C7: 네이버 브리지용 1회용 교환 코드 | `packages/core-auth`, `AUTH_ROADMAP.md` 7.2절 | D-18이 브리지일 때만 | W8(064) |
 | R-A11 | `DB_CONVENTIONS.md` 2장 번호 표 2400 행을 "PRD 초안, 조각 없음" → "조각 있음(`2400_arch.sql`)"으로, 1장 SQLSTATE `AR`의 "(제안)" 해제 | `docs/products/_platform-core/DB_CONVENTIONS.md:43`, `:22` | 05장 조각 작성 완료 반영 | W0(001) |
-| R-A12 | `HERO_3D.md` 5장 제품별 3D 소재 표에 arch-studio 행 추가(대지 → 엔벨로프 솟음·일조사선 깎임 → 매스 적층 → 배치도 선, 모바일 절충: 엔벨로프 1회 + 매스 1개) | `docs/products/_design-guide/HERO_3D.md:77-94` | 03장 4.5절 확정 소재(`03_SCREENS_UX.md:603`)가 공용 표에 없다 | W0-D(057 전) |
+| R-A12 | `HERO_3D.md` 5장 제품별 3D 소재 표에 arch-studio 행 추가(대지 → 엔벨로프 솟음·일조사선 깎임 → 매스 적층 → 배치도 선, 모바일 절충: 엔벨로프 1회 + 매스 1개) | `docs/nomad-design-modules/_design-guide/HERO_3D.md:77-94` | 03장 4.5절 확정 소재(`03_SCREENS_UX.md:603`)가 공용 표에 없다 | W0-D(057 전) |
 | R-A13 | `AUTH_ROADMAP.md` 8장 arch 행의 `arch`(제안) 확정, 11장 적용 순서 표에 arch-studio 추가 | `AUTH_ROADMAP.md:339`, 11장 | 매트릭스 행은 있으나 적용 순서가 없다 | W1(008) |
-| R-A14 | `REFERENCES.md`에 arch-studio 절 추가(CAD·건축 도구 레퍼런스 URL 확인 후) | `docs/products/_design-guide/REFERENCES.md` | 지금은 다른 제품 절만 인용한다(제안: 3.19절 패턴 출처를 한곳에 둔다) | W0-D(009) |
+| R-A14 | `REFERENCES.md`에 arch-studio 절 추가(CAD·건축 도구 레퍼런스 URL 확인 후) | `docs/nomad-design-modules/_design-guide/REFERENCES.md` | 지금은 다른 제품 절만 인용한다(제안: 3.19절 패턴 출처를 한곳에 둔다) | W0-D(009) |
 
 반영 현황(2026-10-16): R-A1~R-A14 모두 남음. R-A13은 매트릭스 행만 이미 있다(`AUTH_ROADMAP.md:339`).
 
@@ -287,7 +287,7 @@ MVP·P1 기능 29개가 모두 1개 이상의 작업에 매핑된다. 열린 결
 
 ## 8. 설득형 랜딩·플랫폼 검증 작업 (2026-10-17, 검토용)
 
-요구는 01장 10.1절(AR-F-039~042), 결정은 01장 10.3절(D-27~D-30), 화면은 03장 7장, 공용 규칙은 `docs/products/_design-guide/LANDING_PERSUASION.md`다. DB 변경과 코어 요청은 없다. 1~7장은 그대로 두고(줄 번호 인용 보호) 추가분을 이 장에 모았다.
+요구는 01장 10.1절(AR-F-039~042), 결정은 01장 10.3절(D-27~D-30), 화면은 03장 7장, 공용 규칙은 `docs/nomad-design-modules/_design-guide/LANDING_PERSUASION.md`다. DB 변경과 코어 요청은 없다. 1~7장은 그대로 두고(줄 번호 인용 보호) 추가분을 이 장에 모았다.
 
 ### 8.1 작업 목록 (2절과 같은 열)
 

@@ -6,7 +6,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 대상 사용자 | 자기 이해나 가족 선물용으로 사주·타로 리포트를 소장하려는 20~40대(`Astro AI/기획안/공통/PRD.md:21`, `FortuneDocs/PRD.MD:15`, `docs/products/_design-guide/REFERENCES.md:61`) |
+| 대상 사용자 | 자기 이해나 가족 선물용으로 사주·타로 리포트를 소장하려는 20~40대(`Astro AI/기획안/공통/PRD.md:21`, `FortuneDocs/PRD.MD:15`, `docs/nomad-design-modules/_design-guide/REFERENCES.md:61`) |
 | MVP | 사주 + 타로 + 통합 리딩, 크레딧팩 일회 결제(확정 결정 7, `docs/products/00_MERGE_ANALYSIS.md:16`) |
 | 플랜 정본 | Astro AI 단가표(확정 결정 8, `docs/products/00_MERGE_ANALYSIS.md:17`, `Astro AI/기획안/공통/PRD.md:29-58`) |
 | 서비스명 | 신비로운AI, 폴더 `astro-ai`(확정 결정 10, `docs/products/00_MERGE_ANALYSIS.md:19`) |

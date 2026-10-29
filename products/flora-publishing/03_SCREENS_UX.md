@@ -1,14 +1,14 @@
 # 03 화면과 UX: FLORA Publishing
 
-2026-10-13 개정: AI 채팅·음성·설정집 화면(3.1절), 디자인 시스템(3.2절), 3D 히어로(4.6절)를 더했다. **메인페이지 히어로는 2026-10-13 사용자 결정(확정 결정 15, `docs/products/00_MERGE_ANALYSIS.md:23`)으로 "판면 정지 렌더 + 판형 전환 1회"에서 3D로 바뀌었다.** 기기 구성·성능 예산·대체 화면은 `docs/products/_design-guide/HERO_3D.md`를, 디자인 시스템은 `docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다.
+2026-10-13 개정: AI 채팅·음성·설정집 화면(3.1절), 디자인 시스템(3.2절), 3D 히어로(4.6절)를 더했다. **메인페이지 히어로는 2026-10-13 사용자 결정(확정 결정 15, `docs/products/00_MERGE_ANALYSIS.md:23`)으로 "판면 정지 렌더 + 판형 전환 1회"에서 3D로 바뀌었다.** 기기 구성·성능 예산·대체 화면은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`를, 디자인 시스템은 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다.
 
 2026-10-14 FLORA 개편(검토용): 제품을 4개 영역(공개 메인페이지, 작가 작업 공간, 에이전트 작업 공간, 운영 콘솔)과 3개 디자인 레이어로 나누고(8절), 랜딩 섹션 6개(8.3절), 에디터 3단 레이아웃과 AI 패널(8.4절), 에이전트 화면(8.5절), 운영 콘솔(8.6절)을 더했다. 기존 4절 토큰·A안·3D 히어로는 그대로이며 제안서의 색·서체·헤드라인은 01장 D23~D25로 올렸다.
 
-작성일 2026-10-12. 화면 구성의 원본은 `Flora-v2/DESIGN.md`(아래 v2 DESIGN)와 `Flora-v2/PRD.md` 3.1절. 메인페이지는 `docs/products/_design-guide/DESIGN_PRINCIPLES.md`(아래 DP) 절차를 따른다. 모든 UI 문구는 한국어(`Flora-v2/CLAUDE.md` UI 텍스트 규칙).
+작성일 2026-10-12. 화면 구성의 원본은 `Flora-v2/DESIGN.md`(아래 v2 DESIGN)와 `Flora-v2/PRD.md` 3.1절. 메인페이지는 `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md`(아래 DP) 절차를 따른다. 모든 UI 문구는 한국어(`Flora-v2/CLAUDE.md` UI 텍스트 규칙).
 
 ## 1. 정보 구조와 화면 목록
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -42,7 +42,7 @@
 
 채팅 패널은 경로가 아니라 에디터·위저드 오른쪽 시트다(3.1절). 설정집은 에디터 사이드의 "설정집" 탭에서도 열린다.
 
-화면 구조 패턴(2026-10-14, `docs/products/_design-guide/DASHBOARD_PATTERNS.md` 7절 flora-publishing 행을 이 제품에서 확정): 모든 앱 화면은 A(앱 셸). `/dashboard`는 "오늘 처리할 일"(원고 단계별 다음 행동), `/dashboard/books`는 B(리스트-상세), 위저드 `/books/[id]/wizard`와 `/dashboard/books/new`는 I(위저드·단계형), 제작 단계 보드(챕터·소제목 상태)는 D(칸반), `/books/[id]/editor`는 J(에디터 + 미리보기), `/dashboard/agents`·`/admin/jobs`·실행 추적은 N(작업·실행 모니터), `/dashboard/settings`·`/dashboard/billing`은 H(설정). 화면 작업 지시는 `DESIGN_SYSTEM.md` 10장 형식으로 이 패턴 코드를 함께 적는다.
+화면 구조 패턴(2026-10-14, `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md` 7절 flora-publishing 행을 이 제품에서 확정): 모든 앱 화면은 A(앱 셸). `/dashboard`는 "오늘 처리할 일"(원고 단계별 다음 행동), `/dashboard/books`는 B(리스트-상세), 위저드 `/books/[id]/wizard`와 `/dashboard/books/new`는 I(위저드·단계형), 제작 단계 보드(챕터·소제목 상태)는 D(칸반), `/books/[id]/editor`는 J(에디터 + 미리보기), `/dashboard/agents`·`/admin/jobs`·실행 추적은 N(작업·실행 모니터), `/dashboard/settings`·`/dashboard/billing`은 H(설정). 화면 작업 지시는 `DESIGN_SYSTEM.md` 10장 형식으로 이 패턴 코드를 함께 적는다.
 
 사이드바(대시보드, 2026-10-14): 홈, 내 책, AI 에이전트, 페르소나, 사용량·결제, 설정. 검수 대기 항목이 있으면 "AI 에이전트" 옆에 개수 배지. v2 사이드바의 오디오북·자동화 메뉴는 뺀다(v2 DESIGN 4.2절, 확정 결정 7). 교육·강의 메뉴는 없다(01장 2절).
 
@@ -212,19 +212,19 @@
 
 ### 3.2 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 flora-publishing의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 flora-publishing의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 앱 화면(위저드 10단계 진행, 챕터·소제목 상태 보드, 목차 드래그 정렬, 생성 실행 상태, 모달·사이드바 중첩, 권한·상태 배지): **Atlassian**. 보조: **Primer**(책 목록·크레딧 원장·내보내기 기록 표의 정보 밀도, 컴팩트/기본 두 밀도). AI 채팅·음성·설정집 화면: Astryx 패턴(존재·라이선스 미확인, 01장 D17) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` flora-publishing 절 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` (원고·제작 단계 = 협동·워크플로 행 `:56`) |
+| 주 레퍼런스 | 앱 화면(위저드 10단계 진행, 챕터·소제목 상태 보드, 목차 드래그 정렬, 생성 실행 상태, 모달·사이드바 중첩, 권한·상태 배지): **Atlassian**. 보조: **Primer**(책 목록·크레딧 원장·내보내기 기록 표의 정보 밀도, 컴팩트/기본 두 밀도). AI 채팅·음성·설정집 화면: Astryx 패턴(존재·라이선스 미확인, 01장 D17) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` flora-publishing 절 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:51-61` (원고·제작 단계 = 협동·워크플로 행 `:56`) |
 | 가져올 것 | Atlassian: 칼럼으로 나뉜 상태 보드(소제목 상태), 드래그 앤 드롭의 드롭 위치 표시와 키보드 대안 이동, 상태 lozenge(아이콘 + 텍스트), 사이드바 접힘, 모달 중첩 최소화, 포커스 링과 접근성 기준, 디자인 토큰 체계. Primer: 컴팩트/기본 밀도, 숫자 열 정렬, 상태 라벨 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`, Astryx 패키지), Atlassian·Primer 색과 아이콘(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, 모든 패널을 같은 둥근 카드로 나누는 SaaS 카드 키트(`REFERENCES.md`의 Lexi 항목) | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next 16.2.x, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `web/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-canvas`(교정지), `--color-surface`(판면), `--color-text`(청먹), `--color-text-muted`, `--color-accent`(공정 시안), `--color-mark`(맞춤 마젠타: 재단선·맞춤표·교정 표시와 3D 재단선에만), `--color-rule`(재단 회색: 괘선·치수), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 화면 테마 7종(01장 PB-F-032)은 `data-theme` 값 7개로 이 토큰 세트를 갈아 끼우는 방식이다(기본은 라이트와 다크 한 쌍, 다크 팔레트는 `Flora-v2` 다크 계열을 3단계 사람 검토에서 확정, `REFERENCES.md:45`). 잠금은 DB가 강제(`PB008`) | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
+| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`, Astryx 패키지), Atlassian·Primer 색과 아이콘(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, 모든 패널을 같은 둥근 카드로 나누는 SaaS 카드 키트(`REFERENCES.md`의 Lexi 항목) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next 16.2.x, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `web/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-canvas`(교정지), `--color-surface`(판면), `--color-text`(청먹), `--color-text-muted`, `--color-accent`(공정 시안), `--color-mark`(맞춤 마젠타: 재단선·맞춤표·교정 표시와 3D 재단선에만), `--color-rule`(재단 회색: 괘선·치수), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 화면 테마 7종(01장 PB-F-032)은 `data-theme` 값 7개로 이 토큰 세트를 갈아 끼우는 방식이다(기본은 라이트와 다크 한 쌍, 다크 팔레트는 `Flora-v2` 다크 계열을 3단계 사람 검토에서 확정, `REFERENCES.md:45`). 잠금은 DB가 강제(`PB008`) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
 | 컴포넌트(정답) | `web/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | 같은 곳 |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다. `design-system/flora-publishing/MASTER.md`는 DP 3단계 초안이며 정답이 아니다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(PB-06-039, PB-06-040, PB-06-041 사람 검토, PB-06-042). 화면 작업(021~024, 050, 051, 052, 053, 054)은 4단계 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다. `design-system/flora-publishing/MASTER.md`는 DP 3단계 초안이며 정답이 아니다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(PB-06-039, PB-06-040, PB-06-041 사람 검토, PB-06-042). 화면 작업(021~024, 050, 051, 052, 053, 054)은 4단계 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:39-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -353,7 +353,7 @@ A안 와이어프레임의 [A5 펼친 면]은 4.6절 3D 장면의 마지막 프�
 
 ### 4.6 3D 히어로 (원고 낱장 → 제본 → 책장 넘김)
 
-정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`)이고, 이 절은 flora 소재(`:82`)와 장면만 정한다. 이 히어로는 2026-10-13 사용자 결정으로 바뀌었다. 4.3절 토큰과 4.2절 "피할 인상"(보라 그라디언트 AI 툴, 크림색 문학 잡지 템플릿)은 그대로 지킨다.
+정본은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`)이고, 이 절은 flora 소재(`:82`)와 장면만 정한다. 이 히어로는 2026-10-13 사용자 결정으로 바뀌었다. 4.3절 토큰과 4.2절 "피할 인상"(보라 그라디언트 AI 툴, 크림색 문학 잡지 템플릿)은 그대로 지킨다.
 
 | 기기 | 구성(HERO_3D 1절) | flora 장면 |
 |---|---|---|
@@ -390,7 +390,7 @@ A안 와이어프레임의 [A5 펼친 면]은 4.6절 3D 장면의 마지막 프�
 | 위치 | `web/src/features/hero3d/`(`ManuscriptScene`, `BindingSequence`, `MobileBook`, `StaticFallback`, `useHeroTier`), 정지 이미지 `web/public/hero/` |
 | 형상 | 코드 생성 도형(Box, Plane, Line). 외부 glTF·글꼴 없음. 책장 넘김은 책등 축 회전(`rotation.y`)을 시차로 적용 |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/products/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:17-30`) |
 | 태블릿 기울기 | iOS Safari는 [기울여 보기] 버튼 탭으로 권한을 요청하고, 거부·미지원이면 터치 드래그만 쓴다 |
 | 공용 키트 | 공용 3D 장면 키트 `packages/ui-3d`(제안, 로더·토큰 재질·조명·대체 이미지·성능 모니터) 위에 flora 소재(낱장, 책)만 얹는다. 키트가 아직 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 R12) |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |
@@ -723,7 +723,7 @@ AI 패널 규칙: 제안을 승인하기 전에는 원고를 바꾸지 않는다
 
 ## 9. 설득형 랜딩과 "왜 FLORA인가" 검증 (2026-10-17, 검토용)
 
-요구는 01장 9.1절(PB-F-064~069), 결정은 01장 9.4절(D28~D32), 공용 규칙은 `docs/products/_design-guide/LANDING_PERSUASION.md`(아래 LP), 작업은 06장 10절이다. 설득 순서와 검증 방식만 쓰고, 다른 회사 랜딩의 문구·수치와 다크 글래스 비주얼은 쓰지 않는다(LP 1장). 시각은 8.2절 marketing 레이어 그대로이며, 이 절의 칸은 정지 상태로 읽혀야 한다(모션은 히어로 3D 하나).
+요구는 01장 9.1절(PB-F-064~069), 결정은 01장 9.4절(D28~D32), 공용 규칙은 `docs/nomad-design-modules/_design-guide/LANDING_PERSUASION.md`(아래 LP), 작업은 06장 10절이다. 설득 순서와 검증 방식만 쓰고, 다른 회사 랜딩의 문구·수치와 다크 글래스 비주얼은 쓰지 않는다(LP 1장). 시각은 8.2절 marketing 레이어 그대로이며, 이 절의 칸은 정지 상태로 읽혀야 한다(모션은 히어로 3D 하나).
 
 이 절은 1절 화면 표와 8.3절 섹션 표의 추가분이다(다른 문서가 이 파일을 줄 번호로 인용하므로 앞 절을 고치지 않고 여기에 모은다).
 

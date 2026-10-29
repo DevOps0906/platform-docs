@@ -8,7 +8,7 @@
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 2 | 이 폴더 `README.md`, `01_PRD.md` ~ `07_SOURCE_MIGRATION.md` |
 | 3 | 맡은 작업의 SQL: `_supabase-modular/migrations/1600_erp.sql`, `1700_sms.sql`, `supabase/monolith/<app>/` |
-| 4 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` admin-suite 절. 3D 히어로(`HERO_3D.md`)는 이 제품에 적용하지 않는다 |
+| 4 | UI 작업이면 `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` admin-suite 절. 3D 히어로(`HERO_3D.md`)는 이 제품에 적용하지 않는다 |
 
 ## 2. 절대 규칙
 

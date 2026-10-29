@@ -143,8 +143,8 @@ SECURITY_BASELINE 14장 중 해당 항목 + 제품 고유 결함.
 | 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용, 과금 우회 | DB의 메시지·대본만 낭독. 샘플만 100자 이하 + 선차감 + 레이트 리밋 |
 | 타인(원본 배우·크리에이터) 목소리 복제 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80` | 음성·초상 권리 침해 | 미제공, Phase 2도 본인 한정 |
 | 미디어 처리(FFmpeg·Whisper)를 FastAPI AI 서비스에 넣기 | 02장 2절 | LLM 키와 미디어 바이너리 경계 붕괴 | 미디어 워커(`core.claim_jobs`)에만 |
-| 3D 재질에 토큰 밖 색, 3D 안 숫자·글자, 보라 글로우·네온 그리드 | `docs/products/_design-guide/HERO_3D.md:52-53`, REFERENCES sceneflow 피할 인상 | 피할 인상, 검증 불가 수치 | 03장 4.5절 토큰 표 |
-| "Tailwind로"만 지시해 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
+| 3D 재질에 토큰 밖 색, 3D 안 숫자·글자, 보라 글로우·네온 그리드 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53`, REFERENCES sceneflow 피할 인상 | 피할 인상, 검증 불가 수치 | 03장 4.5절 토큰 표 |
+| "Tailwind로"만 지시해 v3 설정 생성 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 

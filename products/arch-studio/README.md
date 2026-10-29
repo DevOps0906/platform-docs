@@ -33,7 +33,7 @@
 | nomad-docs(설계) | `docs/products/nomad-docs/` | 기획만 | 체크리스트 효과 엔진(결정적 순수 함수), "숫자는 서버가 계산하고 LLM은 해석만" 원칙, 고위험 문서 템플릿 전용 규칙, 문서 묶음 생성, 회의 녹음 → 요구사항 후보 | 개발 외주 문서 카탈로그, CRM 연동 |
 | flora-publishing(설계) | `docs/products/flora-publishing/` | 기획만 | WeasyPrint 렌더 서비스(소비자로 추가), 크레딧 선차감·환불 흐름 | 판형·표지·ePub |
 | _platform-core AI 계층 | `docs/products/_platform-core/AI_ARCHITECTURE.md` | 기획만 | FastAPI LangGraph, pgvector RAG, 모델 라우팅 이원화, compliance 노드 | 없음 |
-| _design-guide 3D 히어로 | `docs/products/_design-guide/HERO_3D.md` | 기획만 | R3F 히어로 키트(랜딩) | 없음 |
+| _design-guide 3D 히어로 | `docs/nomad-design-modules/_design-guide/HERO_3D.md` | 기획만 | R3F 히어로 키트(랜딩) | 없음 |
 | FortuneDocs 원칙 | `docs/reviews/FortuneDocs.md:47` | 약 40% | 결정적 값은 서버(이 제품은 규칙엔진)가 계산 | 사주 도메인 |
 
 ## 4. 문서 목록

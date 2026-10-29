@@ -218,19 +218,19 @@
 
 ### 3.2 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 microweb의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 microweb의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 스튜디오(문의 → 제작 주문 → 시안 → 게시 → 만료를 한 화면에서 추적하는 주문·제작 관리): Atlassian(워크플로 상태 배지, 보드·목록 필터, 권한 표시, 모달·사이드패널 중첩, 토큰 체계). 보조: Primer(컴팩트/기본 두 밀도, 표·목록, 숫자 열 정렬). AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-16) + Primer 밀도. 공개 청첩장·쇼룸 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` microweb 절(B2B 레퍼런스 사용 안 함) | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | 스튜디오(문의 → 제작 주문 → 시안 → 게시 → 만료를 한 화면에서 추적하는 주문·제작 관리): Atlassian(워크플로 상태 배지, 보드·목록 필터, 권한 표시, 모달·사이드패널 중첩, 토큰 체계). 보조: Primer(컴팩트/기본 두 밀도, 표·목록, 숫자 열 정렬). AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-16) + Primer 밀도. 공개 청첩장·쇼룸 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` microweb 절(B2B 레퍼런스 사용 안 함) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Atlassian: 상태 배지(라벨 + 아이콘, 색만으로 구분하지 않음), 칸반·목록 전환, 역할별 비활성 사유 표시. Primer: 컴팩트(행 32px)/기본(행 40px), 상태 라벨. Astryx: 메시지 스레드 구조, 스트리밍 표시, 출처 칩 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`, Astryx 패키지), Atlassian 파랑 브랜드색·Primer 색(토큰은 4.3절 청자·인주), StyleX, 공개 청첩장·쇼룸에 B2B 레퍼런스 적용 | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js 16, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `apps/microweb-studio/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(백자), `--color-text`(먹), `--color-border`(한지 괘), `--color-accent`(청자), `--color-cta`(인주, 쇼룸 "견적 문의"와 3D 도장에만), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 전환은 `data-theme` 하나. 쇼룸·스튜디오 토큰과 별개로 청첩장 템플릿 테마는 `src/engine/themes/<theme>.css`(템플릿 범위 변수)에 두고 하객 페이지는 스튜디오 토큰을 쓰지 않는다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
+| 가져오지 않을 것 | 라이브러리 설치(`@atlaskit/*`, `@primer/react`, Astryx 패키지), Atlassian 파랑 브랜드색·Primer 색(토큰은 4.3절 청자·인주), StyleX, 공개 청첩장·쇼룸에 B2B 레퍼런스 적용 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/microweb-studio/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(백자), `--color-text`(먹), `--color-border`(한지 괘), `--color-accent`(청자), `--color-cta`(인주, 쇼룸 "견적 문의"와 3D 도장에만), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 전환은 `data-theme` 하나. 쇼룸·스튜디오 토큰과 별개로 청첩장 템플릿 테마는 `src/engine/themes/<theme>.css`(템플릿 범위 변수)에 두고 하객 페이지는 스튜디오 토큰을 쓰지 않는다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
 | 컴포넌트(정답) | `apps/microweb-studio/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | 같은 곳 |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다: MW-06-036(1단계) → MW-06-020(2단계) → MW-06-037(3단계, 사람) → MW-06-038(4단계). 스튜디오·쇼룸 화면 작업은 4단계 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다: MW-06-036(1단계) → MW-06-020(2단계) → MW-06-037(3단계, 사람) → MW-06-038(4단계). 스튜디오·쇼룸 화면 작업은 4단계 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:39-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -363,7 +363,7 @@ UUPM 초안: `search.py "wedding invitation mobile micro website builder" --desi
 
 ### 4.6 3D 히어로 (봉투 → 청첩장 카드 → 미니 사이트)
 
-정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`, microweb 소재 `:86`)이고, 이 절은 microweb 소재와 장면만 정한다.
+정본은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`, microweb 소재 `:86`)이고, 이 절은 microweb 소재와 장면만 정한다.
 
 | 기기 | 구성(HERO_3D 1절) | microweb 장면 |
 |---|---|---|
@@ -399,7 +399,7 @@ UUPM 초안: `search.py "wedding invitation mobile micro website builder" --desi
 | 위치 | `apps/microweb-studio/src/components/hero3d/`(`EnvelopeScene`, `CardUnfold`, `MobileEnvelope`, `StaticFallback`, `useHeroTier`), 정지 이미지 `public/hero/`. 쇼룸 랜딩(`src/app/(showroom)/page.tsx`)은 이 컴포넌트를 동적 import로 장착만 한다 |
 | 형상 | 코드 생성 도형(Box, Shape/Extrude 덮개, Cylinder 도장, Plane 카드 3장과 힌지 그룹). 외부 glTF 없음 |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/products/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:17-30`) |
 | 공용 키트 | `packages/ui-3d`(제안, 로더·토큰 재질·조명·대체 이미지·성능 모니터) 위에 microweb 소재만 얹는다. 키트가 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 R-12) |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |
 | 번들 격리 | 하객 페이지(`/i/*`)와 스튜디오 번들에 three.js 0바이트(CI 번들 분석, 하객 JS 150KB 예산 보호) |

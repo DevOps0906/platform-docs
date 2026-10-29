@@ -2,7 +2,7 @@
 
 작성일 2026-10-12. 근거 표기는 `상대경로:줄번호`다. YSM 스냅샷 파일은 `[5f6d262] Youtube_shots_Maker/<경로>:줄`로 적는다(`git show 5f6d262:Youtube_shots_Maker/<경로>`). "제안"은 원본 문서·리뷰에 근거가 없어 이 문서가 정한 값이고, "미확인"은 외부 사실을 확인하지 않은 것이다.
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(브랜드·상품·제휴 캠페인 자료 RAG, 토픽·키워드 위키, LangGraph `blog.post_draft`, Dify 글쓰기 도우미 채팅), 음성(받아쓰기 초안, 음성 대화), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 네이버 브랜드커넥트 완전 자동 지원과 위험 동의(BL-F-030~035, 6.4절), 제휴 대가성 문구 규칙(BL-F-024, 6.3절)은 확정 결정 12 그대로이며 AI 계층이 약화하거나 우회하지 않는다. 새 기능 ID는 BL-F-051~061, 새 열린 결정은 D-13~D-20이다(기존 8절 #1~#12는 D-1~D-12와 같다).
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(브랜드·상품·제휴 캠페인 자료 RAG, 토픽·키워드 위키, LangGraph `blog.post_draft`, Dify 글쓰기 도우미 채팅), 음성(받아쓰기 초안, 음성 대화), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 네이버 브랜드커넥트 완전 자동 지원과 위험 동의(BL-F-030~035, 6.4절), 제휴 대가성 문구 규칙(BL-F-024, 6.3절)은 확정 결정 12 그대로이며 AI 계층이 약화하거나 우회하지 않는다. 새 기능 ID는 BL-F-051~061, 새 열린 결정은 D-13~D-20이다(기존 8절 #1~#12는 D-1~D-12와 같다).
 
 ## 1. 페르소나와 핵심 과제
 
@@ -48,7 +48,7 @@
 | AI 글쓰기 도우미 채팅(제품별 Dify 앱 `blog-chat`) | MVP | 확정 결정 13, 14(`docs/products/00_MERGE_ANALYSIS.md:21-22`) |
 | 음성 받아쓰기 초안, 채팅 음성 대화(STT, 답변 읽어 주기 TTS) | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 랜딩 3D 히어로(원고 시트가 접혀 블로그 채널 카드로 발행) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:84` |
+| 랜딩 3D 히어로(원고 시트가 접혀 블로그 채널 카드로 발행) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:84` |
 | 운영자 규정 해설집(표시광고·채널 가이드) 컬렉션과 공개 위키 | Phase 2 | 제안(D-18) |
 | 비회원 랜딩 AI 상담 | Phase 2 | `docs/products/_platform-core/AI_ARCHITECTURE.md:130`(운영자 예산과 강한 레이트 리밋 필요) |
 | 반복 시리즈(BL-F-050)의 무인 AI 초안 | Phase 2 | 사람 승인 면제는 D-20에서 결정 |
@@ -76,7 +76,7 @@
 | BL-F-011 | AI 원고 생성 | 통합 | 입력: 키워드, 템플릿(info 정보형 / compare 비교형 / guide 가이드형 / essay 감성형 / experience 체험형), 분량(짧게 1,000자 / 보통 2,000자 / 길게 3,500자), 어조, 모드(빠름/고품질), 제휴 자동 삽입 여부. 출력: 제목, 본문(TipTap JSON), 요약, 태그 10개 이하. 잡 `blog.generate`로 실행하고 진행률을 보여 준다(2026-10-13: 잡 안에서 BL-F-051 그래프 `blog.post_draft`를 호출한다) | 보통 분량 빠름 모드가 p95 60초 안에 끝난다(제안). 결과가 zod 스키마를 통과하지 못하면 1회 재시도 후 실패·환불한다 | `NOMAD Shorts Maker/src/skill/ai-engine/content-generator.ts:10-47`, `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:31-59`, `nomad-ai-factory/CLAUDE.md:242` |
 | BL-F-012 | 체험형 템플릿 제한 | 신규 | experience 템플릿은 사용자가 쓴 실제 사용 메모(50자 이상)가 있어야 열린다. AI는 메모에 없는 경험·수치·만족도를 만들지 않는다. 다른 템플릿은 1인칭 구매·사용 경험 서술을 금지한다 | 메모 49자로 체험형을 고르면 생성 버튼이 비활성이고 "직접 사용해 본 내용을 50자 이상 적어 주세요"가 보인다. DB도 `posts_experience_check`로 거부한다 | 6.5절, `[5f6d262] Youtube_shots_Maker/backend/services/blog_writer.py:41`(가상 후기 요구 프롬프트, 폐기) |
 | BL-F-013 | 제목 3안과 개요 | 유지 | 키워드로 제목 3안과 H2 개요를 만든다. 사용자가 고른 제목·개요로 원고를 생성한다 | 제목 3안이 각각 20~60자이고 키워드를 포함한다 | `NOMAD Shorts Maker/src/components/posts/AiGeneratePanel.tsx` |
-| BL-F-014 | 구간 다시쓰기 | 신규 | 에디터에서 선택한 구간(최대 1,500자)을 지시문("더 짧게", "표로")에 따라 다시 쓴다. 원문은 실행 취소로 되돌린다 | 선택 없이 실행하면 버튼이 비활성이다. 다시쓰기 결과가 선택 구간만 바꾼다 | 제안(`docs/products/_design-guide/REFERENCES.md:117` 편집기 옆 보조 패널) |
+| BL-F-014 | 구간 다시쓰기 | 신규 | 에디터에서 선택한 구간(최대 1,500자)을 지시문("더 짧게", "표로")에 따라 다시 쓴다. 원문은 실행 취소로 되돌린다 | 선택 없이 실행하면 버튼이 비활성이다. 다시쓰기 결과가 선택 구간만 바꾼다 | 제안(`docs/nomad-design-modules/_design-guide/REFERENCES.md:117` 편집기 옆 보조 패널) |
 | BL-F-015 | SEO 점수 | 유지 | 규칙 기반 점수(제목 키워드 20, 제목 길이 20~60자 15, 본문 1,000자 이상 20, 본문 키워드 20, 소제목 2개 이상 15, 이미지 10). 무료. 피드백 문구는 이모지 없이 | 같은 원고에 같은 점수가 나온다. 점수 게이지 대신 항목 체크리스트로 보인다 | `NOMAD Shorts Maker/src/skill/ai-engine/keyword-recommender.ts:73-103`, `REFERENCES.md:108`(점수 게이지 남발 회피) |
 | BL-F-016 | 태그 추천 | 유지 | 제목과 본문 앞 500자로 태그 10개(네이버 태그 최대 10개 기준)를 추천. 실패 시 기본 해시태그 폴백 금지 | 추천 태그가 10개 이하이고 중복이 없다 | `NOMAD Shorts Maker/src/skill/ai-engine/hashtag-generator.ts:52-56`(폴백 폐기), `[5f6d262] Youtube_shots_Maker/backend/services/naver_blog.py:250` |
 | BL-F-017 | 에디터와 자동 저장 | 디벨롭 | TipTap(StarterKit, Link, Image, Table, 제휴 카드 노드, 대가성 문구 잠금 노드). 입력 멈춤 2초 뒤 자동 저장, `version`으로 충돌 감지. 미리보기는 서버 렌더러 결과를 sanitize 후 보여 준다(`dangerouslySetInnerHTML` 직접 금지) | 두 탭에서 같은 원고를 고치면 늦게 저장한 쪽에 "다른 곳에서 수정됨, 최신 내용 불러오기" 안내가 뜬다. `<script>`를 붙여 넣어도 미리보기와 발행 HTML에 남지 않는다 | `docs/reviews/NOMAD_Shorts_Maker.md:106`, `NOMAD Shorts Maker/src/components/posts/MultiChannelEditor.tsx:316` |
@@ -118,7 +118,7 @@
 | BL-F-041 | 네이버·티스토리 연결 | 디벨롭 | 계정 아이디·비밀번호 또는(Phase 2) 세션 쿠키 가져오기. 비밀은 `encrypted_credentials`에만. 연결 전에 owner/admin이 6.4절 "자동 게시 위험" 동의(`blog.consent_channel_automation_risk`). 연결 검증 잡 `blog.channel.verify`가 로그인해 세션 쿠키를 암호화 저장하고 blog_id를 확인한다 | 동의 전에는 "연결" 버튼이 잠겨 있다. 검증이 끝나면 상태 active와 세션 만료 예정일(로그인 후 7일, 제안)이 보인다. 세션 쿠키가 평문으로 저장되는 경로가 없다 | `NOMAD Shorts Maker/src/app/api/accounts/[id]/connect/route.ts:24-35`(세션 평문 저장, 결함), `NOMAD Shorts Maker/src/skill/playwright-engine/naver-login.ts:9-63` |
 | BL-F-042 | 세션 재인증 | 디벨롭 | 발행·지원 잡이 로그인 페이지나 CAPTCHA를 만나면 채널 상태를 `needs_reauth`로 바꾸고 잡을 재시도 불가 실패로 끝낸다. CAPTCHA 우회·자동 풀이를 하지 않는다. 만료 2일 전 알림 | 세션 만료 상태에서 예약 발행 시각이 되면 발행이 failed("네이버 로그인이 만료되었습니다")가 되고 알림이 1회 간다 | `[5f6d262] Youtube_shots_Maker/backend/services/naver_blog.py:196-201` |
 | BL-F-043 | 즉시 발행 | 통합 | 원고 1개를 채널 계정 N개에 발행 요청. 서버 순서: 엔타이틀먼트 → 월 한도 → 채널 한도 → 컴플라이언스 상태 → 채널 정책 경고 확인 → `post_publications` INSERT(DB 게이트) → `enqueue_job(blog.publish.<channel>)`. 요청마다 `request_id`로 멱등 | 같은 `request_id`로 두 번 요청해도 발행 행과 잡은 1개다. 같은 원고·같은 계정에 진행 중 발행이 있으면 409 | `NOMAD Shorts Maker/src/app/api/posts/[id]/publish/route.ts:168-279`(동기 Playwright, 결함), `05_DATA_MODEL.md` 3.2절 |
-| BL-F-044 | 예약 발행과 캘린더 | 통합 | 예약 시각(10분 단위, 지금부터 최소 10분 뒤, 최대 90일 뒤, 제안)은 잡의 `run_after`로 넣는다. 캘린더는 월/주 보기, 채널 색 범례, 드래그로 시각 변경(시각 변경 = 기존 취소 + 새 예약) | 예약 시각 KST 09:00으로 넣은 발행이 09:00~09:05 사이에 시작된다 | `NOMAD Shorts Maker/src/skill/schedule-engine/queue-processor.ts:18-35`, `docs/products/_design-guide/REFERENCES.md:118` |
+| BL-F-044 | 예약 발행과 캘린더 | 통합 | 예약 시각(10분 단위, 지금부터 최소 10분 뒤, 최대 90일 뒤, 제안)은 잡의 `run_after`로 넣는다. 캘린더는 월/주 보기, 채널 색 범례, 드래그로 시각 변경(시각 변경 = 기존 취소 + 새 예약) | 예약 시각 KST 09:00으로 넣은 발행이 09:00~09:05 사이에 시작된다 | `NOMAD Shorts Maker/src/skill/schedule-engine/queue-processor.ts:18-35`, `docs/nomad-design-modules/_design-guide/REFERENCES.md:118` |
 | BL-F-045 | 발행 결과 불확실 처리 | 신규 | 발행 버튼은 눌렀으나 결과 URL을 확인하지 못하면 `unconfirmed`로 두고 자동 재시도하지 않는다(중복 발행 방지). 사용자가 채널에서 확인 후 URL을 입력하거나 "올라가지 않음"을 고른다 | unconfirmed 건은 대시보드 "확인 필요"에 보이고, 자동 재시도 잡이 생기지 않는다 | `[5f6d262] Youtube_shots_Maker/backend/services/naver_blog.py:279-288`(불확실 URL을 성공으로 반환, 결함) |
 | BL-F-046 | 재시도와 취소 | 디벨롭 | 발행 버튼을 누르기 전 단계의 실패(로그인 전 네트워크 오류 등)만 자동 재시도(최대 3회, 60초·120초·240초). 예약·대기 발행은 사용자가 취소할 수 있다 | 실행 중(publishing) 발행 취소 요청은 409 `BL002`다 | `CORE_SPEC.md` 9.1절 |
 | BL-F-047 | 계정당 발행 간격 | 신규 | 같은 채널 계정의 연속 발행 간격 10분 이상, 하루 상한 네이버 5건·티스토리 5건·워드프레스 30건(제안). 브라우저 세션은 계정당 1개(`acquire_channel_lock`) | 같은 네이버 계정에 3건을 동시에 예약하면 10분 간격으로 순서대로 실행된다 | 제안(대량 자동 게시가 스팸 판정·계정 제한으로 이어지는 위험을 낮추기 위함) |
@@ -157,7 +157,7 @@ MVP 필수다. 정본 설계는 `docs/products/_platform-core/AI_ARCHITECTURE.md
 | BL-F-058 | AI 라우팅과 국외 이전 동의 | 신규 | 이메일 인증 직후 온보딩 `/onboarding/ai`(기존 사용자는 AI 기능 첫 사용 직전)에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`과 감사 `blog.ai.cross_border_ack`를 함께 남기고 설정에서 철회한다. 동의 전에는 모든 AI·음성이 오픈소스 제공자만 쓴다. AI 기능만 선택 전 잠기고 발행 기능은 영향이 없다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 감사 메타에 같게 남는다. member가 동의를 바꾸면 403 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
 | BL-F-059 | AI 크레딧 선차감·정산 | 신규 | 그래프 실행, 채팅 턴, STT, TTS, 자료 색인, 위키 작업은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 정산한다(차액 추가 차감 또는 `refund_credits`). 그래프는 정액 선차감에 묶는다. 단가는 4.6절 | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0. 사용자에게 결과가 전달되지 않은 실패는 전액 환불 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
 | BL-F-060 | AI 출력 규칙 | 신규 | 6.5절 금지 문구와 6.7절 대화 규칙을 그래프 `compliance` 노드, `/tools/answer` 후처리, 위키 ingest·query에 같은 규칙 파일(`packages/blog-rules/banned.json`)로 적용한다. 대가성 표기 회피, 가상 후기, 수익·순위 보장 요청은 정중히 거절하고 설정 화면이나 올바른 방법을 안내한다 | 규칙 평가셋 30문항(제안) 위반 0. 한글 경계 규칙 테스트 통과(`\b` 금지). 같은 규칙을 TS 컴플라이언스(BL-F-048)와 FastAPI가 읽는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 6.5절 |
-| BL-F-061 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원고 시트가 접혀 네이버·티스토리·워드프레스 채널 카드 3장으로 발행되는 풀 3D, 모바일은 시트 1장이 접히는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.6절) | `HERO_3D.md` 4절 수용 기준 전부: 기기 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보임·키보드 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:84` |
+| BL-F-061 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원고 시트가 접혀 네이버·티스토리·워드프레스 채널 카드 3장으로 발행되는 풀 3D, 모바일은 시트 1장이 접히는 가벼운 3D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.6절) | `HERO_3D.md` 4절 수용 기준 전부: 기기 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보임·키보드 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-75`, `:84` |
 
 BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, `blog.voice.notice_ack`, `blog.ai.document_delete`, `blog.wiki.publish`, `blog.wiki.edit`를 더한다. BL-F-043 서버 순서는 "컴플라이언스 상태" 다음에 "AI 승인 상태(그래프로 만든 원고)" 확인이 들어간다.
 
@@ -288,7 +288,7 @@ BL-F-006 감사 목록에 `blog.ai.cross_border_ack`, `blog.ai.draft_approved`, 
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 `features.ai_chat_turns_per_day`, STT 사용자당 10회/분, 그래프 시작 조직당 10회/분(기존 생성 60회/분 안에서), 잡 토큰 발급 120회/분 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 기준 |
 | AI 입력 상한 | 채팅 메시지 2,000자, 대화당 50턴, 받아쓰기 5분·20MB, 채팅 음성 질문 60초·5MB, 자료 파일 10MB·청크 1,000개 | 제안 |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 조직 삭제 후 30일, 자료 문서는 삭제 즉시 청크 포함 삭제 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/products/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 
 ## 6. 법, 개인정보, 금지 문구
 
@@ -445,7 +445,7 @@ AI 대화·생성 추가 규칙(6.5절에 더해 채팅, 위키, 그래프에 �
 | D-14 | 캠페인 요강·브랜드 소재의 AI 색인 허용 범위 | (a) 사용자가 정당하게 받은 자료만 올리게 하고 책임은 사용자에게(약관) (b) 브랜드커넥트 요강 자동 수집·색인 금지 (c) 허용 | (a)+(b). 네이버·브랜드의 이용 조건은 미확인. BL-F-032 스캔 결과를 자료 컬렉션에 자동 저장하지 않는다 |
 | D-15 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트 `/api/internal/ai-token`(워커 키 + running 잡 확인, org·사용자는 잡 행에서) (b) FastAPI가 잡을 직접 소비 (c) 워커에 개인키 배포 | (a). 개인키는 Next.js에만 둔다는 공용 규칙을 지키고 TS 워커를 유지한다(astro D-18과 같은 문제, 06장 AI-R3) |
 | D-16 | 받아쓰기·읽어 주기 제공자와 ElevenLabs 데이터 보관 | (a) 받아쓰기 오픈소스 우선, 읽어 주기 ElevenLabs 우선, 보이스 1종 고정 (b) 사용자 선택. ElevenLabs 입력 보관·학습 사용·제로 리텐션은 계약 확인 후 처리방침 반영 | (a). 데이터 보관 조건은 미확인(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:83`) |
-| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). blog의 주 레퍼런스는 Primer라 영향이 작다 |
+| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). blog의 주 레퍼런스는 Primer라 영향이 작다 |
 | D-18 | 운영자 규정 해설집(표시광고법, 채널 가이드, SEO 원칙) 컬렉션 | (a) MVP는 규칙 사전만, Phase 2에 운영자 컬렉션 + 공개 위키 (b) MVP부터 운영자 컬렉션 | (a). 규정 해설은 법률 검토가 필요하고, MVP에서 AI가 법 해석을 답하지 않도록 한다(6.7절) |
 | D-19 | 공정 사용 한도와 월 크레딧 재산정 | (a) 하루 채팅 턴 50/200/500, 문서 10/100/1,000, 4.1절 월 크레딧 유지 (b) 그래프 단가 5를 반영해 월 크레딧 상향(Free 25, Pro 375 등) | (a)로 출시, 실사용 원가(`core.ai_usage`)로 재산정. 2026-10-14 가격 정책 판정: 보류(실사용 원가 측정 후 중기 후보, `docs/Price_Plans/nomad-blog/PRICE_PLAN.md` 10장 BL-P-2) |
 | D-20 | 반복 시리즈(BL-F-050) 무인 AI 초안의 사람 승인 | (a) 승인 면제 없음: 초안은 만들되 승인 전에는 발행 안 함 (b) 규칙 통과 시 면제(브랜드커넥트 무인 규칙과 함께) | (a). BL-F-052 원칙(되돌리기 어려운 발행 앞에는 사람 승인)을 유지, 면제는 Phase 2에서 법률 검토 후 |

@@ -168,8 +168,8 @@ AI 계층 도입(2026-10-13)으로 생긴 추가 폐기. 분석 A-3 목록 밖�
 | 낭독 중 제공자 대체(목소리가 바뀜) | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` | 연속 낭독 품질 | 시작 제공자 고정, 실패 시 파일 없음 + 환불 |
 | 참고 파일 문장을 그대로 이어 붙이는 생성 | 01장 PB-F-054 | 저작권 침해 위험 | compliance의 장문 일치 검사 |
 | 사람 소유 블록을 에이전트가 덮어쓰기 | `docs/products/_platform-core/LLM_WIKI.md:30` | 이용자 수정 소실 | 제안만 남기고 `expected_version` 잠금 |
-| 토큰 밖 3D 재질 색, 보라/핑크 그라디언트 | `docs/products/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.6절 토큰 표 |
-| "Tailwind로"만 적은 지시로 v3 설정 생성 | `docs/products/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
+| 토큰 밖 3D 재질 색, 보라/핑크 그라디언트 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:52-53` | 피할 인상 | 03장 4.6절 토큰 표 |
+| "Tailwind로"만 적은 지시로 v3 설정 생성 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:23` | v3 설정 혼입 | 지시와 문서에 Tailwind CSS v4 명시, `tailwind.config.js` 금지 |
 
 ## 5. 아카이브 절차
 

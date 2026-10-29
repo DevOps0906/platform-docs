@@ -1,12 +1,12 @@
 # 03 화면과 UX: NOMAD Book Trailer (book-trailer)
 
-작성일 2026-10-15. 디자인 토큰·컴포넌트·영상 규격은 `08_DESIGN_SYSTEM.md`, 화면 구조 패턴 코드는 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(A~O)를 따른다. 사용자 노출 문구는 한국어, 카피는 01장 6.5절 금지 문구와 `DESIGN_PRINCIPLES.md` 카피 규칙을 통과해야 한다.
+작성일 2026-10-15. 디자인 토큰·컴포넌트·영상 규격은 `08_DESIGN_SYSTEM.md`, 화면 구조 패턴 코드는 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(A~O)를 따른다. 사용자 노출 문구는 한국어, 카피는 01장 6.5절 금지 문구와 `DESIGN_PRINCIPLES.md` 카피 규칙을 통과해야 한다.
 
 ## 1. 정보 구조와 화면 목록
 
 모든 앱 화면은 앱 셸(A): 왼쪽 내비게이션(홈, 책, 코치, 설정), 상단 잔액·조직 전환·도움말.
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -247,7 +247,7 @@
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
-### 4.1 레퍼런스 (`docs/products/_design-guide/REFERENCES.md`에 있는 것만 인용)
+### 4.1 레퍼런스 (`docs/nomad-design-modules/_design-guide/REFERENCES.md`에 있는 것만 인용)
 
 다른 제품과 같은 방식으로 쓰지 않는다(`REFERENCES.md` "다른 제품 간 공유" 금지). 각 행의 "다른 제품의 쓰임"을 같이 적는다. 이 표는 `REFERENCES.md` book-trailer 절(2026-10-16 추가, R-T7)과 같다. 이 제품 전용 후보(북트레일러·출판 마케팅 사이트)는 URL을 직접 확인한 뒤 그 절에 먼저 추가하고 쓴다.
 

@@ -182,7 +182,7 @@ setup 스크립트는 커밋, 원격 푸시, 의존성 설치, Rust·Tauri 설�
 | `docs/products/arch-studio/04_API.md` | `docs/file/03-설계/04_API.md` | DOC-DES-003 | 인터페이스설계서(4.7절 로컬 엔진 계약) |
 | `docs/products/arch-studio/05_DATA_MODEL.md` | `docs/file/03-설계/05_DATA_MODEL.md` | DOC-DES-004 | 데이터설계서 |
 | `docs/products/_platform-core/` 9개 | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(009 `AUTH_ROADMAP.md`) |
-| `docs/products/_design-guide/` 5개 + `DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-001~005, 008 | 디자인 기준 |
+| `docs/nomad-design-modules/_design-guide/` 5개 + `DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-001~005, 008 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 빈 초기 템플릿(이 제품은 `08_DESIGN_SYSTEM.md`가 없어 초기값 없음) |
 | `docs/products/arch-studio/CLAUDE.md` | `docs/file/04-구현/CLAUDE.md` | DOC-IMP-001 | 개발지침 |
 | `docs/products/arch-studio/07_SOURCE_MIGRATION.md` | `docs/file/04-구현/07_SOURCE_MIGRATION.md` | DOC-IMP-002 | 원본 이식 계획 |

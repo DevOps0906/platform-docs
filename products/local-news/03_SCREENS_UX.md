@@ -1,6 +1,6 @@
 # 03 화면과 UX: 로컬뉴스 클라우드(가칭)
 
-작성일 2026-10-15. 신규 기획(원본 프로젝트·리뷰 없음). 장 구조는 `docs/products/_platform-core/DOC_TEMPLATE.md:144-177`(2.4절)을 따르고, 인증 단계 화면은 7절에 덧붙인다(`DOC_TEMPLATE.md:354-356`). 화면 구조 패턴 코드는 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(A~O), 메인페이지 절차는 `docs/products/_design-guide/DESIGN_PRINCIPLES.md`(아래 DP), 화이트라벨은 `Multi-tenant_Theming/`을 따른다. 기능 ID `NW-F-###`는 01장 3절, RPC 이름은 04·05장과 같다. 모든 사용자 노출 문구는 한국어다.
+작성일 2026-10-15. 신규 기획(원본 프로젝트·리뷰 없음). 장 구조는 `docs/products/_platform-core/DOC_TEMPLATE.md:144-177`(2.4절)을 따르고, 인증 단계 화면은 7절에 덧붙인다(`DOC_TEMPLATE.md:354-356`). 화면 구조 패턴 코드는 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(A~O), 메인페이지 절차는 `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md`(아래 DP), 화이트라벨은 `Multi-tenant_Theming/`을 따른다. 기능 ID `NW-F-###`는 01장 3절, RPC 이름은 04·05장과 같다. 모든 사용자 노출 문구는 한국어다.
 
 이 제품의 화면은 세 호스트로 나뉜다. (1) 독자 사이트: 신문사 테넌트 도메인(`<slug>.<플랫폼 도메인>` 또는 커스텀 도메인), 공개 (2) 편집국 콘솔: `newsroom.<플랫폼 도메인>`, 조직 전환기 (3) 운영 콘솔: 플랫폼 운영자. 호스트 분기는 `proxy.ts`가 Host로 한다(02장, 라우트 그룹 `(reader)`, `(newsroom)`, `(ops)`).
 
@@ -8,7 +8,7 @@
 
 열 설명: 역할은 `news.staff.role`(publisher, editor, desk, reporter, contributor, ad_manager)과 독자 상태(방문자, 독자, 멤버)다. 플랜 접근은 `core.plans.features` 키(01장 4절)로 적는다. 패턴은 `DASHBOARD_PATTERNS.md:16-34` 코드이고, 공개 독자 화면은 그 문서의 대상이 아니라서 "공개(4절)"로 적는다.
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 ### 1.1 독자 사이트 (테넌트 도메인, 라우트 그룹 `(reader)`)
 
@@ -435,7 +435,7 @@
 
 ### 3.9 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙, `:96-100`). 이 절은 local-news의 선택만 적는다. 화면이 세 층(독자 사이트, 편집국·운영 콘솔, 플랫폼 사이트)이라 루트 레이아웃이 `data-surface`(`reader`, `newsroom`, `ops`, `marketing`)를 붙이고 같은 의미 토큰 이름에 다른 값을 준다(flora-publishing 8.2절과 같은 방식).
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙, `:96-100`). 이 절은 local-news의 선택만 적는다. 화면이 세 층(독자 사이트, 편집국·운영 콘솔, 플랫폼 사이트)이라 루트 레이아웃이 `data-surface`(`reader`, `newsroom`, `ops`, `marketing`)를 붙이고 같은 의미 토큰 이름에 다른 값을 준다(flora-publishing 8.2절과 같은 방식).
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
@@ -515,7 +515,7 @@
 
 ### 4.1 레퍼런스 (DP 1단계)
 
-`docs/products/_design-guide/REFERENCES.md`에는 local-news 절이 없다. 그래서 (a) 독자 사이트는 사용자 요청(실제 언론사 디자인 벤치마크)에 따라 2026-10-15 조사한 실제 언론사 홈을 근거로 쓰고, (b) 편집국 콘솔과 플랫폼 소개 페이지는 `REFERENCES.md`에 이미 있는 URL만 쓴다. REFERENCES.md에 local-news 절을 추가하는 것은 변경 제안이다.
+`docs/nomad-design-modules/_design-guide/REFERENCES.md`에는 local-news 절이 없다. 그래서 (a) 독자 사이트는 사용자 요청(실제 언론사 디자인 벤치마크)에 따라 2026-10-15 조사한 실제 언론사 홈을 근거로 쓰고, (b) 편집국 콘솔과 플랫폼 소개 페이지는 `REFERENCES.md`에 이미 있는 URL만 쓴다. REFERENCES.md에 local-news 절을 추가하는 것은 변경 제안이다.
 
 조사 한계: 아래 "직접 확인" URL은 HTML 텍스트를 읽은 것이라 sticky 여부, 실제 컬럼 수, 광고 실제 크기, 모바일 차이는 대부분 미확인이다. chosun.com, joongang.co.kr, hani.co.kr, yna.co.kr, nytimes.com, theguardian.com, bbc.com은 도구 접근이 막혀 **미확인**이다(조선일보 Arc CMS 도입, 중앙 로그인 유도, 한겨레 상단 '후원하기'는 2차 출처라 설계 근거로 쓰지 않는다).
 

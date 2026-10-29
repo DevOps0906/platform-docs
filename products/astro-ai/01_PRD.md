@@ -2,7 +2,7 @@
 
 표기: "제안"은 원본 문서와 리뷰에 근거가 없어 이 문서가 새로 정한 값이다. 근거 경로의 `AA/`는 `Astro AI/기획안/`, `FD/`는 `FortuneDocs/`다.
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(RAG, LangGraph, 제품 지식 위키, Dify 채팅), 음성(음성 대화, 리딩 낭독), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다.
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(RAG, LangGraph, 제품 지식 위키, Dify 채팅), 음성(음성 대화, 리딩 낭독), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다.
 
 ## 1. 페르소나와 핵심 과제
 
@@ -37,7 +37,7 @@
 | 사주 용어·해석 위키(제품 지식 위키, 공개 열람) | MVP | 확정 결정 13, `docs/products/_platform-core/LLM_WIKI.md:37-47` |
 | 음성 대화, 리딩 낭독(TTS) | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 랜딩 3D 히어로(혼천의 → 펼쳐지는 책) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:81` |
+| 랜딩 3D 히어로(혼천의 → 펼쳐지는 책) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/nomad-design-modules/_design-guide/HERO_3D.md:81` |
 | 비회원 AI 상담(랜딩 채팅) | Phase 2 | 제안: 비로그인 상담은 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/products/_platform-core/AI_ARCHITECTURE.md:130`). MVP의 비회원 체험은 LLM 없는 Live Demo로 둔다 |
 | 사용자 보이스 선택, 보이스 클로닝 | Phase 2 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80` |
 | 구독 플랜(Basic/Pro/Master) + 빌링키 + 연간 20% 할인 | Phase 2 | `docs/products/00_MERGE_ANALYSIS.md:359`, `:362` |
@@ -87,7 +87,7 @@
 | AS-F-034 | 리딩 낭독 | 신규 | 완료된 리딩 본문을 장 단위로 TTS(기능 `narration`)해 mp3 1개로 저장(`exports/<org_id>/astro/narration/<reading_id>.mp3`)하고 플레이어로 재생·다운로드한다. 작업 도중 다른 제공자로 대체하지 않는다(같은 목소리). 시작 전에 ElevenLabs를 쓸 수 없으면(국외 이전 미동의, 비활성) 처음부터 오픈소스 보이스로 만든다. 재생과 재다운로드는 무료. 음성 첫머리에 "AI가 생성한 음성입니다" 안내 | 한 낭독의 `ai_usage` 행 제공자가 모두 같고 `voice_jobs.fallback_from` null. 중간 실패 시 파일 미생성 + 선차감 전액 환불. 같은 리딩 재요청은 기존 파일 URL 반환(추가 차감 0). 리딩·대상 삭제 시 파일 삭제 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:45-47` |
 | AS-F-035 | AI 라우팅과 국외 이전 동의 | 신규 | 이메일 인증 직후 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`과 `consents(kind='overseas_transfer')`를 함께 기록하고, 설정에서 언제든 철회한다. 기능별 기본 체인은 02장 5절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`와 `consents.version`에 같게 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | AS-F-036 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴·STT·TTS·낭독은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고, 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 리딩 그래프는 리딩 정액 차감에 묶고 정산 차액이 없다(4.7절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
-| AS-F-037 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 혼천의(24절기 고리)가 입력한 생일의 절기를 가리킨 뒤 책으로 접혀 펼쳐지는 풀 3D, 모바일은 고리만 있는 가벼운 혼천의 + 2D 페이지 넘김, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:81` |
+| AS-F-037 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 혼천의(24절기 고리)가 입력한 생일의 절기를 가리킨 뒤 책으로 접혀 펼쳐지는 풀 3D, 모바일은 고리만 있는 가벼운 혼천의 + 2D 페이지 넘김, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:5-75`, `:81` |
 | AS-F-038 | AI 출력 규칙(리딩·채팅·낭독·위키) | 신규 | 6.4절 금지 문구와 6.5절 AI 대화 규칙을 그래프 compliance 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`packages/astro-report/rules/banned.json`)로 적용한다. 단정 예언, 의료·법률·투자 판단 요청은 정중히 거절하고 전문가를 안내한다. 자해·자살 언급은 상담 전화 안내로 전환한다 | 채팅 금지 문구 평가셋 30문항(제안) 위반 0. 위기 신호 테스트 문장 5개 모두 안내 문구로 응답 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117`, 6.4절 |
 
 ## 4. 요금과 크레딧
@@ -224,7 +224,7 @@ AI 키 4개는 2026-10-13에 추가했다. 모놀리스는 `supabase/monolith/se
 | 그래프 실행(`astro.reading`) | 위 "T0 → 본문 생성 완료 p95 30초"에 포함 | 이 표 3행 |
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 200턴, STT 사용자당 10회/분, 낭독 조직당 5회/시간, 잡 토큰 발급 120회/분 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 기준 |
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 음성 발화 60초·5MB | 제안 |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/products/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:32-41` |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 탈퇴 후 30일 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 | 보존 기간 | 6장 1절 표 | 공백 9 |
 
@@ -349,7 +349,7 @@ AI 대화 추가 규칙(6.4절에 더해 채팅·낭독에 적용):
 | D-14 | AI 채팅 무료 제공 | (a) 무료 없음(턴 선차감) (b) 리딩 1건당 무료 질문 3턴 | (a)(제안). (b)는 전환 효과를 본 뒤 결정 |
 | D-15 | 해설집 원고 작성과 위키 공개 | (a) 운영자 직접 집필 + 위키 공개(SEO) (b) AI 초안 + 운영자 검수 + 위키 공개 (c) 위키는 로그인 사용자만 | (b)(제안). 원고 항목마다 검수자·검수일을 남기고 공개 위키는 `published`만 |
 | D-16 | 낭독 보이스와 ElevenLabs 데이터 보관 | (a) ElevenLabs 기본 보이스 1종 + 오픈소스 보이스 1종 고정 (b) 사용자 선택. ElevenLabs 입력 보관·학습 사용·제로 리텐션 옵션 여부 | (a). 보이스 id는 환경변수(02장 8절). 오픈소스 보이스는 `VOICE_ARCHITECTURE.md` 4.1절 후보 중 코드·가중치 라이선스와 한국어 낭독 품질을 확인해 고른다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:63-73`). 생성 음성의 상업 이용 조건과 데이터 보관 조건은 ElevenLabs 계약으로 구현 시 확인하고 처리방침에 반영(`:81-83`) |
-| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). AS-06-039에서 확인 결과를 기록 |
+| D-17 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:11`). AS-06-039에서 확인 결과를 기록 |
 | D-18 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트(02장 4절) (b) FastAPI가 잡을 직접 소비하고 렌더도 Python으로 (c) 워커에 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/products/_platform-core/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 R-8 |
 
 ### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)

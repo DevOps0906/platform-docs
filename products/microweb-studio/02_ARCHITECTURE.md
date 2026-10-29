@@ -1,6 +1,6 @@
 # 02 아키텍처: Microweb Studio
 
-2026-10-13 개정: 확정 결정 13~17에 따라 AI 계층과 음성, 3D 히어로, 디자인 시스템 규칙을 더했다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 microweb의 그래프, 기능별 기본값, 경계만 정한다. 아래 결정으로 이 제품의 AI 경계를 닫는다.
+2026-10-13 개정: 확정 결정 13~17에 따라 AI 계층과 음성, 3D 히어로, 디자인 시스템 규칙을 더했다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`, `docs/nomad-design-modules/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 microweb의 그래프, 기능별 기본값, 경계만 정한다. 아래 결정으로 이 제품의 AI 경계를 닫는다.
 
 | 쟁점 | 결정 | 근거 |
 |---|---|---|
@@ -15,8 +15,8 @@
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 웹 앱 | Next.js App Router, React, TypeScript strict | Next.js 16, React 19 | 확정 결정 11, `00_MERGE_ANALYSIS.md:1089` |
-| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`, 빌드 `@tailwindcss/postcss`), shadcn/ui(Tailwind v4 지원 버전, 스튜디오 화면 전용). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | CDN 런타임 금지(`premium-wedding-invitation.md:72`), `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`). 쇼룸 히어로(`src/components/hero3d/`)에서만 import | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:47-48` |
+| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`, 빌드 `@tailwindcss/postcss`), shadcn/ui(Tailwind v4 지원 버전, 스튜디오 화면 전용). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | CDN 런타임 금지(`premium-wedding-invitation.md:72`), `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`). 쇼룸 히어로(`src/components/hero3d/`)에서만 import | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:47-48` |
 | 모션 | framer-motion(템플릿 모션만), canvas-confetti 제거 검토 | 12.x | `premium-wedding-invitation/CLAUDE.md:72-84` |
 | 검증 | zod | 3.x | `SECURITY_BASELINE.md` 10장 |
 | DB/인증 | Supabase(Postgres 15, Auth, Storage, Realtime), 모듈러 `microweb` 스키마 | - | `_supabase-modular/ARCHITECTURE.md:41` |

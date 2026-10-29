@@ -46,9 +46,9 @@
 
 | 자산 | 상태 | 처리 | 대상 위치 | 근거 |
 |---|---|---|---|---|
-| 구현 규칙(동적 import, 화면 밖 정지, 코드 생성 형상, `aria-hidden`, reduced-motion 정지 이미지, 토큰 색) | 기획만 | 참고 | `apps/web/src/components/hero3d/**` | `docs/products/_design-guide/HERO_3D.md:43-54` |
-| 장면 키트(로더, 재질, 조명, 대체 이미지, 성능 모니터) | 기획만 | 참고(`packages/ui-3d`가 생기면 소비) | `apps/web/src/components/hero3d/**`, `apps/web/public/hero/**` | `docs/products/_design-guide/HERO_3D.md:56-68` |
-| 랜딩 수용 기준 | 기획만 | 이식(문장 그대로 06장 랜딩 작업에) | 06장 | `docs/products/_design-guide/HERO_3D.md:70-75` |
+| 구현 규칙(동적 import, 화면 밖 정지, 코드 생성 형상, `aria-hidden`, reduced-motion 정지 이미지, 토큰 색) | 기획만 | 참고 | `apps/web/src/components/hero3d/**` | `docs/nomad-design-modules/_design-guide/HERO_3D.md:43-54` |
+| 장면 키트(로더, 재질, 조명, 대체 이미지, 성능 모니터) | 기획만 | 참고(`packages/ui-3d`가 생기면 소비) | `apps/web/src/components/hero3d/**`, `apps/web/public/hero/**` | `docs/nomad-design-modules/_design-guide/HERO_3D.md:56-68` |
+| 랜딩 수용 기준 | 기획만 | 이식(문장 그대로 06장 랜딩 작업에) | 06장 | `docs/nomad-design-modules/_design-guide/HERO_3D.md:70-75` |
 
 ### 1.5 FortuneDocs 원칙 (기획만, 약 40%)
 
@@ -94,7 +94,7 @@ GPL·AGPL 구성요소는 설치 파일·웹 번들에 넣지 않는다(PRD:232)
 | flora 선차감·환불 → `arch.start_ai_run` | 시그니처 `arch.start_ai_run(p_org, p_actor, p_kind, p_variant, p_request_id, p_project_ref, p_options)`. 한 트랜잭션: `arch.org_features` 판정(폴백 검토 `AR012`) → variant 단가로 `consume_credits` → kind별 실행 행(`arch.renders`·`reviews`·`intake_runs`·`proposals`) → 잡 enqueue. 멱등 키는 `p_request_id`(제안: 데스크톱 재시도 이중 차감 방지). 데스크톱은 작업 종류·입력·request_id만 보내고 금액을 보내지 않으며 variant는 서버가 정한다(PRD:192). 시간 초과(PRD:208-209)는 정리 잡이 `fail_ai_run`으로 전액 환불. 세 함수 service_role 전용 |
 | WeasyPrint → 제안서 PDF | 제안서만 공용 렌더, 도면 PDF는 로컬(D-23 (a)). 렌더는 서버 조립 HTML만 받는다(`docs/products/_platform-core/SHARED_MODULES.md:270`). 확정: 데스크톱이 로컬 시트 SVG(PRD:382)를 `POST /api/uploads/sign`(purpose `proposal_sheet`)로 올리고, Route Handler가 SVG를 sanitize하고, 워커(`workers/arch-jobs`)가 엔진 값 표·인라인 SVG·렌더 이미지로 HTML을 조립해 렌더에 보낸다(02장 4절, 04장 6.2절). 클라이언트 HTML은 렌더하지 않는다. 결과는 `arch.proposals`. 렌더 계약 `app_id`에 `arch` 추가 필요(현재 `'publishing' \| 'astro'`, 같은 파일 `:280`, PRD 코어 요청 C-5) |
 | AI 계층 → 그래프 3종 | `arch.review`: 로컬 규칙엔진 결과 + RAG → 항목별 근거 → compliance, 출처 없는 문장은 `AR033` 실패·환불(PRD:50). `arch.intake`: `source` `chat`(2)·`consult`(5, feature `arch.intake_consult` 오픈소스 강제) 같은 잡, 검증 실패 1회 재시도 후 `AR032`. `arch.layout`: Phase 2. 모두 결과 저장은 service_role `finish_ai_run` 1회 |
-| HERO_3D → 제품 장면 | 소재 제안: 대지 경계 → 엔벨로프가 솟고 → 매스가 앉고 → 배치도 시트가 펼쳐진다(제안: "입력하면 도면이 나온다"를 보여 준다. HERO_3D 5장에 arch-studio 행이 없어 03장 4절에서 확정 후 행 추가 요청). Manifold WASM을 랜딩 번들에 넣지 않는다(제안: 성능 예산, `docs/products/_design-guide/HERO_3D.md:32`). 카피는 PRD 6.1절 |
+| HERO_3D → 제품 장면 | 소재 제안: 대지 경계 → 엔벨로프가 솟고 → 매스가 앉고 → 배치도 시트가 펼쳐진다(제안: "입력하면 도면이 나온다"를 보여 준다. HERO_3D 5장에 arch-studio 행이 없어 03장 4절에서 확정 후 행 추가 요청). Manifold WASM을 랜딩 번들에 넣지 않는다(제안: 성능 예산, `docs/nomad-design-modules/_design-guide/HERO_3D.md:32`). 카피는 PRD 6.1절 |
 | FortuneDocs 원칙 → 규칙엔진 | 기준 시점 혼동(FD:40)을 막도록 적용 규칙은 시스템 시각이 아니라 `rule_context.application_date`로 고른다(PRD:47). 누락 입력은 기본값으로 계산하지 않고 "조례 미확인"·입력 요청(PRD:48). 규칙 팩 버전별 골든 테스트 |
 
 ## 3. 폐기 목록과 사유

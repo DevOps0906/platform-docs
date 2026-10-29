@@ -9,7 +9,7 @@
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 웹 | Next.js App Router, React, TypeScript | Next 16.x, React 19.x(원본과 같은 메이저, `latest` 금지) | `docs/reviews/NOMAD_Shorts_Maker.md:16`, `SECURITY_BASELINE.md` 13장 |
-| UI | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전), lucide 아이콘. `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | `docs/reviews/NOMAD_Shorts_Maker.md:16`, `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73`, `_design-guide/DESIGN_PRINCIPLES.md` 6단계 |
+| UI | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전), lucide 아이콘. `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | `docs/reviews/NOMAD_Shorts_Maker.md:16`, `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73`, `_design-guide/DESIGN_PRINCIPLES.md` 6단계 |
 | 에디터 | TipTap(StarterKit, Link, Image, Table) + 제품 노드 2종(AffiliateCard, DisclosureBlock) | 원본과 같은 메이저 | `NOMAD Shorts Maker/src/components/posts/MultiChannelEditor.tsx:4-7` |
 | 검증/상태 | zod, React Hook Form, TanStack Query | - | `docs/products/00_MERGE_ANALYSIS.md:79`(BS 구성) |
 | HTML sanitize | 서버: 허용 목록 기반 sanitize(예: `sanitize-html`), 클라이언트 미리보기도 서버 렌더 결과만 | 구현 시 선택 | `SECURITY_BASELINE.md` 10장 |
@@ -17,7 +17,7 @@
 | 워커 | Node 20+ TS 프로세스 `workers/blog-worker`, `@platform/core-jobs` `runWorker`(core.jobs `SKIP LOCKED`), Playwright Chromium | Playwright는 원본과 같은 메이저 | `SHARED_MODULES.md` 16장 |
 | 큐 | Redis/BullMQ 없음. `core.jobs`가 큐이자 상태 정본 | - | 제안(blog 잡은 단계가 1~2개라 FlowProducer가 필요 없음). 확정 결정 6은 video 워커 결정 |
 | 결제 | Toss Payments(공용 toss 모듈) | - | 확정 결정 4 |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:47-48` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/nomad-design-modules/_design-guide/HERO_3D.md:47-48` |
 | AI 서비스 | FastAPI(Python) `apps/api`. 공용 ai-service(`services/ai-service`) 위에 blog 확장만 둔다 | Python 3.12(제안, 구현 시 확인) | 확정 결정 3, 13, `docs/products/_platform-core/AI_ARCHITECTURE.md:132-160`, `docs/products/_platform-core/SHARED_MODULES.md:17` |
 | AI 오케스트레이션 | LangChain(채팅 모델, text splitter), LangGraph + `langgraph-checkpoint-postgres`(스키마 `ai_runtime`) | 구현 시 확인 | `docs/products/_platform-core/AI_ARCHITECTURE.md:83`, `:114` |
 | LLM | FastAPI 라우터: 상용 `anthropic`, `openai`, `google`, `openrouter` + 오픈소스 `oss-llm`(vLLM). 기능별 체인은 5.1절. 기존 purpose별 LLM 호출(5절 표)도 이 라우터를 거친다 | 모델 id는 `core.ai_model_prices` 행으로 | 확정 결정 17 |

@@ -24,7 +24,7 @@
 | RAG | pgvector(HNSW, cosine, 1024차원). 신문사별 컬렉션 `news-archive`(게시 기사), `news-policy`(사내 규정) 임베딩은 `oss-embed` 고정 | pgvector 0.8 이상 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107` |
 | 채팅 운영 | 공용 자체 호스팅 Dify 1개, 제품 앱 `news-assistant`(Chatflow) | 설치 버전 문서로 확인 | 확정 결정 14 |
 | 음성 | `packages/core-voice`(ElevenLabs TS SDK + 공용 오픈소스 음성 서버) | 구현 시 확인 | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:40-48` |
-| 3D | three.js + React Three Fiber + drei. **플랫폼 마케팅 랜딩에만**(독자 사이트·편집국 미적용, D-11) | React 19 호환 버전 | `docs/products/_design-guide/HERO_3D.md`, 브리프 7절 |
+| 3D | three.js + React Three Fiber + drei. **플랫폼 마케팅 랜딩에만**(독자 사이트·편집국 미적용, D-11) | React 19 호환 버전 | `docs/nomad-design-modules/_design-guide/HERO_3D.md`, 브리프 7절 |
 | 배포 | Vercel(web), Railway(TS 워커, FastAPI), Supabase(모놀리스 단독 프로젝트), 공용 Dify·GPU·음성 서버 | - | 7절 |
 
 확정 결정 6(TS 오케스트레이션 + Python AI)을 따른다: 잡의 소유(큐, 재시도, 저장)는 TS 워커, LLM 호출은 FastAPI 그래프가 한다. web과 워커에는 LLM 키가 없다.

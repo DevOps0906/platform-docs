@@ -1,12 +1,12 @@
 # 03 화면과 UX: NOMAD Blog
 
-작성일 2026-10-12. 디자인 절차는 `docs/products/_design-guide/DESIGN_PRINCIPLES.md` 7단계를 따른다. 레퍼런스 URL은 `docs/products/_design-guide/REFERENCES.md:101-120`에 있는 것만 쓴다.
+작성일 2026-10-12. 디자인 절차는 `docs/nomad-design-modules/_design-guide/DESIGN_PRINCIPLES.md` 7단계를 따른다. 레퍼런스 URL은 `docs/nomad-design-modules/_design-guide/REFERENCES.md:101-120`에 있는 것만 쓴다.
 
 2026-10-13 개정: AI 채팅·음성·위키 화면(3.9절), 디자인 시스템 항목(3.10절), 3D 히어로(4.6절, 사용자 결정 2026-10-13 확정 결정 15)를 더했다. 공통 요소는 `docs/products/_platform-core/VOICE_ARCHITECTURE.md:106-110`(음성)과 `docs/products/_platform-core/LLM_WIKI.md:45`(위키)를 따른다.
 
 ## 1. 정보 구조와 화면 목록
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/nomad-design-modules/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -226,19 +226,19 @@
 
 ### 3.10 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 blog의 선택만 적는다.
+`docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 blog의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 앱 화면(대시보드, 원고 목록, 발행 시트, 채널, 제휴, 설정): **Primer**(발행 관리의 정보 밀도, 표·목록·상태 표시, 커밋 상태 같은 생산성 UI). 보조: Atlassian(캘린더 드래그, 지원·발행 상태 배지, 권한 표시). AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-17) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` blog 절 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | 앱 화면(대시보드, 원고 목록, 발행 시트, 채널, 제휴, 설정): **Primer**(발행 관리의 정보 밀도, 표·목록·상태 표시, 커밋 상태 같은 생산성 UI). 보조: Atlassian(캘린더 드래그, 지원·발행 상태 배지, 권한 표시). AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-17) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` blog 절 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Primer: 컴팩트/기본 두 밀도, 상태 라벨(아이콘 + 텍스트), 숫자 열 정렬, 표 행 선택. Atlassian: 상태 배지·태그, 칩 필터. Astryx: 메시지 스레드 구조, 스트리밍 표시, 출처 칩, 입력 영역 구성 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), SEO 툴식 점수 게이지(`REFERENCES.md:108`), 마케팅 랜딩에 B2B 레퍼런스 적용 | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js 16.x, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `apps/nomad-blog/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(원고지), `--color-text`(먹), `--color-text-muted`, `--color-accent`(교정 적색, 핵심 행동 한 곳), `--color-link`(잉크 청), `--color-border`(괘선), `--color-notice`(문구 노랑, 대가성 문구 블록 전용), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 전환은 `data-theme` 하나. 다크는 대시보드에서만(배경 #182124) | `docs/products/_design-guide/DESIGN_SYSTEM.md:30-31` |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), SEO 툴식 점수 게이지(`REFERENCES.md:108`), 마케팅 랜딩에 B2B 레퍼런스 적용 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16.x, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/nomad-blog/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(원고지), `--color-text`(먹), `--color-text-muted`, `--color-accent`(교정 적색, 핵심 행동 한 곳), `--color-link`(잉크 청), `--color-border`(괘선), `--color-notice`(문구 노랑, 대가성 문구 블록 전용), `--color-success`·`warning`·`danger`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 전환은 `data-theme` 하나. 다크는 대시보드에서만(배경 #182124) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:30-31` |
 | 컴포넌트(정답) | `apps/nomad-blog/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | 같은 곳 |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(BL-06-041, 042, 043 사람 검토, 044). 화면 작업은 BL-06-044 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(BL-06-041, 042, 043 사람 검토, 044). 화면 작업은 BL-06-044 뒤 | `docs/nomad-design-modules/_design-guide/DESIGN_SYSTEM.md:39-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -340,7 +340,7 @@ B안: 중앙 정렬 큰 헤드라인 + 아래 캘린더 캡처. 버림: 캘린�
 
 ### 4.6 3D 히어로 (원고 시트 → 채널 카드)
 
-정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 blog 소재(`:84`)와 장면만 정한다.
+정본은 `docs/nomad-design-modules/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 blog 소재(`:84`)와 장면만 정한다.
 
 | 기기 | 구성(HERO_3D 1절) | blog 장면 |
 |---|---|---|
@@ -375,7 +375,7 @@ B안: 중앙 정렬 큰 헤드라인 + 아래 캘린더 캡처. 버림: 캘린�
 | 위치 | `apps/nomad-blog/src/components/hero3d/`(`ManuscriptScene`, `FoldToCards`, `MobileSheet`, `StaticFallback`, `useHeroTier`), 정지 이미지 `public/hero/` |
 | 형상 | 코드 생성 도형(Plane, 얇은 Box, Line). 외부 glTF 없음. 3D 안에 글자 없음(번들 축소, 모든 글자는 HTML) |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/products/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/nomad-design-modules/_design-guide/HERO_3D.md:17-30`) |
 | 태블릿 기울기 | iOS Safari는 [기울여 보기] 버튼 탭으로 권한을 요청하고, 거부·미지원이면 터치 드래그만 쓴다 |
 | 공용 키트 | 공용 3D 장면 키트 `packages/ui-3d`(제안, 로더·토큰 재질·조명·대체 이미지·성능 모니터) 위에 blog 소재(시트, 카드)만 얹는다. 키트가 아직 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 AI-R1) |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |
@@ -580,3 +580,30 @@ member·viewer에게는 4번의 제휴 클릭 영역을 숨기고 브랜드커�
 | 3.1절 본문 | 7일 예약, 확인 필요, 제휴 클릭, 브랜드커넥트 4줄 | 8.5절 4영역으로 구체화. "오늘 처리할 일"을 맨 위에 더했다 |
 | 3.8절 대가성 문구 | 설정 > 대가성 문구 | 경로는 그대로. GNB에서는 수익 묶음에 바로 보이고 설정 목록에도 바로가기 |
 | 4.3절 다크 | "다크 모드는 대시보드에서만"(기본값 없음) | 시안은 라이트. D-25 결정 전까지 4.3절 문장은 그대로 정본 |
+
+## 9. 홈페이지형 네이버 블로그 스킨 출력 (2026-10-30 추가, 제안·미확정)
+
+공용 표준은 `_design-guide/BLOG_SKIN.md`다. 이 장은 nomad-blog에 어떤 화면으로 붙일 수 있는지의 후보만 적고, 이 제품의 확정 결정·1절 화면 표·8장 GNB는 바꾸지 않는다. 채택 여부는 사용자 결정 대기(결정 번호 미부여).
+
+### 9.1 후보 범위 (작은 것부터)
+
+| 단계 | 내용 | 비고 |
+|---|---|---|
+| S0 | 문서만: 스킨 제작 안내를 도움말 문서로 제공 | 개발 없음 |
+| S1 | 스킨 설치 패키지 생성기: 업종·로고·브랜드 컬러·메뉴·URL을 입력하면 PNG 스킨, 투명 위젯 이미지, 위젯 코드, 좌표표, 설치 안내서를 만들어 **사용자가 직접 적용** | `BLOG_SKIN.md` 8절 |
+| S2 | 네이버 계정에 자동 설치 | **하지 않는다**(편집 환경·허용 API 범위 제한, 가이드 권고). 현재 채널 연동은 8.7절 원본 메뉴 이행 범위만 |
+
+### 9.2 S1 화면 후보
+
+| 화면 | 경로(제안) | 내용 |
+|---|---|---|
+| 스킨 만들기 | `/channels/naver/skin` | 입력(브랜드·메뉴·링크) → 방향 선택(기업형/개인 브랜딩형/매거진형) → 시안 3개 → 선택 → 패키지 내려받기 |
+| 설치 안내 | 같은 화면 마지막 단계 | `BLOG_SKIN.md` 6절 6단계 체크 표, 위젯 개수(≤20)·크기(170×≤600) 경고 |
+
+- 위젯 코드는 네이버가 허용하는 태그만 쓰는지 **실제 미리보기로 검증한 뒤** 제공한다. 검증 전에는 "시험용" 표시.
+- AI 시안 생성은 크레딧을 쓴다(플랜·크레딧 정본은 01장). 가격은 `Price_Plans/nomad-blog/PRICE_PLAN.md` 절차로만 정한다.
+- 레퍼런스와 이미지 에셋 저작권 규칙은 `REFERENCES.md` "영감용이지 복제용이 아니다"를 따른다.
+
+### 9.3 이 제품 랜딩의 모션
+
+nomad-blog 랜딩 히어로는 4.6절 3D가 정본이다. `MOTION_GSAP.md`의 M1(텍스트 리빌)·M2(발행 과정 스크롤 시퀀스)·M3(채널 카드 리빌) 정도만 보조로 고르며, 4.6절 예산·대체 화면과 충돌하면 4.6절이 이긴다. 스킨 결과물에는 모션이 없다(네이버 위젯은 정적 이미지).

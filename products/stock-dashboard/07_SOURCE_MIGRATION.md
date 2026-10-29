@@ -20,7 +20,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본의 AI 사용은 PRD 3.3의 �
 | `PRD.md` 3.5 매매 일지 자동 동기화, 종목 상세 모달(PER/PBR/ROE/EPS/배당) | 기획만 | 이식(조회 전용) | ST-F-008, ST-F-009 | `docs/products/00_MERGE_ANALYSIS.md:1275`, `:1280` |
 | `PRD.md` 4장 스택(Context API / TanStack Query, Recharts / Chart.js) | 기획만 | 디벨롭: Recharts 하나, 시세는 zustand, 서버 데이터만 TanStack Query. Context로 시세 관리 폐기 | 02장 1절 | `docs/reviews/Stock_Trader_nomad.md:16`, `:48` |
 | `PRD.md` 5장 GEO, JSON-LD 금융 스키마 | 기획만 | 폐기(법률 검토 전 보류) | - | `docs/products/00_MERGE_ANALYSIS.md:1282` |
-| `claude.md` 1장 다크 테마(Deep Slate/Charcoal, Neon Green/Red/Amber) | 기획만 | 참고: 다크 기본은 유지, 색은 03장 토큰으로 교체(한국 관례 상승 빨강/하락 파랑) | 03장 4.3 | `claude.md:6-8`, `docs/products/_design-guide/REFERENCES.md:207` |
+| `claude.md` 1장 다크 테마(Deep Slate/Charcoal, Neon Green/Red/Amber) | 기획만 | 참고: 다크 기본은 유지, 색은 03장 토큰으로 교체(한국 관례 상승 빨강/하락 파랑) | 03장 4.3 | `claude.md:6-8`, `docs/nomad-design-modules/_design-guide/REFERENCES.md:207` |
 | `claude.md` 2.1 `setInterval` 목업 시세 | 기획만 | 디벨롭: `MockBroker`가 같은 어댑터 계약으로 제공 | ST-06-008 | `docs/reviews/Stock_Trader_nomad.md:47` |
 | `claude.md` 2.1 원자적 상태 분리 | 기획만 | 이식(종목별 셀렉터) | ST-06-016 | `claude.md:17` |
 | `claude.md` 2.2 우측 AI 패널, 모델 토글, 전략 버튼 | 기획만 | 참고: 패널 위치 유지, 모델 버전 뱃지 하드코딩 폐기 | 03장 3.1 | `claude.md:20-21` |

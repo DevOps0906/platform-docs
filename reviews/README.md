@@ -1,6 +1,6 @@
 # reviews — 원본 프로젝트 코드 리뷰 25개
 
-통합 기획의 근거 자료입니다. 각 리뷰는 원본 프로젝트의 구조, 결함("높음" 결함은 기획서 02·05장에서 차단 설계로 처리), 이식할 자산을 적었습니다. 작성 형식은 [`_tools/REVIEW_TEMPLATE.md`](../_tools/REVIEW_TEMPLATE.md), PDF 변환본은 [`pdf/`](../pdf/)에 있습니다.
+통합 기획의 근거 자료입니다. 각 리뷰는 원본 프로젝트의 구조, 결함("높음" 결함은 기획서 02·05장에서 차단 설계로 처리), 이식할 자산을 적었습니다. 작성 형식은 [`_tools/REVIEW_TEMPLATE.md`](../_tools/REVIEW_TEMPLATE.md), PDF 변환본은 별도 레포 [PDF_Collections](https://github.com/DevOps0906/PDF_Collections/tree/master/code-reviews)의 `code-reviews/`에 있습니다.
 
 | 리뷰 | 원본 프로젝트 | 반영된 통합 제품 |
 |---|---|---|
