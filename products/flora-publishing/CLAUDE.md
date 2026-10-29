@@ -9,7 +9,7 @@
 | 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`, `DB_CONVENTIONS.md`, `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 인증 작업이면 `AUTH_ROADMAP.md`(맨 끝 "인증 단계 규칙" 절) |
 | 2 | 이 폴더 `01_PRD.md`(기능 ID, 단가, features 키) → `02_ARCHITECTURE.md`(경계, 잡) → `04_API.md`(계약) → `05_DATA_MODEL.md`(테이블, RLS) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `SECURITY_BASELINE.md` 16장, `DB_CONVENTIONS.md` 14장(pgvector) |
-| 3 | 화면 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` flora-publishing 절, 랜딩이면 `HERO_3D.md`와 `LANDING_PERSUASION.md`(2026-10-17, 03장 9절) |
+| 3 | 화면 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `03_SCREENS_UX.md`(4.1절 레퍼런스 표), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` flora-publishing 절, 랜딩이면 `HERO_3D.md`와 `LANDING_PERSUASION.md`(2026-10-17, 03장 9절) |
 | 4 | 자기 작업 행(`06_AGENT_PLAN.md` 2절)과 이식 대상(`07_SOURCE_MIGRATION.md` 2절, 금지 패턴 4절) |
 
 ## 2. 절대 규칙
@@ -142,7 +142,7 @@ AI·디자인(2026-10-13): LLM·음성 키를 브라우저·Vercel·워커에 �
 
 ## 설득형 랜딩 규칙 (2026-10-17, 검토용)
 
-정본 `docs/products/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 9장, 03장 9절, 06장 10절.
+정본 `docs/design-module/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 9장, 03장 9절, 06장 10절.
 
 | 항목 | 규칙 |
 |---|---|

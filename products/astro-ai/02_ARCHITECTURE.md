@@ -21,8 +21,8 @@
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 웹 | Next.js App Router, React | 16.2.x(LTS), 19 | `AA/공통/CLAUDE.md:11`, `docs/reviews/FortuneDocs.md:66` |
-| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | `AA/공통/CLAUDE.md:12-13`, `docs/reviews/Astro_AI.md:66`, `docs/products/_design-guide/DESIGN_SYSTEM.md:67` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:47-48` |
+| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`), shadcn/ui(Tailwind v4 지원 버전). `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | Tailwind 4.x 고정(`latest` 금지), shadcn 버전 구현 시 확인 | `AA/공통/CLAUDE.md:12-13`, `docs/reviews/Astro_AI.md:66`, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:47-48` |
 | 상태 | Zustand(리딩 시작 스테퍼만), 나머지는 RSC | 5.x | `AA/대시보드/CLAUDE_DASHBOARD.md:158-187` |
 | 인증/DB | Supabase Auth, Postgres 15, RLS, Storage, Realtime | `@supabase/ssr` | `docs/products/_platform-core/SHARED_MODULES.md:58-84` |
 | 워커 | Node 22 + TS(`astro-worker`, core-jobs `runWorker`) | - | `docs/products/_platform-core/SHARED_MODULES.md:415-437`. 확정 결정 3의 FastAPI는 렌더 서비스가 맡는다 |

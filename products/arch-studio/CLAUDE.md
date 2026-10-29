@@ -12,7 +12,7 @@
 | 4 | 자기 작업 행(`06_AGENT_PLAN.md` 2장)과 금지 패턴(`07_SOURCE_MIGRATION.md` 4장) |
 | 4-DB | DB 작업이면 `docs/products/_supabase-modular/migrations/2400_arch.sql`(정본)과 `supabase/monolith/` |
 | 4-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
-| 4-UI | 화면 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `DASHBOARD_PATTERNS.md`, `03_SCREENS_UX.md` 3.19절, 랜딩이면 `HERO_3D.md` |
+| 4-UI | 화면 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `DASHBOARD_PATTERNS.md`, `03_SCREENS_UX.md` 3.19절, 랜딩이면 `HERO_3D.md` |
 | 4-도면 | 도면 작업이면 `01_PRD.md` 9장(`:328-494`), `02_ARCHITECTURE.md` 2.3절(`:119-235`), `04_API.md` 4.7.3~4.7.6절, 스파이크 결과(task `log.md`의 `[DECISION] D-20`, `D-23`) |
 | 5 | V2 공용모듈: `docs/develop_V2/arch-studio/arch-studio_develop_v2.md`(compliance 채택, media·search 보류) |
 
@@ -174,7 +174,7 @@ P0 작업은 대응 테스트 작업(`06_AGENT_PLAN.md` 7.1절)이 녹색이어�
 
 ## 설득형 랜딩 규칙 (2026-10-17, 검토용)
 
-정본 `docs/products/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 10장, 03장 7장, 06장 8장.
+정본 `docs/design-module/_design-guide/LANDING_PERSUASION.md`, 이 제품 반영은 01장 10장, 03장 7장, 06장 8장.
 
 | 항목 | 규칙 |
 |---|---|

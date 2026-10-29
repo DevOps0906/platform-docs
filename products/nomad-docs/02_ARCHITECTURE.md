@@ -10,7 +10,7 @@
 |---|---|---|---|
 | 웹 | Next.js App Router(Route Handler, Node 런타임), `src/proxy.ts` | 16.2.x(16.2.9 제안) | `docs/products/flora-publishing/02_ARCHITECTURE.md:11`, `docs/products/study-note/02_ARCHITECTURE.md:11` |
 | UI | React, TypeScript strict | React 19.2, TS strict(버전은 구현 시 고정, `latest` 금지) | `docs/products/study-note/02_ARCHITECTURE.md:12` |
-| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`. `tailwind.config.js`와 v3 문법 금지), shadcn/ui(Tailwind CSS v4 지원 버전) | Tailwind CSS v4 4.x 고정, shadcn/ui 구현 시 확인 | `docs/products/_design-guide/DESIGN_SYSTEM.md:67`, `docs/products/study-note/02_ARCHITECTURE.md:13` |
+| 스타일 | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`. `tailwind.config.js`와 v3 문법 금지), shadcn/ui(Tailwind CSS v4 지원 버전) | Tailwind CSS v4 4.x 고정, shadcn/ui 구현 시 확인 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67`, `docs/products/study-note/02_ARCHITECTURE.md:13` |
 | 에디터 | Tiptap(ProseMirror). 섹션 단위 노드, 고정 섹션 잠금 확장, 선택영역 툴바, Diff 카드 | 2.x 고정(제안) | `docs/products/flora-publishing/02_ARCHITECTURE.md:12` |
 | 검증 | zod(Route Handler 입력, 잡 payload, 그래프 출력 재검증) | 3.x | SB 10장(`SECURITY_BASELINE.md:171`) |
 | TS 워커 | Node LTS + `packages/core-jobs` 워커 루프 | Node 20 LTS | SM 16장(`SHARED_MODULES.md:415-437`) |
@@ -20,7 +20,7 @@
 | RAG | Supabase pgvector(HNSW, cosine, 1024차원). 컬렉션 `docs.knowledge`는 `oss-embed` 고정 | pgvector 0.8 이상 | `AI_ARCHITECTURE.md:100-103`, `docs/products/flora-publishing/02_ARCHITECTURE.md:22` |
 | 채팅 운영 | 공용 자체 호스팅 Dify 1개, 제품 앱 `docs-chat`(Chatflow) | 설치 버전 문서로 확인 | `AI_ARCHITECTURE.md:58-71` |
 | 음성 | `packages/core-voice`: ElevenLabs TS SDK + 공용 오픈소스 음성 서버(faster-whisper + silero-vad) | 구현 시 확인 | `VOICE_ARCHITECTURE.md:22-38` |
-| 3D 히어로 | three.js + React Three Fiber + drei. 캔버스 동적 import(`ssr: false`), 공용 키트 `packages/ui-3d`(제안) | React 19 호환 버전(구현 시 확인) | `docs/products/_design-guide/HERO_3D.md:43-48`, `docs/products/flora-publishing/02_ARCHITECTURE.md:25` |
+| 3D 히어로 | three.js + React Three Fiber + drei. 캔버스 동적 import(`ssr: false`), 공용 키트 `packages/ui-3d`(제안) | React 19 호환 버전(구현 시 확인) | `docs/design-module/_design-guide/HERO_3D.md:43-48`, `docs/products/flora-publishing/02_ARCHITECTURE.md:25` |
 | PDF/DOCX 렌더 | 공용 렌더 서비스 `services/render-weasyprint`(flora-publishing 소유). PDF는 기존 `POST /render/pdf`, DOCX는 확장 `POST /render/docx`(코어 요청 C-1, python-docx/docxtpl) | WeasyPrint 62 이상(제안) | SM 10장(`SHARED_MODULES.md:264-288`), `docs/products/flora-publishing/02_ARCHITECTURE.md:16` |
 | DB/인증/Storage | Supabase(PostgreSQL 15, Auth, Storage, Realtime), 스키마 `docs`, `@supabase/ssr` | PG 15 | `_PRODUCT_AGENT_BRIEF.md:68` |
 | 결제 | Toss Payments(일반결제, 빌링키) | API v1 | SM 5장(`SHARED_MODULES.md:139-163`) |

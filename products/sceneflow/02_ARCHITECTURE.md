@@ -1,14 +1,14 @@
 # 02 아키텍처: SceneFlow (sceneflow)
 
-2026-10-13 개정: AI 계층(FastAPI `apps/api`, LangGraph, RAG, 제품 지식 위키, 공용 Dify), 음성(`packages/core-voice`, 공용 오픈소스 음성 서버), 3D 히어로를 추가했다. 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`, `docs/products/_design-guide/HERO_3D.md`이고 이 문서는 인용하며 video 고유 경계·그래프·라우팅 기본값만 정한다. 기존 Python 미디어 워커(Whisper, demucs, FFmpeg)와 새 FastAPI AI 서비스의 경계는 2절 끝 표.
+2026-10-13 개정: AI 계층(FastAPI `apps/api`, LangGraph, RAG, 제품 지식 위키, 공용 Dify), 음성(`packages/core-voice`, 공용 오픈소스 음성 서버), 3D 히어로를 추가했다. 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `VOICE_ARCHITECTURE.md`, `LLM_WIKI.md`, `docs/design-module/_design-guide/HERO_3D.md`이고 이 문서는 인용하며 video 고유 경계·그래프·라우팅 기본값만 정한다. 기존 Python 미디어 워커(Whisper, demucs, FFmpeg)와 새 FastAPI AI 서비스의 경계는 2절 끝 표.
 
 ## 1. 스택
 
 | 레이어 | 기술 | 버전 | 근거 |
 |---|---|---|---|
 | 웹 | Next.js App Router + React | 16.2.x / 19.2 (SM 기준, lockfile 고정) | `docs/reviews/NOMAD_Shorts_Maker.md:16` |
-| UI | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`, 4.x 고정, `latest` 금지) + shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), lucide, recharts. `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | SM 기준 | `docs/reviews/NOMAD_Shorts_Maker.md:16`, `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 히어로 전용 컴포넌트에서만 import | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:43-55` |
+| UI | Tailwind CSS v4(CSS 우선 설정 `@import "tailwindcss"`, `@theme`, `@custom-variant dark`, 4.x 고정, `latest` 금지) + shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), lucide, recharts. `tailwind.config.js`와 v3 문법(`@tailwind base` 등) 금지 | SM 기준 | `docs/reviews/NOMAD_Shorts_Maker.md:16`, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 히어로 전용 컴포넌트에서만 import | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:43-55` |
 | 폼/검증/데이터 | React Hook Form + zod, TanStack Query v5 | BS 기준 | `docs/reviews/Nomad-BlogStudio.md:13` |
 | DB/인증/Storage | Supabase(Postgres 15, RLS, Auth, Storage, Realtime), `@supabase/ssr` | - | CORE_SPEC 1장 |
 | 오케스트레이션 워커 | Node 20 + TS, BullMQ FlowProducer, Upstash Redis(ioredis는 bullmq 내장분만) | - | 확정 결정 6, SM #11 |

@@ -22,7 +22,7 @@
 | RAG | Supabase pgvector(HNSW, cosine, 1024차원). 책별 컬렉션 임베딩은 `oss-embed` 고정 | pgvector 0.8 이상 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107`, `docs/products/_platform-core/DB_CONVENTIONS.md:315-327` |
 | 채팅 운영 | 공용 자체 호스팅 Dify 1개, 제품 앱 `publishing-chat`(Chatflow) | 설치 버전 문서로 확인 | 확정 결정 14, `docs/products/_platform-core/AI_ARCHITECTURE.md:58-71` |
 | 음성 | `packages/core-voice`: ElevenLabs TypeScript 공식 SDK + 공용 오픈소스 음성 서버(faster-whisper + silero-vad + 상업 이용 가능 한국어 TTS) | 구현 시 확인 | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:22-73` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`). 공용 키트 `packages/ui-3d`(제안) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:47-48`, `:56-68` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`). 공용 키트 `packages/ui-3d`(제안) | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:47-48`, `:56-68` |
 | 이미지 | 공용 fal 클라이언트 | - | SM 9장 |
 | 배포 | Vercel(web), Railway(TS 워커, 엔진, AI 서비스, 렌더 서비스), 공용 Dify·GPU 서버(운영사 자체 호스팅) | - | `Flora-v2/PRD.md:505`, `docs/reviews/SellingDocs.md:77` |
 

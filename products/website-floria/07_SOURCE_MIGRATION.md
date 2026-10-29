@@ -80,7 +80,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본에는 AI 기능이 없다. AI
 | X-16 | `WebSite/.vite/deps_temp_*` | 의존성 캐시 잔재 | 리뷰 `:215` |
 | X-17 | 모든 `href="#"` 링크와 `mailto:`만 있는 CTA | 비동작 | 리뷰 `:214` |
 | X-18 | webcraft의 picsum 가짜 포트폴리오 9건을 대체하는 연동(참고) | 이 제품이 폐기하는 것이 아니라 microweb-studio가 WebSite 실제 납품작으로 교체한다는 분석 판정 | `00_MERGE_ANALYSIS.md:1048` |
-| X-19 | Botanic `CLAUDE.md`의 "Tailwind 전용"처럼 버전 없이 "Tailwind"만 적은 지시 | v3 문법·`tailwind.config.js` 혼입 위험(`docs/products/_design-guide/DESIGN_SYSTEM.md:23`) | 지시·문서에 "Tailwind CSS v4"로 명시(AI 개발 지시 포함) |
+| X-19 | Botanic `CLAUDE.md`의 "Tailwind 전용"처럼 버전 없이 "Tailwind"만 적은 지시 | v3 문법·`tailwind.config.js` 혼입 위험(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:23`) | 지시·문서에 "Tailwind CSS v4"로 명시(AI 개발 지시 포함) |
 
 ## 4. 복사 금지 결함
 
@@ -104,7 +104,7 @@ AI 관련 원본 자산(2026-10-13 점검): 원본에는 AI 기능이 없다. AI
 | 익명 AI 호출에 한도 없음 | `docs/products/_platform-core/AI_ARCHITECTURE.md:130` | 비용 폭주 | Turnstile, 레이트 리밋 5종, 사이트 일일 상한, 스위치 기본 꺼짐 |
 | AI 응답에 후기·평점·미검증 수치·가짜 연락처·가격 약속 | 01장 6절 | 허위 표시 | 그래프 `compliance` 노드와 규칙 파일 |
 | 클라이언트가 보낸 임의 텍스트를 TTS | 제안 | 음성 생성 남용 | DB의 assistant 메시지(500자 이하)만 낭독 |
-| 3D 재질에 토큰 밖 색, 금색, 별 파티클, 잎 일러스트 패턴 | `docs/products/_design-guide/HERO_3D.md:52-53`, `REFERENCES.md` website-floria 절 | 피할 인상 | 03장 4.8절 토큰 표 |
+| 3D 재질에 토큰 밖 색, 금색, 별 파티클, 잎 일러스트 패턴 | `docs/design-module/_design-guide/HERO_3D.md:52-53`, `REFERENCES.md` website-floria 절 | 피할 인상 | 03장 4.8절 토큰 표 |
 | 상담 지식에 고객 식별정보·동의 없는 사례 | 01장 6절 | 개인정보, 초상·저작권 | `consent_ref` 없는 사례는 색인 거부 |
 | `user_plans FOR ALL`류 정책 | `SECURITY_BASELINE.md:226` | 셀프 변경 | 쓰기 정책 없음 |
 

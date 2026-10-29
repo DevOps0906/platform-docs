@@ -24,7 +24,7 @@ AI 관련 원본 자산(2026-10-13 점검): 없다. 리뷰 1장 표가 AI 항목
 | `CLAUDE.md` 3절 IP 해시 검증 미들웨어 | 기획만 | 디벨롭(HMAC, 저장 안 함) | 05장 7절 | 리뷰:42 |
 | `CLAUDE.md` 5절 재연결 로직 명시 | 기획만 | 이식(디벨롭: 스냅샷 복구, seq) | LP-F-010 | 원본 CLAUDE:21 |
 | 리뷰가 지목한 재사용 자산(basic-master-module, Nomad-BlogStudio supabase 클라이언트/shadcn, Hospital 실시간 훅 구조, recharts) | 동작/부분 | 참고 | LP-06-001, 013, 015 | 리뷰:72-81 |
-| `PRD.md` 5절 `Frontend: Next.js, Tailwind CSS, Shadcn UI`, `CLAUDE.md` 1절 "Tailwind CSS, Shadcn UI" | 기획만 | 디벨롭(버전 명시) | 02장 1절(Tailwind CSS v4, 4.x 고정), LP-06-001, 023 | 원본 PRD:32, 원본 CLAUDE:4, `docs/products/_design-guide/DESIGN_SYSTEM.md:23` |
+| `PRD.md` 5절 `Frontend: Next.js, Tailwind CSS, Shadcn UI`, `CLAUDE.md` 1절 "Tailwind CSS, Shadcn UI" | 기획만 | 디벨롭(버전 명시) | 02장 1절(Tailwind CSS v4, 4.x 고정), LP-06-001, 023 | 원본 PRD:32, 원본 CLAUDE:4, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:23` |
 | `CLAUDE.md` 2절 GEO 시맨틱 마크업(`main`, `section`, `article`, `header`) | 기획만 | 이식(랜딩만) | LP-F-024, 03장 4절 | 원본 CLAUDE:7. AI 검색 엔진이 읽는 구조일 뿐 AI 기능이 아니다 |
 | AI 어시스턴트, Q&A AI 정리, 자료 RAG, 행사 위키, 음성(진행자·청중), 3D 히어로 | 원본에 없음 | 신규 | 01장 LP-F-025~037, 02장 5절, LP-06-033~048 | 확정 결정 13~17 |
 
@@ -60,7 +60,7 @@ AI 관련 원본 자산(2026-10-13 점검): 없다. 리뷰 1장 표가 AI 항목
 | Supabase 익명 로그인 | 코어 가입 트리거가 익명 사용자마다 조직을 만든다(05장 7절) |
 | `postgres_changes` 구독 | 구독자마다 권한 검사가 일어나 대규모에 부적합(리뷰:65) |
 | `poll_counts` 원자적 증분 테이블(리뷰 권장안) | 같은 카운터 행에 300건/초가 몰리는 핫 로우 경합. 집계는 워커 시점 계산으로 대체(02장 5-1절) |
-| 원본 PRD:32, CLAUDE:4의 버전 없는 "Tailwind CSS" 지시 | 버전을 적지 않으면 AI가 가장 흔한 v3로 만든다(`docs/products/_design-guide/DESIGN_SYSTEM.md:23`). Tailwind CSS v4로 명시 |
+| 원본 PRD:32, CLAUDE:4의 버전 없는 "Tailwind CSS" 지시 | 버전을 적지 않으면 AI가 가장 흔한 v3로 만든다(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:23`). Tailwind CSS v4로 명시 |
 | AI 도입 시 후보였다가 버린 것: 투표마다 AI 호출, 청중용 AI 채팅(MVP), AI 자동 질문 삭제, 청중 원문의 상용 모델 전송 | 비용 폭증·투표 경로 지연, 청중이 국외 이전 동의를 줄 수 없음, 자동 삭제는 오탐 책임이 진행자에게 있음. 대신 진행자가 누르는 Q&A 정리와 제안 적용(LP-F-029, 030), 청중 원문 오픈소스 강제(01장 D9) |
 
 ## 4. 복사 금지 결함

@@ -1,10 +1,10 @@
 # 03 화면과 UX: Stock Dashboard
 
-작성일 2026-10-12. 원본의 화면 지침(다크 테마, 증권사/Total 탭, 블링크, 블러 모달, 우측 AI 패널)은 구체적이므로 구조를 유지하고(`docs/reviews/Stock_Trader_nomad.md:21`), 색과 서체는 `_design-guide` 절차로 다시 정한다. 공개 랜딩은 법률 검토 후로 미루고(`docs/products/_design-guide/REFERENCES.md:207`), MVP는 초대 전용 안내 페이지만 둔다. 2026-10-13: 사용자 결정(확정 결정 15, `docs/products/00_MERGE_ANALYSIS.md:23`)으로 이 안내 화면의 히어로를 3D(시세 흐름 지형)로 바꿨고(4.5절), AI 채팅·음성·브리핑·위키 화면(3.7절)과 디자인 시스템(3.8절)을 더했다.
+작성일 2026-10-12. 원본의 화면 지침(다크 테마, 증권사/Total 탭, 블링크, 블러 모달, 우측 AI 패널)은 구체적이므로 구조를 유지하고(`docs/reviews/Stock_Trader_nomad.md:21`), 색과 서체는 `_design-guide` 절차로 다시 정한다. 공개 랜딩은 법률 검토 후로 미루고(`docs/design-module/_design-guide/REFERENCES.md:207`), MVP는 초대 전용 안내 페이지만 둔다. 2026-10-13: 사용자 결정(확정 결정 15, `docs/products/00_MERGE_ANALYSIS.md:23`)으로 이 안내 화면의 히어로를 3D(시세 흐름 지형)로 바꿨고(4.5절), AI 채팅·음성·브리핑·위키 화면(3.7절)과 디자인 시스템(3.8절)을 더했다.
 
 ## 1. 정보 구조와 화면 목록
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -242,19 +242,19 @@
 
 ### 3.8 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 stock의 선택만 적는다.
+`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 stock의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 앱 화면 전체(대시보드, 보유 그리드, 매매 일지, 리서치, 연결, 운영자): **Primer**(데이터 밀도, 표·목록·상태 표시). 보조: Atlassian(상태 배지, 권한·베타 상태 표시, 초대 관리 표). AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-17) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` stock 절 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | 앱 화면 전체(대시보드, 보유 그리드, 매매 일지, 리서치, 연결, 운영자): **Primer**(데이터 밀도, 표·목록·상태 표시). 보조: Atlassian(상태 배지, 권한·베타 상태 표시, 초대 관리 표). AI 채팅·음성·위키: Astryx 패턴(존재·라이선스 미확인, 01장 D-17) + Primer 밀도. 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` stock 절 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Primer: 컴팩트/기본 두 밀도, 숫자 열 정렬(tabular-nums), 상태 라벨(아이콘 + 텍스트), 표 머리 고정. Atlassian: StatusBadge 체계. Astryx: 메시지 스레드 구조, 출처 칩, 입력 영역 | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, 크립토 거래소 네온 | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61`, 4.2절 |
-| 스택 | Next.js 16.2.9, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide, Recharts 3. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `apps/stock-dashboard/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(야간장 남색), `--color-surface-raised`(체결판 남회), `--color-text`(한지 백), `--color-text-muted`(장외 회색), `--color-caution`(동시호가 황), `--color-up`·`--color-down`(상승/하락, **미결 D-5라 값은 잠정**), `--color-error`, `--color-sample`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 다크 기본, 라이트 제공, 전환은 `data-theme` 하나 | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, 크립토 거래소 네온 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:14`, `:61`, 4.2절 |
+| 스택 | Next.js 16.2.9, React 19, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide, Recharts 3. `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/stock-dashboard/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(야간장 남색), `--color-surface-raised`(체결판 남회), `--color-text`(한지 백), `--color-text-muted`(장외 회색), `--color-caution`(동시호가 황), `--color-up`·`--color-down`(상승/하락, **미결 D-5라 값은 잠정**), `--color-error`, `--color-sample`, `--radius-control`, `--space-row-compact`/`--space-row-default`. 다크 기본, 라이트 제공, 전환은 `data-theme` 하나 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
 | 컴포넌트(정답) | `apps/stock-dashboard/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | 같은 곳 |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W2에 둔다(ST-06-035, ST-06-011, ST-06-036 사람 검토, ST-06-037). 화면 작업은 4단계 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W2에 둔다(ST-06-035, ST-06-011, ST-06-036 사람 검토, ST-06-037). 화면 작업은 4단계 뒤 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:39-49` |
 | 상승/하락 색 | D-5가 미결이므로 컴포넌트는 `--color-up`/`--color-down` 의미 토큰만 참조하고 색 값을 직접 쓰지 않는다. 결정 뒤 `tokens.css` 값만 바꾼다. 색만으로 뜻을 전하지 않는다(부호 + 텍스트 병기) | 01장 D-5, `DESIGN_SYSTEM.md:72` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
@@ -274,7 +274,7 @@
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
-`docs/products/_design-guide/DESIGN_PRINCIPLES.md` 1~5단계를 따른다. 공개 마케팅 랜딩은 법률 검토 전에는 만들지 않으므로, `/`는 초대 전용 안내 1화면이다.
+`docs/design-module/_design-guide/DESIGN_PRINCIPLES.md` 1~5단계를 따른다. 공개 마케팅 랜딩은 법률 검토 전에는 만들지 않으므로, `/`는 초대 전용 안내 1화면이다.
 
 ### 4.1 레퍼런스 (REFERENCES.md stock-dashboard 절에서만)
 
@@ -377,7 +377,7 @@
 
 ### 4.5 3D 히어로 (시세 흐름 지형)
 
-정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 stock 소재(`:88`)와 장면만 정한다. **변경 기록: 원본 03장 4절의 안 A(실제 대시보드 화면이 주인공, 3D 없음)는 2026-10-13 사용자 결정(확정 결정 15)으로 3D 히어로를 가진 안으로 바뀌었다.** 4.2절 브리프, 4.3절 토큰 플랜, 피할 인상(거의 검은 배경 + 애시드 그린, 크립토 네온, 수익 인증 광고)은 그대로 유지한다. 대시보드 앱 화면에는 3D가 없다.
+정본은 `docs/design-module/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 stock 소재(`:88`)와 장면만 정한다. **변경 기록: 원본 03장 4절의 안 A(실제 대시보드 화면이 주인공, 3D 없음)는 2026-10-13 사용자 결정(확정 결정 15)으로 3D 히어로를 가진 안으로 바뀌었다.** 4.2절 브리프, 4.3절 토큰 플랜, 피할 인상(거의 검은 배경 + 애시드 그린, 크립토 네온, 수익 인증 광고)은 그대로 유지한다. 대시보드 앱 화면에는 3D가 없다.
 
 | 기기 | 구성(HERO_3D 1절) | stock 장면 |
 |---|---|---|
@@ -413,7 +413,7 @@ reduced-motion이면 0단계의 정지 이미지만 보인다.
 | 수익 약속 방지 규칙 | 산과 골짜기가 번갈아 나타나게 만들고 우상향 추세와 마지막 구간의 급등을 두지 않는다. 단위 테스트: 앞 1/3 구간 평균 높이와 뒤 1/3 구간 평균 높이의 비가 0.8~1.25. 장면에 `%`, 금액, 종목명, 상승/하락 색을 쓰지 않는다. 범례는 "높이 = 거래 활동의 상대 크기" |
 | 형상 | 코드 생성 도형(PlaneGeometry의 정점 변위). 외부 glTF 없음 |
 | 로딩·렌더 | `next/dynamic`(`ssr: false`), 화면 밖·탭 숨김이면 정지(HERO_3D 3절) |
-| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/products/_design-guide/HERO_3D.md:17-30`) |
+| 저사양 판정 | 로딩 전에 `saveData`, reduced-motion, WebGL 시험 생성, GPU 등급(렌더러 문자열), `deviceMemory`·`hardwareConcurrency`(4 이하 낮음)를 조합한다. `deviceMemory`가 없는 Safari·Firefox에서 undefined를 고사양으로 보지 않는다(`docs/design-module/_design-guide/HERO_3D.md:17-30`) |
 | 태블릿 기울기 | iOS Safari는 [기울여 보기] 버튼 탭으로 권한을 요청하고, 거부·미지원이면 드래그만 쓴다 |
 | 공용 키트 | 공용 3D 장면 키트 `packages/ui-3d`(제안) 위에 stock 소재(지형)만 얹는다. 키트가 없으면 같은 인터페이스로 `hero3d/` 안에 두고 키트가 생기면 옮긴다(06장 6절 R-9) |
 | 예산 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초(HERO_3D 2절) |

@@ -139,7 +139,7 @@ setup 스크립트는 커밋, 원격 푸시, 의존성 설치, 원격 DB 변경�
 | `docs/products/book-trailer/05_DATA_MODEL.md` | `docs/file/03-설계/05_DATA_MODEL.md` | DOC-DES-004 | 데이터설계서 |
 | `docs/products/book-trailer/08_DESIGN_SYSTEM.md` | `docs/file/03-설계/08_DESIGN_SYSTEM.md` | DOC-DES-005 | 디자인시스템설계서(앱 토큰 + 영상 토큰) |
 | `docs/products/_platform-core/` 9개 | `docs/file/03-설계/공용코어/` | DOC-CORE-001~009 | 공용 코어 명세(009 `AUTH_ROADMAP.md`) |
-| `docs/products/_design-guide/` 5개 + `DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-001~005, 008 | 디자인 기준 |
+| `docs/design-module/_design-guide/` 5개 + `DASHBOARD_PATTERNS.md` | `docs/file/03-설계/디자인/` | DOC-DSN-001~005, 008 | 디자인 기준 |
 | (생성) DESIGN.md, COMPONENTS.md | `docs/file/03-설계/디자인/` | DOC-DSN-006~007 | 앱 디자인 토큰·컴포넌트 초기값(`08_DESIGN_SYSTEM.md` 3.7절·11.3절에서 복사) |
 | `docs/products/book-trailer/CLAUDE.md` | `docs/file/04-구현/CLAUDE.md` | DOC-IMP-001 | 개발지침 |
 | `docs/products/book-trailer/07_SOURCE_MIGRATION.md` | `docs/file/04-구현/07_SOURCE_MIGRATION.md` | DOC-IMP-002 | 원본 이식 계획 |

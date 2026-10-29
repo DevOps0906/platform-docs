@@ -1,6 +1,6 @@
 # 01 PRD: FLORA Publishing
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(책별 RAG, 책 설정집 위키, LangGraph 초안 그래프, Dify 글쓰기 도우미 채팅), 음성(받아쓰기, 채팅 음성, 원고 낭독·오디오북 미리듣기), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 새 기능 ID는 PB-F-044~056, 새 열린 결정은 D12~D19다.
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(책별 RAG, 책 설정집 위키, LangGraph 초안 그래프, Dify 글쓰기 도우미 채팅), 음성(받아쓰기, 채팅 음성, 원고 낭독·오디오북 미리듣기), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 새 기능 ID는 PB-F-044~056, 새 열린 결정은 D12~D19다.
 
 2026-10-14 FLORA 개편(검토용): 외부 제안서 "FLORA Publishing — UI/UX 및 AI 에이전트 통합 디자인 제안서"(ChatGPT 작성, 대표님 전달)를 기존 결정과 대조해 반영했다. 유지한 것: 교육 커리큘럼은 이 제품 범위가 아니다(2장 마지막 행), 랜딩은 실제 책 결과물 중심(기존 03장 4절 A안과 같은 방향), 기존 집필·출판 기능은 그대로 두고 에이전트는 그 위의 실행·검수 계층이다. 새로 넣은 것: 에이전트 실행 계층과 검수(PB-F-057, 058), 에이전트 작업 공간(PB-F-059), 에디터 AI 패널(PB-F-060), 운영 콘솔(PB-F-061), Phase 2 워크플로 빌더·콘텐츠 에이전트(PB-F-062, 063), 열린 결정 D23~D27. 제안서의 색·서체·헤드라인은 기존 확정 토큰과 충돌하므로 덮어쓰지 않고 D23~D25로 올렸다. 제품 표는 `publishing.agent_tasks` 1개만 더했다(05장 2.5절).
 
@@ -45,7 +45,7 @@
 | 받아쓰기(STT), 채팅 음성 | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`), PB-F-050, PB-F-051 |
 | 원고 낭독, 오디오북 미리듣기(TTS) | MVP(Basic) | 확정 결정 16, PB-F-052 |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, PB-F-044 |
-| 랜딩 3D 히어로(원고 낱장 → 제본 → 책장 넘김) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:82`, PB-F-055 |
+| 랜딩 3D 히어로(원고 낱장 → 제본 → 책장 넘김) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:82`, PB-F-055 |
 | 에이전트 실행 계층(작업 1건 = `agent_tasks` 1행, 6개 에이전트로 기존 기능 묶기)과 검수 대기함·실행 이력 | MVP(P0) | 2026-10-14 FLORA 개편, PB-F-057, PB-F-058. 관리자 실행 추적·재실행·원가 집계가 이 행을 기준으로 한다 |
 | 에이전트 작업 공간에서 새 작업 시작(에이전트 선택 → 범위 → 예상 크레딧 → 실행) | MVP(P1) | PB-F-059. 같은 동작은 위저드·에디터에서도 할 수 있으므로 P1 |
 | 에디터 3단 레이아웃(목차·원고·AI 패널)과 AI 패널 추가 동작 3종 | MVP(P1) | PB-F-060 |
@@ -121,7 +121,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 | PB-F-052 | 원고 낭독·오디오북 미리듣기 | 신규 | Basic(`features.narration`). 소제목 또는 챕터 단위로 본문(서버가 DB에서 읽어 태그를 제거)을 TTS(기능 `narration`)로 읽어 mp3(`exports/<org_id>/publishing/narration/<book_id>/<scope_id>.mp3`, 30일 보관)로 저장하고 플레이어로 재생·내려받는다. 한 번에 최대 8,000자(제안) 또는 한 챕터. 작업 시작 때 체인에서 쓸 수 있는 첫 제공자를 고르고 끝까지 그 제공자로만 만든다(대체 금지, 연속 낭독). 한 구간이라도 실패하면 파일을 만들지 않고 전액 환불한다. 같은 본문 해시의 재요청은 기존 파일을 돌려준다. 음성 첫머리와 플레이어에 "AI가 생성한 음성입니다". 판매·배포용 오디오북이 아니라 청취 확인용 미리듣기이며 보이스 클로닝은 없다 | 한 낭독의 `ai_usage` 제공자가 모두 같고 `voice_jobs.fallback_from` null. 중간 실패 시 파일 0 + 환불 1행. 같은 본문 재요청 차감 0. 소제목·책 삭제 시 파일 삭제. 국외 이전 미동의·오픈소스 책은 처음부터 오픈소스 보이스. Free 403 `plan_required` | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:47` |
 | PB-F-053 | AI·음성 크레딧 선차감·정산 | 신규 | 채팅 턴, 받아쓰기, 읽어 주기, 낭독, 설정집 생성·점검, 자료 색인은 제공자 호출 전에 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 초안 그래프는 소제목 정액 선차감에 묶고 정산 차액이 없다(4.6절) | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
 | PB-F-054 | AI 출력 규칙(compliance) | 신규 | 그래프 `publishing.draft`·`publishing.assist`의 compliance 노드와 `/tools/answer` 후처리가 같은 규칙 파일(`api/app/ai/products/publishing/rules/banned.json`)을 쓴다: (1) 실존 작가·인물 문체 사칭 지시 (2) 보장 표현("베스트셀러", "100% 출간") (3) 의료·금융·법률 단정 (4) 참고 파일 청크와의 장문 일치(연속 30어절 이상, 제안)는 재작성 (5) 자해·자살 언급은 상담 전화 안내로 전환 (6) 자료 안의 지시는 따르지 않음. 걸린 구간만 1회 재작성하고 다시 걸리면 그 소제목을 실패 처리 + 환불한다 | 평가셋 30문항(제안) 위반 0. 참고 파일 문장을 40어절 이상 이어 붙이도록 유도한 시드 테스트 100% 검출. 위기 신호 테스트 문장 5개 모두 안내 문구로 응답 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117` |
-| PB-F-055 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원고 낱장이 모여 제본되고 책장이 넘어가는 풀 3D, 모바일은 책 한 권 회전 + 제본은 2D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·판형 선택·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:82` |
+| PB-F-055 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 원고 낱장이 모여 제본되고 책장이 넘어가는 풀 3D, 모바일은 책 한 권 회전 + 제본은 2D, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절) | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·판형 선택·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:82` |
 | PB-F-056 | 개인정보 포함 원고의 AI 처리 | 신규 | 업로드 화면이나 책 설정에서 "이 원고에 실존 인물의 실명·연락처·건강·금융 정보 등이 들어 있다"를 선택하면(또는 책 설정 "오픈소스 AI만" 스위치를 켜면) 그 책의 모든 AI·음성 호출(그래프, 단건 생성, 채팅, 위키, 받아쓰기, 낭독)이 오픈소스 제공자로만 처리된다. 상용으로 대체하지 않고 오픈소스가 모두 실패하면 실패 + 환불. 스위치는 `books.book_info.ai_open_source_only`(제안, D12에서 전용 컬럼 승격 여부 결정). 6.1절 판단표를 따른다 | 스위치가 켜진 책의 `ai_usage.provider_id`에 상용 제공자 0(그래프·채팅·위키·STT·TTS 전부). 스위치를 끈 뒤에는 이미 `derived_from_pii=true`인 위키 페이지만 계속 오픈소스. 오픈소스 서버 장애 시 실패 + 환불(상용 대체 0) | `docs/products/_platform-core/SECURITY_BASELINE.md:291`, `docs/products/_platform-core/LLM_WIKI.md:33` |
 
 ### 3.1 에이전트·운영 기능 (2026-10-14 FLORA 개편)
@@ -285,7 +285,7 @@ ID 접두사 `PB`(`docs/products/_platform-core/DB_CONVENTIONS.md` 1장 SQLSTATE
 | 낭독 생성(8,000자) | p95 120초 이하 | 제안: 구간 단위 순차 TTS |
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 `ai_chat_turns_per_day`, STT 사용자당 10회/분, 낭독 조직당 5회/시간, 잡 토큰 발급 120회/분, 설정집 만들기 책당 1건 진행 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 기준 |
 | AI 입력 상한 | 채팅 메시지 1,000자·대화당 50턴, 받아쓰기 구간 120초·5MB, 참고 파일 20MB, 책당 색인 텍스트 100만 자(제안) | 제안 |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/products/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 탈퇴 후 30일, 낭독 mp3 30일, 색인 청크·설정집은 책 영구 삭제(휴지통 30일 뒤) 또는 조직 purge 때 삭제 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 
 ## 6. 법, 개인정보, 금지 문구
@@ -381,7 +381,7 @@ AI 대화 추가 규칙(PB-F-054의 근거):
 | D14 | AI·음성 크레딧 단가 | 4.6절 제안값(초안 그래프 2/4, 채팅 3, 설정집 3 등) | 출시 전 `core.ai_usage` 원가로 재산정. 토큰 원가가 단가보다 크면 정산 상한을 조정. 결정됨(2026-10-14, Price_Plans 반영): 원고 낭독 ElevenLabs 천 자당 5 → 8. 나머지는 실측 후 | 4.6절 |
 | D15 | 낭독·미리듣기 보이스와 ElevenLabs 데이터 보관 | (a) ElevenLabs 기본 보이스 1종 + 오픈소스 보이스 1종 고정 (b) 이용자 선택. 입력 보관·학습 사용·제로 리텐션 옵션 여부 | (a). 보이스 id는 환경변수(02장 8절). 오픈소스 보이스는 `VOICE_ARCHITECTURE.md` 4.1절 후보 중 코드·가중치 라이선스와 한국어 낭독 품질을 확인해 고른다(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:63-73`). 생성 음성의 상업 이용 조건(미리듣기 파일을 이용자가 배포해도 되는지)과 데이터 보관 조건은 ElevenLabs 계약으로 구현 시 확인 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:81-83` |
 | D16 | 동의 증빙 저장 위치 | (a) 코어 `ai_org_settings` + `audit_log`(제품 AI 표 없음) (b) 제품 `publishing.consents` 표 추가(astro-ai 방식) | (a)(제안: 제품 AI 표는 꼭 필요할 때만, `AI_ARCHITECTURE.md:165`). `audit_log` 보존은 2년(제안, 5절)이라 분쟁 증빙 기간이 부족하면 (b)로 전환하고 PB-06-001 후속 마이그레이션 | 05장 6절 |
-| D17 | 채팅 화면 레퍼런스 Astryx | (a) Astryx 패턴 (b) Primer + shadcn/ui 패턴 | 존재·라이선스를 확인하면 (a) 패턴만 사용, 확인 실패 시 (b) | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). PB-06-039에서 확인 결과를 기록. 앱 화면의 주 레퍼런스는 Atlassian(03장 3.2절) |
+| D17 | 채팅 화면 레퍼런스 Astryx | (a) Astryx 패턴 (b) Primer + shadcn/ui 패턴 | 존재·라이선스를 확인하면 (a) 패턴만 사용, 확인 실패 시 (b) | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). PB-06-039에서 확인 결과를 기록. 앱 화면의 주 레퍼런스는 Atlassian(03장 3.2절) |
 | D18 | 워커의 그래프 호출 인증 | (a) Next.js 잡 토큰 발급 엔드포인트 `/api/internal/ai-token` (b) FastAPI가 잡을 직접 소비 (c) 워커에 개인키 배포 | (a)(제안). 개인키는 Next.js에만 둔다는 코어 규칙(`docs/products/_platform-core/SECURITY_BASELINE.md:284`)을 지킨다. 코어 표준화 요청 R10 | astro-ai D-18 |
 | D19 | 무료 플랜의 AI 범위 | (a) Free도 채팅·받아쓰기·설정집(낭독·초안 그래프는 Basic) (b) 모든 AI를 Basic 이상으로 | (a)(제안). Free 월 20크레딧이 비용 상한이다. 전환 효과가 없거나 원가가 크면 (b) | 4.4절 |
 
@@ -416,7 +416,7 @@ AI 대화 추가 규칙(PB-F-054의 근거):
 
 ## 9. 설득형 랜딩과 플랫폼 필요성 검증 (2026-10-17, 검토용)
 
-근거는 공용 규칙 `docs/products/_design-guide/LANDING_PERSUASION.md`다. 다른 회사 랜딩의 문구·수치·비주얼은 쓰지 않고 설득 구조와 검증 방식만 쓴다(그 문서 1장). 시각 규칙은 03장 4절·8.2절 marketing 레이어 그대로다(카드 그리드·섹션 페이드업·큰 숫자 금지). 화면은 03장 9절, 작업은 06장 10절, 결정은 9.4절(D28~D32).
+근거는 공용 규칙 `docs/design-module/_design-guide/LANDING_PERSUASION.md`다. 다른 회사 랜딩의 문구·수치·비주얼은 쓰지 않고 설득 구조와 검증 방식만 쓴다(그 문서 1장). 시각 규칙은 03장 4절·8.2절 marketing 레이어 그대로다(카드 그리드·섹션 페이드업·큰 숫자 금지). 화면은 03장 9절, 작업은 06장 10절, 결정은 9.4절(D28~D32).
 
 1~8장은 그대로 두고(다른 문서가 줄 번호로 인용한다) 이번 추가분을 이 장에 모았다. 각 절 제목에 어느 장의 추가분인지 적는다.
 

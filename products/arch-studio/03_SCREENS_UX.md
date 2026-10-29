@@ -1,6 +1,6 @@
 # 03 화면과 UX: Arch Studio (arch-studio)
 
-작성일 2026-10-16. 기능 정본은 `docs/products/arch-studio/01_PRD.md`(AR-F-001~038, 4장 요금·상태, 9장 도면 자동 생성)이고, 이 문서는 화면과 흐름으로 구체화만 한다. 테이블·RPC·Route Handler·잡·오류 코드 이름은 02·04·05장과 같은 공통 계약을 쓴다. 화면 구조 코드는 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(A~O), 토큰·컴포넌트 규칙은 `docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다. 사용자 노출 문구는 한국어이며 카피는 PRD 6.1절(`docs/products/arch-studio/01_PRD.md:238`)과 9.7절(`:446`) 금지 문구를 통과해야 한다. 근거 없는 수치는 "제안"이다(이유: 신규 제품이라 사용 데이터가 없다).
+작성일 2026-10-16. 기능 정본은 `docs/products/arch-studio/01_PRD.md`(AR-F-001~038, 4장 요금·상태, 9장 도면 자동 생성)이고, 이 문서는 화면과 흐름으로 구체화만 한다. 테이블·RPC·Route Handler·잡·오류 코드 이름은 02·04·05장과 같은 공통 계약을 쓴다. 화면 구조 코드는 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(A~O), 토큰·컴포넌트 규칙은 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다. 사용자 노출 문구는 한국어이며 카피는 PRD 6.1절(`docs/products/arch-studio/01_PRD.md:238`)과 9.7절(`:446`) 금지 문구를 통과해야 한다. 근거 없는 수치는 "제안"이다(이유: 신규 제품이라 사용 데이터가 없다).
 
 ## 1. 정보 구조와 화면 목록
 
@@ -8,7 +8,7 @@
 
 상태 약어(PRD 4.3절 상태, `docs/products/arch-studio/01_PRD.md:103-112`): 체험 = 체험 14일, 체험만료 = 체험 만료·라이선스 없음, 영구 = 영구 + 업데이트 유효, 폴백 = 영구 + 업데이트 만료, 구독 = 월 구독 활성, 구독만료 = 월 구독 만료·라이선스 없음. "열람"은 PRD의 "열람·내보내기만"이다.
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 ### 1.1 데스크톱 화면
 
@@ -514,7 +514,7 @@ member는 읽기 전용(저장 시 `AR042`), 오프라인이면 캐시를 읽기
 
 | 항목 | 값 |
 |---|---|
-| 주 레퍼런스 | 모델러·평면·도면 화면: Atlassian(복잡한 폼과 상태, 패널 중첩) + Primer(정보 밀도, 상태 표시). 목록·라이선스·크레딧: Primer. 채팅·음성·위키: Astryx 패턴만(설치 안 함)(`DESIGN_SYSTEM.md` 5장, `docs/products/_design-guide/DESIGN_SYSTEM.md:53-57`) |
+| 주 레퍼런스 | 모델러·평면·도면 화면: Atlassian(복잡한 폼과 상태, 패널 중첩) + Primer(정보 밀도, 상태 표시). 목록·라이선스·크레딧: Primer. 채팅·음성·위키: Astryx 패턴만(설치 안 함)(`DESIGN_SYSTEM.md` 5장, `docs/design-module/_design-guide/DESIGN_SYSTEM.md:53-57`) |
 | 토큰 파일 | `packages/ui/tokens.css`(Tailwind CSS v4 `@theme`, 라이트·다크, 컴팩트·기본 밀도). 웹과 데스크톱이 같은 파일을 쓴다. `DESIGN_SYSTEM.md` 3장의 `apps/web/src/styles/tokens.css` 대신 공유 패키지에 두는 것은 Tauri 모노레포 구조(`docs/Tauri/README.md:223`) 때문이다 |
 | 3D·도면 색 | 뷰포트 재질과 SVG 미리보기 색도 토큰에서 읽는다(`--color-envelope`, `--color-mass`, `--color-site-line` 등, 이름 제안). DXF 출력 색은 토큰이 아니라 ACI 번호(PRD 9.6절)로 고정해 화면 테마와 무관하게 같은 파일이 나온다 |
 | 기본 컴포넌트 | Button(primary/secondary/ghost/danger, sm/md), IconButton, Input·NumberInput(mm 단위 접미사, 화살표 키 증감), Select, Checkbox, Switch, Tabs, Dialog, Sheet, Toast, Tooltip, Table(컴팩트), Badge, Kbd, Banner, Progress, Skeleton, EmptyState |
@@ -524,9 +524,9 @@ member는 읽기 전용(저장 시 `AR042`), 오프라인이면 캐시를 읽기
 
 ## 4. 메인페이지(랜딩) 디자인 방향
 
-### 4.1 레퍼런스 (`docs/products/_design-guide/REFERENCES.md`에 있는 것만 인용)
+### 4.1 레퍼런스 (`docs/design-module/_design-guide/REFERENCES.md`에 있는 것만 인용)
 
-`REFERENCES.md`에는 arch-studio 절이 없다(2026-10-16 확인). 그래서 건축·도구 성격이 맞는 기존 절의 URL을 다른 참고 포인트로 쓴다("다른 제품 간 공유" 규칙, `docs/products/_design-guide/REFERENCES.md:23`). CAD·3D 설계 도구 계열 레퍼런스는 그 파일에 없으므로, 앱 화면은 `DESIGN_SYSTEM.md` 5장 주 레퍼런스와 `DASHBOARD_PATTERNS.md` J로 정한다. 이 제품 전용 후보는 URL을 확인해 `REFERENCES.md`에 arch-studio 절을 먼저 추가한 뒤 쓴다(06장 디자인 요청으로 넘긴다).
+`REFERENCES.md`에는 arch-studio 절이 없다(2026-10-16 확인). 그래서 건축·도구 성격이 맞는 기존 절의 URL을 다른 참고 포인트로 쓴다("다른 제품 간 공유" 규칙, `docs/design-module/_design-guide/REFERENCES.md:23`). CAD·3D 설계 도구 계열 레퍼런스는 그 파일에 없으므로, 앱 화면은 `DESIGN_SYSTEM.md` 5장 주 레퍼런스와 `DASHBOARD_PATTERNS.md` J로 정한다. 이 제품 전용 후보는 URL을 확인해 `REFERENCES.md`에 arch-studio 절을 먼저 추가한 뒤 쓴다(06장 디자인 요청으로 넘긴다).
 
 | 구분 | 제목 | 출처 | URL | 참고 포인트(가져올 것) | 다른 제품의 쓰임 | 적용 화면 |
 |---|---|---|---|---|---|---|
@@ -579,7 +579,7 @@ member는 읽기 전용(저장 시 `AR042`), 오프라인이면 캐시를 읽기
 +--------------------------------------------------+
 ```
 
-### 4.4 생성형 기본값 회피 검토 (`DESIGN_PRINCIPLES.md` 5단계, `docs/products/_design-guide/DESIGN_PRINCIPLES.md:118-131`)
+### 4.4 생성형 기본값 회피 검토 (`DESIGN_PRINCIPLES.md` 5단계, `docs/design-module/_design-guide/DESIGN_PRINCIPLES.md:118-131`)
 
 | # | 기본값 | 이 제품 | 처리 |
 |---|---|---|---|
@@ -598,7 +598,7 @@ member는 읽기 전용(저장 시 `AR042`), 오프라인이면 캐시를 읽기
 
 ### 4.5 3D 히어로
 
-기기 구성·저사양 판정·성능 예산·킬 스위치는 `HERO_3D.md` 1~3절(`docs/products/_design-guide/HERO_3D.md:5-54`)을 그대로 따르고 여기서는 소재만 정한다.
+기기 구성·저사양 판정·성능 예산·킬 스위치는 `HERO_3D.md` 1~3절(`docs/design-module/_design-guide/HERO_3D.md:5-54`)을 그대로 따르고 여기서는 소재만 정한다.
 
 | 항목 | 내용 |
 |---|---|
@@ -764,7 +764,7 @@ member는 읽기 전용(저장 시 `AR042`), 오프라인이면 캐시를 읽기
 
 ## 7. 설득형 랜딩과 "왜 Arch Studio인가" 검증 (2026-10-17, 검토용)
 
-요구는 01장 10.1절(AR-F-039~042), 결정은 01장 10.3절(D-27~D-30), 공용 규칙은 `docs/products/_design-guide/LANDING_PERSUASION.md`(아래 LP), 작업은 06장 8절이다. 설득 순서·검증 방식과 "도입 단계 탭" 구조만 쓰고, 다른 회사 랜딩의 문구·수치와 다크 글래스 비주얼은 쓰지 않는다(LP 1장). 시각은 4.3절 토큰(트레이싱지 라이트)과 4.4절 점검 그대로이고, 연출 순간은 히어로의 엔벨로프 하나다. 카피는 4.6절과 01장 6.1·9.7·10.2절 금지 문구를 통과해야 한다.
+요구는 01장 10.1절(AR-F-039~042), 결정은 01장 10.3절(D-27~D-30), 공용 규칙은 `docs/design-module/_design-guide/LANDING_PERSUASION.md`(아래 LP), 작업은 06장 8절이다. 설득 순서·검증 방식과 "도입 단계 탭" 구조만 쓰고, 다른 회사 랜딩의 문구·수치와 다크 글래스 비주얼은 쓰지 않는다(LP 1장). 시각은 4.3절 토큰(트레이싱지 라이트)과 4.4절 점검 그대로이고, 연출 순간은 히어로의 엔벨로프 하나다. 카피는 4.6절과 01장 6.1·9.7·10.2절 금지 문구를 통과해야 한다.
 
 이 장은 3.18절 웹 화면과 4절 랜딩 방향의 추가분이다(다른 문서가 이 파일을 줄 번호로 인용하므로 앞 절을 고치지 않고 여기에 모은다).
 

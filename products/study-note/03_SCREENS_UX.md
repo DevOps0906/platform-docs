@@ -188,11 +188,11 @@
 
 ### 3.5 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 study-note의 선택만 적는다.
+`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 study-note의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 채팅·노트·위키·퀴즈 같은 AI 연동 화면: Astryx 패턴(메시지 스레드, 스트리밍 표시, 출처 칩, 입력 영역, 노트 목록 + 상세 2열). **존재·라이선스 미확인**이라 확인 전에는 패턴 이름으로만 쓴다(01장 D-17). 보조: Primer(정보 밀도: 표·목록·상태 라벨·키보드 단축키 표시). 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` study-note 절 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | 채팅·노트·위키·퀴즈 같은 AI 연동 화면: Astryx 패턴(메시지 스레드, 스트리밍 표시, 출처 칩, 입력 영역, 노트 목록 + 상세 2열). **존재·라이선스 미확인**이라 확인 전에는 패턴 이름으로만 쓴다(01장 D-17). 보조: Primer(정보 밀도: 표·목록·상태 라벨·키보드 단축키 표시). 랜딩: `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` study-note 절 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Astryx 패턴: 메시지 스레드 구조, 출처 칩, 입력 영역(마이크 포함). Primer: 컴팩트/기본 두 밀도, 상태 라벨(아이콘 + 텍스트), 숫자 열 정렬 | 같은 곳 |
 | 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX(Tailwind CSS v4로 재현), 마케팅 랜딩에 B2B 레퍼런스 적용, 파스텔 스티커·손글씨 장식(`REFERENCES.md:246-248`의 피할 인상) | `DESIGN_SYSTEM.md:14`, `:61` |
 | 스택 | Next.js 16.2.9, React 19.2.6, **Tailwind CSS v4**(4.3.0 고정), shadcn/ui(Tailwind v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `DESIGN_SYSTEM.md:63-73` |
@@ -324,7 +324,7 @@
 
 ### 4.4 레이아웃 안 비교
 
-2026-10-13: 히어로는 사용자 결정(전 제품 3D 히어로, `docs/products/_design-guide/HERO_3D.md`)으로 4.6절의 3D 장면이 된다. 아래 안 B의 좌측 헤드라인·CTA와 우측 "원문 → 정리본" 예시는 3D 위에 겹치는 HTML 오버레이로 유지한다.
+2026-10-13: 히어로는 사용자 결정(전 제품 3D 히어로, `docs/design-module/_design-guide/HERO_3D.md`)으로 4.6절의 3D 장면이 된다. 아래 안 B의 좌측 헤드라인·CTA와 우측 "원문 → 정리본" 예시는 3D 위에 겹치는 HTML 오버레이로 유지한다.
 
 | 안 | 구성 | 평가 |
 |---|---|---|
@@ -366,7 +366,7 @@
 
 ### 4.6 3D 히어로 (흩어진 메모 카드 → 정리된 노트)
 
-2026-10-13 사용자 결정(확정 결정 15)으로 히어로가 평면 2단 비교에서 3D 장면으로 바뀌었다. 정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 소재(`:90`)와 장면만 정한다.
+2026-10-13 사용자 결정(확정 결정 15)으로 히어로가 평면 2단 비교에서 3D 장면으로 바뀌었다. 정본은 `docs/design-module/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 수용 기준 `:70-75`)이고, 이 절은 소재(`:90`)와 장면만 정한다.
 
 | 기기 | 구성(HERO_3D 1절) | study-note 장면 |
 |---|---|---|

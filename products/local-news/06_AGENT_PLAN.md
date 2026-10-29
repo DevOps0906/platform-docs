@@ -1,6 +1,6 @@
 # 06 에이전트 작업 계획: 로컬뉴스 클라우드(가칭)
 
-작업 ID 접두사 `NW`(SQLSTATE 접두사와 같다, `docs/products/_platform-core/DOC_TEMPLATE.md` 0장). 작성일 2026-10-15. 경로는 앱 저장소 기준이며 `apps/web/`은 생략해 `src/...`로 적는다(02장 2절 트리와 같다). 작업 수 56개(사람 작업 1개 포함, 모델 작업 55개)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 신문사 SaaS가 편집국·독자 사이트·운영 콘솔 3개 화면 묶음과 공통모듈 8개, 화이트라벨, AI·음성, 인증 2개 대상(편집국·독자)을 함께 갖기 때문이며, 검증할 수 있는 크기(`docs/products/_design-guide/DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
+작업 ID 접두사 `NW`(SQLSTATE 접두사와 같다, `docs/products/_platform-core/DOC_TEMPLATE.md` 0장). 작성일 2026-10-15. 경로는 앱 저장소 기준이며 `apps/web/`은 생략해 `src/...`로 적는다(02장 2절 트리와 같다). 작업 수 56개(사람 작업 1개 포함, 모델 작업 55개)는 `DOC_TEMPLATE.md`의 15~40개 권장을 넘는다. 신문사 SaaS가 편집국·독자 사이트·운영 콘솔 3개 화면 묶음과 공통모듈 8개, 화이트라벨, AI·음성, 인증 2개 대상(편집국·독자)을 함께 갖기 때문이며, 검증할 수 있는 크기(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:24`)를 지키려고 합치지 않았다.
 
 ## 1. 원칙과 소유 경계
 

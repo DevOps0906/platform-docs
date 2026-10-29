@@ -1,0 +1,3 @@
+[submodule "design-module"]
+	path = design-module
+	url = https://github.com/DevOps0906/nomad-design-modules.git

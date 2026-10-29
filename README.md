@@ -17,7 +17,7 @@
 | 가격 플랜 | 제품 15개 + 서비스 사업 1개(arch-studio는 아직 없음, 요금은 01_PRD 4장) | `Price_Plans/` |
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
-| 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `products/_design-guide/templates/persuasion-landing/` |
+| 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `design-module/_design-guide/templates/persuasion-landing/` |
 | 전체 파일 | 1,636개, 폴더 444개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
@@ -31,7 +31,7 @@ reviews/  원본 25개 코드 리뷰(결함, 이식할 자산)
 products/00_MERGE_ANALYSIS.md  통합 분석 + 확정 결정 22개(분석 본문보다 우선)
    │
    ├──▶ products/_platform-core/   공용 코어 규격(인증·조직·크레딧·결제·잡·AI·음성·보안·DB 규칙)
-   ├──▶ products/_design-guide/    디자인 시스템, 3D 히어로, 레퍼런스
+   ├──▶ design-module/_design-guide/    디자인 시스템, 3D 히어로, 레퍼런스
    ├──▶ products/_supabase-modular/ 통합 DB(core + 제품 스키마)
    │
    ▼
@@ -73,7 +73,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`00_MERGE_ANALYSIS.md`](products/00_MERGE_ANALYSIS.md) | 통합 전 기능 분석과 확정 결정 22개. 상단 결정 표가 본문보다 우선 |
 | [`_platform-core/`](products/_platform-core/README.md) | 공용 코어 규격: `CORE_SPEC`, `SHARED_MODULES`, `SECURITY_BASELINE`, `DB_CONVENTIONS`, `DOC_TEMPLATE`(제품 문서 장 구조), `AI_ARCHITECTURE`, `VOICE_ARCHITECTURE`, `LLM_WIKI`, `AUTH_ROADMAP`(인증 단계), `COMMON_MODULES_ROADMAP`, `MONOLITH_CORE_LITE.sql`, `staged/`(승인 전 코어 SQL) |
 | [`_platform-core/common-modules/`](products/_platform-core/common-modules/README.md) | 공용모듈 7개 기획(compliance, media, editorial, community, search, membership, ads)과 15개 제품 적용표 |
-| [`_design-guide/`](products/_design-guide/README.md) | 디자인 원칙·시스템, 3D 히어로 표준, 관리자 대시보드 구조 패턴(A~O)과 시각 아키타입(V-A~V-N, 필수 분석 절차), Awwwards·Dribbble 레퍼런스, 디자인 스킬, 설득형 랜딩·"왜 이 플랫폼인가" 검증 규칙(`LANDING_PERSUASION.md`, 2026-10-17)과 설득형 랜딩 템플릿(`templates/persuasion-landing/`, 공통 1개 + 제품 16개) |
+| [`_design-guide/`](design-module/_design-guide/README.md) | 디자인 원칙·시스템, 3D 히어로 표준, 관리자 대시보드 구조 패턴(A~O)과 시각 아키타입(V-A~V-N, 필수 분석 절차), Awwwards·Dribbble 레퍼런스, 디자인 스킬, 설득형 랜딩·"왜 이 플랫폼인가" 검증 규칙(`LANDING_PERSUASION.md`, 2026-10-17)과 설득형 랜딩 템플릿(`templates/persuasion-landing/`, 공통 1개 + 제품 16개) |
 | [`_supabase-modular/`](products/_supabase-modular/README.md) | 통합 DB: 코어 `0000~0009` + 제품 조각, seed, 검증 기록 |
 | [`_tools-sqlcheck/`](products/_tools-sqlcheck/README.md) | PGlite로 SQL 적용을 검사하는 도구(`node check.mjs --vector ...`) |
 | `<제품>/` | 제품 기획서(2.2절 표준 구성) |
@@ -303,11 +303,11 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | 항목 | 내용 |
 |---|---|
-| 공용 규칙 | [`products/_design-guide/LANDING_PERSUASION.md`](products/_design-guide/LANDING_PERSUASION.md): 외부 자료 사용 원칙(구조만 쓰고 다른 회사의 문구·수치·비주얼은 쓰지 않음), "왜 이 플랫폼이어야 하는가" 판정표·증거 등급·주장 장부, 필요성 검증 단계(V0 인터뷰·칸 유무 교대 실험 → V1 과업 측정 → V2 실측 → V3 사례) |
+| 공용 규칙 | [`design-module/_design-guide/LANDING_PERSUASION.md`](design-module/_design-guide/LANDING_PERSUASION.md): 외부 자료 사용 원칙(구조만 쓰고 다른 회사의 문구·수치·비주얼은 쓰지 않음), "왜 이 플랫폼이어야 하는가" 판정표·증거 등급·주장 장부, 필요성 검증 단계(V0 인터뷰·칸 유무 교대 실험 → V1 과업 측정 → V2 실측 → V3 사례) |
 | 적용 제품 | flora-publishing(01장 9장, 03장 9절, 06장 10절), nomad-docs(01장 9장, 03장 8장, 06장 9절), arch-studio(01장 10장, 03장 7장, 06장 8장). 각 제품 작업 5개 추가(합계 962개) |
 | 서비스 상품 | Web-App-Agency 설득형 랜딩 패키지 AG-PL(`Price_Plans/Web-App-Agency/02_SERVICE_CATALOG.md` 6장, `PRICE_PLAN.md` 11장) |
 | 문서 방식 | 기존 장의 줄 번호를 다른 문서가 인용하므로 각 문서 끝에 추가 장을 붙였다(같은 줄 안의 수정만 예외) |
-| 랜딩 템플릿 | [`products/_design-guide/templates/persuasion-landing/`](products/_design-guide/templates/persuasion-landing/README.md): 공통 템플릿 1개(`data/_common.json`, 기본 "구매 여정")와 제품별 템플릿 16개(`data/<제품>.json` → `dist/<제품>.html`). 제품마다 개발 요건에 맞춘 "(제품) ○○ 여정"(5~7단계, 22~24페이지), Whisper 음성 지시 페이지, 경쟁사 강점·약점(내부 검토용) 포함. 만드는 법: `node validate.js` → `python3 build.py <제품>` |
+| 랜딩 템플릿 | [`design-module/_design-guide/templates/persuasion-landing/`](design-module/_design-guide/templates/persuasion-landing/README.md): 공통 템플릿 1개(`data/_common.json`, 기본 "구매 여정")와 제품별 템플릿 16개(`data/<제품>.json` → `dist/<제품>.html`). 제품마다 개발 요건에 맞춘 "(제품) ○○ 여정"(5~7단계, 22~24페이지), Whisper 음성 지시 페이지, 경쟁사 강점·약점(내부 검토용) 포함. 만드는 법: `node validate.js` → `python3 build.py <제품>` |
 | 템플릿 테마 | 불투명한 면과 한글 서체(Noto Sans KR)를 쓰는 어두운 단일 테마. 반투명 유리 카드·배경 흐림·영문 디스플레이 서체·빛이 훑는 효과는 쓰지 않는다. 제품마다 강조색만 다르다 |
 | 남은 결정 | flora-publishing D28~D32, nomad-docs D-23~D-27, arch-studio D-27~D-30, Web-App-Agency AG-D-13·14. V0 인터뷰는 개발 전에 대표님이 진행 |
 

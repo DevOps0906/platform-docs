@@ -2,11 +2,11 @@
 
 작성일 2026-10-12. 공개 사이트(방문자)와 운영 콘솔(초대받은 운영자)로 나뉜다.
 
-2026-10-13 개정: 방문자 AI 상담 위젯(텍스트·음성), 브랜드 지식 위키 화면, 콘솔 AI 화면, 디자인 시스템 항목(3.7절), 3D 히어로(4.8절)를 추가했다. **히어로는 사용자 결정(2026-10-13)으로 사진 중심에서 3D 온실 구조물로 바뀌었다**(`docs/products/_design-guide/HERO_3D.md:91`). 공개 사이트는 `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` website-floria 절을 따르고, B2B 레퍼런스(Primer 등)는 운영 콘솔에만 쓴다(`docs/products/_design-guide/DESIGN_SYSTEM.md:53-55`).
+2026-10-13 개정: 방문자 AI 상담 위젯(텍스트·음성), 브랜드 지식 위키 화면, 콘솔 AI 화면, 디자인 시스템 항목(3.7절), 3D 히어로(4.8절)를 추가했다. **히어로는 사용자 결정(2026-10-13)으로 사진 중심에서 3D 온실 구조물로 바뀌었다**(`docs/design-module/_design-guide/HERO_3D.md:91`). 공개 사이트는 `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` website-floria 절을 따르고, B2B 레퍼런스(Primer 등)는 운영 콘솔에만 쓴다(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:53-55`).
 
 ## 1. 정보 구조와 화면 목록
 
-화면 표의 `패턴` 열은 `docs/products/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/products/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
+화면 표의 `패턴` 열은 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md`(구조 A~O), `시각` 열은 `docs/design-module/_design-guide/DASHBOARD_VISUAL.md`(시각 V-A~V-N, 1장 분석 절차)를 따른다. 값은 제안이며 화면 착수 시 1장 7단계로 다시 확인한다(2026-10-16).
 
 | 경로 | 화면 | 패턴 | 시각 | 역할 접근 | 플랜 접근 | 우선순위 |
 |---|---|---|---|---|---|---|
@@ -226,20 +226,20 @@ viewer 역할은 콘솔에서 `/admin/settings`의 읽기 전용 화면 외에�
 
 ### 3.7 디자인 시스템
 
-`docs/products/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 floria의 선택만 적는다.
+`docs/design-module/_design-guide/DESIGN_SYSTEM.md`를 따른다(9절 제품 문서 반영 규칙). 이 절은 floria의 선택만 적는다.
 
 | 항목 | 내용 | 근거 |
 |---|---|---|
-| 주 레퍼런스 | 공개 사이트(랜딩, 폼, 상담 위젯, 지식 페이지): `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` website-floria 절. **B2B 레퍼런스(Primer, Atlassian)는 쓰지 않는다**(마케팅 페이지 구분). 운영 콘솔(`/admin/*`): Primer(정보 밀도, 표·목록·상태 표시), 상태 배지와 권한 표시는 Atlassian 보조. 상담 위젯의 스레드 구조: Astryx 패턴(존재·라이선스 미확인, 01_PRD.md D-17), 확인 실패 시 Primer + shadcn/ui 패턴. 시각은 어느 쪽이든 브랜드 토큰 | `docs/products/_design-guide/DESIGN_SYSTEM.md:51-61` |
+| 주 레퍼런스 | 공개 사이트(랜딩, 폼, 상담 위젯, 지식 페이지): `DESIGN_PRINCIPLES.md` + `HERO_3D.md` + `REFERENCES.md` website-floria 절. **B2B 레퍼런스(Primer, Atlassian)는 쓰지 않는다**(마케팅 페이지 구분). 운영 콘솔(`/admin/*`): Primer(정보 밀도, 표·목록·상태 표시), 상태 배지와 권한 표시는 Atlassian 보조. 상담 위젯의 스레드 구조: Astryx 패턴(존재·라이선스 미확인, 01_PRD.md D-17), 확인 실패 시 Primer + shadcn/ui 패턴. 시각은 어느 쪽이든 브랜드 토큰 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:51-61` |
 | 가져올 것 | Primer: 컴팩트/기본 두 밀도, 상태 라벨(아이콘 + 텍스트), 숫자 열 정렬(콘솔). Astryx: 메시지 스레드 구조, 출처 칩, 입력 영역 구성(위젯) | 같은 곳 |
-| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX, 마케팅 영역에 B2B 레퍼런스 적용, 위젯에 챗봇 말풍선 기본 파란색 | `docs/products/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
-| 스택 | Next.js 16, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind CSS v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:63-73` |
-| 토큰 파일(정답) | `apps/website-floria/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(온실 그늘), `--color-surface-raised`(이끼 석재), `--color-text`(석회), `--color-text-muted`(잿빛 잎), `--color-accent`(난초 자주), `--color-success`·`warning`·`danger`, `--radius-photo`(2px), `--radius-surface`(12px), `--radius-control`, `--space-row-compact`/`--space-row-default`(콘솔 밀도). 전환은 `data-theme` 하나 | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
+| 가져오지 않을 것 | 라이브러리 설치(`@primer/react`, Astryx 패키지), Primer 색·Octicons(Lucide 사용), StyleX, 마케팅 영역에 B2B 레퍼런스 적용, 위젯에 챗봇 말풍선 기본 파란색 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:14`, `:61` |
+| 스택 | Next.js 16, React 19.2, Tailwind CSS v4(4.x 고정), shadcn/ui(Tailwind CSS v4 지원 버전, 구현 시 확인), Lucide. `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:63-73` |
+| 토큰 파일(정답) | `apps/website-floria/src/styles/tokens.css`의 `@theme` 블록과 라이트/다크 변수. 의미 기반 이름: `--color-surface`(온실 그늘), `--color-surface-raised`(이끼 석재), `--color-text`(석회), `--color-text-muted`(잿빛 잎), `--color-accent`(난초 자주), `--color-success`·`warning`·`danger`, `--radius-photo`(2px), `--radius-surface`(12px), `--radius-control`, `--space-row-compact`/`--space-row-default`(콘솔 밀도). 전환은 `data-theme` 하나 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:26-37`, 4.3절 |
 | 다크/라이트 | 공개 사이트는 다크(온실 그늘)가 기본이고 3D 히어로 구역은 항상 다크다. 라이트 토큰 초안(제안, 3단계 사람 검토에서 확정, 대비는 계산값): 바탕 석회 `#ECE9DF`, 표면 `#F6F4EC`, 본문 `#0D1912`(14.84), 보조 `#46544A`(6.58), 강조 `#5B4580`(6.63, 그 위 글자 `#F6F4EC` 7.31), 성공 `#2F6B45`(5.22), 경고 `#8A5A00`(4.88), 오류 `#A23B2E`(5.40). 콘솔은 라이트 기본 | 4.3절, 계산값 |
-| 컴포넌트(정답) | `apps/website-floria/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). 컴포넌트에 hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | `docs/products/_design-guide/DESIGN_SYSTEM.md:26-37` |
-| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/products/_design-guide/DESIGN_SYSTEM.md:32` |
-| 시각 확인 | `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/products/_design-guide/DESIGN_SYSTEM.md:33` |
-| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(SI-06-033, SI-06-005, SI-06-034 사람 검토, SI-06-035). 화면 작업은 4단계 뒤 | `docs/products/_design-guide/DESIGN_SYSTEM.md:39-49` |
+| 컴포넌트(정답) | `apps/website-floria/src/components/ui/`(shadcn/ui를 토큰으로 재스타일). 컴포넌트에 hex 직접 사용 금지(린트로 `bg-[#...]` 차단, 제안) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:26-37` |
+| 문서 | `docs/file/03-설계/디자인/DESIGN.md`(1절 레퍼런스와 방향, 토큰 표), `COMPONENTS.md`(배리언트 표). 코드에서 갱신하고 다르면 코드가 이긴다 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:32` |
+| 시각 확인 | `/dev/components` 라이트/다크 스크린샷(Storybook은 쓰지 않는다) | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:33` |
+| 작업 순서 | `DESIGN_SYSTEM.md` 4장 1~4단계를 06장 W0~W1에 둔다(SI-06-033, SI-06-005, SI-06-034 사람 검토, SI-06-035). 화면 작업은 4단계 뒤 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:39-49` |
 
 기본 컴포넌트와 배리언트(수치는 제안, 3단계 사람 검토에서 확정):
 
@@ -259,11 +259,11 @@ viewer 역할은 콘솔에서 `/admin/settings`의 읽기 전용 화면 외에�
 
 `_design-guide/DESIGN_PRINCIPLES.md`의 7단계 절차를 따른다. 이 기획에서 완료한 것은 1~2, 4~5단계(문서화)이고, 3단계(UUPM 초안 생성)와 6~7단계는 구현 에이전트가 한다(작업 SI-06-005, 008~010, 013, 047).
 
-**2026-10-13 변경(사용자 결정)**: 히어로가 "사진이 사진 위로 걸치는 제목" 구성에서 3D 온실 구조물로 바뀌었다(확정 결정 15, `docs/products/_design-guide/HERO_3D.md`). 사진은 Collections·Archive로 자리를 옮겨 계속 주인공이다. 토큰 플랜(4.3)과 피할 인상은 그대로 유지한다. 3D 장면은 4.8절.
+**2026-10-13 변경(사용자 결정)**: 히어로가 "사진이 사진 위로 걸치는 제목" 구성에서 3D 온실 구조물로 바뀌었다(확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md`). 사진은 Collections·Archive로 자리를 옮겨 계속 주인공이다. 토큰 플랜(4.3)과 피할 인상은 그대로 유지한다. 3D 장면은 4.8절.
 
 ### 4.1 레퍼런스 (1단계)
 
-URL은 `docs/products/_design-guide/REFERENCES.md:267-285`(website-floria 절)에 있는 것만 인용했다. 구조와 리듬만 참고하고 자산을 복제하지 않는다.
+URL은 `docs/design-module/_design-guide/REFERENCES.md:267-285`(website-floria 절)에 있는 것만 인용했다. 구조와 리듬만 참고하고 자산을 복제하지 않는다.
 
 | 출처 | 제목 | URL | 참고 포인트(가져올 것) | 가져오지 않을 것 | 적용 화면 |
 |---|---|---|---|---|---|
@@ -398,7 +398,7 @@ URL은 `docs/products/_design-guide/REFERENCES.md:267-285`(website-floria 절)�
 
 ### 4.8 3D 히어로: 온실 구조물 (2026-10-13, 사용자 결정으로 변경)
 
-정본은 `docs/products/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`)이고, 이 절은 floria 소재(`:91` "식물과 건축 구조가 어우러진 온실 구조물")와 장면만 정한다. 브랜드 의미는 "보태닉 아키텍처": 식물이 건축 구조를 타고 자라 구조의 일부가 된다.
+정본은 `docs/design-module/_design-guide/HERO_3D.md`(기기 구성 `:5-15`, 저사양 판정 `:17-30`, 성능 예산 `:32-41`, 구현 규칙 `:43-54`, 공용 키트 `:56-68`, 수용 기준 `:70-75`)이고, 이 절은 floria 소재(`:91` "식물과 건축 구조가 어우러진 온실 구조물")와 장면만 정한다. 브랜드 의미는 "보태닉 아키텍처": 식물이 건축 구조를 타고 자라 구조의 일부가 된다.
 
 | 기기 | 구성(HERO_3D 1절) | floria 장면 |
 |---|---|---|
@@ -578,7 +578,7 @@ reduced-motion이면 0~4단계 없이 정지 이미지만 보인다. 연출은 �
 
 ### 8.5 첫 화면 구성 (`/admin` → `/admin/inquiries`, D-22 기본값)
 
-위에서 아래 순서. 1절 :24 패턴 "B + G시트"와 `docs/products/_design-guide/DASHBOARD_PATTERNS.md:140`(7장 website-floria 행, "운영자: 오늘 처리할 일(문의 목록)", 제안)을 따른다. 주인공은 문의 목록이다. 큰 숫자 KPI 카드를 두지 않는다(4.5절 원칙 2 "증빙 없는 숫자", 4.6절 6번을 콘솔에도 적용, 제안).
+위에서 아래 순서. 1절 :24 패턴 "B + G시트"와 `docs/design-module/_design-guide/DASHBOARD_PATTERNS.md:140`(7장 website-floria 행, "운영자: 오늘 처리할 일(문의 목록)", 제안)을 따른다. 주인공은 문의 목록이다. 큰 숫자 KPI 카드를 두지 않는다(4.5절 원칙 2 "증빙 없는 숫자", 4.6절 6번을 콘솔에도 적용, 제안).
 
 | 순서 | 영역 | 내용 | 누르면 |
 |---|---|---|---|

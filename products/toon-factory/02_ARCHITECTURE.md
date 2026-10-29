@@ -10,7 +10,7 @@
 | LLM 키 위치 | LLM·임베딩 제공자 키는 FastAPI(`apps/api`)에만 둔다. Vercel과 `toon-worker`에는 LLM 키가 없다. ElevenLabs 키와 서명 토큰 개인키는 Next.js 서버 전용. fal 키(`FAL_KEY`)는 이미지 생성을 하는 워커에 남는다(LLM·음성이 아님) | `docs/products/_platform-core/SECURITY_BASELINE.md:284`, `:299` |
 | 콘티·대사·프롬프트 변환 경로 | 워커의 `storyboard.generate`, `image.generate` 핸들러와 `/api/dialogue` Route Handler는 LLM을 직접 부르지 않는다. 워커는 Next.js `/api/internal/ai-token`에서 잡에 묶인 서명 토큰을 받아 FastAPI 그래프를 실행하고, 결과 저장은 워커가 한다(4절, 01장 D17) | 01장 D17 |
 | 음성 | Next.js `/api/voice/*` + 공용 `packages/core-voice`(ElevenLabs TS SDK, 오픈소스 음성 서버). 영상 음성도 Next.js Route Handler가 대사 mp3를 만들고 워커는 합성만 한다(ElevenLabs 키를 워커에 두지 않기 위해) | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:5-20` |
-| 스타일 | Tailwind CSS v4(CSS 우선 설정). `tailwind.config.js`와 v3 문법 금지 | `docs/products/_design-guide/DESIGN_SYSTEM.md:67` |
+| 스타일 | Tailwind CSS v4(CSS 우선 설정). `tailwind.config.js`와 v3 문법 금지 | `docs/design-module/_design-guide/DESIGN_SYSTEM.md:67` |
 
 ## 1. 스택
 
@@ -32,7 +32,7 @@
 | RAG | Supabase pgvector(HNSW, cosine, 1024차원). 작품 설정 임베딩은 `oss-embed` | pgvector 0.8 이상 | `docs/products/_platform-core/AI_ARCHITECTURE.md:94-107`, `docs/products/_platform-core/DB_CONVENTIONS.md:315-327` |
 | 채팅 운영 | 공용 자체 호스팅 Dify 1개, 제품 앱 `toon-chat`(Chatflow) | 설치 버전 문서로 확인 | 확정 결정 14, `docs/products/_platform-core/AI_ARCHITECTURE.md:58-71` |
 | 음성 | `packages/core-voice`: ElevenLabs TypeScript 공식 SDK + 공용 오픈소스 음성 서버(faster-whisper + silero-vad + 상업 이용 가능 한국어 TTS) | 구현 시 확인 | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:22-73` |
-| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 공용 키트 `packages/ui-3d`(제안) 위에 제품 소재만 | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/products/_design-guide/HERO_3D.md:47-48`, `:56-68` |
+| 3D | three.js + React Three Fiber + drei. 캔버스는 동적 import(`ssr: false`), 공용 키트 `packages/ui-3d`(제안) 위에 제품 소재만 | React 19 호환 버전(구현 시 확인) | 확정 결정 15, `docs/design-module/_design-guide/HERO_3D.md:47-48`, `:56-68` |
 | 검증 | zod(웹·워커 경계), pydantic(FastAPI 경계, zod와 같은 스키마), Vitest, pytest(FastAPI), Playwright | - | `docs/products/_platform-core/SECURITY_BASELINE.md:10장` |
 | 결제 | Toss Payments(`core-billing/toss`) | - | 확정 결정 4 |
 
@@ -288,7 +288,7 @@ interface CutDoc { v: 1; background: { color: string; ref: AssetRef | null }; la
 | fabric/node 렌더가 브라우저와 픽셀이 다름 | 골든 이미지 테스트(차이 0.5% 이하, TN-06-006). 글꼴 같은 파일 사용 |
 | 워커 장애 | 잡은 대기열에 남음. `reap_stale_jobs(600)` |
 | 영상 음성 준비(대사 20개 이상)가 Vercel 함수 시간 제한에 걸림 | `video-lines`를 대사 수에 따라 분할 호출(요청당 최대 10개)하고 진행 상태를 `exports.options.voice`에 기록. 한도는 배포 플랜으로 구현 시 확인 |
-| 3D 히어로가 저사양 기기에서 느림 | 로딩 전 저사양 판정, 정지 이미지 대체, 런타임 강등(`docs/products/_design-guide/HERO_3D.md:17-30`) |
+| 3D 히어로가 저사양 기기에서 느림 | 로딩 전 저사양 판정, 정지 이미지 대체, 런타임 강등(`docs/design-module/_design-guide/HERO_3D.md:17-30`) |
 | 서명 URL 대량 발급으로 원본 수집 | 편집용은 1024px이고 원본은 서명 URL로 나가지 않는다. 발급 레이트 리밋 600개/10분 |
 
 ## 8. 환경변수

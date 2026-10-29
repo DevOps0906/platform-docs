@@ -19,6 +19,7 @@ import sys
 
 PLATFORM = 'D:/WorkSpace/platform'
 P = PLATFORM + '/docs/products'
+DESIGN = PLATFORM + '/docs/design-module/_design-guide'  # nomad-design-modules 서브모듈(2026-10-30 이전)
 DEV = PLATFORM + '/docs/develop'
 STAMP = '20261013'
 
@@ -92,9 +93,9 @@ def plan(prod):
     for i, f in enumerate(CORE_DOCS, 1):
         items.append((f'{P}/_platform-core/{f}', f'docs/file/03-설계/공용코어/{f}', f'DOC-CORE-{i:03d}', f'공용 코어: {f[:-3]}', '03-설계'))
     for i, f in enumerate(DESIGN_DOCS, 1):
-        items.append((f'{P}/_design-guide/{f}', f'docs/file/03-설계/디자인/{f}', f'DOC-DSN-{i:03d}', f'디자인 기준: {f[:-3]}', '03-설계'))
+        items.append((f'{DESIGN}/{f}', f'docs/file/03-설계/디자인/{f}', f'DOC-DSN-{i:03d}', f'디자인 기준: {f[:-3]}', '03-설계'))
     for f, did in EXTRA_DESIGN_DOCS:
-        items.append((f'{P}/_design-guide/{f}', f'docs/file/03-설계/디자인/{f}', did, f'디자인 기준: {f[:-3]}', '03-설계'))
+        items.append((f'{DESIGN}/{f}', f'docs/file/03-설계/디자인/{f}', did, f'디자인 기준: {f[:-3]}', '03-설계'))
     # 제품 공통모듈 기획서(선택, 2026-10-15 local-news부터): products/<제품>/modules/*.md → docs/file/03-설계/모듈/
     mod_dir = f'{P}/{prod}/modules'
     if os.path.isdir(mod_dir):
@@ -118,7 +119,7 @@ def plan(prod):
 
 
 # docs/Tauri, docs/develop_V2 등 묶음에 복사하지 않는 공용 가이드는 platform 절대경로로 바꾼다(2026-10-16 arch-studio부터)
-REF_RE = re.compile(r'(?<![\w/.-])((?:docs/(?:products|reviews|Tauri|Capacitor|develop_V2|develop|Price_Plans|Multi-tenant_Theming)/|_platform-core/|_design-guide/)[^\s`\'"|)\]:,;<>]*)')
+REF_RE = re.compile(r'(?<![\w/.-])((?:docs/(?:products|reviews|Tauri|Capacitor|develop_V2|develop|Price_Plans|Multi-tenant_Theming|design-module)/|_platform-core/|_design-guide/)[^\s`\'"|)\]:,;<>]*)')
 
 
 def rewrite(text, mapping):
@@ -126,7 +127,7 @@ def rewrite(text, mapping):
         path = m.group(1)
         full = path
         if path.startswith('_platform-core/') or path.startswith('_design-guide/'):
-            full = 'docs/products/' + path
+            full = ('docs/design-module/' if path.startswith('_design-guide/') else 'docs/products/') + path
         if full in mapping:
             return mapping[full]
         for k, v in mapping.items():

@@ -7,7 +7,7 @@
 | 1 | `docs/products/_platform-core/CORE_SPEC.md`, `SHARED_MODULES.md`, `SECURITY_BASELINE.md`(16장 AI·음성, 17장 인증 단계), `DB_CONVENTIONS.md`(14장 pgvector), `DOC_TEMPLATE.md`, `MONOLITH_CORE_LITE.sql`, 로그인·세션·시드 작업이면 `AUTH_ROADMAP.md`(이 문서 8절) |
 | 1-AI | AI·음성 작업이면 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md` |
 | 2 | 이 폴더 `01_PRD.md` → `02_ARCHITECTURE.md` → `05_DATA_MODEL.md` → `04_API.md` → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md`(자기 작업 행) → `07_SOURCE_MIGRATION.md` 4절 |
-| 3 | UI 작업이면 `docs/products/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` astro-ai 절, 랜딩이면 `HERO_3D.md` |
+| 3 | UI 작업이면 `docs/design-module/_design-guide/DESIGN_SYSTEM.md`(먼저), `DESIGN_PRINCIPLES.md`, `REFERENCES.md` astro-ai 절, 랜딩이면 `HERO_3D.md` |
 
 원본 기획(`Astro AI/기획안/`, `FortuneDocs/`)은 참고용이다. 이 폴더와 충돌하면 이 폴더가 이긴다.
 

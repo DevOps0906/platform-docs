@@ -2,7 +2,7 @@
 
 근거 약어: 리뷰 = `docs/reviews/Slido_Project.md`, 원본 PRD = `구현해야 할 프로젝트/Slido_Project/PRD.md`, 원본 CLAUDE = `구현해야 할 프로젝트/Slido_Project/CLAUDE.md`, 조각 = `docs/products/_supabase-modular/migrations/1800_poll.sql`, 분석 = `docs/products/00_MERGE_ANALYSIS.md`.
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(행사 자료 RAG, LangGraph `poll.qna_assist`, 행사 위키, 진행자 어시스턴트 채팅), 음성(진행자 음성 대화, 청중 음성 질문, Q&A 요약 읽어 주기), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 이 제품은 청중이 로그인하지 않는 익명 참가자 토큰 구조(D2)를 유지하므로 AI 채팅은 진행자 전용이고, 청중 원문(질문, 음성)을 처리하는 모든 단계는 오픈소스로 강제한다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 신규 기능 ID는 LP-F-025~037, 신규 열린 결정은 D8~D18이다.
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(행사 자료 RAG, LangGraph `poll.qna_assist`, 행사 위키, 진행자 어시스턴트 채팅), 음성(진행자 음성 대화, 청중 음성 질문, Q&A 요약 읽어 주기), 상용/오픈소스 모델 이원화와 국외 이전 동의, 3D 히어로를 MVP에 넣었다. 이 제품은 청중이 로그인하지 않는 익명 참가자 토큰 구조(D2)를 유지하므로 AI 채팅은 진행자 전용이고, 청중 원문(질문, 음성)을 처리하는 모든 단계는 오픈소스로 강제한다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. 신규 기능 ID는 LP-F-025~037, 신규 열린 결정은 D8~D18이다.
 
 ## 1. 페르소나와 핵심 과제
 
@@ -42,7 +42,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | Q&A AI 정리(모더레이션 제안, 유사 질문 군집, 요약) | MVP | 확정 결정 13. Q&A(LP-F-013~015)가 MVP(P1)이므로 같은 단계 |
 | 음성: 진행자 음성 대화, 청중 음성 질문(STT → 텍스트 Q&A), Q&A 요약 읽어 주기(TTS) | MVP | 확정 결정 16(`docs/products/00_MERGE_ANALYSIS.md:24`) |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17, `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 랜딩 3D 히어로(무대 위 막대·구가 솟는 장면) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:87` |
+| 랜딩 3D 히어로(무대 위 막대·구가 솟는 장면) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:87` |
 | 청중용 AI 채팅(방문자 규칙 적용) | Phase 2 | 제안: 참가자 토큰 사용자는 로그인이 없고 크레딧 지갑도 없다. 방문자 키·레이트 리밋·예산 설계가 선행된다(D10) |
 | 크레딧팩, AI 자동 실행(질문 N건 도달 시), 질문 군집 컬럼 | Phase 2 | 제안(D11, D14) |
 | 유료 플랜(Pro, Business) + Toss 결제 | Phase 2 | 확정 결정 4 |
@@ -91,7 +91,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | LP-F-033 | Q&A 요약 읽어 주기 | 신규 | 진행자가 `poll.qna_assist` 요약을 "읽어 주기"(TTS, `qna_read_aloud`, ElevenLabs 우선 · 오픈소스 대체)로 재생한다. TTS 입력은 DB에 저장된 요약문뿐이고 임의 텍스트는 받지 않는다. 재생 화면에 "AI가 생성한 음성입니다"를 표시한다. 국외 이전 미동의 조직은 처음부터 오픈소스 보이스 | 요약 id 없는 요청은 404. 임의 텍스트 전송 시 400. 미동의 조직의 `ai_usage` 제공자에 elevenlabs 0건 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:40-48` |
 | LP-F-034 | 온보딩 국외 이전 동의와 AI 라우팅 | 신규 | 가입 직후(이메일 인증 뒤 또는 OAuth 첫 로그인의 약관 단계 뒤, 03장 7.3절) 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`을 부르고 설정에서 철회할 수 있다. 기능별 기본 체인은 02장 5절(seed와 일치). 동의가 없으면 모든 진행자 AI·음성 기능이 오픈소스 제공자만 쓴다. 청중 원문 처리 단계는 동의와 무관하게 항상 오픈소스다 | 미동의 조직의 `ai_usage.provider_id`에 상용 0건. 철회 직후 다음 요청부터 상용 0건. 고지문 버전이 `ai_org_settings.cross_border_notice`에 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
 | LP-F-035 | AI 크레딧 선차감·정산 | 신규 | 채팅 턴, Q&A 정리, 자료 색인, 위키 ingest·lint, STT, TTS, 청중 음성 질문 묶음은 시작 때 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다(차액 추가 차감 또는 `refund_credits`). 청중 음성 질문은 4건 묶음 단위로 선차감하고 행사 종료 정산이 한 건도 쓰지 않은 묶음을 환불한다. 투표, 일반 Q&A, 발표 화면, 오버레이는 크레딧을 쓰지 않는다 | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 투표·질문 경로에서 `consume_credits` 호출 0건 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
-| LP-F-036 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 무대 위에서 막대와 구가 투표가 들어올 때마다 솟는 풀 3D, 모바일은 막대 3개, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 3D 장면의 값은 시연용 시뮬레이션이며 실제 행사 데이터가 아니다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:87` |
+| LP-F-036 | 3D 히어로 | 신규 | 랜딩 히어로: PC·태블릿은 무대 위에서 막대와 구가 투표가 들어올 때마다 솟는 풀 3D, 모바일은 막대 3개, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.5절). 3D 장면의 값은 시연용 시뮬레이션이며 실제 행사 데이터가 아니다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·입력·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:87` |
 | LP-F-037 | AI 출력 규칙 | 신규 | 어시스턴트 답변, Q&A 요약, 위키, 음성 모두에 6장 AI 표시와 금지 문구를 같은 규칙 파일(`apps/api` compliance)로 적용한다. 요약과 답변에 청중 닉네임·식별 정보를 넣지 않는다. 투표·질문 결과를 "여론조사 결과", "전체 의견", "예측"으로 단정하는 문구를 만들지 않는다 | 평가셋 30문항(제안)에서 닉네임·개인정보 노출 0건, 금지 문구 0건. 요약문에 "여론조사", "대표한다" 류 문형 0건 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117` |
 
 ## 4. 요금과 크레딧
@@ -192,7 +192,7 @@ MVP = 공개 베타. 확정 결정 7에 이 제품의 범위는 없으므로 아
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 진행자 음성 발화 60초·5MB, 자료 문서 10MB, 질문 정리 대상 최근 600건 | 제안 |
 | AI 레이트 리밋 | 채팅 사용자당 20턴/분 + 하루 `ai_chat_turns_per_day`, 진행자 STT 사용자당 10회/분, Q&A 정리 행사당 `qna_assist_runs_per_event` + 조직당 10회/시간, 청중 음성 참가자당 2건/분·행사당 `audience_voice_per_participant`건, IP HMAC당 20건/10분, 행사당 120건/시간, 자료 업로드 조직당 20건/시간 | `docs/products/_platform-core/SECURITY_BASELINE.md:143-154` 형식, 수치는 제안 |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 탈퇴 후 30일, `core.ai_runs`(Q&A 정리 결과)는 행사 물리 삭제 때 함께 삭제, 자료·위키·아카이브는 행사 삭제 또는 `retention_days` 만료 때 삭제 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(Dify 30일 제안), 제안 |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 이하 | `docs/products/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 이하 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
 
 ## 6. 법, 개인정보, 금지 문구
 
@@ -279,7 +279,7 @@ AI 금지 문구(6장 금지 문구에 더해 AI 출력에 적용):
 | D14 | Q&A AI 정리 자동 실행 | A) 진행자가 누를 때만(현재) / B) 대기 질문 N건 도달 시 자동 | A. 자동 실행은 크레딧이 예고 없이 줄어든다 |
 | D15 | Q&A 아카이브 저장 시점 | A) 종료 때 진행자 선택, 기본 꺼짐(현재) / B) 기본 켜짐 | A. 청중 원문의 장기 보관이므로 명시 선택 |
 | D16 | 오픈소스 STT·TTS 모델, ElevenLabs 데이터 보관 | 공용 서버 결정(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:52-72`) | 오픈소스 보이스 1종과 ElevenLabs 보이스 1종을 환경변수로 고정. ElevenLabs 입력 보관·학습 사용·제로 리텐션은 계약으로 구현 시 확인하고 처리방침에 반영 |
-| D17 | 디자인 시스템 레퍼런스 사용 범위 | 진행자 콘솔 Atlassian(주) + Primer(보조) 패턴. 채팅 위젯은 Astryx 패턴(존재·라이선스 미확인) | Atlassian·Primer는 공개 문서의 패턴·토큰 체계만 참고하고 라이브러리를 설치하지 않는다. Astryx는 확인 전까지 미확인으로 두고 실패 시 Primer + shadcn/ui 패턴. 확인은 LP-06-033에서 기록(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`) |
+| D17 | 디자인 시스템 레퍼런스 사용 범위 | 진행자 콘솔 Atlassian(주) + Primer(보조) 패턴. 채팅 위젯은 Astryx 패턴(존재·라이선스 미확인) | Atlassian·Primer는 공개 문서의 패턴·토큰 체계만 참고하고 라이브러리를 설치하지 않는다. Astryx는 확인 전까지 미확인으로 두고 실패 시 Primer + shadcn/ui 패턴. 확인은 LP-06-033에서 기록(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`) |
 | D18 | 랜딩 3D 장면의 데이터 | A) 시뮬레이션 값(현재) / B) 실제 공개 샘플 행사 데이터 | A. 운영 수치를 3D에 쓰지 않는다(6장 금지 문구). 시연 값임을 화면에 표시 |
 
 ### 8.1 인증 단계 결정 (2026-10-14, 확정 결정 22)

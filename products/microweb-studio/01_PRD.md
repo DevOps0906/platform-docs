@@ -1,6 +1,6 @@
 # 01 PRD: Microweb Studio
 
-2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(템플릿·문구 RAG, 이벤트 종류별 문구 위키, LangGraph `microweb.invitation_copy`, Dify 제작 상담 채팅), 음성(제작 상담 음성 대화, 청첩장 인사말 음성, 하객 음성 방명록), 상용/오픈소스 모델 이원화와 국외 이전 동의, 쇼룸 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/products/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. "제안"은 원본과 리뷰에 근거가 없어 이 문서가 새로 정한 값이다. 2026-10-14 개정: 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`, 정본 `docs/products/_platform-core/AUTH_ROADMAP.md`)에 따라 운영자 로그인을 단계로 켠다(MW-F-024, 범위는 8.2절, 결정은 8.1절).
+2026-10-13 개정: 확정 결정 13~17(`docs/products/00_MERGE_ANALYSIS.md:21-25`)에 따라 AI 계층(템플릿·문구 RAG, 이벤트 종류별 문구 위키, LangGraph `microweb.invitation_copy`, Dify 제작 상담 채팅), 음성(제작 상담 음성 대화, 청첩장 인사말 음성, 하객 음성 방명록), 상용/오픈소스 모델 이원화와 국외 이전 동의, 쇼룸 3D 히어로를 MVP에 넣었다. 설계 정본은 `docs/products/_platform-core/AI_ARCHITECTURE.md`, `LLM_WIKI.md`, `VOICE_ARCHITECTURE.md`, `docs/design-module/_design-guide/HERO_3D.md`, `DESIGN_SYSTEM.md`이고 이 문서는 제품 요구만 정한다. "제안"은 원본과 리뷰에 근거가 없어 이 문서가 새로 정한 값이다. 2026-10-14 개정: 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`, 정본 `docs/products/_platform-core/AUTH_ROADMAP.md`)에 따라 운영자 로그인을 단계로 켠다(MW-F-024, 범위는 8.2절, 결정은 8.1절).
 
 ## 1. 페르소나와 핵심 과제
 
@@ -40,7 +40,7 @@
 | 청첩장 인사말 음성(TTS 또는 호스트 녹음) | MVP | 확정 결정 16 |
 | 하객 음성 방명록(STT 자막, 하객 고지·동의, 익명 엄격 제한) | MVP | 확정 결정 16, `docs/products/_platform-core/VOICE_ARCHITECTURE.md:94-95` |
 | 상용/오픈소스 모델 이원화, 온보딩 국외 이전 동의 | MVP | 확정 결정 17(`docs/products/00_MERGE_ANALYSIS.md:25`), `docs/products/_platform-core/AI_ARCHITECTURE.md:86` |
-| 쇼룸 3D 히어로(봉투 → 청첩장 카드 → 미니 사이트) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/products/_design-guide/HERO_3D.md:86` |
+| 쇼룸 3D 히어로(봉투 → 청첩장 카드 → 미니 사이트) | MVP | 확정 결정 15(`docs/products/00_MERGE_ANALYSIS.md:23`), `docs/design-module/_design-guide/HERO_3D.md:86` |
 | 쇼룸 비로그인 방문자 AI 상담 | Phase 2 | 제안: 운영자 예산과 강한 레이트 리밋이 필요하다(`docs/products/_platform-core/AI_ARCHITECTURE.md:130`). MVP 쇼룸은 `/contact` 문의로 이끈다 |
 | 사용자 보이스 선택, 본인 음성 복제 | Phase 2 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:80`. 타인(유명인, 고인) 음성 복제는 제공하지 않는다 |
 
@@ -83,7 +83,7 @@
 | MW-F-033 | AI 라우팅과 국외 이전 동의 | 신규 | 스튜디오 첫 진입 온보딩에서 "AI 처리 방식"을 고른다: 상용 AI 사용(국외 이전 동의) 또는 국내 오픈소스만. 동의하면 `core.set_ai_cross_border_ack(org, true, 고지문 버전)`을 호출하고 설정에서 언제든 철회한다. 기능별 기본 체인은 02장 5.1절(seed와 일치). 동의가 없으면 모든 AI·음성 기능이 오픈소스 제공자만 쓴다. 하객 음성 STT는 동의와 무관하게 항상 오픈소스다 | 미동의 조직의 `ai_usage.provider_id`에 상용 제공자 0. 철회 직후 다음 요청부터 상용 0. 고지문 버전이 `ai_org_settings.cross_border_notice`에 남는다 | `docs/products/_platform-core/AI_ARCHITECTURE.md:86`, `docs/products/_supabase-modular/migrations/0008_core_ai.sql:553-575` |
 | MW-F-034 | AI 크레딧 선차감·정산 | 신규 | 문구 제안 실행, 채팅 턴, STT, TTS는 시작 전에 예상 크레딧을 `consume_credits`로 선차감하고 끝나면 실제 사용량으로 정산한다. 하객 기능(축하말, 음성 방명록)은 0 크레딧이며 비용은 `ai_usage`에 쌓이고 사이트당 상한으로 제한한다. 대행 모드(스튜디오 조직)의 AI 비용 처리는 열린 결정 D-9 | 1시간 넘게 지난 `ai_usage` 중 `settled_at is null` 0행. 같은 멱등 키 재요청 시 차감 1회. 원장 drift 0 | `docs/products/_platform-core/AI_ARCHITECTURE.md:121-130` |
 | MW-F-035 | AI 출력 규칙 | 신규 | 6절 금지 문구와 청첩장 규칙을 그래프 compliance 노드와 `/tools/answer` 후처리에 같은 규칙 파일(`content/rules/banned.json`)로 적용한다: 전화·계좌·주소 생성 금지, 보장 표현, 타사 상표, 가상 후기, 미검증 수치, 부고장에서 축하 표현. 자해·자살 언급은 상담 전화 안내로 전환한다 | 평가셋 30문항(제안) 위반 0. 위기 신호 테스트 문장 5개 모두 안내 문구로 응답 | `docs/products/_platform-core/AI_ARCHITECTURE.md:117` |
-| MW-F-036 | 쇼룸 3D 히어로 | 신규 | `/` 히어로: PC·태블릿은 봉투가 열리고 청첩장 카드가 펼쳐져 미니 사이트(실제 엔진으로 렌더한 샘플)가 되는 풀 3D, 모바일은 제목·CTA를 HTML로 즉시 표시하고 봉투가 열리는 가벼운 3D만 첫 화면 뒤에 자동 로드, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.6절). 이 히어로는 사용자 결정(2026-10-13)으로 기존 "휴대폰 화면 iframe" 안을 대체했다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/products/_design-guide/HERO_3D.md:5-75`, `:86` |
+| MW-F-036 | 쇼룸 3D 히어로 | 신규 | `/` 히어로: PC·태블릿은 봉투가 열리고 청첩장 카드가 펼쳐져 미니 사이트(실제 엔진으로 렌더한 샘플)가 되는 풀 3D, 모바일은 제목·CTA를 HTML로 즉시 표시하고 봉투가 열리는 가벼운 3D만 첫 화면 뒤에 자동 로드, WebGL 미지원·저사양·`prefers-reduced-motion`은 정지 이미지(03장 4.6절). 이 히어로는 사용자 결정(2026-10-13)으로 기존 "휴대폰 화면 iframe" 안을 대체했다 | `HERO_3D.md` 4절 수용 기준 전부: 기기별 3종 동작, 3D 번들+에셋 PC·태블릿 1MB/모바일 300KB 이하, LCP 2.5초, 제목·CTA가 3D 전에 보이고 키보드로 사용 가능, 3종 스크린샷 고문 검토 통과 | `docs/design-module/_design-guide/HERO_3D.md:5-75`, `:86` |
 
 ## 4. 요금과 크레딧
 
@@ -183,7 +183,7 @@ AI·음성 키 8개는 2026-10-13에 추가했다. 모놀리스는 `supabase/mon
 | AI 레이트 리밋 | 문구 제안 사용자당 5회/시간, 채팅 사용자당 20턴/분 + 하루 100턴, STT 사용자당 10회/분, 인사말 TTS 사용자당 10회/시간, 서명 토큰 발급 120회/분 | 제안: `docs/products/_platform-core/SECURITY_BASELINE.md:143-155` 형식 |
 | 하객 음성 방명록 제한 | IP 해시당 10분 2건·하루 5건, 사이트당 하루 50건·30일 100건, 녹음 30초·2MB, 업로드 전 서명된 방문자 쿠키 필수 | 제안(익명이라 텍스트 방명록(IP 3/10분)보다 엄격) |
 | AI 입력 상한 | 채팅 메시지 1,000자, 대화당 50턴, 문구 제안 운영자 메모 500자, 인사말 TTS 600자, 음성 질문 60초·5MB | 제안 |
-| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/products/_design-guide/HERO_3D.md:32-41` |
+| 3D 히어로 | 3D 번들+에셋 PC·태블릿 1MB, 모바일 300KB 이하, 60fps / 30fps 이상, LCP 2.5초 | `docs/design-module/_design-guide/HERO_3D.md:32-41` |
 | AI 기록 보존 | Dify 대화 로그 30일, `core.ai_messages`는 대화 삭제 또는 탈퇴 후 30일 | `docs/products/_platform-core/AI_ARCHITECTURE.md:69`(제안 30일) |
 | 음성 보존 | 하객 음성 원본: 사이트 공개 만료 + 30일(제안), 숨김·삭제 시 즉시 삭제 요청. 호스트 인사말 mp3: 사이트 보관 후 30일과 같음. 제작 상담 음성 질문: 저장하지 않음 | `docs/products/_platform-core/VOICE_ARCHITECTURE.md:90-93` |
 
@@ -246,7 +246,7 @@ AI·음성 키 8개는 2026-10-13에 추가했다. 모놀리스는 `supabase/mon
 | D-13 | 인사말 보이스와 ElevenLabs 조건 | (a) ElevenLabs 기본 보이스 1종 + 오픈소스 보이스 1종 고정 (b) 사용자 선택. 생성 음성의 상업 이용 조건·입력 보관·제로 리텐션 여부 | (a)(제안). 보이스 id는 환경변수. 약관·보관 조건은 구현 시 ElevenLabs 계약으로 확인(`docs/products/_platform-core/VOICE_ARCHITECTURE.md:81-83`) |
 | D-14 | 호스트 녹음 mp3 변환 | (a) 워커에서 ffmpeg로 mp3 변환 (b) 원본 mime(webm/ogg/mp4)을 `site_assets`에 허용(스키마 변경 필요) | (a)(제안). 워커 이미지의 ffmpeg 라이선스·크기는 구현 시 확인 |
 | D-15 | 문구 코퍼스 출처 | (a) 운영자 직접 집필 + 허락받은 예시 (b) AI 초안 + 운영자 검수 (c) 고객 청첩장 문구 재사용(이름 마스킹) | (a)+(b)(제안). (c)는 개인정보·저작권 위험으로 제외. 항목마다 작성자·검수일·라이선스 기록 |
-| D-16 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/products/_design-guide/DESIGN_SYSTEM.md:11`). MW-06-036에서 확인 결과를 기록 |
+| D-16 | 채팅 화면 레퍼런스 Astryx | 존재·라이선스 확인 후 패턴만 사용 / 확인 실패 시 Primer + shadcn/ui 패턴 | 확인 전까지 미확인(`docs/design-module/_design-guide/DESIGN_SYSTEM.md:11`). MW-06-036에서 확인 결과를 기록 |
 | D-17 | 쇼룸 비로그인 AI 상담 시기 | (a) Phase 2 (b) MVP | (a)(제안). 방문자 쿠키 + 운영자 조직 예산 + 강한 레이트 리밋이 필요(`docs/products/_platform-core/AI_ARCHITECTURE.md:54-56`, `:130`) |
 | D-18 | AI 생성물 표시 의무 범위 | 스튜디오 내부 표시만 / 최종 청첩장·음성 플레이어까지 | 음성은 플레이어 표시, 문구는 호스트 선택(제안). 법적 의무는 구현 시 확인(미확인) |
 
