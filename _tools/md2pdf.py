@@ -74,17 +74,30 @@ def make_table(rows):
         return None
     ncol = max(len(r) for r in data)
     data = [r + [""] * (ncol - len(r)) for r in data]
-    pdata = [[Paragraph(inline(c), S["cellh"] if i == 0 else S["cell"]) for c in r] for i, r in enumerate(data)]
+    small = ncol >= 8   # 열이 많으면 글자를 줄여 좁은 열에서도 행이 한 쪽을 넘지 않게 한다
+    hs, cs = (S["cellh"], S["cell"]) if not small else (
+        ParagraphStyle("cellh_s", parent=S["cellh"], fontSize=6.8, leading=9), ParagraphStyle("cell_s", parent=S["cell"], fontSize=6.8, leading=9))
+    pdata = [[Paragraph(inline(c), hs if i == 0 else cs) for c in r] for i, r in enumerate(data)]
     avail = A4[0] - 36 * mm
-    lens = [max(len(data[i][j]) for i in range(len(data))) for j in range(ncol)]
-    lens = [min(max(l, 6), 60) for l in lens]
+    # 열 폭 = 평균 길이(상한 40) 기준, 단 가장 긴 단어가 들어갈 최소 폭은 보장
+    def colw(j):
+        col = [data[i][j] for i in range(len(data))]
+        avg = sum(len(c) for c in col) / len(col)
+        word = max((len(w) for c in col for w in c.split()), default=1)
+        return max(min(avg, 40), min(word * 1.15, 30), 4)
+    lens = [colw(j) for j in range(ncol)]
     tot = sum(lens)
     widths = [avail * l / tot for l in lens]
+    minw = 24 if small else 30   # 패딩(8pt)보다 충분히 넓게: 열이 매우 많은 표에서 음수 폭 방지
+    if min(widths) < minw:
+        extra = sum(max(0, minw - w) for w in widths)
+        big = sum(w for w in widths if w >= minw)
+        widths = [minw if w < minw else w - extra * w / big for w in widths]
     t = Table(pdata, colWidths=widths, repeatRows=1)
     style = [("BACKGROUND", (0, 0), (-1, 0), ACCENT),
              ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#BBBBBB")),
              ("VALIGN", (0, 0), (-1, -1), "TOP"),
-             ("LEFTPADDING", (0, 0), (-1, -1), 4), ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+             ("LEFTPADDING", (0, 0), (-1, -1), 2 if small else 4), ("RIGHTPADDING", (0, 0), (-1, -1), 2 if small else 4),
              ("TOPPADDING", (0, 0), (-1, -1), 3), ("BOTTOMPADDING", (0, 0), (-1, -1), 3)]
     for i in range(1, len(pdata)):
         if i % 2 == 0:

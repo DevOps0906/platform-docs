@@ -23,3 +23,12 @@
 
 ## 완료 보고 형식
 파일별로 `파일명 | 페이지수 | 상태(OK/수정후OK/실패)` 표를 작성하고, md2pdf.py 를 수정했다면 무엇을 바꿨는지 2줄로 적는다.
+
+## 제품 기획서 통합본 (2026-10-30 추가)
+
+- 도구: `python -X utf8 _tools/product_pdf.py <저장소 루트> <PDF_Collections>/product-docs --all` (book-trailer는 `book_trailer_pdf.py`가 별도 담당)
+- 변환기는 `md2pdf.py`의 `convert()`를 쓴다. reportlab·pypdf가 설치된 Python으로 실행한다(시스템 `py`에는 없을 수 있음).
+- `md2pdf.py` 표 폭 계산을 개선했다: 열 폭은 평균 길이와 가장 긴 단어 기준이고, 열이 8개 이상이면 글자를 줄이며 최소 폭을 보장한다(좁은 열 때문에 행이 한 쪽을 넘던 LayoutError 해결).
+- 알려진 한계: 코드 스팬 안의 `|`는 표 열 구분으로 읽혀 행이 쪼개진다.
+
+- 변환 뒤에는 `_tools/pdf_overlap_check.py <PDF 폴더>`로 글자 겹침을 검사한다(2026-10-30: 통합본 문서 목록에서 내용이 쪽 번호 칸을 침범하던 문제를 이 검사로 확인·수정, 전체 62개 0건).
