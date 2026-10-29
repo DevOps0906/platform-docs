@@ -4,7 +4,16 @@
 
 로컬 위치는 `D:\WorkSpace\platform\docs`를 기준으로 합니다. 문서 안의 경로가 이 위치를 씁니다.
 
-## 0. 한눈에 보기 (2026-10-18 기준)
+디자인 기준과 PDF 사본은 별도 레포에 있습니다. 로컬은 같은 상위 폴더(`D:\WorkSpace\DEV\`) 아래에 나란히 둡니다. 읽는 방법과 전체 연관 레포는 9장입니다.
+
+| 레포 | 내용 | 로컬 위치 |
+|---|---|---|
+| [platform-docs](https://github.com/DevOps0906/platform-docs) | 이 저장소: 통합 기획·개발 문서 정본 | `D:\WorkSpace\DEV\platform-docs` |
+| [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules) | 공통 디자인 가이드·설득형 랜딩 템플릿 | `D:\WorkSpace\DEV
+omad-design-modules` |
+| [PDF_Collections](https://github.com/DevOps0906/PDF_Collections) | 코드 리뷰·북트레일러 PDF 사본 | `D:\WorkSpace\DEV\PDF_Collections` |
+
+## 0. 한눈에 보기 (2026-10-30 기준)
 
 | 항목 | 수 | 위치 |
 |---|---|---|
@@ -51,7 +60,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 
 ## 2. 폴더 지도
 
-폴더 444개를 모두 펼친 트리는 [`FOLDER_TREE.md`](FOLDER_TREE.md)에 있습니다(`python3 -I _tools/folder_tree.py`로 다시 만듦).
+폴더 434개를 모두 펼친 트리는 [`FOLDER_TREE.md`](FOLDER_TREE.md)에 있습니다(`python3 -I _tools/folder_tree.py`로 다시 만듦).
 
 | 폴더 | 무엇이 있나 | 성격 | 언제 보나 |
 |---|---|---|---|
@@ -345,6 +354,30 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 가격 | `Price_Plans/sceneflow/PRICE_PLAN.md` 12장: 편집 LLM을 저가 모델로 두지 않으면 70% 미달, 2160p 배수 2배로는 렌더 원가를 덮지 못함 → SF-P-7~10 제안(D-38·D-39·D-41) |
 | 대시보드 시안 | Design 캔버스 "SceneFlow AI 자동편집 대시보드"(A안 문서 토큰, B안 랜딩 엔진 테마, 둘 다 실제 동작) |
 
+
+### 8.6 2026-10-30 레포 분리와 디자인·PDF 도구 추가
+
+이 저장소에서 디자인 기준과 PDF 사본을 분리하고, 모션·블로그 스킨 표준과 제품 PDF 도구를 추가했다. 변경 PR은 #47(병합), #48(README), #49(PDF 도구)다.
+
+| 영역 | 변경 | 위치 |
+|---|---|---|
+| 디자인 기준 분리 | `products/_design-guide/` 전체(가이드 10종, PDF 2종, 설득형 랜딩 템플릿)를 별도 레포로 이관. 문서 경로 117개 파일을 `nomad-design-modules/_design-guide/...`로 갱신. 서브모듈은 쓰지 않고 레포를 직접 참고한다 | [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules) |
+| 새 디자인 표준(제안) | `MOTION_GSAP.md`: 모션 어휘 M1~M9, 기기별 구성, 모션 성능 예산, 모션 끔 대체. `BLOG_SKIN.md`: 홈페이지형 네이버 블로그 스킨(공식 수치와 작업용 예시 구분, 방향 3갈래, 설치 패키지 범위). `REFERENCES.md`에 모션·인터랙티브 탐색 사이트 절(URL 미확인) | 같은 레포 `_design-guide/` |
+| 제품 반영(제안) | `nomad-blog/03_SCREENS_UX.md` 9장: 스킨 설치 패키지 생성기 후보(S0 문서, S1 패키지 생성, S2 자동 설치는 하지 않음). 결정 번호 미부여 | `products/nomad-blog/` |
+| PDF 분리 | `pdf/` 46개 파일을 별도 레포로 이관(코드 리뷰 25개를 제품별 폴더로, 북트레일러 20개). 체크섬 일치 확인 | [PDF_Collections](https://github.com/DevOps0906/PDF_Collections) |
+| 제품 기획서 통합본 | 제품 15개의 기획서를 통합본 PDF로 변환(표지, 문서 목록과 쪽 번호, 문서·장·절 책갈피, 97~225쪽, 합계 13MB) | PDF_Collections `product-docs/<제품>/` |
+| 도구 | `_tools/product_pdf.py` 추가, `_tools/md2pdf.py` 표 열 폭 계산 개선(열 8개 이상 표의 LayoutError 해결). `develop/_shared/tools/build_root.py`는 디자인 원본을 `D:/WorkSpace/DEV/nomad-design-modules`에서 읽도록 변경 | `_tools/`, `develop/_shared/tools/` |
+| 문서 갱신 | 9장(별도 레포 참고 방법과 연관 레포 9개), 폴더 지도, 파일 수(1,540개, 폴더 434개), `products/README.md` 깨진 디자인 링크 4곳 | 이 문서, `products/README.md` |
+
+남은 일과 알려진 한계:
+
+| 항목 | 내용 |
+|---|---|
+| 개발 묶음 재생성 | `develop/*/*-root/`의 `디자인/` 사본(생성물)은 아직 예전 내용이다. `build_root.py`를 다시 실행하면 새 경로와 새 문서가 반영된다(디자인 레포 클론이 있어야 함). 실행은 시험하지 못했고 `nomad-blog`의 경로 매핑만 확인했다 |
+| 이관하지 않은 디자인 파일 | `Multi-tenant_Theming/`(SQL·테스트가 `products/` 상대 경로를 읽음), `products/book-trailer/08_DESIGN_SYSTEM.md`, `products/local-news/research/DESIGN_BENCHMARK.md` |
+| 분리 후보 | `develop/*/*-root/` 생성물 1,065개(저장소 제외 검토), `_supabase-modular/`+`_tools-sqlcheck/`(DB 모듈 후보). 사용자 결정 대기 |
+| 제안 상태 문서 | `MOTION_GSAP.md`, `BLOG_SKIN.md`, `nomad-blog` 9장은 확정 전. 탐색 사이트 URL은 직접 확인한 뒤에만 제품 표에 인용 |
+| PDF 한계 | 제품 통합본은 reportlab 변환이라 코드 스팬 안의 `\|`가 있는 표 행이 쪼개져 보인다. PDF는 사본이므로 md가 바뀌면 다시 변환한다 |
 
 ## 9. 디자인 요소는 별도 레포를 참고한다 (2026-10-30)
 

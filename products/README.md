@@ -7,7 +7,7 @@
 | 폴더 | 종류 | 원본 프로젝트 | 모듈러 스키마 | 마이그레이션 번호 |
 |---|---|---|---|---|
 | `_platform-core/` | 공통 | basic-master-module + 그룹 간 공통 결함 | `core` | 0000~0099 |
-| `_design-guide/` | 공통 | 신규 | - | - |
+| ~~`_design-guide/`~~ | 공통 | 별도 레포 [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules)로 이관(2026-10-30) | - | - |
 | `_supabase-modular/` | 공통 | 신규 (통합 DB) | 전체 | - |
 | `flora-publishing/` | 통합 | Flora-v2, flora, flora-publisher, SellingDocs | `publishing` | 1000 |
 | `astro-ai/` (신비로운AI) | 통합 | Astro AI, FortuneDocs | `astro` | 1100 |
@@ -64,7 +64,7 @@
 | 단계 | 내용 | 상태 | 산출물 |
 |---|---|---|---|
 | 0 | 폴더 골격, 통합 분석, 인덱스 | 완료 | `00_MERGE_ANALYSIS.md`, 이 문서 |
-| 1 | 공용 코어, core DB, 디자인 가이드 | 완료 | `_platform-core/` 6개, `_supabase-modular/migrations/0000~0007`, `_design-guide/` 3개 |
+| 1 | 공용 코어, core DB, 디자인 가이드 | 완료 | `_platform-core/` 6개, `_supabase-modular/migrations/0000~0007`, nomad-design-modules `_design-guide/` 3개(이관 전 기록) |
 | 2 | 제품 12개 기획과 DB | 완료 | 제품 폴더마다 문서 9개와 `supabase/`, 모듈러 조각 13개 |
 | 3 | SQL 통합 검증, 구조 점검 | 완료 | `_supabase-modular/VERIFICATION.md`, `_STRUCTURE_CHECK.md` |
 | 4 | 인덱스 마무리, 최종 보고 | 완료 | 이 절 |
@@ -156,8 +156,8 @@
 | `_platform-core/AI_ARCHITECTURE.md` | AI 계층 구조, 서명 토큰, Dify 연동, 모델 라우팅, RAG, 그래프 |
 | `_platform-core/LLM_WIKI.md` | 제품 지식 위키와 개발용 프로젝트 위키 |
 | `_platform-core/VOICE_ARCHITECTURE.md` | 음성 이원화, 대화 흐름, 개인정보 |
-| `_design-guide/HERO_3D.md` | 3D 히어로 표준, 저사양 판정, 공용 3D 키트, 제품별 소재 |
-| `_design-guide/DESIGN_SYSTEM.md` | 디자인 시스템 규칙(Primer·Atlassian·Astryx 참고), 정답 소스는 Tailwind CSS v4 CSS + 코드 컴포넌트, 4단계 구축 워크플로, 작업 지시 템플릿 |
+| [`nomad-design-modules/_design-guide/HERO_3D.md`](https://github.com/DevOps0906/nomad-design-modules/blob/master/_design-guide/HERO_3D.md) | 3D 히어로 표준, 저사양 판정, 공용 3D 키트, 제품별 소재 |
+| [`nomad-design-modules/_design-guide/DESIGN_SYSTEM.md`](https://github.com/DevOps0906/nomad-design-modules/blob/master/_design-guide/DESIGN_SYSTEM.md) | 디자인 시스템 규칙(Primer·Atlassian·Astryx 참고), 정답 소스는 Tailwind CSS v4 CSS + 코드 컴포넌트, 4단계 구축 워크플로, 작업 지시 템플릿 |
 | `_supabase-modular/migrations/0008_core_ai.sql`, `0009_core_voice.sql` | AI·음성 코어 SQL (검사는 `check.mjs --vector`) |
 | `../develop/_shared/{dify,voice,llm,llm-wiki}/` | 공용 설치·운영 가이드, 개발 위키 스킬 원본 |
 
@@ -312,7 +312,7 @@ local-news 기획에서 모든 제품에 쓸 수 있는 부분을 꺼내 공용�
 
 ## 설득형 랜딩 추가 (2026-10-17, 검토용)
 
-설득형 랜딩의 내용 구조와 "왜 이 플랫폼이어야 하는가" 검증 방식을 공용 규칙 [`_design-guide/LANDING_PERSUASION.md`](_design-guide/LANDING_PERSUASION.md)로 정리하고, 적합도가 높은 3개 제품에 반영했다. 설득 순서·검증 방식·범용 UI 패턴만 쓰고, 다른 회사 랜딩의 문구·통계·고유 연출·유료 테마 자산과 다크 글래스 비주얼은 쓰지 않는다(저작권과 `DESIGN_PRINCIPLES.md` 생성형 기본값 판정, 규칙 문서 1장). 화면 시안은 [`_design-guide/templates/persuasion-landing/`](_design-guide/templates/persuasion-landing/README.md)(공통 템플릿 1개 + 제품별 16개)에 있다.
+설득형 랜딩의 내용 구조와 "왜 이 플랫폼이어야 하는가" 검증 방식을 공용 규칙 [`nomad-design-modules/_design-guide/LANDING_PERSUASION.md`](https://github.com/DevOps0906/nomad-design-modules/blob/master/_design-guide/LANDING_PERSUASION.md)로 정리하고, 적합도가 높은 3개 제품에 반영했다. 설득 순서·검증 방식·범용 UI 패턴만 쓰고, 다른 회사 랜딩의 문구·통계·고유 연출·유료 테마 자산과 다크 글래스 비주얼은 쓰지 않는다(저작권과 `DESIGN_PRINCIPLES.md` 생성형 기본값 판정, 규칙 문서 1장). 화면 시안은 [`nomad-design-modules/_design-guide/templates/persuasion-landing/`](https://github.com/DevOps0906/nomad-design-modules/blob/master/_design-guide/templates/persuasion-landing/README.md)(공통 템플릿 1개 + 제품별 16개)에 있다.
 
 | 제품 | 06장 작업 | 추가 작업 | 요구 ID | 결정 | 문서 위치 |
 |---|---|---|---|---|---|
