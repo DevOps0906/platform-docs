@@ -18,7 +18,7 @@
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `design-module/_design-guide/templates/persuasion-landing/` |
-| 전체 파일 | 1,636개, 폴더 444개(이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
+| 전체 파일 | 1,588개, 폴더 439개(`design-module/` 서브모듈 제외, 이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
 
@@ -55,6 +55,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 
 | 폴더 | 무엇이 있나 | 성격 | 언제 보나 |
 |---|---|---|---|
+| [`design-module/`](design-module/README.md) | **서브모듈** [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules): 공통 디자인 가이드(`_design-guide/`)와 설득형 랜딩 템플릿 | 정본(별도 레포) | 디자인 기준을 볼 때. 받으려면 `git submodule update --init` |
 | [`reviews/`](reviews/) | 원본 프로젝트 25개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
 | [`pdf/`](pdf/) | `reviews/`의 PDF 변환본 25개 | 근거 사본 | 인쇄·공유 |
 | [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 16개 기획서 | **정본** | 무엇을 만들지 볼 때 |
@@ -73,7 +74,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`00_MERGE_ANALYSIS.md`](products/00_MERGE_ANALYSIS.md) | 통합 전 기능 분석과 확정 결정 22개. 상단 결정 표가 본문보다 우선 |
 | [`_platform-core/`](products/_platform-core/README.md) | 공용 코어 규격: `CORE_SPEC`, `SHARED_MODULES`, `SECURITY_BASELINE`, `DB_CONVENTIONS`, `DOC_TEMPLATE`(제품 문서 장 구조), `AI_ARCHITECTURE`, `VOICE_ARCHITECTURE`, `LLM_WIKI`, `AUTH_ROADMAP`(인증 단계), `COMMON_MODULES_ROADMAP`, `MONOLITH_CORE_LITE.sql`, `staged/`(승인 전 코어 SQL) |
 | [`_platform-core/common-modules/`](products/_platform-core/common-modules/README.md) | 공용모듈 7개 기획(compliance, media, editorial, community, search, membership, ads)과 15개 제품 적용표 |
-| [`_design-guide/`](design-module/_design-guide/README.md) | 디자인 원칙·시스템, 3D 히어로 표준, 관리자 대시보드 구조 패턴(A~O)과 시각 아키타입(V-A~V-N, 필수 분석 절차), Awwwards·Dribbble 레퍼런스, 디자인 스킬, 설득형 랜딩·"왜 이 플랫폼인가" 검증 규칙(`LANDING_PERSUASION.md`, 2026-10-17)과 설득형 랜딩 템플릿(`templates/persuasion-landing/`, 공통 1개 + 제품 16개) |
+| ~~`_design-guide/`~~ → [`design-module/_design-guide/`](design-module/_design-guide/README.md) (2026-10-30 서브모듈로 이관, 9장) | 디자인 원칙·시스템, 3D 히어로 표준, 모션(GSAP)·블로그 스킨 표준(제안), 관리자 대시보드 구조 패턴(A~O)과 시각 아키타입(V-A~V-N, 필수 분석 절차), Awwwards·Dribbble 레퍼런스, 디자인 스킬, 설득형 랜딩·"왜 이 플랫폼인가" 검증 규칙(`LANDING_PERSUASION.md`, 2026-10-17)과 설득형 랜딩 템플릿(`templates/persuasion-landing/`, 공통 1개 + 제품 16개) |
 | [`_supabase-modular/`](products/_supabase-modular/README.md) | 통합 DB: 코어 `0000~0009` + 제품 조각, seed, 검증 기록 |
 | [`_tools-sqlcheck/`](products/_tools-sqlcheck/README.md) | PGlite로 SQL 적용을 검사하는 도구(`node check.mjs --vector ...`) |
 | `<제품>/` | 제품 기획서(2.2절 표준 구성) |
@@ -157,6 +158,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | 로그인 구현 | `AUTH_ROADMAP.md` → [`develop/_shared/auth/README.md`](develop/_shared/auth/README.md) → 제품 개발서 19장 |
 | 화이트라벨 판매 | [`Multi-tenant_Theming/README.md`](Multi-tenant_Theming/README.md) → `06_ADOPTION_PLAN.md` → `07_SALES_AND_OPERATIONS.md` |
 | 데스크톱·모바일 앱 | [`Tauri/README.md`](Tauri/README.md) 2장(웹 SDK 사용 시 주의점) → 12장(제품별 적용), [`Capacitor/README.md`](Capacitor/README.md) 3장(기획 지시) → 5장(제품별 적용) |
+| 디자인 작업 | [`design-module/README.md`](design-module/README.md) → `_design-guide/DESIGN_PRINCIPLES.md` → 제품 `03_SCREENS_UX.md` 4절 |
 | 원본 리뷰 추가 | [`_tools/README.md`](_tools/README.md) → `REVIEW_TEMPLATE.md` → `PDF_GUIDE.md` |
 
 ## 6. 개발하는 방법 (모든 제품 공통)
@@ -266,7 +268,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | 규칙 | 내용 |
 |---|---|
-| 공용 폴더 보호 | `_platform-core/`, `_design-guide/`, `_supabase-modular/`는 제품 작업에서 고치지 않고 제품 `06_AGENT_PLAN.md` 6절 "공용 모듈 요청"에 적는다 |
+| 공용 폴더 보호 | `_platform-core/`, `design-module/`, `_supabase-modular/`는 제품 작업에서 고치지 않고 제품 `06_AGENT_PLAN.md` 6절 "공용 모듈 요청"에 적는다 |
 | 생성물 직접 수정 금지 | `develop/<제품>/<제품>-root/`(`build_root.py`), `develop_V2/<제품>/`(`gen_v2.py`)는 원본을 고친 뒤 스크립트로 다시 만든다 |
 | DB | 정본은 모듈러 조각이고 제품 모놀리스는 변환본이다. 원격 DB 적용(`supabase db push`)은 사람이 확인 후 실행한다. SQL은 `products/_tools-sqlcheck`로 적용 검사를 통과해야 한다 |
 | 스택 | Tailwind CSS v4 고정(v3 문법·`tailwind.config.js` 금지). 의존성 버전 고정, `latest` 금지 |
@@ -343,3 +345,38 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 가격 | `Price_Plans/sceneflow/PRICE_PLAN.md` 12장: 편집 LLM을 저가 모델로 두지 않으면 70% 미달, 2160p 배수 2배로는 렌더 원가를 덮지 못함 → SF-P-7~10 제안(D-38·D-39·D-41) |
 | 대시보드 시안 | Design 캔버스 "SceneFlow AI 자동편집 대시보드"(A안 문서 토큰, B안 랜딩 엔진 테마, 둘 다 실제 동작) |
 
+
+## 9. 디자인 모듈(서브모듈)과 연관 레포 (2026-10-30)
+
+### 9.1 `design-module/` 사용법
+
+공통 디자인 요소는 별도 레포 [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules)로 분리해 서브모듈로 연결했습니다. 이전 위치 `products/_design-guide/`는 없어졌습니다.
+
+| 하고 싶은 일 | 명령·방법 |
+|---|---|
+| 처음 받기 | `git clone --recurse-submodules https://github.com/DevOps0906/platform-docs.git` |
+| 이미 받은 저장소에서 내려받기 | `git submodule update --init design-module` |
+| 모듈 최신으로 올리기 | `git -C design-module pull origin master` 후 `git add design-module`, 커밋 |
+| 디자인 문서 수정 | `design-module/`에서 수정·커밋·푸시(모듈 레포) → 이 저장소에서 `git add design-module`로 포인터 커밋. **모듈을 먼저 푸시한다** |
+| 문서에서 인용 | `design-module/_design-guide/<파일>`. 개발 묶음 안에서는 `_design-guide/<파일>` |
+| 개발 묶음 재생성 | `develop/_shared/tools/build_root.py`가 `DESIGN` 상수로 모듈을 읽는다. `develop/*/*-root/`의 `디자인/` 사본은 다음 재생성 때 새 경로로 바뀐다 |
+
+모듈에 있는 것: 디자인 시스템·원칙, 3D 히어로, 모션(GSAP, 제안), 네이버 블로그 스킨(제안), 레퍼런스, 대시보드 패턴, 설득형 랜딩 규칙과 템플릿. 제품별 선택은 `products/<제품>/03_SCREENS_UX.md`에 둡니다.
+
+이관하지 않은 디자인 관련 파일: `Multi-tenant_Theming/`(SQL·테스트가 `products/` 상대 경로를 읽음), `products/book-trailer/08_DESIGN_SYSTEM.md`, `products/local-news/research/DESIGN_BENCHMARK.md`(제품 문서 체계에 속함).
+
+### 9.2 연관 레포
+
+| 레포 | 역할 | 이 저장소와의 관계 |
+|---|---|---|
+| [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules) | 공통 디자인 가이드·템플릿 | `design-module/` 서브모듈 |
+| [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os) | Claude Code AI 개발팀 설정(에이전트, 도구) | 제품 개발 폴더에서 기획·구현·디자인 에이전트를 돌릴 때 사용 |
+| [nomad-blueprints-module](https://github.com/DevOps0906/nomad-blueprints-module) | 도메인별 기획 표 묶음 | 화면·API·데이터 기획 표를 가져올 때 |
+| [nomad-docker-module](https://github.com/DevOps0906/nomad-docker-module) | 자체 호스팅 서비스 컨테이너 실행 템플릿 | 로컬·단일 서버 실행 시 |
+| [nomad-secure-pack-module](https://github.com/DevOps0906/nomad-secure-pack-module) | 납품·규제용 보안 L3 | 공공·금융·대기업 납품, EU 판매 시 |
+| [SceneFlow](https://github.com/DevOps0906/SceneFlow) | AI 자동편집 영상 SaaS | `products/sceneflow/`의 개발 레포 |
+| [Arch-Studio](https://github.com/DevOps0906/Arch-Studio) | 건축 설계실무 도구 | `products/arch-studio/`의 개발 레포 |
+| [nomad-classroom](https://github.com/DevOps0906/nomad-classroom) | 오프라인·하이브리드 교육 강의실 SaaS 기획 | 이 저장소 16개 제품에는 없는 별도 기획 레포 |
+| [replica-collect-system](https://github.com/DevOps0906/replica-collect-system) | 서비스 분석·재구현 수집 시스템 | 레퍼런스 서비스 분석 시 |
+
+위 표의 역할은 각 레포 README 첫머리를 근거로 적었습니다. 모듈 레포(blueprints·docker·secure-pack)의 설치는 각 README의 `nomad-os module add` 안내를 따릅니다.
