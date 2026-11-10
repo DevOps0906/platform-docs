@@ -395,3 +395,15 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 남은 결정 | `products/bm-core/01_PRD.md` 8장(초기 핵심 고객, Wizard 필드, 스코어 0~5점 기준, AI·PDF의 MVP 포함 여부, BM-Agent·BM-Docs 분리 등) |
 
 에이전트로 작업할 때는 [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os)의 `/bm <제품>`을 씁니다. 단위경제·시나리오·점수 판정은 모델이 아니라 `bm-calc`가 계산합니다.
+
+## 11. GitHub 레포 지도 (2026-11-11)
+
+[DevOps0906](https://github.com/DevOps0906)·[theBestTrade](https://github.com/theBestTrade) 두 계정의 레포 142개(직접 만든 88개, 포크 54개)를 이 저장소 문서와 연결한 지도는 [`REPOSITORIES.md`](REPOSITORIES.md)에 있습니다.
+
+| 어디에 | 무엇을 적었나 |
+|---|---|
+| `reviews/<원본>.md` 첫 줄 | 원본 레포 주소(로컬 원본 폴더의 `git remote origin` 근거). 찾을 수 없는 레포는 이름만 |
+| `reviews/README.md` 표 | 원본 프로젝트 칸에 레포 주소 |
+| `products/<제품>/README.md` 첫 줄 | 원본 레포 또는 개발 레포(sceneflow, arch-studio) |
+
+다른 문서가 `파일:줄`로 인용하므로 줄을 추가하지 않고 첫 줄 끝에 붙였습니다. `develop/*/*-root/`의 사본은 `build_root.py`로 다시 만들 때 반영됩니다.

@@ -1,4 +1,4 @@
-# WebSite 코드 리뷰
+# WebSite 코드 리뷰 · 원본 레포: [DevOps0906/Lucury_Website](https://github.com/DevOps0906/Lucury_Website) (비공개)
 
 리뷰 대상: `D:\WorkSpace\platform\WebSite` 하위 5개 정적/마케팅 사이트 (Biz_Website, Botanic_Architecture, Floria_Neo, Floria_NEO_02, Lucury Website).
 본문의 경로는 모두 `WebSite/` 기준 상대경로이며, `경로:줄번호` 형식으로 근거를 표기한다. 이미지·동영상은 열지 않고 파일 크기와 메타데이터(ffprobe)만 확인했다. node_modules, dist 내부 코드는 읽지 않았다(Biz_Website는 dist/index.html과 번들 내 문자열만 확인).

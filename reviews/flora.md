@@ -1,4 +1,4 @@
-# flora 코드 리뷰
+# flora 코드 리뷰 · 원본 레포: `theBestTrade/flora`(로컬 origin 기록, 현재 GitHub에서 찾을 수 없음)
 
 ## 1. 프로젝트 개요
 

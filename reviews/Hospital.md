@@ -1,4 +1,4 @@
-# Hospital 코드 리뷰
+# Hospital 코드 리뷰 · 원본 레포: [DevOps0906/Hospital](https://github.com/DevOps0906/Hospital) (비공개)
 
 ## 1. 프로젝트 개요
 

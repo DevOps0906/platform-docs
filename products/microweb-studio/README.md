@@ -1,4 +1,4 @@
-# Microweb Studio (microweb-studio)
+# Microweb Studio (microweb-studio) · 원본 레포: [theBestTrade/premium-wedding-invitation](https://github.com/theBestTrade/premium-wedding-invitation), [theBestTrade/nexus-micro-web-builder](https://github.com/theBestTrade/nexus-micro-web-builder)
 
 ## 1. 한 줄 정의
 

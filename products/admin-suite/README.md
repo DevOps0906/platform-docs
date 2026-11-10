@@ -1,4 +1,4 @@
-# Admin Suite (admin-suite)
+# Admin Suite (admin-suite) · 원본 레포: [DevOps0906/nexus-erp](https://github.com/DevOps0906/nexus-erp) (비공개), [DevOps0906/Hospital](https://github.com/DevOps0906/Hospital) (비공개), [DevOps0906/school-management-system](https://github.com/DevOps0906/school-management-system) (비공개)
 
 ## 1. 한 줄 정의
 

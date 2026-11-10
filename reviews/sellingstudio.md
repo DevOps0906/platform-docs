@@ -1,4 +1,4 @@
-# sellingstudio 코드 리뷰
+# sellingstudio 코드 리뷰 · 원본 레포: [DevOps0906/sellingstudio](https://github.com/DevOps0906/sellingstudio) (비공개)
 
 리뷰 일자: 2026-10-11 / 대상 경로: `D:\WorkSpace\platform\sellingstudio` (`android/`, `ios/`는 Capacitor 생성물로 구조만 확인)
 

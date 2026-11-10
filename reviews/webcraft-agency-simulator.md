@@ -1,4 +1,4 @@
-# webcraft-agency-simulator 코드 리뷰
+# webcraft-agency-simulator 코드 리뷰 · 원본 레포: `theBestTrade/webcraft-agency-simulator`(로컬 origin 기록, 현재 GitHub에서 찾을 수 없음)
 
 ## 1. 프로젝트 개요
 

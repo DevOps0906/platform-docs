@@ -1,4 +1,4 @@
-# School_Management_System 코드 리뷰
+# School_Management_System 코드 리뷰 · 원본 레포: [DevOps0906/school-management-system](https://github.com/DevOps0906/school-management-system) (비공개)
 
 ## 1. 프로젝트 개요
 

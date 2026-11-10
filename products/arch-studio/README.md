@@ -1,4 +1,4 @@
-# Arch Studio (arch-studio, 가칭)
+# Arch Studio (arch-studio, 가칭) · 개발 레포: [DevOps0906/Arch-Studio](https://github.com/DevOps0906/Arch-Studio)
 
 작성일 2026-10-14, 갱신 2026-10-16(도면 자동 생성 9장 추가, 02~07·`CLAUDE.md`·SQL 초안 작성). 신규 단독 제품, 기획 초안. app id `arch`(제안), 스키마 `arch`(제안). 이 폴더는 기획 문서와 SQL 초안만 있고 앱 코드는 없다(`docs/products/_PRODUCT_AGENT_BRIEF.md:6`). 문서 상태는 4장. 브랜드 최종명은 열린 결정 D-1이다(`01_PRD.md` 8장).
 

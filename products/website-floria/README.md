@@ -1,4 +1,4 @@
-# Floria (website-floria)
+# Floria (website-floria) · 원본 레포: [DevOps0906/Lucury_Website](https://github.com/DevOps0906/Lucury_Website) (비공개)
 
 작성일 2026-10-12. 작업 루트 `D:\WorkSpace\platform`. 이 폴더에는 문서와 SQL만 있다. 앱 코드는 만들지 않았다.
 
