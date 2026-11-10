@@ -1,6 +1,6 @@
 # REPOSITORIES — GitHub 레포 지도
 
-조사일 2026-11-11. 대상: [DevOps0906](https://github.com/DevOps0906)·[theBestTrade](https://github.com/theBestTrade) 계정의 레포 142개(직접 만든 레포 88개, 포크 54개). 이 저장소 문서에서 해당 레포로 바로 가기 위한 지도다.
+조사일 2026-11-11. 대상: [DevOps0906](https://github.com/DevOps0906)·[theBestTrade](https://github.com/theBestTrade) 계정의 레포 143개(직접 만든 레포 89개, 포크 54개). 이 저장소 문서에서 해당 레포로 바로 가기 위한 지도다.
 
 연결 근거: 로컬 원본 폴더(`D:/WorkSpace/platform/*`, `D:/WorkSpace/DEV/*`)의 `git remote origin`. 근거가 이름 일치뿐인 것: `theBestTrade/nexus-micro-web-builder`, `theBestTrade/premium-wedding-invitation`. 비공개 레포는 권한이 있는 계정에서만 열린다. 각 리뷰 파일과 제품 README의 첫 줄에도 같은 주소를 적었다(다른 문서가 줄 번호로 인용하므로 줄을 추가하지 않고 첫 줄 끝에 붙였다).
 
@@ -25,10 +25,11 @@
 
 "찾을 수 없음"은 레포가 삭제됐거나 이름이 바뀌었거나, 현재 로그인 계정에 권한이 없는 경우다.
 
-## 1. 이 저장소 문서와 연결된 레포 (23개)
+## 1. 이 저장소 문서와 연결된 레포 (24개)
 
 | 레포 | 공개 | 최근 갱신 | 이 저장소 문서 | 설명(GitHub) |
 |---|---|---|---|---|
+| [DevOps0906/BM-CORE](https://github.com/DevOps0906/BM-CORE) | 공개 | 2026-11-11 | BM 7단계·캔버스·사업계획서 매핑·BM-Core 기획서(README 10장) | 이 저장소에서 2026-11-11 이동 |
 | [DevOps0906/Arch-Studio](https://github.com/DevOps0906/Arch-Studio) | 공개 | 2026-11-02 | [products/arch-studio](products/arch-studio/README.md)의 개발 레포 |  |
 | [DevOps0906/ERP_Website](https://github.com/DevOps0906/ERP_Website) | 비공개 | 2026-06-11 | [reviews/ERP-Wesite.md](reviews/ERP-Wesite.md)(nexus-erp 내부 저장소) |  |
 | [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2) | 비공개 | 2026-11-03 | [reviews/Flora-v2.md](reviews/Flora-v2.md) → [products/flora-publishing](products/flora-publishing/README.md) |  |
