@@ -29,7 +29,7 @@
 
 | 레포 | 공개 | 최근 갱신 | 이 저장소 문서 | 설명(GitHub) |
 |---|---|---|---|---|
-| [theBestTrade/BM-CORE](https://github.com/theBestTrade/BM-CORE) | 공개 | 2026-11-11 | BM 7단계·캔버스·사업계획서 매핑·BM-Core 기획서(README 10장) | 이 저장소에서 2026-11-11 이동 |
+| [DevOps0906/BM-CORE](https://github.com/DevOps0906/BM-CORE) | 공개 | 2026-11-11 | BM 7단계·캔버스·사업계획서 매핑·BM-Core 기획서(README 10장) | 이 저장소에서 2026-11-11 이동 |
 | [DevOps0906/Arch-Studio](https://github.com/DevOps0906/Arch-Studio) | 공개 | 2026-11-02 | [products/arch-studio](products/arch-studio/README.md)의 개발 레포 |  |
 | [DevOps0906/ERP_Website](https://github.com/DevOps0906/ERP_Website) | 비공개 | 2026-06-11 | [reviews/ERP-Wesite.md](reviews/ERP-Wesite.md)(nexus-erp 내부 저장소) |  |
 | [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2) | 비공개 | 2026-11-03 | [reviews/Flora-v2.md](reviews/Flora-v2.md) → [products/flora-publishing](products/flora-publishing/README.md) |  |

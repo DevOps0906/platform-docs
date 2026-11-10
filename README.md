@@ -152,7 +152,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 |---|---|
 | 저장소 전체 파악 | 이 문서 → [`products/README.md`](products/README.md)(인덱스와 진행 상태) → `00_MERGE_ANALYSIS.md` 확정 결정 표 |
 | 제품 하나 이해 | 제품 `README.md` → `01_PRD.md`(대표님 결정은 8장 "열린 결정") → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md` |
-| 가격 결정 | [`Price_Plans/_common/PRICING_PRINCIPLES.md`](Price_Plans/_common/PRICING_PRINCIPLES.md) → 제품 `PRICE_PLAN.md` → 제품 `01_PRD.md` 4장. 수익모델·사업성 검토는 [BM-CORE `method/BM_METHOD.md`](https://github.com/theBestTrade/BM-CORE/blob/master/method/BM_METHOD.md)(BM 7단계) |
+| 가격 결정 | [`Price_Plans/_common/PRICING_PRINCIPLES.md`](Price_Plans/_common/PRICING_PRINCIPLES.md) → 제품 `PRICE_PLAN.md` → 제품 `01_PRD.md` 4장. 수익모델·사업성 검토는 [BM-CORE `method/BM_METHOD.md`](https://github.com/DevOps0906/BM-CORE/blob/main/method/BM_METHOD.md)(BM 7단계) |
 | 개발 시작 | [`develop/README.md`](develop/README.md) → `develop/<제품>/<제품>_develop.md` → setup 스크립트(6장) |
 | 공용모듈로 개발 | [`develop_V2/README.md`](develop_V2/README.md) → `develop_V2/_shared/V2_RULES.md` → 제품 V2 개발서 → [`develop/_shared/modules/`](develop/_shared/modules/README.md) |
 | 로그인 구현 | `AUTH_ROADMAP.md` → [`develop/_shared/auth/README.md`](develop/_shared/auth/README.md) → 제품 개발서 19장 |
@@ -370,7 +370,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 레포 | 역할 | 이 저장소와의 관계 |
 |---|---|---|
 | [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules) | 공통 디자인 가이드·템플릿 | 디자인 기준의 정본. 제품 문서가 경로로 인용 |
-| [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os) | Claude Code AI 개발팀 설정(에이전트, 도구) | 제품 개발 폴더에서 기획·구현·디자인 에이전트를 돌릴 때 사용. BM 7단계는 `/bm <제품>`(계산은 `bm-calc`, 결과는 [BM-CORE](https://github.com/theBestTrade/BM-CORE)) |
+| [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os) | Claude Code AI 개발팀 설정(에이전트, 도구) | 제품 개발 폴더에서 기획·구현·디자인 에이전트를 돌릴 때 사용. BM 7단계는 `/bm <제품>`(계산은 `bm-calc`, 결과는 [BM-CORE](https://github.com/DevOps0906/BM-CORE)) |
 | [nomad-blueprints-module](https://github.com/DevOps0906/nomad-blueprints-module) | 도메인별 기획 표 묶음 | 화면·API·데이터 기획 표를 가져올 때 |
 | [nomad-docker-module](https://github.com/DevOps0906/nomad-docker-module) | 자체 호스팅 서비스 컨테이너 실행 템플릿 | 로컬·단일 서버 실행 시 |
 | [nomad-secure-pack-module](https://github.com/DevOps0906/nomad-secure-pack-module) | 납품·규제용 보안 L3 | 공공·금융·대기업 납품, EU 판매 시 |
@@ -384,13 +384,13 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 ## 10. BM과 사업계획서 자료는 BM-CORE 레포로 이동 (2026-11-11)
 
-사업모델(BM) 7단계 방법론, 비즈니스 모델 캔버스, 사업계획서(PSST) 매핑, BM-Core SaaS 기획서는 **[theBestTrade/BM-CORE](https://github.com/theBestTrade/BM-CORE)** 레포에서 관리합니다. 이 저장소는 "무엇을 만드는가"(제품 기획), BM-CORE는 "왜 돈이 되는가"(고객·가격·단위경제·검증·점수)와 사업계획서 재료를 맡습니다.
+사업모델(BM) 7단계 방법론, 비즈니스 모델 캔버스, 사업계획서(PSST) 매핑, BM-Core SaaS 기획서는 **[DevOps0906/BM-CORE](https://github.com/DevOps0906/BM-CORE)** 레포에서 관리합니다. 이 저장소는 "무엇을 만드는가"(제품 기획), BM-CORE는 "왜 돈이 되는가"(고객·가격·단위경제·검증·점수)와 사업계획서 재료를 맡습니다.
 
 | 옮긴 것 | BM-CORE 위치 |
 |---|---|
-| `Price_Plans/_common/BM_METHOD.md` | [`method/BM_METHOD.md`](https://github.com/theBestTrade/BM-CORE/blob/master/method/BM_METHOD.md) |
-| `products/bm-core/`(README, 01~09, CLAUDE.md) | [`product/`](https://github.com/theBestTrade/BM-CORE/tree/master/product) |
-| `products/bm-core/research/00_SOURCE_DESIGN.md` | [`research/`](https://github.com/theBestTrade/BM-CORE/tree/master/research) |
+| `Price_Plans/_common/BM_METHOD.md` | [`method/BM_METHOD.md`](https://github.com/DevOps0906/BM-CORE/blob/main/method/BM_METHOD.md) |
+| `products/bm-core/`(README, 01~09, CLAUDE.md) | [`product/`](https://github.com/DevOps0906/BM-CORE/tree/main/product) |
+| `products/bm-core/research/00_SOURCE_DESIGN.md` | [`research/`](https://github.com/DevOps0906/BM-CORE/tree/main/research) |
 
 제품별 BM 결과는 BM-CORE `projects/<제품>/`에 둡니다. 가격 플랜(`Price_Plans/<제품>/PRICE_PLAN.md`)은 계속 이 저장소에 있습니다.
 
