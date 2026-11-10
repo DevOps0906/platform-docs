@@ -10,7 +10,7 @@
 |---|---|---|
 | 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, PDF는 별도 레포 PDF_Collections |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
-| 기획 제품 | 16개(모두 01~07 완료) | `products/<제품>/` |
+| 기획 제품 | 16개(모두 01~07 완료) + 기획 중 1개(bm-core, 10장) | `products/<제품>/` |
 | 개발 묶음 | 16개, 작업 합계 1,011개 | `develop/<제품>/` |
 | 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
 | 공용모듈 기획 | 7개(제안) + 기존 4개 보강 | `products/_platform-core/common-modules/` |
@@ -58,7 +58,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | `nomad-design-modules/` (이 저장소 밖) | 별도 레포 [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules): 공통 디자인 가이드(`_design-guide/`)와 설득형 랜딩 템플릿. 로컬은 `D:/WorkSpace/DEV/nomad-design-modules` | 정본(별도 레포) | 디자인 기준을 볼 때. 9장 |
 | [`reviews/`](reviews/) | 원본 프로젝트 25개의 코드 리뷰(완성도, 결함 심각도, 이식할 자산) | 근거(읽기 전용) | 기획이 왜 이렇게 됐는지 확인할 때 |
 | `PDF_Collections/` (이 저장소 밖) | 별도 레포 [PDF_Collections](https://github.com/DevOps0906/PDF_Collections): 코드 리뷰 PDF 25개(제품별)와 북트레일러 문서 PDF 20개. 로컬은 `D:/WorkSpace/DEV/PDF_Collections` | 근거 사본(별도 레포) | 인쇄·공유. 9장 |
-| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 16개 기획서 | **정본** | 무엇을 만들지 볼 때 |
+| [`products/`](products/README.md) | 통합 분석, 공용 코어, 디자인 가이드, 통합 DB, 제품 16개 기획서 + bm-core(기획 중, 10장) | **정본** | 무엇을 만들지 볼 때 |
 | [`Price_Plans/`](Price_Plans/README.md) | 공용 가격 결정 방법(`_common/`), 제품별 가격 플랜, 서비스 사업 Web-App-Agency | 분석·계획(요금 정본은 01_PRD 4장) | 가격을 정하거나 바꿀 때 |
 | [`develop/`](develop/README.md) | 제품별 개발 안내서, setup 스크립트(`.sh`/`.ps1`), 개발 폴더에 붙일 묶음(`<제품>-root/`), 공용 설치 가이드(`_shared/`) | 묶음은 생성물(`build_root.py`) | 개발을 시작할 때 |
 | [`develop_V2/`](develop_V2/README.md) | 공용모듈 7개를 쓰는 제품별 개발서, V2 공통 규칙, 생성 스크립트 | 생성물(`gen_v2.py`) | 공용모듈로 개발할 때 |
@@ -106,7 +106,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`dify/`](develop/_shared/dify/README.md), [`llm/`](develop/_shared/llm/README.md), [`voice/`](develop/_shared/voice/README.md) | 공용 Dify, LLM 키·오픈소스 LLM 서버·라우팅, 음성 서버 |
 | [`tools/build_root.py`](develop/_shared/tools/build_root.py) | `products/`를 고친 뒤 `<제품>-root/` 묶음을 다시 만드는 스크립트 |
 
-## 3. 제품 목록 (16개)
+## 3. 제품 목록 (16개, 기획 중인 bm-core는 10장)
 
 개발 순서는 `develop/README.md` "권장 개발 순서"를 따릅니다(0단계 = 공용 코어). 작업 수는 V1 개발 묶음 기준입니다.
 
@@ -152,7 +152,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 |---|---|
 | 저장소 전체 파악 | 이 문서 → [`products/README.md`](products/README.md)(인덱스와 진행 상태) → `00_MERGE_ANALYSIS.md` 확정 결정 표 |
 | 제품 하나 이해 | 제품 `README.md` → `01_PRD.md`(대표님 결정은 8장 "열린 결정") → `03_SCREENS_UX.md` → `06_AGENT_PLAN.md` |
-| 가격 결정 | [`Price_Plans/_common/PRICING_PRINCIPLES.md`](Price_Plans/_common/PRICING_PRINCIPLES.md) → 제품 `PRICE_PLAN.md` → 제품 `01_PRD.md` 4장 |
+| 가격 결정 | [`Price_Plans/_common/PRICING_PRINCIPLES.md`](Price_Plans/_common/PRICING_PRINCIPLES.md) → 제품 `PRICE_PLAN.md` → 제품 `01_PRD.md` 4장. 수익모델·사업성 검토는 [`Price_Plans/_common/BM_METHOD.md`](Price_Plans/_common/BM_METHOD.md)(BM 7단계) |
 | 개발 시작 | [`develop/README.md`](develop/README.md) → `develop/<제품>/<제품>_develop.md` → setup 스크립트(6장) |
 | 공용모듈로 개발 | [`develop_V2/README.md`](develop_V2/README.md) → `develop_V2/_shared/V2_RULES.md` → 제품 V2 개발서 → [`develop/_shared/modules/`](develop/_shared/modules/README.md) |
 | 로그인 구현 | `AUTH_ROADMAP.md` → [`develop/_shared/auth/README.md`](develop/_shared/auth/README.md) → 제품 개발서 19장 |
@@ -370,7 +370,7 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | 레포 | 역할 | 이 저장소와의 관계 |
 |---|---|---|
 | [nomad-design-modules](https://github.com/DevOps0906/nomad-design-modules) | 공통 디자인 가이드·템플릿 | 디자인 기준의 정본. 제품 문서가 경로로 인용 |
-| [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os) | Claude Code AI 개발팀 설정(에이전트, 도구) | 제품 개발 폴더에서 기획·구현·디자인 에이전트를 돌릴 때 사용 |
+| [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os) | Claude Code AI 개발팀 설정(에이전트, 도구) | 제품 개발 폴더에서 기획·구현·디자인 에이전트를 돌릴 때 사용. BM 7단계는 `/bm <제품>`(계산은 `bm-calc`) |
 | [nomad-blueprints-module](https://github.com/DevOps0906/nomad-blueprints-module) | 도메인별 기획 표 묶음 | 화면·API·데이터 기획 표를 가져올 때 |
 | [nomad-docker-module](https://github.com/DevOps0906/nomad-docker-module) | 자체 호스팅 서비스 컨테이너 실행 템플릿 | 로컬·단일 서버 실행 시 |
 | [nomad-secure-pack-module](https://github.com/DevOps0906/nomad-secure-pack-module) | 납품·규제용 보안 L3 | 공공·금융·대기업 납품, EU 판매 시 |
@@ -381,3 +381,17 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | [PDF_Collections](https://github.com/DevOps0906/PDF_Collections) | 이 저장소 문서의 PDF 사본(코드 리뷰 25개, 북트레일러 20개) | `reviews/`와 제품 문서의 PDF 사본. 변환 도구(`_tools/md2pdf.py`, `book_trailer_pdf.py`)는 이 저장소에 있고 결과만 그 레포에 보관 |
 
 위 표의 역할은 각 레포 README 첫머리를 근거로 적었습니다. 모듈 레포(blueprints·docker·secure-pack)의 설치는 각 README의 `nomad-os module add` 안내를 따릅니다.
+
+## 10. BM-Core와 BM 방법론 (2026-11-11, 기획 중)
+
+사업모델(BM)을 숫자와 증거로 검증하는 방법을 모든 제품의 공용 방법으로 정리하고, 같은 방법을 SaaS로 만드는 제품 bm-core를 기획했습니다. 원본은 BM-Core 설계안(2026-11-07)이며 수치는 모두 가정(제안)입니다.
+
+| 문서 | 내용 |
+|---|---|
+| [`Price_Plans/_common/BM_METHOD.md`](Price_Plans/_common/BM_METHOD.md) | BM 7단계(고객·문제 → 가치 제안 → 수익모델·가격 → 단위경제 → 파트 분리·공통비 배분 → 린 검증 → 사업성 스코어), BookForge 예시, 루브릭(5축 × 4지표 × 0~5점), 증거 등급 A~E, 판정 구간(80/60/40). 다른 제품의 `PRICE_PLAN.md`가 이 방법을 쓴다 |
+| [`products/bm-core/`](products/bm-core/README.md) | BM-Core SaaS 기획서: README, 01 PRD, 02 아키텍처, 03 화면, 04 API, 05 데이터 모델, 06 작업 분해, 07 원본 이식(해당 없음), 08 계산 엔진(공식·반올림·경계조건·BookForge 기대값), 09 다이어그램(Mermaid 16종), CLAUDE.md, `research/00_SOURCE_DESIGN.md`(원본 설계안 정리본) |
+| 스키마 | `bm`(2700대), SQLSTATE `BM`, 작업 ID `BM-06-###`. 조직·구독·크레딧·잡·감사 로그는 core를 재사용한다 |
+| 아직 없음 | `supabase/monolith/`와 모듈러 SQL 조각, `develop/bm-core/` 개발 묶음, `Price_Plans/bm-core/PRICE_PLAN.md`(기획 승인 후) |
+| 남은 결정 | `products/bm-core/01_PRD.md` 8장(초기 핵심 고객, Wizard 필드, 스코어 0~5점 기준, AI·PDF의 MVP 포함 여부, BM-Agent·BM-Docs 분리 등) |
+
+에이전트로 작업할 때는 [nomad-agent-os](https://github.com/DevOps0906/nomad-agent-os)의 `/bm <제품>`을 씁니다. 단위경제·시나리오·점수 판정은 모델이 아니라 `bm-calc`가 계산합니다.
