@@ -1,4 +1,4 @@
-# premium-wedding-invitation 코드 리뷰
+# premium-wedding-invitation 코드 리뷰 · 원본 레포: [theBestTrade/premium-wedding-invitation](https://github.com/theBestTrade/premium-wedding-invitation)
 
 ## 1. 프로젝트 개요
 

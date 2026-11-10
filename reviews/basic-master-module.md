@@ -1,4 +1,4 @@
-# basic-master-module 코드 리뷰
+# basic-master-module 코드 리뷰 · 원본 레포: `DevOps0906/basic_master_module`(로컬 origin 기록, 현재 GitHub에서 찾을 수 없음)
 
 ## 1. 프로젝트 개요
 - 한 줄 설명: `create-next-app` 으로 막 생성한 Next.js 16 App Router 기본 골격. 이름("master module")으로 보아 워크스페이스 내 Next.js + Supabase 계열 프로젝트들의 공통 출발점으로 쓰려던 것으로 보인다.

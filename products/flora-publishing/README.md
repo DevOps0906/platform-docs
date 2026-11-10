@@ -1,4 +1,4 @@
-# FLORA Publishing (flora-publishing)
+# FLORA Publishing (flora-publishing) · 원본 레포: [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2) (비공개)
 
 작성일 2026-10-12. 단계 2 제품 기획서. 장 구조는 `docs/products/_platform-core/DOC_TEMPLATE.md` 2.1절을 따른다.
 

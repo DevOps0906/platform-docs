@@ -6,7 +6,7 @@
 |---|---|---|
 | [`Astro_AI.md`](Astro_AI.md) | 사주·타로 AI 리포트 | astro-ai |
 | [`FortuneDocs.md`](FortuneDocs.md) | 운세 리포트 PDF | astro-ai, nomad-docs(참고) |
-| [`Flora-v2.md`](Flora-v2.md) | AI 출판(v2) | flora-publishing |
+| [`Flora-v2.md`](Flora-v2.md) | AI 출판(v2) · [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2) (비공개) | flora-publishing |
 | [`flora.md`](flora.md) | AI 출판(v1) | flora-publishing, nomad-docs(참고) |
 | [`flora-publisher.md`](flora-publisher.md) | 출판 편집기 | flora-publishing |
 | [`SellingDocs.md`](SellingDocs.md) | 판매 문서 생성 | flora-publishing, nomad-docs(참고) |
@@ -16,18 +16,18 @@
 | [`Nomad-AI-Factory_V.2.md`](Nomad-AI-Factory_V.2.md) | AI 커머스 팩토리 v2 | nomad-commerce |
 | [`nomad-ai-factory.md`](nomad-ai-factory.md) | AI 커머스 팩토리 | nomad-commerce, nomad-blog(참고) |
 | [`nomad-ai-commerce.md`](nomad-ai-commerce.md) | AI 커머스 | nomad-commerce, nomad-blog(참고) |
-| [`sellingstudio.md`](sellingstudio.md) | 셀링스튜디오(상세페이지) | nomad-commerce, toon-factory(참고) |
-| [`premium-wedding-invitation.md`](premium-wedding-invitation.md) | 모바일 청첩장 | microweb-studio |
-| [`nexus-micro-web-builder.md`](nexus-micro-web-builder.md) | 마이크로웹 빌더 | microweb-studio |
+| [`sellingstudio.md`](sellingstudio.md) | 셀링스튜디오(상세페이지) · [DevOps0906/sellingstudio](https://github.com/DevOps0906/sellingstudio) (비공개) | nomad-commerce, toon-factory(참고) |
+| [`premium-wedding-invitation.md`](premium-wedding-invitation.md) | 모바일 청첩장 · [theBestTrade/premium-wedding-invitation](https://github.com/theBestTrade/premium-wedding-invitation) | microweb-studio |
+| [`nexus-micro-web-builder.md`](nexus-micro-web-builder.md) | 마이크로웹 빌더 · [theBestTrade/nexus-micro-web-builder](https://github.com/theBestTrade/nexus-micro-web-builder) | microweb-studio |
 | [`webcraft-agency-simulator.md`](webcraft-agency-simulator.md) | 웹 제작 견적 시뮬레이터 | microweb-studio |
-| [`ERP-Wesite.md`](ERP-Wesite.md) | ERP | admin-suite |
-| [`Hospital.md`](Hospital.md) | 병원 관리 | admin-suite |
-| [`School_Management_System.md`](School_Management_System.md) | 학교 관리 | admin-suite |
+| [`ERP-Wesite.md`](ERP-Wesite.md) | ERP · [DevOps0906/nexus-erp](https://github.com/DevOps0906/nexus-erp) (비공개), 내부 [DevOps0906/ERP_Website](https://github.com/DevOps0906/ERP_Website) (비공개) | admin-suite |
+| [`Hospital.md`](Hospital.md) | 병원 관리 · [DevOps0906/Hospital](https://github.com/DevOps0906/Hospital) (비공개) | admin-suite |
+| [`School_Management_System.md`](School_Management_System.md) | 학교 관리 · [DevOps0906/school-management-system](https://github.com/DevOps0906/school-management-system) (비공개) | admin-suite |
 | [`basic-master-module.md`](basic-master-module.md) | 공통 마스터 모듈(인증·권한) | 공용 코어(_platform-core), admin-suite |
 | [`Slido_Project.md`](Slido_Project.md) | 실시간 투표 | live-poll |
 | [`Stock_Trader_nomad.md`](Stock_Trader_nomad.md) | 주식 대시보드 | stock-dashboard |
 | [`Toon-Factory.md`](Toon-Factory.md) | 웹툰 제작 | toon-factory |
-| [`study-note-organizer-codex-01.md`](study-note-organizer-codex-01.md) | 학습 노트 정리 | study-note |
-| [`WebSite.md`](WebSite.md) | 브랜드 웹사이트 | website-floria, microweb-studio |
+| [`study-note-organizer-codex-01.md`](study-note-organizer-codex-01.md) | 학습 노트 정리 · [theBestTrade/study-note-organizer-codex-01](https://github.com/theBestTrade/study-note-organizer-codex-01) | study-note |
+| [`WebSite.md`](WebSite.md) | 브랜드 웹사이트 · [DevOps0906/Lucury_Website](https://github.com/DevOps0906/Lucury_Website) (비공개) | website-floria, microweb-studio |
 
 "참고"는 그 제품의 설계에 패턴만 참고했다는 뜻입니다(코드 이식 대상 아님). 원본 폴더 위치와 이식·폐기 목록은 각 제품 `07_SOURCE_MIGRATION.md`에 있습니다.

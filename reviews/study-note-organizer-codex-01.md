@@ -1,4 +1,4 @@
-# study-note-organizer-codex-01 코드 리뷰
+# study-note-organizer-codex-01 코드 리뷰 · 원본 레포: [theBestTrade/study-note-organizer-codex-01](https://github.com/theBestTrade/study-note-organizer-codex-01)
 
 ## 1. 프로젝트 개요
 

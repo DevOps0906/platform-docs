@@ -1,4 +1,4 @@
-# Flora-v2 코드 리뷰
+# Flora-v2 코드 리뷰 · 원본 레포: [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2) (비공개)
 
 ## 1. 프로젝트 개요
 

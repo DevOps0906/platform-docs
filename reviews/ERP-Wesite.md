@@ -1,4 +1,4 @@
-# ERP-Wesite 코드 리뷰
+# ERP-Wesite 코드 리뷰 · 원본 레포: [DevOps0906/nexus-erp](https://github.com/DevOps0906/nexus-erp) (비공개), 내부 [DevOps0906/ERP_Website](https://github.com/DevOps0906/ERP_Website) (비공개)
 
 ## 1. 프로젝트 개요
 

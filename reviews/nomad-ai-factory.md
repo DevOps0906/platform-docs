@@ -1,4 +1,4 @@
-# nomad-ai-factory 코드 리뷰
+# nomad-ai-factory 코드 리뷰 · 원본 레포: `theBestTrade/nomad-ai-factory`(로컬 origin 기록, 현재 GitHub에서 찾을 수 없음)
 
 리뷰 일자: 2026-10-11 / 대상 경로: `D:\WorkSpace\platform\nomad-ai-factory` (v1) / 비교 참조: `D:\WorkSpace\platform\Nomad-AI-Factory_V.2` (기획 문서만 존재하는 차기 버전)
 

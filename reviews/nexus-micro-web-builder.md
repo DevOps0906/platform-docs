@@ -1,4 +1,4 @@
-# nexus-micro-web-builder 코드 리뷰
+# nexus-micro-web-builder 코드 리뷰 · 원본 레포: [theBestTrade/nexus-micro-web-builder](https://github.com/theBestTrade/nexus-micro-web-builder)
 
 ## 1. 프로젝트 개요
 

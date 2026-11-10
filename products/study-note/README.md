@@ -1,4 +1,4 @@
-# Study Note (study-note)
+# Study Note (study-note) · 원본 레포: [theBestTrade/study-note-organizer-codex-01](https://github.com/theBestTrade/study-note-organizer-codex-01)(같은 계열 [theBestTrade/study-note-organizer-claude](https://github.com/theBestTrade/study-note-organizer-claude), [theBestTrade/study-note-organizer-geminicli](https://github.com/theBestTrade/study-note-organizer-geminicli))
 
 작성일 2026-10-12. 단독 제품, 공개 베타, 가입 개방(`apps.signup_policy = 'open'`, `status = 'beta'`). 이 폴더는 기획 문서와 SQL만 있고 앱 코드는 없다(`docs/products/_PRODUCT_AGENT_BRIEF.md:6`).
 
