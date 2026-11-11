@@ -413,10 +413,10 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 | 어디에 | 무엇을 적었나 |
 |---|---|
-| [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md) | 16개 제품 전체 표, 단계별 제품 수, 공개 레포 화면, 확인이 필요한 것 |
-| `products/<제품>/README.md` 끝 | 진행 현황 표. 공개 코드나 기획 문서로 만든 구조도는 `diagrams/architecture.mmd`와 README 안 Mermaid로 둠 |
+| [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md) | 16개 제품 전체 표, 단계별 제품 수, 화면 모음(캡처 13장), 확인이 필요한 것 |
+| `products/<제품>/README.md` 끝 | 진행 현황 표와 화면(`screenshots/`). 공개 코드나 기획 문서로 만든 구조도는 `diagrams/architecture.mmd`와 README 안 Mermaid로 둠 |
 | 개발·원본 레포 README | 진행 현황, 구조도(`docs/diagrams/architecture.mmd`), 화면(`docs/screenshots/`), 콘텐츠 바로가기 |
 
-- 비공개 레포의 구조도와 화면은 그 레포 README에만 있고, 이 저장소에는 표와 링크만 둡니다.
+- 화면 캡처는 모두 이 저장소에도 둡니다. 비공개 레포 제품의 구조도는 그 레포 README에만 있습니다.
 - 완성도는 작업표가 있으면 완료 작업 수/전체 작업 수(작업 개수 기준), 없으면 `reviews/`의 원본 리뷰 수치입니다.
 - `products/<제품>/README.md`는 다른 문서가 `파일:줄`로 인용하므로 기존 줄을 바꾸지 않고 파일 끝에만 붙였습니다.

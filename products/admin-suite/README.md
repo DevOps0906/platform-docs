@@ -71,4 +71,30 @@ erp와 sms는 같은 도메인 모델을 두 형태로 모두 제공한다. 모�
 
 - 기획: 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` 작성 완료.
 - 개발 단계: 원본 코드(세 레포 모두 Next.js 16 + Supabase).
-- 구조도와 화면은 각 비공개 원본 레포 README에 있습니다. 권한이 있는 계정에서만 열립니다.
+- 구조도는 각 비공개 원본 레포 README에 있고, 권한이 있는 계정에서만 열립니다. 화면은 아래에 있습니다.
+
+## 화면
+
+### ERP(nexus-erp) 로그인
+
+![Nexus ERP 로그인](screenshots/erp-login.png)
+
+출처: 실행 화면 `/login`(공개 랜딩이 없어 `/`가 로그인으로 이동). 대시보드는 데모 계정이 없어 캡처하지 않았습니다.
+
+### 병원(Hospital) 로그인
+
+![Hospital 로그인](screenshots/hospital-login.png)
+
+출처: 실행 화면 `/login`.
+
+### 병원(Hospital) 대시보드
+
+![Hospital 대시보드 시안](screenshots/hospital-dashboard.png)
+
+출처: 원본 레포 안 디자인 시안 `Images/medic-crm-dashboard.jpg`(1440×900로 축소). 이름·수치는 시안의 예시 데이터입니다.
+
+### 학교(school-management-system) 로그인
+
+![SMS 로그인](screenshots/school-login.png)
+
+출처: 실행 화면 `/login`. 대시보드는 데모 계정이 없어 캡처하지 않았습니다.

@@ -111,4 +111,18 @@ SceneFlow는 **말로 지시하면 AI가 편집안을 만들고 승인하면 실
 | 마지막 커밋 | 2026-11-01 | 개발 레포 main |
 | 주요 스택 | pnpm 모노레포, Next.js 16, FastAPI API·워커, Supabase, Redis, Dify | 개발 레포 README 구조도 |
 
-구조도와 화면(랜딩 시안, 대시보드 와이어프레임)은 비공개 개발 레포 README에 있습니다. 권한이 있는 계정에서만 열립니다: [SceneFlow README](https://github.com/DevOps0906/SceneFlow#readme).
+구조도는 비공개 개발 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [SceneFlow README](https://github.com/DevOps0906/SceneFlow#readme).
+
+## 화면
+
+### 랜딩
+
+![SceneFlow 랜딩](screenshots/landing.png)
+
+출처: 디자인 시안 `design/landing/sceneflow.html`(1440×900, 실행 화면 아님).
+
+### 대시보드
+
+![SceneFlow 대시보드 와이어프레임](screenshots/dashboard-wireframe.png)
+
+출처: 와이어프레임 `design/wireframes/DASH-01.html`(1440×900, 실행 화면 아님).

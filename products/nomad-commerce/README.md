@@ -81,4 +81,16 @@
 | 화면 | 랜딩 캡처 있음. 대시보드는 데모 계정이 없어 캡처하지 않음 | 원본 레포 README |
 | 다른 원본 | nomad-ai-factory, nomad-ai-commerce(git 없음), Nomad-AI-Factory_V.2는 이번 정리에 넣지 않음 | `../README.md` 원본 열 |
 
-구조도와 화면은 비공개 원본 레포 README에 있습니다. 권한이 있는 계정에서만 열립니다: [sellingstudio README](https://github.com/DevOps0906/sellingstudio#readme).
+구조도는 비공개 원본 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [sellingstudio README](https://github.com/DevOps0906/sellingstudio#readme).
+
+## 화면
+
+### 랜딩(sellingstudio)
+
+![SellingStudio 랜딩](screenshots/landing.png)
+
+출처: 원본 sellingstudio 실행 화면(1440×900, 더미 Supabase 주소, 원격 연결 없음).
+
+### 대시보드
+
+캡처 불가: 로그인이 필요하고 레포에 시드·데모 계정이 없습니다.

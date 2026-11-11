@@ -72,4 +72,16 @@ FLORA Publishing은 원고는 있지만 편집·조판 경험이 없는 1인 작
 | 랜딩·대시보드 | 아직 골격(제목 한 줄)이라 캡처하지 않음. 랜딩은 PB-06-024에서 구현 예정 | 개발 레포 `apps/web/src/app/` |
 | 선행 원본 | Flora-V2(원본 코드, 작업 2/12 완료, 랜딩 캡처 있음), Flora-V1(손대지 않음) | [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2)(비공개) |
 
-구조도와 화면은 비공개 레포 README에 있습니다. 권한이 있는 계정에서만 열립니다: [flora-publishing README](https://github.com/DevOps0906/flora-publishing#readme) · [Flora-V2 README](https://github.com/DevOps0906/Flora-V2#readme).
+구조도는 비공개 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [flora-publishing README](https://github.com/DevOps0906/flora-publishing#readme) · [Flora-V2 README](https://github.com/DevOps0906/Flora-V2#readme).
+
+## 화면
+
+### 랜딩(선행 원본 Flora-V2)
+
+![Flora-V2 랜딩](screenshots/flora-v2-landing.png)
+
+출처: Flora-V2 실행 화면(1440×900, 더미 Supabase 주소, 원격 연결 없음). 개발 레포 flora-publishing의 랜딩·대시보드는 아직 골격이라 캡처하지 않았습니다.
+
+### 대시보드
+
+캡처 불가: Flora-V2는 로그인이 필요하고 시드·데모 계정이 없으며, flora-publishing 대시보드는 아직 골격입니다.

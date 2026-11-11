@@ -41,18 +41,27 @@
 | 개발 단계 | 개발 중(통합 제품 개발 레포에서 진행) / 일시 정지 / 원본 코드(통합 전 원본 프로젝트 코드만 있음) / 기획만 |
 | 완성도 | 작업표가 있으면 완료 작업 수/전체 작업 수(작업 개수 기준, 기능 완성률 아님). 없으면 [`reviews/`](reviews/README.md)의 원본 리뷰 수치. "원본 기획 리뷰"는 원본 기획 문서의 완성도이고 구현 완성도가 아님 |
 | 랜딩·대시보드 | 실행 화면 / 시안(레포 안 디자인 HTML·이미지) / 와이어프레임 / 캡처 불가와 사유. 모두 1440×900 |
-| 공개 여부 | 비공개 레포의 구조도와 화면은 그 레포 README에만 있고, 권한이 있는 계정에서만 열림 |
+| 공개 여부 | 화면 캡처는 모두 이 저장소 `products/<제품>/screenshots/`에 있음. 비공개 레포 제품의 구조도는 그 레포 README에만 있고, 권한이 있는 계정에서만 열림 |
 
-## 공개 레포 화면
+## 화면 모음 (2026-11-11 캡처, 1440×900)
 
-비공개 레포의 화면은 각 레포 README에서 볼 수 있습니다.
+캡처 13장입니다. 각 제품 README의 화면 섹션에 출처가 적혀 있습니다. 대시보드가 없는 제품은 데모 계정이 없거나 아직 골격이라 캡처하지 못했습니다(제품별 현황 표 참고).
 
-| 제품 | 화면 |
-|---|---|
-| arch-studio 랜딩(시안) | ![Arch Studio 랜딩](https://github.com/DevOps0906/Arch-Studio/raw/main/docs/screenshots/landing.png) |
-| arch-studio 대시보드(데모 실행 화면) | ![Arch Studio 스튜디오 홈](https://github.com/DevOps0906/Arch-Studio/raw/main/docs/screenshots/dashboard.png) |
-| study-note 랜딩(실행 화면) | ![Study Note](products/study-note/screenshots/landing.png) |
-| microweb-studio 빌더(실행 화면) | ![Nexus Micro Web Builder](products/microweb-studio/screenshots/dashboard.png) |
+| 제품 | 화면 | 캡처 |
+|---|---|---|
+| [arch-studio](products/arch-studio/README.md#화면) | 랜딩(시안) | ![arch-studio 랜딩(시안)](products/arch-studio/screenshots/landing.png) |
+| [arch-studio](products/arch-studio/README.md#화면) | 대시보드(데모 실행 화면) | ![arch-studio 대시보드(데모 실행 화면)](products/arch-studio/screenshots/dashboard.png) |
+| [sceneflow](products/sceneflow/README.md#화면) | 랜딩(시안) | ![sceneflow 랜딩(시안)](products/sceneflow/screenshots/landing.png) |
+| [sceneflow](products/sceneflow/README.md#화면) | 대시보드(와이어프레임) | ![sceneflow 대시보드(와이어프레임)](products/sceneflow/screenshots/dashboard-wireframe.png) |
+| [flora-publishing](products/flora-publishing/README.md#화면) | 랜딩(선행 원본 Flora-V2 실행 화면) | ![flora-publishing 랜딩(선행 원본 Flora-V2 실행 화면)](products/flora-publishing/screenshots/flora-v2-landing.png) |
+| [admin-suite](products/admin-suite/README.md#화면) | ERP 로그인(실행 화면) | ![admin-suite ERP 로그인(실행 화면)](products/admin-suite/screenshots/erp-login.png) |
+| [admin-suite](products/admin-suite/README.md#화면) | 병원 로그인(실행 화면) | ![admin-suite 병원 로그인(실행 화면)](products/admin-suite/screenshots/hospital-login.png) |
+| [admin-suite](products/admin-suite/README.md#화면) | 병원 대시보드(시안) | ![admin-suite 병원 대시보드(시안)](products/admin-suite/screenshots/hospital-dashboard.png) |
+| [admin-suite](products/admin-suite/README.md#화면) | 학교 로그인(실행 화면) | ![admin-suite 학교 로그인(실행 화면)](products/admin-suite/screenshots/school-login.png) |
+| [nomad-commerce](products/nomad-commerce/README.md#화면) | 랜딩(sellingstudio 실행 화면) | ![nomad-commerce 랜딩(sellingstudio 실행 화면)](products/nomad-commerce/screenshots/landing.png) |
+| [website-floria](products/website-floria/README.md#화면) | 랜딩(Lucury_Website 실행 화면) | ![website-floria 랜딩(Lucury_Website 실행 화면)](products/website-floria/screenshots/landing.png) |
+| [study-note](products/study-note/README.md#화면) | 랜딩(실행 화면) | ![study-note 랜딩(실행 화면)](products/study-note/screenshots/landing.png) |
+| [microweb-studio](products/microweb-studio/README.md#화면) | 빌더(실행 화면) | ![microweb-studio 빌더(실행 화면)](products/microweb-studio/screenshots/dashboard.png) |
 
 ## 확인이 필요한 것
 

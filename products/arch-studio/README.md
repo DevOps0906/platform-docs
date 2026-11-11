@@ -78,8 +78,8 @@
 
 랜딩(확정 랜딩 시안 캡처, 1440×900)
 
-![Arch Studio 랜딩](https://github.com/DevOps0906/Arch-Studio/raw/main/docs/screenshots/landing.png)
+![Arch Studio 랜딩](screenshots/landing.png)
 
 대시보드(스튜디오 홈, 데모 모드 실행 화면, 데모 데이터)
 
-![Arch Studio 스튜디오 홈](https://github.com/DevOps0906/Arch-Studio/raw/main/docs/screenshots/dashboard.png)
+![Arch Studio 스튜디오 홈](screenshots/dashboard.png)

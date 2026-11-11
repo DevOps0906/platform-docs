@@ -77,4 +77,16 @@
 | 화면 | 랜딩 캡처 있음. 정적 사이트라 대시보드 없음 | 원본 레포 README |
 | 확인 필요 | 원본 레포의 실제 내용은 Floria 식물 브랜드가 아니라 건설사 "한울건설" 1페이지 사이트다. 원본 연결이 맞는지 확인이 필요하다 | 원본 레포 `index.html` |
 
-구조도와 화면은 비공개 원본 레포 README에 있습니다. 권한이 있는 계정에서만 열립니다: [Lucury_Website README](https://github.com/DevOps0906/Lucury_Website#readme).
+구조도는 비공개 원본 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [Lucury_Website README](https://github.com/DevOps0906/Lucury_Website#readme).
+
+## 화면
+
+### 랜딩(Lucury_Website)
+
+![Lucury Website 랜딩](screenshots/landing.png)
+
+출처: 원본 레포 `index.html`(1440×900). 화면 내용은 건설사 "한울건설" 사이트이며, Floria 원본 연결은 확인이 필요합니다.
+
+### 대시보드
+
+해당 없음: 정적 1페이지 사이트입니다.
