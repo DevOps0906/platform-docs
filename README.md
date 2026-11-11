@@ -18,7 +18,7 @@
 | 공용 설계 가이드 | 화이트라벨, 데스크톱(Tauri), 모바일(Capacitor) | `Multi-tenant_Theming/`, `Tauri/`, `Capacitor/` |
 | 통합 DB 조각 | 코어 10개 + 제품 17개 | `products/_supabase-modular/migrations/` |
 | 설득형 랜딩 템플릿 | 공통 1개 + 제품별 16개 | `nomad-design-modules/_design-guide/templates/persuasion-landing/` |
-| 전체 파일 | 1,540개, 폴더 434개(별도 레포 `nomad-design-modules`, `PDF_Collections` 제외, 이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
+| 전체 파일 | 1,543개, 폴더 435개(별도 레포 `nomad-design-modules`, `PDF_Collections` 제외, 이 중 파일 1,065개는 `develop/*/*-root/`에 생성된 사본) | [`FOLDER_TREE.md`](FOLDER_TREE.md) |
 
 ## 1. 문서가 흐르는 순서
 
@@ -65,6 +65,7 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 | [`Multi-tenant_Theming/`](Multi-tenant_Theming/README.md) | 화이트라벨 공용 설계: 커스터마이징 5단계(L0~L5), 디자인 토큰 3계층, 커스텀 도메인, 코어 확장 SQL `0011`(제안)과 RLS 스모크 | 공용 설계(제안) | 고객사 브랜드로 바꿔 팔 때 |
 | [`Tauri/`](Tauri/README.md) | 데스크톱 앱 공용 가이드: 로컬 SQLite와 Supabase 정본 배치, 인증(시스템 브라우저 + PKCE), 결제·라이선스·업데이트, 제품별 적용, 작업 분해 | 공용 설계(초안) | Windows·macOS 앱으로 만들 때 |
 | [`Capacitor/`](Capacitor/README.md) | 모바일 앱 공용 가이드: 기획 지시(스토어 정책, 결제 전략, 푸시 동의, 개인정보)와 개발 지시(설정, 플러그인, 인증, 푸시, 출시) | 공용 설계(초안) | iOS·Android 앱으로 만들 때 |
+| [`research/`](research/README.md) | 영상·오픈소스 조사 노트와 제품별 적용 후보(2026-11-11 첫 노트) | 후보 기록(결정 아님) | 새 기술·도구를 제품에 넣을지 검토할 때 |
 | [`_tools/`](_tools/README.md) | 리뷰 작성 템플릿, md → PDF 변환기 | 도구 | 원본 리뷰를 추가할 때 |
 
 ### 2.1 `products/` 안쪽

@@ -7,7 +7,7 @@
 ## 1. 요약 트리 (개발 묶음은 sceneflow만 펼침)
 
 ```
-platform-docs/  (파일 1,540개, 폴더 434개)
+platform-docs/  (파일 1,543개, 폴더 435개)
 ├── _tools/  (6)
 ├── Capacitor/  (1)
 ├── develop/  (1153)
@@ -190,6 +190,7 @@ platform-docs/  (파일 1,540개, 폴더 434개)
 │       └── supabase/  (3)
 │           └── monolith/  (3)
 │               └── migrations/  (2)
+├── research/  (2)
 ├── reviews/  (26)
 └── Tauri/  (1)
 ```
@@ -197,7 +198,7 @@ platform-docs/  (파일 1,540개, 폴더 434개)
 ## 2. 전체 트리
 
 ```
-platform-docs/  (파일 1,540개, 폴더 434개)
+platform-docs/  (파일 1,543개, 폴더 435개)
 ├── _tools/  (6)
 ├── Capacitor/  (1)
 ├── develop/  (1153)
@@ -630,6 +631,7 @@ platform-docs/  (파일 1,540개, 폴더 434개)
 │       └── supabase/  (3)
 │           └── monolith/  (3)
 │               └── migrations/  (2)
+├── research/  (2)
 ├── reviews/  (26)
 └── Tauri/  (1)
 ```
