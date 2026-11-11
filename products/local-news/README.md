@@ -68,3 +68,65 @@
 | 정본 관계 | 모듈러 조각이 도메인 정본이고 모놀리스 `0003_local_news_domain.sql`은 변환 규칙(`core.` → `public.`, 스키마 블록 제거, 명시 GRANT)으로 만든다. Theming은 `Multi-tenant_Theming/supabase/0011_core_tenant_theming.sql`을 같은 규칙으로 변환해 `0002`에 둔다 | `docs/products/_platform-core/DB_CONVENTIONS.md:266` |
 | 엔터프라이즈 | 전용 DB가 필요한 신문사는 판매 모델 B(신문사별 프로젝트)로 같은 마이그레이션을 적용한다 | `Price_Plans/_common/PRICING_PRINCIPLES.md:63-72` |
 | 번호 범위 | arch-studio가 2400~2499(제안)를 먼저 잡았으므로(`docs/products/README.md:25`) 이 제품은 다음 빈 범위 2500~2599를 쓴다 | `docs/products/_platform-core/DB_CONVENTIONS.md:42` |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md`, `modules/` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 프로젝트·리뷰 없는 신규 기획(README.md:3) |
+| 완성도 | 미확인 | 원본 리뷰가 없고 작업 완료 기록도 없다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/local-news/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.2.x + React 19.2, Tailwind CSS v4(4.x), Node 20 워커, FastAPI(Python 3.12 제안), Supabase Postgres 15(단독 모놀리스) | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  R["독자"]
+  E["편집국"]
+  O["운영자"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["apps/web: Next.js 16.2, proxy.ts Host 분기, Vercel"]
+    WK["TS 워커: Node 20, 큐 6개, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify news-assistant (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  subgraph DATA["Supabase 단독 프로젝트 (모놀리스)"]
+    DB[("Postgres 15 public, Auth, Realtime")]
+    CDN["Storage 공개 버킷 public-assets"]
+  end
+  subgraph EXT["외부 서비스"]
+    MAIL["메일 제공자: Resend 또는 Amazon SES (제안)"]
+    PUSH["Web Push"]
+    VAPI["Vercel API, Supabase 관리 API"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    TOSS["Toss Payments"]
+  end
+  R -->|"테넌트 도메인"| WEB
+  E -->|"newsroom 호스트"| WEB
+  O -->|"ops 호스트"| WEB
+  R --> CDN
+  WEB --> DB
+  WEB --> TOSS
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WK -->|"claim_jobs"| DB
+  WK -->|"잡 토큰"| API
+  WK --> MAIL
+  WK --> PUSH
+  WK --> VAPI
+  API --> DB
+  API --> LLM
+  API --> GPU
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

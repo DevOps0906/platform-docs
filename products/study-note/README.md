@@ -51,3 +51,44 @@ AI 요약(2026-10-13): 노트·교재를 과목별로 색인(RAG)하고, LangGra
 | 이동 | 모놀리스에서 모듈러로 흡수하는 절차는 `ARCHITECTURE.md:50-59` |
 | 코어 사용 | 크레딧 선차감과 잡 큐를 쓰므로 모놀리스에서도 코어 축소판의 SECTION 3(Toss), 4(크레딧), 6-C(레이트 리밋), 7(잡)을 유지했다. SECTION 6-A/6-B/8/9는 사유와 함께 제거했다(`0001_core_lite.sql` 안 주석) |
 | 주의 | 모듈러 코어(0000~0006)는 `core` 함수 다수의 PUBLIC EXECUTE가 회수되지 않는 결함이 있다. 제품 SQL은 영향을 받지 않게 함수마다 명시적으로 회수했지만, 코어 수정 전까지는 출시 전제 조건이다(`06_AGENT_PLAN.md` 6장 C-1) |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 원본 코드 | 원본 레포 theBestTrade/study-note-organizer-codex-01(공개)에 동작하는 단일 화면 앱이 있다. 통합 제품(`apps/study-note`) 코드는 없다 |
+| 완성도 | 리뷰 기준 약 85%(리뷰 파일 추가 2026-10-12) | `../../reviews/study-note-organizer-codex-01.md:16`. 리뷰 뒤 원본에 2026-11-08 커밋(OpenRouter 호출을 로컬 서버로 이동)이 더해졌다 |
+| 마지막 커밋 | 2026-11-08(`4dfd557`) | 원본 레포 main. 로컬 체크아웃 `D:/WorkSpace/platform/study-note-organizer-codex-01`은 2026-05-29(`cfecc2f`)에 머물러 있다 |
+| 주요 스택 | React 19.2.6, Vite 8.0.14, Tailwind CSS v4(4.3.0), TypeScript 6.0.3, Node http 서버(`server/index.mjs`), OpenRouter | 원본 `package-lock.json`(`package.json`은 `latest` 지정) |
+
+## 구조도
+
+원본 코드 기준(원본 레포 main `4dfd557`의 `src/`, `server/index.mjs`, `vite.config.ts`). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph FE["프런트엔드: React 19.2.6 SPA, Vite 8, Tailwind CSS v4.3.0"]
+    APPC["App.tsx: 모델 A, B 병렬 호출 후 통합 모델"]
+    CTX["AppContext: 설정, 히스토리, 초안"]
+    DL["utils/download.ts: TXT 내려받기"]
+  end
+  LS[("브라우저 localStorage")]
+  SRV["server/index.mjs: Node http, POST /api/chat, dist 정적 제공"]
+  OR["OpenRouter Chat Completions API"]
+  U --> APPC
+  APPC --> CTX
+  CTX --> LS
+  APPC --> DL
+  APPC -->|"POST /api/chat, 개발 시 Vite 프록시"| SRV
+  SRV -->|"OPENROUTER_API_KEY 서버 환경변수"| OR
+```
+
+## 화면
+
+![학습 일지 정리기 메인 화면](screenshots/landing.png)
+
+출처: 실행 화면(원본 레포 `4dfd557`을 Vite 개발 서버로 실행, 입력 전 빈 상태, API 키 없이 화면만 확인).
+
+캡처 불가(대시보드): 원본이 단일 화면 앱이라 별도 대시보드 화면이 없다.

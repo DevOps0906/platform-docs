@@ -1,0 +1,35 @@
+flowchart LR
+  H["진행자 브라우저"]
+  A["청중 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["웹: Next.js 16.2.9, Vercel icn1"]
+    BC["poll-broadcaster: Node 22, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify poll-assistant (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  subgraph DATA["Supabase ap-northeast-2"]
+    DB[("Postgres 15 poll 스키마, Auth")]
+    RT["Realtime Broadcast private 채널"]
+  end
+  subgraph EXT["외부 서비스"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+  end
+  H --> WEB
+  A -->|"/api/p/* 참가자 토큰"| WEB
+  WEB --> DB
+  BC -->|"pooler, service_role"| DB
+  BC -->|"Realtime HTTP API"| RT
+  RT -->|"수신만"| A
+  RT --> H
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB -->|"음성"| GPU
+  API --> DB
+  API --> LLM
+  API --> GPU

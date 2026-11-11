@@ -55,3 +55,58 @@
 | 이유 | 증권사 키와 계좌 데이터의 격리, 법률 검토 전 단계, 다른 제품의 코어 결함이나 장애가 금융 데이터에 닿지 않게 하기 위해 | `docs/products/_supabase-modular/ARCHITECTURE.md:16`, `:19` |
 | 모듈러 조각 | `1900_stock.sql`을 유지해 같은 도메인 모델이 통합 DB에서도 동작함을 검증한다(체커 OK, RLS 스모크 75/75). 재검토 시점은 법률 검토 완료와 Phase 2 결정 이후 | `docs/products/_supabase-modular/ARCHITECTURE.md:43` "재검토" |
 | 이동 절차 | 모놀리스 → 모듈러는 `ARCHITECTURE.md` 4.1절 | `docs/products/_supabase-modular/ARCHITECTURE.md:50-59` |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 Stock_Trader_nomad도 코드 없음(`../../reviews/Stock_Trader_nomad.md:3`) |
+| 완성도 | 원본 기획 리뷰 기준 약 20%(2026-10-12) | `../../reviews/Stock_Trader_nomad.md:21`. 제품 구현 완성도가 아니라 원본 기획의 완성도다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/stock-dashboard/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.2.9 + React 19, Tailwind CSS v4, Recharts 3, Node 22 워커 2개, FastAPI(Python 3.12 제안), Supabase Postgres 15(모놀리스) | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["웹: Next.js 16.2.9 + React 19, Vercel"]
+    QR["quote-relay: Node 22 시세 중계, Railway"]
+    SJ["stock-jobs: Node 22 잡 소비, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify stock-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase 모놀리스: Postgres 15 public, Auth, pgvector")]
+  subgraph EXT["외부 서비스"]
+    BROKER["증권사 REST, WebSocket"]
+    DART["DART 오픈API"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+  end
+  U --> WEB
+  U -->|"SSE"| QR
+  QR -->|"WebSocket"| BROKER
+  WEB --> DB
+  SJ -->|"service_role"| DB
+  SJ --> BROKER
+  SJ --> DART
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  API --> DB
+  API --> LLM
+  API --> GPU
+  API --> DART
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

@@ -62,3 +62,52 @@
 | 2차 | 유지 | 위와 같음 |
 | 모놀리스 | 준비만 | `supabase/monolith/`는 단독 배포가 필요할 때(예: 블로그만 별도 운영) 쓴다. 코어 [선택] 절을 하나도 지우지 않았다. blog는 결제, 크레딧, 자격증명, 잡, Storage, affiliate를 모두 쓴다 |
 | 모놀리스 스키마 | `public` | `_platform-core/MONOLITH_CORE_LITE.sql` 결정을 따른다. 최종 사용자 확인 대기(05장 8절) |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 원본 코드(비공개 로컬) | NOMAD Shorts Maker 안의 Content Automator(`src/skill/**`, `src/components/posts/*`, `src/app/api/{posts,ai,coupang,brand-connect,accounts,schedules}`). Youtube_shots_Maker Track D는 작업 트리에 없고 스냅샷 `5f6d262`에만 있다. 통합 제품 코드는 없다 |
+| 완성도 | 리뷰 기준 NOMAD Shorts Maker 약 35%(2026-10-11), Youtube_shots_Maker 작업 트리 약 5%·스냅샷 약 55~60%(2026-10-12) | `../../reviews/NOMAD_Shorts_Maker.md:25`, `../../reviews/Youtube_shots_Maker.md:37-38`. 원본 전체 기준이며 nomad-blog가 가져오는 부분만의 수치는 미확인 |
+| 마지막 커밋 | 미확인(git 없음) | NOMAD Shorts Maker는 어떤 저장소에도 추적되지 않는다. Youtube_shots_Maker 스냅샷 `5f6d262`은 상위 `D:/WorkSpace/platform` 저장소의 2026-06-08 커밋 |
+| 주요 스택 | Next.js 16.2.9, React 19.2.4, Tailwind CSS v4(^4), @supabase/supabase-js ^2.108.1, openai ^6.42.0, Playwright, Vercel Cron | NOMAD Shorts Maker `package.json`, `vercel.json` |
+
+## 구조도
+
+원본 코드 기준(NOMAD Shorts Maker의 Content Automator 경로, `vercel.json`. Youtube_shots_Maker Track D는 리뷰 `../../reviews/Youtube_shots_Maker.md:45` 기준 점선). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph SM["NOMAD Shorts Maker 안 Content Automator: Next.js 16.2.9, React 19.2.4"]
+    UI["components/posts: 다채널 편집, AI 생성, 쿠팡 링크 패널"]
+    RT["app/api: posts, ai, coupang, brand-connect, accounts, schedules"]
+    SK["src/skill: ai-engine, channel-api, playwright-engine, schedule-engine"]
+  end
+  CRON["Vercel Cron: /api/schedules/run"]
+  DB[("Supabase Postgres, Auth")]
+  subgraph EXT["외부 서비스"]
+    LLM["LLM: Anthropic, OpenAI, OpenRouter"]
+    SERP["SerpAPI, Google API 키워드"]
+    CP["쿠팡 파트너스 API"]
+    CH["게시 채널: 네이버 블로그, 티스토리, WordPress, Instagram"]
+    BC["네이버 브랜드커넥트"]
+  end
+  YT["Youtube_shots_Maker Track D: FastAPI + Celery, 스냅샷 5f6d262에만 있음"]
+  U --> UI
+  UI --> RT
+  RT --> SK
+  RT --> DB
+  CRON --> RT
+  SK --> LLM
+  SK --> SERP
+  SK --> CP
+  SK -->|"API, Playwright"| CH
+  SK -->|"Playwright"| BC
+  YT -.->|"참고: Claude 글 생성 후 Playwright 게시"| CH
+```
+
+## 화면
+
+캡처 불가: 비공개 로컬 코드(git 없음)라 캡처하지 않는다.

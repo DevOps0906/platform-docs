@@ -1,0 +1,34 @@
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["web: Next.js 16.2 + Remotion Player, Vercel"]
+    ORC["trailer-orchestrator: Node 20, Railway"]
+    REN["renderer: Remotion 4.0 + Chrome Headless Shell + FFmpeg, Railway 2대"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI 원고 파싱 + AI, Railway"]
+    DIFY["Dify trailer-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, 음성"]
+  end
+  DB[("Supabase: Postgres 15 trailer 스키마, Storage exports")]
+  subgraph EXT["외부 서비스"]
+    FAL["fal 이미지 생성"]
+    EL["ElevenLabs"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google"]
+    TOSS["Toss Payments"]
+  end
+  U --> WEB
+  WEB --> DB
+  WEB --> TOSS
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  ORC -->|"claim_jobs"| DB
+  ORC --> API
+  ORC --> FAL
+  ORC --> EL
+  ORC -->|"음성"| GPU
+  REN -->|"service_role, Storage"| DB
+  API --> DB
+  API --> LLM
+  API --> GPU

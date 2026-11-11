@@ -62,3 +62,55 @@
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-13 | 2차 개정(확정 결정 20): 경쟁 도구 벤치마킹 문서 `08_BENCHMARK.md` 추가. 로그라인·시놉시스 생성(TN-F-024), 플랫폼 내보내기 프리셋(TN-F-038), 브랜디드 툰(TN-F-070~073)을 MVP에, SNS 직접 업로드(TN-F-080, 네이버 클립 포함)와 숏툰 모션(TN-F-081)을 Phase 2에 넣었다. SQL `2000_toon.sql` 11절(프리셋, `sponsorships`)과 모놀리스 변환본 갱신 | `08_BENCHMARK.md`, 01장 2절 |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료(08 벤치마크 추가) | 이 폴더 `01_PRD.md`~`08_BENCHMARK.md` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 Toon-Factory도 문서 3개뿐(`../../reviews/Toon-Factory.md:4`) |
+| 완성도 | 원본 기획 리뷰 기준 약 20%(2026-10-12) | `../../reviews/Toon-Factory.md:21`. 제품 구현 완성도가 아니라 원본 기획의 완성도다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/toon-factory/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.x, Tailwind CSS v4(4.x), Fabric.js 6.x, Zustand 5, FFmpeg 6.x 워커, FastAPI(Python 3.12 제안), Supabase Postgres 15 | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["웹: Next.js 16 + Fabric.js v6 뷰, Vercel"]
+    WK["toon-worker: fabric/node, FFmpeg 6, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify toon-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase: Postgres 15 core + toon 스키마, Storage, Realtime")]
+  subgraph EXT["외부 서비스"]
+    FAL["fal 이미지 생성"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+    TOSS["Toss Payments"]
+  end
+  U --> WEB
+  U -->|"anon key, RLS"| DB
+  WEB --> DB
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB --> TOSS
+  WK -->|"service_role"| DB
+  WK --> FAL
+  API --> DB
+  API --> LLM
+  API --> GPU
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

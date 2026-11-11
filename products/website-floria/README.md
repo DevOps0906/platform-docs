@@ -64,3 +64,17 @@
 | 모놀리스 제공 | 제공한다. 마케팅 사이트만 따로 배포하는 고객사(예: 스튜디오가 자기 Supabase를 쓰는 경우)를 위한 대안이다. 스키마는 `public`이며 사용자 최종 확인 전 가정이다(05_DATA_MODEL.md 8장) |
 | 코어에서 쓰는 것 | 인증/조직/멤버십, `app_entitlements`, 감사 로그, 레이트 리밋, AI·음성 코어 테이블(`ai_*`, `wiki_*`, `voice_*`). 크레딧, 결제, 잡, Storage, OAuth, 제휴는 쓰지 않는다 |
 | 알려진 코어 이슈 | (1) `confirm_payment_order`는 금액 불일치 시 failed 주문을 남기지 못한다. 이 제품은 결제가 없어 의존하지 않는다 (2) 모듈러 코어에서 서비스 전용 함수에 PUBLIC EXECUTE가 남는 점검 결과를 05_DATA_MODEL.md 6장과 06_AGENT_PLAN.md 6장에 적었다. 코어는 수정하지 않았다 |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 원본 코드(통합 제품 코드 없음) | 원본 레포 [DevOps0906/Lucury_Website](https://github.com/DevOps0906/Lucury_Website)(비공개) |
+| 완성도 | 리뷰 기준 65%(Lucury Website 절, 리뷰 파일 추가 2026-10-12) | `../../reviews/WebSite.md` |
+| 마지막 커밋 | 2026-06-12 | 원본 레포 main |
+| 주요 스택 | 정적 HTML/CSS/JS, GSAP 3.12.5 | 원본 `index.html` |
+| 화면 | 랜딩 캡처 있음. 정적 사이트라 대시보드 없음 | 원본 레포 README |
+| 확인 필요 | 원본 레포의 실제 내용은 Floria 식물 브랜드가 아니라 건설사 "한울건설" 1페이지 사이트다. 원본 연결이 맞는지 확인이 필요하다 | 원본 레포 `index.html` |
+
+구조도와 화면은 비공개 원본 레포 README에 있습니다. 권한이 있는 계정에서만 열립니다: [Lucury_Website README](https://github.com/DevOps0906/Lucury_Website#readme).

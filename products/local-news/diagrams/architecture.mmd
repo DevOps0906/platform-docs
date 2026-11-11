@@ -1,0 +1,41 @@
+flowchart LR
+  R["독자"]
+  E["편집국"]
+  O["운영자"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["apps/web: Next.js 16.2, proxy.ts Host 분기, Vercel"]
+    WK["TS 워커: Node 20, 큐 6개, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify news-assistant (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  subgraph DATA["Supabase 단독 프로젝트 (모놀리스)"]
+    DB[("Postgres 15 public, Auth, Realtime")]
+    CDN["Storage 공개 버킷 public-assets"]
+  end
+  subgraph EXT["외부 서비스"]
+    MAIL["메일 제공자: Resend 또는 Amazon SES (제안)"]
+    PUSH["Web Push"]
+    VAPI["Vercel API, Supabase 관리 API"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    TOSS["Toss Payments"]
+  end
+  R -->|"테넌트 도메인"| WEB
+  E -->|"newsroom 호스트"| WEB
+  O -->|"ops 호스트"| WEB
+  R --> CDN
+  WEB --> DB
+  WEB --> TOSS
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WK -->|"claim_jobs"| DB
+  WK -->|"잡 토큰"| API
+  WK --> MAIL
+  WK --> PUSH
+  WK --> VAPI
+  API --> DB
+  API --> LLM
+  API --> GPU

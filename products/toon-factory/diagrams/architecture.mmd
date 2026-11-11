@@ -1,0 +1,31 @@
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["웹: Next.js 16 + Fabric.js v6 뷰, Vercel"]
+    WK["toon-worker: fabric/node, FFmpeg 6, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify toon-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase: Postgres 15 core + toon 스키마, Storage, Realtime")]
+  subgraph EXT["외부 서비스"]
+    FAL["fal 이미지 생성"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+    TOSS["Toss Payments"]
+  end
+  U --> WEB
+  U -->|"anon key, RLS"| DB
+  WEB --> DB
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB --> TOSS
+  WK -->|"service_role"| DB
+  WK --> FAL
+  API --> DB
+  API --> LLM
+  API --> GPU

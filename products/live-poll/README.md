@@ -54,3 +54,59 @@
 | 트래픽이 늘면 | 모놀리스로 분리 검토 | Realtime 채널 부하가 다른 제품에 영향을 줄 수 있다(`docs/products/_supabase-modular/ARCHITECTURE.md:40`). 이동 절차는 같은 문서 4.2절. 모놀리스 SQL은 `supabase/monolith/`에 미리 두었고 체커를 통과했다 |
 
 모놀리스 스키마는 `public`이다(`MONOLITH_CORE_LITE.sql` 머리말). 최종 확인은 사용자 결정으로 남긴다(05장 8절).
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 Slido_Project도 코드 없음(`../../reviews/Slido_Project.md:3`) |
+| 완성도 | 원본 기획 리뷰 기준 약 35%(리뷰 파일 추가 2026-10-12) | `../../reviews/Slido_Project.md:19`. 제품 구현 완성도가 아니라 원본 기획의 완성도다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/live-poll/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.2.9, Tailwind CSS v4(4.x), Supabase Postgres 15 + Realtime Broadcast, Node 22 브로드캐스터, FastAPI(Python 3.12 제안) | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  H["진행자 브라우저"]
+  A["청중 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["웹: Next.js 16.2.9, Vercel icn1"]
+    BC["poll-broadcaster: Node 22, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify poll-assistant (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  subgraph DATA["Supabase ap-northeast-2"]
+    DB[("Postgres 15 poll 스키마, Auth")]
+    RT["Realtime Broadcast private 채널"]
+  end
+  subgraph EXT["외부 서비스"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+  end
+  H --> WEB
+  A -->|"/api/p/* 참가자 토큰"| WEB
+  WEB --> DB
+  BC -->|"pooler, service_role"| DB
+  BC -->|"Realtime HTTP API"| RT
+  RT -->|"수신만"| A
+  RT --> H
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB -->|"음성"| GPU
+  API --> DB
+  API --> LLM
+  API --> GPU
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

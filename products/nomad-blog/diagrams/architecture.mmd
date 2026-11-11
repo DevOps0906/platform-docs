@@ -1,0 +1,28 @@
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph SM["NOMAD Shorts Maker 안 Content Automator: Next.js 16.2.9, React 19.2.4"]
+    UI["components/posts: 다채널 편집, AI 생성, 쿠팡 링크 패널"]
+    RT["app/api: posts, ai, coupang, brand-connect, accounts, schedules"]
+    SK["src/skill: ai-engine, channel-api, playwright-engine, schedule-engine"]
+  end
+  CRON["Vercel Cron: /api/schedules/run"]
+  DB[("Supabase Postgres, Auth")]
+  subgraph EXT["외부 서비스"]
+    LLM["LLM: Anthropic, OpenAI, OpenRouter"]
+    SERP["SerpAPI, Google API 키워드"]
+    CP["쿠팡 파트너스 API"]
+    CH["게시 채널: 네이버 블로그, 티스토리, WordPress, Instagram"]
+    BC["네이버 브랜드커넥트"]
+  end
+  YT["Youtube_shots_Maker Track D: FastAPI + Celery, 스냅샷 5f6d262에만 있음"]
+  U --> UI
+  UI --> RT
+  RT --> SK
+  RT --> DB
+  CRON --> RT
+  SK --> LLM
+  SK --> SERP
+  SK --> CP
+  SK -->|"API, Playwright"| CH
+  SK -->|"Playwright"| BC
+  YT -.->|"참고: Claude 글 생성 후 Playwright 게시"| CH
