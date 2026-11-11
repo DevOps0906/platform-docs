@@ -52,3 +52,59 @@
 | 기본 | 모듈러(`_supabase-modular`, `astro` 스키마) | SSO와 공용 크레딧 지갑을 쓰는 기본값이다(`docs/products/_supabase-modular/ARCHITECTURE.md:74`). 출판(flora-publishing)과 렌더 서비스·결제 코드를 공유한다 |
 | 대안 | 모놀리스(`supabase/monolith/`, `public` 스키마) | 생년월일시라는 민감 개인정보를 다른 제품과 같은 DB에 두지 않으려는 경우. 스키마를 `public`으로 둔 것은 `MONOLITH_CORE_LITE.sql`을 따른 것이며 최종 확정은 사용자 결정 대기다(01장 8절 D-9) |
 | 같은 점 | 테이블, 정책, 함수 이름과 시그니처 | 앱은 `SUPABASE_DB_SCHEMA`(`core`/`public`)와 제품 스키마 이름(`astro`/`public`)만 바꾼다(`docs/products/_platform-core/CORE_SPEC.md:40`) |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 두 개도 기획 문서만 있음(`../../reviews/Astro_AI.md:3`, `../../reviews/FortuneDocs.md:3`) |
+| 완성도 | 원본 기획 리뷰 기준 Astro AI 약 55%, FortuneDocs 약 40%(2026-10-12) | `../../reviews/Astro_AI.md:20`, `../../reviews/FortuneDocs.md:21`. 제품 구현 완성도가 아니라 원본 기획의 완성도다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/astro-ai/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.2.x + React 19, Tailwind CSS v4(4.x), Node 22 워커, FastAPI(Python 3.12 제안), Supabase Postgres 15, WeasyPrint | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["apps/astro-ai: Next.js 16.2 + React 19, Vercel"]
+    WK["astro-worker: Node 22, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    RENDER["render-weasyprint: 공용 PDF 렌더, Railway"]
+    DIFY["Dify astro-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase: Postgres 15 astro 스키마, Auth, Storage, pgvector")]
+  subgraph EXT["외부 서비스"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+    TOSS["Toss Payments"]
+    RESEND["Resend 이메일"]
+  end
+  U --> WEB
+  WEB --> DB
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB -->|"음성"| GPU
+  WEB --> TOSS
+  WK -->|"claim_jobs"| DB
+  WK -->|"잡 토큰"| API
+  WK -->|"private network"| RENDER
+  WK --> RESEND
+  RENDER -->|"exports PDF"| DB
+  API --> DB
+  API --> LLM
+  API --> GPU
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

@@ -1,0 +1,34 @@
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["웹: Next.js 16.2.9 + React 19, Vercel"]
+    QR["quote-relay: Node 22 시세 중계, Railway"]
+    SJ["stock-jobs: Node 22 잡 소비, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI AI 서비스, Railway"]
+    DIFY["Dify stock-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase 모놀리스: Postgres 15 public, Auth, pgvector")]
+  subgraph EXT["외부 서비스"]
+    BROKER["증권사 REST, WebSocket"]
+    DART["DART 오픈API"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google, OpenRouter"]
+    EL["ElevenLabs"]
+  end
+  U --> WEB
+  U -->|"SSE"| QR
+  QR -->|"WebSocket"| BROKER
+  WEB --> DB
+  SJ -->|"service_role"| DB
+  SJ --> BROKER
+  SJ --> DART
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  API --> DB
+  API --> LLM
+  API --> GPU
+  API --> DART

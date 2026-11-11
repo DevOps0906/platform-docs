@@ -83,3 +83,60 @@ AI 요약: RFP·참고 자료를 프로젝트별로 색인(RAG, `docs.knowledge`
 | 2026-10-13 | Phase 2 패키지 `shorts_agency`(숏폼 제작·채널 운영 대행) 추가: `project_type=content`, 비용 분류·단위 확장, 문서 유형 7종(비활성, 초안 버전), content 체크리스트 14개, 계약·위임 동의서 조항 골격 23개, lint 2종, D-13~D-16 | 확정 결정 21(`docs/products/00_MERGE_ANALYSIS.md`), `01_PRD.md` DC-F-046·6.4절 |
 | 2026-10-14 | 개발 착수 점검 반영: 교차검증 "반드시 고칠 것" SQL 수정(`06_AGENT_PLAN.md` 1.2.4절), n8n만 사용, CRM형 워크스페이스(DC-F-047), 생성 진행 애니메이션(DC-F-048), 3D 영상 히어로(DC-F-049), 작업 62개, RLS 스모크 105항목 | 사용자 요청(2026-10-14), `06_AGENT_PLAN.md` 1.2절 |
 | 2026-10-14 | 인증 단계 반영(Mock → Google + 이메일 → 카카오·네이버): DC-06-014를 Stage A로, DC-06-063(B, P0)·064(C1, P1)·065(C2, P1) 추가, 작업 65개, D-18~D-22, 코어 요청 C-13(네이버 브리지일 때만) | 확정 결정 22(`docs/products/00_MERGE_ANALYSIS.md:30`), `docs/products/_platform-core/AUTH_ROADMAP.md` 8장 |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 프로젝트를 합친 제품이 아닌 신규 기획(README.md:22) |
+| 완성도 | 미확인 | 참고 리뷰(flora, SellingDocs, FortuneDocs)만 있고 이 제품 자체의 리뷰·작업 완료 기록은 없다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/nomad-docs/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.2.x(16.2.9 제안) + React 19.2, Tailwind CSS v4(4.x), Tiptap 2.x, Node 20 워커, FastAPI 0.115(Python 3.12 제안), WeasyPrint 62 이상(제안), Supabase Postgres 15 | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["apps/nomad-docs: Next.js 16.2, Vercel"]
+    WK["apps/nomad-docs-worker: Node 20, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["ai-service apps/api: FastAPI 0.115, Railway"]
+    REN["render-weasyprint: 공용 PDF, DOCX 렌더, private"]
+    DIFY["Dify docs-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase: Postgres 15 docs 스키마, Auth, Storage")]
+  subgraph EXT["외부 서비스"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google"]
+    EL["ElevenLabs"]
+    TOSS["Toss Payments"]
+    HUB["HubSpot (Phase 2)"]
+    HOOK["사용자 웹훅 URL"]
+  end
+  U --> WEB
+  WEB --> DB
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB -->|"음성"| GPU
+  WEB --> TOSS
+  WK -->|"claim_jobs"| DB
+  WK -->|"잡 토큰"| API
+  WK -->|"X-Render-Token"| REN
+  WK --> HUB
+  WK --> HOOK
+  API --> DB
+  API --> LLM
+  API --> GPU
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

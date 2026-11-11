@@ -1,0 +1,36 @@
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["apps/nomad-docs: Next.js 16.2, Vercel"]
+    WK["apps/nomad-docs-worker: Node 20, Railway"]
+  end
+  subgraph SVC["서비스"]
+    API["ai-service apps/api: FastAPI 0.115, Railway"]
+    REN["render-weasyprint: 공용 PDF, DOCX 렌더, private"]
+    DIFY["Dify docs-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, oss-voice"]
+  end
+  DB[("Supabase: Postgres 15 docs 스키마, Auth, Storage")]
+  subgraph EXT["외부 서비스"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google"]
+    EL["ElevenLabs"]
+    TOSS["Toss Payments"]
+    HUB["HubSpot (Phase 2)"]
+    HOOK["사용자 웹훅 URL"]
+  end
+  U --> WEB
+  WEB --> DB
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  WEB -->|"음성"| EL
+  WEB -->|"음성"| GPU
+  WEB --> TOSS
+  WK -->|"claim_jobs"| DB
+  WK -->|"잡 토큰"| API
+  WK -->|"X-Render-Token"| REN
+  WK --> HUB
+  WK --> HOOK
+  API --> DB
+  API --> LLM
+  API --> GPU

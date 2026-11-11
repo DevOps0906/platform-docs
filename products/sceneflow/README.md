@@ -100,3 +100,29 @@ SceneFlow는 **말로 지시하면 AI가 편집안을 만들고 승인하면 실
 | `06_AGENT_PLAN.md` | 10장 |
 | `CLAUDE.md` | AI 자동편집·화면비 규칙 절 |
 | `docs/Price_Plans/sceneflow/PRICE_PLAN.md` | 12장 |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~08 작성 완료 | 이 폴더 `01_PRD.md`~`08`. 이후 정본은 개발 레포 `docs/file/`로 이관 |
+| 개발 단계 | 일시 정지(MVP 구현 중, 2026-11-01부터) | 개발 레포 [DevOps0906/SceneFlow](https://github.com/DevOps0906/SceneFlow)(비공개) `tasks/NOW.md` |
+| 완성도 | main 병합 기준 P0 72/88, P1 4/20(작업 개수 기준). 미병합 기능 브랜치까지 넣으면 P0 78/88 | 개발 레포 `06_AGENT_PLAN.md` 10.5절 MVP 범위와 main 커밋의 작업 ID 대조 |
+| 마지막 커밋 | 2026-11-01 | 개발 레포 main |
+| 주요 스택 | pnpm 모노레포, Next.js 16, FastAPI API·워커, Supabase, Redis, Dify | 개발 레포 README 구조도 |
+
+구조도는 비공개 개발 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [SceneFlow README](https://github.com/DevOps0906/SceneFlow#readme).
+
+## 화면
+
+### 랜딩
+
+![SceneFlow 랜딩](screenshots/landing.png)
+
+출처: 디자인 시안 `design/landing/sceneflow.html`(1440×900, 실행 화면 아님).
+
+### 대시보드
+
+![SceneFlow 대시보드 와이어프레임](screenshots/dashboard-wireframe.png)
+
+출처: 와이어프레임 `design/wireframes/DASH-01.html`(1440×900, 실행 화면 아님).

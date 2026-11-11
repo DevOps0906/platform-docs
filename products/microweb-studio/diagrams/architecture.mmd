@@ -1,0 +1,31 @@
+flowchart LR
+  G["하객 브라우저"]
+  P["운영자 브라우저"]
+  subgraph PW["premium-wedding-invitation"]
+    PWF["frontend: React 19 + Vite 8, Tailwind CDN, framer-motion"]
+    PWB["backend: Express 5 /api-proxy"]
+  end
+  subgraph NX["nexus-micro-web-builder"]
+    NXF["frontend: React 19 + Vite 8, recharts 3, 모델 12종 데이터"]
+    NXM["services/supabaseMock.ts: 목 인증"]
+    NXB["backend: Express 5 /api-proxy"]
+  end
+  subgraph WC["webcraft-agency-simulator"]
+    WCF["frontend: React + Vite, 시뮬레이터, 관리자 화면"]
+    WCB["backend: Express 5 /api-proxy"]
+  end
+  SB[("Supabase guestbook_messages, 미설정 시 localStorage")]
+  VTX["Google Vertex AI, Gemini"]
+  KAKAO["Kakao JS SDK, 지도 딥링크"]
+  G --> PWF
+  P --> NXF
+  P --> WCF
+  PWF --> SB
+  PWF --> KAKAO
+  PWF -->|"Vite 프록시"| PWB
+  NXF --> NXM
+  NXF -->|"Vite 프록시"| NXB
+  WCF -->|"Vite 프록시"| WCB
+  PWB --> VTX
+  NXB --> VTX
+  WCB --> VTX

@@ -68,3 +68,29 @@
 |---|---|---|
 | 모듈러(통합) | 1차 출시 기본값 | SNS 업로더(video 소유)를 2단계에 소비하므로 같은 계정 체계가 유리하다(`docs/products/_supabase-modular/ARCHITECTURE.md:35`). 크레딧 지갑과 SSO로 video·blog와 크로스 셀 |
 | 모놀리스 | 대안으로 같은 도메인 모델 제공 | 셀러 마켓 키를 다른 제품과 물리 분리하고 싶을 때. 스키마 `public`(사용자 최종 확인 대기, `05_DATA_MODEL.md` 8장) |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 원본 코드(통합 제품 코드 없음) | 원본 레포 [DevOps0906/sellingstudio](https://github.com/DevOps0906/sellingstudio)(비공개) |
+| 완성도 | 리뷰 기준 55%(sellingstudio, 2026-10-11) | `../../reviews/sellingstudio.md` |
+| 마지막 커밋 | 2026-06-11 | 원본 레포 main |
+| 주요 스택 | Next.js 16.2.7, React 19.2.4, Tailwind CSS v4, Supabase, Capacitor 8.4 | 원본 `package.json` |
+| 화면 | 랜딩 캡처 있음. 대시보드는 데모 계정이 없어 캡처하지 않음 | 원본 레포 README |
+| 다른 원본 | nomad-ai-factory, nomad-ai-commerce(git 없음), Nomad-AI-Factory_V.2는 이번 정리에 넣지 않음 | `../README.md` 원본 열 |
+
+구조도는 비공개 원본 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [sellingstudio README](https://github.com/DevOps0906/sellingstudio#readme).
+
+## 화면
+
+### 랜딩(sellingstudio)
+
+![SellingStudio 랜딩](screenshots/landing.png)
+
+출처: 원본 sellingstudio 실행 화면(1440×900, 더미 Supabase 주소, 원격 연결 없음).
+
+### 대시보드
+
+캡처 불가: 로그인이 필요하고 레포에 시드·데모 계정이 없습니다.

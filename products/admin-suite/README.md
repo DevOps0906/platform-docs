@@ -58,3 +58,43 @@
 | hms | 모놀리스(강제) | 유지 | 의료정보 격리(확정 결정 2, `ARCHITECTURE.md:46`, `docs/products/_supabase-modular/README.md:80-89`) |
 
 erp와 sms는 같은 도메인 모델을 두 형태로 모두 제공한다. 모듈러 조각을 정본으로 두고, 모놀리스 `0002_<app>_domain.sql`은 `DB_CONVENTIONS.md` 12장 규칙(`core.`→`public.`, `<schema>.`→`public.`, 스키마 블록 제거)으로 생성한다. 분석의 "DB 분리 B(앱별 분리)" 권고(`docs/products/00_MERGE_ANALYSIS.md:1240`)는 hms에만 강제하고 erp/sms는 모듈러를 기본으로 한다(확정 결정 2가 hms만 제외했기 때문). 모놀리스 스키마는 `public`이다(`MONOLITH_CORE_LITE.sql` 머리 주석). 이 선택은 사용자 최종 확인 대기다(05장 8절).
+
+## 진행 현황 (2026-11-11 기준)
+
+통합 제품 코드는 없고, 원본 레포 3개에 원본 코드가 있습니다(모두 비공개, 마지막 커밋 2026-06-11).
+
+| 원본 레포 | 영역 | 완성도 | 화면 | 근거 |
+|---|---|---|---|---|
+| [DevOps0906/nexus-erp](https://github.com/DevOps0906/nexus-erp) | ERP | 리뷰 기준 약 50% | 로그인 실행 화면 캡처. 대시보드는 데모 계정이 없어 캡처하지 않음 | [`ERP-Wesite.md`](../../reviews/ERP-Wesite.md) 리뷰(파일 추가 2026-10-12) |
+| [DevOps0906/Hospital](https://github.com/DevOps0906/Hospital) | 병원(HMS) | 리뷰 기준 약 45% | 로그인 실행 화면, 대시보드는 레포 안 디자인 시안 | [`Hospital.md`](../../reviews/Hospital.md) 리뷰(파일 추가 2026-10-12) |
+| [DevOps0906/school-management-system](https://github.com/DevOps0906/school-management-system) | 학교(SMS) | 리뷰 기준 약 55%(HEAD 기준, 당시 로컬 작업 트리는 약 25%) | 로그인 실행 화면 캡처. 대시보드는 데모 계정이 없어 캡처하지 않음 | [`School_Management_System.md`](../../reviews/School_Management_System.md) 리뷰(파일 추가 2026-10-12) |
+
+- 기획: 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` 작성 완료.
+- 개발 단계: 원본 코드(세 레포 모두 Next.js 16 + Supabase).
+- 구조도는 각 비공개 원본 레포 README에 있고, 권한이 있는 계정에서만 열립니다. 화면은 아래에 있습니다.
+
+## 화면
+
+### ERP(nexus-erp) 로그인
+
+![Nexus ERP 로그인](screenshots/erp-login.png)
+
+출처: 실행 화면 `/login`(공개 랜딩이 없어 `/`가 로그인으로 이동). 대시보드는 데모 계정이 없어 캡처하지 않았습니다.
+
+### 병원(Hospital) 로그인
+
+![Hospital 로그인](screenshots/hospital-login.png)
+
+출처: 실행 화면 `/login`.
+
+### 병원(Hospital) 대시보드
+
+![Hospital 대시보드 시안](screenshots/hospital-dashboard.png)
+
+출처: 원본 레포 안 디자인 시안 `Images/medic-crm-dashboard.jpg`(1440×900로 축소). 이름·수치는 시안의 예시 데이터입니다.
+
+### 학교(school-management-system) 로그인
+
+![SMS 로그인](screenshots/school-login.png)
+
+출처: 실행 화면 `/login`. 대시보드는 데모 계정이 없어 캡처하지 않았습니다.

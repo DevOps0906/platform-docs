@@ -1,0 +1,16 @@
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph FE["프런트엔드: React 19.2.6 SPA, Vite 8, Tailwind CSS v4.3.0"]
+    APPC["App.tsx: 모델 A, B 병렬 호출 후 통합 모델"]
+    CTX["AppContext: 설정, 히스토리, 초안"]
+    DL["utils/download.ts: TXT 내려받기"]
+  end
+  LS[("브라우저 localStorage")]
+  SRV["server/index.mjs: Node http, POST /api/chat, dist 정적 제공"]
+  OR["OpenRouter Chat Completions API"]
+  U --> APPC
+  APPC --> CTX
+  CTX --> LS
+  APPC --> DL
+  APPC -->|"POST /api/chat, 개발 시 Vite 프록시"| SRV
+  SRV -->|"OPENROUTER_API_KEY 서버 환경변수"| OR

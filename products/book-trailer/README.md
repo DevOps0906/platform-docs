@@ -84,3 +84,58 @@ AI 요약: 원고를 1회 분석해 장 요약·인물·주제와 RAG 색인을 
 | 날짜 | 변경 | 근거 |
 |---|---|---|
 | 2026-10-15 | 최초 작성: 기획 01~08, `2600_trailer.sql`, 모놀리스 3종, RLS 스모크 124항목, 작업 60개 | 사용자 요청(2026-10-15) |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료(08 디자인 시스템 추가) | 이 폴더 `01_PRD.md`~`08_DESIGN_SYSTEM.md` |
+| 개발 단계 | 기획만 | 앱 코드 없음. 원본 프로젝트 없는 신규 기획(README.md:22) |
+| 완성도 | 미확인 | 원본 리뷰가 없고 작업 완료 기록도 없다 |
+| 마지막 커밋 | 2026-10-30 | platform-docs `products/book-trailer/` 경로의 마지막 커밋 |
+| 주요 스택 | Next.js 16.2.x + React 19.2, Tailwind CSS v4(4.x), Remotion 4.0.x, Node 20(오케스트레이터·렌더러), FastAPI(Python 3.12 제안), Supabase Postgres 15 | `02_ARCHITECTURE.md` 1절 |
+
+## 구조도
+
+기획 문서 기준(`02_ARCHITECTURE.md` 1절 스택, 7절 배포 토폴로지). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  U["사용자 브라우저"]
+  subgraph APP["앱 (기획, 코드 없음)"]
+    WEB["web: Next.js 16.2 + Remotion Player, Vercel"]
+    ORC["trailer-orchestrator: Node 20, Railway"]
+    REN["renderer: Remotion 4.0 + Chrome Headless Shell + FFmpeg, Railway 2대"]
+  end
+  subgraph SVC["서비스"]
+    API["apps/api: FastAPI 원고 파싱 + AI, Railway"]
+    DIFY["Dify trailer-chat (공용)"]
+    GPU["공용 GPU 서버: oss-llm, oss-embed, 음성"]
+  end
+  DB[("Supabase: Postgres 15 trailer 스키마, Storage exports")]
+  subgraph EXT["외부 서비스"]
+    FAL["fal 이미지 생성"]
+    EL["ElevenLabs"]
+    LLM["상용 LLM: Anthropic, OpenAI, Google"]
+    TOSS["Toss Payments"]
+  end
+  U --> WEB
+  WEB --> DB
+  WEB --> TOSS
+  WEB -->|"서명 토큰"| API
+  WEB --> DIFY
+  DIFY -->|"내부 키"| API
+  ORC -->|"claim_jobs"| DB
+  ORC --> API
+  ORC --> FAL
+  ORC --> EL
+  ORC -->|"음성"| GPU
+  REN -->|"service_role, Storage"| DB
+  API --> DB
+  API --> LLM
+  API --> GPU
+```
+
+## 화면
+
+캡처 불가: 코드 없음(기획만 있는 제품). 화면 명세는 `03_SCREENS_UX.md`.

@@ -55,3 +55,59 @@
 | 1차 | 모듈러(`microweb` 스키마) | 대행 단계는 데이터가 작고 SSO·공용 지갑의 이점이 크다(`docs/products/_supabase-modular/ARCHITECTURE.md:41`) |
 | 모놀리스 | 같은 도메인을 `public`에 둔 사본을 함께 유지 | 고객사별 분리나 독립 운영이 필요할 때를 대비. 스키마 `public`은 사용자 최종 확인 대기(05장 8절) |
 | 검증 | 두 구조 모두 SQL 체커 OK, RLS 스모크 87/87 통과(05장 9절) | `docs/products/_tools-sqlcheck/` |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 원본 코드 | 원본 3개(premium-wedding-invitation, nexus-micro-web-builder, webcraft-agency-simulator)에 Vite + Express 앱이 있다. 통합 제품 코드는 없다 |
+| 완성도 | 리뷰 기준 premium-wedding-invitation 약 45%, nexus-micro-web-builder 약 55%, webcraft-agency-simulator 약 50%(리뷰 파일 추가 2026-10-12) | `../../reviews/premium-wedding-invitation.md:20`, `../../reviews/nexus-micro-web-builder.md:20`, `../../reviews/webcraft-agency-simulator.md:20` |
+| 마지막 커밋 | premium-wedding-invitation 2026-05-26(`cd7b8b9`), nexus-micro-web-builder 코드 2026-05-26(`e16fb75`, 레포 전체는 2026-11-08 문서 추가), webcraft-agency-simulator 2026-05-26(`4622c33`, 로컬) | theBestTrade 공개 레포 2개, webcraft는 GitHub에서 찾을 수 없어 로컬 기록 |
+| 주요 스택 | React 19.2.5, Vite 8.0.10, TypeScript 6.0.3, Express 5.2.1, framer-motion 12.38.0, recharts 3.8.1, @google/genai 1.50.1, @supabase/supabase-js 2.104.1, Tailwind CDN | premium·nexus `package-lock.json`(`package.json`은 `latest` 지정). webcraft 버전은 미확인 |
+
+## 구조도
+
+원본 코드 기준(각 레포의 `frontend/`, `backend/server.js`, `frontend/vite.config.ts`). 같은 내용을 `diagrams/architecture.mmd`에 둔다.
+
+```mermaid
+flowchart LR
+  G["하객 브라우저"]
+  P["운영자 브라우저"]
+  subgraph PW["premium-wedding-invitation"]
+    PWF["frontend: React 19 + Vite 8, Tailwind CDN, framer-motion"]
+    PWB["backend: Express 5 /api-proxy"]
+  end
+  subgraph NX["nexus-micro-web-builder"]
+    NXF["frontend: React 19 + Vite 8, recharts 3, 모델 12종 데이터"]
+    NXM["services/supabaseMock.ts: 목 인증"]
+    NXB["backend: Express 5 /api-proxy"]
+  end
+  subgraph WC["webcraft-agency-simulator"]
+    WCF["frontend: React + Vite, 시뮬레이터, 관리자 화면"]
+    WCB["backend: Express 5 /api-proxy"]
+  end
+  SB[("Supabase guestbook_messages, 미설정 시 localStorage")]
+  VTX["Google Vertex AI, Gemini"]
+  KAKAO["Kakao JS SDK, 지도 딥링크"]
+  G --> PWF
+  P --> NXF
+  P --> WCF
+  PWF --> SB
+  PWF --> KAKAO
+  PWF -->|"Vite 프록시"| PWB
+  NXF --> NXM
+  NXF -->|"Vite 프록시"| NXB
+  WCF -->|"Vite 프록시"| WCB
+  PWB --> VTX
+  NXB --> VTX
+  WCB --> VTX
+```
+
+## 화면
+
+캡처 불가(랜딩): premium-wedding-invitation 실행 화면에 코드에 들어 있는 신랑·신부 이름이 보이는데 실명 여부를 확인할 수 없어 쓰지 않았다.
+
+![nexus-micro-web-builder 기획 도구 화면](screenshots/dashboard.png)
+
+출처: 실행 화면·코드 내장 데이터(nexus-micro-web-builder `frontend/data/models.ts`, Vite 개발 서버로 실행).

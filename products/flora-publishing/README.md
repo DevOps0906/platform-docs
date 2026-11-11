@@ -60,3 +60,28 @@ FLORA Publishing은 원고는 있지만 편집·조판 경험이 없는 1인 작
 | 모놀리스 | 같은 도메인 모델을 `public` 스키마로 변환해 둔다. 제품을 단독 프로젝트로 분리할 때 쓴다. 모놀리스 스키마 `public`은 사용자 최종 확인 대기 | `docs/products/_platform-core/MONOLITH_CORE_LITE.sql:5-10`, `docs/products/_platform-core/DB_CONVENTIONS.md` 12장 |
 | 정본 관계 | 모듈러 조각이 정본이다. 모놀리스 `0002_publishing_domain.sql`은 조각을 규칙대로 변환한 결과이며 직접 고치지 않는다 | `DB_CONVENTIONS.md` 12장 마지막 문단 |
 | 검증 | 두 구조 모두 SQL 체커(`--vector`) OK, RLS 스모크 57항목 통과(05장 9절), AI 라우팅 기본값 12행 확인(2026-10-13) | `docs/products/_tools-sqlcheck` |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md` |
+| 개발 단계 | 개발 중(W0) | 개발 레포 [DevOps0906/flora-publishing](https://github.com/DevOps0906/flora-publishing)(비공개, 2026-11-11 GitHub에 올림) |
+| 완성도 | 작업표 완료 표시 기준 1/70, 커밋이 들어간 작업 기준 12/70(작업 개수 기준) | 개발 레포 `tasks/` |
+| 마지막 커밋 | 2026-11-03 | 개발 레포 main |
+| 랜딩·대시보드 | 아직 골격(제목 한 줄)이라 캡처하지 않음. 랜딩은 PB-06-024에서 구현 예정 | 개발 레포 `apps/web/src/app/` |
+| 선행 원본 | Flora-V2(원본 코드, 작업 2/12 완료, 랜딩 캡처 있음), Flora-V1(손대지 않음) | [DevOps0906/Flora-V2](https://github.com/DevOps0906/Flora-V2)(비공개) |
+
+구조도는 비공개 레포 README에 있고, 권한이 있는 계정에서만 열립니다(화면은 아래): [flora-publishing README](https://github.com/DevOps0906/flora-publishing#readme) · [Flora-V2 README](https://github.com/DevOps0906/Flora-V2#readme).
+
+## 화면
+
+### 랜딩(선행 원본 Flora-V2)
+
+![Flora-V2 랜딩](screenshots/flora-v2-landing.png)
+
+출처: Flora-V2 실행 화면(1440×900, 더미 Supabase 주소, 원격 연결 없음). 개발 레포 flora-publishing의 랜딩·대시보드는 아직 골격이라 캡처하지 않았습니다.
+
+### 대시보드
+
+캡처 불가: Flora-V2는 로그인이 필요하고 시드·데모 계정이 없으며, flora-publishing 대시보드는 아직 골격입니다.

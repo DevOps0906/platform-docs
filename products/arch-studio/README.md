@@ -57,3 +57,29 @@
 | 이유 | 계정·크레딧·결제·잡·AI 계층을 다른 제품과 같은 코어로 쓰고, 법령 RAG 컬렉션을 플랫폼 공통 지식으로 운영하기 쉽다 |
 | 로컬 | 데스크톱 앱은 프로젝트·3D 모델·판정 기록을 로컬 SQLite에 둔다. 도면과 모델은 사용자가 클라우드 기능(렌더, 클라우드 검토, 공유)을 실행할 때 필요한 부분만 올린다 |
 | 모놀리스 | 화이트라벨(Phase 2) 고객사 전용 설치 시 쓴다. 같은 함수 이름과 시그니처를 유지한다(`docs/products/_platform-core/DB_CONVENTIONS.md` 12장) |
+
+## 진행 현황 (2026-11-11 기준)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 기획 | 01~07 작성 완료 | 이 폴더 `01_PRD.md`~`07_SOURCE_MIGRATION.md`. 이후 정본은 개발 레포 `docs/file/`로 이관 |
+| 개발 단계 | 개발 중 | 개발 레포 [DevOps0906/Arch-Studio](https://github.com/DevOps0906/Arch-Studio)(공개) |
+| 완성도 | 완료 63/92(작업 개수 기준, 진행 5, 대기 24) | 개발 레포 [README 진행 현황](https://github.com/DevOps0906/Arch-Studio#진행-현황-2026-11-03-기준) · [작업표](https://github.com/DevOps0906/Arch-Studio/blob/main/tasks/README.md) |
+| 마지막 커밋 | 2026-11-03(`c16df36`) | 개발 레포 main |
+| 주요 스택 | pnpm 모노레포, Next.js 16, Tauri 2 + Vite(설치형·웹 스튜디오), FastAPI, Supabase | 개발 레포 README 스택 장 |
+
+## 구조도
+
+개발 레포의 구성도를 그대로 씁니다: [architecture.svg](https://github.com/DevOps0906/Arch-Studio/blob/main/docs/diagrams/architecture.svg) ([Mermaid 원본](https://github.com/DevOps0906/Arch-Studio/blob/main/docs/diagrams/architecture.mmd)).
+
+![Arch Studio 구성도](https://github.com/DevOps0906/Arch-Studio/raw/main/docs/diagrams/architecture.svg)
+
+## 화면
+
+랜딩(확정 랜딩 시안 캡처, 1440×900)
+
+![Arch Studio 랜딩](screenshots/landing.png)
+
+대시보드(스튜디오 홈, 데모 모드 실행 화면, 데모 데이터)
+
+![Arch Studio 스튜디오 홈](screenshots/dashboard.png)

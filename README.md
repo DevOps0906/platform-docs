@@ -10,6 +10,7 @@
 |---|---|---|
 | 원본 프로젝트 코드 리뷰 | 25개(PDF 25개) | `reviews/`, PDF는 별도 레포 PDF_Collections |
 | 확정 결정 | 22개 | `products/00_MERGE_ANALYSIS.md` 상단 |
+| 제품 현황(2026-11-11) | 개발 중 2, 일시 정지 1, 원본 코드 6, 기획만 7 | [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md), 12장 |
 | 기획 제품 | 16개(모두 01~07 완료). BM·사업성은 별도 레포 BM-CORE(10장) | `products/<제품>/` |
 | 개발 묶음 | 16개, 작업 합계 1,011개 | `develop/<제품>/` |
 | 공용모듈 개발서(V2) | 16개 | `develop_V2/<제품>/` |
@@ -110,24 +111,24 @@ D:\WorkSpace\DEV\<제품>\   실제 개발 폴더(이 저장소 밖, Claude Code
 
 개발 순서는 `develop/README.md` "권장 개발 순서"를 따릅니다(0단계 = 공용 코어). 작업 수는 V1 개발 묶음 기준입니다.
 
-| 제품 | 무엇을 하는 서비스인가 | 스키마(번호) | 개발 순서 | 작업 수 | 기획 · 개발 · 가격 |
+| 제품 | 무엇을 하는 서비스인가 | 스키마(번호) | 개발 순서 | 작업 수 | 기획 · 개발 · 가격 · 현황 |
 |---|---|---|---|---|---|
-| study-note (Study Note) | 수업·회의 원문을 AI 2개가 정리하고 하나의 학습 일지로 합침 | `notes`(2100) | 1 | 55 | [기획](products/study-note/) · [개발](develop/study-note/) · [가격](Price_Plans/study-note/PRICE_PLAN.md) |
-| website-floria (Floria) | 식물 설치 브랜드 홈페이지 + 문의·뉴스레터 운영 콘솔 | `site`(2200) | 1 | 49 | [기획](products/website-floria/) · [개발](develop/website-floria/) · [가격](Price_Plans/website-floria/PRICE_PLAN.md) |
-| flora-publishing (FLORA Publishing) | 1인 작가가 AI와 기획·집필·판형 조정을 거쳐 인쇄 PDF·ePub 완성 | `publishing`(1000) | 2 | 65 | [기획](products/flora-publishing/) · [개발](develop/flora-publishing/) · [가격](Price_Plans/flora-publishing/PRICE_PLAN.md) |
-| astro-ai (신비로운AI) | 사주 원국 + 타로 3장 AI 해설을 A4 책자형 PDF 리포트로 | `astro`(1100) | 2 | 57 | [기획](products/astro-ai/) · [개발](develop/astro-ai/) · [가격](Price_Plans/astro-ai/PRICE_PLAN.md) |
-| nomad-docs (NOMAD Docs) | 체크리스트 한 번으로 견적서·요구사항정의서·계약서 등 실무 문서 묶음 생성, CRM형 작업 공간 | `docs`(2300) | 2 이후 | 65 | [기획](products/nomad-docs/) · [개발](develop/nomad-docs/) · [가격](Price_Plans/nomad-docs/PRICE_PLAN.md) |
-| sceneflow (SceneFlow) | AI 자동편집(주력)으로 스토리보드 하나에서 롱폼·장면 단위 쇼츠·언어판을 만들고 다채널 배포, 드라마·커머스 숏폼 재편집, 쇼츠 대행(음원·플리는 Phase 2) | `video`(1200) | 3 | 114 | [기획](products/sceneflow/) · [개발](develop/sceneflow/) · [가격](Price_Plans/sceneflow/PRICE_PLAN.md) |
-| nomad-blog (NOMAD Blog) | 키워드 하나로 블로그 원고 + 제휴 카드 + 대가성 문구, 예약 발행 | `blog`(1300) | 3 | 59 | [기획](products/nomad-blog/) · [개발](develop/nomad-blog/) · [가격](Price_Plans/nomad-blog/PRICE_PLAN.md) |
-| nomad-commerce (NOMAD Commerce) | 셀러용 상품 소싱·AI 상세페이지·마켓 업로드 | `commerce`(1400) | 3 | 60 | [기획](products/nomad-commerce/) · [개발](develop/nomad-commerce/) · [가격](Price_Plans/nomad-commerce/PRICE_PLAN.md) |
-| microweb-studio (Microweb Studio) | 모바일 청첩장 등 마이크로웹 템플릿 엔진 + 대행 제작 쇼룸 | `microweb`(1500) | 4 | 56 | [기획](products/microweb-studio/) · [개발](develop/microweb-studio/) · [가격](Price_Plans/microweb-studio/PRICE_PLAN.md) |
-| live-poll (Live Poll) | Slido형 실시간 투표·Q&A, 방송 오버레이 | `poll`(1800) | 4 | 51 | [기획](products/live-poll/) · [개발](develop/live-poll/) · [가격](Price_Plans/live-poll/PRICE_PLAN.md) |
-| toon-factory (Toon Factory) | 이야기 → 콘티 → 캐릭터 모듈 조립 → 인스타툰·웹툰·9:16 영상 | `toon`(2000) | 4 | 69 | [기획](products/toon-factory/) · [개발](develop/toon-factory/) · [가격](Price_Plans/toon-factory/PRICE_PLAN.md) |
-| admin-suite (Admin Suite) | ERP·병원(HMS)·학교(SMS) 내부 관리 3종, 사내 규정 AI 어시스턴트 | `erp`(1600), `sms`(1700), hms는 단독 | 5 | 60 | [기획](products/admin-suite/) · [개발](develop/admin-suite/) · [가격](Price_Plans/admin-suite/PRICE_PLAN.md) |
-| stock-dashboard (Stock Dashboard) | 본인 증권 계좌(1차 모의투자) 대시보드 + AI 포트폴리오 진단, 초대제 | `stock`(1900) | 5 | 54 | [기획](products/stock-dashboard/) · [개발](develop/stock-dashboard/) · [가격](Price_Plans/stock-dashboard/PRICE_PLAN.md) |
-| local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(화이트라벨), 공용모듈 7개의 출처 | `news`(2500) | 6 | 56 | [기획](products/local-news/) · [개발](develop/local-news/) · [가격](Price_Plans/local-news/PRICE_PLAN.md) |
-| book-trailer (NOMAD Book Trailer, 가칭) | 원고 → 훅 브리프 3안 → 장르 문법 스토리보드 → 규격 4종 + 표지 루프 트레일러 렌더(Remotion) → 구매 링크 클릭 측정 | `trailer`(2600) | 4(대행 판매로 수요 검증 후) | 60 | [기획](products/book-trailer/) · [개발](develop/book-trailer/) · [가격](Price_Plans/book-trailer/PRICE_PLAN.md) |
-| arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱(Windows, Tauri 2): 정보 입력 → 도면 자동 생성(DXF·SVG·PDF), 법규 엔벨로프 판정, AI 렌더, 제안서, 시리얼 라이선스 | `arch`(2400) | 공용 코어 다음 언제든(설치형, 도면 스파이크 먼저) | 66 | [기획](products/arch-studio/) · [개발](develop/arch-studio/) · 가격 플랜 없음(요금은 01_PRD 4장) |
+| study-note (Study Note) | 수업·회의 원문을 AI 2개가 정리하고 하나의 학습 일지로 합침 | `notes`(2100) | 1 | 55 | [기획](products/study-note/) · [개발](develop/study-note/) · [가격](Price_Plans/study-note/PRICE_PLAN.md) · [현황](products/study-note/README.md#진행-현황-2026-11-11-기준) |
+| website-floria (Floria) | 식물 설치 브랜드 홈페이지 + 문의·뉴스레터 운영 콘솔 | `site`(2200) | 1 | 49 | [기획](products/website-floria/) · [개발](develop/website-floria/) · [가격](Price_Plans/website-floria/PRICE_PLAN.md) · [현황](products/website-floria/README.md#진행-현황-2026-11-11-기준) |
+| flora-publishing (FLORA Publishing) | 1인 작가가 AI와 기획·집필·판형 조정을 거쳐 인쇄 PDF·ePub 완성 | `publishing`(1000) | 2 | 65 | [기획](products/flora-publishing/) · [개발](develop/flora-publishing/) · [가격](Price_Plans/flora-publishing/PRICE_PLAN.md) · [현황](products/flora-publishing/README.md#진행-현황-2026-11-11-기준) |
+| astro-ai (신비로운AI) | 사주 원국 + 타로 3장 AI 해설을 A4 책자형 PDF 리포트로 | `astro`(1100) | 2 | 57 | [기획](products/astro-ai/) · [개발](develop/astro-ai/) · [가격](Price_Plans/astro-ai/PRICE_PLAN.md) · [현황](products/astro-ai/README.md#진행-현황-2026-11-11-기준) |
+| nomad-docs (NOMAD Docs) | 체크리스트 한 번으로 견적서·요구사항정의서·계약서 등 실무 문서 묶음 생성, CRM형 작업 공간 | `docs`(2300) | 2 이후 | 65 | [기획](products/nomad-docs/) · [개발](develop/nomad-docs/) · [가격](Price_Plans/nomad-docs/PRICE_PLAN.md) · [현황](products/nomad-docs/README.md#진행-현황-2026-11-11-기준) |
+| sceneflow (SceneFlow) | AI 자동편집(주력)으로 스토리보드 하나에서 롱폼·장면 단위 쇼츠·언어판을 만들고 다채널 배포, 드라마·커머스 숏폼 재편집, 쇼츠 대행(음원·플리는 Phase 2) | `video`(1200) | 3 | 114 | [기획](products/sceneflow/) · [개발](develop/sceneflow/) · [가격](Price_Plans/sceneflow/PRICE_PLAN.md) · [현황](products/sceneflow/README.md#진행-현황-2026-11-11-기준) |
+| nomad-blog (NOMAD Blog) | 키워드 하나로 블로그 원고 + 제휴 카드 + 대가성 문구, 예약 발행 | `blog`(1300) | 3 | 59 | [기획](products/nomad-blog/) · [개발](develop/nomad-blog/) · [가격](Price_Plans/nomad-blog/PRICE_PLAN.md) · [현황](products/nomad-blog/README.md#진행-현황-2026-11-11-기준) |
+| nomad-commerce (NOMAD Commerce) | 셀러용 상품 소싱·AI 상세페이지·마켓 업로드 | `commerce`(1400) | 3 | 60 | [기획](products/nomad-commerce/) · [개발](develop/nomad-commerce/) · [가격](Price_Plans/nomad-commerce/PRICE_PLAN.md) · [현황](products/nomad-commerce/README.md#진행-현황-2026-11-11-기준) |
+| microweb-studio (Microweb Studio) | 모바일 청첩장 등 마이크로웹 템플릿 엔진 + 대행 제작 쇼룸 | `microweb`(1500) | 4 | 56 | [기획](products/microweb-studio/) · [개발](develop/microweb-studio/) · [가격](Price_Plans/microweb-studio/PRICE_PLAN.md) · [현황](products/microweb-studio/README.md#진행-현황-2026-11-11-기준) |
+| live-poll (Live Poll) | Slido형 실시간 투표·Q&A, 방송 오버레이 | `poll`(1800) | 4 | 51 | [기획](products/live-poll/) · [개발](develop/live-poll/) · [가격](Price_Plans/live-poll/PRICE_PLAN.md) · [현황](products/live-poll/README.md#진행-현황-2026-11-11-기준) |
+| toon-factory (Toon Factory) | 이야기 → 콘티 → 캐릭터 모듈 조립 → 인스타툰·웹툰·9:16 영상 | `toon`(2000) | 4 | 69 | [기획](products/toon-factory/) · [개발](develop/toon-factory/) · [가격](Price_Plans/toon-factory/PRICE_PLAN.md) · [현황](products/toon-factory/README.md#진행-현황-2026-11-11-기준) |
+| admin-suite (Admin Suite) | ERP·병원(HMS)·학교(SMS) 내부 관리 3종, 사내 규정 AI 어시스턴트 | `erp`(1600), `sms`(1700), hms는 단독 | 5 | 60 | [기획](products/admin-suite/) · [개발](develop/admin-suite/) · [가격](Price_Plans/admin-suite/PRICE_PLAN.md) · [현황](products/admin-suite/README.md#진행-현황-2026-11-11-기준) |
+| stock-dashboard (Stock Dashboard) | 본인 증권 계좌(1차 모의투자) 대시보드 + AI 포트폴리오 진단, 초대제 | `stock`(1900) | 5 | 54 | [기획](products/stock-dashboard/) · [개발](develop/stock-dashboard/) · [가격](Price_Plans/stock-dashboard/PRICE_PLAN.md) · [현황](products/stock-dashboard/README.md#진행-현황-2026-11-11-기준) |
+| local-news (로컬뉴스 클라우드, 가칭) | 여러 지역신문사가 쓰는 멀티테넌트 뉴스룸 SaaS(화이트라벨), 공용모듈 7개의 출처 | `news`(2500) | 6 | 56 | [기획](products/local-news/) · [개발](develop/local-news/) · [가격](Price_Plans/local-news/PRICE_PLAN.md) · [현황](products/local-news/README.md#진행-현황-2026-11-11-기준) |
+| book-trailer (NOMAD Book Trailer, 가칭) | 원고 → 훅 브리프 3안 → 장르 문법 스토리보드 → 규격 4종 + 표지 루프 트레일러 렌더(Remotion) → 구매 링크 클릭 측정 | `trailer`(2600) | 4(대행 판매로 수요 검증 후) | 60 | [기획](products/book-trailer/) · [개발](develop/book-trailer/) · [가격](Price_Plans/book-trailer/PRICE_PLAN.md) · [현황](products/book-trailer/README.md#진행-현황-2026-11-11-기준) |
+| arch-studio (Arch Studio, 가칭) | 설치형 AI 건축 설계 앱(Windows, Tauri 2): 정보 입력 → 도면 자동 생성(DXF·SVG·PDF), 법규 엔벨로프 판정, AI 렌더, 제안서, 시리얼 라이선스 | `arch`(2400) | 공용 코어 다음 언제든(설치형, 도면 스파이크 먼저) | 66 | [기획](products/arch-studio/) · [개발](develop/arch-studio/) · 가격 플랜 없음(요금은 01_PRD 4장) · [현황](products/arch-studio/README.md#진행-현황-2026-11-11-기준) |
 
 모든 제품이 같은 공용 기반(로그인·조직, 크레딧·결제, 잡 워커, AI 계층, 음성)을 쓰고, 공개 랜딩이 있는 제품은 3D 히어로를 씁니다. 제품별 상세 설명은 [`develop/README.md`](develop/README.md), 공용모듈 채택 현황은 [`develop_V2/README.md`](develop_V2/README.md)에 있습니다.
 
@@ -405,3 +406,17 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 | `products/<제품>/README.md` 첫 줄 | 원본 레포 또는 개발 레포(sceneflow, arch-studio) |
 
 다른 문서가 `파일:줄`로 인용하므로 줄을 추가하지 않고 첫 줄 끝에 붙였습니다. `develop/*/*-root/`의 사본은 `build_root.py`로 다시 만들 때 반영됩니다.
+
+## 12. 제품 현황 (2026-11-11)
+
+제품 16개의 기획·개발 단계, 완성도, 랜딩·대시보드 캡처, 레포 링크를 한 장에 모은 표는 [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md)에 있습니다. 3장 표의 "현황" 링크는 제품별 진행 현황 섹션으로 갑니다.
+
+| 어디에 | 무엇을 적었나 |
+|---|---|
+| [`PRODUCT_STATUS.md`](PRODUCT_STATUS.md) | 16개 제품 전체 표, 단계별 제품 수, 화면 모음(캡처 13장), 확인이 필요한 것 |
+| `products/<제품>/README.md` 끝 | 진행 현황 표와 화면(`screenshots/`). 공개 코드나 기획 문서로 만든 구조도는 `diagrams/architecture.mmd`와 README 안 Mermaid로 둠 |
+| 개발·원본 레포 README | 진행 현황, 구조도(`docs/diagrams/architecture.mmd`), 화면(`docs/screenshots/`), 콘텐츠 바로가기 |
+
+- 화면 캡처는 모두 이 저장소에도 둡니다. 비공개 레포 제품의 구조도는 그 레포 README에만 있습니다.
+- 완성도는 작업표가 있으면 완료 작업 수/전체 작업 수(작업 개수 기준), 없으면 `reviews/`의 원본 리뷰 수치입니다.
+- `products/<제품>/README.md`는 다른 문서가 `파일:줄`로 인용하므로 기존 줄을 바꾸지 않고 파일 끝에만 붙였습니다.
