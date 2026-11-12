@@ -382,6 +382,32 @@ review role worker 의 서브 에이전트는 plan-challenger, review-expert 가
 
 위 표의 역할은 각 레포 README 첫머리를 근거로 적었습니다. 모듈 레포(blueprints·docker·secure-pack)의 설치는 각 README의 `nomad-os module add` 안내를 따릅니다.
 
+### 9.3 Docker 모듈 활용 방법 (2026-11-12)
+
+[nomad-docker-module](https://github.com/DevOps0906/nomad-docker-module) 0.1.0은 자체 호스팅 서비스를 로컬·단일 서버에서 띄우는 compose 템플릿입니다(쿠버네티스는 범위 밖). Supabase는 compose에 없고 `supabase start`로 따로 띄웁니다. 상세 절차·보안 규칙은 그 레포의 `README.md`·`SECURITY.md`가 정본입니다.
+
+| 프로파일 | 서비스 | 쓰는 경우 (이 저장소 기준) |
+|---|---|---|
+| core | api(FastAPI) · worker | Python 백엔드·잡 워커가 있는 제품 |
+| security | clamd · clamav-update | 파일 업로드 악성코드 검사(files-storage) |
+| ai-cpu / ai-gpu | whisper.cpp(STT) · PaddleOCR · TEI(bge-m3 임베딩) | 음성·OCR·RAG를 외부 API 없이 돌릴 때. `develop/_shared/voice/`·`llm/`의 GPU 준비와 같은 전제. 둘을 함께 켜지 않음 |
+| fetch | models-fetch | 모델 최초 다운로드(일회성) |
+
+| 하고 싶은 일 | 방법 |
+|---|---|
+| 전체 설치 | 제품 개발 폴더에서 `nomad-os module add docker --allow-scripts` → `infra/docker/`. 설치 전 `compose.yml`·Dockerfile을 직접 검토 |
+| 실행 | `.env.example` 복사 → `supabase start` 출력의 URL·키 입력 → `docker compose --profile core --profile security up -d` (AI는 `--profile ai-cpu` 추가) |
+| 문법 확인 | `docker compose -f compose.yml --profile core --profile security --profile ai-cpu --profile ai-gpu --profile fetch config --no-interpolate -q` |
+| 일부만 가져오기 | 워커 하나만 필요하면 모듈 전체 대신 `services/worker/Dockerfile`·`Dockerfile.dockerignore`와 `SECURITY.md`의 컨테이너 권한 규칙만 가져온다. 예: LOTTO-LAB은 Python 분석 워커 규칙(`.claude/rules/worker.md`)에만 반영 |
+| 기획 문서에 적기 | 제품 `02_ARCHITECTURE.md` 배포 절에 쓸 프로파일과 서비스 키 위치(service_role은 worker에만)를 적는다 |
+
+지킬 것 (모듈 `SECURITY.md` 요약):
+- service_role 키는 worker에만 둡니다. api는 anon 키 + 사용자 JWT를 쓰고, AI·clamd 컨테이너에는 Supabase 키를 주지 않습니다.
+- 외부 포트는 api 하나(`127.0.0.1:8000`)뿐입니다. 공개는 리버스 프록시(TLS)로 하고, 내부 망(`nomad-core`·`nomad-ai`)은 internal입니다.
+- 자체 이미지는 비루트(uid 10001)·`read_only`·`cap_drop: ALL`로 돌리고, 이미지는 버전 고정 후 `@sha256` digest로 고정합니다(latest 금지).
+- `.env`·키 파일을 빌드 컨텍스트와 이미지에 넣지 않습니다. 이미지를 갱신할 때 `docker scout cves`나 `trivy image`로 스캔합니다.
+- 상업 이용 전에 모델 라이선스를 확인합니다(ClamAV GPL-2.0, CUDA 이미지 NVIDIA EULA).
+
 ## 10. BM과 사업계획서 자료는 BM-CORE 레포로 이동 (2026-11-11)
 
 사업모델(BM) 7단계 방법론, 비즈니스 모델 캔버스, 사업계획서(PSST) 매핑, BM-Core SaaS 기획서는 **[DevOps0906/BM-CORE](https://github.com/DevOps0906/BM-CORE)** 레포에서 관리합니다. 이 저장소는 "무엇을 만드는가"(제품 기획), BM-CORE는 "왜 돈이 되는가"(고객·가격·단위경제·검증·점수)와 사업계획서 재료를 맡습니다.
